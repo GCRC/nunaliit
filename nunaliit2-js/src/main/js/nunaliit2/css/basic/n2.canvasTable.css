@@ -5,9 +5,8 @@
 
 .n2TableCanvas td,
 .n2TableCanvas th {
-	border-color: #000000;
-    border-style: solid;
-    border-width: 1px;
+    border: 1px solid #000000;
+    white-space: pre-wrap;
 }
 
 .n2TableCanvas td.n2TableCanvas_lazyDisplay {

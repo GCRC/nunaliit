@@ -311,14 +311,14 @@ var longLatRe = /^\s*([0-9]{1,2})(°|d|\u00B0)\s*([0-9]{1,2})['m]\s*([0-9]{1,2}(
 $n2.parseLongLatText = function(text) {
 	var result = {};
 	
-	$n2.log('longLat text',text,longLatRe);
+	//$n2.log('longLat text',text,longLatRe);
 
 	var matchObj = text.match(longLatRe);
 	if( null == matchObj ) {
 		return null;
 	};
 
-	$n2.log('longLat',matchObj);
+	//$n2.log('longLat',matchObj);
 
 	var longMult = 1;
 	if( 'S' === matchObj[6] ) {
@@ -340,7 +340,7 @@ $n2.parseLongLatText = function(text) {
 		+ (1 * matchObj[10] / 3600)
 	);
 		
-	$n2.log('parseLongLatText',text,result);
+	//$n2.log('parseLongLatText',text,result);
 
 	return result;
 };
@@ -961,7 +961,7 @@ $n2.utils = {
 			};
 		};
 	},
-	
+
 	/**
 	 * Creates a version of the function where the rate of calls is limited to
 	 * one call per defined time out.
@@ -989,7 +989,63 @@ $n2.utils = {
 			timeout = setTimeout(later, wait);
 		};
 	},
-	
+
+	/**
+	 * Creates a version of the function where the rate of calls is throttled to no
+	 * more than a set rate. If, during the delay, the function is called again, then
+	 * it will result in a last call at the end of the delay.
+	 * @name throttle
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param {Function} func The function that should be limited in the rate at which
+	 *                   it is fired.
+	 * @param {Number} wait Number of milliseconds between the calls to the function
+	 * @returns {boolean} If true, the function is called immediately, and again in the
+	 *                    future after a period defined by the timeout.
+	 */
+	throttle: function(func, wait) {
+		var timeoutId = undefined;
+		var lastRan = undefined;
+		var throttledFn = function() {
+			var context = this, args = arguments;
+			var immediate = false;
+			if( !lastRan ){
+				immediate = true;
+			} else {
+				var timeSinceLastCall = Date.now() - lastRan;
+				if( timeSinceLastCall >= wait ){
+					immediate = true;
+				};
+			};
+			if( immediate ){
+				// Run it now.
+				func.apply(context, args);
+				lastRan = Date.now();
+			} else if( timeoutId ){
+				// Already waiting for a timeout. No
+				// need to schedule again
+			} else {
+				// Schedule to be called again in the future
+				var delay = wait - (Date.now() - lastRan);
+				timeoutId = setTimeout(
+					function(){
+						func.apply(context, args);
+						lastRan = Date.now();
+						timeoutId = undefined;
+					}
+					,delay
+				);
+			};
+		};
+
+		// Call this function for the next invocation to be immediate
+		throttledFn.setImmediate = function(){
+			lastRan = undefined;
+		};
+
+		return throttledFn;
+	},
+
 	/**
 	 * Returns the identifier associated with the given element. If no identifier
 	 * is currently assigned to the element, assign a unique one and then return it.

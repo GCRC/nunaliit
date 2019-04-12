@@ -601,6 +601,44 @@ function suppressPopupHtmlFunction(opts_){
 
 //**************************************************
 //**************************************************
+
+function ComputeFeatureOriginalBboxForMapProjection(f, mapProj){
+	// Each feature has a projection stored at f.n2GeomProj
+	// that represents the original projection for a feature
+	//
+	// Each feature has a property named 'n2ConvertedBbox' that contains
+	// the full geometry bbox converted for the map projection, if 
+	// already computed.
+
+	if( f && f.n2ConvertedBbox ){
+		return f.n2ConvertedBbox;
+	};
+
+	var geomBounds = undefined;
+	if( f.data 
+	 && f.data.nunaliit_geom
+	 && f.data.nunaliit_geom.bbox 
+	 && f.n2GeomProj
+	 && mapProj ){
+		
+		var bbox = f.data.nunaliit_geom.bbox;
+		if( $n2.isArray(bbox) 
+		 && bbox.length >= 4 ){
+			geomBounds = new OpenLayers.Bounds(bbox[0], bbox[1], bbox[2], bbox[3]);
+
+			if( mapProj.getCode() !== f.n2GeomProj.getCode ){
+				geomBounds.transform(f.n2GeomProj, mapProj);
+			};
+
+			f.n2ConvertedBbox = geomBounds;
+		};
+	};
+	
+	return geomBounds;
+};
+
+//**************************************************
+//**************************************************
 var LayerInfo = $n2.Class({
 
 	customService: null,
@@ -4590,14 +4628,12 @@ var MapAndControls = $n2.Class({
 				for(var fi=0,fe=layer.features.length; fi<fe; ++fi){
 					var feature = layer.features[fi];
 					
-					// If feature is a cluster, iterate over its components
+					// If feature is a cluster, skip it. No need to fetch the
+					// components as they are hidden in a cluster
 					if( feature.cluster ){
-						for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
-							var f = feature.cluster[ci];
-							checkFeature(f,epsg4326Resolution,geomsNeeded,mapExtent);
-						};
+
 					} else {
-						checkFeature(feature,epsg4326Resolution,geomsNeeded,mapExtent);
+						checkFeature(feature,epsg4326Resolution,geomsNeeded,mapExtent,mapProjection);
 					};
 				};
 			};
@@ -4635,6 +4671,7 @@ var MapAndControls = $n2.Class({
 			};
 		};
 		if( simplificationsReported.length ){
+			// These are all the geometries already in memory
 			//$n2.log('simplificationsReported',simplificationsReported);
 			window.setTimeout(function(){
 				_this._updateSimplifiedGeometries(simplificationsReported);
@@ -4698,34 +4735,25 @@ var MapAndControls = $n2.Class({
 			,count: geometriesRequested.length
 		});
 		
-		function checkFeature(f, res, geomsNeeded, mapExtent){
+		function checkFeature(f, res, geomsNeeded, mapExtent, mapProjection){
 			// Check if feature falls within viewable boundaries of
 			// map
-			if( mapExtent 
-			 && f.data 
-			 && f.data.nunaliit_geom
-			 && f.data.nunaliit_geom.bbox ){
-				
-				var bbox = f.data.nunaliit_geom.bbox;
-				if( $n2.isArray(bbox) 
-				 && bbox.length >= 4
-				 && mapProjection ){
-					var geomBound = new OpenLayers.Bounds(bbox[0], bbox[1], bbox[2], bbox[3]);
-
-					if( mapProjection 
-					 && mapProjection.getCode() !== epsg4326Proj.getCode ){
-						geomBound.transform(epsg4326Proj, mapProjection);
-					};
-					
-					if( geomBound.intersectsBounds(mapExtent) ){
-						// We should continue and get a simplified geometry
-						// for this feature. Its BBOX intersetcs with the visible
-						// portion of the map.
-					} else {
-						// Not on screen. Do not bother
-						return;
-					};
-				};
+			if( !mapExtent ) {
+				// Can not continue
+				return;
+			};
+			var geomBound = ComputeFeatureOriginalBboxForMapProjection(f, mapProjection);
+			if( !geomBound ){
+				// Can not process this feature
+				return;
+			};
+			if( geomBound.intersectsBounds(mapExtent) ){
+				// We should continue and get a simplified geometry
+				// for this feature. Its BBOX intersects with the visible
+				// portion of the map.
+			} else {
+				// Not on screen. Do not bother
+				return;
 			};
 			
 			// Operate only on features that have simplification information
@@ -4807,6 +4835,7 @@ var MapAndControls = $n2.Class({
 	 */
 	_updateSimplifiedGeometries: function(simplifiedGeometries){
 		var _this = this;
+		//$n2.log('_updateSimplifiedGeometries '+simplifiedGeometries.length+' at '+Date.now());
 		
 		// Often used
 		var wktFormat = new OpenLayers.Format.WKT();
@@ -5800,23 +5829,26 @@ var MapAndControls = $n2.Class({
 		var mapLayer = layerInfo.olLayer;
 
 		var mustReproject = false;
-        var remoteProjection = mapLayer.projection;
-	    var localProjection = layerInfo.olLayer.map.getProjectionObject();
-        if( localProjection 
-         && false == localProjection.equals(remoteProjection) ) {
-        	mustReproject = true;
-        };
+		var remoteProjection = mapLayer.projection;
+		var localProjection = layerInfo.olLayer.map.getProjectionObject();
+		if( localProjection 
+		 && false == localProjection.equals(remoteProjection) ) {
+			mustReproject = true;
+		};
 		
 		// Remove features. Remove features that are to be updated
-        var featureIdsToRemoveMap = {};
-        state.removed.forEach(function(f){
-        	featureIdsToRemoveMap[f.fid] = true;
-        });
-        state.updated.forEach(function(f){
-        	featureIdsToRemoveMap[f.fid] = true;
-        });
-        var featuresToRemove = [];
-        var featuresToAdd = [];
+		var featureIdsToRemoveMap = {};
+		state.removed.forEach(function(f){
+			featureIdsToRemoveMap[f.fid] = true;
+		});
+		state.updated.forEach(function(f){
+			featureIdsToRemoveMap[f.fid] = true;
+		});
+		state.added.forEach(function(f){
+			featureIdsToRemoveMap[f.fid] = true;
+		});
+		var featuresToRemove = [];
+		var featuresToAdd = [];
 		if( mapLayer && mapLayer.features ) {
 			var loop;
 			var features = mapLayer.features;
@@ -5915,6 +5947,9 @@ $n2.mapAndControls = function(opts_){
 	return new MapAndControls(opts_);
 };
 $n2.mapAndControls.MapAndControls = MapAndControls;
+
+// Utilities
+$n2.mapAndControls.ComputeFeatureOriginalBboxForMapProjection = ComputeFeatureOriginalBboxForMapProjection;
 
 // Pop-up management
 $n2.mapAndControls.DefaultPopupHtmlFunction = null;

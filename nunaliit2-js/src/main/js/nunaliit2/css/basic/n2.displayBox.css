@@ -84,8 +84,6 @@
 	display: none;	
 }
 
-.n2DisplayBoxImage {}
-
 .n2DisplayBoxNavBtn {
 	position: absolute;
 	top: 0;
@@ -130,8 +128,6 @@ a.n2DisplayBoxNavBtn {
 	line-height: 0;
 }
 
-.n2DisplayBoxLoadingLink {}
-
 .n2DisplayBoxLoadingImg {
 	content: url('images/wait_icon.gif')
 }
@@ -167,14 +163,12 @@ a.n2DisplayBoxNavBtn {
 	padding-bottom: 1.0em;	
 }			
 
-.n2DisplayBoxButtons {}
-
 .n2DisplayBoxButtonClose {
 	display: block;
 	width: 15px;
 	height: 15px;
 	margin: 10px auto;
-	cursor:pointer;
+	cursor: pointer;
 	background: transparent url('images/x_icon_naked_15.png') no-repeat 0 0;
 	float: right;
 	content: ''
@@ -190,7 +184,7 @@ a.n2DisplayBoxNavBtn {
 	height: 25px;
 	margin: 10px auto;
 	color: transparent !important;
-	cursor:pointer;
+	cursor: pointer;
 	background: transparent url('images/download_icon_30.png') no-repeat 0 0;
 	float: right;
 	content: ''

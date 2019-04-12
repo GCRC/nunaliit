@@ -61,6 +61,8 @@ var WaitWidget = $n2.Class({
 	
 	refreshIntervalInMs: null,
 
+	logging: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			containerId: null
@@ -69,6 +71,7 @@ var WaitWidget = $n2.Class({
 			// From configuration
 			,showNames: null
 			,refreshIntervalInMs: null
+			,logging: false
 		},opts_);
 		
 		var _this = this;
@@ -84,6 +87,10 @@ var WaitWidget = $n2.Class({
 			this.refreshIntervalInMs = opts.refreshIntervalInMs;
 		} else {
 			this.refreshIntervalInMs = 300;
+		};
+
+		if( typeof opts.logging === 'boolean' ){
+			this.logging = opts.logging;
 		};
 		
 		this.dispatchService = opts.dispatchService;
@@ -251,8 +258,23 @@ var WaitWidget = $n2.Class({
 					waitObject = {
 						name: name
 						,label: label
+						,count: 0
 					};
 					waitObjects[name] = waitObject;
+				};
+
+				// Report
+				if( this.logging ){
+					if( waitObject.count < 1 && count > 0 ){
+						// Report start
+						waitObject.start = Date.now();
+						$n2.log('wait '+requesterId+'/'+name+' start '+waitObject.start)
+					} else if( waitObject.count > 0 && count < 1 ){
+						// Report end
+						var end = Date.now();
+						var elapsed = end - waitObject.start;
+						$n2.log('wait '+requesterId+'/'+name+' end '+end+' elapsed '+elapsed)
+					};
 				};
 				
 				waitObject.count = count;

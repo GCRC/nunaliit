@@ -52,6 +52,13 @@ var LegendWidget = $n2.Class('LegendWidget',{
 	stylesInUse: null,
 	
 	cachedSymbols: null,
+
+	/* 
+	 * These are versions of functions that are throttled. These
+	 * functions touch the DOM structure and should not be called too
+	 * often as they affect performance.
+	 */
+	_throttledRefresh: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -69,6 +76,7 @@ var LegendWidget = $n2.Class('LegendWidget',{
 
 		this.stylesInUse = null;
 		this.cachedSymbols = {};
+		this._throttledRefresh = $n2.utils.throttle(this._refresh, 2000);
 
 		if( typeof this.sourceCanvasName !== 'string' ){
 			throw new Error('sourceCanvasName must be specified');
@@ -111,7 +119,7 @@ var LegendWidget = $n2.Class('LegendWidget',{
 		
 		$n2.log(this._classname, this);
 
-		this._refresh();
+		this._throttledRefresh();
 	},
 	
 	_getElem: function(){
@@ -124,7 +132,7 @@ var LegendWidget = $n2.Class('LegendWidget',{
 		if( 'canvasReportStylesInUse' === m.type ){
 			if( m.canvasName === this.sourceCanvasName ){
 				this.stylesInUse = m.stylesInUse;
-				this._refresh();
+				this._throttledRefresh();
 			};
 		};
 	},
@@ -133,8 +141,8 @@ var LegendWidget = $n2.Class('LegendWidget',{
 		var _this = this;
 
 		var $elem = this._getElem();
-		
 		$elem.empty();
+		this.refreshCount = this.refreshCount ? this.refreshCount + 1 : 1;
 		
 		// Make a map of styles by label
 		var stylesByLabel = {};

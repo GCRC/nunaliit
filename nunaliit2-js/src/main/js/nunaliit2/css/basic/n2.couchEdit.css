@@ -8,7 +8,7 @@
 
 /* Remove extra white space in accordion */
 div.n2CouchEditor_container .ui-accordion-content {
-	padding: 0 0 0 0;
+	padding: 0;
 }
 
 /* Hide portion of the 'add file' form that should not
@@ -16,7 +16,6 @@ div.n2CouchEditor_container .ui-accordion-content {
 .editorAddFileDialog .editorAddFileFormEditorLine {
 	display: none;
 }
-
 
 /* Hide portion of the 'add file' form that should not
    appear when form is attached to editor */
@@ -36,8 +35,8 @@ div.n2CouchEditor_container .ui-accordion-content {
 
 form.attachmentEditor_creationForm {
 	clear: both;
-  height: 100px;
-  margin-top: 10px;
+	height: 100px;
+	margin-top: 10px;
 }
 
 .n2_cordova form.attachmentEditor_creationForm {
@@ -57,8 +56,8 @@ form.attachmentEditor_creationFormWithVideo {
 }
 
 .attachmentEditor_photoPreview {
-  max-width: 70%;
-  max-height: 100px;
+	max-width: 70%;
+	max-height: 100px;
 }
 
 .n2_cordova .attachmentEditor_photoPreview {
@@ -72,29 +71,28 @@ form.attachmentEditor_creationFormWithVideo {
 }
 
 .attachmentEditor_hiddenFileInput {
-  display: none;
+	display: none;
 }
 
 .attachmentEditor_buttonDiv {
-  margin: 10px 0;
+	margin: 10px 0;
 }
 
 .attachmentEditor_fileInputLabel {
-  border: 1px solid grey;
-  display: inline-block;
-  padding: 3px 6px;
-  background-color: #f5f5f5;
+	border: 1px solid grey;
+	display: inline-block;
+	padding: 3px 6px;
+	background-color: #f5f5f5;
 }
 
-.attachmentEditor_cordovaCaptureButtonsContainer {
-  float: left;
-  width: 29%;
+.attachmentEditor_cordovaCaptureButtonsContainer,
+.attachmentEditor_uploadTabs {
+	float: left;
+	width: 29%;
 }
 
 .attachmentEditor_uploadTabs {
-	float: left;
 	border: 1px solid #ddd;
-	width: 29%;
 	margin-bottom: 15px;
 }
 
@@ -109,9 +107,7 @@ form.attachmentEditor_creationFormWithVideo {
 	cursor: pointer;
 	transition: 0.3s;
 	background-color: #f5f5f5;
-	font-weight: bold;
-	font-size: 1em;
-	font-family: helvetica, sans-serif;
+	font: bold 1em helvetica, sans-serif;
 }
 
 .attachmentEditor_uploadTabs button:disabled {
@@ -235,12 +231,12 @@ form.attachmentEditor_creationFormWithVideo {
 }
 
 .cordova-btn {
-  position: relative;
-  display: block;
-  overflow: hidden;
-  outline: none;
-  border-radius: 2px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
+	position: relative;
+	display: block;
+	overflow: hidden;
+	outline: none;
+	border-radius: 2px;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, .6);
 	transition: background-color .3s;
 	background: #e6e6e6;
 	padding: 5px 7px 4px 30px;
@@ -248,47 +244,41 @@ form.attachmentEditor_creationFormWithVideo {
 }
 
 .cordova-btn > * {
-  position: relative;
+	position: relative;
 }
 
 .cordova-btn span {
-  display: block;
-  padding: 12px 24px;
+	display: block;
+	padding: 12px 24px;
 }
 
 .cordova-btn:before {
-  content: "";
-  
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  
-  display: block;
-  width: 0;
-  padding-top: 0;
-    
-  border-radius: 100%;
-  
-  background-color: rgba(255, 255, 255, 0.3);
-  
-  -webkit-transform: translate(-50%, -50%);
-  -moz-transform: translate(-50%, -50%);
-  -ms-transform: translate(-50%, -50%);
-  -o-transform: translate(-50%, -50%);
-  transform: translate(-50%, -50%);
+	content: "";
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	display: block;
+	width: 0;
+	padding-top: 0;
+	border-radius: 100%;
+	background-color: rgba(255, 255, 255, 0.3);
+  	-webkit-transform: translate(-50%, -50%);
+	-moz-transform: translate(-50%, -50%);
+	-ms-transform: translate(-50%, -50%);
+	-o-transform: translate(-50%, -50%);
+	transform: translate(-50%, -50%);
 }
 
 .cordova-btn:active:before {
-  width: 120%;
-  padding-top: 120%;
-  
-  transition: width .2s ease-out, padding-top .2s ease-out;
+	width: 120%;
+	padding-top: 120%;
+	transition: width .2s ease-out, padding-top .2s ease-out;
 }
 
 .n2_cordova *, 
 .n2_cordova *:before, 
 .n2_cordova *:after {
-  box-sizing: border-box;
+	box-sizing: border-box;
 }
 
 .cordova-remove-button {

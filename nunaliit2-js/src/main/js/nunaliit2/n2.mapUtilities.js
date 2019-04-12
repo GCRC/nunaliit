@@ -161,9 +161,9 @@ function HandleUtilityCreateRequests(m, addr, dispatcher){
 			};
 		};
 		
-        new MapClusterClickToZoom(options);
-        
-        m.created = true;
+		new MapClusterClickToZoom(options);
+
+		m.created = true;
 
 	} else if( 'mapClusterClickToMultiSelect' === m.utilityType ){
 		var options = {};
@@ -181,9 +181,9 @@ function HandleUtilityCreateRequests(m, addr, dispatcher){
 			};
 		};
 		
-        new MapClusterClickToMultiSelect(options);
-        
-        m.created = true;
+		new MapClusterClickToMultiSelect(options);
+
+		m.created = true;
 
 	} else if( 'mapClusterClickHandler' === m.utilityType ){
 		var options = {};
@@ -201,9 +201,9 @@ function HandleUtilityCreateRequests(m, addr, dispatcher){
 			};
 		};
 		
-        new MapClusterClickHandler(options);
-        
-        m.created = true;
+		new MapClusterClickHandler(options);
+
+		m.created = true;
 	};
 };
 

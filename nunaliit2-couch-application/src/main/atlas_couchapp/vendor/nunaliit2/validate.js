@@ -55,7 +55,7 @@ var n2validate = {
 		
 		} else if( !userInfo.atlas[n2atlas.name]
 		 || !userInfo.atlas[n2atlas.name].agreement ) {
-			throw( {forbidden: 'Database submissions are restricted to users that have accepted the user agreement'} );
+			throw( {forbidden: 'Database submissions are restricted to users that have accepted the user agreement '+userCtxt.name+' roles: '+userCtxt.roles.join(',')} );
 		
 		} else if( n2atlas.submissionDbEnabled
 		 && n2atlas.isDocumentDb

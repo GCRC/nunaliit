@@ -1,9 +1,13 @@
+/*
+	This portion of the CSS deals with the schema display
+*/
+
 .n2_localize_fallback {
-	font-style:italic;	
+	font-style: italic;	
 }
 
 .n2_localize_fallback_lang {
-	color:#ff7777;	
+	color: #ff7777;	
 }
 
 .n2schema_array_item {
@@ -19,10 +23,7 @@
 	border: none;
 }
 
-.n2schema_array_item:nth-child(1) .n2schema_array_item_up {
-	display: none;
-}
-
+.n2schema_array_item:nth-child(1) .n2schema_array_item_up,
 .n2schema_array_item:nth-last-child(2) .n2schema_array_item_down {
 	display: none;
 }
@@ -85,7 +86,9 @@
 	background: url(images/x_icon_naked_15.png) no-repeat;
 }
 
-.n2schema_referenceDelete:hover {
+.n2schema_referenceDelete:hover,
+.n2schema_help_date:hover,
+.n2schema_help_wiki:hover {
 	background-position: -15px 0px;
 }
 
@@ -95,10 +98,6 @@
 	height: 0px;
 	padding: 15px 15px 0px 0px;
 	background: url(images/question_icon_naked_15.png) no-repeat;
-}
-
-.n2schema_help_date:hover {
-	background-position: -15px 0px;
 }
 
 .n2schema_field_container {
@@ -115,10 +114,6 @@
 	border: 0;
 	padding: 15px 15px 0px 0px;
 	background: url(images/question_icon_naked_15.png) no-repeat;
-}
-
-.n2schema_help_wiki:hover {
-	background-position: -15px 0px;
 }
 
 .n2help_content {

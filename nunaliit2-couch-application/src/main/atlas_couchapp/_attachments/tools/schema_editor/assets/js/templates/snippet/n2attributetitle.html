@@ -1,0 +1,7 @@
+<!-- n2 attribute title -->
+<div class="control-group">
+  <% var thisId = label.replace(/\W/g, '').toLowerCase() %>
+  <span id="schema-attribute-type-label"><%- type.charAt(0).toUpperCase() + type.substr(1) %></span>
+  <label class = "text-center" for="<%- thisId %>"><%- label %></label>
+
+</div>

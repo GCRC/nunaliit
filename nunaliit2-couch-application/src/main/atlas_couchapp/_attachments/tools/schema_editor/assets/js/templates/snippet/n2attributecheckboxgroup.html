@@ -1,0 +1,13 @@
+<!--n2 attribute checkbox group -->
+<div class="control-group">
+  <% var thisId = label.replace(/\W/g, '').toLowerCase(); %>
+  <span id="schema-attribute-type-label"><%- type.charAt(0).toUpperCase() + type.substr(1) %></span>
+  <label class="control-label" for="<%- thisId %>"><%-  label  %></label>
+
+  <div class="controls"><% _.each(checkboxes, function(checkbox, i){ %>
+    <label class="checkbox" for="<%- n2id+'-'+i %>">
+      <input type="checkbox" name="<%- n2id+'-'+i %>" id="<%- n2id+'-'+i %>" value="<%- checkbox %>">
+      <%- checkbox %>
+    </label><% }); %>
+  </div>
+</div>

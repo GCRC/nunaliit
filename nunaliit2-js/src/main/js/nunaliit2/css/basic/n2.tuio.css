@@ -3,14 +3,8 @@
 	fit on the TUIO table.
  */
 
-.nunaliit_tuio .nunaliit_header {
-	display: none;
-}
-
-.nunaliit_tuio .nunaliit_footer {
-	display: none;
-}
-
+.nunaliit_tuio .nunaliit_header,
+.nunaliit_tuio .nunaliit_footer,
 .nunaliit_tuio .n2_content_text {
 	display: none;
 }
@@ -64,13 +58,10 @@
 	display: block;
 	top: 0;
 	left: 0;
-
 	margin: 1px;
 	padding: 0;
 	color: white;
-	font-size: 18px;
-	font-family: 'Lucida Grande', Verdana, Geneva, Lucida, Arial, Helvetica, sans-serif;
-	font-weight: bold;
+	font: bold 18px 'Lucida Grande', Verdana, Geneva, Lucida, Arial, Helvetica, sans-serif;
 	text-decoration: none;
 	text-align: center;
 	height: 22px;
@@ -197,10 +188,8 @@
 }
 
 .n2tuio_edit_ring {
-	border-color: green;
+	border: 40px solid green;
 	border-radius: 50%;
-	border-style: solid;
-	border-width: 40px;
 	bottom: 0;
 	left: 0;
 	opacity: 0.4;

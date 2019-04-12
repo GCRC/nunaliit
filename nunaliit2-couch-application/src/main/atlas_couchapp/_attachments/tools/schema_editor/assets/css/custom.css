@@ -1,0 +1,230 @@
+body {
+  padding-top: 60px; /* 60px to make the container go all the way to the bottom of the topbar */
+  padding-bottom: 10px;
+  position: relative;
+  height:auto !important;
+}
+
+@media (max-width: 979px) {
+  body {
+    padding-top: 0px;
+  }
+}
+
+
+#components {
+  min-height: 500px;
+}
+
+.progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: rgba(0, 60, 136, 0.4);
+    width: 0;
+    transition: width 250ms;
+}  
+
+
+#build #target div.component:first-of-type{
+  max-width: 480px;
+  height : auto;
+  padding: 20px;
+  margin-left: 20px;
+  margin-right: 20px ;
+  background: #FFF;
+  margin-top: 10px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  transition: all 0.3s;
+  border-radius: 3px;
+}
+
+
+
+.component{
+  max-width: 480px;
+  display: block;
+
+  position: relative;
+  height: 100%;
+  padding: 20px;
+  margin: auto;
+  margin-bottom: 10px;
+  background: #FFF;
+  margin-top: 10px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+  transition: all 0.3s;
+  border-radius: 3px;
+}
+.component span#schema-attribute-type-label {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  padding: 3px 7px;
+  font-size: 15px;
+  font-weight: bold;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  color: #9da0a4;
+  -webkit-border-radius: 4px 0 4px 0;
+  -moz-border-radius: 4px 0 4px 0;
+  border-radius: 4px 0 4px 0;
+}
+
+.component:hover{
+  box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  transition: all 0.3s;
+  transform: translateZ(10px);
+}
+div.popover-content div.tab-content {
+    overflow-y: auto;
+    height: auto;
+
+}
+
+.tab-content {
+    overflow-y: auto;
+    height: 629px;
+}
+
+#target fieldset {
+  border: 1px solid #000;
+  min-height: 200px;
+  padding: 5px;
+  padding-bottom: 30px;
+}
+
+
+.component {
+  cursor: grab;
+}
+
+.popover .n2id-label-in-popover {
+  cursor: pointer;
+}
+
+.temp {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  position: absolute;
+  z-index: 999999;
+  top: 0;
+  overflow-x: hidden;
+  left: 0;
+  cursor: move;
+}
+.temp label.checkbox{
+  cursor: move;
+}
+
+.temp input{
+  cursor:move;
+}
+
+.temp button{
+  cursor:move;
+}
+.temp select{
+  cursor:move;
+}
+
+textarea {
+  resize: vertical;
+}
+
+
+.popover {
+  z-index: 9999999;
+}
+.popover .control-group {
+  cursor: default;
+}
+
+.popover input {
+  cursor: text;
+}
+
+
+
+.temp span#schema-attribute-type-label {
+  position: absolute;
+  top: -1px;
+  left: -1px;
+  padding: 3px 7px;
+  font-size: 15px;
+  font-weight: bold;
+  background-color: #f5f5f5;
+  border: 1px solid #ddd;
+  color: #9da0a4;
+  -webkit-border-radius: 4px 0 4px 0;
+  -moz-border-radius: 4px 0 4px 0;
+  border-radius: 4px 0 4px 0;
+}
+
+.temp form {
+  padding: 20px;
+  border: 1px dotted #ccc;
+  position: absolute;
+  background: white;
+  box-shadow: 0px 0px 30px #999;
+  -webkit-transition: -webkit-transform 0.1s ease-out;
+  overflow: hidden;
+}
+
+#render{
+  min-height: 500px;
+  font-family: monospace;
+}
+
+/* Popovers now are appended to their parent rather
+than to the body/main document as they once were.
+We need to over-ride some inherited stuff.. */
+form .popover .controls {
+  margin-left: 0;
+}
+
+form .popover .control-label {
+  text-align: left;
+}
+
+form .popover form {
+  width: 224px;
+}
+
+.popover-content form .btn{
+  margin-right: 10px
+}
+
+.target::after{
+  float:left;
+  content: " ";
+  display: block;
+  height: 70px;
+  margin-top: 3px;
+  position: relative;
+  z-index: -1;
+  background: #f0f0f0;
+  width: 100%;
+  border: 2px dashed #d1d1d1;
+}
+
+#target, #input, #radioscheckboxes, #select, #buttons {
+ -webkit-touch-callout: none;
+ -webkit-user-select: none;
+ -khtml-user-select: none;
+ -moz-user-select: none;
+ -ms-user-select: none;
+ user-select: none;
+}
+
+
+#target fieldset{
+ overflow: hidden;
+ margin-right: 20px;
+}
+
+div.div-sync-button{
+    margin-top: 20px;
+}

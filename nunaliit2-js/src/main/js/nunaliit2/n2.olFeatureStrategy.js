@@ -262,6 +262,12 @@ var Clustering = $n2.Class({
     resolution: null,
     
     /**
+     * Property: projection
+     * {<OpenLayers.Projection>} The projection currently used by the map
+     */
+    projection: null,
+    
+    /**
      * Property: clusterPrefix
      * {Integer} The string portion of the identifiers to be given to clusters.
      */
@@ -292,8 +298,8 @@ var Clustering = $n2.Class({
 
 		this.resolution = 1;
 		this.clusterPrefix = 'cluster_' + $n2.getUniqueId() + '_';
-    	this.clusterId = 1;
-    	
+		this.clusterId = 1;
+		
     	if( typeof this.minimumPolygonPixelSize === 'undefined' ){
     		this.minimumPolygonPixelSize = this.distance;
     	};
@@ -302,11 +308,15 @@ var Clustering = $n2.Class({
     		this.minimumLinePixelSize = this.distance;
     	};
 	},
-	
+
 	setResolution: function(resolution){
 		this.resolution = resolution;
 	},
-	
+
+	setProjection: function(projection){
+		this.projection = projection;
+	},
+
 	performClustering: function(features){
         var resolution = this.resolution;
         var clusters = [];
@@ -412,57 +422,87 @@ var Clustering = $n2.Class({
         ++this.clusterId;
         return cluster;
     },
-    
-    /**
-     * Method: _isEligibleFeature
-     * Returns true if a feature should be clustered
-     *
-     * Returns:
-     * {Boolean} True if the feature should be considered for clusters
-     */
-    _isEligibleFeature: function(feature) {
-    	// By default, cluster everything
-        var eligible = true;
-        
-        if( feature.n2DisableClustering ){
-        	return false;
-        };
-        
-        if( !this.disableDynamicClustering ) {
-        	// Dynamic Clustering
-        	// Small polygons and lines are turned into a cluster
-        	eligible = false;
-        	if( feature.geometry.CLASS_NAME.indexOf('Point') >= 0 ){
-        		eligible = true;
-        	} else if( feature.geometry.CLASS_NAME.indexOf('Line') >= 0 ){
-        		var bounds = feature.geometry.getBounds();
-        		var xLen = (bounds.right - bounds.left) / this.resolution;
-        		var yLen = (bounds.top - bounds.bottom) / this.resolution;
-        		if( (xLen) < this.minimumLinePixelSize
-            	 && (yLen) < this.minimumLinePixelSize ) {
-        			eligible = true;
-        		};
-        	} else if( feature.geometry.CLASS_NAME.indexOf('Polygon') >= 0 ){
-        		var bounds = feature.geometry.getBounds();
-        		var xLen = (bounds.right - bounds.left) / this.resolution;
-        		var yLen = (bounds.top - bounds.bottom) / this.resolution;
-        		if( (xLen) < this.minimumPolygonPixelSize
-            	 && (yLen) < this.minimumPolygonPixelSize ) {
-        			eligible = true;
-        		};
-        	};
-        	
-        } else if( this.clusterPointsOnly ){
-        	// Cluster Point Only
-        	// Do not cluster polygons and lines
-        	eligible = false;
-        	if( feature.geometry.CLASS_NAME.indexOf('Point') >= 0 ){
-        		eligible = true;
-        	};
-        };
-        
-        return eligible;
-    }
+
+	/**
+	 * Method: _isEligibleFeature
+	 * Returns true if a feature should be clustered
+	 *
+	 * Returns:
+	 * {Boolean} True if the feature should be considered for clusters
+	 */
+	_isEligibleFeature: function(feature) {
+		if( feature.n2DisableClustering ){
+			return false;
+		};
+
+		// By default, cluster everything
+		var eligible = true;
+
+		if( !this.disableDynamicClustering ) {
+			// Dynamic Clustering
+			// Small polygons and lines are turned into a cluster
+			eligible = false;
+			
+			var bounds = this._computeFullBoundingBox(feature);
+			if( bounds ){
+				// If the original bounds are larger than what is expected
+				// by the resolution, do not cluster. At one point, the correct
+				// geometry will arrive to show this feature.
+				var xLen = (bounds.right - bounds.left) / this.resolution;
+				var yLen = (bounds.top - bounds.bottom) / this.resolution;
+				if( (xLen) < this.minimumLinePixelSize
+				 && (yLen) < this.minimumLinePixelSize ) {
+					eligible = true;
+				};
+			} else {
+				// We are unable to compute the bounds for this feature.
+				// Use the geometry for the purpose of clustering
+				if( feature.geometry.CLASS_NAME.indexOf('Point') >= 0 ){
+					eligible = true;
+				} else if( feature.geometry.CLASS_NAME.indexOf('Line') >= 0 ){
+					var bounds = feature.geometry.getBounds();
+					var xLen = (bounds.right - bounds.left) / this.resolution;
+					var yLen = (bounds.top - bounds.bottom) / this.resolution;
+					if( (xLen) < this.minimumLinePixelSize
+					 && (yLen) < this.minimumLinePixelSize ) {
+						eligible = true;
+					};
+				} else if( feature.geometry.CLASS_NAME.indexOf('Polygon') >= 0 ){
+					var bounds = feature.geometry.getBounds();
+					var xLen = (bounds.right - bounds.left) / this.resolution;
+					var yLen = (bounds.top - bounds.bottom) / this.resolution;
+					if( (xLen) < this.minimumPolygonPixelSize
+					 && (yLen) < this.minimumPolygonPixelSize ) {
+						eligible = true;
+					};
+				};
+			};
+
+		} else if( this.clusterPointsOnly ){
+			// Cluster Point Only
+			// Do not cluster polygons and lines
+			eligible = false;
+			if( feature.geometry.CLASS_NAME.indexOf('Point') >= 0 ){
+				eligible = true;
+			};
+		};
+		
+		return eligible;
+	},
+
+	/**
+	 * Method: _computeFullBoundingBox
+	 * Compute the bounding box of the original geometry. This may differ from
+	 * the bounding box of the geometry on the feature since this can be a
+	 * simplification.
+	 *
+	 * Returns:
+	 * {<OpenLayers.Bounds>} The bounding box of the original geometry translated for
+	 * the current map projection.
+	 */
+	_computeFullBoundingBox: function(f) {
+		return $n2.mapAndControls.ComputeFeatureOriginalBboxForMapProjection(f, this.projection);
+	}
 });
 
 //+++++++++++++++++++++++++++++++++++++++++++++++
@@ -682,7 +722,11 @@ OpenLayers.Strategy.NunaliitFeatureStrategy = OpenLayers.Class(OpenLayers.Strate
     	if( this.clustering ){
             var resolution = this.layer.map.getResolution();
             this.clustering.setResolution(resolution);
-    		features = this.clustering.performClustering(features);
+
+            var projection = this.layer.map.getProjectionObject();
+            this.clustering.setProjection(projection);
+
+            features = this.clustering.performClustering(features);
     	};
 
     	if( this.sorting ){

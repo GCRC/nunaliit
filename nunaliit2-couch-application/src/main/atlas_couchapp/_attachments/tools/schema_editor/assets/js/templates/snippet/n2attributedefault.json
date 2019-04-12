@@ -1,0 +1,1 @@
+    <% var str =JSON.stringify(obj, null, 4) %><%= str.substring(1, str.length-1) %>

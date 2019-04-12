@@ -6,12 +6,11 @@ import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
-
-import org.restlet.engine.util.Base64;
 
 import ca.carleton.gcrc.utils.PropertiesWriter;
 
@@ -67,7 +66,7 @@ public class AtlasProperties {
 		try {
 			String serverKeyString = props.getProperty("server.key",null);
 			if( null != serverKeyString ){
-				byte[] serverKey = Base64.decode(serverKeyString);
+				byte[] serverKey = Base64.getDecoder().decode(serverKeyString);
 				atlasProps.setServerKey(serverKey);
 			}
 		} catch(Exception e) {

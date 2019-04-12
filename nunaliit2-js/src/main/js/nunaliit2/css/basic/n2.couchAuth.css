@@ -91,7 +91,6 @@
 	color: #0379CF;
 }
 
-
 /* Create user dialog window */
 .n2Auth_create .n2Auth_create_label {
 	float: left;
@@ -292,7 +291,6 @@
 	color: #0379CF;
 }
 
-
 .n2Auth_userEdit .n2UserEdit_deleteButton {
 	display: none;
 }
@@ -302,7 +300,8 @@
 }
 
 /* User Agreement */
-.n2Auth_user_agreement_label {
+.n2Auth_user_agreement_label,
+.n2Auth_user_agreement_buttons {
 	margin-top: 10px;
 	margin-bottom: 10px;
 }
@@ -310,9 +309,4 @@
 textarea.n2Auth_user_agreement_content {
 	width: 600px;
 	height: 400px;
-}
-
-.n2Auth_user_agreement_buttons {
-	margin-top: 10px;
-	margin-bottom: 10px;
 }
