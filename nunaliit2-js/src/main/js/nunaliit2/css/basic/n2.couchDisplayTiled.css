@@ -48,6 +48,8 @@ div.n2DisplayTiled_tile_image {
 .n2DisplayTiled_thumb img {
 	width: 125%;
 	height: 100%;
+	object-fit: cover;
+	object-position: top;
 }
 
 .n2DisplayTiled_tile_brief {
