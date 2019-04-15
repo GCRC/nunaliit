@@ -106,13 +106,17 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _n2es6_ol5support_N2Cluster__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./n2es6/ol5support/N2Cluster */ "./dist/n2es6/ol5support/N2Cluster.js");
-/* harmony import */ var _n2es6_n2mapModule_N2CouchDbSource__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2CouchDbSource */ "./dist/n2es6/n2mapModule/N2CouchDbSource.js");
-/* harmony import */ var _n2es6_n2mapModule_N2CustomPointStyle__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2CustomPointStyle */ "./dist/n2es6/n2mapModule/N2CustomPointStyle.js");
-/* harmony import */ var _n2es6_n2mapModule_N2LRU__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2LRU */ "./dist/n2es6/n2mapModule/N2LRU.js");
-/* harmony import */ var _n2es6_n2mapModule_N2LayerInfo__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2LayerInfo */ "./dist/n2es6/n2mapModule/N2LayerInfo.js");
-/* harmony import */ var _n2es6_n2mapModule_N2MapCanvas__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2MapCanvas */ "./dist/n2es6/n2mapModule/N2MapCanvas.js");
-/* harmony import */ var _n2es6_n2mapModule_N2ModelSource__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2ModelSource */ "./dist/n2es6/n2mapModule/N2ModelSource.js");
-/* harmony import */ var _n2es6_n2mapModule_N2Select__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2Select */ "./dist/n2es6/n2mapModule/N2Select.js");
+/* harmony import */ var _n2es6_n2ui_N2EditorBase__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./n2es6/n2ui/N2EditorBase */ "./dist/n2es6/n2ui/N2EditorBase.js");
+/* harmony import */ var _n2es6_n2mapModule_N2CouchDbSource__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2CouchDbSource */ "./dist/n2es6/n2mapModule/N2CouchDbSource.js");
+/* harmony import */ var _n2es6_n2mapModule_N2CustomPointStyle__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2CustomPointStyle */ "./dist/n2es6/n2mapModule/N2CustomPointStyle.js");
+/* harmony import */ var _n2es6_n2mapModule_N2LRU__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2LRU */ "./dist/n2es6/n2mapModule/N2LRU.js");
+/* harmony import */ var _n2es6_n2mapModule_N2LayerInfo__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2LayerInfo */ "./dist/n2es6/n2mapModule/N2LayerInfo.js");
+/* harmony import */ var _n2es6_n2mapModule_N2MapCanvas__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2MapCanvas */ "./dist/n2es6/n2mapModule/N2MapCanvas.js");
+/* harmony import */ var _n2es6_n2mapModule_N2ModelSource__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2ModelSource */ "./dist/n2es6/n2mapModule/N2ModelSource.js");
+/* harmony import */ var _n2es6_n2mapModule_N2Select__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2Select */ "./dist/n2es6/n2mapModule/N2Select.js");
+/* harmony import */ var _n2es6_common_N2Object__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./n2es6/common/N2Object */ "./dist/n2es6/common/N2Object.js");
+
+
 
 
 
@@ -124,18 +128,75 @@ __webpack_require__.r(__webpack_exports__);
 
 var n2es6 = {};
 
+n2es6.common = {};
 n2es6.n2mapModule = {};
+n2es6.n2ui = {};
 n2es6.ol5support = {};
-n2es6.n2mapModule.N2CouchDbSource = _n2es6_n2mapModule_N2CouchDbSource__WEBPACK_IMPORTED_MODULE_1__["default"];
-n2es6.n2mapModule.N2CustomPointStyle = _n2es6_n2mapModule_N2CustomPointStyle__WEBPACK_IMPORTED_MODULE_2__["default"];
-n2es6.n2mapModule.N2LRU = _n2es6_n2mapModule_N2LRU__WEBPACK_IMPORTED_MODULE_3__["default"];
-n2es6.n2mapModule.N2LayerInfo = _n2es6_n2mapModule_N2LayerInfo__WEBPACK_IMPORTED_MODULE_4__["default"];
-n2es6.n2mapModule.N2MapCanvas = _n2es6_n2mapModule_N2MapCanvas__WEBPACK_IMPORTED_MODULE_5__["default"];
-n2es6.n2mapModule.N2ModelSource = _n2es6_n2mapModule_N2ModelSource__WEBPACK_IMPORTED_MODULE_6__["default"];
-n2es6.n2mapModule.N2Select = _n2es6_n2mapModule_N2Select__WEBPACK_IMPORTED_MODULE_7__["default"];
+n2es6.common.N2Object = _n2es6_common_N2Object__WEBPACK_IMPORTED_MODULE_9__["default"];
+n2es6.n2mapModule.N2CouchDbSource = _n2es6_n2mapModule_N2CouchDbSource__WEBPACK_IMPORTED_MODULE_2__["default"];
+n2es6.n2mapModule.N2CustomPointStyle = _n2es6_n2mapModule_N2CustomPointStyle__WEBPACK_IMPORTED_MODULE_3__["default"];
+n2es6.n2mapModule.N2LRU = _n2es6_n2mapModule_N2LRU__WEBPACK_IMPORTED_MODULE_4__["default"];
+n2es6.n2mapModule.N2LayerInfo = _n2es6_n2mapModule_N2LayerInfo__WEBPACK_IMPORTED_MODULE_5__["default"];
+n2es6.n2mapModule.N2MapCanvas = _n2es6_n2mapModule_N2MapCanvas__WEBPACK_IMPORTED_MODULE_6__["default"];
+n2es6.n2mapModule.N2ModelSource = _n2es6_n2mapModule_N2ModelSource__WEBPACK_IMPORTED_MODULE_7__["default"];
+n2es6.n2mapModule.N2Select = _n2es6_n2mapModule_N2Select__WEBPACK_IMPORTED_MODULE_8__["default"];
+n2es6.n2ui.N2EditorBase = _n2es6_n2ui_N2EditorBase__WEBPACK_IMPORTED_MODULE_1__["default"];
 n2es6.ol5support.N2Cluster = _n2es6_ol5support_N2Cluster__WEBPACK_IMPORTED_MODULE_0__["default"];
 
 /* harmony default export */ __webpack_exports__["default"] = (n2es6);
+
+/***/ }),
+
+/***/ "./dist/n2es6/common/N2Object.js":
+/*!***************************************!*\
+  !*** ./dist/n2es6/common/N2Object.js ***!
+  \***************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/**
+* @module n2es6/common/N2Object
+*/
+
+var n2class = nunaliit2.Construct("N2BaseClass",{
+	constructor : function(){}
+});
+
+
+/**
+* @classdesc
+* The N2Object class is the base class Nunaliit-es6
+* @api
+*/
+var test = new n2class();
+var N2Object = function(){};
+_inherits(N2Object, n2class)
+function _inherits(subCtor, superClass) {
+	
+	function tempCtor() {};
+	tempCtor.prototype = superClass.prototype;
+	subCtor.prototype = new tempCtor();
+	subCtor.prototype.constructor = subCtor;
+	
+	
+//    if (typeof superClass !== 'function' && superClass !== null) {
+//        throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass)
+//    }
+//    subClass.prototype = Object.create(superClass && superClass.prototype, {
+//        constructor: {
+//            value: subClass,
+//            enumerable: false,
+//            writable: true,
+//            configurable: true
+//        }
+//    });
+    
+    if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subCtor, superClass) : subCtor.__proto__ = superClass;
+
+}
+/* harmony default export */ __webpack_exports__["default"] = (N2Object);
 
 /***/ }),
 
@@ -1318,8 +1379,6 @@ const stringStyles = {
 		"label": true
 };
 
-
-
 /**
  * @classdesc
  * N2 Map canvas (The playground for ol5 lib update in nunaliit 2)
@@ -1394,9 +1453,11 @@ class N2MapCanvas  {
 		this.lastTime = null;
 		this.initialTime = null;
 		this.endIdx = 0;
+		
+		var t = new $n2.N2Editor.Base();
 		//==============
 
-
+		
 
 		this.n2View = undefined;
 		this.n2Map = undefined;
@@ -1410,7 +1471,7 @@ class N2MapCanvas  {
 		};
 		this.currentInteract = null;
 		this._processOverlay(opts.overlays);
-
+		
 		// Register to events
 		if( this.dispatchService ){
 			var f = function(m){
@@ -1430,7 +1491,7 @@ class N2MapCanvas  {
 
 		this._drawMap();
 		opts.onSuccess();
-
+		
 
 	}
 
@@ -1443,81 +1504,88 @@ class N2MapCanvas  {
 
 
 		var _this = this;
-		if( $n2.isArray(overlays) ){
-			overlays.forEach( (function(overlay){
+		
+		if( !$n2.isArray(overlays) ){
+			overlays = [overlays];
+		}
+			
+		overlays.forEach( (function(overlay){
 
-				// Generate Array<layerInfo> layerInfos;
-				var layerInfoOptions = overlay;
-				var layerInfo = new _N2LayerInfo__WEBPACK_IMPORTED_MODULE_3__["default"](layerInfoOptions);
-				var layerOptions = {
-						name: layerInfo.name
-						,projection: layerInfo.sourceProjection
-						,visibility: layerInfo.visibility
-						,_layerInfo: layerInfo
+			// Generate Array<layerInfo> layerInfos;
+			var layerInfoOptions = overlay;
+			var layerInfo = new _N2LayerInfo__WEBPACK_IMPORTED_MODULE_3__["default"](layerInfoOptions);
+			var layerOptions = {
+					name: layerInfo.name
+					,projection: layerInfo.sourceProjection
+					,visibility: layerInfo.visibility
+					,_layerInfo: layerInfo
+					,clustering: overlay.clustering
+			};
+
+			this.overlayInfos.push(layerOptions);
+			//---------------------
+			//---------------------
+			if ('couchdb' === overlay.type) {
+				let sourceModelId = undefined;
+				if( overlay.options
+						&& 'string' === typeof overlay.options.sourceModelId ){
+					sourceModelId = overlay.options.sourceModelId;
+				} else if( overlay.options
+						&& 'string' === typeof overlay.options.layerName ){
+					sourceModelId = overlay.options.layerName;
+				} else {
+					$n2.logError('Map canvas overlay is not named. Will be ignored');
 				};
 
-				this.overlayInfos.push(layerOptions);
-				//---------------------
-				//---------------------
-				if ('couchdb' === overlay.type) {
-					let sourceModelId = undefined;
-					if( overlay.options
-							&& 'string' === typeof overlay.options.sourceModelId ){
-						sourceModelId = overlay.options.sourceModelId;
-					} else if( overlay.options
-							&& 'string' === typeof overlay.options.layerName ){
-						sourceModelId = overlay.options.layerName;
-					} else {
-						$n2.logError('Map canvas overlay is not named. Will be ignored');
-					};
+				if( sourceModelId ){
+					var source = new _N2CouchDbSource_js__WEBPACK_IMPORTED_MODULE_1__["default"]({
+						sourceModelId: sourceModelId
+						,dispatchService: this.dispatchService
+						,projCode: 'EPSG:3857'
+					});
+					this.sources.push(source);
+				};
+			} else if ( 'model' === overlay.type ) {
 
-					if( sourceModelId ){
-						var source = new _N2CouchDbSource_js__WEBPACK_IMPORTED_MODULE_1__["default"]({
-							sourceModelId: sourceModelId
-							,dispatchService: this.dispatchService
-							,projCode: 'EPSG:3857'
-						});
-						this.sources.push(source);
-					};
-				} else if ( 'model' === overlay.type ) {
-
-					let sourceModelId = undefined;
-					if( overlay.options
-							&& 'string' === typeof overlay.options.sourceModelId ){
-						sourceModelId = overlay.options.sourceModelId;
-					} else if( overlay.options
-							&& 'string' === typeof overlay.options.layerName ){
-						sourceModelId = overlay.options.layerName;
-					} else {
-						$n2.logError('Map canvas overlay is not named. Will be ignored');
-					};
-
-					if( sourceModelId ){
-						var source = new _N2ModelSource_js__WEBPACK_IMPORTED_MODULE_2__["default"]({
-							sourceModelId: sourceModelId
-							,dispatchService: this.dispatchService
-							,projCode: 'EPSG:3857'
-								,onUpdateCallback : function(state){
-									//_this._modelLayerUpdated(layerOptions, state);
-								}
-						,notifications: {
-							readStart: function(){
-								//_this._mapBusyStatus(1);
-							}
-						,readEnd: function(){
-							//_this._mapBusyStatus(-1);
-						}
-						}
-						});
-						this.sources.push(source);
-					};
-				} else if ('wfs' === overlay.type) {
-					$n2.logError(overlay.type + 'is constructing');
+				let sourceModelId = undefined;
+				if( overlay.options
+						&& 'string' === typeof overlay.options.sourceModelId ){
+					sourceModelId = overlay.options.sourceModelId;
+				} else if( overlay.options
+						&& 'string' === typeof overlay.options.layerName ){
+					sourceModelId = overlay.options.layerName;
 				} else {
-					$n2.logError('Can not handle overlay type: '+overlay.type);
-				}
-			}).bind(this) );
-		};
+					$n2.logError('Map canvas overlay is not named. Will be ignored');
+				};
+
+				if( sourceModelId ){
+					var source = new _N2ModelSource_js__WEBPACK_IMPORTED_MODULE_2__["default"]({
+						sourceModelId: sourceModelId
+						,dispatchService: this.dispatchService
+						,projCode: 'EPSG:3857'
+							,onUpdateCallback : function(state){
+								//_this._modelLayerUpdated(layerOptions, state);
+							}
+					,notifications: {
+						readStart: function(){
+							//_this._mapBusyStatus(1);
+						}
+						,readEnd: function(){
+						//_this._mapBusyStatus(-1);
+					}
+					}
+					});
+					this.sources.push(source);
+				};
+			} else if ('wfs' === overlay.type) {
+				$n2.logError(overlay.type + 'is constructing');
+				this.sources.push({});
+			} else {
+				$n2.logError('Can not handle overlay type: '+overlay.type);
+				this.sources.push({});
+			}
+		}).bind(this) );
+		
 
 
 
@@ -1838,20 +1906,24 @@ class N2MapCanvas  {
 		var _this = this;
 		
 		if( Sources) {
-			Sources.forEach(function(source){
-
-				var clusterSource = new n2es6.ol5support.N2Cluster({
-					source: source
-				});
-				var n2IntentSource = new _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_13__["default"]({
+			for (var i = 0, e = Sources.length; i < e; i++){
+				var overlayInfo = _this.overlayInfos[i];
+				var alphasource = Sources[i];
+				var betaSource = alphasource;
+				if ( overlayInfo.clustering ){
+					var clsOpt = Object.assign({}, overlayInfo.clustering
+							,{source: alphasource});
+					betaSource = new n2es6.ol5support.N2Cluster(clsOpt);
+				}
+				var charlieSource = new _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_13__["default"]({
 					interaction: _this.interactionSet.selectInteraction,
-					source: clusterSource,
+					source: betaSource,
 					dispatchService: _this.dispatchService
 				});
 				var vectorLayer = new ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_16__["default"]({
 					title: "CouchDb",
 					renderMode : 'image',
-					source: n2IntentSource,
+					source: charlieSource,
 					style: StyleFn,
 					renderOrder: function(feature1, feature2){
 						return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
@@ -1861,7 +1933,7 @@ class N2MapCanvas  {
 //				var layerStyleMap = createStyleMap(layerOptions._layerInfo);
 //				vectorLayer.set('styleMap', layerStyleMap);
 				fg.push(vectorLayer);
-			});
+			};
 
 		}
 		return (fg);
@@ -1941,6 +2013,13 @@ class N2MapCanvas  {
 					&& f.cluster.length === 1) {
 				data = f.cluster[0].data;
 			};
+			
+			
+			//is a cluster
+			if (!data) {
+				data = {clusterData: true};
+ 			}
+			//
 			f.n2_doc = data;
 			//===================== mocking data
 			if (f.n2_doc.cinedata){
@@ -4446,6 +4525,39 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 }
  /* harmony default export */ __webpack_exports__["default"] = (N2SourceWithN2Intent);
 
+
+/***/ }),
+
+/***/ "./dist/n2es6/n2ui/N2EditorBase.js":
+/*!*****************************************!*\
+  !*** ./dist/n2es6/n2ui/N2EditorBase.js ***!
+  \*****************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _common_N2Object__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../common/N2Object */ "./dist/n2es6/common/N2Object.js");
+/**
+* @module n2es6/n2ui/N2EditorBase
+*/
+
+
+
+/**
+* @classdesc
+* The N2EditorBase class is the base class for customized editor
+* @api
+*/
+class N2EditorBase extends _common_N2Object__WEBPACK_IMPORTED_MODULE_0__["default"]{
+	constructor(){
+		super();
+		
+	};
+};
+
+nunaliit2.N2Editor = { Base: N2EditorBase};
+/* harmony default export */ __webpack_exports__["default"] = (N2EditorBase);
 
 /***/ }),
 

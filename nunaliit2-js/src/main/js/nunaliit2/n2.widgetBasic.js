@@ -784,7 +784,7 @@ function BuildButtonWidget(m){
 };
 
 //--------------------------------------------------------------------------
-var Service = $n2.Class({
+var Service = $n2.Construct({
 	
 	config: null,
 	

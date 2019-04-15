@@ -39,7 +39,7 @@ var
  ;
 
 //--------------------------------------------------------------------------
-var TranscriptWidget = $n2.Class('TranscriptWidget',{
+var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 	
 	dispatchService: null,
 

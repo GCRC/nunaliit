@@ -481,10 +481,10 @@ var global = {
 			var arr = propName.split(',');
 			var _this = this;
 			for(var i =0, e= arr.length; i<e; ++i){
-				if (typeof _this === 'function')
+				if (typeof _this === 'function'){
 					_this = null;
 					break;
-				if (_this.hasOwnProperty(arr[i])){
+				} else if (_this.hasOwnProperty(arr[i])){
 					_this = _this[arr[i]];
 					continue;
 				} else {
@@ -493,7 +493,7 @@ var global = {
 				}
 			}
 		}
-		return _this || false;
+		return _this && true || false;
 	}
 	,Math: Math
 };
