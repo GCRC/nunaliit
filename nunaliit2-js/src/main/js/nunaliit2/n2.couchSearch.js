@@ -281,6 +281,9 @@ POSSIBILITY OF SUCH DAMAGE.
 			// Search terms are stored lower case in database
 			var term = this.textTerm.toLowerCase();
 			var resultsByDocId = null;
+			var sourceModelIds = [];
+			var modelDocs = [];
+			var modelDocIds = [];
 	
 			if (this.constraint) {
 				// Convert string to an array of 1 element for performing query view
@@ -310,10 +313,25 @@ POSSIBILITY OF SUCH DAMAGE.
 								this.arraySearchQuery(opts, this.constraint.layers, term);
 							}
 
-						} else if (this.constraint.type === "model" 
-							&& typeof this.constraint.sourceModelId === 'string') {
+						} else if (this.constraint.type === "models") {
 
-							var modelDocs = this.getDocumentsFromModelId(this.constraint.sourceModelId);
+							if (typeof this.constraint.sourceModelIds === 'string') {
+								sourceModelIds = [this.constraint.sourceModelIds];
+
+							} else if ($n2.isArray(this.constraint.sourceModelIds)) {
+								sourceModelIds = this.constraint.sourceModelIds;
+							}
+							
+							for (var i = 0, e = sourceModelIds.length; i < e; i += 1) {
+								var tempDocs = this.getDocumentsFromModelId(sourceModelIds[i]);
+								tempDocs.forEach(function(doc){
+									if (doc && doc._id && modelDocIds.indexOf(doc._id) < 0) {
+										modelDocIds.push(doc._id);
+										modelDocs.push(doc);
+									}
+								});
+							}
+
 							var startKey = [term,0];
 							var endKey = [term,{}];
 			
