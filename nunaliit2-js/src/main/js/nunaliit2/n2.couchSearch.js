@@ -225,6 +225,47 @@ POSSIBILITY OF SUCH DAMAGE.
 			return docs;
 		},
 
+		filterOutNonModelDocs: function(queryResults, modelDocs){
+			var i, e, j, f, docId;
+			var filteredResults = [];
+
+			// Filter out docs not found in model
+			for (i = 0, e = queryResults.length; i < e; i += 1) {
+				docId = queryResults[i].id;
+				for (j = 0, f = modelDocs.length; j < f; j += 1) {
+					if (modelDocs[j]._id === docId 
+						&& filteredResults.indexOf(queryResults[i]) < 0) {
+						filteredResults.push(queryResults[i]);
+					}
+				}
+			}
+
+			return filteredResults;
+		},
+
+		getUniqueResults: function(filteredResults){
+			var i, e, docId, index, result;
+			var uniqueResults = {};
+
+			for (i = 0, e = filteredResults.length; i < e; i += 1) {
+				docId = filteredResults[i].id;
+				index = filteredResults[i].key[1];
+				
+				if (uniqueResults[docId] 
+					&& uniqueResults[docId].index <= index) {
+					// Do nothing 
+
+				} else {
+					result = new ResearchResult({
+						id: docId,
+						index: index
+					});
+					uniqueResults[docId] = result;
+				}
+			}
+			return uniqueResults;
+		},
+
 		execute: function(opts_){
 			var opts = $n2.extend({
 				onSuccess: function(resultMap, research){}
@@ -280,34 +321,12 @@ POSSIBILITY OF SUCH DAMAGE.
 								onSuccess: function(rows) {
 									var i, e, j, f, docId, index, result;
 									var filteredRows = [];
-									var resultsByDocId = {};
-
-									// Filter out docs not found in model
-									for (i = 0, e = rows.length; i < e; i += 1) {
-										docId = rows[i].id;
-										for (j = 0, f = modelDocs.length; j < f; j += 1) {
-											if (modelDocs[j]._id === docId && filteredRows.indexOf(rows[i]) < 0) {
-												filteredRows.push(rows[i]);
-											}
-										}
-									}
+									var uniqueIndexResults = {};
 									
-									for (i = 0, e = filteredRows.length; i < e; i += 1) {
-										docId = filteredRows[i].id;
-										index = filteredRows[i].key[1];
-										
-										if (resultsByDocId[docId] && resultsByDocId[docId].index <= index) {
-											// Do nothing
-										} else {
-											result = new ResearchResult({
-												id: docId,
-												index: index
-											});
-											resultsByDocId[docId] = result;
-										}
-									}
+									filteredRows = _this.filterOutNonModelDocs(rows, modelDocs);
+									uniqueIndexResults = _this.getUniqueResults(filteredRows);
 									
-									opts.onSuccess(resultsByDocId);
+									opts.onSuccess(uniqueIndexResults);
 								},
 								onError: function(err) {
 									opts.onError(err);
@@ -337,7 +356,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							var index = rows[i].key[1];
 							
 							if( resultsByDocId[docId] 
-							 && resultsByDocId[docId].index <= index ){
+								&& resultsByDocId[docId].index <= index ){
 								// Do nothing
 							} else {
 								var result = new ResearchResult({
