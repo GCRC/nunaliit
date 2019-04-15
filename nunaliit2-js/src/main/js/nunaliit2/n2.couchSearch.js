@@ -162,29 +162,31 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		arraySearchQuery: function(opts, constraint, term){
+			var i, e, docId, index, result;
 			var resultsByDocId = null;
 			var expectedCount = constraint.length;
 			
-			for (var i = 0, e = constraint.length; i < e; i += 1) {
+			for (i = 0, e = constraint.length; i < e; i += 1) {
 				if (!resultsByDocId){
 					resultsByDocId = {};
 				}
 	
 				this.designDoc.queryView({
 					viewName: this.searchView
-					,startkey: [constraint[i],term,0]
-					,endkey: [constraint[i],term,{}]
+					,startkey: [constraint[i], term, 0]
+					,endkey: [constraint[i], term, {}]
 					,constraint: constraint
 					,onSuccess: function(rows) {
-						for (var i = 0, e = rows.length; i < e; i += 1) {
-							var docId = rows[i].id;
-							var index = rows[i].key[1];
+						for (i = 0, e = rows.length; i < e; i += 1) {
+							docId = rows[i].id;
+							index = rows[i].key[1];
 							
 							if (resultsByDocId[docId] 
-							&& resultsByDocId[docId].index <= index) {
+								&& resultsByDocId[docId].index <= index) {
 								// Do nothing
+
 							} else {
-								var result = new ResearchResult({
+								result = new ResearchResult({
 									id: docId
 									,index: index
 								});
@@ -209,10 +211,11 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 		
 		getDocumentsFromModelId: function(modelId){
+			var state;
 			var docs = [];
 			
 			if (modelId && this.dispatchService) {
-				var state = $n2.model.getModelState({
+				state = $n2.model.getModelState({
 					dispatchService: this.dispatchService
 					,modelId: modelId
 				});
@@ -319,7 +322,6 @@ POSSIBILITY OF SUCH DAMAGE.
 								startkey: startKey,
 								endkey: endKey,
 								onSuccess: function(rows) {
-									var i, e, j, f, docId, index, result;
 									var filteredRows = [];
 									var uniqueIndexResults = {};
 									
