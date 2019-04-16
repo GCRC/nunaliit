@@ -2059,6 +2059,7 @@ function handleModelCreate(m, addr, dispatcher){
 $n2.modelTime = {
 	TimeFilter: TimeFilter
 	,TimeTransform: TimeTransform
+	,TimeIntervalModel: TimeIntervalModel
 	,DatedReferenceTransform: DatedReferenceTransform
 	,NoTimeFilter: NoTimeFilter
 	,TimeSynchronize: TimeSynchronize

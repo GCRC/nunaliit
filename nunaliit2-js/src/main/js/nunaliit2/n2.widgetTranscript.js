@@ -73,6 +73,9 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 	intervalSetEventName: null, // name of event used to set current time interval
 	intervalMin: null, // integer, current interval minimum
 	intervalMax: null, // integer, current interval maximum
+	rangeChangeEventName: null,
+	rangeGetEventName: null,
+	rangeSetEventName: null,
 
 	/*
 		[
@@ -157,16 +160,24 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 				var sourceModelInfo = modelInfoRequest.modelInfo;
 				
 				if( sourceModelInfo 
-				 && sourceModelInfo.parameters 
-				 && sourceModelInfo.parameters.interval ){
-					var paramInfo = sourceModelInfo.parameters.interval;
-					this.intervalChangeEventName = paramInfo.changeEvent;
-					this.intervalGetEventName = paramInfo.getEvent;
-					this.intervalSetEventName = paramInfo.setEvent;
+				 && sourceModelInfo.parameters ){
+					if( sourceModelInfo.parameters.interval ){
+						var paramInfo = sourceModelInfo.parameters.interval;
+						this.intervalChangeEventName = paramInfo.changeEvent;
+						this.intervalGetEventName = paramInfo.getEvent;
+						this.intervalSetEventName = paramInfo.setEvent;
+	
+						if( paramInfo.value ){
+							this.intervalMin = paramInfo.value.min;
+							this.intervalMax = paramInfo.value.max;
+						};
+					};
 
-					if( paramInfo.value ){
-						this.intervalMin = paramInfo.value.min;
-						this.intervalMax = paramInfo.value.max;
+					if( sourceModelInfo.parameters.range ){
+						var paramInfo = sourceModelInfo.parameters.range;
+						this.rangeChangeEventName = paramInfo.changeEvent;
+						this.rangeGetEventName = paramInfo.getEvent;
+						this.rangeSetEventName = paramInfo.setEvent;
 					};
 				};
 			};
@@ -344,6 +355,9 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 			} else {
 				this.timeTable = [];
 
+				var videoMinStart = undefined;
+				var videoMaxEnd = undefined;
+
 				this.transcript.timeTable.forEach(function(timeEntry){
 					if( typeof timeEntry !== 'object' ){
 						throw new Error('Entries in timeTable must be objects');
@@ -362,6 +376,17 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 					if( typeof videoEnd !== 'number' ){
 						throw new Error('videoEnd in timeTable must be a number');
 					};
+					
+					if( undefined === videoMinStart ){
+						videoMinStart = videoStart;
+					} else if(videoMinStart > videoStart) {
+						videoMinStart = videoStart;
+					};
+					if( undefined === videoMaxEnd ){
+						videoMaxEnd = videoEnd;
+					} else if(videoMaxEnd < videoEnd) {
+						videoMaxEnd = videoEnd;
+					};
 
 					// Try to parse time
 					var timeStartInt = $n2.date.parseUserDate(timeStart);
@@ -377,11 +402,28 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 					};
 					_this.timeTable.push(timeObj);
 				});
+				
+				// Report video start and end
+				$n2.log('Video start:'+videoMinStart+' end:'+videoMaxEnd);
+				_this._rangeChanged(videoMinStart,videoMaxEnd);
 			};
 		};
 
 		// At the end of all this, refresh
 		this._refresh();
+	},
+	
+	_rangeChanged: function(rangeStart, rangeEnd){
+		var value = new $n2.date.DateInterval({
+			min: rangeStart
+			,max: rangeEnd
+			,ongoing: false
+		});
+
+		this.dispatchService.send(DH,{
+			type: this.rangeSetEventName
+			,value: value
+		});
 	},
 
 	_refresh: function(){
@@ -505,6 +547,10 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 				.bind('timeupdate', function() {
 					var currentTime = this.currentTime;
 					_this._updateCurrentTime(currentTime, 'video');
+				})
+				.bind('durationchange', function(e) {
+					var duration = this.duration;
+					$n2.log('duration changed: '+duration);
 				});
 
 		} else {
@@ -599,6 +645,9 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 		return undefined;
 	},
 
+	/**
+	 * Receives the current time as video time
+	 */
 	_updateCurrentTime: function(currentTime, origin){
 		// Send notice to dispatcher
 		this.dispatchService.send(DH,{
@@ -610,12 +659,13 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 		
 		 //Inform time model
 		if( this.intervalSetEventName ){
-			var min = this._convertVideoTimeToTime(currentTime);
+			//var min = this._convertVideoTimeToTime(currentTime);
+			var max = currentTime;
 			
-			if( typeof min == 'number' ){
+			if( typeof max == 'number' ){
 				var value = new $n2.date.DateInterval({
-					min: min
-					,max: this.intervalMax
+					min: 0
+					,max: max
 					,ongoing: false
 				});
 
