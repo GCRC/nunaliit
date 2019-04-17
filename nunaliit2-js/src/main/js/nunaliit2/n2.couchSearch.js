@@ -308,18 +308,18 @@ var ResearchTerm = $n2.Class(Research,{
 
 				// Updated Constraint
 				if (this.constraint.type) { 
-					if (this.constraint.type === "layers") {
+					if (this.constraint.type === "layer") {
 						// Convert layer string to an array of layers
-						if (typeof this.constraint.layers === 'string') {
-							layerConstraint = [this.constraint.layers];
-							this.constraint.layers = layerConstraint;
+						if (typeof this.constraint.layerNames === 'string') {
+							layerConstraint = [this.constraint.layerNames];
+							this.constraint.layerNames = layerConstraint;
 						}
 
-						if ($n2.isArray(this.constraint.layers)) {
-							this.constrainedQuery(opts, this.constraint.layers, term);
+						if ($n2.isArray(this.constraint.layerNames)) {
+							this.constrainedQuery(opts, this.constraint.layerNames, term);
 						}
 
-					} else if (this.constraint.type === "models") {
+					} else if (this.constraint.type === "model") {
 
 						if (typeof this.constraint.sourceModelIds === 'string') {
 							sourceModelIds = [this.constraint.sourceModelIds];
