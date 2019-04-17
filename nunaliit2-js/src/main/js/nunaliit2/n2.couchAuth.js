@@ -2180,9 +2180,12 @@ var AuthWidgetMenu = $n2.Class({
 			var toolsPageLink = $('<li></li>')
 				.appendTo(this.authLoginMenuList);
 
+			var protocol = window.location.protocol;
+			var host = window.location.host;
+
 			$('<a>')
 				.text(_loc('Tools'))
-				.attr('href','./tools/index.html')
+				.attr('href', protocol + '//' + host + '/tools/index.html')
 				.appendTo(toolsPageLink);
 		};
 
