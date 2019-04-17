@@ -293,9 +293,9 @@ var ResearchTerm = $n2.Class(Research,{
 			// Convert string to an array of 1 element for performing constrained query
 			if (typeof(this.constraint) === 'string') {
 
-				layerConstraint = [ this.constraint ];
+				layerConstraint = [this.constraint];
 				this.constraint = layerConstraint;
-			};
+			}
 		
 			// Legacy search constraint 
 			if ($n2.isArray(this.constraint)
@@ -311,7 +311,7 @@ var ResearchTerm = $n2.Class(Research,{
 					if (this.constraint.type === "layers") {
 						// Convert layer string to an array of layers
 						if (typeof this.constraint.layers === 'string') {
-							layerConstraint = [ this.constraint.layers ];
+							layerConstraint = [this.constraint.layers];
 							this.constraint.layers = layerConstraint;
 						}
 
@@ -999,7 +999,7 @@ var LookAheadService = $n2.Class({
 	
 	setConstraint: function(constraint){
 		this.constraint = constraint;
-	},		
+	},
 
 	queryPrefix: function(prefix,callback) {
 		var _this = this;
@@ -1759,3 +1759,4 @@ $n2.couchSearch = {
 };
 
 })(jQuery,nunaliit2);
+
