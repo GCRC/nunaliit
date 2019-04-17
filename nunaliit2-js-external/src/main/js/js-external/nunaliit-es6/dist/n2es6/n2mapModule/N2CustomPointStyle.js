@@ -39,15 +39,45 @@ class N2CustomPointStyle extends RegularShape{
 	constructor(opt_options) {	
 		var options = $n2.extend({
 			radius : 0,
-			donutScaleFactor: 1
+			donutScaleFactor: 1,
+			stacking : true,
+			map : null,
+			data: undefined,
+			startupOffset : 10,
+			feature: null
 		}, opt_options)
 	
+
 		
-		options.data.forEach(function(d){
+		
+		if (options.stacking){
+			var hist = N2CustomPointStyle.__stackingHistory;
+			var previousRadius = options.startupOffset;
+			if (hist){
+				let ext = options.feature.getGeometry().getExtent();
+				var cachedPointInfo = hist.getStackingHistory(ext);
+				if( cachedPointInfo 
+					&& Array.isArray(cachedPointInfo)
+					&& cachedPointInfo.length > 0){
+					for(var item of cachedPointInfo) {
+						var incre = item.extra.incre;
+						if (typeof incre === 'number')
+							previousRadius += incre;
+					}
+				}
+			}
+			if (typeof options.data === 'object'
+				&& typeof options.data.duration === 'number'){
+				options.radius = previousRadius + options.data.duration;
+			}
+		} else {
+			options.data.forEach(function(d){
 			options.radius +=d.duration;
 		})
+		}
 		options.radius *= 2* options.donutScaleFactor;
-		super (
+		
+		RegularShape.prototype.contructor.apply (this,
 				{	radius: options.radius , 
 					fill: new Fill({color: [0,0,0]}),
 					rotation: options.rotation,
@@ -66,8 +96,12 @@ class N2CustomPointStyle extends RegularShape{
 		this.offset_ = [options.offsetX ? options.offsetX : 0, options.offsetY ? options.offsetY : 0];
 		this.animation_ = (typeof(options.animation) == 'number') ? { animate:true, step:options.animation } : this.animation_ = { animate:false, step:1 };
 		this.max_ = options.max;
-
+		this.startupOffset_ = options.startupOffset;
 		this.data_ = options.data;
+		this._stacking = options.stacking;
+		if (options.feature){
+			this._ext = options.feature.getGeometry().getExtent();
+		}
 		if (options.colors instanceof Array)
 		{	this.colors_ = options.colors;
 		}
@@ -75,7 +109,13 @@ class N2CustomPointStyle extends RegularShape{
 		{	this.colors_ = colors[options.colors];
 			if (!this.colors_) this.colors_ = colors.classic;
 		}
-
+		if (options.stacking && options.map){
+			if (! N2CustomPointStyle.__stackingHistory){
+				N2CustomPointStyle.__stackingHistory = new N2StackingHistory({
+					map: options.map
+				});
+			}
+		}
 		this.renderChart_();
 }
 
@@ -125,7 +165,37 @@ class N2CustomPointStyle extends RegularShape{
 		}
 		this.renderChart_();
 	}
-
+	_getPreviousRadius (){
+		var hist = N2CustomPointStyle.__stackingHistory;
+		var rst = this.startupOffset_;
+		if (hist){
+			var ext = this._ext;
+			var cachedPointInfo = hist.getStackingHistory(ext);
+			if( cachedPointInfo 
+				&& Array.isArray(cachedPointInfo)
+				&& cachedPointInfo.length > 0){
+				for(var item of cachedPointInfo) {
+					var incre = item.extra.incre;
+					if (typeof incre === 'number')
+					rst += incre;
+				}
+			}
+		}
+		return rst;
+	}
+	_appendNewRadius (ext, radius){
+		var hist = N2CustomPointStyle.__stackingHistory;
+		
+		if (hist){
+			var ext = this._ext;
+			var extraInfo = {
+				incre: radius
+			};
+			hist.addStackingHistory(ext, extraInfo);
+			
+		}
+		
+	}
 	_getRings (){
 		var rings = [];
 		var currentRing = null;
@@ -199,7 +269,7 @@ class N2CustomPointStyle extends RegularShape{
 			//context.beginPath();
 			context.rect ( 0,0,2*c,2*c );
 			let rings = this._getRings();
-			let currRadius = this.startupOffset || 10;
+			let currRadius = this.startupOffset_ ;
 			
 			for (let i = 0, e= rings.length; i<e; ++i){
 				let ring = rings[i];
@@ -222,6 +292,35 @@ class N2CustomPointStyle extends RegularShape{
 			}
 			break;
 		}
+			case "treeRingB":{
+
+				c = canvas.width/2;
+				context.strokeStyle = strokeStyle;
+				context.lineWidth = strokeWidth;
+				context.save();
+				//context.beginPath();
+				context.rect ( 0,0,2*c,2*c );
+				let currRadius = this._getPreviousRadius();
+				let ring = this.data_;
+				let dur = ring.duration;
+				let effectiveRadiusIncre = Math.floor(
+						(1 * Math.sqrt( dur / 60 ) * this.donutScaleFactor * 7.7)
+				);
+				var type = ring.type;
+				let region = new Path2D();
+				region.arc(c, c, currRadius, 0, 2* Math.PI);
+				currRadius += effectiveRadiusIncre;
+				region.arc(c, c, currRadius, 2* Math.PI, 0);
+				region.closePath();
+				//context.lineWidth = 6;
+				//context.stroke();
+				context.fillStyle = type.strokeColor
+				context.globalAlpha = type.opacity;
+				context.fill(region, 'evenodd');
+				context.restore();
+				_appendNewRadius(this._ext,effectiveRadiusIncre);
+				break;
+			}
 			case "donut":
 			case "pie3D":
 			case "pie": {
@@ -305,6 +404,7 @@ class N2CustomPointStyle extends RegularShape{
 		var anchor = this.getAnchor();
 		anchor[0] = c - this.offset_[0];
 		anchor[1] = c - this.offset_[1];
+
 	}
 	
 

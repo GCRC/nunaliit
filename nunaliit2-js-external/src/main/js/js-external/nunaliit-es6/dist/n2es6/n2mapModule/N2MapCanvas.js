@@ -349,7 +349,7 @@ class N2MapCanvas  {
 
 		});
 		this.n2Map = customMap;
-		
+		this.n2MapStyles.setMap(customMap);
 		//Config the initial bound on the ol5 map
 		if (this.coordinates && !this.coordinates.autoInitialBounds) {
 			let bbox = this.coordinates.initialBounds;
@@ -735,7 +735,7 @@ class N2MapCanvas  {
 			//===================== mocking data
 			if (f.n2_doc.cinedata){
 				f._v2_style_ = {};
-				f.n2_doc.ldata = _this.mockingData;
+				f.n2_doc.ldata = _this.getMockingData();
 
 			}
 			//====================== mocking end
@@ -762,10 +762,23 @@ class N2MapCanvas  {
 			
 			let n2mapStyles = _this.n2MapStyles;
 			let innerStyle = n2mapStyles.loadStyleFromN2Symbolizer(symbols,
-					feature.n2_geometry);
+					feature);
 			innerStyle = Array.isArray(innerStyle)? innerStyle : [innerStyle];
 			return innerStyle;
 		}
+	}
+	
+	getMockingData(){
+		var incr = (function () {
+		    var i = 1;
+
+		    return function () {
+		        return i++;
+		    }
+		})();
+		var i = incr();
+		var len = this.mockingDataComplete.length;
+		return this.mockingDataComplete[i%len];
 	}
 	_genBackgroundMapLayers(bgSources) {
 		var _this = this;

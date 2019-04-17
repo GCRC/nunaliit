@@ -4,7 +4,7 @@
 import {Fill, RegularShape, Stroke, Style, Text} from 'ol/style.js';
 import CircleStyle from 'ol/style/Circle';
 import N2LRU from './N2LRU.js'; 
-import hash from 'es-hash';
+
 
 const StyleNamesMapForAll = 
 	{
@@ -74,21 +74,28 @@ class N2MapStyles {
 	constructor(){
 
 		//this.lrucache = new N2LRU(5000);
-
+		this._map = null;
+	}
+	setMap(map){
+		this._map = map;
+	}
+	getMap(){
+		return this._map 
 	}
 	/**
 	* The function that convert a n2 symbolizer to
 	* ol5 map style obj.
 	* @return {import("ol/style/Style.js").default} produce a ol5 Style object
 	*/
- 	loadStyleFromN2Symbolizer(symbols , geometryType){
+ 	loadStyleFromN2Symbolizer(symbols , feature){
+ 		var geometryType = feature.n2_geometry;
  		var typeLabel = {_n2type: geometryType};
  		//let key = Object.assign({}, symbols, typeLabel);
  		//let candidate = this.lrucache.get(hash(key));
  		//if (candidate){
  		//	return candidate;
  		//}
- 		let candidate =  this.getOl5StyleObjFromSymbol(symbols, geometryType);	
+ 		let candidate =  this.getOl5StyleObjFromSymbol(symbols, geometryType, feature);	
 		//this.lrucache.set(key, candidate );
 		return candidate;
 	}
@@ -97,14 +104,15 @@ class N2MapStyles {
 	* @param  {n2styleSymbol} symbols An nunaliit2 style symbolizer.symbols
 	* @return {import("ol/style/Style.js").default}
 	*/
-	getOl5StyleObjFromSymbol(symbols, geometryType) {
+	getOl5StyleObjFromSymbol(symbols, geometryType,feature) {
 		var rstStyleSet = [];
 		if ("v2_style" in symbols){
 			for (var symbol in symbols){
 				if (symbol === "v2_style"){
 					continue;
 				}
-				let imageStyle = this.getOl5StyleObjFromV2Style(symbol, symbols[symbol]);
+				var value = Object.assign({}, {map: this._map, feature: feature}, symbols[symbol]);
+				let imageStyle = this.getOl5StyleObjFromV2Style(symbol, value);
 				let rstStyle = new Style({image: imageStyle});
 				rstStyleSet.push(rstStyle);
 			}
