@@ -315,7 +315,9 @@ var ResearchTerm = $n2.Class(Research,{
 							this.constraint.layers = layerConstraint;
 						}
 
-						this.constrainedQuery(opts, this.constraint.layers, term);
+						if ($n2.isArray(this.constraint.layers)) {
+							this.constrainedQuery(opts, this.constraint.layers, term);
+						}
 
 					} else if (this.constraint.type === "models") {
 
