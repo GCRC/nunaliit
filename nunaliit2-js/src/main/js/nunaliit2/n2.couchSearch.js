@@ -161,53 +161,59 @@ POSSIBILITY OF SUCH DAMAGE.
 			};
 		},
 
-		arraySearchQuery: function(opts, constraint, term){
-			var i, e, docId, index, result;
+		constrainedQuery: function(opts, constraint, term){
+			var expectedCount, i, e, docId, index, result;
 			var resultsByDocId = null;
-			var expectedCount = constraint.length;
-			
-			for (i = 0, e = constraint.length; i < e; i += 1) {
-				if (!resultsByDocId){
-					resultsByDocId = {};
-				}
-	
-				this.designDoc.queryView({
-					viewName: this.searchView
-					,startkey: [constraint[i], term, 0]
-					,endkey: [constraint[i], term, {}]
-					,constraint: constraint
-					,onSuccess: function(rows) {
-						for (i = 0, e = rows.length; i < e; i += 1) {
-							docId = rows[i].id;
-							index = rows[i].key[1];
-							
-							if (resultsByDocId[docId] 
-								&& resultsByDocId[docId].index <= index) {
-								// Do nothing
 
+			if ($n2.isArray(constraint)) {
+				expectedCount = constraint.length;
+				
+				for (i = 0, e = constraint.length; i < e; i += 1) {
+					if (!resultsByDocId){
+						resultsByDocId = {};
+					}
+	
+					this.designDoc.queryView({
+						viewName: this.searchView
+						,startkey: [constraint[i], term, 0]
+						,endkey: [constraint[i], term, {}]
+						,constraint: constraint
+						,onSuccess: function(rows) {
+							for (i = 0, e = rows.length; i < e; i += 1) {
+								docId = rows[i].id;
+								index = rows[i].key[1];
+								
+								if (resultsByDocId[docId] 
+									&& resultsByDocId[docId].index <= index) {
+									// Do nothing
+
+								} else {
+									result = new ResearchResult({
+										id: docId
+										,index: index
+									});
+									resultsByDocId[docId] = result;
+								}
+							}
+	
+							// Only call opts.onSuccess when all the queries have returned.
+							// Otherwise call opts.onPartial
+							expectedCount -= 1;
+							if (expectedCount <= 0) {
+								opts.onSuccess(resultsByDocId);
 							} else {
-								result = new ResearchResult({
-									id: docId
-									,index: index
-								});
-								resultsByDocId[docId] = result;
+								opts.onPartial(resultsByDocId);
 							}
 						}
-	
-						// Only call opts.onSuccess when all the queries have returned.
-						// Otherwise call opts.onPartial
-						expectedCount -= 1;
-						if (expectedCount <= 0) {
-							opts.onSuccess(resultsByDocId);
-						} else {
-							opts.onPartial(resultsByDocId);
+						,onError: function(err) {
+							opts.onError(err);
 						}
-					}
-					,onError: function(err) {
-						opts.onError(err);
-					}
-				});
-			};
+					});
+				}
+
+			} else {
+				$n2.log("Invalid constraint. Expected an array of constraint values");
+			}
 		},
 		
 		getDocumentsFromModelId: function(modelId){
@@ -281,20 +287,21 @@ POSSIBILITY OF SUCH DAMAGE.
 			var resultsByDocId = null;
 			var sourceModelIds = [];
 			var modelDocs = {};
+			var layerConstraint;
 	
 			if (this.constraint) {
-				// Convert string to an array of 1 element for performing query view
+				// Convert string to an array of 1 element for performing constrained query
 				if (typeof(this.constraint) === 'string') {
-					var key = [];
-					key.push(this.constraint);
-					this.constraint = key;
+
+					layerConstraint = [ this.constraint ];
+					this.constraint = layerConstraint;
 				};
 			
 				// Legacy search constraint 
 				if ($n2.isArray(this.constraint)
 					&& this.constraint.length > 0) {
 					
-					this.arraySearchQuery(opts, this.constraint, term);
+					this.constrainedQuery(opts, this.constraint, term);
 				
 				} else if (typeof this.constraint === "object" 
 					&& this.constraint !== null) {
@@ -302,13 +309,13 @@ POSSIBILITY OF SUCH DAMAGE.
 					// Updated Constraint
 					if (this.constraint.type) { 
 						if (this.constraint.type === "layers") {
+							// Convert layer string to an array of layers
 							if (typeof this.constraint.layers === 'string') {
-								var layerConstraint = [ this.constraint.layers ];
-								this.arraySearchQuery(opts, layerConstraint, term);
-
-							} else if ($n2.isArray(this.constraint.layers)) {
-								this.arraySearchQuery(opts, this.constraint.layers, term);
+								layerConstraint = [ this.constraint.layers ];
+								this.constraint.layers = layerConstraint;
 							}
+
+							this.constrainedQuery(opts, this.constraint.layers, term);
 
 						} else if (this.constraint.type === "models") {
 
