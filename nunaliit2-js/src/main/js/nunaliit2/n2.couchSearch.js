@@ -229,17 +229,15 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		filterOutNonModelDocs: function(queryResults, modelDocs){
-			var i, e, j, f, docId;
+			var i, e, doc, docId;
 			var filteredResults = [];
 
 			// Filter out docs not found in model
 			for (i = 0, e = queryResults.length; i < e; i += 1) {
+				doc = queryResults[i];
 				docId = queryResults[i].id;
-				for (j = 0, f = modelDocs.length; j < f; j += 1) {
-					if (modelDocs[j]._id === docId 
-						&& filteredResults.indexOf(queryResults[i]) < 0) {
-						filteredResults.push(queryResults[i]);
-					}
+				if (modelDocs.hasOwnProperty(docId)) {
+					filteredResults.push(doc);
 				}
 			}
 
@@ -282,8 +280,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			var term = this.textTerm.toLowerCase();
 			var resultsByDocId = null;
 			var sourceModelIds = [];
-			var modelDocs = [];
-			var modelDocIds = [];
+			var modelDocs = {};
 	
 			if (this.constraint) {
 				// Convert string to an array of 1 element for performing query view
@@ -325,9 +322,8 @@ POSSIBILITY OF SUCH DAMAGE.
 							for (var i = 0, e = sourceModelIds.length; i < e; i += 1) {
 								var tempDocs = this.getDocumentsFromModelId(sourceModelIds[i]);
 								tempDocs.forEach(function(doc){
-									if (doc && doc._id && modelDocIds.indexOf(doc._id) < 0) {
-										modelDocIds.push(doc._id);
-										modelDocs.push(doc);
+									if (doc && doc._id && !modelDocs.hasOwnProperty(doc._id)) {
+										modelDocs[doc._id] = doc;
 									}
 								});
 							}
