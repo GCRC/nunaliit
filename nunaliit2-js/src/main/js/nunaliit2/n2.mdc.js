@@ -145,6 +145,106 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 	}
 });
 
+// Class MDCCheckbox
+// Description: Creates a material design checkbox component
+// Options:
+//  - radioLabel (String): A string containing the radio button label.
+//  - radioName (String): A string containing the radio button name.
+//  - radioChecked (Boolean): If true, the radio button is checked (default = false).
+//  - radioDisabled (Boolean): If true, the radio button is disabled (default = false). 
+var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
+
+	chkboxLabel: null,
+	chkboxName: null,
+	chkboxChecked: null,
+	chkboxDisabled: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			chkboxLabel: null,
+			chkboxName: null,
+			chkboxChecked: false,
+			chkboxDisabled: false
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+
+		this.chkboxLabel = opts.chkboxLabel;
+		this.chkboxName = opts.chkboxName;
+		this.chkboxChecked = opts.chkboxChecked;
+		this.chkboxDisabled = opts.chkboxDisabled;
+
+		if (!this.parentId) {
+			throw new Error('Parent Id must be provided, to add a Material Design Check Box Component');
+		}
+
+		this._generateMDCCheckbox();
+	},
+
+	_generateMDCCheckbox: function(){
+		var $chkbox, $chkboxInput, $chkboxBackground, keys;
+		var _this = this;
+
+		var chkboxInputId = $n2.getUniqueId();
+
+		this.mdcClasses.push('mdc-checkbox');
+
+		if (this.chkboxDisabled) {
+			this.mdcClasses.push('mdc-checkbox--disabled');
+		}
+
+		$chkbox = $('<div>')
+			.attr('id', this.mdcId)
+			.addClass(this.mdcClasses.join(' '))
+			.appendTo($('#' + this.parentId));
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$chkbox.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		$chkboxInput = $('<input>')
+			.attr('id', chkboxInputId) 
+			.attr('type', 'checkbox')
+			.name('name', this.chkboxName)
+			.addClass('mdc-checkbox__native-control')
+			.appendTo($chkbox);
+
+		if (this.chkboxChecked) {
+			$chkboxInput.attr('checked', 'checked');
+		}
+
+		$chkboxBackground = $('<div>')
+			.addClass('mdc-checkbox__background')
+			.appendTo($chkbox);
+
+		$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
+			.appendTo($chkboxBackground);
+
+		$('<div>')
+			.addClass('mdc-checkbox__mixedmark')
+			.appendTo($chkboxBackground);
+
+		$('<label>')
+			.attr('for', chkboxInputId)
+			.text(this.chkboxLabel)
+			.appendTo($('#' + this.parentId));
+
+		this._attachCheckBox(this.mdcId);
+	},
+
+	_attachCheckBox: function(chkboxId){
+
+		var chkbox = document.getElementById(chkboxId);
+		if (chkbox) {
+			$mdc.checkbox.MDCCheckbox.attachTo(chkbox);
+		}
+	}
+});
+
+
 // Class MDCDialog
 // Description: Creates a material design dialog component
 // Options:
@@ -371,6 +471,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 	radioLabel: null,
 	radioName: null,
 	radioChecked: null,
+	radioDisabled: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -445,6 +546,16 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 			.attr('for', rbtnInputId)
 			.text(this.radioLabel)
 			.appendTo($('#' + this.parentId));
+
+		this._attachRadioButton(this.mdcId);
+	},
+
+	_attachRadioButton: function(radioBtnId){
+		
+		var radioBtn = document.getElementById(radioBtnId);
+		if (radioBtn) {
+			$mdc.radio.MDCRadio.attachTo(radioBtn);
+		}
 	}
 });
 
@@ -836,6 +947,7 @@ var attachMDCComponents = function(){
 $n2.mdc = {
 	MDC: MDC,
 	MDCButton: MDCButton,
+	MDCCheckbox: MDCCheckbox,
 	MDCDialog: MDCDialog,
 	MDCFormField: MDCFormField,
 	MDCRadio: MDCRadio,
