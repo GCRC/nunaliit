@@ -302,6 +302,152 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	}
 });
 
+
+// Class MDCFormField
+// Description: Create a material design form field component
+var MDCFormField = $n2.Class('MDCFormField', MDC, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+
+		if (!this.parentId) {
+			throw new Error('Parent Id must be provided, to add a Material Design Form Field Component');
+		}
+		this._generateMDCFormField();
+	},
+
+	_generateMDCFormField: function(){
+		var $formField, keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-form-field');
+
+		$formField = $('<div>')
+			.attr('id',this.mdcId)
+			.addClass(this.mdcClasses.join(' '))
+			.appendTo($('#' + this.parentId));
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$formField.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		this._attachFormField(this.mdcId);
+	},
+
+	_appendComponent: function(id){
+		var formField = document.getElementById(this.mdcId);
+		var component = document.getElementById(id);
+		
+		if (formField && component) {
+			formField.appendChild(component);
+		}
+	},
+
+	_attachFormField: function(formFieldId){
+		var formField = document.getElementById(formFieldId);
+
+		if (formField) {
+			$mdc.formField.MDCFormField.attachTo(formField);
+		}
+	}
+});
+
+// Class MDCRadio
+// Description: Creates a material design radio button component
+// Options:
+//  - radioLabel (String): A string containing the radio button label.
+//  - radioName (String): A string containing the radio button name.
+//  - radioChecked (Boolean): If true, the radio button is checked (default = false).
+//  - radioDisabled (Boolean): If true, the radio button is disabled (default = false). 
+var MDCRadio = $n2.Class('MDCRadio', MDC, {
+
+	radioLabel: null,
+	radioName: null,
+	radioChecked: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			radioLabel: null,
+			radioName: null,
+			radioChecked: false,
+			radioDisabled: false
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+
+		this.radioLabel = opts.radioLabel;
+		this.radioName = opts.radioName;
+		this.radioChecked = opts.radioChecked;
+		this.radioDisabled = opts.radioDisabled;
+
+		if (!this.parentId) {
+			throw new Error('Parent Id must be provided, to add a Material Design Radio Button Component');
+		}
+
+		this._generateMDCRadio();
+	},
+
+	_generateMDCRadio: function(){
+		var $rbtn, $rbtnInput, $rbtnBackground, keys;
+		var _this = this;
+
+		var rbtnInputId = $n2.getUniqueId();
+
+		this.mdcClasses.push('mdc-radio');
+
+		if (this.radioDisabled) {
+			this.mdcClasses.push('mdc-radio--disabled');
+		}
+
+		$rbtn = $('<div>')
+			.attr('id',this.mdcId)
+			.addClass(this.mdcClasses.join(' '))
+			.appendTo($('#' + this.parentId));
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$rbtn.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		$rbtnInput = $('<input>')
+			.attr('id', rbtnInputId) 
+			.attr('type', 'radio')
+			.name('name', this.radioName)
+			.addClass('mdc-radio__native-control')
+			.appendTo($rbtn);
+
+		if (this.radioChecked) {
+			$rbtnInput.attr('checked', 'checked');
+		}
+
+		$rbtnBackground = $('<div>')
+			.addClass('mdc-radio__background')
+			.appendTo($rbtn);
+
+		$('<div>')
+			.addClass('mdc-radio__outer-circle')
+			.appendTo($rbtnBackground);
+
+		$('<div>')
+			.addClass('mdc-radio__inner-circle')
+			.appendTo($rbtnBackground);
+
+		$('<label>')
+			.attr('for', rbtnInputId)
+			.text(this.radioLabel)
+			.appendTo($('#' + this.parentId));
+	}
+});
+
 // Class MDCSelect
 // Description: Creates a material design select menu component
 // Options:
@@ -691,6 +837,8 @@ $n2.mdc = {
 	MDC: MDC,
 	MDCButton: MDCButton,
 	MDCDialog: MDCDialog,
+	MDCFormField: MDCFormField,
+	MDCRadio: MDCRadio,
 	MDCSelect: MDCSelect,
 	MDCTextField: MDCTextField,
 	attachMDCComponents: attachMDCComponents
