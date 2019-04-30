@@ -892,7 +892,7 @@ var Tracker = $n2.Class({
 				});
 			};
 
-		} else if( 'unselected' === m.type ){
+		} else if( 'userUnselect' === m.type ){
 			this.last = {
 				unselected: true	
 			};
