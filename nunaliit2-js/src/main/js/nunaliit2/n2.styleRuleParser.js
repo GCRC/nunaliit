@@ -478,22 +478,25 @@ var global = {
 	,hasProperty: function(propName){
 		if (propName &&
 				typeof propName === "string"){
-			var arr = propName.split(',');
+			var arr = propName.split('.');
 			var _this = this;
 			for(var i =0, e= arr.length; i<e; ++i){
+				if (arr[i] === 'doc'){
+					arr[i] = 'n2_doc';
+				}
 				if (typeof _this === 'function'){
-					_this = null;
+					_this = undefined;
 					break;
 				} else if (_this.hasOwnProperty(arr[i])){
 					_this = _this[arr[i]];
 					continue;
 				} else {
-					_this = null;
+					_this = undefined;
 					break;
 				}
 			}
 		}
-		return _this && true || false;
+		return (typeof _this !== 'undefined') && (_this !== null) && (_this !== '');
 	}
 	,Math: Math
 };

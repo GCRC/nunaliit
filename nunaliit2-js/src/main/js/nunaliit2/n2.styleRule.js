@@ -268,7 +268,7 @@ var Symbolizer = $n2.Class({
 	},
 	
 	extendWith: function(symbolizer){
-		if( symbolizer && !this.v2_style){
+		if( symbolizer ){
 			if( symbolizer.v2_style ){
 				if( !symbolizer._n2Symbolizer ) {
 				// Using v2_style and From a user supplied style
@@ -318,7 +318,10 @@ var Symbolizer = $n2.Class({
 						this.symbols[key] = value;
 					};
 				}
+			} else if (this.v2_style) {
+				//cannot merge a v2_style with v1_style;
 			} else if( symbolizer._n2Symbolizer ){
+				//v1_style
 				// From another instance of Symbolizer
 				var att = symbolizer.symbols;
 				for(var key in att){
@@ -326,6 +329,7 @@ var Symbolizer = $n2.Class({
 					this.symbols[key] = value;
 				};
 			} else {
+				//v1_style
 				// From a user supplied dictionary. Must translate
 				for(var key in symbolizer){
 					

@@ -733,11 +733,11 @@ class N2MapCanvas  {
 			//
 			f.n2_doc = data;
 			//===================== mocking data
-			if (f.n2_doc.cinedata){
-				f._v2_style_ = {};
-				f.n2_doc.ldata = _this.getMockingData();
-
-			}
+//			if (f.n2_doc.cinedata){
+//				f._v2_style_ = {};
+//				f.n2_doc.ldata = _this.getMockingData();
+//
+//			}
 			//====================== mocking end
 			
 			//(import $n2.styleRule.js).Style
@@ -767,18 +767,14 @@ class N2MapCanvas  {
 			return innerStyle;
 		}
 	}
-	
-	getMockingData(){
-		var incr = (function () {
-		    var i = 1;
 
-		    return function () {
-		        return i++;
-		    }
-		})();
-		var i = incr();
+	getMockingData(){
+		if (typeof this.mock_idx === 'undefined') {
+			this.mock_idx = -1;
+		}
+		this.mock_idx ++;
 		var len = this.mockingDataComplete.length;
-		return this.mockingDataComplete[i%len];
+		return this.mockingDataComplete[this.mock_idx % len];
 	}
 	_genBackgroundMapLayers(bgSources) {
 		var _this = this;
@@ -958,30 +954,31 @@ class N2MapCanvas  {
 
 				});
 			}
-		} else if ('time_interval_change' === type){
-			let currTime = m.value.min;
-			let incre = 100000000;
-			
-			if (_this.lastTime === null){
-				_this.initialTime = currTime;
-				_this.lastTime = currTime;
-				_this.mockingData = _this.mockingDataComplete.slice(0,1);
-
-			}
-			
-				_this.endIdx = parseInt((currTime - _this.initialTime)/incre);
-				_this.mockingData = _this.mockingDataComplete.slice(0,_this.endIdx);
-	
-				_this.dispatchService.send(DH,{
-					type: 'n2rerender'
-				});
-				
-			
-			_this.lastTime = currTime;
-
-			
-			
-		}
+		} 
+//		else if ('time_interval_change' === type){
+//			let currTime = m.value.min;
+//			let incre = 100000000;
+//			
+//			if (_this.lastTime === null){
+//				_this.initialTime = currTime;
+//				_this.lastTime = currTime;
+//				_this.mockingData = _this.mockingDataComplete.slice(0,1);
+//
+//			}
+//			
+//				_this.endIdx = parseInt((currTime - _this.initialTime)/incre);
+//				_this.mockingData = _this.mockingDataComplete.slice(0,_this.endIdx);
+//	
+//				_this.dispatchService.send(DH,{
+//					type: 'n2rerender'
+//				});
+//				
+//			
+//			_this.lastTime = currTime;
+//
+//			
+//			
+//		}
 
 	}
 

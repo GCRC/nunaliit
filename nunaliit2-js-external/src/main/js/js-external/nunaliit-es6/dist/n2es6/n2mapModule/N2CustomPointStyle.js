@@ -6,7 +6,7 @@ import RegularShape from 'ol/style/RegularShape'
 import Fill from 'ol/style/Fill'
 import Stroke from 'ol/style/Stroke'
 import {asString as ol_color_asString} from 'ol/color'
-
+import N2StackingHistory from './N2StackingHistory'
 
 
 const colors =
@@ -44,7 +44,9 @@ class N2CustomPointStyle extends RegularShape{
 			map : null,
 			data: undefined,
 			startupOffset : 10,
-			feature: null
+			feature: null,
+			color : '#000000',
+			opacity: 1
 		}, opt_options)
 	
 
@@ -66,20 +68,22 @@ class N2CustomPointStyle extends RegularShape{
 					}
 				}
 			}
-			if (typeof options.data === 'object'
+			if (options.data
+				&& typeof options.data === 'object'
 				&& typeof options.data.duration === 'number'){
 				options.radius = previousRadius + options.data.duration;
+			} else {
+				options.radius = previousRadius;
 			}
 		} else {
 			options.data.forEach(function(d){
-			options.radius +=d.duration;
+			options.radius +=Math.ceil(d.duration-0.4);
 		})
 		}
 		options.radius *= 2* options.donutScaleFactor;
 		
-		RegularShape.prototype.contructor.apply (this,
-				{	radius: options.radius , 
-					fill: new Fill({color: [0,0,0]}),
+		super ({	radius: options.radius , 
+					fill: new Fill({color: [0,0,0,0]}),
 					rotation: options.rotation,
 					snapToPixel: options.snapToPixel
 				});
@@ -93,6 +97,9 @@ class N2CustomPointStyle extends RegularShape{
 		this.donutratio_ = options.donutRatio || 0.5;
 		this.donutScaleFactor = options.donutScaleFactor ;
 		this.type_ = options.type;
+		this.color_ = options.color;
+		this.opacity_ = options.opacity;
+		
 		this.offset_ = [options.offsetX ? options.offsetX : 0, options.offsetY ? options.offsetY : 0];
 		this.animation_ = (typeof(options.animation) == 'number') ? { animate:true, step:options.animation } : this.animation_ = { animate:false, step:1 };
 		this.max_ = options.max;
@@ -116,7 +123,11 @@ class N2CustomPointStyle extends RegularShape{
 				});
 			}
 		}
-		this.renderChart_();
+		if (this.data_){
+			this.renderChart_();
+		} else {
+			return;
+		}
 }
 
 	/**
@@ -196,6 +207,8 @@ class N2CustomPointStyle extends RegularShape{
 		}
 		
 	}
+	
+	//only used for treeRing not used for treeRingB
 	_getRings (){
 		var rings = [];
 		var currentRing = null;
@@ -260,40 +273,40 @@ class N2CustomPointStyle extends RegularShape{
 	
 	//	Draw pie
 		switch (this.type_){
-		case "treeRing":{
-
-			c = canvas.width/2;
-			context.strokeStyle = strokeStyle;
-			context.lineWidth = strokeWidth;
-			context.save();
-			//context.beginPath();
-			context.rect ( 0,0,2*c,2*c );
-			let rings = this._getRings();
-			let currRadius = this.startupOffset_ ;
-			
-			for (let i = 0, e= rings.length; i<e; ++i){
-				let ring = rings[i];
-				let dur = ring.duration;
-				let effectiveRadiusIncre = Math.floor(
-						(1 * Math.sqrt( dur / 60 ) * this.donutScaleFactor * 7.7)
+			case "treeRing":{
+	
+				c = canvas.width/2;
+				context.strokeStyle = strokeStyle;
+				context.lineWidth = strokeWidth;
+				context.save();
+				//context.beginPath();
+				context.rect ( 0,0,2*c,2*c );
+				let rings = this._getRings();
+				let currRadius = this.startupOffset_ ;
+	
+				for (let i = 0, e= rings.length; i<e; ++i){
+					let ring = rings[i];
+					let dur = ring.duration;
+					let effectiveRadiusIncre = Math.floor(
+							(1 * Math.sqrt( dur / 60 ) * this.donutScaleFactor * 7.7)
 					);
-				var type = ring.type;
-				let region = new Path2D();
-				region.arc(c, c, currRadius, 0, 2* Math.PI);
-				currRadius += effectiveRadiusIncre;
-				region.arc(c, c, currRadius, 2* Math.PI, 0);
-				region.closePath();
-				//context.lineWidth = 6;
-				//context.stroke();
-				context.fillStyle = type.strokeColor
-				context.globalAlpha = type.opacity;
-				context.fill(region, 'evenodd');
-				context.restore();
+					var type = ring.type;
+					let region = new Path2D();
+					region.arc(c, c, currRadius, 0, 2* Math.PI);
+					currRadius += effectiveRadiusIncre;
+					region.arc(c, c, currRadius, 2* Math.PI, 0);
+					region.closePath();
+					//context.lineWidth = 6;
+					//context.stroke();
+					context.fillStyle = type.strokeColor
+					context.globalAlpha = type.opacity;
+					context.fill(region, 'evenodd');
+					context.restore();
+				}
+				break;
 			}
-			break;
-		}
 			case "treeRingB":{
-
+	
 				c = canvas.width/2;
 				context.strokeStyle = strokeStyle;
 				context.lineWidth = strokeWidth;
@@ -302,10 +315,19 @@ class N2CustomPointStyle extends RegularShape{
 				context.rect ( 0,0,2*c,2*c );
 				let currRadius = this._getPreviousRadius();
 				let ring = this.data_;
-				let dur = ring.duration;
+				if ( !ring ){
+					throw new Error ('N2CustomPointStyle: data is not provided');
+				}
+				//Make sure the radius and its increment are Integer value
+				let dur = Math.ceil(ring.duration-0.4);
 				let effectiveRadiusIncre = Math.floor(
 						(1 * Math.sqrt( dur / 60 ) * this.donutScaleFactor * 7.7)
 				);
+	
+				//If radius equals to zero or undefined no drawing;
+				if ( !effectiveRadiusIncre ){
+					break
+				}
 				var type = ring.type;
 				let region = new Path2D();
 				region.arc(c, c, currRadius, 0, 2* Math.PI);
@@ -314,11 +336,11 @@ class N2CustomPointStyle extends RegularShape{
 				region.closePath();
 				//context.lineWidth = 6;
 				//context.stroke();
-				context.fillStyle = type.strokeColor
-				context.globalAlpha = type.opacity;
+				context.fillStyle = this.color_
+				context.globalAlpha = this.opacity_;
 				context.fill(region, 'evenodd');
 				context.restore();
-				_appendNewRadius(this._ext,effectiveRadiusIncre);
+				this._appendNewRadius(this._ext,effectiveRadiusIncre);
 				break;
 			}
 			case "donut":
@@ -331,38 +353,38 @@ class N2CustomPointStyle extends RegularShape{
 				context.save();
 				if (this.type_=="pie3D") 
 				{	context.translate(0, c*0.3);
-					context.scale(1, 0.7);
-					context.beginPath();
-					context.fillStyle = "#369";
-					context.arc ( c, c*1.4, this.radius_ *step, 0, 2*Math.PI);
-					context.fill();
-					context.stroke();
+				context.scale(1, 0.7);
+				context.beginPath();
+				context.fillStyle = "#369";
+				context.arc ( c, c*1.4, this.radius_ *step, 0, 2*Math.PI);
+				context.fill();
+				context.stroke();
 				}
 				if (this.type_=="donut")
 				{	context.save();
-					context.beginPath();
-					context.rect ( 0,0,2*c,2*c );
-					context.arc ( c, c, this.radius_ *step *this.donutratio_, 0, 2*Math.PI);
-					context.clip("evenodd");
+				context.beginPath();
+				context.rect ( 0,0,2*c,2*c );
+				context.arc ( c, c, this.radius_ *step *this.donutratio_, 0, 2*Math.PI);
+				context.clip("evenodd");
 				}
 				for (i=0; i<this.data_.length; i++)
 				{	context.beginPath();
-					context.moveTo(c,c);
-					context.fillStyle = this.colors_[i%this.colors_.length];
-					a = a0 + 2*Math.PI*this.data_[i]/sum *step;
-					context.arc ( c, c, this.radius_ *step, a0, a);
-					context.closePath();
-					context.fill();
-					context.stroke();
-					a0 = a;
+				context.moveTo(c,c);
+				context.fillStyle = this.colors_[i%this.colors_.length];
+				a = a0 + 2*Math.PI*this.data_[i]/sum *step;
+				context.arc ( c, c, this.radius_ *step, a0, a);
+				context.closePath();
+				context.fill();
+				context.stroke();
+				a0 = a;
 				}
 				if (this.type_=="donut")
 				{	context.restore();
-					context.beginPath();
-					context.strokeStyle = strokeStyle;
-					context.lineWidth = strokeWidth;
-					context.arc ( c, c, this.radius_ *step *this.donutratio_, Math.PI * (step-1.5), a0);
-					context.stroke();
+				context.beginPath();
+				context.strokeStyle = strokeStyle;
+				context.lineWidth = strokeWidth;
+				context.arc ( c, c, this.radius_ *step *this.donutratio_, Math.PI * (step-1.5), a0);
+				context.stroke();
 				}
 				context.restore();
 				break;
@@ -390,15 +412,15 @@ class N2CustomPointStyle extends RegularShape{
 				x = x0 + s;
 				var h = this.data_[i]/max*2*this.radius_ *step;
 				context.rect ( x0, b-h, s, h);
-			//	console.log ( x0+", "+(b-this.data_[i]/max*2*this.radius_)+", "+x+", "+b);
+				//	console.log ( x0+", "+(b-this.data_[i]/max*2*this.radius_)+", "+x+", "+b);
 				context.closePath();
 				context.fill();
 				context.stroke();
 				x0 = x;
 				}
-		
+	
 			}
-		}
+	}
 	
 	//	Set Anchor
 		var anchor = this.getAnchor();

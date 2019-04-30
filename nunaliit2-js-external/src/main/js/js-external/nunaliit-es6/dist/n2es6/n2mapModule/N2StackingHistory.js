@@ -2,7 +2,7 @@
 * @module n2es6/n2mapModule/N2StackingHistory
 */
 import {listen, unlisten} from 'ol/events.js';
-import {hash} from 'object-hash';
+import hash from 'object-hash';
 class N2StackingHistory {
 	
 	constructor(opt_options){
@@ -30,8 +30,8 @@ class N2StackingHistory {
 	addStackingHistory(ext, extraInfo){
 		var hashkey = undefined;
 		if (Array.isArray(ext) && ext.length === 4){
-			hashkey = hash(ext)
-		}
+			hashkey = hash(ext);
+		};
 		var pointInfo = {
 			extra: extraInfo
 		};
@@ -62,7 +62,7 @@ class N2StackingHistory {
 		return rst;
 	}
 	clear(){
-		this._history = null;
+		this._history = {};
 	}
 	
 }
