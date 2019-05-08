@@ -65,7 +65,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<appassembler-maven-plugin.version>1.10</appassembler-maven-plugin.version>
 		<buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
-		<closure-compiler.version>v20151015</closure-compiler.version>
+		<closure-compiler.version>v20190415</closure-compiler.version>
 		<commons-codec.version>1.10</commons-codec.version>
 		<commons-fileupload.version>1.3.3</commons-fileupload.version>
 		<commons-io.version>2.5</commons-io.version>

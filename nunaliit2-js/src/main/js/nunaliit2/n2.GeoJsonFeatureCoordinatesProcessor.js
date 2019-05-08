@@ -123,7 +123,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		/**
 		 * @param context context information showing what IS being processed.  Context accumulates
 		 * down (geometryCollection, coordinates) and laterally (geometries, across coordinate arrays).
-		 * @param direction'down' or 'lateral'
+		 * @param direction down or lateral
 		 * Note that 'down" adjustments are mutable (the original will be unchanged) but lateral
 		 * adjustments update the input context.
 		 */
