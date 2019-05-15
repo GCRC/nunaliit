@@ -4654,11 +4654,11 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 			} else if( m.docIds ){
 				this._startFocus(m.docIds);
 			};
-
+			return;
 
 		} else if( 'focusOff' === type ) {
 			this._endFocus();
-
+			return;
 		} else if( 'focusOnSupplement' === type ) {
 			var fid = m.docId;
 			
