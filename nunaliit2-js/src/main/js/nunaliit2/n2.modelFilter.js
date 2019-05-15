@@ -1739,8 +1739,11 @@ var SchemaFilter = $n2.Class('SchemaFilter', SelectableDocumentFilter, {
 });
 
 // --------------------------------------------------------------------------
-// Filter: a Document Model that filters out certain documents                                                      |         ----------------------------------------------------------------------------------------------------------------
-// MultiDocumentFilter: Allows only specified documents  
+// Filter: a Document Model that filters out certain documents 
+// MultiDocumentFilter: Allows only specified documents 
+// Options:
+//  - selectedDocIds (array): An array of document id strings, which filter 
+//    documents to only include these documents.
 var MultiDocumentFilter = $n2.Class('MultiDocumentFilter', SelectableDocumentFilter, {
 
 	selectedDocIds: null,
