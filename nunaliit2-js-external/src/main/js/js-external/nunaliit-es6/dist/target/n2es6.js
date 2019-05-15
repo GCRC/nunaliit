@@ -520,16 +520,21 @@ class N2CouchDbSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_1__["
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
+/* harmony import */ var ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol/style/RegularShape */ "./node_modules/ol/style/RegularShape.js");
+/* harmony import */ var ol_style_Fill__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/style/Fill */ "./node_modules/ol/style/Fill.js");
+/* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
 /**
 * @module n2es6/n2mapModule/N2CustomLineStyle
 */
+
+
 
 /**
  * @classdesc
  * Custom style for feature linestring.
  * @api
  */
-class N2CustomLineStyle extends RegularShape{
+class N2CustomLineStyle extends ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_0__["default"]{
 	constructor(opt_options) {
 		var options = $n2.extend({
 			
