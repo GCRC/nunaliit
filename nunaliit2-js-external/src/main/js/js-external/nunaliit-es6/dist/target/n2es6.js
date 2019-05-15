@@ -1631,6 +1631,7 @@ class N2MapCanvas  {
 
 		
 
+		this.isClustering = undefined;
 		this.n2View = undefined;
 		this.n2Map = undefined;
 
@@ -2022,7 +2023,40 @@ class N2MapCanvas  {
 					}
 				});
 		nested.addControl ( pedit );
-
+		var pcluster = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_34__["default"]({
+			html: '<i class="fa fa-map-marker" ></i>',
+			className: "cluster_toggle",
+			title: 'Cluster_Toggle',
+			interaction : undefined,
+			active: _this.isClustering ? true: false,
+			onToggle: function(active)
+			{
+				if(active && !_this.isClustering){
+					let c_source =  _this.overlayLayers[0].getSource();
+					let a_source = c_source.getSource();
+					let b_source = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_20__["default"]({source: a_source});
+					a_source.changed();
+					
+					c_source.setSource(b_source);
+					b_source.changed();
+					_this.isClustering = true;
+					_this.dispatchService.send(DH, {
+						type: 'n2rerender'
+					})
+				} else if (_this.isClustering && !active) {
+					let c_source =  _this.overlayLayers[0].getSource();
+					let b_source = c_source.getSource();
+					let a_source = b_source.getSource();
+					c_source.setSource(a_source);
+					a_source.changed();
+					_this.isClustering = false;
+					_this.dispatchService.send(DH, {
+						type: 'n2rerender'
+					})
+				}
+			}
+		})
+		mainbar.addControl (pcluster);
 
 		/* Standard Controls */
 //		mainbar.addControl (new ZoomToExtent({  extent: [ 265971,6243397 , 273148,6250665 ] }));
@@ -2094,6 +2128,10 @@ class N2MapCanvas  {
 				var alphasource = Sources[i];
 				var betaSource = alphasource;
 				if ( overlayInfo.clustering ){
+					
+					if ( typeof _this.isClustering === 'undefined'){
+						_this.isClustering = true;
+					}
 					var clsOpt = Object.assign({}, overlayInfo.clustering
 							,{source: alphasource});
 					betaSource = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_20__["default"](clsOpt);
@@ -3942,7 +3980,14 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 			this.dispatchService.register(DH,'findIsAvailable',f);
 		};
 	}
-
+	getSource(){
+		return this.source;
+	}
+	setSource(opt_source){
+		this.source = opt_source;
+		this.refresh();
+		this.changed();
+	}
 	onHover(evt){
 
 		let selected  = evt.selected;
@@ -5409,6 +5454,12 @@ class N2DonutCluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["d
 
 		
 	}
+	
+	getSource(){
+		return this.source;
+	}
+	
+	
 	/**
 	* The cluster function for cluster Point, Line and Geometry
 	* @override
