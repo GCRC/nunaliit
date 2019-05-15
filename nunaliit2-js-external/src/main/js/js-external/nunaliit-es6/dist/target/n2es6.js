@@ -106,14 +106,18 @@ return /******/ (function(modules) { // webpackBootstrap
 "use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _n2es6_ol5support_N2Cluster__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./n2es6/ol5support/N2Cluster */ "./dist/n2es6/ol5support/N2Cluster.js");
-/* harmony import */ var _n2es6_n2ui_N2EditorBase__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./n2es6/n2ui/N2EditorBase */ "./dist/n2es6/n2ui/N2EditorBase.js");
-/* harmony import */ var _n2es6_n2mapModule_N2CouchDbSource__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2CouchDbSource */ "./dist/n2es6/n2mapModule/N2CouchDbSource.js");
-/* harmony import */ var _n2es6_n2mapModule_N2CustomPointStyle__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2CustomPointStyle */ "./dist/n2es6/n2mapModule/N2CustomPointStyle.js");
-/* harmony import */ var _n2es6_n2mapModule_N2LRU__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2LRU */ "./dist/n2es6/n2mapModule/N2LRU.js");
-/* harmony import */ var _n2es6_n2mapModule_N2LayerInfo__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2LayerInfo */ "./dist/n2es6/n2mapModule/N2LayerInfo.js");
-/* harmony import */ var _n2es6_n2mapModule_N2MapCanvas__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2MapCanvas */ "./dist/n2es6/n2mapModule/N2MapCanvas.js");
-/* harmony import */ var _n2es6_n2mapModule_N2ModelSource__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2ModelSource */ "./dist/n2es6/n2mapModule/N2ModelSource.js");
-/* harmony import */ var _n2es6_n2mapModule_N2Select__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2Select */ "./dist/n2es6/n2mapModule/N2Select.js");
+/* harmony import */ var _n2es6_ol5support_N2DonutCluster__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./n2es6/ol5support/N2DonutCluster */ "./dist/n2es6/ol5support/N2DonutCluster.js");
+/* harmony import */ var _n2es6_n2ui_N2EditorBase__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./n2es6/n2ui/N2EditorBase */ "./dist/n2es6/n2ui/N2EditorBase.js");
+/* harmony import */ var _n2es6_n2mapModule_N2CouchDbSource__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2CouchDbSource */ "./dist/n2es6/n2mapModule/N2CouchDbSource.js");
+/* harmony import */ var _n2es6_n2mapModule_N2CustomLineStyle__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2CustomLineStyle */ "./dist/n2es6/n2mapModule/N2CustomLineStyle.js");
+/* harmony import */ var _n2es6_n2mapModule_N2CustomPointStyle__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2CustomPointStyle */ "./dist/n2es6/n2mapModule/N2CustomPointStyle.js");
+/* harmony import */ var _n2es6_n2mapModule_N2LRU__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2LRU */ "./dist/n2es6/n2mapModule/N2LRU.js");
+/* harmony import */ var _n2es6_n2mapModule_N2LayerInfo__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2LayerInfo */ "./dist/n2es6/n2mapModule/N2LayerInfo.js");
+/* harmony import */ var _n2es6_n2mapModule_N2MapCanvas__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2MapCanvas */ "./dist/n2es6/n2mapModule/N2MapCanvas.js");
+/* harmony import */ var _n2es6_n2mapModule_N2ModelSource__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2ModelSource */ "./dist/n2es6/n2mapModule/N2ModelSource.js");
+/* harmony import */ var _n2es6_n2mapModule_N2Select__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ./n2es6/n2mapModule/N2Select */ "./dist/n2es6/n2mapModule/N2Select.js");
+
+
 
 
 
@@ -129,15 +133,17 @@ var n2es6 = {};
 n2es6.n2mapModule = {};
 n2es6.n2ui = {};
 n2es6.ol5support = {};
-n2es6.n2mapModule.N2CouchDbSource = _n2es6_n2mapModule_N2CouchDbSource__WEBPACK_IMPORTED_MODULE_2__["default"];
-n2es6.n2mapModule.N2CustomPointStyle = _n2es6_n2mapModule_N2CustomPointStyle__WEBPACK_IMPORTED_MODULE_3__["default"];
-n2es6.n2mapModule.N2LRU = _n2es6_n2mapModule_N2LRU__WEBPACK_IMPORTED_MODULE_4__["default"];
-n2es6.n2mapModule.N2LayerInfo = _n2es6_n2mapModule_N2LayerInfo__WEBPACK_IMPORTED_MODULE_5__["default"];
-n2es6.n2mapModule.N2MapCanvas = _n2es6_n2mapModule_N2MapCanvas__WEBPACK_IMPORTED_MODULE_6__["default"];
-n2es6.n2mapModule.N2ModelSource = _n2es6_n2mapModule_N2ModelSource__WEBPACK_IMPORTED_MODULE_7__["default"];
-n2es6.n2mapModule.N2Select = _n2es6_n2mapModule_N2Select__WEBPACK_IMPORTED_MODULE_8__["default"];
-n2es6.n2ui.N2EditorBase = _n2es6_n2ui_N2EditorBase__WEBPACK_IMPORTED_MODULE_1__["default"];
+n2es6.n2mapModule.N2CouchDbSource = _n2es6_n2mapModule_N2CouchDbSource__WEBPACK_IMPORTED_MODULE_3__["default"];
+n2es6.n2mapModule.N2CustomLineStyle = _n2es6_n2mapModule_N2CustomLineStyle__WEBPACK_IMPORTED_MODULE_4__["default"];
+n2es6.n2mapModule.N2CustomPointStyle = _n2es6_n2mapModule_N2CustomPointStyle__WEBPACK_IMPORTED_MODULE_5__["default"];
+n2es6.n2mapModule.N2LRU = _n2es6_n2mapModule_N2LRU__WEBPACK_IMPORTED_MODULE_6__["default"];
+n2es6.n2mapModule.N2LayerInfo = _n2es6_n2mapModule_N2LayerInfo__WEBPACK_IMPORTED_MODULE_7__["default"];
+n2es6.n2mapModule.N2MapCanvas = _n2es6_n2mapModule_N2MapCanvas__WEBPACK_IMPORTED_MODULE_8__["default"];
+n2es6.n2mapModule.N2ModelSource = _n2es6_n2mapModule_N2ModelSource__WEBPACK_IMPORTED_MODULE_9__["default"];
+n2es6.n2mapModule.N2Select = _n2es6_n2mapModule_N2Select__WEBPACK_IMPORTED_MODULE_10__["default"];
+n2es6.n2ui.N2EditorBase = _n2es6_n2ui_N2EditorBase__WEBPACK_IMPORTED_MODULE_2__["default"];
 n2es6.ol5support.N2Cluster = _n2es6_ol5support_N2Cluster__WEBPACK_IMPORTED_MODULE_0__["default"];
+n2es6.ol5support.N2DonutCluster = _n2es6_ol5support_N2DonutCluster__WEBPACK_IMPORTED_MODULE_1__["default"];
 
 /* harmony default export */ __webpack_exports__["default"] = (n2es6);
 
@@ -505,6 +511,39 @@ class N2CouchDbSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_1__["
 
 /***/ }),
 
+/***/ "./dist/n2es6/n2mapModule/N2CustomLineStyle.js":
+/*!*****************************************************!*\
+  !*** ./dist/n2es6/n2mapModule/N2CustomLineStyle.js ***!
+  \*****************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/**
+* @module n2es6/n2mapModule/N2CustomLineStyle
+*/
+
+/**
+ * @classdesc
+ * Custom style for feature linestring.
+ * @api
+ */
+class N2CustomLineStyle extends RegularShape{
+	constructor(opt_options) {
+		var options = $n2.extend({
+			
+		}, opt_options);
+		
+	}
+	render_(){
+		
+	}
+}
+/* harmony default export */ __webpack_exports__["default"] = (N2CustomLineStyle);
+
+/***/ }),
+
 /***/ "./dist/n2es6/n2mapModule/N2CustomPointStyle.js":
 /*!******************************************************!*\
   !*** ./dist/n2es6/n2mapModule/N2CustomPointStyle.js ***!
@@ -540,7 +579,7 @@ const colors =
 }
 /**
  * @classdesc
- * Set chart style for vector features.
+ * Custom style for features point.
  *
  * @constructor
  * @param {object} options
@@ -557,7 +596,7 @@ const colors =
  * @api
  */
 class N2CustomPointStyle extends ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_0__["default"]{
-	constructor(opt_options) {	
+	constructor(opt_options) {
 		var options = $n2.extend({
 			radius : 0,
 			donutScaleFactor: 1,
@@ -610,10 +649,13 @@ class N2CustomPointStyle extends ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_
 				});
 		if (options.scale) this.setScale(options.scale);
 
-		this.stroke_ = options.stroke || new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_2__["default"]({
-													color: "#000",
-													width: 2
-													});
+		this.stroke_ = options.stroke? new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_2__["default"]({
+									color: options.stroke,
+									width: 2
+								}): new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_2__["default"]({
+									color: "#ffffff",
+									width: 2
+								});
 		
 		this.donutratio_ = options.donutRatio || 0.5;
 		this.donutScaleFactor = options.donutScaleFactor ;
@@ -645,7 +687,7 @@ class N2CustomPointStyle extends ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_
 			}
 		}
 		if (this.data_){
-			this.renderChart_();
+			this.renderCanvas_();
 		} else {
 			return;
 		}
@@ -664,7 +706,7 @@ class N2CustomPointStyle extends ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_
 	 */
 	setData (data) {
 		this.data_ = data;
-		this.renderChart_();
+		this.renderCanvas_();
 	}
 
 	/**
@@ -680,7 +722,7 @@ class N2CustomPointStyle extends ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_
 	setRadius(radius, ratio) {
 		this.radius_ = radius;
 		this.donuratio_ = ratio || this.donuratio_;
-		this.renderChart_();
+		this.renderCanvas_();
 	}
 
 	/** Set animation step 
@@ -695,7 +737,7 @@ class N2CustomPointStyle extends ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_
 			this.animation_.animate = true;
 			this.animation_.step = step;
 		}
-		this.renderChart_();
+		this.renderCanvas_();
 	}
 	_getPreviousRadius (){
 		var hist = N2CustomPointStyle.__stackingHistory;
@@ -761,7 +803,7 @@ class N2CustomPointStyle extends ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_
 	}
 	/** @private
 	*/
-	renderChart_ (){	
+	renderCanvas_ (){	
 		var strokeStyle;
 		var strokeWidth = 0;
 	
@@ -856,7 +898,10 @@ class N2CustomPointStyle extends ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_
 				region.arc(c, c, currRadius, 2* Math.PI, 0);
 				region.closePath();
 				//context.lineWidth = 6;
-				//context.stroke();
+				
+				
+				context.strokeStyle = this.stroke_;
+				context.stroke(region, 'evenodd');
 				context.fillStyle = this.color_
 				context.globalAlpha = this.opacity_;
 				context.fill(region, 'evenodd');
@@ -1389,26 +1434,29 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var ol_layer_Group_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ol/layer/Group.js */ "./node_modules/ol/layer/Group.js");
 /* harmony import */ var ol_layer_Image_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ol/layer/Image.js */ "./node_modules/ol/layer/Image.js");
 /* harmony import */ var ol_View_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ol/View.js */ "./node_modules/ol/View.js");
-/* harmony import */ var ol_proj_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ol/proj.js */ "./node_modules/ol/proj.js");
-/* harmony import */ var ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ol/proj/Projection.js */ "./node_modules/ol/proj/Projection.js");
-/* harmony import */ var ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ol/layer/Tile.js */ "./node_modules/ol/layer/Tile.js");
-/* harmony import */ var ol_events_condition_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ol/events/condition.js */ "./node_modules/ol/events/condition.js");
-/* harmony import */ var ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ol/interaction/MouseWheelZoom.js */ "./node_modules/ol/interaction/MouseWheelZoom.js");
-/* harmony import */ var ol_interaction_js__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ol/interaction.js */ "./node_modules/ol/interaction.js");
-/* harmony import */ var ol_Observable__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ol/Observable */ "./node_modules/ol/Observable.js");
-/* harmony import */ var ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ol/interaction/Draw.js */ "./node_modules/ol/interaction/Draw.js");
-/* harmony import */ var ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ol/source/Stamen.js */ "./node_modules/ol/source/Stamen.js");
-/* harmony import */ var ol_source_OSM__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ol/source/OSM */ "./node_modules/ol/source/OSM.js");
-/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ol-layerswitcher */ "./node_modules/ol-layerswitcher/dist/ol-layerswitcher.js");
-/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_30___default = /*#__PURE__*/__webpack_require__.n(ol_layerswitcher__WEBPACK_IMPORTED_MODULE_30__);
-/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ol-ext/dist/ol-ext.css */ "./node_modules/ol-ext/dist/ol-ext.css");
-/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_31___default = /*#__PURE__*/__webpack_require__.n(ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_31__);
-/* harmony import */ var ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ol-ext/control/Bar */ "./node_modules/ol-ext/control/Bar.js");
-/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
-/* harmony import */ var ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ol-ext/control/Timeline */ "./node_modules/ol-ext/control/Timeline.js");
+/* harmony import */ var _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ../ol5support/N2DonutCluster.js */ "./dist/n2es6/ol5support/N2DonutCluster.js");
+/* harmony import */ var ol_proj_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ol/proj.js */ "./node_modules/ol/proj.js");
+/* harmony import */ var ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ol/proj/Projection.js */ "./node_modules/ol/proj/Projection.js");
+/* harmony import */ var ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ol/layer/Tile.js */ "./node_modules/ol/layer/Tile.js");
+/* harmony import */ var ol_events_condition_js__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ol/events/condition.js */ "./node_modules/ol/events/condition.js");
+/* harmony import */ var ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ol/interaction/MouseWheelZoom.js */ "./node_modules/ol/interaction/MouseWheelZoom.js");
+/* harmony import */ var ol_interaction_js__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ol/interaction.js */ "./node_modules/ol/interaction.js");
+/* harmony import */ var ol_Observable__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ol/Observable */ "./node_modules/ol/Observable.js");
+/* harmony import */ var ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ol/interaction/Draw.js */ "./node_modules/ol/interaction/Draw.js");
+/* harmony import */ var ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ol/source/Stamen.js */ "./node_modules/ol/source/Stamen.js");
+/* harmony import */ var ol_source_OSM__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ol/source/OSM */ "./node_modules/ol/source/OSM.js");
+/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ol-layerswitcher */ "./node_modules/ol-layerswitcher/dist/ol-layerswitcher.js");
+/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_31___default = /*#__PURE__*/__webpack_require__.n(ol_layerswitcher__WEBPACK_IMPORTED_MODULE_31__);
+/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ol-ext/dist/ol-ext.css */ "./node_modules/ol-ext/dist/ol-ext.css");
+/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_32___default = /*#__PURE__*/__webpack_require__.n(ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_32__);
+/* harmony import */ var ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ol-ext/control/Bar */ "./node_modules/ol-ext/control/Bar.js");
+/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
+/* harmony import */ var ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ol-ext/control/Timeline */ "./node_modules/ol-ext/control/Timeline.js");
 /**
  * @module n2es6/n2mapModule/N2MapCanvas
  */
+
+
 
 
 
@@ -1605,7 +1653,18 @@ class N2MapCanvas  {
 
 		this.bgSources = opts.backgrounds || [];
 		this.coordinates = opts.coordinates || null;
+		this.renderOrderBasedOn = opts.renderOrderBasedOn || undefined;
 		
+		if (this.renderOrderBasedOn
+			&& this.renderOrderBasedOn[0] === '='){
+			try{
+				this.renderOrderBasedOn = $n2.styleRuleParser.parse(
+						this.renderOrderBasedOn.substr(1)
+					);
+			} catch(e){
+				this.renderOrderBasedOn = e;
+			}
+		}
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styles);
 
 		this._drawMap();
@@ -1740,14 +1799,14 @@ class N2MapCanvas  {
 		var _this = this;
 
 		var olView = new ol_View_js__WEBPACK_IMPORTED_MODULE_19__["default"]({
-			center: Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_20__["transform"])([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
+			center: Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_21__["transform"])([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
 			projection: 'EPSG:3857',
 			zoom: 6
 		});
 		this.n2View = olView;
 		var customMap = new ol_Map_js__WEBPACK_IMPORTED_MODULE_14__["default"]({
-			interactions: Object(ol_interaction_js__WEBPACK_IMPORTED_MODULE_25__["defaults"])({mouseWheelZoom : false}).extend([
-				new ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_24__["default"]({
+			interactions: Object(ol_interaction_js__WEBPACK_IMPORTED_MODULE_26__["defaults"])({mouseWheelZoom : false}).extend([
+				new ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_25__["default"]({
 					duration: 200,
 					constrainResolution: false
 				})
@@ -1761,9 +1820,9 @@ class N2MapCanvas  {
 		//Config the initial bound on the ol5 map
 		if (this.coordinates && !this.coordinates.autoInitialBounds) {
 			let bbox = this.coordinates.initialBounds;
-			let boundInProj = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_20__["transformExtent"])(bbox,
-					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_21__["default"]({code: 'EPSG:4326'}),
-					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_21__["default"]({code: 'EPSG:3857'})
+			let boundInProj = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_21__["transformExtent"])(bbox,
+					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_22__["default"]({code: 'EPSG:4326'}),
+					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_22__["default"]({code: 'EPSG:3857'})
 			);
 			customMap.once('postrender', function(evt){
 				customMap.getView().fit(boundInProj, {size:customMap.getSize()});
@@ -1828,7 +1887,7 @@ class N2MapCanvas  {
 			  });
 			  var listenerKey = vectorSource.on('change', function(e) {
 			    if (vectorSource.getState() == 'ready') {
-			      Object(ol_Observable__WEBPACK_IMPORTED_MODULE_26__["unByKey"])(listenerKey);
+			      Object(ol_Observable__WEBPACK_IMPORTED_MODULE_27__["unByKey"])(listenerKey);
 			      customTimeline.refresh();
 			    }
 			  });
@@ -1859,12 +1918,12 @@ class N2MapCanvas  {
 		);
 
 
-		var customLayerSwitcher = new ol_layerswitcher__WEBPACK_IMPORTED_MODULE_30___default.a({
+		var customLayerSwitcher = new ol_layerswitcher__WEBPACK_IMPORTED_MODULE_31___default.a({
 					tipLabel: 'Legend' // Optional label for button
 				});
 		customMap.addControl(customLayerSwitcher);
 
-		var customTimeline = new ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_34__["default"]({
+		var customTimeline = new ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_35__["default"]({
 		    className: 'ol-zoomhover',
 		    source: vectorSource,
 		    graduation: 'day', // 'month'
@@ -1914,17 +1973,17 @@ class N2MapCanvas  {
 
 
 
-		var mainbar = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_32__["default"]();
+		var mainbar = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_33__["default"]();
 		customMap.addControl(mainbar);
 		mainbar.setPosition("top");
 		/* Nested toobar with one control activated at once */
-		var nested = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_32__["default"] ({ toggleOne: true, group:true });
+		var nested = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_33__["default"] ({ toggleOne: true, group:true });
 //		var selectInteraction= new SelectInteraction ();
 		mainbar.addControl (nested);
 
 
 		// Add selection tool (a toggle control with a select interaction)
-		var selectCtrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_33__["default"](
+		var selectCtrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_34__["default"](
 				{	html: '<i class="fa fa-hand-pointer-o"></i>',
 					className: "select",
 					title: "Select",
@@ -1943,12 +2002,12 @@ class N2MapCanvas  {
 		);
 		nested.addControl(selectCtrl);
 
-		this.interactionSet.drawInteraction = new ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_27__["default"]
+		this.interactionSet.drawInteraction = new ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_28__["default"]
 		({	type: 'Point',
 			source: this.overlayLayers[0].getSource()
 		});
 		// Add editing tools
-		var pedit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_33__["default"](
+		var pedit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_34__["default"](
 				{	html: '<i class="fa fa-map-marker" ></i>',
 					className: "edit",
 					title: 'Point',
@@ -2006,7 +2065,7 @@ class N2MapCanvas  {
 
 		function DFS(item, callback){
 			if(!item) return;
-			if ( item.data){
+			if ( item.data || typeof item.data === 'number'){
 				callback (item);
 				return;
 			}
@@ -2032,7 +2091,7 @@ class N2MapCanvas  {
 				if ( overlayInfo.clustering ){
 					var clsOpt = Object.assign({}, overlayInfo.clustering
 							,{source: alphasource});
-					betaSource = new n2es6.ol5support.N2Cluster(clsOpt);
+					betaSource = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_20__["default"](clsOpt);
 				}
 				var charlieSource = new _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_13__["default"]({
 					interaction: _this.interactionSet.selectInteraction,
@@ -2041,11 +2100,28 @@ class N2MapCanvas  {
 				});
 				var vectorLayer = new ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_16__["default"]({
 					title: "CouchDb",
-					renderMode : 'image',
+					renderMode : 'vector',
 					source: charlieSource,
 					style: StyleFn,
 					renderOrder: function(feature1, feature2){
-						return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
+						var valueSelector = _this.renderOrderBasedOn;
+						if (typeof valueSelector === 'object'
+							&& typeof valueSelector.getValue(feature1) === 'number'){
+								
+							var l = valueSelector.getValue(feature1),
+								r = valueSelector.getValue(feature2);
+							if (typeof l === 'number' && typeof r === 'number'){
+								if (l < r){
+									return -1;
+								} else if(l > r){
+									return 1;
+								} else {
+									return 0;
+								}
+							}
+						} else {
+							return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
+						}
 					}
 				});
 //				var layerOptions = _this.overlayInfos.shift();
@@ -2227,7 +2303,7 @@ class N2MapCanvas  {
 		var _this = this;
 
 		if( layerDefinition ) {
-			var ol5layer = new ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_22__["default"]({
+			var ol5layer = new ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_23__["default"]({
 				title: layerDefinition.name,
 				type: 'base',
 				visible: isDefaultLayer,
@@ -2288,7 +2364,7 @@ class N2MapCanvas  {
 
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.url ){
-				return new ol_source_OSM__WEBPACK_IMPORTED_MODULE_29__["default"]({
+				return new ol_source_OSM__WEBPACK_IMPORTED_MODULE_30__["default"]({
 					url : sourceOptionsInternal.url
 				});
 			} else {
@@ -2299,7 +2375,7 @@ class N2MapCanvas  {
 		} else if ( sourceTypeInternal == VENDOR.STAMEN) {
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.layerName ){
-				return new ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_28__["default"]({
+				return new ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_29__["default"]({
 					layer:  sourceOptionsInternal.layerName
 				});
 			} else {
@@ -2326,7 +2402,7 @@ class N2MapCanvas  {
 			let targetProjCode = 'EPSG:3857';
 			var targetCenter = [x, y];
 			if ( targetProjCode !== sourceProjCode){
-				var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_20__["getTransform"])( sourceProjCode, targetProjCode);
+				var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_21__["getTransform"])( sourceProjCode, targetProjCode);
 				// Convert [0,0] and [0,1] to proj
 				targetCenter = transformFn([x, y]);
 			}
@@ -2404,9 +2480,9 @@ class N2MapCanvas  {
 			let bbox = f.nunaliit_geom.bbox;
 			let geomBounds = undefined;
 			if ( Array.isArray(bbox)) {
-				geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_20__["transformExtent"])(bbox,
-						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_21__["default"]({code: srcProj}),
-						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_21__["default"]({code: dstProj})
+				geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_21__["transformExtent"])(bbox,
+						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_22__["default"]({code: srcProj}),
+						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_22__["default"]({code: dstProj})
 				);
 				return geomBounds;
 
@@ -2440,7 +2516,7 @@ class N2MapCanvas  {
 				geomBounds = bbox;
 
 				if (mapProj.getCode() !== f.n2GeomProj.getCode) {
-					geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_20__["transformExtent"])(bbox, f.n2GeomProj, mapProj);
+					geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_21__["transformExtent"])(bbox, f.n2GeomProj, mapProj);
 				}
 
 				f.n2ConvertedBbox = geomBounds;
@@ -3358,7 +3434,7 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 	/**
 	 * This function is called when the map resolution is changed
 	 */
-	onChangedResolution(res,proj, extent){
+	onChangedResolution(res, proj, extent){
 		//$n2.log('resolution',res,proj);
 
 
@@ -3442,6 +3518,7 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 
 		return targetResolution;
 	}
+	//TODO need to reimplemented it, too expensive for reload every feature
 	_reloadAllFeatures(){
 		var _this = this;
 
@@ -5153,6 +5230,395 @@ class N2Cluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["defaul
 	}
 
 	/* harmony default export */ __webpack_exports__["default"] = (N2Cluster);
+
+
+/***/ }),
+
+/***/ "./dist/n2es6/ol5support/N2DonutCluster.js":
+/*!*************************************************!*\
+  !*** ./dist/n2es6/ol5support/N2DonutCluster.js ***!
+  \*************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var ol_util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol/util.js */ "./node_modules/ol/util.js");
+/* harmony import */ var ol_obj_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/obj.js */ "./node_modules/ol/obj.js");
+/* harmony import */ var ol_events_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/events.js */ "./node_modules/ol/events.js");
+/* harmony import */ var ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/events/EventType.js */ "./node_modules/ol/events/EventType.js");
+/* harmony import */ var ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/source/Vector.js */ "./node_modules/ol/source/Vector.js");
+/* harmony import */ var ol_proj_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/proj.js */ "./node_modules/ol/proj.js");
+/* harmony import */ var ol_extent_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/extent.js */ "./node_modules/ol/extent.js");
+/* harmony import */ var ol_geom_Point_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/geom/Point.js */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_Feature_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/Feature.js */ "./node_modules/ol/Feature.js");
+/* harmony import */ var ol_coordinate_js__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/coordinate.js */ "./node_modules/ol/coordinate.js");
+/**
+* @module n2es6/ol5support/N2DonutCluster
+*/
+
+
+
+
+
+
+//import VectorSource from '';
+
+
+
+
+
+/**
+* @classdesc
+* Layer source that cluster the donut geometry. Implemented for atlascine 2 project
+* system
+* @api
+*/
+class N2DonutCluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["default"] {
+
+	/**
+	* @param {Options} options CLuster options
+	*/
+	constructor(options) {
+		options = Object(ol_obj_js__WEBPACK_IMPORTED_MODULE_1__["assign"])({
+			distance: 20,
+			minimumPolygonPixelSize : 20,
+			minimumLinePixelSize : 20,
+			clusterPointsOnly : false,
+			threshold: null,
+			clusterPrefix: null,
+			disableDynamicClustering : false
+		}, options);
+		super(options);
+
+		/**
+		* @type {number|undefined}
+		* @protected
+		*/
+		this.distance = options.distance;
+		/**
+		* @type {number}
+		*/
+		this.minimumPolygonPixelSize = options.minimumPolygonPixelSize ;
+
+		/**
+		* @type {number}
+		*/
+		this.minimumLinePixelSize = options.minimumLinePixelSize ;
+		/**
+		* @type {boolean}
+		*/
+		this.disableDynamicClustering = options.disableDynamicClustering ;
+		/**
+		* @type {boolean}
+		*/
+
+		this.clusterPointsOnly = options.clusterPointsOnly ;
+
+		/**
+		* @type {number}
+		*/
+		this.threshold = options.threshold;
+
+		/**
+		*  @type {number}
+		*/
+		this.resolution = 1;
+
+		/**
+		*  @type {string}
+		*/
+		this.projection = null;
+
+		/**
+		* @type {string}
+		*/
+		this.clusterPrefix = 'cluster_' + $n2.getUniqueId() + '_';
+
+		/**
+		* @type {number}
+		*/
+		this.clusterId = 1;
+		
+	    /**
+	     * @type {Array<Feature>}
+	     * @protected
+	     */
+	    this.features = [];
+	    this.source = options.source;
+	    
+	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__["default"].CHANGE, this.refresh, this);
+
+	}
+	/**
+	* Loading the feature from the layer source, and config the resolution and projection
+	* @override
+	*/
+	loadFeatures(extent, resolution, projection) {
+		this.source.loadFeatures(extent, resolution, projection);
+		if (resolution !== this.resolution) {
+			this.clear(true);
+			this.resolution = resolution;
+			this.projection = projection;
+			this.extent = extent;
+			this.cluster();
+			this.addFeatures(this.features);
+		}
+	}
+	
+	refresh () {
+		this.clear();
+		this.cluster();
+		this.addFeatures(this.features);
+		
+	}
+	clear(opt_fast){
+		
+		 if (opt_fast) {
+		      for (var featureId in this.featureChangeKeys_) {
+		        var keys = this.featureChangeKeys_[featureId];
+		        keys.forEach(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["unlistenByKey"]);
+		      }
+		      if (!this.featuresCollection_) {
+		        this.featureChangeKeys_ = {};
+		        this.idIndex_ = {};
+		        this.undefIdIndex_ = {};
+		      }
+		    } else {
+		      if (this.featuresRtree_) {
+		        this.featuresRtree_.forEach(this.removeFeatureInternal, this);
+		        for (var id in this.nullGeometryFeatures_) {
+		          this.removeFeatureInternal(this.nullGeometryFeatures_[id]);
+		        }
+		      }
+		    }
+		    if (this.featuresCollection_) {
+		      this.featuresCollection_.clear();
+		    }
+
+		    if (this.featuresRtree_) {
+		      this.featuresRtree_.clear();
+		    }
+		    this.loadedExtentsRtree_.clear();
+		    this.nullGeometryFeatures_ = {};
+
+		
+	}
+	/**
+	* The cluster function for cluster Point, Line and Geometry
+	* @override
+	*/
+	cluster(opt_extent) {
+		var that_ = this;
+		if (this.resolution === undefined) {
+			return;
+		}
+		this.features.length = 0;
+		var extent = Object(ol_extent_js__WEBPACK_IMPORTED_MODULE_6__["createEmpty"])();
+		var mapDistance = this.distance * this.resolution;
+		var features = null;
+		if (opt_extent){
+			features = this.source.getFeaturesInExtent(opt_extent);
+		} else {
+			features = this.source.getFeatures();
+		}
+		/**
+		* @type {!Object<string, boolean>}
+		*/
+		var clustered = {};
+		var taboo = {};
+		for (let i = 0, ii = features.length; i < ii; i++) {
+			let feature = features[i];
+			var uid = Object(ol_util_js__WEBPACK_IMPORTED_MODULE_0__["getUid"])(feature);
+			let hasInTaboo = (Object(ol_util_js__WEBPACK_IMPORTED_MODULE_0__["getUid"])(feature) in taboo);
+			if (hasInTaboo){
+				continue;
+			}
+
+			if (!(Object(ol_util_js__WEBPACK_IMPORTED_MODULE_0__["getUid"])(feature) in clustered)) {
+				if (!this._isEligibleFeature(feature)){
+					taboo[uid] = true;
+					this.features.push(feature);
+					continue;
+				}
+	
+				var geomExtent = feature.getGeometry().getExtent();
+				var geomCentroid = Object(ol_extent_js__WEBPACK_IMPORTED_MODULE_6__["getCenter"])(geomExtent);
+				Object(ol_extent_js__WEBPACK_IMPORTED_MODULE_6__["createOrUpdateFromCoordinate"])(geomCentroid, extent);
+				Object(ol_extent_js__WEBPACK_IMPORTED_MODULE_6__["buffer"])(extent, mapDistance, extent);
+
+				let neighbors = this.source.getFeaturesInExtent(extent);
+				neighbors = neighbors.filter(function (neighbor) {
+					let uid = Object(ol_util_js__WEBPACK_IMPORTED_MODULE_0__["getUid"])(neighbor);
+					if (! (uid in clustered)){
+						if (! (uid in taboo) ){
+							if (that_._isEligibleFeature(neighbor)){
+								clustered[uid] = true;
+								return true;
+							}
+						}
+					}
+					return false;
+					
+				});
+				this.features.push.apply(this.features, this.createCluster(neighbors));
+			}
+		}
+	}
+
+	/**
+	* @param {Array<Feature>} features Features
+	* @return {Feature} The cluster feature.
+	* @protected
+	*/
+	createCluster(features) {
+
+		var centroid = [0, 0];
+		var count = 0;
+		var rst = [];
+		//calculate the centroid for all the clustered donut
+		for (let i = features.length - 1; i >= 0; --i) {
+			var geom = features[i].getGeometry();
+			if( geom ){
+				// Pass in infinity extent to by-pass OpenLayers bug
+				var geomExtent = geom.getExtent();
+				if( geomExtent ){
+					var geomCentroid = Object(ol_extent_js__WEBPACK_IMPORTED_MODULE_6__["getCenter"])(geomExtent);
+					if (geomCentroid) {
+						Object(ol_coordinate_js__WEBPACK_IMPORTED_MODULE_9__["add"])(centroid, geomCentroid);
+						++count;
+					}
+				}
+			}
+		}
+		Object(ol_coordinate_js__WEBPACK_IMPORTED_MODULE_9__["scale"])(centroid, 1/count);
+
+		var centroidGeom = new ol_geom_Point_js__WEBPACK_IMPORTED_MODULE_7__["default"](centroid);
+		
+		for (let f of features){
+			var newf = f.clone();
+			newf.data = f.data;
+			newf.fid = f.fid;
+			newf.n2ConvertedBbox = f.n2ConvertedBbox;
+			newf.n2GeomProj = f.n2GeomProj;
+			newf.setGeometry(centroidGeom);
+			newf.setId(f.getId()+'_inCluster');
+			newf.clusterId = this.clusterPrefix + this.clusterId;
+			rst.push(newf);
+		}
+
+		++this.clusterId;
+		return rst;
+
+	}
+
+	/**
+	* @param {Feature} feature The feature from source
+	* @return {boolean} true if a feature is eligible feature to be clustered
+	* @protected
+	*/
+	_isEligibleFeature(feature) {
+		if (feature.n2DisableClustering) {
+			return false;
+		}
+
+		// By default, cluster everything
+		var eligible = true;
+
+		if (!this.disableDynamicClustering) {
+			// Dynamic Clustering
+			// Small polygons and lines are turned into a cluster
+			eligible = false;
+
+			var extent = this._computeFullBoundingBox(feature);
+			if (extent) {
+				// If the original bounds are larger than what is expected
+				// by the resolution, do not cluster. At one point, the correct
+				// geometry will arrive to show this feature.
+				var xLen = (extent[2] - extent[0]) / this.resolution;
+				var yLen = (extent[3] - extent[1]) / this.resolution;
+				if ((xLen) < this.minimumLinePixelSize
+				&& (yLen) < this.minimumLinePixelSize) {
+					eligible = true;
+				}
+			} else {
+				// We are unable to compute the bounds for this feature.
+				// Use the geometry for the purpose of clustering
+				if (feature.getGeometry().getType().indexOf('Point') >= 0) {
+					eligible = true;
+				} else {
+					// Pass in infinity extent to by-pass OpenLayers bug
+					var bounds = feature.getGeometry().getExtent();
+
+					var xLen = (bounds[2]-bounds[0])/ this.resolution;
+					var yLen = (bounds[3]-bounds[1]) / this.resolution;
+					if ((xLen) < this.minimumLinePixelSize
+					&& (yLen) < this.minimumLinePixelSize) {
+						eligible = true;
+					}
+				}
+			}
+
+		} else if (this.clusterPointsOnly) {
+			// Cluster Point Only
+			// Do not cluster polygons and lines
+			eligible = false;
+			if (feature.getGeometry().getType().indexOf('Point') >= 0) {
+				eligible = true;
+			}
+		}
+
+		return eligible;
+	}
+
+	/**
+	* Compute the bounding box of the original geometry. This may differ from
+	* the bounding box of the geometry on the feature since this can be a
+	* simplification.
+	* @param {Feature} f The bounding box value from nunaliit project, which considers both the simplified geometries and original one.
+	* @return {Array<number>} Extent
+	* @protected
+	*/
+	_computeFullBoundingBox(f) {
+		return this._computeFeatureOriginalBboxForMapProjection(f, this.projection);
+	}
+	_computeFeatureOriginalBboxForMapProjection(f, mapProj) {
+		// Each feature has a projection stored at f.n2GeomProj
+		// that represents the original projection for a feature
+		//
+		// Each feature has a property named 'n2ConvertedBbox' that contains
+		// the full geometry bbox converted for the map projection, if
+		// already computed.
+
+		if (f && f.n2ConvertedBbox) {
+			return f.n2ConvertedBbox;
+		}
+
+		let geomBounds = undefined;
+		if (f.data
+			&& f.data.nunaliit_geom
+			&& f.data.nunaliit_geom.bbox
+			&& f.n2GeomProj
+			&& mapProj) {
+
+				var bbox = f.data.nunaliit_geom.bbox;
+				if (Array.isArray(bbox)
+				&& bbox.length >= 4) {
+					geomBounds = bbox;
+
+					if (mapProj.getCode() !== f.n2GeomProj.getCode) {
+						geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_5__["transformExtent"])(bbox, f.n2GeomProj, mapProj);
+					}
+
+					f.n2ConvertedBbox = geomBounds;
+				}
+			}
+
+			return geomBounds;
+		}
+	}
+
+	/* harmony default export */ __webpack_exports__["default"] = (N2DonutCluster);
 
 
 /***/ }),
