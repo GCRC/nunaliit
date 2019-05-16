@@ -55,6 +55,7 @@ var MDC = $n2.Class('MDC',{
 	mdcClasses: null,
 	mdcAttributes: null,
 	parentId: null,
+	docFragment: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -117,11 +118,12 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 			this.mdcClasses.push('mdc-button--raised');
 		}
 
+		this.docFragment = $(document.createDocumentFragment());
 		$btn = $('<button>')
 			.attr('id',this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
 			.text(_loc(this.btnLabel))
-			.appendTo($('#' + this.parentId));
+			.appendTo($(this.docFragment));
 
 		if (this.btnFunction) {
 			$btn.click(this.btnFunction);
@@ -135,10 +137,12 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		}
 
 		this._attachRippleToButton(this.mdcId);
+		
+		this.docFragment.appendTo($('#' + this.parentId));
 	},
 
 	_attachRippleToButton: function(btnId){
-		var btn = document.getElementById(btnId);
+		var btn = this.docFragment[0].getElementById(btnId);
 		if (btn) {
 			$mdc.ripple.MDCRipple.attachTo(btn);
 		}
