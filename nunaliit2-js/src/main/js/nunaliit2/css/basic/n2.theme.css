@@ -378,7 +378,7 @@
 	background: url(./images/help.png);
 	background-position: center;
 	background-repeat: no-repeat;
-	background-size: contain;
+	background-size: 23px 23px;
 	object-fit: cover;
 	width: 23px;
 	height: 23px;
