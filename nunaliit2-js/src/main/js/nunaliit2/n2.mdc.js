@@ -874,16 +874,6 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 var attachMDCComponents = function(){
 	var i, e;
 
-	// attach ripple to floating action buttons
-	var mdc_fabs = document.getElementsByClassName('mdc-fab');
-	for (i = 0, e = mdc_fabs.length; i < e; i += 1) {
-		try {
-			$mdc.ripple.MDCRipple.attachTo(mdc_fabs[i]);
-		} catch (error){
-			$n2.log("Unable to attach material design component to floating action button ripple: " + error);
-		}
-	}
-
 	// attach textFields
 	var text_fields = document.getElementsByClassName('mdc-text-field');
 	for (i = 0, e = text_fields.length; i < e; i += 1) {
