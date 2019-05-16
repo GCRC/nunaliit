@@ -123,7 +123,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 			.attr('id',this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
 			.text(_loc(this.btnLabel))
-			.appendTo($(this.docFragment));
+			.appendTo(this.docFragment);
 
 		if (this.btnFunction) {
 			$btn.click(this.btnFunction);
@@ -197,10 +197,11 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 			this.mdcClasses.push('mdc-checkbox--disabled');
 		}
 
+		this.docFragment = $(document.createDocumentFragment());
 		$chkbox = $('<div>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
-			.appendTo($('#' + this.parentId));
+			.appendTo(this.docFragment);
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -237,11 +238,13 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 			.appendTo($('#' + this.parentId));
 
 		this._attachCheckBox(this.mdcId);
+
+		this.docFragment.appendTo($('#' + this.parentId));
 	},
 
 	_attachCheckBox: function(chkboxId){
 
-		var chkbox = document.getElementById(chkboxId);
+		var chkbox = this.docFragment[0].getElementById(chkboxId);
 		if (chkbox) {
 			$mdc.checkbox.MDCCheckbox.attachTo(chkbox);
 		}
@@ -303,6 +306,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 
 		this.mdcClasses.push('mdc-dialog');
 
+		this.docFragment = $(document.createDocumentFragment());
 		this.mdcDialogElement = $('<div>')
 			.attr('id',this.mdcId)
 			.attr('role','alertdialog')
@@ -310,7 +314,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			.attr('aria-labelledby','my-dialog-title')
 			.attr('aria-describedby','my-dialog-content')
 			.addClass(this.mdcClasses.join(' '))
-			.appendTo($('body'));
+			.appendTo(this.docFragment);
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -369,6 +373,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		// Attach mdc component to dialog
 		this._attachDialog(this.mdcId);
 
+		this.docFragment.appendTo($('body'));
 
 		if (this.closeBtn) {
 			this.addCloseBtn();
@@ -376,7 +381,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	_attachDialog: function(dialogId){
-		var dialog = document.getElementById(dialogId);
+		var dialog = this.docFragment[0].getElementById(dialogId);
 		if (dialog) {
 			this.mdcDialogComponent = new $mdc.dialog.MDCDialog(dialog);
 		}
@@ -430,10 +435,11 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 
 		this.mdcClasses.push('mdc-form-field');
 
+		this.docFragment = $(document.createDocumentFragment());
 		$formField = $('<div>')
 			.attr('id',this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
-			.appendTo($('#' + this.parentId));
+			.appendTo(this.docFragment);
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -443,6 +449,8 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 		}
 
 		this._attachFormField(this.mdcId);
+
+		this.docFragment.appendTo($('#' + this.parentId));
 	},
 
 	_appendComponent: function(id){
@@ -455,7 +463,7 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 	},
 
 	_attachFormField: function(formFieldId){
-		var formField = document.getElementById(formFieldId);
+		var formField = this.docFragment[0].getElementById(formFieldId);
 
 		if (formField) {
 			$mdc.formField.MDCFormField.attachTo(formField);
@@ -511,10 +519,11 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 			this.mdcClasses.push('mdc-radio--disabled');
 		}
 
+		this.docFragment = $(document.createDocumentFragment());
 		$rbtn = $('<div>')
 			.attr('id',this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
-			.appendTo($('#' + this.parentId));
+			.appendTo(this.docFragment);
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -552,11 +561,13 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 			.appendTo($('#' + this.parentId));
 
 		this._attachRadioButton(this.mdcId);
+
+		this.docFragment.appendTo($('#' + this.parentId));
 	},
 
 	_attachRadioButton: function(radioBtnId){
 		
-		var radioBtn = document.getElementById(radioBtnId);
+		var radioBtn = this.docFragment[0].getElementById(radioBtnId);
 		if (radioBtn) {
 			$mdc.radio.MDCRadio.attachTo(radioBtn);
 		}
@@ -613,11 +624,12 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.mdcClasses.push('mdc-select');
 		this.mdcClasses.push('mdc-select--outline');
 
+		this.docFragment = $(document.createDocumentFragment());
 		$menu = $('<div>')
 			.attr('id',this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
 			.text(_loc(this.menuLabel))
-			.appendTo($('#' + this.parentId));
+			.appendTo(this.docFragment);
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -668,10 +680,12 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		}
 
 		this._attachSelectMenu(this.mdcId);
+
+		this.docFragment.appendTo($('#' + this.parentId));
 	},
 
 	_attachSelectMenu: function(menuId){
-		var menu = document.getElementById(menuId);
+		var menu = this.docFragment[0].getElementById(menuId);
 		if (menu) {
 			$mdc.select.MDCSelect.attachTo(menu);
 		}
@@ -772,10 +786,11 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			this.mdcClasses.push('mdc-text-field--outlined');
 		}
 
+		this.docFragment = $(document.createDocumentFragment());
 		$txtFld = $('<div>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
-			.appendTo($('#' + this.parentId));
+			.appendTo(this.docFragment);
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -843,10 +858,12 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		}
 
 		this._attachTextField(this.mdcId);
+
+		this.docFragment.appendTo($('#' + this.parentId));
 	},
 
 	_attachTextField: function(txtFldId){
-		var txtFld = document.getElementById(txtFldId);
+		var txtFld = this.docFragment[0].getElementById(txtFldId);
 		if (txtFld) {
 			$mdc.textField.MDCTextField.attachTo(txtFld);
 		}
