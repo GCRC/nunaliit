@@ -133,126 +133,58 @@ var LanguageSwitcher = $n2.Class({
 		var _this = this;
 		var diagId = $n2.getUniqueId();
 
-		var $langDialog = $('<div>')
-			.attr('id',diagId)
-			.attr('role','alertdialog')
-			.attr('aria-modal','true')
-			.attr('aria-labelledby','my-dialog-title')
-			.attr('aria-describedby','my-dialog-content')
-			.addClass('n2lang_langSelect_dialog mdc-dialog')
-			.appendTo($('body'));
-
-		var $dialogContainer = $('<div>')
-			.addClass('mdc-dialog__container')
-			.appendTo($langDialog);
-
-		var $dialogSurface = $('<div>')
-			.addClass('mdc-dialog__surface')
-			.appendTo($dialogContainer);
-
-		$('<h2>')
-			.addClass('mdc-dialog__title')
-			.text(_loc('Select Language'))
-			.appendTo($dialogSurface);
-
-		var $langList = $('<div>')
-			.addClass('n2lang_langSelect_list mdc-dialog__content')
-			.appendTo($dialogSurface);
+		var langDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Select Language',
+			mdcClasses: ['n2Lang_langSelect_dialog'],
+			closeBtn: true
+		});
 		
-		var $footer = $('<footer>')
-			.addClass('mdc-dialog__actions')
-			.appendTo($dialogSurface);
+		var languageSelect = new $n2.mdc.MDCFormField({
+			parentId: langDialog.getContentId()
+		});
 
-		var btnOpts = {
-			parentId: $n2.utils.getElementIdentifier($footer),
-			mdcClasses: ['n2dialogs_alert_okButton', 'mdc-dialog__button'],
-			btnLabel: 'Close',
-			btnFunction: function(){
-				mdcDialogComponent.close();
-				$langDialog.remove();
-				return false;
-			}
-		};
+		var formFieldId = languageSelect.getId();
 
-		new $n2.mdc.MDCButton(btnOpts);
-
-		$('<div>')
-			.addClass('mdc-dialog__scrim')
-			.click(function(){
-				mdcDialogComponent.close();
-				$langDialog.remove();
-				return false;
-			})
-			.appendTo($langDialog);
-
-		// Attach mdc component to alert dialog
-		mdcDialogComponent = new mdc.dialog.MDCDialog($langDialog[0]);
-		mdcDialogComponent.open();
-		
-		var onClick = function(e){
-			var $input = $(this);
-			if( $input.is(':checked') ){
-				var code = $input.attr('n2Code');
-				var local = $n2.l10n.getLocale();
-				if (local.lang !== code){
-					_this._selectLanguage(code);
-					mdcDialogComponent.close();
-					$langDialog.remove();
-				}
-			};
-			return false;
-		};
-		
 		var languages = this._getLanguages();
 		for(var i=0,e=languages.length;i<e;++i){
 			var l = languages[i];
-			addLanguage($langList, l.name, l.code);
+			addLanguage(formFieldId, l.name, l.code);
 		};
 
-		addLanguage($langList, _loc('Default'), null);
-
+		addLanguage(formFieldId, _loc('Default'), null);
+		
 		function addLanguage($list, name, code){
-			var id = $n2.getUniqueId();
-			var $formDiv = $('<div>')
-				.addClass('mdc-form-field radio_form_field')
-				.appendTo($list);
-			var $div = $('<div>')
-				.addClass('mdc-radio')
-				.appendTo($formDiv);
-			var $input = $('<input>')
-				.attr('id',id)
-				.attr('type','radio')
-				.attr('name','languageSelect')
-				.click(onClick)
-				.addClass('mdc-radio__native-control')
-				.appendTo($div);
 
-			var $mdcRadioBackground = $('<div>')
-				.addClass('mdc-radio__background')
-				.appendTo($div);
-			$('<div>')
-				.addClass('mdc-radio__outer-circle')
-				.appendTo($mdcRadioBackground);
-			$('<div>')
-				.addClass('mdc-radio__inner-circle')
-				.appendTo($mdcRadioBackground);
-			
+			var languageSelect = new $n2.mdc.MDCRadio({
+				parentId: $list,
+				radioLabel: name,
+				radioName: "languageSelect",
+			});
+		
+			var onClick = function(e){
+				var $input = $(this);
+				if( $input.is(':checked') ){
+					var code = $input.attr('n2Code');
+					var local = $n2.l10n.getLocale();
+					if (local.lang !== code){
+						_this._selectLanguage(code);
+						langDialog.closeDialog();
+					}
+				};
+				return false;
+			};
+
 			if( code ){
-				$input.attr('n2Code',code);
-			};
-			
-			var locale = $n2.l10n.getLocale();
-			if( locale.lang === code ){
-				$input.attr('checked', 'checked');
-			};
-			
-			$('<label/>')
-				.attr('for',id)
-				.text(name)
-				.appendTo($list);
+				var $radioInput = $('#' + languageSelect.getId()).find('input');
+				$radioInput.attr('n2Code',code);
+				$radioInput.click(onClick);
 
-			$('<br/>').appendTo($list);
-
+				var locale = $n2.l10n.getLocale();
+				if (locale.lang === code) {
+					languageSelect.radioChecked = true;
+					$radioInput.attr('checked', 'checked');
+				};
+			};
 		};
 	},
 	
