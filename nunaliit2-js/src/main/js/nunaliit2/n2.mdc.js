@@ -32,6 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2){
 "use strict";
 
+var MDCDialogComponent, MDCDialogElement;
 var _loc = function(str,args){
 	return $n2.loc(str,'nunaliit2',args);
 };
@@ -73,6 +74,10 @@ var MDC = $n2.Class('MDC',{
 		if (!this.mdcId) {
 			this.mdcId = $n2.getUniqueId();
 		}
+	},
+
+	getId: function(){
+		return this.mdcId;
 	}
 });
 
@@ -260,16 +265,12 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 //  - dialogTitle (String): Text defining the title of the dialog window.
 //  - closeBtn (Boolean): Add a close button to the dialog window (default = false).
 //  - closeBtnText (String): Update the close button text (default = "Close").
-//  - customBtns (Array): An array of objects defining button options.
 var MDCDialog = $n2.Class('MDCDialog', MDC, {
-	mdcDialogComponent: null,
-	mdcDialogElement: null,
 	dialogHtmlContent: null,
 	dialogTextContent: null,
 	dialogTitle: null,
 	closeBtn: null,
 	closeBtnText: null,
-	footerBtns: null, 
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -278,7 +279,6 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			dialogTitle: "",
 			closeBtn: false,
 			closeBtnText: "Close",
-			footerBtns: []
 		}, opts_);
 
 		MDC.prototype.initialize.call(this,opts);
@@ -289,11 +289,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		this.closeBtn = opts.closeBtn;
 		this.closeBtnText = opts.closeBtnText;
 
-		if ($n2.utils.isArray(opts.footerBtns)) {
-			this.footerBtns = opts.footerBtns;
-		}
-
-		this.msgId = $n2.getUniqueId();
+		this.contentId = $n2.getUniqueId();
 		this.footerId = $n2.getUniqueId();
 
 		this._generateMDCDialog();
@@ -307,7 +303,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		this.mdcClasses.push('mdc-dialog');
 
 		this.docFragment = $(document.createDocumentFragment());
-		this.mdcDialogElement = $('<div>')
+		MDCDialogElement = $('<div>')
 			.attr('id',this.mdcId)
 			.attr('role','alertdialog')
 			.attr('aria-modal','true')
@@ -319,13 +315,13 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				this.mdcDialogElement.attr(key, _this.mdcAttributes[key]);
+				MDCDialogElement.attr(key, _this.mdcAttributes[key]);
 			});
 		}
 
 		$dialogContainer = $('<div>')
 			.addClass('mdc-dialog__container')
-			.appendTo(this.mdcDialogElement);
+			.appendTo(MDCDialogElement);
 
 		$dialogSurface = $('<div>')
 			.addClass('mdc-dialog__surface')
@@ -337,7 +333,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			.appendTo($dialogSurface);
 
 		$dialogMessage = $('<div>')
-			.attr('id', this.msgId)
+			.attr('id', this.contentId)
 			.addClass('mdc-dialog__content')
 			.text(content)
 			.appendTo($dialogSurface);
@@ -346,8 +342,6 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			$dialogMessage.html(_loc(this.dialogHtmlContent));
 		} else if (this.dialogTextContent) {
 			$dialogMessage.text(_loc(this.dialogTextContent));
-		} else {
-			return;
 		}
 
 		$footer = $('<footer>')
@@ -355,20 +349,10 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			.addClass('mdc-dialog__actions')
 			.appendTo($dialogSurface);
 
-		if (this.footerBtns) {
-			this.footerBtns.forEach(function(btnOpts) {
-				try {
-					new MDCButton(btnOpts);
-				} catch (error) {
-					$n2.logError("Unable to add button to dialog footer: " + error);	
-				}
-			});
-		}
-
 		$('<div>')
 			.addClass('mdc-dialog__scrim')
-			.click(this.closeDialog())
-			.appendTo(this.mdcDialogElement);
+			.click(_this.closeDialog)
+			.appendTo(MDCDialogElement);
 
 		// Attach mdc component to dialog
 		this._attachDialog(this.mdcId);
@@ -378,32 +362,45 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		if (this.closeBtn) {
 			this.addCloseBtn();
 		}
+		
+		this.openDialog();
 	},
 
 	_attachDialog: function(dialogId){
 		var dialog = this.docFragment[0].getElementById(dialogId);
 		if (dialog) {
-			this.mdcDialogComponent = new $mdc.dialog.MDCDialog(dialog);
+			MDCDialogComponent = new $mdc.dialog.MDCDialog(dialog);
 		}
 	},
 
+	getContentId: function() {
+		return this.contentId;
+	},
+
+	getFooterId: function() {
+		return this.footerId;
+	},
+
 	closeDialog: function(){
-		this.mdcDialogComponent.close();
-		this.mdcDialogElement.remove();
-		return false;
+		if (MDCDialogComponent && MDCDialogComponent.isOpen) {
+			MDCDialogComponent.close();
+			MDCDialogElement.remove();
+			return false;
+		}
 	},
 
 	openDialog: function(){
-		this.mdcDialogComponent.open();
+		if (MDCDialogComponent && !MDCDialogComponent.isOpen) {
+			MDCDialogComponent.open();
+		}
 	},
 
 	addCloseBtn: function(){
-		var closeBtnOpts = {
+		new MDCButton({
 			parentId: this.footerId,
 			btnLabel: this.closeBtnText,
 			btnFunction: this.closeDialog
-		};
-		new MDCButton(closeBtnOpts);
+		});
 	}, 
 
 	addFooterBtn: function(btnOpts){
@@ -535,7 +532,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		$rbtnInput = $('<input>')
 			.attr('id', rbtnInputId) 
 			.attr('type', 'radio')
-			.name('name', this.radioName)
+			.attr('name', this.radioName)
 			.addClass('mdc-radio__native-control')
 			.appendTo($rbtn);
 
