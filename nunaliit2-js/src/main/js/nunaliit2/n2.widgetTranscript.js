@@ -123,8 +123,10 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 		};
 
 		this.transcriptConvertor = new SrtToJsonConvertor();
+		this.transcriptDiv = undefined;
 		this.transcript_array = [];
 
+		this.lastTimeUserScroll = 0;
 		// Get container
 		var containerClass = opts.containerClass;
 		if( !containerClass ){
@@ -517,7 +519,7 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 				.attr('id', this.transcriptId)
 				.addClass('n2widgetTranscript_transcript')
 				.appendTo($mediaDiv);
-
+			
 			/*this.transcript_array = [
 				{"start": "0.00",
 					"fin": "5.00",
@@ -576,6 +578,7 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 						_this._updateCurrentTime(currentTime, 'text');
 					});
 			}
+			//$transcript.on("scroll", _this._onUserScrollAction);
 		}
 	},
 	
@@ -678,6 +681,10 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 	},
 
 	_timeChanged: function(currentTime, origin){
+		
+		var _this = this;
+		
+		// console.dir($._data($('#'+ this.transcriptId)[0], 'events'));
 		// Act upon the text
 		for(var i =0;i<this.transcript_array.length;i++) {
 			var transcriptElem = this.transcript_array[i];
@@ -689,12 +696,16 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 			 && currentTime <= transcriptElem.fin) {
 				$transcriptElem.addClass('highlight');
 				//scroll transcript div, so that the ongoing subtitle always stay in the viewport
-				this._scrollToView($transcriptElem);
+				if ($.now() - this.lastTimeUserScroll > 5000){
+				
+					this._scrollToView($transcriptElem);
+				}
 
 			};
 
 			//$n2.log('current time: '+ currentTime);
 		}
+
 		
 		if( 'model' === origin ){
 			var $video = $('#'+this.videoId);
@@ -712,11 +723,29 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 			$video[0].play();
 		}
 	},
+	
+	_onUserScrollAction: function(evt){
+		this.lastTimeUserScroll = $.now();
+	},
 	_scrollToView: function($dst) {
+		var _this = this;
 		var parent_height = $dst.parent().innerHeight();
 		var curr_pos = $dst.offset().top - $dst.parent().offset().top;
-		if (curr_pos > parent_height /2 || curr_pos < 0){
-			$dst.parent().scrollTop($dst.parent().scrollTop() + curr_pos);
+		if (curr_pos > parent_height *2 / 3 || curr_pos < 0){
+			$('#'+ this.transcriptId).off("scroll");
+			var oldOffset = $dst.parent().scrollTop();
+			$dst.parent().scrollTop(oldOffset + curr_pos);
+			
+			var inid = setInterval(function(){
+				var curOffset = $dst.parent().scrollTop();
+				if(curOffset !== oldOffset){
+					
+				} else {
+					$('#'+ _this.transcriptId).on("scroll", _this._onUserScrollAction.bind(_this));
+					clearInterval(inid);
+				}
+				oldOffset = curOffset;
+			},100);
 		}
 	},
 	_renderError: function(errMsg){
