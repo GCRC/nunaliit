@@ -149,76 +149,21 @@ var ProgressDialog = $n2.Class({
 // **********************************************************************
 var AlertDialog = $n2.Class({
 	
-	dialogId: null,
-
-	mdcDialogComponent: null,
-	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			title: _loc('Alert')
 			,message: null
 		},opts_);
 		
-		var _this = this;
-		 
-		this.dialogId = $n2.getUniqueId();
+		var alertDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: ['n2dialogs_alert'],
+			dialogTitle: opts.title,
+			dialogTextContent: opts.message,
+			closeBtn: true,
+			closeBtnText: 'OK'
+		});
 
-		var $dialog = $('<div>')
-			.attr('id',this.dialogId)
-			.attr('role','alertdialog')
-			.attr('aria-modal','true')
-			.attr('aria-labelledby','my-dialog-title')
-			.attr('aria-describedby','my-dialog-content')
-			.addClass('n2dialogs_alert mdc-dialog')
-			.appendTo($('body'));
-
-		var $dialogContainer = $('<div>')
-			.addClass('mdc-dialog__container')
-			.appendTo($dialog);
-
-		var $dialogSurface = $('<div>')
-			.addClass('mdc-dialog__surface')
-			.appendTo($dialogContainer);
-
-		$('<h2>')
-			.addClass('mdc-dialog__title')
-			.text(opts.title)
-			.appendTo($dialogSurface);
-
-		$('<div>')
-			.addClass('n2dialogs_alert_message mdc-dialog__content')
-			.text(opts.message)
-			.appendTo($dialogSurface);
-		
-		var $footer = $('<footer>')
-			.addClass('mdc-dialog__actions')
-			.appendTo($dialogSurface);
-
-		var btnOpts = {
-			parentId: $n2.utils.getElementIdentifier($footer),
-			mdcClasses: ['n2dialogs_alert_okButton', 'mdc-dialog__button'],
-			btnLabel: 'OK',
-			btnFunction: function(){
-				_this.mdcDialogComponent.close();
-				$dialog.remove();
-				return false;
-			}
-		};
-
-		new $n2.mdc.MDCButton(btnOpts);
-
-		$('<div>')
-			.addClass('mdc-dialog__scrim')
-			.click(function(){
-				_this.mdcDialogComponent.close();
-				$dialog.remove();
-				return false;
-			})
-			.appendTo($dialog);
-
-		// Attach mdc component to alert dialog
-		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
-		this.mdcDialogComponent.open();
+		$('#' + alertDialog.contentId).addClass('n2dialogs_alert_message');
 	}
 });
 
