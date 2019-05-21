@@ -33,10 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2){
 "use strict";
 
-var 
-	_loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
-	,DH = 'n2.help'
-	;
+var DH = 'n2.help';
 
 // =========================================================================
 
@@ -76,72 +73,13 @@ var HelpDisplay = $n2.Class({
 	show: function($elem){
 		var _this = this;
 		var content = "";
-		var $dialog = $('<div>')
-			.attr('id',this.helpDialogId)
-			.attr('role','alertdialog')
-			.attr('aria-modal','true')
-			.attr('aria-labelledby','my-dialog-title')
-			.attr('aria-describedby','my-dialog-content')
-			.addClass('n2help_content mdc-dialog')
-			.appendTo($('body'));
-
-		var $dialogContainer = $('<div>')
-			.addClass('mdc-dialog__container')
-			.appendTo($dialog);
-
-		var $dialogSurface = $('<div>')
-			.addClass('mdc-dialog__surface')
-			.appendTo($dialogContainer);
-
-		$('<h2>')
-			.addClass('mdc-dialog__title')
-			.text(_loc(this.title))
-			.appendTo($dialogSurface);
-
-		var $dialogMessage = $('<div>')
-			.addClass('n2dialogs_alert_message mdc-dialog__content')
-			.text(content)
-			.appendTo($dialogSurface);
-
-		if( this.htmlContent ){
-			// localize content
-			$dialogMessage.html(_loc(this.htmlContent));
-		} else if( this.textContent ){
-			$dialogMessage.text(_loc(this.textContent));
-		} else {
-			return;
-		};
-
-		var $footer = $('<footer>')
-			.addClass('mdc-dialog__actions')
-			.appendTo($dialogSurface);
-
-		var btnOpts = {
-			parentId: $n2.utils.getElementIdentifier($footer),
-			mdcClasses: ['n2dialogs_alert_okButton', 'mdc-dialog__button'],
-			btnLabel: 'Close',
-			btnFunction: function(){
-				_this.mdcDialogComponent.close();
-				$dialog.remove();
-				return false;
-			}
-		};
-
-		new $n2.mdc.MDCButton(btnOpts);
-
-		$('<div>')
-			.addClass('mdc-dialog__scrim')
-			.click(function(){
-				_this.mdcDialogComponent.close();
-				$dialog.remove();
-				return false;
-			})
-			.appendTo($dialog);
-
-		// Attach mdc component to alert dialog
-		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
-		this.mdcDialogComponent.open();
-
+		var helpDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: this.title,
+			dialogHtmlContent: this.htmlContent,
+			dialogTextContent: this.textContent,
+			mdcClasses: ['n2help_content'],
+			closeBtn: true
+		});
 	}
 });
 
