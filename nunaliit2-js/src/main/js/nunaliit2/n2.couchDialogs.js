@@ -321,39 +321,21 @@ function selectLayersDialog(opts_){
 			};
 		};
 	};
-	
-	var $dialog = $('<div>')
-		.attr('id', dialogId)
-		.attr('role','alertdialog')
-		.attr('aria-modal','true')
-		.attr('aria-labelledby','my-dialog-title')
-		.attr('aria-describedby','my-dialog-content')
-		.addClass('editorSelectLayerDialog mdc-dialog mdc-dialog--scrollable')
-		.appendTo($('body'));
-	
-	var $dialogContainer = $('<div>')
-		.addClass('mdc-dialog__container')
-		.appendTo($dialog);
 
-	var $dialogSurface = $('<div>')
-		.addClass('mdc-dialog__surface')
-		.appendTo($dialogContainer);
+	var selectLayerDialog = new $n2.mdc.MDCDialog({
+		mdcId: dialogId,
+		mdcClasses: ['editorSelectLayerDialog'],
+		dialogTitle: 'Select Layers',
+		scrollable: true,
+		closeBtn: true,
+		closeBtnText: 'Cancel'
+	});
 
-	$('<h2>')
-		.addClass('mdc-dialog__title')
-		.text(_loc('Select Layers'))
-		.appendTo($dialogSurface);
+	$('#' + selectLayerDialog.contentId).addClass('editorSelectLayerContent');
+	$('#' + selectLayerDialog.footerId).addClass('editorSelectLayerButtons');
 
-	$('<div>')
-		.addClass('editorSelectLayerContent mdc-dialog__content')
-		.appendTo($dialogSurface);
-	
-	var $footer = $('<footer>')
-		.addClass('editorSelectLayerButtons mdc-dialog__actions')
-		.appendTo($dialogSurface);
-	
-	var okBtnOpts = {
-		parentId: $n2.utils.getElementIdentifier($footer),
+	new $n2.mdc.MDCButton({
+		parentId: selectLayerDialog.footerId,
 		mdcClasses: ['ok', 'mdc-dialog__button'],
 		btnLabel: 'OK',
 		btnRaised: true,
@@ -369,40 +351,12 @@ function selectLayersDialog(opts_){
 			});
 			opts.cb(selectedLayers);
 
-			mdcDialogComponent.close();
-			$dialog.remove();
+			selectLayerDialog.closeDialog();
+			$('#' + selectLayerDialog.getId()).remove();
 			return false;
 		}
-	};
+	});
 
-	new $n2.mdc.MDCButton(okBtnOpts);
-
-	var cancelBtnOpts = {
-		parentId: $n2.utils.getElementIdentifier($footer),
-		mdcClasses: ['cancel', 'mdc-dialog__button'],
-		btnLabel: 'Cancel',
-		btnFunction: function(){
-			mdcDialogComponent.close();
-			$dialog.remove();
-			return false;
-		}
-	};
-
-	new $n2.mdc.MDCButton(cancelBtnOpts);
-	
-	$('<div>')
-		.addClass('mdc-dialog__scrim')
-		.click(function(){
-			mdcDialogComponent.close();
-			$dialog.remove();
-			return false;
-		})
-		.appendTo($dialog);
-
-	// Attach mdc component to alert dialog
-	mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
-	mdcDialogComponent.open();
-		
 	// Get layers
 	if( opts.documentSource ){
 		opts.documentSource.getLayerDefinitions({
