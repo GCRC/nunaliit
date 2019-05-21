@@ -179,88 +179,35 @@ function searchForDocumentId(options_){
 	},options_);
 	
 	var shouldReset = true;
-	var mdcDialogComponent = null;
-	var dialogId = $n2.getUniqueId();
 	var inputId = $n2.getUniqueId();
 	var searchButtonId = $n2.getUniqueId();
 	var displayId = $n2.getUniqueId();
 
-	var $dialog = $('<div>')
-		.attr('id',dialogId)
-		.attr('role','alertdialog')
-		.attr('aria-modal','true')
-		.attr('aria-labelledby','my-dialog-title')
-		.attr('aria-describedby','my-dialog-content')
-		.addClass('editorSelectDocumentDialog mdc-dialog mdc-dialog--scrollable')
-		.appendTo($('body'));
+	var searchDocDialog = new $n2.mdc.MDCDialog({
+		mdcClasses: ['editorSelectDocumentDialog'],
+		dialogTitle: 'Select Document',
+		scrollable: true,
+		closeBtn: true,
+		closeBtnText: 'Cancel'
+	});
 
-	var $dialogContainer = $('<div>')
-		.addClass('mdc-dialog__container')
-		.appendTo($dialog);
-
-	var $dialogSurface = $('<div>')
-		.addClass('mdc-dialog__surface')
-		.appendTo($dialogContainer);
-
-	$('<h2>')
-		.addClass('mdc-dialog__title')
-		.text(_loc('Select Document'))
-		.appendTo($dialogSurface);
-
-	var $dialogContent = $('<div>')
-		.addClass('mdc-dialog__content')
-		.appendTo($dialogSurface);
-
-	var searchTxtFldOpts = {
-		parentId: $n2.utils.getElementIdentifier($dialogContent),
+	new $n2.mdc.MDCTextField({
+		parentId: searchDocDialog.contentId,
 		txtFldLabel: 'Search',
 		txtFldInputId: inputId
-	};
-	new $n2.mdc.MDCTextField(searchTxtFldOpts);
+	});
 
 	$('<div>')
 		.attr('id',displayId)
 		.addClass('editorSelectDocumentDialogResults')
-		.appendTo($dialogContent);
+		.appendTo('#' + searchDocDialog.contentId);
 
-	var $footer = $('<footer>')
-		.addClass('mdc-dialog__actions')
-		.appendTo($dialogSurface);
-
-	var searchBtnOpts = {
-		parentId: $n2.utils.getElementIdentifier($footer),
+	new $n2.mdc.MDCButton({
+		parentId: searchDocDialog.footerId, 
 		mdcId: searchButtonId,
 		mdcClasses: ['mdc-dialog__button'],
 		btnLabel: 'Search'
-	};
-
-	new $n2.mdc.MDCButton(searchBtnOpts);
-
-	var cancelBtnOpts = {
-		parentId: $n2.utils.getElementIdentifier($footer),
-		mdcClasses: ['cancel', 'mdc-dialog__button'],
-		btnLabel: 'Cancel',
-		btnFunction: function(){
-			mdcDialogComponent.close();
-			$dialog.remove();
-			return false;
-		}
-	};
-
-	new $n2.mdc.MDCButton(cancelBtnOpts);
-
-	$('<div>')
-		.addClass('mdc-dialog__scrim')
-		.click(function(){
-			mdcDialogComponent.close();
-			$dialog.remove();
-			return false;
-		})
-		.appendTo($dialog);
-
-	// Attach mdc component to alert dialog
-	mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
-	mdcDialogComponent.open();
+	});
 	
 	options.searchServer.installSearch({
 		textInput: $('#'+inputId)
@@ -330,8 +277,8 @@ function searchForDocumentId(options_){
 		return function(e){
 			options.onSelected(docId);
 			shouldReset = false;
-			mdcDialogComponent.close();
-			$dialog.remove();
+			searchDocDialog.closeDialog();
+			$('#' + searchDocDialog.getId()).remove();
 			return false;
 		};
 	};
