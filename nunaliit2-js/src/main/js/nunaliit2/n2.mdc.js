@@ -263,12 +263,14 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 //  - dialogHtmlContent (String): Define text string of HTML content to place in the dialog message.
 //  - dialogTextContent (String): Define text string to place in the dialog window.
 //  - dialogTitle (String): Text defining the title of the dialog window.
+//  - scrollable (Boolean): Make the dialog scrollable if true (default = false).
 //  - closeBtn (Boolean): Add a close button to the dialog window (default = false).
 //  - closeBtnText (String): Update the close button text (default = "Close").
 var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	dialogHtmlContent: null,
 	dialogTextContent: null,
 	dialogTitle: null,
+	scrollable: null,
 	closeBtn: null,
 	closeBtnText: null,
 
@@ -277,6 +279,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			dialogHtmlContent: null,
 			dialogTextContent: null,
 			dialogTitle: "",
+			scrollable: false,
 			closeBtn: false,
 			closeBtnText: "Close",
 		}, opts_);
@@ -286,6 +289,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		this.dialogHtmlContent = opts.dialogHtmlContent;
 		this.dialogTextContent = opts.dialogTextContent;
 		this.dialogTitle = opts.dialogTitle;
+		this.scrollable = opts.scrollable;
 		this.closeBtn = opts.closeBtn;
 		this.closeBtnText = opts.closeBtnText;
 
@@ -301,6 +305,10 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		var content = "";
 
 		this.mdcClasses.push('mdc-dialog');
+
+		if (this.scrollable) {
+			this.mdcClasses.push('mdc-dialog--scrollable');
+		}
 
 		this.docFragment = $(document.createDocumentFragment());
 		MDCDialogElement = $('<div>')
