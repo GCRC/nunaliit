@@ -3241,47 +3241,30 @@ var AttachmentEditor = $n2.Class({
 		var dialogId = $n2.getUniqueId();
 		var addFileFormId = $n2.getUniqueId();
 		
-		var $addFileDialog = $('<div>')
-			.attr('id',dialogId)
-			.attr('role','alertdialog')
-			.attr('aria-modal','true')
-			.attr('aria-labelledby','my-dialog-title')
-			.attr('aria-describedby','my-dialog-content')
-			.addClass('attachmentEditor_dialog mdc-dialog')
-			.appendTo($('body'));
+		var addFileDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: ['attachmentEditor_dialog'],
+			dialogTitle: 'Add File',
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
 
-		var $dialogContainer = $('<div>')
-			.addClass('mdc-dialog__container')
-			.appendTo($addFileDialog);
+		var dialogContentId = addFileDialog.contentId;
+		var dialogFooterId = addFileDialog.footerId;
 
-		var $dialogSurface = $('<div>')
-			.addClass('mdc-dialog__surface')
-			.appendTo($dialogContainer);
-
-		$('<h2>')
-			.addClass('mdc-dialog__title')
-			.text(_loc('Add File'))
-			.appendTo($dialogSurface);
-
-		var $content = $('<div>')
-			.addClass('attachmentEditor_dialog_content mdc-dialog__content')
-			.appendTo($dialogSurface);
+		$('#' + dialogContentId).addClass('attachmentEditor_dialog_content');
+		$('#' + dialogContentId).addClass('attachmentEditor_dialog_buttons');
 
 		var $addFileForm = $('<form>')
-			.attr('id',addFileFormId)
+			.attr('id', addFileFormId)
 			.addClass('attachmentEditor_form')
-			.appendTo($content);
+			.appendTo('#' + dialogContentId);
 
 		$('<input type="file">')
-			.attr('name','media')
+			.attr('name', 'media')
 			.appendTo($addFileForm);
 
-		var $footer = $('<footer>')
-			.addClass('attachmentEditor_dialog_buttons mdc-dialog__actions')
-			.appendTo($dialogSurface);
-
-		var addBtnOpts = {
-			parentId: $n2.utils.getElementIdentifier($footer),
+		new $n2.mdc.MDCButton({
+			parentId: dialogFooterId,
 			mdcClasses: ['mdc-dialog__button'],
 			btnLabel: 'Attach',
 			btnFunction: function(){
@@ -3289,45 +3272,16 @@ var AttachmentEditor = $n2.Class({
 				var $addFileForm = $('#'+addFileFormId);
 				var $input = $addFileForm.find('input');
 				var filename = $input.val();
-				if( filename ) {
+				if (filename) {
 					_this._addFileForm($addFileForm);
-					mdcDialogComponent.close();
-					$addFileDialog.remove();
+					addFileDialog.closeDialog();
+					$('#' + addFileDialog.getId()).remove();
 				} else {
-					alert( _loc('You must select a file') );
+					alert (_loc('You must select a file'));
 				};
 				return false;
 			}
-		};
-
-		new $n2.mdc.MDCButton(addBtnOpts);
-
-		var cancelBtnOpts = {
-			parentId: $n2.utils.getElementIdentifier($footer),
-			mdcClasses: ['mdc-dialog__button'],
-			btnLabel: 'Cancel',
-			btnFunction: function(){
-				mdcDialogComponent.close();
-				$addFileDialog.remove();
-				return false;
-			}
-		};
-
-		new $n2.mdc.MDCButton(cancelBtnOpts);
-
-		$('<div>')
-			.addClass('mdc-dialog__scrim')
-			.click(function(){
-				mdcDialogComponent.close();
-				$addFileDialog.remove();
-				return false;
-			})
-			.appendTo($addFileDialog);
-
-
-		// Attach mdc component to alert dialog
-		mdcDialogComponent = new mdc.dialog.MDCDialog($addFileDialog[0]);
-		mdcDialogComponent.open();
+		});
 	},
 	
 	_addFileForm: function($addFileForm){
