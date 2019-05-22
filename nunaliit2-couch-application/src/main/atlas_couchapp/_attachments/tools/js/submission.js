@@ -766,54 +766,17 @@
 		
 		,_viewOriginal: function(subDocId){
 			var _this = this;
-			var mdcViewDialogComponent;
 			
 			this._getOriginalDocument({
 				subDocId: subDocId
 				,onSuccess: function(doc, subDoc){
-					var diagId = $n2.getUniqueId();
+					var viewOrgDialog = new $n2.mdc.MDCDialog({
+						mdcClasses: ['submission_view_dialog_original'],
+						dialogTitle: 'View Original',
+						scrollable: true
+					});
 
-					var $dialog = $('<div>')
-						.attr('id', diagId)
-						.attr('role','alertdialog')
-						.attr('aria-modal','true')
-						.attr('aria-labelledby','my-dialog-title')
-						.attr('aria-describedby','my-dialog-content')
-						.addClass('submission_view_dialog_original mdc-dialog mdc-dialog--scrollable')
-						.appendTo($('body'));
-							
-					var $dialogContainer = $('<div>')
-						.addClass('mdc-dialog__container')
-						.appendTo($dialog);
-
-					var $dialogSurface = $('<div>')
-						.addClass('mdc-dialog__surface')
-						.css('padding','10px')
-						.appendTo($dialogContainer);
-
-					$('<h2>')
-						.addClass('mdc-dialog__title')
-						.text(_loc('View Original'))
-						.appendTo($dialogSurface);
-
-					var $content = $('<div>')
-						.addClass('mdc-dialog__content')
-						.appendTo($dialogSurface);
-					
-					_this._addDocumentAccordion($content, doc);
-	
-					$('<div>')
-					.addClass('mdc-dialog__scrim')
-					.click(function(){
-						mdcViewDialogComponent.close();
-						$dialog.remove();
-						return false;
-					})
-					.appendTo($dialog);
-			
-					// Attach mdc component to alert dialog
-					mdcViewDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
-					mdcViewDialogComponent.open();
+					_this._addDocumentAccordion($('#' + viewOrgDialog.contentId), doc);
 				}
 			});
 		}
@@ -825,50 +788,13 @@
 			this._getSubmittedDocument({
 				subDocId: subDocId
 				,onSuccess: function(doc, subDoc){
-					var diagId = $n2.getUniqueId();
+					var viewSubmissionDialog = new $n2.mdc.MDCDialog({
+						mdcClasses: ['submission_view_dialog_submitted'],
+						dialogTitle: 'View Submission',
+						scrollable: true
+					});
 
-					var $dialog = $('<div>')
-						.attr('id', diagId)
-						.attr('role','alertdialog')
-						.attr('aria-modal','true')
-						.attr('aria-labelledby','my-dialog-title')
-						.attr('aria-describedby','my-dialog-content')
-						.addClass('submission_view_dialog_submitted mdc-dialog mdc-dialog--scrollable')
-						.appendTo($('body'));
-							
-					var $dialogContainer = $('<div>')
-						.addClass('mdc-dialog__container')
-						.appendTo($dialog);
-
-					var $dialogSurface = $('<div>')
-						.addClass('mdc-dialog__surface')
-						.css('padding','10px')
-						.appendTo($dialogContainer);
-
-					$('<h2>')
-						.addClass('mdc-dialog__title')
-						.text(_loc('View Submission'))
-						.appendTo($dialogSurface);
-
-					var $content = $('<div>')
-						.addClass('mdc-dialog__content')
-						.appendTo($dialogSurface);
-					
-					_this._addDocumentAccordion($content, doc);
-	
-					$('<div>')
-					.addClass('mdc-dialog__scrim')
-					.click(function(){
-						mdcSubmittedDialogComponent.close();
-						$dialog.remove();
-						return false;
-					})
-					.appendTo($dialog);
-			
-					// Attach mdc component to alert dialog
-					mdcSubmittedDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
-					mdcSubmittedDialogComponent.open();
-
+					_this._addDocumentAccordion($('#' + viewSubmissionDialog.contentId), doc);
 				}
 			});
 		}
