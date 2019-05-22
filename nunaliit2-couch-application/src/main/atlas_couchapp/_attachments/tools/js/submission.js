@@ -425,39 +425,18 @@
 					txtFldInputClasses: ['submission_deny_dialog_reason']
 				});
 				
-				// Email Checbox 
+				// Email Checkbox
+				var optionsId = $n2.getUniqueId();
 				var $options = $('<div>')
+					.attr('id', optionsId)
 					.addClass('submission_deny_dialog_options mdc-form-field')
 					.appendTo($('#' + denyDialog.contentId));
 
-				var cbId = $n2.getUniqueId();
-
-				var $checkboxDiv = $('<div>')
-					.addClass('mdc-checkbox')
-					.appendTo($options);
-
-				$('<input>')
-					.addClass('layer mdc-checkbox__native-control')
-					.attr('type','checkbox')
-					.attr('id',cbId)
-					.attr('name','send_email')
-					.appendTo($checkboxDiv);
-
-				var $checkboxBackground = $('<div>')
-					.addClass('mdc-checkbox__background')
-					.appendTo($checkboxDiv);
-	
-				$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
-					.appendTo($checkboxBackground);
-	
-				$('<div>')
-					.addClass('mdc-checkbox__mixedmark')
-					.appendTo($checkboxBackground);
-
-				$('<label>')
-					.attr('for',cbId)
-					.text( _loc('Send e-mail to submitter with reason for rejection') )
-					.appendTo($options);
+				new $n2.mdc.MDCCheckbox({
+					parentId: optionsId,
+					chkboxName: 'send_email',
+					chkboxLabel: 'Send e-mail to submitter with reason for rejection'
+				});
 			};
 		}
 
