@@ -8,12 +8,13 @@
 	margin: 10px 0px 5px;
 }
 
-.n2_documentDisplay .n2_layoutFloat div.label {
+.n2_documentDisplay .n2_layoutFloat div.label,
+.n2_documentDisplay .n2_layoutFloat div.value {
 	margin: 0px 16px;
 } 
 
-.n2_documentForm .n2_layoutFloat div.value {
-	margin: 16px 0px;
+.n2_documentDisplay .n2_layoutFloat div.value {
+    margin-bottom: 16px !important;
 }
 
 .n2_documentForm .n2_layoutFloat span.n2schema_field_localized_label {

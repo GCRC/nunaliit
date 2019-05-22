@@ -79,10 +79,6 @@
 	margin: 3px;
 }
 
-.mdc-card div.value {
-    margin: 0px 16px 16px !important;
-}
-
 .mdc-dialog__title+.mdc-dialog__content {
     padding-top: 5px;
 }

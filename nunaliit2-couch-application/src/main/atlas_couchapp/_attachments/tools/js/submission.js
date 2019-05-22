@@ -45,15 +45,14 @@
 				.text(_loc('Logs '))
 				.appendTo($buttonsLine);
 
-			var clearBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($buttonsLine),
 				btnLabel: 'Clear',
 				btnFunction: function(){
 					_this.clear();
 					return false;
 				}
-			};
-			new $n2.mdc.MDCButton(clearBtnOpts);
+			});
 
 			$('<div>')
 				.addClass('n2LoggerEntries')
@@ -191,15 +190,14 @@
 				.text(_loc('Submissions '))
 				.appendTo($buttonsLine);
 
-			var refreshBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($buttonsLine),
 				btnLabel: 'Refresh',
 				btnFunction: function(){
 					_this._refreshSubmissions();
 					return false;
 				}
-			};
-			new $n2.mdc.MDCButton(refreshBtnOpts);
+			});
 
 			$('<div>')
 				.addClass('submissionAppList')
@@ -707,15 +705,14 @@
 			var $views = $('<div class="submission_views">')
 				.appendTo($entry);
 
-			var viewBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($views),
 				btnLabel: 'View',
 				btnFunction: function(){
 					_this._viewMerging(subDocId);
 					return false;
 				}
-			};
-			new $n2.mdc.MDCButton(viewBtnOpts);
+			});
 
 			// Brief display
 			var $brief = $('<div class="submission_brief">')
@@ -759,13 +756,11 @@
 					.text(value)
 					.appendTo($div);
 			};
-
-			// Attach Material Design Components
-			$n2.mdc.attachMDCComponents();
 		}
 		
 		,_viewOriginal: function(subDocId){
 			var _this = this;
+			var openDiag;
 			
 			this._getOriginalDocument({
 				subDocId: subDocId
@@ -842,14 +837,13 @@
 			});
 
 			function openDialog(originalDoc, submittedDoc, currentDoc, subDoc){
-				var openDiag = new $n2.mdc.MDCDialog({
+				this.openDiag = new $n2.mdc.MDCDialog({
 					mdcClasses: ['submission_view_dialog_merging'],
-					dialogTitle: 'View Submission',
-					closeBtn: true,
-					closeBtnText: 'Cancel'
+					dialogTitle: 'View Submission'
 				});
+				$('#' + this.openDiag.footerId).addClass('submission_view_dialog_merging_buttons');
 
-				initiateMergingView($('#' + openDiag.contentId), openDiag.getId(), originalDoc, submittedDoc, currentDoc, subDoc);
+				initiateMergingView($('#' + this.openDiag.contentId), this.openDiag.getId(), originalDoc, submittedDoc, currentDoc, subDoc);
 			};
 
 			function initiateMergingView($dialogContent, diagId, originalDoc, submittedDoc, currentDoc, subDoc){
@@ -892,8 +886,11 @@
 			};
 
 			function displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc){
-				var $innerDiag = $('#'+diagId).find('.submission_view_dialog_inner')
-					.empty();
+				var $buttons = $('#' + diagId).find('.submission_view_dialog_merging_buttons');
+				$buttons.empty();
+
+				var $innerDiag = $('#' + diagId).find('.submission_view_dialog_inner');
+				$innerDiag.empty();
 
 				var submittedPatch = null;
 				if( originalDoc && submittedDoc ) {
@@ -966,79 +963,68 @@
 						.appendTo($deltaOuter);
 					new $n2.tree.ObjectTree($delta, submittedPatch);
 				};
-				
-				var $buttons = $('<footer>')
-					.addClass('submission_view_dialog_merging_buttons mdc-dialog__actions')
-					.appendTo($innerDiag);
 
-				var btnParentId = $n2.utils.getElementIdentifier($buttons);
-
-				var approveBtnOpts = {
-					parentId: btnParentId,
+				new $n2.mdc.MDCButton({
+					parentId: this.openDiag.footerId,
 					mdcClasses: ['n2_button_approve'],
 					btnLabel: 'Approve',
 					btnFunction: function(){
 						_this._approve(subDocId, proposedDoc);
-						_this.mdcDialogComponent.close();
+						_this.openDiag.close();
 						var $dialog = $('#'+diagId);
 						$dialog.remove();
 						return false;
 					}
-				};
-				new $n2.mdc.MDCButton(approveBtnOpts);
+				});
 
-				var rejectBtnOpts = {
-					parentId: btnParentId,
+				new $n2.mdc.MDCButton({
+					parentId: this.openDiag.footerId,
 					mdcClasses: ['n2_button_deny', 'mdc-dialog__button'],
 					btnLabel: 'Reject',
 					btnFunction: function(){
 						_this._deny(subDocId,function(){
-							_this.mdcDialogComponent.close();
+							_this.openDiag.close();
 							var $dialog = $('#'+diagId);
 							$dialog.remove();
 						});
 						return false;
 					}
-				};
-				new $n2.mdc.MDCButton(rejectBtnOpts);
+				});
 
 				if( originalDoc ) {
-					var viewOrgBtnOpts = {
-						parentId: btnParentId,
+					new $n2.mdc.MDCButton({
+						parentId: this.openDiag.footerId,
 						mdcClasses: ['n2_button_original', 'mdc-dialog__button'],
 						btnLabel: 'View Original',
 						btnFunction: function(){
 							_this._viewOriginal(subDocId);
 							return false;
 						}
-					};
-					new $n2.mdc.MDCButton(viewOrgBtnOpts);
+					});
 				};
-				if( submittedDoc ) {
 
-					var viewSubBtnOpts = {
-						parentId: btnParentId,
+				if( submittedDoc ) {
+					new $n2.mdc.MDCButton({
+						parentId: this.openDiag.footerId,
 						mdcClasses: ['n2_button_submitted', 'mdc-dialog__button'],
 						btnLabel: 'View Submitted',
 						btnFunction: function(){
 							_this._viewSubmitted(subDocId);
 							return false;
 						}
-					};
-					new $n2.mdc.MDCButton(viewSubBtnOpts);
+					});
 				};
-				if( ! subDoc.nunaliit_submission.deletion ) {
 
-					var editBtnOpts = {
-						parentId: btnParentId,
+				if( ! subDoc.nunaliit_submission.deletion ) {
+					new $n2.mdc.MDCButton({
+						parentId: this.openDiag.footerId,
 						mdcClasses: ['n2_button_manual', 'mdc-dialog__button'],
 						btnLabel: 'Edit Proposed Document',
 						btnFunction: function(){
 							editProposedDocument(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
 							return false;
 						}
-					};
-					new $n2.mdc.MDCButton(editBtnOpts);
+					});
 				};
 			
 				// Install mouse over: On mouse over, change style of all
@@ -1092,7 +1078,8 @@
 				var $diag = $('#'+diagId);
 				var $inner = $diag.find('.submission_view_dialog_inner');
 				var $proposed = $inner.find('.submission_view_dialog_merging_submitted_outer');
-				var $buttons = $inner.find('.submission_view_dialog_merging_buttons');
+				var $buttons = $diag.find('.submission_view_dialog_merging_buttons');
+				$buttons.empty();
 				
 				var editedDoc = $n2.document.clone(proposedDoc);
 				
@@ -1115,12 +1102,10 @@
 						,$n2.couchEdit.Constants.RELATION_EDITOR
 					]
 				});
-				
-				$buttons.empty();
 
 				var btnParentId = $n2.utils.getElementIdentifier($buttons);
 				
-				var saveBtnOpts = {
+				new $n2.mdc.MDCButton({
 					parentId: btnParentId,
 					mdcClasses: ['n2_button_save'],
 					btnLabel: 'Save',
@@ -1129,10 +1114,9 @@
 						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, updatedDoc, subDoc);
 						return false;
 					}
-				};
-				new $n2.mdc.MDCButton(saveBtnOpts);
+				});
 
-				var cancelBtnOpts = {
+				new $n2.mdc.MDCButton({
 					parentId: btnParentId,
 					mdcClasses: ['n2_button_cancel'],
 					btnLabel: 'Cancel',
@@ -1140,8 +1124,7 @@
 						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
 						return false;
 					}
-				};
-				new $n2.mdc.MDCButton(cancelBtnOpts);
+				});
 			};
 			
 			// level 0 is on current document (submitted patch)
