@@ -82,106 +82,146 @@ var ScriptEditorCanvas = $n2.Class({
 			};
 		};
 		
-		this.nodesById = {};
-		
-		// Populate nodesById with information from user
-		if( typeof opts.elemIdToDocId === 'object' ){
-			for(var elemId in opts.elemIdToDocId){
-				var docId = opts.elemIdToDocId[elemId];
-				
-				var node = {
-					n2_id: docId
-					,nodeId: elemId
-				};
-				
-				this.nodesById[elemId] = node;
-			};
-		};
-		
-		// Create intent view to keep track of user requests
-		if( this.dispatchService ){
-			this.intentView = new $n2.userIntentView.IntentView({
-				dispatchService: this.dispatchService
-			});
-			this.intentView.addListener(function(nodes){
-				_this._intentChanged(nodes);
-			});
-		};
-
- 		// Register to events
- 		if( this.dispatchService ){
-// 			var f = function(m){
-// 				_this._handleDispatch(m);
+//		this.nodesById = {};
+//		
+//		// Populate nodesById with information from user
+//		if( typeof opts.elemIdToDocId === 'object' ){
+//			for(var elemId in opts.elemIdToDocId){
+//				var docId = opts.elemIdToDocId[elemId];
+//				
+//				var node = {
+//					n2_id: docId
+//					,nodeId: elemId
+//				};
+//				
+//				this.nodesById[elemId] = node;
+//			};
+//		};
+//		
+//		// Create intent view to keep track of user requests
+//		if( this.dispatchService ){
+//			this.intentView = new $n2.userIntentView.IntentView({
+//				dispatchService: this.dispatchService
+//			});
+//			this.intentView.addListener(function(nodes){
+//				_this._intentChanged(nodes);
+//			});
+//		};
+//
+// 		// Register to events
+// 		if( this.dispatchService ){
+//// 			var f = function(m){
+//// 				_this._handleDispatch(m);
+//// 			};
+//// 			
+//// 			this.dispatchService.register(DH,'focusOn',f);
+// 		};
+// 		
+// 		if( opts.cssAttachment ){
+// 			// Load up CSS as an attachment to the module document
+// 			var cssUrl = this._computeAttachmentUrl(opts.cssAttachment);
+// 			if( cssUrl ){
+// 				$.ajax({
+// 					url: cssUrl
+// 					,type: 'get'
+// 					,async: true
+// 					,dataType: 'text'
+// 					,success: function(cssDocument) {
+// 						cssLoaded(cssDocument);
+// 					}
+// 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
+// 						opts.onError( _loc('Error loading CSS from location: {url}',{
+// 							url: cssUrl
+// 						}) );
+// 					}
+// 				});
+// 			} else {
+// 				opts.onError( _loc('Location of CSS is undefined for customHtml canvas') );
 // 			};
-// 			
-// 			this.dispatchService.register(DH,'focusOn',f);
- 		};
- 		
- 		if( opts.cssAttachment ){
- 			// Load up CSS as an attachment to the module document
- 			var cssUrl = this._computeAttachmentUrl(opts.cssAttachment);
- 			if( cssUrl ){
- 				$.ajax({
- 					url: cssUrl
- 					,type: 'get'
- 					,async: true
- 					,dataType: 'text'
- 					,success: function(cssDocument) {
- 						cssLoaded(cssDocument);
- 					}
- 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
- 						opts.onError( _loc('Error loading CSS from location: {url}',{
- 							url: cssUrl
- 						}) );
- 					}
- 				});
- 			} else {
- 				opts.onError( _loc('Location of CSS is undefined for customHtml canvas') );
- 			};
-	 			
- 		} else {
- 			cssLoaded(undefined);
- 		};
-
- 		$n2.log('CustomHtmlCanvas',this);
- 		
- 		function cssLoaded(cssContent){
- 			//$n2.log('CSS content',cssContent);
- 	 		
- 	 		if( opts.htmlAttachment ){
- 	 			// Load up SVG as an attachment to the module document
- 	 			var htmlUrl = _this._computeAttachmentUrl(opts.htmlAttachment);
- 	 			if( htmlUrl ){
- 	 				$.ajax({
- 	 					url: htmlUrl
- 	 					,type: 'get'
- 	 					,async: true
- 	 					,dataType: 'html'
- 	 					,success: function(htmlDocument) {
- 							opts.onSuccess();
- 							
- 							_this._renderHtmlDocument(htmlDocument, cssContent);
- 	 					}
- 	 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
- 	 						opts.onError( _loc('Error loading HTML from location: {url}',{
- 	 							url: htmlUrl
- 	 						}) );
- 	 					}
- 	 				});
- 	 			} else {
- 	 				opts.onError( _loc('Location of HTML is undefined for customHtml canvas') );
- 	 			};
- 	 			
- 	 		} else {
- 	 			opts.onError( _loc('A HTML file must be specified for the customHtml canvas') );
- 	 		};
-
- 		};
+//	 			
+// 		} else {
+// 			cssLoaded(undefined);
+// 		};
+//
+// 		$n2.log('CustomHtmlCanvas',this);
+// 		
+// 		function cssLoaded(cssContent){
+// 			//$n2.log('CSS content',cssContent);
+// 	 		
+// 	 		if( opts.htmlAttachment ){
+// 	 			// Load up SVG as an attachment to the module document
+// 	 			var htmlUrl = _this._computeAttachmentUrl(opts.htmlAttachment);
+// 	 			if( htmlUrl ){
+// 	 				$.ajax({
+// 	 					url: htmlUrl
+// 	 					,type: 'get'
+// 	 					,async: true
+// 	 					,dataType: 'html'
+// 	 					,success: function(htmlDocument) {
+// 							opts.onSuccess();
+// 							
+// 							_this._renderHtmlDocument(htmlDocument, cssContent);
+// 	 					}
+// 	 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
+// 	 						opts.onError( _loc('Error loading HTML from location: {url}',{
+// 	 							url: htmlUrl
+// 	 						}) );
+// 	 					}
+// 	 				});
+// 	 			} else {
+// 	 				opts.onError( _loc('Location of HTML is undefined for customHtml canvas') );
+// 	 			};
+// 	 			
+// 	 		} else {
+// 	 			opts.onError( _loc('A HTML file must be specified for the customHtml canvas') );
+// 	 		};
+//
+// 		};
+		var scriptList = [];
+		scriptList.push({
+			filename : 'stt'
+		});
+		this._renderCanvas(scriptList);
  	},
  	
  	_handleDispatch: function(m){
  	},
+ 	_renderCanvas: function(scriptList){
+ 		
+ 		var _this = this;
+ 		var $canvas = $('#' + this.canvasId);
+ 		/** Create sidebar **/
+ 		var $sidebar = $('<div>')
+ 						.addClass('n2_scripteditor_sidebar')
+ 						.appendTo($canvas);
+ 		var $sidebarHeader = $('<div>')
+ 			.addClass('n2_scripteditor_sidebar_header')
+ 			.appendTo($sidebar);
+ 		var $scriptlist = $('<ul>').addClass('n2_scripteditor_menu')
+ 			.appendTo($sidebar);
+ 		for(var script of scriptList) {
+ 			var $scelem = $('<li>').appendTo($scriptlist);;
+ 			var label = $('<span>').addClass('n2_scripteditor_label')	
+ 						.text(script.filename)
+ 						.appendTo($scelem)
+ 						.click(function(e){
+ 							_this._initialScriptEditor($(this), script, e);
+ 						})	
+ 		}
+ 		/********************/
+ 		/** Create content div **/
+ 		var $contentDiv = $('<div class = "n2_scriptEditor_script_content"></div>');
+ 		$contentDiv.text("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nACCCCCCCC");
+ 		
+ 		$contentDiv.appendTo($canvas);
+ 		/********************/
+ 	},
  	
+ 	_initialScriptEditor: function($label, script, evt){
+ 		var $canvas = $('#' + this.canvasId);
+ 		var $content = $('<div>').appendTo($canvas);
+ 		$n2.log("Starting new scriptEditor");
+ 	},
  	_renderHtmlDocument: function(htmlDocument, cssContent){
  		var _this = this;
  		
@@ -189,6 +229,7 @@ var ScriptEditorCanvas = $n2.Class({
  		
  		var $canvas = $('#'+this.canvasId)
  			.html(htmlDocument);
+ 		
  		
  		// Adjust height and width
  		$canvas.children()
@@ -400,14 +441,14 @@ var ScriptEditorCanvas = $n2.Class({
  
 //--------------------------------------------------------------------------
 function HandleCanvasAvailableRequest(m){
-	if( m.canvasType === 'scriptEditor' ){
+	if( m.canvasType === 'ScriptEditor' ){
 		m.isAvailable = true;
 	};
 };
 
 //--------------------------------------------------------------------------
 function HandleCanvasDisplayRequest(m){
-	if( m.canvasType === 'scriptEditor' ){
+	if( m.canvasType === 'ScriptEditor' ){
 		
 		var options = {};
 		if( m.canvasOptions ){
@@ -423,13 +464,13 @@ function HandleCanvasDisplayRequest(m){
 		options.onSuccess = m.onSuccess;
 		options.onError = m.onError;
 		
-		new scriptEditorCanvas(options);
+		new ScriptEditorCanvas(options);
 	};
 };
 
 //--------------------------------------------------------------------------
 $n2.canvasScriptEditor = {
-	ScriptEditorCanvasCanvas: ScriptEditorCanvasCanvas
+	ScriptEditorCanvas: ScriptEditorCanvas
 	,HandleCanvasAvailableRequest: HandleCanvasAvailableRequest
 	,HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
 };

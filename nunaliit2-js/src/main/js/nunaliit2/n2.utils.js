@@ -1229,12 +1229,20 @@ $n2.utils.DFS = function(item, predicate1, predicate2, callback){
 		&& predicate1(item)){
 		callback (item);
 		return;
-	}
+	} else {return;}
 	if( typeof predicate2 === 'function'
 		&& predicate2(item)){
-		for( var i=0,e=innerFeatures.length; i< e; i++){
-			DFS(innerFeatures[i], predicate1, predicate2, callback);
-		};
-	}
+		if (Array.isArray(item)){
+			for( var i = 0,e=item.length; i< e; i++){
+				var innerfst = item[i];
+				DFS(innerfst, predicate1, predicate2, callback);
+			};
+		} else if (typeof item  ===  'object'){
+			for( var innerfst in item){
+				DFS(item[innerfst], predicate1, predicate2, callback);
+			};
+		}
+
+	} else {return;}
 };
 })(nunaliit2);
