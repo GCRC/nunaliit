@@ -3292,63 +3292,14 @@
 		var docIds = list.docIds;		
 		var dialogId = $n2.getUniqueId();
 
-		var $dialog = $('<div>')
-			.attr('id',dialogId)
-			.attr('role','alertdialog')
-			.attr('aria-modal','true')
-			.attr('aria-labelledby','my-dialog-title')
-			.attr('aria-describedby','my-dialog-content')
-			.addClass('selectAppTextDialog mdc-dialog mdc-dialog--scrollable')
-			.appendTo($('body'));
-
-		var $dialogContainer = $('<div>')
-			.addClass('mdc-dialog__container')
-			.appendTo($dialog);
-
-		var $dialogSurface = $('<div>')
-			.addClass('mdc-dialog__surface')
-			.appendTo($dialogContainer);
-
-		$('<h2>')
-			.addClass('mdc-dialog__title')
-			.text(_loc('Document Identifiers'))
-			.appendTo($dialogSurface);
-
-		var docIdList = docIds.join('\n');
-		
-		$('<div>')
-			.addClass('mdc-dialog__content')
-			.text(docIdList)
-			.appendTo($dialogSurface);
-
-		var $footer = $('<footer>')
-			.addClass('mdc-dialog__actions')
-			.appendTo($dialogSurface);
-
-		var okBtnOpts = {
-			parentId: $n2.utils.getElementIdentifier($footer),
-			mdcClasses: ['mdc-dialog__button'],
-			btnLabel: 'OK',
-			btnFunction: function(){
-				mdcDialogComponent.close();
-				$dialog.remove();
-				return false;
-			}
-		};
-		new $n2.mdc.MDCButton(okBtnOpts);
-		
-		$('<div>')
-			.addClass('mdc-dialog__scrim')
-			.click(function(){
-				mdcDialogComponent.close();
-				$dialog.remove();
-				return false;
-			})
-			.appendTo($dialog);
-
-		// Attach mdc component to alert dialog
-		mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
-		mdcDialogComponent.open();
+		var docIdsDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: [],
+			dialogTitle: 'Document Identifiers',
+			scrollable: true,
+			closeBtn: true,
+			closeBtnText: 'OK',
+			dialogTextContent: docIds.join('\n')
+		});
 	};
 	
 	// -----------------------------------------------------------------
