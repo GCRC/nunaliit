@@ -296,7 +296,6 @@ function selectLayersDialog(opts_){
 		,dispatchService: null
 	},opts_);
 	
-	var mdcDialogComponent = null;
 	var dialogId = $n2.getUniqueId();
 	var layers = {};
 
@@ -344,7 +343,7 @@ function selectLayersDialog(opts_){
 			var $diag = $('#'+dialogId);
 			$diag.find('input.layer').each(function(){
 				var $input = $(this);
-				if( $input.is(':checked') ){
+				if ($input.is(':checked')) {
 					var layerId = $input.attr('name');
 					selectedLayers.push(layerId);
 				}
@@ -1006,106 +1005,60 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 		var suggestionId = $n2.getUniqueId();
 		var displayId = $n2.getUniqueId();
 		
-		var $dialog = $('<div>')
-			.attr('id',dialogId)
-			.attr('role','alertdialog')
-			.attr('aria-modal','true')
-			.attr('aria-labelledby','my-dialog-title')
-			.attr('aria-describedby','my-dialog-content')
-			.attr('class','editorSelectDocumentDialog editorSelectDocumentDialog_relatedMedia mdc-dialog')
-			.appendTo($('body'));
-		
-		var $dialogContainer = $('<div>')
-			.attr('class','mdc-dialog__container')
-			.appendTo($dialog);
-		
-		var $dialogSurface = $('<div>')
-			.attr('class','mdc-dialog__surface')
-			.appendTo($dialogContainer);
-		
-		$('<h2>')
-			.attr('class','mdc-dialog__title')
-			.text(_loc(this.dialogPrompt))
-			.appendTo($dialogSurface);
-
-		var $dialogContent = $('<div>')
-			.attr('class','mdc-dialog__content')
-			.appendTo($dialogSurface);
+		var searchRelatedMediaDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: ['editorSelectDocumentDialog', 'editorSelectDocumentDialog_relatedMedia'],
+			dialogTitle: this.dialogPrompt
+		});
 
 		var $suggestionContainer = $('<div>')
 			.attr('class','editorSelectDocumentDialog_suggested')
-			.appendTo($dialogContent);
+			.appendTo($('#' + searchRelatedMediaDialog.contentId));
 
 		$('<div>')
 			.attr('class','editorSelectDocumentDialog_suggestedHeader')
-			.text( _loc('Suggestions') )
+			.text(_loc('Suggestions'))
 			.appendTo($suggestionContainer);
-		
+
 		$('<div>')
 			.attr('id',suggestionId)
 			.attr('class','editorSelectDocumentDialog_suggestedList')
 			.appendTo($suggestionContainer);
-	
+
 		var $searchLine = $('<div>')
 			.attr('class','editorSelectDocumentDialog_searchLine')
-			.appendTo($dialogContent);
+			.appendTo($('#' + searchRelatedMediaDialog.contentId));
 
-		var searchTxtFldOpts = {
+		new $n2.mdc.MDCTextField({
 			parentId: $n2.utils.getElementIdentifier($searchLine),
 			txtFldInputId: inputId,
 			txtFldLabel: 'Search'
-		};
-		new $n2.mdc.MDCTextField(searchTxtFldOpts);
-		
+		});
+
 		$('<div>')
 			.attr('id',displayId)
 			.attr('class','editorSelectDocumentDialogResults')
-			.appendTo($dialogContent);
-		
-		var $footer = $('<footer>')
-			.addClass('mdc-dialog__actions')
-			.appendTo($dialogContent);
-		
-		var searchBtnOpts = {
-			parentId: $n2.utils.getElementIdentifier($footer),
-			mdcId: searchButtonId,
-			mdcClasses: ['mdc-dialog__button'],
-			btnLabel: 'Search'
-		};
+			.appendTo($('#' + searchRelatedMediaDialog.contentId));
 
-		new $n2.mdc.MDCButton(searchBtnOpts);
-
-		var cancelBtnOpts = {
-			parentId: $n2.utils.getElementIdentifier($footer),
+		new $n2.mdc.MDCButton({
+			parentId: searchRelatedMediaDialog.footerId,
 			mdcClasses: ['cancel', 'mdc-dialog__button'],
 			btnLabel: 'Cancel',
 			btnFunction: function(){
-				_this.mdcDialogComponent.close();
-				$dialog.remove();
+				searchRelatedMediaDialog.closeDialog();
+				$('#' + searchRelatedMediaDialog.getId()).remove();
 				if (shouldReset) {
 					opts.onReset();
 				};
 				return false;
 			}
-		};
+		});
 
-		new $n2.mdc.MDCButton(cancelBtnOpts);
-
-		$('<div>')
-			.addClass('mdc-dialog__scrim')
-			.click(function(){
-				_this.mdcDialogComponent.close();
-				$dialog.remove();
-				if( shouldReset ) {
-					opts.onReset();
-				};
-				return false;
-			})
-			.appendTo($dialog);
-
-		// Attach mdc component to alert dialog
-		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
-		this.mdcDialogComponent.open();
+		new $n2.mdc.MDCButton({
+			parentId: searchRelatedMediaDialog.footerId,
+			mdcId: searchButtonId,
+			mdcClasses: ['mdc-dialog__button'],
+			btnLabel: 'Search'
+		});
 
 		this.searchService.installSearch({
 			textInput: $('#'+inputId)
@@ -1113,9 +1066,9 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 			,displayFn: receiveSearchResults
 			,onlyFinalResults: true
 		});
-		
+
 		$('#'+inputId).focus();
-		
+
 		// Get suggestions
 		if( opts.contextDoc && typeof opts.contextDoc._id === 'string' ){
 			this.documentSource.getReferencesFromId({
@@ -1127,7 +1080,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 				}
 			});
 		};
-		
+
 		function receiveSearchResults(displayData) {
 			if( !displayData ) {
 				reportError( _loc('Invalid search results returned') );
@@ -1137,15 +1090,15 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 
 			} else if( 'results' === displayData.type ) {
 				var docIds = [];
-			
+
 				for(var i=0,e=displayData.list.length; i<e; ++i) {
 					var docId = displayData.list[i].id;
 					docIds.push(docId);
 				};
-				
+
 				if( docIds.length < 1 ){
 					displayDocs([]);
-					
+
 				} else {
 					_this.documentSource.getDocuments({
 						docIds: docIds
@@ -1188,7 +1141,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 						});
 					}
 					,onError: function(errorMsg){ 
-						reportError( _loc('Unable to retrieve documents') );
+						reportError(_loc('Unable to retrieve documents'));
 					}
 				});
 			};
@@ -1237,8 +1190,8 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 				opts.onSelected(docId);
 				shouldReset = false;
 				var $dialog = $('#'+dialogId);
-				_this.mdcDialogComponent.close();
-				$dialog.remove();
+				searchRelatedMediaDialog.closeDialog();
+				$('#' + searchRelatedMediaDialog.getId()).remove();
 				return false;
 			};
 		};
@@ -1729,19 +1682,19 @@ var DialogService = $n2.Class({
 				this.funcMap[key] = fn;
 			};
 		};
-		
+
 		// Add 'getDocumentId', if not defined
 		if( !this.funcMap['getDocumentId'] ){
 			this.funcMap['getDocumentId'] = function(opts){
 				_this.searchForDocumentId(opts);
-			};			
+			};
 		};
 		if( !this.funcMap['getLayers'] ){
 			this.funcMap['getLayers'] = function(opts){
 				_this.selectLayersDialog(opts);
-			};			
+			};
 		};
-		
+
 		if( !this.funcMap['getRelatedMedia'] ){
 			var relatedMediaDialogFactory = new SearchRelatedMediaDialogFactory({
 				documentSource: this.documentSource
@@ -1750,7 +1703,7 @@ var DialogService = $n2.Class({
 			});
 			this.funcMap['getRelatedMedia'] = relatedMediaDialogFactory.getDialogFunction();
 		};
-		
+
 		if( !this.funcMap['getRelatedImage'] ){
 			var factory = new SearchRelatedImageDialogFactory({
 				documentSource: this.documentSource
@@ -1759,7 +1712,7 @@ var DialogService = $n2.Class({
 			});
 			this.funcMap['getRelatedImage'] = factory.getDialogFunction();
 		};
-		
+
 		if( !this.funcMap['getRelatedAudio'] ){
 			var factory = new SearchRelatedAudioDialogFactory({
 				documentSource: this.documentSource
@@ -1768,7 +1721,7 @@ var DialogService = $n2.Class({
 			});
 			this.funcMap['getRelatedAudio'] = factory.getDialogFunction();
 		};
-		
+
 		if( !this.funcMap['getRelatedVideo'] ){
 			var factory = new SearchRelatedVideoDialogFactory({
 				documentSource: this.documentSource
@@ -1777,7 +1730,7 @@ var DialogService = $n2.Class({
 			});
 			this.funcMap['getRelatedVideo'] = factory.getDialogFunction();
 		};
-		
+
 		if( !this.funcMap['getHoverSound'] ){
 			var hoverSoundDialogFactory = new HoverSoundSearchDialogFactory({
 				documentSource: this.documentSource
