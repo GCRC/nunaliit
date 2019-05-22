@@ -805,28 +805,14 @@
 			this._getCurrentDocument({
 				subDocId: subDocId
 				,onSuccess: function(doc, subDoc){
-					var diagId = $n2.getUniqueId();
-					var $diag = $('<div>')
-						.attr('id',diagId)
-						.addClass('submission_view_dialog_latest')
-						.appendTo( $('body') );
-					
-					var $content = $('<div>')
-						.appendTo($diag);
-					
-					_this._addDocumentAccordion($content, doc);
-					
-					$diag.dialog({
-						autoOpen: true
-						,title: _loc('View Submission')
-						,modal: true
-						,width: 500
-						,close: function(event, ui){
-							var diag = $(event.target);
-							diag.dialog('destroy');
-							diag.remove();
-						}
+
+					var viewLatestDialog = new $n2.mdc.MDCDialog({
+						mdcClasses: ['submission_view_dialog_latest'],
+						dialogTitle: 'View Submission',
+						scrollable: true
 					});
+
+					_this._addDocumentAccordion($(viewLatestDialog.contentId), doc);
 				}
 			});
 		}
@@ -856,51 +842,14 @@
 			});
 
 			function openDialog(originalDoc, submittedDoc, currentDoc, subDoc){
-				var diagId = $n2.getUniqueId();
+				var openDiag = new $n2.mdc.MDCDialog({
+					mdcClasses: ['submission_view_dialog_merging'],
+					dialogTitle: 'View Submission',
+					closeBtn: true,
+					closeBtnText: 'Cancel'
+				});
 
-				var $diag = $('<div>')
-					.attr('id',diagId)
-					.attr('role','alertdialog')
-					.attr('aria-modal','true')
-					.attr('aria-labelledby','my-dialog-title')
-					.attr('aria-describedby','my-dialog-content')
-					.attr('class','submission_view_dialog_merging mdc-dialog')
-					.appendTo($('body'));
-
-							
-				var $dialogContainer = $('<div>')
-					.attr('class','mdc-dialog__container')
-					.appendTo($diag);
-				
-				var $dialogSurface = $('<div>')
-					.attr('class','mdc-dialog__surface')
-					.appendTo($dialogContainer);
-				
-				$('<h2>')
-					.attr('class','mdc-dialog__title')
-					.text(_loc('View Submission'))
-					.appendTo($dialogSurface);
-
-				var $dialogContent = $('<div>')
-					.attr('class','mdc-dialog__content')
-					.appendTo($dialogSurface);
-	
-				// Attach mdc component to alert dialog
-				_this.mdcDialogComponent = new mdc.dialog.MDCDialog($diag[0]);
-
-				$('<div>')
-					.addClass('mdc-dialog__scrim')
-					.click(function(){
-						_this.mdcDialogComponent.close();
-						$diag.remove();
-						return false;
-					})
-					.appendTo($diag);
-
-				initiateMergingView($dialogContent, diagId, originalDoc, submittedDoc, currentDoc, subDoc);
-
-				// Open dialog after adding content
-				_this.mdcDialogComponent.open();
+				initiateMergingView($('#' + openDiag.contentId), openDiag.getId(), originalDoc, submittedDoc, currentDoc, subDoc);
 			};
 
 			function initiateMergingView($dialogContent, diagId, originalDoc, submittedDoc, currentDoc, subDoc){
@@ -1092,19 +1041,6 @@
 					new $n2.mdc.MDCButton(editBtnOpts);
 				};
 			
-				var cancelBtnOpts = {
-					parentId: btnParentId,
-					mdcClasses: ['n2_button_cancel', 'mdc-dialog__button'],
-					btnLabel: 'Cancel',
-					btnFunction: function(){
-						_this.mdcDialogComponent.close();
-						var $dialog = $('#'+diagId);
-						$dialog.remove();
-						return false;
-					}
-				};
-				new $n2.mdc.MDCButton(cancelBtnOpts);
-				
 				// Install mouse over: On mouse over, change style of all
 				// similar keys, in the other trees. Include the parent
 				// keys as well.
