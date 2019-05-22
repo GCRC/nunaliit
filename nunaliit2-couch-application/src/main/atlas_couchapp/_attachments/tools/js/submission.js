@@ -389,48 +389,46 @@
 			function gatherDenyReason(callback,sendEmail){
 				var denyDialogId = $n2.getUniqueId();
 
-				var $denyDialog = $('<div>')
-					.attr('id',denyDialogId)
-					.attr('role','alertdialog')
-					.attr('aria-modal','true')
-					.attr('aria-labelledby','my-dialog-title')
-					.attr('aria-describedby','my-dialog-content')
-					.attr('class','submission_deny_dialog mdc-dialog')
-					.appendTo($('body'));
-				
-				var $dialogContainer = $('<div>')
-					.attr('class','mdc-dialog__container')
-					.appendTo($denyDialog);
-				
-				var $dialogSurface = $('<div>')
-					.attr('class','mdc-dialog__surface')
-					.appendTo($dialogContainer);
-				
-				$('<h2>')
-					.attr('class','mdc-dialog__title')
-					.text(_loc('Enter reason for rejecting submission'))
-					.appendTo($dialogSurface);
-		
-				var $dialogContent = $('<div>')
-					.attr('class','mdc-dialog__content')
-					.appendTo($dialogSurface);
+				var denyDialog = new $n2.mdc.MDCDialog({
+					mdcClasses: ['submission_deny_dialog'],
+					dialogTitle: 'Enter reason for rejecting submission',
+					clostBtn: true,
+					closeBtnText: 'Cancel'
+				});
+
+				$('#' + denyDialog.footerId).addClass('submission_deny_dialog_buttons');
+
+				new $n2.mdc.MDCButton({
+					parentId: denyDialog.footerId,
+					mdcClasses: ['n2_button_ok', 'mdc-dialog__button'],
+					btnLabel: 'OK',
+					btnFunction: function(){
+						var $diag = $('#'+denyDialogId);
+						
+						var comment = $diag.find('textarea.submission_deny_dialog_reason').val();
+						var email = $diag.find('input[name="send_email"]').is(':checked');
+												
+						denyDialog.closeDialog();
+						$('#' + denyDialog.getId()).remove();
+
+						if (typeof callback === 'function') {
+							callback(comment,email);
+						}
+					}
+				});
 
 				// TextArea Rejection Reason
-				var taId = $n2.getUniqueId();
-
-				var rejectTxtFldOpts = {
-					parentId: $n2.utils.getElementIdentifier($dialogContent),
+				new $n2.mdc.MDCTextField({
+					parentId: denyDialog.contentId,
 					txtFldArea: true,
 					txtFldLabel: 'Rejection Reason',
-					txtFldInputId: taId,
 					txtFldInputClasses: ['submission_deny_dialog_reason']
-				};
-				new $n2.mdc.MDCTextField(rejectTxtFldOpts);
-
+				});
+				
 				// Email Checbox 
 				var $options = $('<div>')
 					.addClass('submission_deny_dialog_options mdc-form-field')
-					.appendTo($dialogContent);
+					.appendTo($('#' + denyDialog.contentId));
 
 				var cbId = $n2.getUniqueId();
 
@@ -460,61 +458,6 @@
 					.attr('for',cbId)
 					.text( _loc('Send e-mail to submitter with reason for rejection') )
 					.appendTo($options);
-				
-				// Dialog Buttons
-				var $buttons = $('<footer>')
-					.addClass('submission_deny_dialog_buttons mdc-dialog__actions')
-					.appendTo($dialogContent);
-
-				var btnParentId = $n2.utils.getElementIdentifier($buttons);
-
-				var okBtnOpts = {
-					parentId: btnParentId,
-					mdcClasses: ['n2_button_ok', 'mdc-dialog__button'],
-					btnLabel: 'OK',
-					btnFunction: function(){
-						var $diag = $('#'+denyDialogId);
-						
-						var comment = $diag.find('textarea.submission_deny_dialog_reason').val();
-						var email = $diag.find('input[name="send_email"]').is(':checked');
-												
-						mdcDenyDialogComponent.close();
-						$denyDialog.remove();
-
-						if( typeof callback === 'function' ){
-							callback(comment,email);
-						};
-					}
-				};
-				new $n2.mdc.MDCButton(okBtnOpts);
-
-				var cancelBtnOpts = {
-					parentId: btnParentId,
-					mdcClasses: ['n2_button_cancel', 'mdc-dialog__button'],
-					btnLabel: 'Cancel',
-					btnFunction: function(){
-						mdcDenyDialogComponent.close();
-						$denyDialog.remove();
-						return false;
-					}
-				};
-				new $n2.mdc.MDCButton(cancelBtnOpts);
-
-				$('<div>')
-					.addClass('mdc-dialog__scrim')
-					.click(function(){						
-						mdcDenyDialogComponent.close();
-						$denyDialog.remove();
-						return false;
-					})
-					.appendTo($denyDialog);
-					
-				// Attach MDC Components
-				$n2.mdc.attachMDCComponents();
-				
-				// Attach mdc component to alert dialog
-				mdcDenyDialogComponent = new mdc.dialog.MDCDialog($denyDialog[0]);
-				mdcDenyDialogComponent.open();
 			};
 		}
 
