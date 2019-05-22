@@ -218,7 +218,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		$chkboxInput = $('<input>')
 			.attr('id', chkboxInputId) 
 			.attr('type', 'checkbox')
-			.name('name', this.chkboxName)
+			.attr('name', this.chkboxName)
 			.addClass('mdc-checkbox__native-control')
 			.appendTo($chkbox);
 
