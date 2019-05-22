@@ -1100,65 +1100,13 @@ var Display = $n2.Class({
 			var $content = $('<div>')
 				.attr('id', contentId);
 						
-			var $dialog = $('<div>')
-				.attr('role','alertdialog')
-				.attr('aria-modal','true')
-				.attr('aria-labelledby','my-dialog-title')
-				.attr('aria-describedby','my-dialog-content')
-				.addClass('mdc-dialog mdc-dialog--scrollable')
-				.appendTo($('body'));
+			var geometriesDialog = new $n2.mdc.MDCDialog({
+				dialogTitle: 'Geometries',
+				scrollable: true,
+				closeBtn: true
+			});
 
-			var _this = this;
-			
-			var $dialogContainer = $('<div>')
-				.addClass('mdc-dialog__container')
-				.appendTo($dialog);
-
-			var $dialogSurface = $('<div>')
-				.addClass('mdc-dialog__surface')
-				.appendTo($dialogContainer);
-
-			$('<h2>')
-				.addClass('mdc-dialog__title')
-				.text(_loc('Geometries'))
-				.appendTo($dialogSurface);
-
-			var $container = $('<div>')
-				.attr('id',contentId + "_container")
-				.addClass('mdc-dialog__content')
-				.appendTo($dialogSurface);
-
-			$content.appendTo($container);
-
-			var $footer = $('<footer>')
-				.addClass('mdc-dialog__actions')
-				.appendTo($dialogSurface);
-
-			var btnOpts = {
-				parentId: $n2.utils.getElementIdentifier($footer),
-				mdcClasses: ['mdc-dialog__button'],
-				btnLabel: 'Close',
-				btnFunction: function(){
-					mdcDialogComponent.close();
-					$dialog.remove();
-					return false;
-				}
-			};
-
-			new $n2.mdc.MDCButton(btnOpts);
-
-			$('<div>')
-				.addClass('mdc-dialog__scrim')
-				.click(function(){
-					mdcDialogComponent.close();
-					$dialog.remove();
-					return false;
-				})
-				.appendTo($dialog);
-
-			// Attach mdc component to alert dialog
-			mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
-			mdcDialogComponent.open();
+			$content.appendTo($('#' + geometriesDialog.contentId));
 
 			display($content);
 
