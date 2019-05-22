@@ -1901,65 +1901,18 @@ var TreeDocumentViewer = $n2.Class({
 	},
 	
 	_display: function(){
-		var $dialog = $('<div>')
-			.attr('role','alertdialog')
-			.attr('aria-modal','true')
-			.attr('aria-labelledby','my-dialog-title')
-			.attr('aria-describedby','my-dialog-content')
-			.addClass('n2Display_treeViewer_dialog mdc-dialog mdc-dialog--scrollable')
-			.appendTo($('body'));
 
-		var _this = this;
-		
-		var $dialogContainer = $('<div>')
-			.addClass('mdc-dialog__container')
-			.appendTo($dialog);
+		var treeViewDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: ['n2Display_treeViewer_dialog'],
+			dialogTitle: 'Tree View',
+			scrollable: true,
+			closeBtn: true
+		});
 
-		var $dialogSurface = $('<div>')
-			.addClass('mdc-dialog__surface')
-			.appendTo($dialogContainer);
+		$('#' + treeViewDialog.contentId).addClass('n2Display_treeViewer_content');
+		$('#' + treeViewDialog.footerId).addClass('n2Display_treeViewer_buttons');
 
-		$('<h2>')
-			.addClass('mdc-dialog__title')
-			.text(_loc('Tree View'))
-			.appendTo($dialogSurface);
-
-		var $container = $('<div>')
-			.addClass('n2Display_treeViewer_content mdc-dialog__content')
-			.appendTo($dialogSurface);
-		
-		new $n2.tree.ObjectTree($container, this.doc);
-		
-		var $footer = $('<footer>')
-			.addClass('n2Display_treeViewer_buttons mdc-dialog__actions')
-			.appendTo($dialogSurface);
-	
-		var btnOpts = {
-			parentId: $n2.utils.getElementIdentifier($footer),
-			mdcClasses: ['mdc-dialog__button'],
-			btnLabel: 'Close',
-			btnFunction: function(){
-				_this.mdcDialogComponent.close();
-				$dialog.remove();
-				return false;
-			}
-		};
-
-		new $n2.mdc.MDCButton(btnOpts);
-
-		$('<div>')
-			.addClass('mdc-dialog__scrim')
-			.click(function(){
-				_this.mdcDialogComponent.close();
-				$dialog.remove();
-				return false;
-			})
-			.appendTo($dialog);
-
-		// Attach mdc component to alert dialog
-		this.mdcDialogComponent = new mdc.dialog.MDCDialog($dialog[0]);
-		this.mdcDialogComponent.open();
-		
+		new $n2.tree.ObjectTree($('#' + treeViewDialog.contentId), this.doc);
 	}
 });
 
