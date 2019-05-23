@@ -249,10 +249,10 @@ function showButtons(opts_){
 	
 	var btnParentId = $n2.utils.getElementIdentifier($div);
 
-	var showBtnOpts = {
+	new $n2.mdc.MDCButton({
 		parentId: btnParentId,
 		btnLabel: 'Show',
-		btnFunction: function(){
+		onBtnClick: function(){
 			var $formatSel = $('#'+formatSelId);
 			var format = $formatSel.val();
 			showDocs({
@@ -262,13 +262,12 @@ function showButtons(opts_){
 			});
 			return false;
 		}
-	};
-	new $n2.mdc.MDCButton(showBtnOpts);
+	});
 
-	var dlBtnOpts = {
+	new $n2.mdc.MDCButton({
 		parentId: btnParentId,
 		btnLabel: 'Download',
-		btnFunction: function(){
+		onBtnClick: function(){
 			var $formatSel = $('#'+formatSelId);
 			var format = $formatSel.val();
 			downloadDocs({
@@ -278,8 +277,7 @@ function showButtons(opts_){
 			});
 			return false;
 		}
-	};
-	new $n2.mdc.MDCButton(dlBtnOpts);
+	});
 
 	// Attach Material Design Components
 	$n2.mdc.attachMDCComponents();

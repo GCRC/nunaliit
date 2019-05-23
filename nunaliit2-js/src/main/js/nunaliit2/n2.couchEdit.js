@@ -718,14 +718,12 @@ var CouchSimpleDocumentEditor = $n2.Class({
 				showService.printBriefDescription($brief, relDocId);
 			};
 
-			var btnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($displayRelationDiv),
 				mdcClasses: ['editorDisplayRelationButton'],
 				btnLabel: 'Remove',
-				btnFunction: removeRelationFn
-			};
-			
-			new $n2.mdc.MDCButton(btnOpts);
+				onBtnClick: removeRelationFn
+			});
 		};
 	}
 	
@@ -1396,34 +1394,30 @@ var CouchDocumentEditor = $n2.Class({
 			.addClass('editorButtons mdc-card__action-buttons')
 			.appendTo($formButtonsContainer);
 
-		var saveBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($formButtons),
 			mdcClasses: ['save'],
 			btnLabel: 'Save',
 			btnRaised: true,
-			btnFunction: function(){
+			onBtnClick: function(){
 				_this._save();
 				return false;
 			}
-		};
-
-		new $n2.mdc.MDCButton(saveBtnOpts);
+		});
 
 		if( !this.isInsert && $n2.couchMap.canDeleteDoc(data) ) {
 
-			var deleteBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($formButtons),
 				mdcClasses: ['delete'],
 				btnLabel: 'Delete',
-				btnFunction: function(evt){
-					if( confirm( _loc('Do you really want to delete this feature?') ) ) {
+				onBtnClick: function(evt){
+					if (confirm(_loc('Do you really want to delete this feature?'))) {
 						deletion(data);
-					};
+					}
 					return false;
 				}
-			};
-
-			new $n2.mdc.MDCButton(deleteBtnOpts);
+			});
 		};
 		
 		if( this.attachmentEditor ){
@@ -1432,40 +1426,34 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 
-		var addRelBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($formButtons),
 			mdcClasses: ['relation'],
 			btnLabel: 'Add Relation',
-			btnFunction: function(){
+			onBtnClick: function(){
 				_this._addRelationDialog();
 				return false;
 			}
-		};
-
-		new $n2.mdc.MDCButton(addRelBtnOpts);
+		});
 		
-		var layersBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($formButtons),
 			mdcClasses: ['layers'],
 			btnLabel: 'Layers',
-			btnFunction: function(){ 
+			onBtnClick: function(){ 
 				_this._manageLayersDialog(); 
 				return false; 
 			}
-		};
+		});
 
-		new $n2.mdc.MDCButton(layersBtnOpts);
-
-		var cancelBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($formButtons),
 			mdcClasses: ['cancel'],
 			btnLabel: 'Cancel',
-			btnFunction: function(){
+			onBtnClick: function(){
 				_this._cancelEdit();
 			}
-		};
-
-		new $n2.mdc.MDCButton(cancelBtnOpts);
+		});
 
 		// Add user buttons
 		for(var i=0,e=this.userButtons.length; i<e; ++i) {
@@ -2038,14 +2026,12 @@ var CouchDocumentEditor = $n2.Class({
 				showService.printBriefDescription($brief, relDocId);
 			};
 		
-			var removeBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($displayRelationDiv),
 				mdcClasses: ['editorDisplayRelationButton'],
 				btnLabel: 'Remove',
-				btnFunction: removeRelationFn
-			};
-
-			new $n2.mdc.MDCButton(removeBtnOpts);
+				onBtnClick: removeRelationFn
+			});
 		};
 	},
 	
@@ -2908,7 +2894,7 @@ var AttachmentEditor = $n2.Class({
 		var attachBtnOpts = {
 			parentId: $n2.utils.getElementIdentifier($elem),
 			btnLabel: 'Add File',
-			btnFunction: function(){
+			onBtnClick: function(){
 				_this._openAddFileDialog();
 				return false;
 			}
@@ -3267,7 +3253,7 @@ var AttachmentEditor = $n2.Class({
 			parentId: dialogFooterId,
 			mdcClasses: ['mdc-dialog__button'],
 			btnLabel: 'Attach',
-			btnFunction: function(){
+			onBtnClick: function(){
 				var $addFileDialog = $('#'+dialogId);
 				var $addFileForm = $('#'+addFileFormId);
 				var $input = $addFileForm.find('input');
@@ -3886,14 +3872,14 @@ var AttachmentEditor = $n2.Class({
 				.appendTo($div);
 		};
 
-		var removeBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($div),
 			mdcClasses: ['attachmentEditor_delete'],
 			mdcAttributes: {
 				'n2AttName':'attName'
 			},
 			btnLabel: 'Remove',
-			btnFunction: function(){
+			onBtnClick: function(){
 				var $a = $(this);
 				var attName = $a.attr('n2AttName');
 				if( attName ) {
@@ -3901,9 +3887,7 @@ var AttachmentEditor = $n2.Class({
 				};
 				return false;
 			}
-		};
-
-		new $n2.mdc.MDCButton(removeBtnOpts);
+		});
 		
 		if( opts.form ) {
 			opts.form.appendTo($div);

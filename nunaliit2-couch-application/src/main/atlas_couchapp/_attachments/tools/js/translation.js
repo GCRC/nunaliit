@@ -71,13 +71,12 @@ function showRequests(arr) {
 		$tr.append( $('<td class="docId">'+req._id+'</td>') );
 		$tr.append( $('<td class="packageName">'+req.packageName+'</td>') );
 		
-		var uploadBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($btnTd),
 			mdcClasses: ['uploadBtn'],
 			btnLabel: 'Upload',
-			btnFunction: upload
-		};
-		new $n2.mdc.MDCButton(uploadBtnOpts);
+			onBtnClick: upload
+		});
 
 		if( req.nunaliit_created && req.nunaliit_created.name ){
 			// Insert name

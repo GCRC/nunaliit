@@ -2309,10 +2309,10 @@
 			.text(_loc('Queries '))
 			.appendTo($buttonsLine);
 
-		var addBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($buttonsLine),
 			btnLabel: 'Add',
-			btnFunction: function(){
+			onBtnClick: function(){
 				SearchFilter.createNewList({
 					onSuccess: function(list){
 						addList(list);
@@ -2320,8 +2320,7 @@
 				});
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(addBtnOpts);
+		});
 
 		for(var i=0,e=allLists.length; i<e; ++i){
 			var list = allLists[i];
@@ -2343,7 +2342,7 @@
 			
 			var btnParentId = $n2.utils.getElementIdentifier($d);
 
-			var viewBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: btnParentId,
 				mdcAttributes: {
 					'href': '#',
@@ -2351,11 +2350,10 @@
 				},
 				mdcClasses: ['selectApp_list_button'],
 				btnLabel: 'View',
-				btnFunction: onListClick
-			};
-			new $n2.mdc.MDCButton(viewBtnOpts);
+				onBtnClick: onListClick
+			});
 
-			var textBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: btnParentId,
 				mdcAttributes: {
 					'href': '#',
@@ -2363,11 +2361,10 @@
 				},
 				mdcClasses: ['selectApp_list_button'],
 				btnLabel: 'Text',
-				btnFunction: onTextClick
-			};
-			new $n2.mdc.MDCButton(textBtnOpts);
+				onBtnClick: onTextClick
+			});
 
-			var removeBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: btnParentId,
 				mdcAttributes: {
 					'href': '#',
@@ -2375,9 +2372,8 @@
 				},
 				mdcClasses: ['selectApp_list_button'],
 				btnLabel: 'Remove',
-				btnFunction: onRemoveClick
-			};
-			new $n2.mdc.MDCButton(removeBtnOpts);
+				onBtnClick: onRemoveClick
+			});
 		};
 		
 		function onListClick(e){
@@ -2497,30 +2493,28 @@
 
 		var btnParentId = $n2.utils.getElementIdentifier($headerLine);
 
-		var transformBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: btnParentId,
 			btnLabel: 'Transform',
-			btnFunction: function(){
+			onBtnClick: function(){
 				transformList(list);
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(transformBtnOpts);
+		});
 
-		var deleteBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: btnParentId,
 			btnLabel: 'Delete',
-			btnFunction: function(){
+			onBtnClick: function(){
 				deleteDocumentsFromList(list);
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(deleteBtnOpts);
+		});
 
-		var refineListBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: btnParentId,
 			btnLabel: 'Refine List',
-			btnFunction: function(){
+			onBtnClick: function(){
 				SearchFilter.refineList({
 					list: list
 					,onSuccess: function(refinedList){
@@ -2529,38 +2523,34 @@
 				});
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(refineListBtnOpts);
+		});
 
-		var reportBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: btnParentId,
 			btnLabel: 'Report',
-			btnFunction: function(){
+			onBtnClick: function(){
 				reportList(list);
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(reportBtnOpts);
+		});
 
-		var exportBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: btnParentId,
 			btnLabel: 'Export',
-			btnFunction: function(){
+			onBtnClick: function(){
 				exportList(list);
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(exportBtnOpts);
+		});
 		
-		var exportScriptBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: btnParentId,
 			btnLabel: 'Export by Script',
-			btnFunction: function(){
+			onBtnClick: function(){
 				exportListByScript(list);
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(exportScriptBtnOpts);
+		});
 
 		for(var i=0,e=list.docIds.length; i<e; ++i){
 			var docId = list.docIds[i];
@@ -2659,7 +2649,7 @@
 		new $n2.mdc.MDCButton({
 			parentId: transformDialog.footerId,
 			btnLabel: 'Ok',
-			btnFunction: function(){
+			onBtnClick: function(){
 				var transformId = $('#' + transformSelect.selectId).val();
 				transformDialog.closeDialog();
 				var useTransform = null;
@@ -3398,15 +3388,14 @@
 					.addClass('mdc-card__actions')
 					.appendTo($div);
 
-				var editBtnOpts = {
+				new $n2.mdc.MDCButton({
 					parentId: $n2.utils.getElementIdentifier($buttons),
 					btnLabel: 'Edit',
-					btnFunction: function(){
+					onBtnClick: function(){
 						editDocument(doc);
 						return false;
 					}
-				};
-				new $n2.mdc.MDCButton(editBtnOpts)
+				});
 				
 				if( revsInfo ){
 					$revs.empty();
@@ -3567,17 +3556,16 @@
 				.text(_loc('Logs '))
 				.appendTo($buttonsLine);
 
-			var clearBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($buttonsLine),
 				btnLabel: 'Clear',
-				btnFunction: function(){
+				onBtnClick: function(){
 					var $d = getLogsDiv();
 					$d.empty();
 					addHeader($d);
 					return false;
 				}
-			};
-			new $n2.mdc.MDCButton(clearBtnOpts);
+			});
 		};
 	};
 	
@@ -3603,10 +3591,10 @@
 	function bs(){
 		
 		var btnParentId = $n2.utils.getElementIdentifier($selectAppDiv);
-		var tempViewBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: btnParentId,
 			btnLabel: 'Test Temporary View',
-			btnFunction: function(){
+			onBtnClick: function(){
 				atlasDb.queryTemporaryView({
 					map: 'function(doc){ emit(null,null); }'
 					,onSuccess: function(rows){
@@ -3624,13 +3612,12 @@
 				});
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(tempViewBtnOpts);
+		});
 
-		var allDocsBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: btnParentId,
 			btnLabel: 'All Documents',
-			btnFunction: function(){
+			onBtnClick: function(){
 				atlasDb.listAllDocuments({
 					onSuccess: function(docIds){
 						var l = new DocumentList({
@@ -3642,8 +3629,7 @@
 				});
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(allDocsBtnOpts);
+		});
 	};
 	
 	// -----------------------------------------------------------------

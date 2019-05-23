@@ -1837,7 +1837,7 @@ var ButtonDisplay = $n2.Class({
 			parentId: $n2.utils.getElementIdentifier($elem),
 			mdcClasses: ['nunaliit_form_link'],
 			btnLabel: label,
-			btnFunction: wrapAndReturnFalse(opts.click)
+			onBtnClick: wrapAndReturnFalse(opts.click)
 		};
 		
 		if( name ){

@@ -48,7 +48,7 @@
 			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($buttonsLine),
 				btnLabel: 'Clear',
-				btnFunction: function(){
+				onBtnClick: function(){
 					_this.clear();
 					return false;
 				}
@@ -193,7 +193,7 @@
 			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($buttonsLine),
 				btnLabel: 'Refresh',
-				btnFunction: function(){
+				onBtnClick: function(){
 					_this._refreshSubmissions();
 					return false;
 				}
@@ -400,7 +400,7 @@
 					parentId: denyDialog.footerId,
 					mdcClasses: ['n2_button_ok', 'mdc-dialog__button'],
 					btnLabel: 'OK',
-					btnFunction: function(){
+					onBtnClick: function(){
 						var $diag = $('#'+denyDialogId);
 						
 						var comment = $diag.find('textarea.submission_deny_dialog_reason').val();
@@ -708,7 +708,7 @@
 			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($views),
 				btnLabel: 'View',
-				btnFunction: function(){
+				onBtnClick: function(){
 					_this._viewMerging(subDocId);
 					return false;
 				}
@@ -968,7 +968,7 @@
 					parentId: this.openDiag.footerId,
 					mdcClasses: ['n2_button_approve'],
 					btnLabel: 'Approve',
-					btnFunction: function(){
+					onBtnClick: function(){
 						_this._approve(subDocId, proposedDoc);
 						_this.openDiag.close();
 						var $dialog = $('#'+diagId);
@@ -981,7 +981,7 @@
 					parentId: this.openDiag.footerId,
 					mdcClasses: ['n2_button_deny', 'mdc-dialog__button'],
 					btnLabel: 'Reject',
-					btnFunction: function(){
+					onBtnClick: function(){
 						_this._deny(subDocId,function(){
 							_this.openDiag.close();
 							var $dialog = $('#'+diagId);
@@ -996,7 +996,7 @@
 						parentId: this.openDiag.footerId,
 						mdcClasses: ['n2_button_original', 'mdc-dialog__button'],
 						btnLabel: 'View Original',
-						btnFunction: function(){
+						onBtnClick: function(){
 							_this._viewOriginal(subDocId);
 							return false;
 						}
@@ -1008,7 +1008,7 @@
 						parentId: this.openDiag.footerId,
 						mdcClasses: ['n2_button_submitted', 'mdc-dialog__button'],
 						btnLabel: 'View Submitted',
-						btnFunction: function(){
+						onBtnClick: function(){
 							_this._viewSubmitted(subDocId);
 							return false;
 						}
@@ -1020,7 +1020,7 @@
 						parentId: this.openDiag.footerId,
 						mdcClasses: ['n2_button_manual', 'mdc-dialog__button'],
 						btnLabel: 'Edit Proposed Document',
-						btnFunction: function(){
+						onBtnClick: function(){
 							editProposedDocument(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
 							return false;
 						}
@@ -1109,7 +1109,7 @@
 					parentId: btnParentId,
 					mdcClasses: ['n2_button_save'],
 					btnLabel: 'Save',
-					btnFunction: function(){
+					onBtnClick: function(){
 						var updatedDoc = editor.getDocument();
 						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, updatedDoc, subDoc);
 						return false;
@@ -1120,7 +1120,7 @@
 					parentId: btnParentId,
 					mdcClasses: ['n2_button_cancel'],
 					btnLabel: 'Cancel',
-					btnFunction: function(){
+					onBtnClick: function(){
 						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
 						return false;
 					}

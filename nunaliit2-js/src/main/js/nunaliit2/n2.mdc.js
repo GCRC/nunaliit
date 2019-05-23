@@ -85,26 +85,26 @@ var MDC = $n2.Class('MDC',{
 // Description: Creates a material design button component
 // Options:
 //  - btnLabel (String): Defines the text label on the button.
-//  - btnFunction (Function): Defines the function which occurs when the button is clicked.
 //  - btnRaised (Boolean): Defines if the button should be raised or not (default = false).
+//  - onBtnClick (Function): Defines the function which occurs when the button is clicked.
 var MDCButton = $n2.Class('MDCButton', MDC, {
 
 	btnLabel: null,
-	btnFunction: null,
 	btnRaised: null,
+	onBtnClick: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			btnLabel: null,
-			btnFunction: null,
-			btnRaised: false
+			btnRaised: false,
+			onBtnClick: null
 		}, opts_);
 
 		MDC.prototype.initialize.call(this,opts);
 
 		this.btnLabel = opts.btnLabel;
-		this.btnFunction = opts.btnFunction;
 		this.btnRaised = opts.btnRaised;
+		this.onBtnClick = opts.onBtnClick;
 
 		if (!this.parentId) {
 			throw new Error('Parent Id must be provided, to add a Material Design Button Component');
@@ -130,8 +130,8 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 			.text(_loc(this.btnLabel))
 			.appendTo(this.docFragment);
 
-		if (this.btnFunction) {
-			$btn.click(this.btnFunction);
+		if (this.onBtnClick) {
+			$btn.click(this.onBtnClick);
 		}
 
 		if (this.mdcAttributes) {
@@ -407,7 +407,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		new MDCButton({
 			parentId: this.footerId,
 			btnLabel: this.closeBtnText,
-			btnFunction: this.closeDialog
+			onBtnClick: this.closeDialog
 		});
 	}, 
 

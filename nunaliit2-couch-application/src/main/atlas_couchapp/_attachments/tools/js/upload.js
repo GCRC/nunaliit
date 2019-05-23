@@ -294,46 +294,43 @@ function refreshToolbar(){
 
 	var $approveSelected = $buttonLine.find('.uploadApproveSelectedButton');
 	if( $approveSelected.length < 1 ) {
-		var approveBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($buttonLine),
 			mdcClasses: ['uploadButton', 'uploadApproveSelectedButton'],
 			btnLabel: 'Approve Selected',
 			btnRaised: true,
-			btnFunction: function(){
+			onBtnClick: function(){
 				var selection = _getSelectedUploads();
 				_approveDenySelection(selection, 'approved');
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(approveBtnOpts);
+		});
 	};
 
 	var $denySelected = $buttonLine.find('.uploadDenySelectedButton');
 	if( $denySelected.length < 1 ) {
-		var denyBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($buttonLine),
 			mdcClasses: ['uploadButton', 'uploadDenySelectedButton'],
 			btnLabel: 'Deny Selected',
 			btnRaised: true,
-			btnFunction: function(){
+			onBtnClick: function(){
 				var selection = _getSelectedUploads();
 				_approveDenySelection(selection, 'denied');
 				return false;
 			}
-		};
-		new $n2.mdc.MDCButton(denyBtnOpts);
+		});
 	};
 
 	var $selectAllButton = $buttonLine.find('.uploadSelectAllButton');
 	if( $selectAllButton.length < 1 ) {
-		var selectAllBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($buttonLine),
 			mdcClasses: ['uploadButton', 'uploadSelectAllButton'],
 			btnLabel: 'Selected All',
 			btnRaised: true,
-			btnFunction: _selectAll
-		};
-		new $n2.mdc.MDCButton(selectAllBtnOpts);
+			onBtnClick: _selectAll
+		});
 	};
 
 	// Attach Material Design Components

@@ -1178,27 +1178,25 @@ var AnalysisReport = $n2.Class({
 				.appendTo($changes);
 			$div.text( _loc('This appears to be the first time that you are importing this profile. Accept all? ') );
 
-			var proceedBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($div),
 				btnLabel: 'Proceed',
-				btnFunction: function(){
+				onBtnClick: function(){
 					_this._proceedAll({
 						onSuccess: function(){ $('#'+proceedDivId).remove(); }
 					});
 				}
-			};
-			new $n2.mdc.MDCButton(proceedBtnOpts);
+			});
 
-			var discardBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($div),
 				btnLabel: 'Discard',
-				btnFunction: function(){
+				onBtnClick: function(){
 					var $button = $(this);
 					var $promptElem = $button.parents('.prompt');
 					$promptElem.remove();
 				}
-			};
-			new $n2.mdc.MDCButton(discardBtnOpts);
+			});
 
 		} else {
 			var autoChanges = [];
@@ -1218,27 +1216,25 @@ var AnalysisReport = $n2.Class({
 					count: autoChanges.length
 				}));
 
-				var proceedBtnOpts = {
+				new $n2.mdc.MDCButton({
 					parentId: $n2.utils.getElementIdentifier($div),
 					btnLabel: 'Proceed',
-					btnFunction: function(){
+					onBtnClick: function(){
 						_this._proceedAutomatics({
 							onSuccess: function(){ $('#'+autoDivId).remove(); }
 						});
 					}
-				};
-				new $n2.mdc.MDCButton(proceedBtnOpts);
+				});
 
-				var discardBtnOpts = {
+				new $n2.mdc.MDCButton({
 					parentId: $n2.utils.getElementIdentifier($div),
 					btnLabel: 'Discard',
-					btnFunction: function(){
+					onBtnClick: function(){
 						var $button = $(this);
 						var $promptElem = $button.parents('.prompt');
 						$promptElem.remove();
 					}
-				};
-				new $n2.mdc.MDCButton(discardBtnOpts);
+				});
 			};
 		};
 
@@ -1302,7 +1298,7 @@ var AnalysisReport = $n2.Class({
 		var discardBtnOpts = {
 			mdcClasses: ['discard'],
 			btnLabel: 'Discard',
-			btnFunction: discardClickFn
+			onBtnClick: discardClickFn
 		};
 
 		var analysis = this.analysis;
@@ -1348,7 +1344,7 @@ var AnalysisReport = $n2.Class({
 				mdcId: change.changeId + '_proceed',
 				mdcClasses: ['proceed'],
 				btnLabel: 'Modify Document',
-				btnFunction: proceedClickFn
+				onBtnClick: proceedClickFn
 			};
 
 			if( change.isAddition ){
@@ -1515,13 +1511,12 @@ var AnalysisReport = $n2.Class({
 			discardBtnOpts.parentId = $n2.utils.getElementIdentifier($del),
 			new $n2.mdc.MDCButton(discardBtnOpts);
 			
-			var delDBBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($del),
 				mdcClasses: ['proceed'],
 				btnLabel: 'Delete Database Document',
-				btnFunction: proceedClickFn
-			};
-			new $n2.mdc.MDCButton(delDBBtnOpts);
+				onBtnClick: proceedClickFn
+			});
 
 			var explanation = _loc('Delete existing document');
 			if( change.isAuto() ){

@@ -94,17 +94,16 @@
 				$deletedHeader.append($deletedHeaderHeadline);
 				$deletedList.append($deletedHeader);
 				
-				var refreshBtnOpts = {
+				new $n2.mdc.MDCButton({
 					parentId: $n2.utils.getElementIdentifier($deletedHeader),
 					btnLabel: 'Refresh',
-					btnFunction: function(){
+					onBtnClick: function(){
 						var $div = _this._getDisplayDiv();
 						$div.find('.restoreDeletedDocs').remove();
 						_this._refresh();
 						return false;
 					}
-				};
-				new $n2.mdc.MDCButton(refreshBtnOpts);
+				});
 			};
 
 			var $deletedDocs = $deletedList.find('.restoreDeletedDocs');
@@ -248,17 +247,16 @@
 					
 					new $n2.tree.ObjectTree($content, doc);
 					
-					var restoreBtnOpts = {
+					new $n2.mdc.MDCButton({
 						parentId: $n2.utils.getElementIdentifier($displayDiv),
 						btnLabel: 'Restore this version',
 						btnRaised: true,
-						btnFunction: function(){
+						onBtnClick: function(){
 							var $btn = $(this);
 							_this._restoreRevision($btn, doc, lastRev);
 							return false;
 						}
-					}
-					new $n2.mdc.MDCButton(restoreBtnOpts);
+					});
 				}
 				,onError: function(errorMsg){ 
 					var $div = _this._getDisplayDiv();

@@ -378,14 +378,13 @@ function main(opts_) {
 	var $addDocBtn = $('#searchPanel').find('#addDocumentButton');
 
 	if( $addDocBtn.length < 1){
-		var newDocBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: 'searchPanel',
 			mdcId: 'addDocumentButton',
 			btnLabel: 'New Document',
 			btnRaised: true,
-			btnFunction: addDocument
-		};
-		new $n2.mdc.MDCButton(newDocBtnOpts);
+			onBtnClick: addDocument
+		});
 	}
 	
 	// Editor

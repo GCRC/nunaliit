@@ -338,7 +338,7 @@ function selectLayersDialog(opts_){
 		mdcClasses: ['ok', 'mdc-dialog__button'],
 		btnLabel: 'OK',
 		btnRaised: true,
-		btnFunction: function(){
+		onBtnClick: function(){
 			var selectedLayers = [];
 			var $diag = $('#'+dialogId);
 			$diag.find('input.layer').each(function(){
@@ -1043,7 +1043,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 			parentId: searchRelatedMediaDialog.footerId,
 			mdcClasses: ['cancel', 'mdc-dialog__button'],
 			btnLabel: 'Cancel',
-			btnFunction: function(){
+			onBtnClick: function(){
 				searchRelatedMediaDialog.closeDialog();
 				$('#' + searchRelatedMediaDialog.getId()).remove();
 				if (shouldReset) {

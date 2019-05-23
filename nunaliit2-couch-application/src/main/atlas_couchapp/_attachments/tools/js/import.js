@@ -99,10 +99,10 @@
 		new $n2.mdc.MDCTextField(inputTxtFldOpts);
 
 		// Import Verify Button
-		var verifyBtnOpts = {
+		new $n2.mdc.MDCButton({
 			parentId: $n2.utils.getElementIdentifier($buttonLine),
 			btnLabel: 'Verify',
-			btnFunction: function(){
+			onBtnClick: function(){
 				var $inputSection = $appDiv.find('.importAppInput');
 				var importProfileId = $inputSection.find('.import_profile').val();
 				var importData = $inputSection.find('.importData').val();
@@ -168,8 +168,7 @@
 					}
 				});
 			}
-		};
-		new $n2.mdc.MDCButton(verifyBtnOpts);
+		});
 		
 		function fatalError(err){
 			reportError( err );
@@ -204,17 +203,16 @@
 				.text( _loc('Logs') )
 				.appendTo($h);
 		
-			var clearBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($h),
 				btnLabel: 'Clear',
-				btnFunction: function(){
+				onBtnClick: function(){
 					var $d = getLogsDiv();
 					$d.empty();
 					addHeader($d);
 					return false;
 				}
-			}
-			new $n2.mdc.MDCButton(clearBtnOpts);
+			});
 		};
 	};
 	

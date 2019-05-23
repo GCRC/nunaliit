@@ -227,19 +227,18 @@
 				var btnParentId = $n2.utils.getElementIdentifier($td);
 
 				if( isInstalled ) {
-					var replaceBtnOpts = {
+					new $n2.mdc.MDCButton({
 						parentId: btnParentId,
 						btnLabel: 'Replace',
-						btnFunction: createClickReplaceSchema(schema, received[name])
-					};
-					new $n2.mdc.MDCButton(replaceBtnOpts);
+						onBtnClick: createClickReplaceSchema(schema, received[name])
+					});
+
 				} else {
-					var installBtnOpts = {
+					new $n2.mdc.MDCButton({
 						parentId: btnParentId,
 						btnLabel: 'Install',
-						btnFunction: createClickInstallSchema(schema)
-					};
-					new $n2.mdc.MDCButton(installBtnOpts);
+						onBtnClick: createClickInstallSchema(schema)
+					});
 				};
 
 				// Attach Material Design Components
@@ -351,17 +350,16 @@
 				.text('Logs')
 				.appendTo($e);
 
-			var clearBtnOpts = {
+			new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($h),
 				btnLabel: 'Clear',
-				btnFunction: function(){
+				onBtnClick: function(){
 					var $d = getLogsDiv();
 					$d.empty();
 					addHeader($d);
 					return false;
 				}
-			};
-			new $n2.mdc.MDCButton(clearBtnOpts);
+			});
 		};
 	};
 	
