@@ -3234,8 +3234,8 @@ var AttachmentEditor = $n2.Class({
 			closeBtnText: 'Cancel'
 		});
 
-		var dialogContentId = addFileDialog.contentId;
-		var dialogFooterId = addFileDialog.footerId;
+		var dialogContentId = addFileDialog.getContentId();
+		var dialogFooterId = addFileDialog.getFooterId();
 
 		$('#' + dialogContentId).addClass('attachmentEditor_dialog_content');
 		$('#' + dialogContentId).addClass('attachmentEditor_dialog_buttons');

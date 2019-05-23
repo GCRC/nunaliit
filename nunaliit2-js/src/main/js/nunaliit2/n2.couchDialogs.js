@@ -163,7 +163,7 @@ var AlertDialog = $n2.Class({
 			closeBtnText: 'OK'
 		});
 
-		$('#' + alertDialog.contentId).addClass('n2dialogs_alert_message');
+		$('#' + alertDialog.getContentId()).addClass('n2dialogs_alert_message');
 	}
 });
 
@@ -192,7 +192,7 @@ function searchForDocumentId(options_){
 	});
 
 	new $n2.mdc.MDCTextField({
-		parentId: searchDocDialog.contentId,
+		parentId: searchDocDialog.getContentId(),
 		txtFldLabel: 'Search',
 		txtFldInputId: inputId
 	});
@@ -200,10 +200,10 @@ function searchForDocumentId(options_){
 	$('<div>')
 		.attr('id',displayId)
 		.addClass('editorSelectDocumentDialogResults')
-		.appendTo('#' + searchDocDialog.contentId);
+		.appendTo('#' + searchDocDialog.getContentId());
 
 	new $n2.mdc.MDCButton({
-		parentId: searchDocDialog.footerId, 
+		parentId: searchDocDialog.getFooterId(), 
 		mdcId: searchButtonId,
 		mdcClasses: ['mdc-dialog__button'],
 		btnLabel: 'Search'
@@ -330,11 +330,11 @@ function selectLayersDialog(opts_){
 		closeBtnText: 'Cancel'
 	});
 
-	$('#' + selectLayerDialog.contentId).addClass('editorSelectLayerContent');
-	$('#' + selectLayerDialog.footerId).addClass('editorSelectLayerButtons');
+	$('#' + selectLayerDialog.getContentId()).addClass('editorSelectLayerContent');
+	$('#' + selectLayerDialog.getFooterId()).addClass('editorSelectLayerButtons');
 
 	new $n2.mdc.MDCButton({
-		parentId: selectLayerDialog.footerId,
+		parentId: selectLayerDialog.getFooterId(),
 		mdcClasses: ['ok', 'mdc-dialog__button'],
 		btnLabel: 'OK',
 		btnRaised: true,
@@ -1012,7 +1012,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 
 		var $suggestionContainer = $('<div>')
 			.attr('class','editorSelectDocumentDialog_suggested')
-			.appendTo($('#' + searchRelatedMediaDialog.contentId));
+			.appendTo($('#' + searchRelatedMediaDialog.getContentId()));
 
 		$('<div>')
 			.attr('class','editorSelectDocumentDialog_suggestedHeader')
@@ -1026,7 +1026,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 
 		var $searchLine = $('<div>')
 			.attr('class','editorSelectDocumentDialog_searchLine')
-			.appendTo($('#' + searchRelatedMediaDialog.contentId));
+			.appendTo($('#' + searchRelatedMediaDialog.getContentId()));
 
 		new $n2.mdc.MDCTextField({
 			parentId: $n2.utils.getElementIdentifier($searchLine),
@@ -1037,10 +1037,10 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 		$('<div>')
 			.attr('id',displayId)
 			.attr('class','editorSelectDocumentDialogResults')
-			.appendTo($('#' + searchRelatedMediaDialog.contentId));
+			.appendTo($('#' + searchRelatedMediaDialog.getContentId()));
 
 		new $n2.mdc.MDCButton({
-			parentId: searchRelatedMediaDialog.footerId,
+			parentId: searchRelatedMediaDialog.getFooterId(),
 			mdcClasses: ['cancel', 'mdc-dialog__button'],
 			btnLabel: 'Cancel',
 			onBtnClick: function(){
@@ -1054,7 +1054,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: searchRelatedMediaDialog.footerId,
+			parentId: searchRelatedMediaDialog.getFooterId(),
 			mdcId: searchButtonId,
 			mdcClasses: ['mdc-dialog__button'],
 			btnLabel: 'Search'

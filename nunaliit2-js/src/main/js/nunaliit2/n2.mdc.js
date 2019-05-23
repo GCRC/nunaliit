@@ -504,6 +504,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		this.radioName = opts.radioName;
 		this.radioChecked = opts.radioChecked;
 		this.radioDisabled = opts.radioDisabled;
+		this.rbtnInputId = $n2.getUniqueId();
 
 		if (!this.parentId) {
 			throw new Error('Parent Id must be provided, to add a Material Design Radio Button Component');
@@ -515,8 +516,6 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 	_generateMDCRadio: function(){
 		var $rbtn, $rbtnInput, $rbtnBackground, keys;
 		var _this = this;
-
-		var rbtnInputId = $n2.getUniqueId();
 
 		this.mdcClasses.push('mdc-radio');
 
@@ -538,7 +537,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		}
 
 		$rbtnInput = $('<input>')
-			.attr('id', rbtnInputId) 
+			.attr('id', this.rbtnInputId) 
 			.attr('type', 'radio')
 			.attr('name', this.radioName)
 			.addClass('mdc-radio__native-control')
@@ -561,7 +560,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 			.appendTo($rbtnBackground);
 
 		$('<label>')
-			.attr('for', rbtnInputId)
+			.attr('for', this.rbtnInputId)
 			.text(this.radioLabel)
 			.appendTo($('#' + this.parentId));
 
@@ -576,6 +575,10 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		if (radioBtn) {
 			$mdc.radio.MDCRadio.attachTo(radioBtn);
 		}
+	},
+
+	getInputId: function(){
+		return this.rbtnInputId;
 	}
 });
 

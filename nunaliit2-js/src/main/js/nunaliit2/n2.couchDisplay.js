@@ -1044,7 +1044,6 @@ var Display = $n2.Class({
 	
 	,_performSimplifiedGeometries: function(doc){
 		var contentId = $n2.getUniqueId();
-		var mdcDialogComponent = null;
 		
 		if( doc 
 		 && doc.nunaliit_geom 
@@ -1106,7 +1105,7 @@ var Display = $n2.Class({
 				closeBtn: true
 			});
 
-			$content.appendTo($('#' + geometriesDialog.contentId));
+			$content.appendTo($('#' + geometriesDialog.getContentId()));
 
 			display($content);
 
@@ -1883,8 +1882,6 @@ var ButtonDisplay = $n2.Class({
 var TreeDocumentViewer = $n2.Class({
 	
 	doc: null,
-
-	mdcDialogComponent: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -1909,10 +1906,10 @@ var TreeDocumentViewer = $n2.Class({
 			closeBtn: true
 		});
 
-		$('#' + treeViewDialog.contentId).addClass('n2Display_treeViewer_content');
-		$('#' + treeViewDialog.footerId).addClass('n2Display_treeViewer_buttons');
+		$('#' + treeViewDialog.getContentId()).addClass('n2Display_treeViewer_content');
+		$('#' + treeViewDialog.getFooterId()).addClass('n2Display_treeViewer_buttons');
 
-		new $n2.tree.ObjectTree($('#' + treeViewDialog.contentId), this.doc);
+		new $n2.tree.ObjectTree($('#' + treeViewDialog.getContentId()), this.doc);
 	}
 });
 

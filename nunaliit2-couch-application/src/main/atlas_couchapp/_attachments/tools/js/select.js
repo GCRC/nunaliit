@@ -2641,13 +2641,13 @@
 		});
 		
 		var transformSelect = new $n2.mdc.MDCSelect({
-			parentId: transformDialog.contentId,
+			parentId: transformDialog.getContentId(),
 			menuLabel: 'Transform Methods',
 			menuOpts: transformMenuOpts
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: transformDialog.footerId,
+			parentId: transformDialog.getFooterId(),
 			btnLabel: 'Ok',
 			onBtnClick: function(){
 				var transformId = $('#' + transformSelect.getSelectId()).val();

@@ -394,10 +394,10 @@
 					closeBtnText: 'Cancel'
 				});
 
-				$('#' + denyDialog.footerId).addClass('submission_deny_dialog_buttons');
+				$('#' + denyDialog.getFooterId()).addClass('submission_deny_dialog_buttons');
 
 				new $n2.mdc.MDCButton({
-					parentId: denyDialog.footerId,
+					parentId: denyDialog.getFooterId(),
 					mdcClasses: ['n2_button_ok', 'mdc-dialog__button'],
 					btnLabel: 'OK',
 					onBtnClick: function(){
@@ -417,7 +417,7 @@
 
 				// TextArea Rejection Reason
 				new $n2.mdc.MDCTextField({
-					parentId: denyDialog.contentId,
+					parentId: denyDialog.getContentId(),
 					txtFldArea: true,
 					txtFldLabel: 'Rejection Reason',
 					txtFldInputClasses: ['submission_deny_dialog_reason']
@@ -428,7 +428,7 @@
 				var $options = $('<div>')
 					.attr('id', optionsId)
 					.addClass('submission_deny_dialog_options mdc-form-field')
-					.appendTo($('#' + denyDialog.contentId));
+					.appendTo($('#' + denyDialog.getContentId()));
 
 				new $n2.mdc.MDCCheckbox({
 					parentId: optionsId,
@@ -771,7 +771,7 @@
 						scrollable: true
 					});
 
-					_this._addDocumentAccordion($('#' + viewOrgDialog.contentId), doc);
+					_this._addDocumentAccordion($('#' + viewOrgDialog.getContentId()), doc);
 				}
 			});
 		}
@@ -789,7 +789,7 @@
 						scrollable: true
 					});
 
-					_this._addDocumentAccordion($('#' + viewSubmissionDialog.contentId), doc);
+					_this._addDocumentAccordion($('#' + viewSubmissionDialog.getContentId()), doc);
 				}
 			});
 		}
@@ -807,7 +807,7 @@
 						scrollable: true
 					});
 
-					_this._addDocumentAccordion($(viewLatestDialog.contentId), doc);
+					_this._addDocumentAccordion($(viewLatestDialog.getContentId()), doc);
 				}
 			});
 		}
@@ -841,9 +841,9 @@
 					mdcClasses: ['submission_view_dialog_merging'],
 					dialogTitle: 'View Submission'
 				});
-				$('#' + this.openDiag.footerId).addClass('submission_view_dialog_merging_buttons');
+				$('#' + this.openDiag.getFooterId()).addClass('submission_view_dialog_merging_buttons');
 
-				initiateMergingView($('#' + this.openDiag.contentId), this.openDiag.getId(), originalDoc, submittedDoc, currentDoc, subDoc);
+				initiateMergingView($('#' + this.openDiag.getContentId()), this.openDiag.getId(), originalDoc, submittedDoc, currentDoc, subDoc);
 			};
 
 			function initiateMergingView($dialogContent, diagId, originalDoc, submittedDoc, currentDoc, subDoc){
@@ -965,7 +965,7 @@
 				};
 
 				new $n2.mdc.MDCButton({
-					parentId: this.openDiag.footerId,
+					parentId: this.openDiag.getFooterId(),
 					mdcClasses: ['n2_button_approve'],
 					btnLabel: 'Approve',
 					onBtnClick: function(){
@@ -978,7 +978,7 @@
 				});
 
 				new $n2.mdc.MDCButton({
-					parentId: this.openDiag.footerId,
+					parentId: this.openDiag.getFooterId(),
 					mdcClasses: ['n2_button_deny', 'mdc-dialog__button'],
 					btnLabel: 'Reject',
 					onBtnClick: function(){
@@ -993,7 +993,7 @@
 
 				if( originalDoc ) {
 					new $n2.mdc.MDCButton({
-						parentId: this.openDiag.footerId,
+						parentId: this.openDiag.getFooterId(),
 						mdcClasses: ['n2_button_original', 'mdc-dialog__button'],
 						btnLabel: 'View Original',
 						onBtnClick: function(){
@@ -1005,7 +1005,7 @@
 
 				if( submittedDoc ) {
 					new $n2.mdc.MDCButton({
-						parentId: this.openDiag.footerId,
+						parentId: this.openDiag.getFooterId(),
 						mdcClasses: ['n2_button_submitted', 'mdc-dialog__button'],
 						btnLabel: 'View Submitted',
 						onBtnClick: function(){
@@ -1017,7 +1017,7 @@
 
 				if( ! subDoc.nunaliit_submission.deletion ) {
 					new $n2.mdc.MDCButton({
-						parentId: this.openDiag.footerId,
+						parentId: this.openDiag.getFooterId(),
 						mdcClasses: ['n2_button_manual', 'mdc-dialog__button'],
 						btnLabel: 'Edit Proposed Document',
 						onBtnClick: function(){
