@@ -8,6 +8,10 @@
 	margin: 10px 0px 5px;
 }
 
+.n2_documentForm .n2_layoutFloat > div > div {
+    margin: 8px 10px;
+}
+
 .n2_documentDisplay .n2_layoutFloat div.label,
 .n2_documentDisplay .n2_layoutFloat div.value {
 	margin: 0px 16px;
