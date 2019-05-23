@@ -2625,68 +2625,61 @@
 	
 	// -----------------------------------------------------------------
 	function transformList(list){
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+dialogId+'">'
-			+'<select></select>'
-			+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
-			+'</div>');
+		var _this = this;
+		var transformMenuOpts = [{value:''}];
+		var transformDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Select Document Transform',
+			closeBtn: true,
+			closeBtnText: 'Cancel'
 
-		var $select = $dialog.find('select');
-		for(var i=0,e=documentTransforms.length; i<e; ++i) {
-			var documentTransform = documentTransforms[i];
-			var $o = $('<option></option>');
-			$o.attr('value',documentTransform.id);
-			$o.text(documentTransform.name);
-			$select.append( $o );
-		};
-		
-		$dialog.find('button')
-			.first()
-				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					var $select = $dialog.find('select');
-					var transformId = $select.val();
-	
-					$dialog.dialog('close');
+		});
 
-					var useTransform = null;
-					for(var i=0,e=documentTransforms.length; i<e; ++i) {
-						var documentTransform = documentTransforms[i];
-						if( documentTransform.id === transformId ) {
-							useTransform = documentTransform;
-							break;
-						};
-					};
-					if( useTransform ) {
-						transformListUsing(list, useTransform);
-					} else {
-						alert(_loc('Unable to find document transform'));
-					};
-					
-					return false;
-				})
-			.next()
-				.button({icons:{primary:'ui-icon-cancel'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					$dialog.dialog('close');
-					return false;
-				})
-			;
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Select Document Transform')
-			,modal: true
-			,width: 400
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
+		// Create a list of menu options
+		documentTransforms.forEach(function(option){
+			if (option) {
+				var transformOpt = {};
+				if (option.id) {
+					transformOpt.value = option.id;
+				}
+
+				if (option.name) {
+					transformOpt.label = option.name;
+				}
+
+				transformMenuOpts.push(transformOpt);
 			}
-		};
-		$dialog.dialog(dialogOptions);
+		});
+		
+		var transformSelect = new $n2.mdc.MDCSelect({
+			parentId: transformDialog.contentId,
+			menuLabel: 'Transform Methods',
+			menuOpts: transformMenuOpts
+		});
+
+		new $n2.mdc.MDCButton({
+			parentId: transformDialog.footerId,
+			btnLabel: 'Ok',
+			btnFunction: function(){
+				var transformId = $('#' + transformSelect.selectId).val();
+				transformDialog.closeDialog();
+				var useTransform = null;
+
+				for (var i = 0, e = documentTransforms.length; i < e; i += 1) {
+					var documentTransform = documentTransforms[i];
+					if (documentTransform.id === transformId) {
+						useTransform = documentTransform;
+						break;
+					}
+				}
+				if (useTransform) {
+					transformListUsing(list, useTransform);
+				} else {
+					alert(_loc('Unable to find document transform'));
+				}
+				
+				return false;
+			}
+		});
 	};
 	
 	// -----------------------------------------------------------------
