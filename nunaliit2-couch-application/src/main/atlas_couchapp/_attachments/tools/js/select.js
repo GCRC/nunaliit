@@ -2650,7 +2650,7 @@
 			parentId: transformDialog.footerId,
 			btnLabel: 'Ok',
 			onBtnClick: function(){
-				var transformId = $('#' + transformSelect.selectId).val();
+				var transformId = $('#' + transformSelect.getSelectId()).val();
 				transformDialog.closeDialog();
 				var useTransform = null;
 

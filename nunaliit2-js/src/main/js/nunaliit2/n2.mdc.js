@@ -726,6 +726,10 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 				}
 			}
 		}
+	},
+
+	getSelectId: function(){
+		return this.selectId;
 	}
 });
 
