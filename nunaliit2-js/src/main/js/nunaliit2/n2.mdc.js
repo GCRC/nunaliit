@@ -613,6 +613,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.menuChgFunction = opts.menuChgFunction;
 		this.menuLabel = opts.menuLabel;
 		this.menuOpts = opts.menuOpts;
+		this.selectId = $n2.getUniqueId();
 		this.selectClasses = opts.selectClasses;
 
 		if (!this.parentId) {
@@ -627,13 +628,12 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		var _this = this;
 
 		this.mdcClasses.push('mdc-select');
-		this.mdcClasses.push('mdc-select--outline');
+		this.mdcClasses.push('mdc-select--outlined');
 
 		this.docFragment = $(document.createDocumentFragment());
 		$menu = $('<div>')
 			.attr('id',this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
-			.text(_loc(this.menuLabel))
 			.appendTo(this.docFragment);
 
 		if (this.mdcAttributes) {
@@ -650,6 +650,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.selectClasses.push('mdc-select__native-control');
 
 		this.select = $('<select>')
+			.attr('id', this.selectId)
 			.addClass(this.selectClasses.join(' '))
 			.appendTo($menu)
 			.change(this.menuChgFunction);
@@ -667,6 +668,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			.appendTo($menuNotchedOutline);
 
 		$('<label>')
+			.attr('for', this.selectId)
 			.addClass('mdc-floating-label')
 			.text(_loc(this.menuLabel))
 			.appendTo($menuNotchedOutlineNotch);
@@ -678,9 +680,8 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		if (this.menuOpts 
 			&& $n2.isArray(this.menuOpts) 
 			&& this.menuOpts.length > 0) {
-			
 			this.menuOpts.forEach(function(menuOpt) {
-				this._addOptionToSelectMenu(menuOpt);		
+				_this._addOptionToSelectMenu(menuOpt);
 			});
 		}
 
@@ -710,7 +711,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 				label = menuOpt.label;
 			}
 
-			if (label) {
+			if (value || value === '') {
 				opt = $('<option>')
 					.attr('value', value)
 					.attr('label', label)
