@@ -75,7 +75,7 @@ var ScriptEditorCanvas = $n2.Class({
 		this.interactionId = opts.interactionId;
 		this.moduleDisplay = opts.moduleDisplay;
 		this.sourceModelId = opts.sourceModelId;
-
+		this.cinemap_docInfoById = {};
 		var config = opts.config;
 		if( config ){
 			if( config.directory ){
@@ -86,24 +86,18 @@ var ScriptEditorCanvas = $n2.Class({
 		};
 		if( this.dispatchService ){
 			if( this.sourceModelId ){
-				var modelStateRequest = {
-						type: 'modelGetState'
-						,modelId: this.sourceModelId
-						
-					};
-				this.dispatchService.synchronousCall(DH, modelStateRequest);
+				this.modelObserver = new $n2.model.DocumentModelObserver({
+					dispatchService : this.dispatchService,
+					sourceModelId: this.sourceModelId,
+					updatedCallback : function(state){
+						_this._modelSourceUpdated(state);
+					}
+				});
 	
 			};
-			var sourceState = modelStateRequest.state;
-			var cinemap_docIds = [];
-			if (sourceState.added) {
-				for(var i=0,e=sourceState.added.length; i<e; ++i){
-					var doc = sourceState.added[i];
-					
-					var docId = doc._id;
-					
-				};
-			}
+			
+			
+	
 			
 			var f = function(m, addr, dispatcher){
 				_this._handle(m, addr, dispatcher);
@@ -222,7 +216,14 @@ var ScriptEditorCanvas = $n2.Class({
  		
  	},
  	_modelSourceUpdated(state){
- 		
+		if (sourceState.added) {
+			for(var i=0,e=sourceState.added.length; i<e; ++i){
+				var doc = sourceState.added[i];
+				
+				var docId = doc._id;
+				
+			};
+		}
  	},
  	_renderCanvas: function(scriptList){
  		
