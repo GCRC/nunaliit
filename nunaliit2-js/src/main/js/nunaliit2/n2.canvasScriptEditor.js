@@ -63,6 +63,7 @@ var ScriptEditorCanvas = $n2.Class({
 			,moduleDisplay: null
 			,htmlAttachment: null
 			,cssAttachment: null
+			,sourceModelId : null
 			,elemIdToDocId: null
 			,onSuccess: function(){}
 			,onError: function(err){}
@@ -73,14 +74,45 @@ var ScriptEditorCanvas = $n2.Class({
 		this.canvasId = opts.canvasId;
 		this.interactionId = opts.interactionId;
 		this.moduleDisplay = opts.moduleDisplay;
+		this.sourceModelId = opts.sourceModelId;
 
 		var config = opts.config;
 		if( config ){
 			if( config.directory ){
 				this.dispatchService = config.directory.dispatchService;
+				this.attachmentService = config.directory.attachmentService;
 				this.showService = config.directory.showService;
 			};
 		};
+		if( this.dispatchService ){
+			if( this.sourceModelId ){
+				var modelStateRequest = {
+						type: 'modelGetState'
+						,modelId: this.sourceModelId
+						
+					};
+				this.dispatchService.synchronousCall(DH, modelStateRequest);
+	
+			};
+			var sourceState = modelStateRequest.state;
+			var cinemap_docIds = [];
+			if (sourceState.added) {
+				for(var i=0,e=sourceState.added.length; i<e; ++i){
+					var doc = sourceState.added[i];
+					
+					var docId = doc._id;
+					
+				};
+			}
+			
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			
+	
+			this.dispatchService.register(DH,'documentContent',f);
+			
+		}
 		
 //		this.nodesById = {};
 //		
@@ -179,12 +211,18 @@ var ScriptEditorCanvas = $n2.Class({
 // 		};
 		var scriptList = [];
 		scriptList.push({
-			filename : 'stt'
+			filename : 'demo_script'
 		});
 		this._renderCanvas(scriptList);
  	},
  	
- 	_handleDispatch: function(m){
+ 	_handle: function(m){
+ 	},
+ 	_refreshList: function(){
+ 		
+ 	},
+ 	_modelSourceUpdated(state){
+ 		
  	},
  	_renderCanvas: function(scriptList){
  		
@@ -463,6 +501,7 @@ function HandleCanvasDisplayRequest(m){
 		options.moduleDisplay = m.moduleDisplay;
 		options.onSuccess = m.onSuccess;
 		options.onError = m.onError;
+		
 		
 		new ScriptEditorCanvas(options);
 	};
