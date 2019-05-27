@@ -61,9 +61,9 @@ function showDocs(opts_){
 				$('.exportResult').append($textarea);
 				$textarea.text(csv);
 			}
-			,onError: function(errStr) {
+			,onError: function(errStr, error) {
 				$('.exportResult').empty();
-				if( error ){
+				if (error) {
 					reportError(error);
 				} else {
 					reportError('Problem exporting by layer id: '+errStr);
@@ -85,10 +85,10 @@ function downloadDocs(opts_){
 	
 	var format = 'csv';
 	var fileName = 'export.csv';
-	if( opts.format ){
+	if (opts.format) {
 		format = opts.format;
 		
-		if( 'geojson' === format ){
+		if (format === 'geojson') {
 			fileName = 'export.geojson';
 		};
 	};
@@ -103,9 +103,9 @@ function downloadDocs(opts_){
 			visibility: 'hidden'
 			,display: 'none'
 		})
-		.appendTo( $('body') );
+		.appendTo($('body'));
 	
-	if( schema ){
+	if (schema) {
 		exportService.exportBySchemaName({
 			schemaName: schema.name
 			,targetWindow: windowId
@@ -118,7 +118,7 @@ function downloadDocs(opts_){
 			}
 		});
 
-	} else if( layerId ){
+	} else if (layerId) {
 		exportService.exportByLayerId({
 			layerId: layerId
 			,targetWindow: windowId
@@ -138,12 +138,12 @@ function loadSchemaDocumentIds(opts_){
 		schemaName: null
 		,onSuccess: function(docIds, schemaName){}
 		,onError: function(err){
-			reportError('Error. Unable to load document related to selected schema: '+err);
+			reportError('Error. Unable to load document related to selected schema: ' + err);
 		}
 	},opts_);
 	
 	var schemaName = opts.schemaName;
-	if( !schemaName ) {
+	if (!schemaName) {
 		throw 'Schema name not specified';
 	};
 	
@@ -153,7 +153,7 @@ function loadSchemaDocumentIds(opts_){
 		,endkey: schemaName
 		,onSuccess: function(rows){
 			var docIds = [];
-			for(var i=0,e=rows.length; i<e; ++i){
+			for (var i = 0, e = rows.length; i < e; i += 1) {
 				docIds.push(rows[i].id);
 			};
 			opts.onSuccess(docIds, schemaName);
@@ -169,12 +169,12 @@ function loadLayerDocumentIds(opts_){
 		layerId: null
 		,onSuccess: function(docIds){}
 		,onError: function(err){
-			reportError('Error. Unable to load document related to selected layer: '+err);
+			reportError('Error. Unable to load document related to selected layer: ' + err);
 		}
 	},opts_);
 	
 	var layerId = opts.layerId;
-	if( !layerId ) {
+	if (!layerId) {
 		throw 'layerId not specified';
 	};
 	
@@ -184,7 +184,7 @@ function loadLayerDocumentIds(opts_){
 		,endkey: layerId
 		,onSuccess: function(rows){
 			var docIds = [];
-			for(var i=0,e=rows.length; i<e; ++i){
+			for (var i = 0, e = rows.length; i < e; i += 1) {
 				docIds.push(rows[i].id);
 			};
 			opts.onSuccess(docIds);
@@ -202,58 +202,35 @@ function showButtons(opts_){
 		,div: null
 	},opts_);
 	
-	var $div = $( opts.div );
+	var $div = $(opts.div);
 	$div.empty();
 
-	var $formatSelect = $('<div>')
-		.addClass('mdc-select mdc-select--outlined')
-		.appendTo($div);
+	var formatSelect = new $n2.mdc.MDCSelect({
+		parentId: $n2.utils.getElementIdentifier($div),
+		preSelected: true,
+		menuLabel: 'Export Format',
+		menuOpts: [
+			{
+				"value": "csv",
+				"label": "csv",
+				"selected": true
+			},
+			{
+				"value": "geojson",
+				"label": "geojson"
+			}
+		]
+	});
 
-	$('<i>')
-		.addClass('mdc-select__dropdown-icon')
-		.appendTo($formatSelect);
+	$('#' + formatSelect.getSelectId()).addClass('exportControls_formatSelector');
 
-	var $menuNotchedOutline = $('<div>')
-		.addClass('mdc-notched-outline')
-		.appendTo($formatSelect);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__leading')
-		.appendTo($menuNotchedOutline);
-
-	var $menuNotchedOutlineNotch = $('<div>')
-		.addClass('mdc-notched-outline__notch')
-		.appendTo($menuNotchedOutline);
-
-	$('<label>')
-		.addClass('mdc-floating-label')
-		.text(_loc('Export Format'))
-		.appendTo($menuNotchedOutlineNotch);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__trailing')
-		.appendTo($menuNotchedOutline);	
-
-	var $formatSel = $('<select>')
-		.addClass('.exportControls_formatSelector mdc-select__native-control')
-		.appendTo( $formatSelect );
-	var formatSelId = $n2.utils.getElementIdentifier($formatSel);
-	var formats = ['csv','geojson'];
-	for(var i=0,e=formats.length; i<e; ++i){
-		var format = formats[i];
-		$('<option>')
-			.text( format )
-			.val( format )
-			.appendTo($formatSel);
-	};
-	
 	var btnParentId = $n2.utils.getElementIdentifier($div);
 
 	new $n2.mdc.MDCButton({
 		parentId: btnParentId,
 		btnLabel: 'Show',
 		onBtnClick: function(){
-			var $formatSel = $('#'+formatSelId);
+			var $formatSel = $('#' + formatSelect.getSelectId());
 			var format = $formatSel.val();
 			showDocs({
 				schema: opts.schema
@@ -268,7 +245,7 @@ function showButtons(opts_){
 		parentId: btnParentId,
 		btnLabel: 'Download',
 		onBtnClick: function(){
-			var $formatSel = $('#'+formatSelId);
+			var $formatSel = $('#' + formatSelect.getSelectId());
 			var format = $formatSel.val();
 			downloadDocs({
 				schema: opts.schema
@@ -283,7 +260,7 @@ function showButtons(opts_){
 	$n2.mdc.attachMDCComponents();
 };
 
-function schemaSelected($sel){
+function schemaSelected(schemaName){
 
 	$('.exportResult').empty();
 	$('.exportError').empty();
@@ -296,8 +273,6 @@ function schemaSelected($sel){
 	$('<span>')
 		.addClass('exportDocCount')
 		.appendTo($result);
-
-	var schemaName = $sel.val();
 	
 	loadSchemaDocumentIds({
 		schemaName: schemaName
@@ -319,7 +294,7 @@ function schemaSelected($sel){
 	});
 };
 
-function layerSelected($sel){
+function layerSelected(layerId){
 
 	$('.exportResult').empty();
 	$('.exportError').empty();
@@ -332,8 +307,6 @@ function layerSelected($sel){
 	$('<span>')
 		.addClass('exportDocCount')
 		.appendTo($result);
-
-	var layerId = $sel.val();
 	
 	loadLayerDocumentIds({
 		layerId: layerId
@@ -349,48 +322,60 @@ function layerSelected($sel){
 	});
 };
 
-function methodChanged($select){
+function installSchemaLayerSelect(menuOptions) {
+	var $methodResult = $('.exportControls_methodResult');
+	var schemaLayerSelect = new $n2.mdc.MDCSelect({
+		parentId: $n2.utils.getElementIdentifier($methodResult),
+		menuChgFunction: function(){
+			var $sel = $(this);
+			var selectedType = $('.exportControls_methodSelector').val();
+			if (selectedType === 'schema') {
+				schemaSelected($sel.val());
+				return true;
+
+			} else if (selectedType === 'layer') {
+				layerSelected($sel.val());
+				return true;
+			}
+		},
+		menuLabel: 'Schema / Layer Name',
+		menuOpts: menuOptions
+	});
+	
+	// Add result spans based on type
+	var selectionType = $('.exportControls_methodSelector').val();
+	if (selectionType === 'schema') {
+		$('<span>')
+			.addClass('exportControls_schemaResult')
+			.appendTo($methodResult);
+		
+		schemaSelected($('#' + schemaLayerSelect.getSelectId()).val());
+
+	} else if (selectionType === 'layer') {
+		$('<span>')
+			.addClass('exportControls_layerResult')
+			.appendTo($methodResult);
+		
+		layerSelected($('#' + schemaLayerSelect.getSelectId()).val());
+	}
+};
+
+function methodChanged(selectVal){
+	var methodChgFunction;
+	var selected = false;
+	var menuOptions = [];
 	var $methodResult = $('.exportControls_methodResult').empty();
 
-	var $schemaLayerSelect = $('<div>')
-		.addClass('mdc-select mdc-select--outlined')
-		.appendTo($methodResult);
-	
-	$('<i>')
-		.addClass('mdc-select__dropdown-icon')
-		.appendTo($schemaLayerSelect);
-
-	var $menuNotchedOutline = $('<div>')
-		.addClass('mdc-notched-outline')
-		.appendTo($schemaLayerSelect);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__leading')
-		.appendTo($menuNotchedOutline);
-
-	var $menuNotchedOutlineNotch = $('<div>')
-		.addClass('mdc-notched-outline__notch')
-		.appendTo($menuNotchedOutline);
-
-	$('<label>')
-		.addClass('mdc-floating-label')
-		.text(_loc('Schema / Layer Name'))
-		.appendTo($menuNotchedOutlineNotch);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__trailing')
-		.appendTo($menuNotchedOutline);
-	
-	if( 'schema' === $select.val() ){
+	if (selectVal === 'schema') {
 		schemaRepository.getRootSchemas({
 			onSuccess: function(schemas){
 				var exportableSchemas = [];
-				for(var i=0,e=schemas.length; i<e; ++i){
+				for (var i = 0, e = schemas.length; i < e; i += 1) {
 					var s = schemas[i];
-					if( s.csvExport ) {
+					if (s.csvExport) {
 						exportableSchemas.push(s);
-					};
-				};
+					}
+				}
 				
 				exportableSchemas.sort(function(a,b){
 					if( a.name < b.name ) {
@@ -399,153 +384,106 @@ function methodChanged($select){
 						return 1;
 					} else {
 						return 0;
-					};
+					}
 				});
 				
-				//var $methodResult = $('.exportControls_methodResult').empty();
-				if( exportableSchemas.length > 0 ) {
-					var $sel = $('<select>')
-						.addClass('mdc-select__native-control')
-						.appendTo($schemaLayerSelect);
-
-					for(var i=0,e=exportableSchemas.length; i<e; ++i){
+				if (exportableSchemas.length > 0) {
+					for (var i = 0 , e = exportableSchemas.length; i < e; i += 1) {
 						var s = exportableSchemas[i];
-						var $o = $('<option></option>');
-						$o.text(s.name);
-						$sel.append($o);
-					};
-					
-					$sel.change(function(){
-						var $sel = $(this);
-						schemaSelected($sel);
-						return true;
-					});
 
-					$('<span>')
-						.addClass('exportControls_schemaResult')
-						.appendTo($methodResult);
-					
-					schemaSelected($sel);
+						if (i === 0) {
+							selected = true;
+						}
+
+						menuOptions.push({
+							'value': s.name,
+							'label': s.name,
+							'selected': selected
+						});
+					}
+					installSchemaLayerSelect(menuOptions);
 
 				} else {
 					$('.exportControls_methodResult').text('No exportable schema found');
-				};
+				}
 			}
 			,onError: function(err){
 				reportError('Error. Unable to get schemas: '+err);
 			}
 		});
 
-	} else if( 'layer' === $select.val() ){
+	} else if (selectVal === 'layer') {
 		atlasDesign.queryView({
 			viewName: 'layers'
 			,reduce: true
 			,group: true
 			,onSuccess: function(rows){
 				var layerIds = [];
-				for(var i=0,e=rows.length; i<e; ++i){
+				for (var i = 0, e = rows.length; i < e; i += 1) {
 					var layerId = rows[i].key;
 					layerIds.push(layerId);
-				};
+				}
 				
-				//var $methodResult = $('.exportControls_methodResult').empty();
-				
-				if( layerIds.length > 0 ){
-					var $sel = $('<select>')
-						.addClass('mdc-select__native-control')
-						.appendTo($schemaLayerSelect);
-					for(var i=0,e=layerIds.length; i<e; ++i){
+				if (layerIds.length > 0) {
+					for (var i = 0, e = layerIds.length; i < e; i += 1) {
 						var layerId = layerIds[i];
-						var $o = $('<option></option>')
-							.val(layerId)
-							.text(layerId)
-							.appendTo($sel);
-						
-						if( showService ){
-							showService.printLayerName($o, layerId);
-						};
-					};
-					
-					$sel.change(function(){
-						var $sel = $(this);
-						layerSelected($sel);
-						return true;
-					});
 
-					$('<span>')
-						.addClass('exportControls_layerResult')
-						.appendTo($methodResult);
-					
-					layerSelected($sel);
-				};
+						if (i === 0) {
+							selected = true;
+						}
+
+						menuOptions.push({
+							'value': layerId,
+							'label': layerId,
+							'selected': selected
+						});
+					}
+					installSchemaLayerSelect(menuOptions);
+				}
 			}
 			,onError: function(err){
-				reportError(_loc('Unable to obtain list of layers')+': '+err);
+				reportError(_loc('Unable to obtain list of layers') + ': ' + err);
 			}
 		});
 
 	} else {
-		$('.exportControls_methodResult').text('Not implemented:'+$select.val());
-	};
+		$('.exportControls_methodResult').text('Not implemented:' + selectVal);
+	}
 };
 
 function installMethodButton(){
 	var $controls = $('.exportControls')
 		.empty();
 	
-	var $typeSelect = $('<div>')
-		.addClass('mdc-select mdc-select--outlined')
-		.appendTo($controls);
-
-	$('<i>')
-		.addClass('mdc-select__dropdown-icon')
-		.appendTo($typeSelect);
-
-	var $menuNotchedOutline = $('<div>')
-		.addClass('mdc-notched-outline')
-		.appendTo($typeSelect);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__leading')
-		.appendTo($menuNotchedOutline);
-
-	var $menuNotchedOutlineNotch = $('<div>')
-		.addClass('mdc-notched-outline__notch')
-		.appendTo($menuNotchedOutline);
-
-	$('<label>')
-		.addClass('mdc-floating-label')
-		.text(_loc('Type'))
-		.appendTo($menuNotchedOutlineNotch);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__trailing')
-		.appendTo($menuNotchedOutline);	
-
-	var $select = $('<select>')
-		.addClass('exportControls_methodSelector mdc-select__native-control')
-		.appendTo($typeSelect)
-		.change(function(){
+	var typeSelect = new $n2.mdc.MDCSelect({
+		parentId: $n2.utils.getElementIdentifier($controls),
+		preSelected: true,
+		menuChgFunction: function(){
 			var $sel = $(this);
-			methodChanged($sel);
+			methodChanged($sel.val());
 			return true;
-		});
+		},
+		menuLabel: 'Type',
+		menuOpts: [
+			{
+				'value':'schema',
+				'label':'Schemas',
+				'selected': true
+			},
+			{
+				'value':'layer',
+				'label':'Layers'
+			}
+		]
+	});
 
-	$('<option>')
-		.text( _loc('Schemas') )
-		.val('schema')
-		.appendTo($select);
-
-	$('<option>')
-		.text( _loc('Layers') )
-		.val('layer')
-		.appendTo($select);
+	$('#' + typeSelect.getSelectId()).addClass('exportControls_methodSelector');
 	
 	$('<span>')
 		.addClass('exportControls_methodResult')
 		.appendTo($controls);
 	
-	methodChanged($select);
+	methodChanged($('#' + typeSelect.getSelectId()).val());
 };
 
 function reportError(err){
