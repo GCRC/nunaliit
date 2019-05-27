@@ -585,7 +585,6 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 // Class MDCSelect
 // Description: Creates a material design select menu component
 // Options:
-//  - selectClasses (Array): Define an array of classes specific to select element.
 //  - menuChgFunction (Function): Function to occur when 
 //  - menuLabel (String): Defines the text label on the select menu.
 //  - menuOpts (Array of Objects): Define an array of objects describing each option for the select menu.
@@ -601,14 +600,12 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 	menuLabel: null,
 	menuOpts: null,
 	select: null,
-	selectClasses: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			menuChgFunction: null,
 			menuLabel: null,
 			menuOpts: [],
-			selectClasses: []
 		}, opts_);
 
 		MDC.prototype.initialize.call(this,opts);
@@ -617,7 +614,6 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.menuLabel = opts.menuLabel;
 		this.menuOpts = opts.menuOpts;
 		this.selectId = $n2.getUniqueId();
-		this.selectClasses = opts.selectClasses;
 
 		if (!this.parentId) {
 			throw new Error('Parent Id must be provided, to add a Material Design Select Menu Component');
@@ -649,12 +645,10 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		$('<i>')
 			.addClass('mdc-select__dropdown-icon')
 			.appendTo($menu);
-		
-		this.selectClasses.push('mdc-select__native-control');
 
 		this.select = $('<select>')
 			.attr('id', this.selectId)
-			.addClass(this.selectClasses.join(' '))
+			.addClass('mdc-select__native-control')
 			.appendTo($menu)
 			.change(this.menuChgFunction);
 
