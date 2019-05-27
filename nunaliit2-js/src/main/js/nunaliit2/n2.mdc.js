@@ -585,6 +585,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 // Class MDCSelect
 // Description: Creates a material design select menu component
 // Options:
+//  - preSelected (Boolean): Define a select menu as pre-selected (default = false)
 //  - menuChgFunction (Function): Function to occur when 
 //  - menuLabel (String): Defines the text label on the select menu.
 //  - menuOpts (Array of Objects): Define an array of objects describing each option for the select menu.
@@ -592,13 +593,14 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 //    - value - value when selected
 //    - label - label shown to the user
 //    - selected - initially selected
-//    - disabled - not selectedable
+//    - disabled - not selected-able
 //   - Example: [{"value":"1", "label":"One"}, {"value":"2", "label":"Two"}]
 var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 	menuChgFunction: null,
 	menuLabel: null,
 	menuOpts: null,
+	preSelected: null,
 	select: null,
 
 	initialize: function(opts_){
@@ -606,6 +608,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			menuChgFunction: null,
 			menuLabel: null,
 			menuOpts: [],
+			preSelected: false
 		}, opts_);
 
 		MDC.prototype.initialize.call(this,opts);
@@ -613,6 +616,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.menuChgFunction = opts.menuChgFunction;
 		this.menuLabel = opts.menuLabel;
 		this.menuOpts = opts.menuOpts;
+		this.preSelected = opts.preSelected;
 		this.selectId = $n2.getUniqueId();
 
 		if (!this.parentId) {
@@ -664,11 +668,15 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			.addClass('mdc-notched-outline__notch')
 			.appendTo($menuNotchedOutline);
 
-		$('<label>')
+		var label = $('<label>')
 			.attr('for', this.selectId)
 			.addClass('mdc-floating-label')
 			.text(_loc(this.menuLabel))
 			.appendTo($menuNotchedOutlineNotch);
+
+		if (this.preSelected) {
+			label.addClass('mdc-floating-label--float-above');
+		}
 	
 		$('<div>')
 			.addClass('mdc-notched-outline__trailing')
@@ -695,7 +703,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 	},
 
 	_addOptionToSelectMenu: function(menuOpt){
-		var opt, value, label;
+		var $opt, value, label;
 	
 		if (menuOpt) {
 			if (menuOpt.value) {
@@ -709,17 +717,17 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			}
 
 			if (value || value === '') {
-				opt = $('<option>')
+				$opt = $('<option>')
 					.attr('value', value)
 					.attr('label', label)
 					.appendTo(this.select);
 
 				if (menuOpt.selected) {
-					opt.attr('selected', 'selected');
+					$opt.attr('selected', 'selected');
 				}
 
 				if (menuOpt.disabled) {
-					opt.attr('disabled', 'disabled');
+					$opt.attr('disabled', 'disabled');
 				}
 			}
 		}
