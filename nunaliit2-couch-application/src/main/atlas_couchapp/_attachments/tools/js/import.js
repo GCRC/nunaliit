@@ -36,67 +36,33 @@
 		var $buttonLine = $('<div class="buttonline">')
 			.appendTo($inputSection);
 
-		// Import Profile Select Menu
-		var $importProfileSelect = $('<div>')
-			.addClass('mdc-select mdc-select--outlined n2s_attachMDCSelect')
-			.appendTo($buttonLine);
-		
-		$('<i>')
-			.addClass('mdc-select__dropdown-icon')
-			.appendTo($importProfileSelect);
-
-		var $menuNotchedOutline = $('<div>')
-			.addClass('mdc-notched-outline')
-			.appendTo($importProfileSelect);
-
-		$('<div>')
-			.addClass('mdc-notched-outline__leading')
-			.appendTo($menuNotchedOutline);
-
-		var $menuNotchedOutlineNotch = $('<div>')
-			.addClass('mdc-notched-outline__notch')
-			.appendTo($menuNotchedOutline);
-
-		$('<label>')
-			.addClass('mdc-floating-label')
-			.text(_loc('Import Profile'))
-			.appendTo($menuNotchedOutlineNotch);
-
-		$('<div>')
-			.addClass('mdc-notched-outline__trailing')
-			.appendTo($menuNotchedOutline);
-														
-		var $select = $('<select>')
-			.addClass('import_profile mdc-select__native-control')
-			.appendTo($importProfileSelect);
-
-		if ( importProfiles.length === 0 ){
-			$('<option>')
-			.val(' ')
-			.text(_loc('No valid import profiles available'))
-			.appendTo($select);
-
-		} else {
+		if (importProfiles && importProfiles.length > 0) {
+			var importProfileMenuOpts = [];
 			for(var i=0,e=importProfiles.length; i<e; ++i){
 				var importProfile = importProfiles[i];
-				$('<option>')
-					.val(importProfile.getId())
-					.text( _loc(importProfile.getLabel())+' ('+importProfile.getType()+')' )
-					.appendTo($select);
-			};
+				importProfileMenuOpts.push({
+					"value": importProfile.getId(),
+					"label": _loc(importProfile.getLabel()) + ' (' + importProfile.getType() + ')'
+				});
+			}
+		} else {
+			// do nothing
 		}
 
-		// Input Textarea
-		var textareaInputId = $n2.getUniqueId();
+		// Import Profile Select Menu
+		var importProfileSelect = new $n2.mdc.MDCSelect({
+			parentId: $n2.utils.getElementIdentifier($buttonLine),
+			menuLabel: 'Import Profile',
+			menuOpts: importProfileMenuOpts
+		});
 
-		var inputTxtFldOpts = {
+		// Input Textarea
+		new $n2.mdc.MDCTextField({
 			parentId: $n2.utils.getElementIdentifier($inputSection),
 			txtFldInputClasses: ['importData'],
-			txtFldInputId: textareaInputId,
 			txtFldArea: true,
 			txtFldLabel: 'Input'
-		};
-		new $n2.mdc.MDCTextField(inputTxtFldOpts);
+		});
 
 		// Import Verify Button
 		new $n2.mdc.MDCButton({
