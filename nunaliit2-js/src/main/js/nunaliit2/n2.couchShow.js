@@ -381,6 +381,12 @@ var DomStyler = $n2.Class({
 				,acceptsContextDocument: false
 			},
 			{
+				source: 'n2s_attachMDCList'
+				,target: 'n2s_attachedMDCList'
+				,fn: this._attachMDCList
+				,acceptsContextDocument: false
+			},
+			{
 				source: 'n2s_attachMDCRadio'
 				,target: 'n2s_attachedMDCRadio'
 				,fn: this._attachMDCRadio
@@ -2065,6 +2071,13 @@ var DomStyler = $n2.Class({
 		var formField = $jq[0];
 		if (formField) {
 			$mdc.formField.MDCFormField.attachTo(formField);
+		}
+	},
+	
+	_attachMDCList: function($jq) {
+		var list = $jq[0];
+		if (list) {
+			$mdc.list.MDCList.attachTo(list);
 		}
 	},
 	
