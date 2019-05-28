@@ -73,9 +73,6 @@
 			});
 
 			this._refresh();
-
-			// Attach MDC Components
-			$n2.mdc.attachMDCComponents();
 		},
 
 		_getDiv: function(){
@@ -103,7 +100,7 @@
 				.appendTo($debugList);
 
 			var $badProxyCheckboxDiv = $('<div>')
-				.addClass('n2debug_configuration_content_badProxy mdc-checkbox')
+				.addClass('n2debug_configuration_content_badProxy mdc-checkbox n2s_attachMDCCheckbox')
 				.appendTo($badProxyListItem);
 
 			var $badProxyCB = $('<input>')
@@ -149,7 +146,7 @@
 				.appendTo($debugList);
 
 			var $loggingCheckboxDiv = $('<div>')
-				.addClass('n2debug_configuration_content_logging mdc-checkbox')
+				.addClass('n2debug_configuration_content_logging mdc-checkbox n2s_attachMDCCheckbox')
 				.appendTo($loggingListItem);
 
 			var $loggingCB = $('<input>')
@@ -195,7 +192,7 @@
 				.appendTo($debugList);
 
 			var $couchDbCachingCheckboxDiv = $('<div>')
-				.addClass('n2debug_configuration_content_couchDbCaching mdc-checkbox')
+				.addClass('n2debug_configuration_content_couchDbCaching mdc-checkbox n2s_attachMDCCheckbox')
 				.appendTo($couchDbCachingListItem);
 
 			var $couchDbCachingCB = $('<input>')
@@ -241,7 +238,7 @@
 				.appendTo($debugList);
 
 			var $disableCouchDbCachingCheckboxDiv = $('<div>')
-				.addClass('n2debug_configuration_content_disableCouchDbCaching mdc-checkbox')
+				.addClass('n2debug_configuration_content_disableCouchDbCaching mdc-checkbox n2s_attachMDCCheckbox')
 				.appendTo($disableCouchDbCachingListItem);
 
 			var $disableCouchDbCachingCB = $('<input>')
@@ -287,7 +284,7 @@
 				.appendTo($debugList);
 
 			var $slowConnectionCheckboxDiv = $('<div>')
-				.addClass('n2debug_configuration_content_slowConnectionHandling mdc-checkbox')
+				.addClass('n2debug_configuration_content_slowConnectionHandling mdc-checkbox n2s_attachMDCCheckbox')
 				.appendTo($slowConnectionListItem);
 
 			var $slowConnectionCB = $('<input>')

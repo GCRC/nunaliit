@@ -1141,9 +1141,6 @@ var AnalysisReport = $n2.Class({
 			.appendTo($elem);
 		
 		this._reportChanges();
-
-		// Attach Material Design Components
-		$n2.mdc.attachMDCComponents();
 	},
 
 	_getElem: function(){

@@ -240,9 +240,6 @@
 						onBtnClick: createClickInstallSchema(schema)
 					});
 				};
-
-				// Attach Material Design Components
-				$n2.mdc.attachMDCComponents();
 			};
 		};
 		

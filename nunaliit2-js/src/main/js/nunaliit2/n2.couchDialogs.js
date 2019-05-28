@@ -422,7 +422,7 @@ function selectLayersDialog(opts_){
 				.appendTo($list);
 				
 			var $div = $('<div>')
-				.addClass('mdc-checkbox')
+				.addClass('mdc-checkbox n2s_attachMDCCheckbox')
 				.appendTo($listItem);
 
 			var $input = $('<input>')
@@ -456,9 +456,6 @@ function selectLayersDialog(opts_){
 				opts.showService.printLayerName($label, layerId);
 			};
 		};
-
-		// Attach Material Design Components
-		$n2.mdc.attachMDCComponents();
 	};
 	
 	function reportError(err){

@@ -219,8 +219,8 @@ function _formSingleField(r,completeSelectors,options){
 		r.push(' class="n2schema_input mdc-text-field__input');
 
 	} else if( options.checkbox ){
-		r.push('<div class="mdc-form-field">');
-		r.push('<div class="mdc-checkbox">');
+		r.push('<div class="mdc-form-field n2s_attachMDCFormField">');
+		r.push('<div class="mdc-checkbox n2s_attachMDCCheckbox">');
 		r.push('<input id="' + textFieldId + '" type="checkbox" class="n2schema_input mdc-checkbox__native-control');
 	} else {
 		r.push('<input type="text" id="' + textFieldId + '"');
@@ -383,7 +383,7 @@ function _formField() {
 
 			opts.label = fieldLabel + " (" + lang + ")";
 
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field');
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field n2s_attachMDCTextField');
 			if( opts.textarea ){
 				r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
 				_formSingleField(r,langSel,opts);
@@ -413,7 +413,7 @@ function _formField() {
 			
 			opts.label = fieldLabel + " (" + lang + ")";
 			
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field');
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field n2s_attachMDCTextField');
 			if( opts.textarea ){
 				r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
 				_formSingleField(r,langSel,opts);
@@ -427,7 +427,7 @@ function _formField() {
 	} else if( opts.reference ) {
 		var attr = completeSelectors.encodeForDomAttribute();
 
-		r.push('<div class="n2schema_field_reference mdc-text-field mdc-text-field--outlined" ');
+		r.push('<div class="n2schema_field_reference mdc-text-field mdc-text-field--outlined n2s_attachMDCTextField" ');
 		if( opts.label ){
 			r.push('nunaliit-label="'+opts.label+'" ');
 		}
@@ -442,7 +442,7 @@ function _formField() {
 	} else if( opts.geometry ) {
 		var geometryTextareaId = $n2.getUniqueId();
 		var attr = completeSelectors.encodeForDomAttribute();
-		r.push('<div class="n2schema_field_container n2schema_field_container_textarea mdc-text-field mdc-text-field--textarea">');
+		r.push('<div class="n2schema_field_container n2schema_field_container_textarea mdc-text-field mdc-text-field--textarea n2s_attachMDCTextField">');
 		r.push('<textarea id="' + geometryTextareaId + '" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"></textarea>');
 		r.push('<div class="mdc-notched-outline">');
 		r.push('<div class="mdc-notched-outline__leading"></div>');
@@ -458,7 +458,7 @@ function _formField() {
 		r.push('</div>');
 		
 	} else {
-		r.push('<div class="n2schema_field_container mdc-text-field');
+		r.push('<div class="n2schema_field_container mdc-text-field n2s_attachMDCTextField');
 		if( opts.textarea ){
 			r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
 			_formSingleField(r,completeSelectors,opts);
@@ -1889,7 +1889,6 @@ var Form = $n2.Class({
 				});
 			};
 		};
-		$n2.mdc.attachMDCComponents();
 	},
 
 	_setHtml: function(obj) {

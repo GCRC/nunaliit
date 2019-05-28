@@ -403,9 +403,6 @@ function main(opts_) {
 		}
 	});
 
-	// Attach Material Design Components
-	$n2.mdc.attachMDCComponents();
-
 	config.start();
 };
 

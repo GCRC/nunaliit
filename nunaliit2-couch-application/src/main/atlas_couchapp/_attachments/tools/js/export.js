@@ -255,9 +255,6 @@ function showButtons(opts_){
 			return false;
 		}
 	});
-
-	// Attach Material Design Components
-	$n2.mdc.attachMDCComponents();
 };
 
 function schemaSelected(schemaName){

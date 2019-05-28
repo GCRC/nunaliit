@@ -117,9 +117,6 @@ function showRequests(arr) {
 			$tr.find('.trans').val(req.trans);
 		};
 	};
-
-	// Attach Material Design Components
-	$n2.mdc.attachMDCComponents();
 };
 
 function displayTranslated() {
@@ -129,7 +126,7 @@ function displayTranslated() {
 		.append( $('<div class="translationResult mdc-card"></div>') );
 		
 	$('<div>')
-		.addClass('translationLangSelect mdc-select mdc-select--outlined')
+		.addClass('translationLangSelect mdc-select mdc-select--outlined n2s_attachMDCSelect')
 		.appendTo($('.translationButtonLine'));
 	
 	var $langMenuIcon = $('<i>')
@@ -180,9 +177,6 @@ function displayTranslated() {
 				.append($langMenuNotchedOutline);
 
 			$langMenu.change(languageChanged);
-
-			// Attach Material Design Components
-			$n2.mdc.attachMDCComponents();
 
 			languageChanged();
 		}
@@ -280,7 +274,7 @@ function main() {
 	$('#'+requestPanelName).before($buttonLine);
 
 	var $status = $('<div>')
-		.addClass('mdc-select mdc-select--outlined')
+		.addClass('mdc-select mdc-select--outlined n2s_attachMDCSelect')
 		.appendTo($buttonLine);
 
 	$('<i>')

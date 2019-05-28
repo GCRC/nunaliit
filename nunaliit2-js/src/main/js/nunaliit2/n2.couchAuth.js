@@ -1964,7 +1964,7 @@ var AuthWidget = $n2.Class({
 			};
 
 			var nameElem = $('<button>')
-				.addClass('nunaliit_login_link mdc-button');
+				.addClass('nunaliit_login_link mdc-button n2s_attachMDCButton');
 
 			$('<span>')
 				.addClass('mdc-button__label')

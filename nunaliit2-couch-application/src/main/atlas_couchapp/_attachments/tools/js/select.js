@@ -2573,9 +2573,6 @@
 				$a.text(docId);
 			};
 			installViewDoc($a, docId);
-
-			// Attach Material Design Components
-			$n2.mdc.attachMDCComponents();
 		};
 		
 		function installViewDoc($a, docId){
@@ -3414,7 +3411,7 @@
 						.appendTo($revs);
 
 					var $selectorContainer = $('<div>')
-						.addClass('mdc-select mdc-select--outlined')
+						.addClass('mdc-select mdc-select--outlined n2s_attachMDCSelect')
 						.appendTo($buttons);
 
 					$('<i>')
@@ -3464,9 +3461,6 @@
 						.addClass('mdc-notched-outline__trailing')
 						.appendTo($selectorOutline);					
 				};
-
-				// Attach Material Design Components
-				$n2.mdc.attachMDCComponents();
 			}
 			,onError: function(err){
 				reportError(err);
@@ -3690,9 +3684,6 @@
 		bs();
 
 		log( _loc('Select application started') );
-
-		// Attach Material Design Components
-		$n2.mdc.attachMDCComponents();
 	};
 
 	

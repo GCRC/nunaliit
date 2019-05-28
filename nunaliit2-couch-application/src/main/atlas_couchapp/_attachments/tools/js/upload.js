@@ -277,9 +277,6 @@ function refreshToolbar(){
 		});
 	};
 
-	// Attach Material Design Components
-	$n2.mdc.attachMDCComponents();
-
 	// Update selection button
 	var $table = $('.uploadsTable');
 	var anyCheckBox = false;

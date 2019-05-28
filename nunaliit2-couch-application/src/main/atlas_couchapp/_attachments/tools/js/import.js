@@ -38,7 +38,7 @@
 
 		// Import Profile Select Menu
 		var $importProfileSelect = $('<div>')
-			.addClass('mdc-select mdc-select--outlined')
+			.addClass('mdc-select mdc-select--outlined n2s_attachMDCSelect')
 			.appendTo($buttonLine);
 		
 		$('<i>')
@@ -174,9 +174,6 @@
 			reportError( err );
 			alert( err );
 		};
-
-		// Attach Material Design Components
-		$n2.mdc.attachMDCComponents();
 	};
 
 	// *****************************************************************

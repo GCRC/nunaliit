@@ -1178,7 +1178,7 @@ public class SchemaAttribute {
 					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"value\">");
-					pw.println("\t\t\t<div class=\"mdc-select mdc-select--outlined\">");
+					pw.println("\t\t\t<div class=\"mdc-select mdc-select--outlined n2s_attachMDCSelect\">");
 					pw.println("\t\t\t\t<i class=\"mdc-select__dropdown-icon\"></i>");
 					pw.println("\t\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}} mdc-select__native-control\">");
 					
@@ -1277,7 +1277,7 @@ public class SchemaAttribute {
 						String forId = id+"_"+itemId;
 						
 						pw.println("\t\t\t<li class=\"mdc-list-item\">");
-						pw.println("\t\t\t\t<div class=\"mdc-checkbox\">");
+						pw.println("\t\t\t\t<div class=\"mdc-checkbox n2s_attachMDCCheckbox\">");
 						pw.println("\t\t\t\t\t<input type=\"checkbox\" class=\"mdc-checkbox__native-control {{#:input}}"+itemId+"{{/:input}}\" id=\""+forId+"\" />");
 						pw.println("\t\t\t\t\t<div class=\"mdc-checkbox__background\">");
 						pw.println("\t\t\t\t\t\t<svg class=\"mdc-checkbox__checkmark\" viewBox=\"0 0 24 24\">");

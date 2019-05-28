@@ -75,9 +75,6 @@ var NavigationDisplay = $n2.Class({
 		this.elemId = $n2.utils.getElementIdentifier($elem);
 		
 		this._display();
-
-		// Attach MDC Components
-		$n2.mdc.attachMDCComponents();
 	},
 	
 	_display: function(){

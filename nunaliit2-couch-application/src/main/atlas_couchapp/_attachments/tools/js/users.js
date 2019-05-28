@@ -145,9 +145,6 @@ var UserManagementApplication = $n2.Class({
 				_this.queryMyUser();
 			}
 		});
-
-		// Attach Material Design Components
-		$n2.mdc.attachMDCComponents();
 	}
 	
 	,_reportErrorsOnElem: function(errors, $elem) {

@@ -1475,9 +1475,6 @@ var CouchDocumentEditor = $n2.Class({
 			$uBtn.button(userButton.options);
 			installUserButtonClick($uBtn, userButton);
 		};
-	
-		// Attach mdc ripple effect on buttons
-		$n2.mdc.attachMDCComponents();
 		
 		// First time to call refresh
 		var $editorContainer = _this._getEditorContainer();

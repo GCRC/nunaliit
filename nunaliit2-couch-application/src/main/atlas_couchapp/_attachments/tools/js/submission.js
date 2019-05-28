@@ -156,9 +156,6 @@
 				};
 			};
 			refresh();
-
-			// Attach Material Design Components
-			$n2.mdc.attachMDCComponents();
 		}
 	
 		,_getDiv: function(){
@@ -427,7 +424,7 @@
 				var optionsId = $n2.getUniqueId();
 				var $options = $('<div>')
 					.attr('id', optionsId)
-					.addClass('submission_deny_dialog_options mdc-form-field')
+					.addClass('submission_deny_dialog_options mdc-form-field n2s_attachMDCFormField')
 					.appendTo($('#' + denyDialog.getContentId()));
 
 				new $n2.mdc.MDCCheckbox({

@@ -38,6 +38,12 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); },
  couchUserPrefix = 'org.couchdb.user:',
  suppressLeaveConfirmation = false;
 
+// Required library: material design components
+var $mdc = window.mdc;
+if (!$mdc) {
+	return;
+}
+
 function noop(){};
 
 var reUrl = /(^|\s)(https?:\/\/[^\s]*)(\s|$)/;
@@ -355,7 +361,43 @@ var DomStyler = $n2.Class({
 				,target: 'n2s_showedFindAvailable'
 				,fn: this._showFindAvailable
 				,acceptsContextDocument: true
-			}
+			},
+			{
+				source: 'n2s_attachMDCButton'
+				,target: 'n2s_attachedMDCButton'
+				,fn: this._attachMDCButton
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_attachMDCCheckbox'
+				,target: 'n2s_attachedMDCCheckbox'
+				,fn: this._attachMDCCheckbox
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_attachMDCFormField'
+				,target: 'n2s_attachedMDCFormField'
+				,fn: this._attachMDCFormField
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_attachMDCRadio'
+				,target: 'n2s_attachedMDCRadio'
+				,fn: this._attachMDCRadio
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_attachMDCSelect'
+				,target: 'n2s_attachedMDCSelect'
+				,fn: this._attachMDCSelect
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_attachMDCTextField'
+				,target: 'n2s_attachedMDCTextField'
+				,fn: this._attachMDCTextField
+				,acceptsContextDocument: false
+			},
 		];
 	
 		// Make an array of changes that accepts a context document
@@ -2003,6 +2045,48 @@ var DomStyler = $n2.Class({
 		};
 		
 		return docId;
+	},
+	
+	_attachMDCButton: function($jq) {
+		var btn = $jq[0];
+		if (btn) {
+			$mdc.ripple.MDCRipple.attachTo(btn);
+		}
+	},
+	
+	_attachMDCCheckbox: function($jq) {
+		var chkbox = $jq[0];
+		if (chkbox) {
+			$mdc.checkbox.MDCCheckbox.attachTo(chkbox);
+		}
+	},
+	
+	_attachMDCFormField: function($jq) {
+		var formField = $jq[0];
+		if (formField) {
+			$mdc.formField.MDCFormField.attachTo(formField);
+		}
+	},
+	
+	_attachMDCRadio: function($jq) {
+		var radioBtn = $jq[0];
+		if (radioBtn) {
+			$mdc.radio.MDCRadio.attachTo(radioBtn);
+		}
+	},
+	
+	_attachMDCSelect: function($jq) {
+		var menu = $jq[0];
+		if (menu) {
+			$mdc.select.MDCSelect.attachTo(menu);
+		}
+	},
+	
+	_attachMDCTextField: function($jq) {
+		var txtFld = $jq[0];
+		if (txtFld) {
+			$mdc.textField.MDCTextField.attachTo(txtFld);
+		}
 	}
 });
 
