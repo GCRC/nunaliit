@@ -320,7 +320,7 @@ var Display = $n2.Class({
 				,reply: true
 				,geom: true
 				,edit: true
-				,'delete': true
+				,'delete': false
 				,addLayer: true
 				,treeView: true
 				,simplifiedGeoms: true
