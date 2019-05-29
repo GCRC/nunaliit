@@ -399,6 +399,7 @@ function selectLayersDialog(opts_){
 	};
 	
 	function displayLayers(){
+		var _this = this;
 		var $diag = $('#'+dialogId);
 		
 		var $c = $diag.find('.editorSelectLayerContent');
@@ -406,55 +407,37 @@ function selectLayersDialog(opts_){
 
 		var $list = $('<ul>')
 			.addClass('mdc-list')
+			.attr('role', 'group')
 			.attr('aria-orientation','vertical')
 			.appendTo($c);
 
-		for(var layerId in layers){
+		for (var layerId in layers) {
 			var label = layerId;
-			if( layers[layerId].label ){
-				label = _loc( layers[layerId].label );
+			if (layers[layerId].label) {
+				label = _loc(layers[layerId].label);
 			};
 			
-			var inputId = $n2.getUniqueId();
-
 			var $listItem = $('<li>')
 				.addClass('mdc-list-item')
+				.attr('role', 'checkbox')
 				.appendTo($list);
-				
-			var $div = $('<div>')
-				.addClass('mdc-checkbox n2s_attachMDCCheckbox')
-				.appendTo($listItem);
 
-			var $input = $('<input>')
-				.addClass('layer mdc-checkbox__native-control')
-				.attr('type','checkbox')
-				.attr('id',inputId)
-				.attr('name',layerId)
-				.appendTo($div);
+			var layerChkbox = new $n2.mdc.MDCCheckbox({
+				parentId: $n2.utils.getElementIdentifier($listItem),
+				chkboxLabel: label,
+				chkboxName: layerId
+			});
 
-			var $checkboxBackground = $('<div>')
-				.addClass('mdc-checkbox__background')
-				.appendTo($div);
-
-			$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
-				.appendTo($checkboxBackground);
-
-			$('<div>')
-				.addClass('mdc-checkbox__mixedmark')
-				.appendTo($checkboxBackground);
-
-			var $label = $('<span>')
-				.addClass('mdc-list-item__text')
-				.text(label)
-				.appendTo($listItem)
-
-			if( layers[layerId].currentlySelected ){
-				$input.attr('checked','checked');
+			if (layers[layerId].currentlySelected) {
+				$('#' + layerChkbox.getInputId()).attr('checked','checked');
 			};
 			
-			if( opts.showService && !layers[layerId].label ){
-				opts.showService.printLayerName($label, layerId);
+			if (opts.showService && !layers[layerId].label) {
+				opts.showService.printLayerName($('#' + layerChkbox.getId()  + ' label'), layerId);
 			};
+
+
+			$('#' + layerChkbox.getInputId()).addClass('layer');
 		};
 	};
 	
