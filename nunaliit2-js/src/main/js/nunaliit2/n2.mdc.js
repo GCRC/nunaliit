@@ -192,6 +192,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		this.chkboxChecked = opts.chkboxChecked;
 		this.chkboxDisabled = opts.chkboxDisabled;
 		this.chkboxChgFunc = opts.chkboxChgFunc;
+		this.chkboxInputId = $n2.getUniqueId();
 
 		if (!this.parentId) {
 			throw new Error('Parent Id must be provided, to add a Material Design Check Box Component');
@@ -203,8 +204,6 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 	_generateMDCCheckbox: function(){
 		var $chkbox, $chkboxInput, $chkboxBackground, keys;
 		var _this = this;
-
-		var chkboxInputId = $n2.getUniqueId();
 
 		this.mdcClasses.push('mdc-checkbox', 'n2s_attachMDCCheckbox');
 
@@ -226,7 +225,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		}
 
 		$chkboxInput = $('<input>')
-			.attr('id', chkboxInputId) 
+			.attr('id', this.chkboxInputId) 
 			.attr('type', 'checkbox')
 			.attr('name', this.chkboxName)
 			.addClass('mdc-checkbox__native-control')
@@ -252,8 +251,8 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 			.appendTo($chkboxBackground);
 
 		$('<label>')
-			.attr('for', chkboxInputId)
-			.text(this.chkboxLabel)
+			.attr('for', this.chkboxInputId)
+			.text(_loc(this.chkboxLabel))
 			.appendTo(this.docFragment);
 
 		this.docFragment.appendTo($('#' + this.parentId));
@@ -261,6 +260,10 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
+	},
+
+	getInputId: function() {
+		return this.chkboxInputId;
 	}
 });
 
