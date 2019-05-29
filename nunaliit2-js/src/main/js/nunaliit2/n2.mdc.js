@@ -163,23 +163,26 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 // Class MDCCheckbox
 // Description: Creates a material design checkbox component
 // Options:
-//  - radioLabel (String): A string containing the radio button label.
-//  - radioName (String): A string containing the radio button name.
-//  - radioChecked (Boolean): If true, the radio button is checked (default = false).
-//  - radioDisabled (Boolean): If true, the radio button is disabled (default = false). 
+//  - chkboxLabel (String): A string containing the radio button label.
+//  - chkboxName (String): A string containing the radio button name.
+//  - chkboxChecked (Boolean): If true, the radio button is checked (default = false).
+//  - chkboxDisabled (Boolean): If true, the radio button is disabled (default = false). 
+//  - chkboxChgFunc (Function): A function which handles the functionality when the checkbox changes.
 var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 
 	chkboxLabel: null,
 	chkboxName: null,
 	chkboxChecked: null,
 	chkboxDisabled: null,
+	chkboxChgFunc: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			chkboxLabel: null,
 			chkboxName: null,
 			chkboxChecked: false,
-			chkboxDisabled: false
+			chkboxDisabled: false,
+			chkboxChgFunc: null
 		}, opts_);
 
 		MDC.prototype.initialize.call(this, opts);
@@ -188,6 +191,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		this.chkboxName = opts.chkboxName;
 		this.chkboxChecked = opts.chkboxChecked;
 		this.chkboxDisabled = opts.chkboxDisabled;
+		this.chkboxChgFunc = opts.chkboxChgFunc;
 
 		if (!this.parentId) {
 			throw new Error('Parent Id must be provided, to add a Material Design Check Box Component');
@@ -228,6 +232,10 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 			.addClass('mdc-checkbox__native-control')
 			.appendTo($chkbox);
 
+		if (this.chkboxChgFunc) {
+			$chkboxInput.change(this.chkboxChgFunc);
+		}
+
 		if (this.chkboxChecked) {
 			$chkboxInput.attr('checked', 'checked');
 		}
@@ -246,7 +254,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		$('<label>')
 			.attr('for', chkboxInputId)
 			.text(this.chkboxLabel)
-			.appendTo($('#' + this.parentId));
+			.appendTo(this.docFragment);
 
 		this.docFragment.appendTo($('#' + this.parentId));
 
@@ -416,7 +424,6 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	}
 });
 
-
 // Class MDCFormField
 // Description: Create a material design form field component
 var MDCFormField = $n2.Class('MDCFormField', MDC, {
@@ -457,15 +464,6 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
-		}
-	},
-
-	_appendComponent: function(id){
-		var formField = document.getElementById(this.mdcId);
-		var component = document.getElementById(id);
-		
-		if (formField && component) {
-			formField.appendChild(component);
 		}
 	}
 });
