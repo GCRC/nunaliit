@@ -410,6 +410,12 @@ var DomStyler = $n2.Class({
 				,fn: this._attachMDCTextField
 				,acceptsContextDocument: false
 			},
+			{
+				source: 'n2s_attachMDCTopAppBar'
+				,target: 'n2s_attachedMDCTopAppBar'
+				,fn: this._attachMDCTopAppBar
+				,acceptsContextDocument: false
+			}
 		];
 	
 		// Make an array of changes that accepts a context document
@@ -2112,6 +2118,18 @@ var DomStyler = $n2.Class({
 		var txtFld = $jq[0];
 		if (txtFld) {
 			$mdc.textField.MDCTextField.attachTo(txtFld);
+		}
+	},
+	
+	_attachMDCTopAppBar: function($jq) {
+		var mdcTopAppBar;
+		var topAppBar = $jq[0];
+		if (topAppBar) {
+			mdcTopAppBar = $mdc.topAppBar.MDCTopAppBar.attachTo(topAppBar);
+			mdcTopAppBar.setScrollTarget(document.body);
+			mdcTopAppBar.listen('MDCTopAppBar:nav', function(){
+				drawer.open = !drawer.open;			
+			});
 		}
 	}
 });

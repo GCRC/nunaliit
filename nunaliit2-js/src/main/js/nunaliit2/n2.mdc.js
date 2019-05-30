@@ -459,7 +459,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 		this.navId = $n2.getUniqueId();
 
 		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Form Field Component');
+			throw new Error('Parent Id must be provided, to add a Material Design Drawer Component');
 		}
 		this._generateMDCDrawer();
 	},
@@ -996,6 +996,75 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 	}
 });
 
+// Class MDCTopAppBar
+// Description: Create a material design top app bar component
+var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
+
+	barTitle: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			barTitle: null
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+		
+		this.barTitle = opts.barTitle;
+		this._generateMDCTopAppBar();
+	},
+
+	_generateMDCTopAppBar: function(){
+		var $topAppBar, $topAppBarRow, $topAppBarRSection, $topAppBarLSection,keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-top-app-bar', 'n2s_attachMDCTopAppBar');
+
+		this.docFragment = $(document.createDocumentFragment());
+		$topAppBar = $('<header>')
+			.attr('id',this.mdcId)
+			.addClass(this.mdcClasses.join(' '))
+			.appendTo(this.docFragment);
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$topAppBar.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		$topAppBarRow = $('<div>')
+			.addClass('mdc-top-app-bar__row')
+			.appendTo($topAppBar);
+
+		$topAppBarLSection = $('<section>')
+			.addClass('mdc-top-app-bar__section mdc-top-app-bar__section--align-start')
+			.appendTo($topAppBarRow);
+
+		$('<a>').attr('href', '#')
+			.addClass('material-icons mdc-top-app-bar__navigation-icon')
+			.text('☰')
+			.appendTo($topAppBarLSection);
+
+		$('<span>').addClass('mdc-top-app-bar__title')
+			.text(this.barTitle)
+			.appendTo($topAppBarLSection);
+
+		$topAppBarRSection = $('<section>')
+			.addClass('mdc-top-app-bar__section mdc-top-app-bar__section--align-end')
+			.appendTo($topAppBarRow);
+
+		$('<a>').attr('id', 'login')
+			.addClass('nunaliit_login mdc-top-app-bar__action-item')
+			.appendTo($topAppBarRSection);
+
+		this.docFragment.prependTo($('body'));
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+	}
+});
+
 $n2.mdc = {
 	Service: Service,
 	MDC: MDC,
@@ -1006,7 +1075,8 @@ $n2.mdc = {
 	MDCFormField: MDCFormField,
 	MDCRadio: MDCRadio,
 	MDCSelect: MDCSelect,
-	MDCTextField: MDCTextField
+	MDCTextField: MDCTextField,
+	MDCTopAppBar: MDCTopAppBar
 };
 
 })(jQuery,nunaliit2);
