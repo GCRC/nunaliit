@@ -402,7 +402,10 @@ function main(opts_) {
 			$n2.log('Unable to load schema for editor',err);
 		}
 	});
+	config.start();
+};
 
+function addHamburgerMenu(){
 	//Tools Drawer
 	var drawer = new $n2.mdc.MDCDrawer({
 		hamburgerDrawer: true,
@@ -427,12 +430,11 @@ function main(opts_) {
 	var topAppBar = new $n2.mdc.MDCTopAppBar({
 		barTitle: 'Data Browser'
 	});
-
-	config.start();
 };
 
 $n2.browseApp = {
-	main: main
+	main: main,
+	addHamburgerMenu: addHamburgerMenu
 };
 
 })(jQuery,nunaliit2);

@@ -44,6 +44,9 @@
 
 
 			function main_init(config) {
+
+				$n2.browseApp.addHamburgerMenu();
+
 				if( config.directory && config.directory.authService ) {
 					config.directory.authService.createAuthWidget({
 						elemId: 'login'
