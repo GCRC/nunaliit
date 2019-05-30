@@ -375,6 +375,12 @@ var DomStyler = $n2.Class({
 				,acceptsContextDocument: false
 			},
 			{
+				source: 'n2s_attachMDCDrawer'
+				,target: 'n2s_attachedMDCDrawer'
+				,fn: this._attachMDCDrawer
+				,acceptsContextDocument: false
+			},
+			{
 				source: 'n2s_attachMDCFormField'
 				,target: 'n2s_attachedMDCFormField'
 				,fn: this._attachMDCFormField
@@ -2067,6 +2073,13 @@ var DomStyler = $n2.Class({
 		}
 	},
 	
+	_attachMDCDrawer: function($jq) {
+		var drawer = $jq[0];
+		if (drawer) {
+			$mdc.drawer.MDCDrawer.attachTo(drawer);
+		}
+	},
+
 	_attachMDCFormField: function($jq) {
 		var formField = $jq[0];
 		if (formField) {

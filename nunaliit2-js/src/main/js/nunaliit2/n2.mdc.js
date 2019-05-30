@@ -427,6 +427,139 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	}
 });
 
+// Class MDCDrawer
+// Description: Create a material design drawer component
+// Options:
+//  - navHeaderTitle (String): Nav-Bar Header Title
+//  - navHeaderSubTitle (String): Nav-Bar Sub-Header Title
+//  - navItems (Array): An array of objects containing link text, href URL, and activated status
+//   - navItems Example: 
+//   [
+//   	{"href":"https://gcrc.carleton.ca", "text":"GCRC", "activated":true}, 
+//   	{"href":"https://nunaliit.org", "text":"Nunaliit"}
+//   ]
+var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
+
+	navHeaderTitle: null,
+	navHeaderSubTitle: null,
+	navItems: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			navHeaderTitle: null,
+			navHeaderSubTitle: null,
+			navItems: null
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+
+		this.navHeaderTitle = opts.navHeaderTitle;
+		this.navHeaderSubTitle = opts.navHeaderSubTitle;
+		this.navItems = opts.navItems;
+		this.navId = $n2.getUniqueId();
+
+		if (!this.parentId) {
+			throw new Error('Parent Id must be provided, to add a Material Design Form Field Component');
+		}
+		this._generateMDCDrawer();
+	},
+
+	_generateMDCDrawer: function(){
+		var $drawer, $drawerContent, $drawerHeader, $drawerNav, keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-drawer', 'mdc-drawer--modal', 'n2s_attachMDCDrawer');
+
+		this.docFragment = $(document.createDocumentFragment());
+		$drawer = $('<aside>')
+			.attr('id',this.mdcId)
+			.addClass(this.mdcClasses.join(' '))
+			.appendTo(this.docFragment);
+
+		if (this.navHeaderTitle || this.navHeaderSubTitle) {
+			$drawerHeader = $('<div>')
+				.addClass('mdc-drawer__header')
+				.appendTo($drawer);
+
+			if (this.navHeaderTitle) {
+				$('<h3>').addClass('mdc-drawer__title')
+					.text(this.navHeaderTitle)
+					.appendTo($drawerHeader);
+			}
+
+			if (this.navHeaderSubTitle) {
+				$('<h6>').addClass('mdc-drawer__subtitle')
+					.text(this.navHeaderSubTitle)
+					.appendTo($drawerHeader);
+			}
+		}
+
+		$drawerContent = $('<div>')
+			.addClass('mdc-drawer__content')
+			.appendTo($drawer);
+
+		$drawerNav = $('<nav>')
+			.attr('id', this.navId)
+			.addClass('mdc-list')
+			.appendTo($drawerContent);
+
+		if (this.navItems && $n2.isArray(this.navItems)) {
+			this.navItems.forEach(function(item){
+				var link = _this._createNavItem(item);
+				link.appendTo($drawerNav);
+			});
+		}
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$drawer.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		$('<div>').addClass('mdc-drawer-scrim')
+			.appendTo(this.docFragment);
+
+		this.docFragment.appendTo($('#' + this.parentId));
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+	},
+
+	_createNavItem: function(item){
+		var $itemLink, $itemText;
+		var _this = this;
+
+		$itemLink = $('<a>')
+			.addClass('mdc-list-item')
+			.attr('tabindex', '-1')
+			.attr('href', '#');
+
+		if (item.activated) {
+			$itemLink.attr('tabIndex', '0')
+				.attr('aria-selected', true)
+				.addClass('mdc-list-item--activated');
+		}
+
+		if (item.href && typeof item.href === 'string') {
+			$itemLink.attr('href', item.href);
+		}
+
+		if (item.text && typeof item.text === 'string') {
+			$itemText = $('<span>')
+				.addClass('mdc-list-item__text')
+				.text(item.text)
+				.appendTo($itemLink);
+		}
+		return $itemLink;
+	},
+
+	getNavId: function(){
+		return this.navId;
+	}
+});
+
 // Class MDCFormField
 // Description: Create a material design form field component
 var MDCFormField = $n2.Class('MDCFormField', MDC, {
@@ -869,6 +1002,7 @@ $n2.mdc = {
 	MDCButton: MDCButton,
 	MDCCheckbox: MDCCheckbox,
 	MDCDialog: MDCDialog,
+	MDCDrawer: MDCDrawer,
 	MDCFormField: MDCFormField,
 	MDCRadio: MDCRadio,
 	MDCSelect: MDCSelect,
