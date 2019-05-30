@@ -134,6 +134,8 @@ var DomStyler = $n2.Class({
 	observerChangeMap: null,
 
 	mutationObserver: null,
+
+	hamburgerDrawer: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -153,7 +155,7 @@ var DomStyler = $n2.Class({
 		this.editFunction = opts.editFunction;
 		this.deleteFunction = opts.deleteFunction;
 		this.viewLayerFunction = opts.viewLayerFunction;
-		
+
 		var _this = this;
 		
 		// This is a list of all DOM changes performed by
@@ -2082,7 +2084,11 @@ var DomStyler = $n2.Class({
 	_attachMDCDrawer: function($jq) {
 		var drawer = $jq[0];
 		if (drawer) {
-			$mdc.drawer.MDCDrawer.attachTo(drawer);
+			if ($jq.hasClass('nunaliit_hamburger_drawer')){
+				this.hamburgerDrawer = $mdc.drawer.MDCDrawer.attachTo(drawer);
+			} else {
+				$mdc.drawer.MDCDrawer.attachTo(drawer);
+			}
 		}
 	},
 
@@ -2123,12 +2129,15 @@ var DomStyler = $n2.Class({
 	
 	_attachMDCTopAppBar: function($jq) {
 		var mdcTopAppBar;
+		var _this = this;
 		var topAppBar = $jq[0];
 		if (topAppBar) {
 			mdcTopAppBar = $mdc.topAppBar.MDCTopAppBar.attachTo(topAppBar);
 			mdcTopAppBar.setScrollTarget(document.body);
 			mdcTopAppBar.listen('MDCTopAppBar:nav', function(){
-				drawer.open = !drawer.open;			
+				if (_this.hamburgerDrawer) {
+					_this.hamburgerDrawer.open = !_this.hamburgerDrawer.open;
+				}
 			});
 		}
 	}

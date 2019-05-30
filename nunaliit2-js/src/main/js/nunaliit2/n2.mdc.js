@@ -440,12 +440,14 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 //   ]
 var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 
+	hamburgerDrawer: null,
 	navHeaderTitle: null,
 	navHeaderSubTitle: null,
 	navItems: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
+			hamburgerDrawer: false,
 			navHeaderTitle: null,
 			navHeaderSubTitle: null,
 			navItems: null
@@ -453,14 +455,12 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 
 		MDC.prototype.initialize.call(this, opts);
 
+		this.hamburgerDrawer = opts.hamburgerDrawer;
 		this.navHeaderTitle = opts.navHeaderTitle;
 		this.navHeaderSubTitle = opts.navHeaderSubTitle;
 		this.navItems = opts.navItems;
 		this.navId = $n2.getUniqueId();
 
-		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Drawer Component');
-		}
 		this._generateMDCDrawer();
 	},
 
@@ -469,6 +469,10 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 		var _this = this;
 
 		this.mdcClasses.push('mdc-drawer', 'mdc-drawer--modal', 'n2s_attachMDCDrawer');
+
+		if (this.hamburgerDrawer) {
+			this.mdcClasses.push('nunaliit_hamburger_drawer');
+		}
 
 		this.docFragment = $(document.createDocumentFragment());
 		$drawer = $('<aside>')
@@ -520,7 +524,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 		$('<div>').addClass('mdc-drawer-scrim')
 			.appendTo(this.docFragment);
 
-		this.docFragment.appendTo($('#' + this.parentId));
+		this.docFragment.prependTo($('body'));
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
