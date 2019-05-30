@@ -349,8 +349,36 @@ function main_init(opts_) {
  	main(atlasDb, atlasDesign);
 };
 
+function addHamburgerMenu(){
+	//Tools Drawer
+	var drawer = new $n2.mdc.MDCDrawer({
+		hamburgerDrawer: true,
+		navHeaderTitle: 'Nunaliit Tools',
+		navItems: [
+			{"text": "User Management", "href": "./users.html"},
+			{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+			{"text": "Data Browser", "href": "./browse.html"},
+			{"text": "Localization", "href": "./translation.html", "activated": true},
+			{"text": "Data Export", "href": "./export.html"},
+			{"text": "Data Modification", "href": "./select.html"},
+			{"text": "Schemas", "href": "./schemas.html"},
+			{"text": "Restore Tool", "href": "./restore.html"},
+			{"text": "Submission Tool", "href": "./submission.html"},
+			{"text": "Import Tool", "href": "./import.html"},
+			{"text": "Debug Tool", "href": "./debug.html"},
+			{"text": "Schema Editor", "href": "./schema_editor.html"}
+		]	
+	});
+
+	// Top-App-Bar
+	var topAppBar = new $n2.mdc.MDCTopAppBar({
+		barTitle: 'Translations'
+	});
+};
+
 $n2.translation = {
-	main_init: main_init
+	main_init: main_init,
+	addHamburgerMenu: addHamburgerMenu
 };
 	
 })(jQuery,nunaliit2);
