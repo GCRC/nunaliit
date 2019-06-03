@@ -533,7 +533,6 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 
 	_createNavItem: function(item){
 		var $itemLink, $itemText;
-		var _this = this;
 
 		$itemLink = $('<a>')
 			.addClass('mdc-list-item')
