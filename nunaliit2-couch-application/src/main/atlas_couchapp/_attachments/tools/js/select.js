@@ -3409,57 +3409,25 @@
 					$('<div>')
 						.addClass('selectAppRevisionDisplay')
 						.appendTo($revs);
-
-					var $selectorContainer = $('<div>')
-						.addClass('mdc-select mdc-select--outlined n2s_attachMDCSelect')
-						.appendTo($buttons);
-
-					$('<i>')
-						.addClass('mdc-select__dropdown-icon')
-						.appendTo($selectorContainer);
-
-					var $selector = $('<select>')
-						.addClass('mdc-select__native-control')
-						.change(function(){
-							revisionSelected(this, $revs);
-						})
-						.appendTo($selectorContainer);
-
-					$('<option>')
-						.val('')
-						.appendTo($selector);
 					
+					var menuOptions = [{'value': '', 'label': ''}];
 					if( $n2.isArray(revsInfo) ){
 						revsInfo.forEach(function(revInfo){
 							if( typeof revInfo.rev === 'string' ){
-								$('<option>')
-									.text(revInfo.rev)
-									.val(revInfo.rev)
-									.appendTo($selector);
+								menuOptions.push({
+									'value': revInfo.rev,
+									'label': revInfo.rev
+								});
 							};
 						});
 					};
-
-					var $selectorOutline = $('<div>')
-						.addClass('mdc-notched-outline')
-						.appendTo($selectorContainer);
-
-					$('<div>')
-						.addClass('mdc-notched-outline__leading')
-						.appendTo($selectorOutline);
-
-					var $selectorOutlineNotch = $('<div>')
-						.addClass('mdc-notched-outline__notch')
-						.appendTo($selectorOutline);
-
-					$('<label>')
-						.addClass('mdc-floating-label')
-						.text( _loc('Select Revision') )
-						.appendTo($selectorOutlineNotch);
-
-					$('<div>')
-						.addClass('mdc-notched-outline__trailing')
-						.appendTo($selectorOutline);					
+					
+					new $n2.mdc.MDCSelect({
+						parentId: $n2.utils.getElementIdentifier($buttons),
+						menuLabel: 'Select Revision',
+						menuChgFunction: function(){ revisionSelected(this, $revs) },
+						menuOpts: menuOptions
+					});
 				};
 			}
 			,onError: function(err){
