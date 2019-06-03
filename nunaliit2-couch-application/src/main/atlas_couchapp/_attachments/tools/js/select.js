@@ -3648,8 +3648,6 @@
 
 		$selectAppDiv = opts_.div;
 		
-		$('.selectAppTitle').text( _loc('Data Modification Application') );
-		
 		if( config.directory ){
 			showService = config.directory.showService;
 			exportService = config.directory.exportService;
