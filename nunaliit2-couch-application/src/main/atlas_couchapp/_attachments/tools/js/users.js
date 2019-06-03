@@ -82,13 +82,12 @@ var UserManagementApplication = $n2.Class({
 		var $userOutput = $('<div class="userAppOutput"></div>')
 			.appendTo(div);
 		
-		var userSearchTxtFldOpts = {
+		new $n2.mdc.MDCTextField({
 			parentId: $n2.utils.getElementIdentifier($userInput),
 			txtFldInputClasses: inputId,
 			txtFldInputClasses: ['userAppSearchText'],
 			txtFldLabel: 'User Search'
-		};
-		new $n2.mdc.MDCTextField(userSearchTxtFldOpts);
+		});
 
 		var $textInput = $('#' + inputId);
 
@@ -229,36 +228,33 @@ var UserManagementApplication = $n2.Class({
 			.attr('id', formId)
 			.appendTo($userAppOutput);
 
-		var addUserNameTxtFldOpts = {
+		new $n2.mdc.MDCTextField({
 			parentId: formId,
 			txtFldInputId: 'addUserName',
 			txtFldLabel: 'User Name'
-		};
-		new $n2.mdc.MDCTextField(addUserNameTxtFldOpts);
+		});
 		
 		$userForm.append('</br>');
 
-		var addUserPassFldOpts = {
+		new $n2.mdc.MDCTextField({
 			parentId: formId,
 			txtFldInputAttributes: {
 				'type': 'password'
 			},
 			txtFldInputId: 'addUserPassword1',
 			txtFldLabel: 'Password'
-		};
-		new $n2.mdc.MDCTextField(addUserPassFldOpts);
+		});
 
 		$userForm.append('</br>');
 
-		var addUserConfirmPassFldOpts = {
+		new $n2.mdc.MDCTextField({
 			parentId: formId,
 			txtFldInputAttributes: {
 				'type': 'password'
 			},
 			txtFldInputId: 'addUserPassword2',
 			txtFldLabel: 'Repeat Password'
-		};
-		new $n2.mdc.MDCTextField(addUserConfirmPassFldOpts);
+		});
 
 		$userForm.append('</br>');
 
