@@ -272,57 +272,18 @@ function main() {
 		.addClass('translationButtonLine');
 
 	$('#'+requestPanelName).before($buttonLine);
-
-	var $status = $('<div>')
-		.addClass('mdc-select mdc-select--outlined n2s_attachMDCSelect')
-		.appendTo($buttonLine);
-
-	$('<i>')
-		.addClass('mdc-select__dropdown-icon')
-		.appendTo($status);
-
-	var $statusMenu = $('<select>')
-		.addClass('mdc-select__native-control')
-		.appendTo($status)
-		.change(selectionChanged);
-
-	$('<option>')
-		.attr('value','l10n-pending')
-		.attr('selected','selected')
-		.text(_loc('Pending'))
-		.appendTo($statusMenu);
-
-	$('<option>')
-		.attr('value','l10n-all')
-		.text(_loc('All'))
-		.appendTo($statusMenu);
-
-	$('<option>')
-		.attr('value','translated')
-		.text(_loc('Translated'))
-		.appendTo($statusMenu);
-
-	var $statusMenuNotchedOutline = $('<div>')
-		.addClass('mdc-notched-outline')
-		.appendTo($status);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__leading')
-		.appendTo($statusMenuNotchedOutline);
-
-	var $statusMenuNotchedOutlineNotch = $('<div>')
-		.addClass('mdc-notched-outline__notch')
-		.appendTo($statusMenuNotchedOutline);
-
-	$('<label>')
-		.addClass('mdc-floating-label')
-		.text(_loc('Status'))
-		.appendTo($statusMenuNotchedOutlineNotch);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__trailing')
-		.appendTo($statusMenuNotchedOutline);
 	
+	new $n2.mdc.MDCSelect({
+		parentId: $n2.utils.getElementIdentifier($buttonLine),
+		preSelected: true,
+		menuLabel: 'Status',
+		menuChgFunction: selectionChanged,
+		menuOpts: [
+			{'value': 'l10n-pending', 'label': 'Pending', 'selected': 'selected'},
+			{'value': 'l10n-all', 'label': 'All'},
+			{'value': 'translated', 'label': 'Translated'}
+		]
+	});
 	refreshView();
 };
 
