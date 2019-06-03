@@ -17,45 +17,10 @@
 		<link rel="stylesheet" href="css/import.css" type="text/css" />
 	</head>
 	<body class="nunaliit_application">
-		<div class="drawer-frame-root">
-			<aside class="mdc-drawer mdc-drawer--modal">
-				<div class="mdc-drawer__header">
-					<h3 class="mdc-drawer__title"><a href="./index.html">Nunaliit2 Tools</a></h3>
-				</div>
-				<div class="mdc-drawer__content">
-					<nav class="mdc-list">
-						<a class="mdc-list-item" href="./users.html" tabindex="-1" aria-selected="false">User Management</a>
-						<a class="mdc-list-item" href="./upload.html" tabindex="-1" aria-selected="false">Approval for Uploaded Files</a>
-						<a class="mdc-list-item" href="./browse.html" tabindex="-1" aria-selected="false">Data Browser</a>
-						<a class="mdc-list-item" href="./translation.html" tabindex="-1" aria-selected="false">Localization</a>
-						<a class="mdc-list-item" href="./export.html" tabindex="-1" aria-selected="false">Data Export</a>
-						<a class="mdc-list-item" href="./select.html" tabindex="-1" aria-selected="false">Data Modification</a>
-						<a class="mdc-list-item" href="./schemas.html" tabindex="-1" aria-selected="false">Schemas</a>
-						<a class="mdc-list-item" href="./restore.html" tabindex="-1" aria-selected="false">Restore Tool</a>
-						<a class="mdc-list-item" href="./submission.html" tabindex="-1" aria-selected="false">Submission Tool</a>
-						<a class="mdc-list-item mdc-list-item--activated" href="./import.html" tabindex="0" aria-selected="false">Import Tool</a>
-						<a class="mdc-list-item" href="./debug.html" tabindex="-1" aria-selected="false">Debug Tool</a>
-						<a class="mdc-list-item" href="./schema_editor.html" tabindex="-1" aria-selected="false">Schema Editor</a>
-					</nav>
-				</div>
-			</aside>
-			<div class="mdc-drawer-scrim"></div>
-			<header class="mdc-top-app-bar" id="nunaliit_hanmburger_menu">
-				<div class="mdc-top-app-bar__row">
-					<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
-						<a href="#" class="material-icons mdc-top-app-bar__navigation-icon">☰</a>
-						<span class="mdc-top-app-bar__title">Import Data Tool</span>
-					</section>
-					<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end">
-						<a id="login" class="nunaliit_login mdc-top-app-bar__action-item"></a>
-					</section>
-				</div>
-			</header>
-			<main class="main-content importAppBody" id="main-content">
-				<div class="mdc-top-app-bar--fixed-adjust"></div>
-				<div id="importApp"></div>
-			</main>
-		</div>
+		<main class="main-content importAppBody" id="main-content">
+			<div class="mdc-top-app-bar--fixed-adjust"></div>
+			<div id="importApp"></div>
+		</main>
 		
 		<script type="text/javascript" src="../js-external/materialcomponentsweb/material-components-web.min.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
@@ -77,27 +42,15 @@
 
 		<script type="text/javascript">
 			// <!--
-
-			// Attach MDCDrawer
-			var drawer = mdc.drawer.MDCDrawer.attachTo(document.querySelector('.mdc-drawer'));
-
-			// Attach MDCTopAppBar
-			var topAppBar = mdc.topAppBar.MDCTopAppBar.attachTo(document.getElementById('nunaliit_hanmburger_menu'));
-			topAppBar.setScrollTarget(document.body);
-
-			topAppBar.listen('MDCTopAppBar:nav', function(){
-				drawer.open = !drawer.open;
-			});
-
 			function main_init(config) {
+
+				$n2.importApp.addHamburgerMenu();
 
 				if( config.directory && config.directory.authService ) {
 					config.directory.authService.createAuthWidget({
 						elemId: 'login'
 					});
 				};
-				
-				$('#importAppTitle').text( 'Json Upgrade Utility' );
 				
 			 	$n2.importApp.main({
 			 		config: config
