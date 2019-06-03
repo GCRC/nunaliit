@@ -1349,7 +1349,6 @@ function addHamburgerMenu(){
 	var topAppBar = new $n2.mdc.MDCTopAppBar({
 		barTitle: 'User Management'
 	});
-
 };
 
 $n2.userApp = {

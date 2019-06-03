@@ -1372,9 +1372,37 @@
 	function main(opts_){
 		return new $n2.submissionApp.SubmissionApplication(opts_);
 	};
+
+	function addHamburgerMenu(){
+		// Tools Drawer
+		var drawer = new $n2.mdc.MDCDrawer({
+			hamburgerDrawer: true,
+			navHeaderTitle: 'Nunaliit Tools',
+			navItems: [
+				{"text": "User Management", "href": "./users.html"},
+				{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+				{"text": "Data Browser", "href": "./browse.html"},
+				{"text": "Localization", "href": "./translation.html"},
+				{"text": "Data Export", "href": "./export.html"},
+				{"text": "Data Modification", "href": "./select.html"},
+				{"text": "Schemas", "href": "./schemas.html"},
+				{"text": "Restore Tool", "href": "./restore.html"},
+				{"text": "Submission Tool", "href": "./submission.html", "activated": true},
+				{"text": "Import Tool", "href": "./import.html"},
+				{"text": "Debug Tool", "href": "./debug.html"},
+				{"text": "Schema Editor", "href": "./schema_editor.html"}
+			]	
+		});
+	
+		// Top-App-Bar
+		var topAppBar = new $n2.mdc.MDCTopAppBar({
+			barTitle: 'Submission Tool'
+		});
+	};
 	
 	$n2.submissionApp = {
 		main: main
 		,SubmissionApplication: SubmissionApplication
+		,addHamburgerMenu: addHamburgerMenu
 	};
 })(jQuery,nunaliit2);
