@@ -561,7 +561,7 @@ function main(opts_) {
 
 function addHamburgerMenu(){
 	// Tools Drawer
-	var drawer = new $n2.mdc.MDCDrawer({
+	new $n2.mdc.MDCDrawer({
 		hamburgerDrawer: true,
 		navHeaderTitle: 'Nunaliit Tools',
 		navItems: [
@@ -581,7 +581,7 @@ function addHamburgerMenu(){
 	});
 
 	// Top-App-Bar
-	var topAppBar = new $n2.mdc.MDCTopAppBar({
+	new $n2.mdc.MDCTopAppBar({
 		barTitle: 'Export DataUser'
 	});
 };

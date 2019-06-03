@@ -256,7 +256,7 @@
 	
 	function addHamburgerMenu(){
 		// Tools Drawer
-		var drawer = new $n2.mdc.MDCDrawer({
+		new $n2.mdc.MDCDrawer({
 			hamburgerDrawer: true,
 			navHeaderTitle: 'Nunaliit Tools',
 			navItems: [
@@ -276,7 +276,7 @@
 		});
 	
 		// Top-App-Bar
-		var topAppBar = new $n2.mdc.MDCTopAppBar({
+		new $n2.mdc.MDCTopAppBar({
 			barTitle: 'Import Data Tool'
 		});
 	};
