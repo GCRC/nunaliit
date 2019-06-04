@@ -267,7 +267,6 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 	}
 });
 
-
 // Class MDCDialog
 // Description: Creates a material design dialog component
 // Options:
@@ -869,7 +868,6 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 //  - txtFldLabel (String): Defines the text field label.
 //  - txtFldOutline (Boolean): Defines if the text-field should be outlined (default = true).
 //  - txtFldInputId (String): Defines the id of input or text-area element.
-//  - txtFldInputClasses (Array): Defines a list of classes specific to the input field.
 //  - txtFldArea (Boolean): Defines if the text-field input should be a text-field-area (default = false).
 //  - inputRequired (Boolean): Defines if the text-field is required field or not (default = false).
 var MDCTextField = $n2.Class('MDCTextField', MDC, {
@@ -877,8 +875,6 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 	txtFldLabel: null,
 	txtFldOutline: null,
 	txtFldInputId: null,
-	txtFldInputClasses: null,
-	txtFldInputAttributes: null,
 	txtFldArea: null,
 	inputRequired: null,
 
@@ -887,8 +883,6 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			txtFldLabel: null,
 			txtFldOutline: true,
 			txtFldInputId: null,
-			txtFldInputClasses: [],
-			txtFldInputAttributes: null,
 			txtFldArea: false,
 			inputRequired: false,
 		}, opts_);
@@ -898,8 +892,6 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.txtFldLabel = opts.txtFldLabel;
 		this.txtFldOutline = opts.txtFldOutline;
 		this.txtFldInputId = opts.txtFldInputId;
-		this.txtFldInputClasses = opts.txtFldInputClasses;
-		this.txtFldInputAttributes = opts.txtFldInputAttributes;
 		this.txtFldArea = opts.txtFldArea;
 		this.inputRequired = opts.inputRequired;
 
@@ -918,7 +910,6 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		}
 
 		this.mdcClasses.push('mdc-text-field', 'n2s_attachMDCTextField');
-		this.txtFldInputClasses.push('mdc-text-field__input');	
 
 		if (this.txtFldArea) {
 			this.mdcClasses.push('mdc-text-field--textarea');
@@ -941,23 +932,16 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 
 		if (this.txtFldArea) {
 			$txtFldInput = $('<textarea>')
-				.addClass(this.txtFldInputClasses.join(' '))
+				.addClass('mdc-text-field__input')
 				.attr('id', this.txtFldInputId)
 				.attr('rows','8')
 				.attr('cols','40');
 
 		} else {
 			$txtFldInput = $('<input>')
-				.addClass(this.txtFldInputClasses.join(' '))
+				.addClass('mdc-text-field__input')
 				.attr('id',this.txtFldInputId)
 				.attr('type','text');
-		}
-
-		if (this.txtFldInputAttributes) {
-			keys = Object.keys(this.txtFldInputAttributes);
-			keys.forEach(function(key) {
-				$txtFldInput.attr(key, _this.txtFldInputAttributes[key]);
-			});
 		}
 		
 		$txtFld.append($txtFldInput);
@@ -1002,6 +986,10 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
+	},
+
+	getInputId: function(){
+		return this.txtFldInputId;
 	}
 });
 
