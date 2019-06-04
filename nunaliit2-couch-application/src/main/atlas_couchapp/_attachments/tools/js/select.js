@@ -2671,133 +2671,121 @@
 	
 	// -----------------------------------------------------------------
 	function deleteDocumentsFromList(list){
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+dialogId+'">'
-			+'<span class="deleteDocumentsApproveText"></span>'
-			+'<div><button class="buttonOK">'+_loc('OK')+'</button>'
-			+'<button class="buttonCancel">'+_loc('Cancel')+'</button></div>'
-			+'</div>');
-
-		var $span = $dialog.find('span.deleteDocumentsApproveText');
 		var locStr = _loc('Do you really wish to delete the {count} document(s) referenced by this list?',{
 			count: list.docIds.length
 		});
-		$span.text(locStr);
+
+		var deleteDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Confirm',
+			dialogTextContent: locStr,
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
+
+		new $n2.mdc.MDCButton({
+			parentId: deleteDialog.getFooterId(),
+			btnLabel: 'OK',
+			onBtnClick: deleteConfirmFunc
+		});
 		
-		$dialog.find('button.buttonOK')
-			.button({icons:{primary:'ui-icon-check'}})
-			.click(function(){
-				var $dialog = $('#'+dialogId);
+		function deleteConfirmFunc(){
 
-				$dialog.dialog('close');
+			deleteDialog.closeDialog();
+			var opCancelled = false;
 
-				var opCancelled = false;
-				var progressDialog = new $n2.couchDialogs.ProgressDialog({
-					title: _loc('Deletion Progress')
-					,onCancelFn: function(){
-						opCancelled = true;
-					}
-				});
-				
-				var docIdsLeft = [];
-				for(var i=0,e=list.docIds.length; i<e; ++i){
-					docIdsLeft.push( list.docIds[i] );
+			var deleteProgressDialog = new $n2.mdc.MDCDialog({
+				dialogTitle: 'Deletion Progress',
+				dialogHtmlContent: '<span id="deleteDialogProgress"></span>'
+			});
+
+			new $n2.mdc.MDCButton({
+				parentId: deleteProgressDialog.getFooterId(),
+				btnLabel: 'Cancel',
+				onBtnClick: cancelFunc
+			});
+
+			var docIdsLeft = [];
+			for(var i=0,e=list.docIds.length; i<e; i += 1){
+				docIdsLeft.push(list.docIds[i]);
+			}
+
+			var totalCount = docIdsLeft.length;
+			var okCount = 0;
+			var failCount = 0;
+
+			processNext();
+			
+			function processNext(){
+				if (opCancelled) {
+					cancelFunc();
+					return;
 				};
-				
-				var totalCount = docIdsLeft.length;
-				var okCount = 0;
-				var failCount = 0;
-				
-				processNext();
-				
-				function processNext(){
-					if( opCancelled ) {
-						cancel();
-						return;
-					};
 
-					if(docIdsLeft.length < 1){
-						progressDialog.updatePercent(100);
-						progressDialog.close();
+				if(docIdsLeft.length < 1){
+					updatePercent(100);
+					deleteProgressDialog.closeDialog();
 
+				} else {
+					if (totalCount) {
+						updatePercent((okCount + failCount) * 100 / totalCount);
 					} else {
-						if( totalCount ) {
-							progressDialog.updatePercent( (okCount + failCount) * 100 / totalCount );
-						} else {
-							progressDialog.updatePercent(0);
-						};
-						
-						var docId = docIdsLeft.pop();
-						atlasDb.getDocument({
-							docId: docId
-							,skipCache: true
-							,onSuccess: retrievedDocument
-							,onError: function(err){
-								var locStr = _loc('Failure to fetch {docId}',{
-									docId: docId
-								});
-								reportError(locStr);
-								failCount += 1;
-								processNext();
-							}
-						});
-					};
-				};
-				
-				function retrievedDocument(doc){
-					if( opCancelled ) {
-						cancel();
-						return;
-					};
-
-					atlasDb.deleteDocument({
-						data: doc
-						,onSuccess: function(docInfo){
-							log( _loc('{docId} deleted',{
-								docId: doc._id
-							}) );
-							okCount += 1;
-							processNext();
-						}
-						,onError: function(errorMsg){ 
-							var locStr = _loc('Failure to delete {docId}',{
-								docId: doc._id
+						updatePercent(0);
+					}
+					
+					var docId = docIdsLeft.pop();
+					atlasDb.getDocument({
+						docId: docId
+						,skipCache: true
+						,onSuccess: retrievedDocument
+						,onError: function(err){
+							var locStr = _loc('Failure to fetch {docId}',{
+								docId: docId
 							});
-							reportError(locStr+': '+errorMsg);
+							reportError(locStr);
 							failCount += 1;
 							processNext();
 						}
 					});
 				};
-				
-				function cancel(){
-					reportError( _loc('Operation cancelled by user') );
-					progressDialog.close();
-				};
-				
-				return false;
-			});
-		
-		$dialog.find('button.buttonCancel')
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
-				var $dialog = $('#'+dialogId);
-				$dialog.dialog('close');
-				return false;
-			});
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Confirm')
-			,modal: true
-			,width: 400
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
+			};
+
+			function updatePercent(value){
+				$('#deleteDialogProgress').text('Progress: ' + Math.round(value) + '%');
+			};
+
+			function retrievedDocument(doc){
+				if (opCancelled) {
+					cancelFunc();
+					return;
+				}
+
+				atlasDb.deleteDocument({
+					data: doc
+					,onSuccess: function(docInfo){
+						log(_loc('{docId} deleted',{
+							docId: doc._id
+						}));
+						okCount += 1;
+						processNext();
+					}
+					,onError: function(errorMsg){
+						var locStr = _loc('Failure to delete {docId}',{
+							docId: doc._id
+						});
+						reportError(locStr+': '+errorMsg);
+						failCount += 1;
+						processNext();
+					}
+				});
+			};
+			
+			function cancelFunc(){
+				opCancelled = true;
+				reportError(_loc('Operation cancelled by user'));
+				deleteProgressDialog.closeDialog();
+			};
+			return false;
 		};
-		$dialog.dialog(dialogOptions);
 	};
 
 	// -----------------------------------------------------------------
