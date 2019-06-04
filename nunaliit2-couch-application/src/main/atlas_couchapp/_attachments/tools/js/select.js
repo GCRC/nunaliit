@@ -2790,47 +2790,35 @@
 
 	// -----------------------------------------------------------------
 	function reportList(list){
-		
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div>')
-			.attr('id',dialogId)
-			;
-		
-		$('<textarea>')
-			.addClass('n2select_report_script')
-			.val( 'function(opts_){\n\tvar opts = nunaliit2.extend({\n\t\tconfig: null\n\t\t,doc: null\n\t\t,logger: null\n\t},opts_);\n\n\tif( opts.doc ){\n\n\t} else {\n\t\topts.logger.log("Finished");\n\t}\n}' )
-			.appendTo($dialog);
+	
+		var reportListDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Enter Report Script',
+			scrollable: true
+		});
+
+		new $n2.mdc.MDCButton({
+			parentId: reportListDialog.getFooterId(),
+			btnLabel: 'OK',
+			onBtnClick: function(){
+				performReport(reportListDialog.getId());
+				return false;
+			}
+		});
+
+		var scriptTxtField = new $n2.mdc.MDCTextField({
+			parentId: reportListDialog.getContentId(),
+			txtFldLabel: 'Script',
+			txtFldArea: true
+		});
 
 		$('<div>')
 			.addClass('n2select_report_result')
-			.appendTo($dialog);
+			.appendTo($('#' + reportListDialog.getContentId()));
 
-		var $buttons = $('<div>')
-			.addClass('n2select_report_buttons')
-			.appendTo($dialog);
-
-		$('<button>')
-			.text( _loc('OK') )
-			.click(function(){
-				performReport();
-				return false;
-			})
-			.appendTo($buttons);
+		$('#' + scriptTxtField.getInputId()).addClass('n2select_report_script')
+			.val('function(opts_){\n\tvar opts = nunaliit2.extend({\n\t\tconfig: null\n\t\t,doc: null\n\t\t,logger: null\n\t},opts_);\n\n\tif( opts.doc ){\n\n\t} else {\n\t\topts.logger.log("Finished");\n\t}\n}');
 		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Enter Report Script')
-			,modal: true
-			,width: 550
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
-		$dialog.dialog(dialogOptions);
-		
-		function performReport(){
+		function performReport(dialogId){
 			var funcStr = $('#'+dialogId).find('.n2select_report_script').val();
 			
 			var func = null;
