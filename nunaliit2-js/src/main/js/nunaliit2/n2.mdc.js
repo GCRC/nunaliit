@@ -1051,6 +1051,7 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 
 		$('<a>').attr('href', '#')
 			.addClass('material-icons mdc-top-app-bar__navigation-icon')
+			.css('text-decoration', 'none')
 			.text('☰')
 			.appendTo($topAppBarLSection);
 
