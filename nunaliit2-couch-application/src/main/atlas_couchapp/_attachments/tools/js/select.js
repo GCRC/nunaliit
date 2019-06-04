@@ -514,76 +514,64 @@
 			,onSuccess: function(list){}
 			,onError: function(err){ alert( _loc('Unable to create a new list')+': '+err); }
 		},opts_);
-		
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+dialogId+'">'
-			+'<div>'+_loc('Type of refinement')+': <select class="searchFilterSelector"></select></div>'
-			+'<div class="searchFilterOptions"></div>'
-			+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
-			+'</div>');
 
-		var $select = $dialog.find('select.searchFilterSelector');
-		for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
-			var searchFilter = SearchFilter.availableSearchFilters[i];
-			var $o = $('<option></option>');
-			$o.text(searchFilter.name);
-			$o.attr('value',searchFilter.id);
-			$select.append( $o );
-		};
-		$select.change(function(e){
-			var $dialog = $('#'+dialogId);
-			adjustOptions($dialog);
+		var refineListDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Refine List: '+opts.list.name,
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
+		
+		new $n2.mdc.MDCButton({
+			parentId: refineListDialog.getFooterId(),
+			btnLabel: 'OK',
+			onBtnClick: okBtnFunc
 		});
 
-		adjustOptions($dialog);
-		
-		$dialog.find('button')
-			.first()
-				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					var $options = $dialog.find('.searchFilterOptions');
-					var filterId = $dialog.find('select.searchFilterSelector').val();
-					
-					$dialog.dialog('close');
-
-					var useFilter = findSearchFilterFromId(filterId);
-					if( useFilter ) {
-						useFilter.refineList({
-							list: opts.list
-							,options: $options
-							,onSuccess: opts.onSuccess
-							,onError: function(err){
-								$n2.log('Error refining list: '+err);
-							}
-						});
-					} else {
-						alert( _loc('Unable to find document search filter') );
-					};
-					
-					return false;
-				})
-			.next()
-				.button({icons:{primary:'ui-icon-cancel'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					$dialog.dialog('close');
-					return false;
-				})
-			;
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Refine List')+': '+opts.list.name
-			,modal: true
-			,width: 400
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
+		var menuOptions = [];
+		for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
+			var searchFilter = SearchFilter.availableSearchFilters[i];
+			menuOptions.push({
+				'value': searchFilter.id,
+				'label': searchFilter.name
+			});
 		};
-		$dialog.dialog(dialogOptions);
+		
+		var refinementSelect = new $n2.mdc.MDCSelect({
+			parentId: refineListDialog.getContentId(),
+			menuLabel: 'Type of refinement',
+			menuOpts: menuOptions,
+			menuChgFunction: function(e){
+				adjustOptions($('#' + refineListDialog.getId()));
+			}
+		});
+
+		$('#' + refinementSelect.getSelectId()).addClass('searchFilterSelector');
+		$('<div>').addClass('searchFilterOptions').appendTo('#' + refineListDialog.getContentId());
+
+		adjustOptions($('#' + refineListDialog.getId()));
+
+		function okBtnFunc(){
+			var $dialog = $('#'+refineListDialog.getId());
+			var $options = $dialog.find('.searchFilterOptions');
+			var filterId = $dialog.find('select.searchFilterSelector').val();
+			
+			refineListDialog.closeDialog();
+
+			var useFilter = findSearchFilterFromId(filterId);
+			if(useFilter) {
+				useFilter.refineList({
+					list: opts.list
+					,options: $options
+					,onSuccess: opts.onSuccess
+					,onError: function(err){
+						$n2.log('Error refining list: '+err);
+					}
+				});
+			} else {
+				alert( _loc('Unable to find document search filter') );
+			};
+			return false;
+		};
 
 		function adjustOptions($dialog){
 			var $select = $dialog.find('select.searchFilterSelector');
