@@ -561,6 +561,12 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 
 		function prep_transcript($transcript, transcript_array){
 			var temp;
+			var contextMenu = $('div.transcript-context-menu').remove();
+			var contextMenu = $('<div>')
+								.addClass("transcript-context-menu")
+								.addClass("transcript-context-menu-hide")
+								.append($.parseHTML('<ul><li>link-1</li><li>link-2</li></ul>'))
+								.appendTo(document.body);
 			for (var i = 0; i < transcript_array.length; i++) {
 				var transcriptElem = transcript_array[i];
 				
@@ -570,14 +576,72 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 				temp = $('<span/>')
 					.attr('id', id)
 					.attr('data-start', transcriptElem.start)
+					.attr('data-end', transcriptElem.end)
+					.addClass('n2-transcriptWidget-sentence')
 					.text(transcriptElem.text+ ' ')
 					.appendTo($transcript)
+					.contextmenu( function(e){
+						var elmnt = e.target;
+				
+						e.preventDefault();
+						var eid = elmnt.id.replace(/link-/,"");
+						contextMenu[0].style.left = e.pageX + 'px';
+						contextMenu[0].style.top = e.pageY + 'px';
+						contextMenu.removeClass('transcript-context-menu-hide');
+						//contextMenu[0].style.display = 'block';
+
+						for(var i =0;i<_this.transcript_array.length;i++) {
+							var transcriptElem = _this.transcript_array[i];
+							var $transcriptElem = $('#'+transcriptElem.id);
+							$transcriptElem.removeClass('sentence-highlight-pending');
+						}
+						$(this).addClass('sentence-highlight-pending')
+						 //var toRepl = "to=" + eid.toString()
+						 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)
+						 //alert(rgtClickContextMenu.innerHTML.toString())
+					})
 					.click(function(e) {
-						var $span = $(this);
-						var currentTime = $span.attr('data-start');
-						_this._updateCurrentTime(currentTime, 'text');
+						switch(e.which){
+						case 1:
+							contextMenu.addClass('transcript-context-menu-hide');
+							$(this).removeClass('sentence-highlight-pending')
+							var $span = $(this);
+							var currentTime = $span.attr('data-start');
+							_this._updateCurrentTime(currentTime, 'text');
+							break;
+						case 2:
+							break;
+						case 3:
+							break;
+						
+						}
+						// close the context menu, if it still exists
+						
 					});
+				
 			}
+			$(document).on('click', function(){
+				contextMenu.addClass('transcript-context-menu-hide');
+				for(var i =0;i<_this.transcript_array.length;i++) {
+					var transcriptElem = _this.transcript_array[i];
+					var $transcriptElem = $('#'+transcriptElem.id);
+					$transcriptElem.removeClass('sentence-highlight-pending');
+				}
+			})
+//			
+//			document.oncontextmenu = function(e){
+//				var elmnt = e.target;
+//				if( elmnt.className.startsWith("n2-transcriptWidget-sentence")){
+//					 e.preventDefault();
+//					 var eid = elmnt.id.replace(/link-/,"")
+//					 contextMenu[0].style.left = e.pageX + 'px'
+//					 contextMenu[0].style.top = e.pageY + 'px'
+//					 contextMenu[0].style.display = 'block'
+//						 //var toRepl = "to=" + eid.toString()
+//						 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)
+//						 //alert(rgtClickContextMenu.innerHTML.toString())
+//				}
+//			}
 			//$transcript.on("scroll", _this._onUserScrollAction);
 		}
 	},
@@ -693,7 +757,7 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 			$transcriptElem.removeClass('highlight');
 
 			if(currentTime >= transcriptElem.start 
-			 && currentTime <= transcriptElem.fin) {
+			 && currentTime < transcriptElem.fin) {
 				$transcriptElem.addClass('highlight');
 				//scroll transcript div, so that the ongoing subtitle always stay in the viewport
 				if ($.now() - this.lastTimeUserScroll > 5000){

@@ -1229,7 +1229,7 @@ $n2.utils.DFS = function(item, predicate1, predicate2, callback){
 		&& predicate1(item)){
 		callback (item);
 		return;
-	} else {return;}
+	}
 	if( typeof predicate2 === 'function'
 		&& predicate2(item)){
 		if (Array.isArray(item)){
@@ -1243,6 +1243,6 @@ $n2.utils.DFS = function(item, predicate1, predicate2, callback){
 			};
 		}
 
-	} else {return;}
+	}
 };
 })(nunaliit2);
