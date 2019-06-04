@@ -358,7 +358,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			.appendTo($dialogSurface);
 
 		if (this.dialogHtmlContent) {
-			$dialogMessage.html(_loc(this.dialogHtmlContent));
+			$dialogMessage.html(this.dialogHtmlContent);
 		} else if (this.dialogTextContent) {
 			$dialogMessage.text(_loc(this.dialogTextContent));
 		}
@@ -460,6 +460,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 		this.navHeaderSubTitle = opts.navHeaderSubTitle;
 		this.navItems = opts.navItems;
 		this.navId = $n2.getUniqueId();
+		this.navContentId = $n2.getUniqueId();
 
 		this._generateMDCDrawer();
 	},
@@ -476,7 +477,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 
 		this.docFragment = $(document.createDocumentFragment());
 		$drawer = $('<aside>')
-			.attr('id',this.mdcId)
+			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
 			.appendTo(this.docFragment);
 
@@ -499,6 +500,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 		}
 
 		$drawerContent = $('<div>')
+			.attr('id', this.navContentId)
 			.addClass('mdc-drawer__content')
 			.appendTo($drawer);
 
@@ -556,6 +558,10 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 				.appendTo($itemLink);
 		}
 		return $itemLink;
+	},
+
+	getContentId: function(){
+		return this.navContentId;
 	},
 
 	getNavId: function(){
@@ -719,7 +725,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 //    - label - label shown to the user
 //    - selected - initially selected
 //    - disabled - not selected-able
-//   - Example: [{"value":"1", "label":"One"}, {"value":"2", "label":"Two"}]
+//   - Example: [{"value":"1", "label":"One", "selected":"selected"}, {"value":"2", "label":"Two"}]
 var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 	menuChgFunction: null,
