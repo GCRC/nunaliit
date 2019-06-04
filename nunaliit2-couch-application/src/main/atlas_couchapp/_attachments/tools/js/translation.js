@@ -120,67 +120,47 @@ function showRequests(arr) {
 };
 
 function displayTranslated() {
-
 	$('#'+requestPanelName)
 		.empty()
 		.append( $('<div class="translationResult mdc-card"></div>') );
-		
-	$('<div>')
-		.addClass('translationLangSelect mdc-select mdc-select--outlined n2s_attachMDCSelect')
-		.appendTo($('.translationButtonLine'));
+
+	addLanguageSelectionMenu();
+
+	function addLanguageSelectionMenu(){
+		var langList = [];
+
+		atlasDesign.queryView({
+			viewName: 'l10n-translated'
+			,reduce: true
+			,group: true
+			,onSuccess: function(rows){
+				for(var i=0,e=rows.length;i<e;++i){
+					var selected = false;
+					var r = rows[i];
+					if (!langList.length) {
+						selected = 'selected';
+					}
 	
-	var $langMenuIcon = $('<i>')
-		.addClass('mdc-select__dropdown-icon');
+					langList.push({
+						'value':r.key,
+						'label':r.key,
+						'selected': selected
+					});
+				}
 
-	var $langMenuNotchedOutline = $('<div>')
-		.addClass('mdc-notched-outline');
+				new $n2.mdc.MDCSelect({
+					parentId: $n2.utils.getElementIdentifier($('.translationButtonLine')),
+					mdcClasses: ['translationLangSelect'],
+					menuLabel: 'Language',
+					menuChgFunction: languageChanged,
+					menuOpts: langList
+				});
 
-	$('<div>')
-		.addClass('mdc-notched-outline__leading')
-		.appendTo($langMenuNotchedOutline);
-
-	var $langMenuNotchedOutlineNotch = $('<div>')
-		.addClass('mdc-notched-outline__notch')
-		.appendTo($langMenuNotchedOutline);
-
-	$('<label>')
-		.addClass('mdc-floating-label')
-		.text(_loc('Language'))
-		.appendTo($langMenuNotchedOutlineNotch);
-
-	$('<div>')
-		.addClass('mdc-notched-outline__trailing')
-		.appendTo($langMenuNotchedOutline);
-	
-	// Fetch all pending requests
-	atlasDesign.queryView({
-		viewName: 'l10n-translated'
-		,reduce: true
-		,group: true
-		,onSuccess: function(rows){
-
-			var $langMenu = $('<select>')
-				.addClass('mdc-select__native-control');
-
-			for(var i=0,e=rows.length;i<e;++i){
-				var r = rows[i];
-				var $opt = $('<option></option>');
-				$opt.text(r.key);
-				$opt.attr('value',r.key);
-				$langMenu.append( $opt );
-			};
-			
-			$('.translationButtonLine').find('.translationLangSelect')
-				.empty()
-				.append($langMenuIcon)
-				.append($langMenu)
-				.append($langMenuNotchedOutline);
-
-			$langMenu.change(languageChanged);
-
-			languageChanged();
-		}
-	});
+				// Initialize language selection
+				languageChanged();
+			}
+		});
+	};
 	
 	function languageChanged(){
 		var $select = $('.translationButtonLine').find('.translationLangSelect').find('select');
