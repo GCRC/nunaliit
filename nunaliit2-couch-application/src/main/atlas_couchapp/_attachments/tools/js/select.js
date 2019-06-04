@@ -2834,21 +2834,20 @@
 			};
 			
 			var docIdsLeft = [];
-			for(var i=0,e=list.docIds.length; i<e; ++i){
+			for(var i=0,e=list.docIds.length; i<e; i += 1){
 				docIdsLeft.push( list.docIds[i] );
 			};
 			var totalCount = docIdsLeft.length;
 			var processedCount = 0;
 			var failCount = 0;
 			var opCancelled = false;
-			
-			var progressDialog = new $n2.couchDialogs.ProgressDialog({
-				title: _loc('Preparing Report')
-				,onCancelFn: function(){
-					opCancelled = true;
-				}
+	
+			var progressDialog = new $n2.mdc.MDCDialog({
+				dialogTitle: 'Preparing Report',
+				closeBtn: true,
+				closeBtnText: 'Cancel'
 			});
-			
+
 			var logger = new $n2.logger.HtmlLogger({
 				elem: $('#'+dialogId).find('.n2select_report_result')
 			});
@@ -2858,15 +2857,19 @@
 			var my_scriptConfig = $n2.extend({},g_scriptConfig);
 			
 			processNext();
+
+			function updateProgressMsg(msg){
+				$('#' + progressDialog.getContentId()).html(msg);
+			};
 			
 			function processNext(){
 				if( opCancelled ) {
 					cancel();
 					return;
-				};
+				}
 
 				if(docIdsLeft.length < 1){
-					progressDialog.updateHtmlMessage('<span>100%</span>');
+					updateProgressMsg('<span>100%</span>');
 
 					// Call one last time, without a document
 					my_scriptConfig.continueOnExit = true;
@@ -2875,10 +2878,10 @@
 						config: my_scriptConfig
 						,logger: logger
 					});
+
 					if( my_scriptConfig.continueOnExit ){
 						onFinish();
-					};
-					
+					}
 					
 				} else {
 					if( totalCount ) {
@@ -2888,10 +2891,10 @@
 						html.push('<span>Processed: '+processedCount+'</span><br/>');
 						html.push('<span>Failures: '+failCount+'</span><br/>');
 						html.push('</div>');
-						progressDialog.updateHtmlMessage( html.join('') );
+						updateProgressMsg(html.join(''));
 					} else {
-						progressDialog.updateHtmlMessage('<span>0%</span>');
-					};
+						updateProgressMsg('<span>0%</span>');
+					}
 					
 					var docId = docIdsLeft.pop();
 					atlasDb.getDocument({
@@ -2906,14 +2909,14 @@
 							processNext();
 						}
 					});
-				};
+				}
 			};
 			
 			function retrievedDocument(doc){
 				if( opCancelled ) {
 					cancel();
 					return;
-				};
+				}
 
 				my_scriptConfig.continueOnExit = true;
 				my_scriptConfig.onContinue = onContinue;
@@ -2925,23 +2928,21 @@
 				
 				if( my_scriptConfig.continueOnExit ){
 					onContinue();
-				};
-				
+				}
 			};
 
 			function onFinish(){
-				progressDialog.close();
+				progressDialog.closeDialog();
 			};
 
 			function onContinue(){
 				processedCount += 1;
-
 				processNext();
 			};
 			
 			function cancel(){
 				reportError(_loc('Operation cancelled by user'));
-				progressDialog.close();
+				progressDialog.closeDialog();
 			};
 		};
 	};
