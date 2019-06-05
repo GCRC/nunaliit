@@ -236,25 +236,23 @@ var UserManagementApplication = $n2.Class({
 		
 		$userForm.append('</br>');
 
-		new $n2.mdc.MDCTextField({
+		var password1 = new $n2.mdc.MDCTextField({
 			parentId: formId,
-			txtFldInputAttributes: {
-				'type': 'password'
-			},
 			txtFldInputId: 'addUserPassword1',
 			txtFldLabel: 'Password'
 		});
 
+		$('#' + password1.getInputId()).attr('type', 'password');
+
 		$userForm.append('</br>');
 
-		new $n2.mdc.MDCTextField({
+		var password2 = new $n2.mdc.MDCTextField({
 			parentId: formId,
-			txtFldInputAttributes: {
-				'type': 'password'
-			},
 			txtFldInputId: 'addUserPassword2',
 			txtFldLabel: 'Repeat Password'
 		});
+
+		$('#' + password2.getInputId()).attr('type', 'password');
 
 		$userForm.append('</br>');
 
