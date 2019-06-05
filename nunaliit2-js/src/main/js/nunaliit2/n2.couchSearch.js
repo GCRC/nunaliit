@@ -1559,13 +1559,14 @@ var SearchServer = $n2.Class({
 		} else {
 			// If Search widget is not installed in the module title bar
 			// update appearance
-			var searchTxtFldOpts = {
+			var searchTxtFldOpts = new $n2.mdc.MDCTextField({
 				parentId: $n2.utils.getElementIdentifier($elem),
 				txtFldLabel: searchWidgetLabel,
-				txtFldInputId: $searchInputId,
-				txtFldInputClasses: ['search_panel_input']
-			};
-			new $n2.mdc.MDCTextField(searchTxtFldOpts);
+				txtFldInputId: $searchInputId
+			});
+			$('#' + searchTxtFldOpts.getInputId()).addClass('search_panel_input');
+
+			searchInput = $('#' + searchTxtFldOpts.getInputId());
 		}
 
 		if( opts.doNotDisable ){
@@ -1588,18 +1589,16 @@ var SearchServer = $n2.Class({
 		var searchButton = null;
 		if( opts.useButton ){
 
-			var searchBtnOpts = {
+			var searchBtn = new $n2.mdc.MDCButton({
 				parentId: $n2.utils.getElementIdentifier($elem),
 				btnLabel: searchButtonLabel,
 				btnRaised: true
-			};
-
-			new $n2.mdc.MDCButton(searchBtnOpts);
-		};
+			});
+			searchButton = $('#' + searchBtn.getId());
+		}
 		
 		return new SearchInput({
 			textInput: searchInput
-			,initialSearchText: searchWidgetLabel
 			,dispatchService: this.dispatchService
 			,searchButton: searchButton
 			,constraint: opts.constraint
