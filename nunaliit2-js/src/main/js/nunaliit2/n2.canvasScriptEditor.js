@@ -75,7 +75,10 @@ var ScriptEditorCanvas = $n2.Class({
 		this.interactionId = opts.interactionId;
 		this.moduleDisplay = opts.moduleDisplay;
 		this.sourceModelId = opts.sourceModelId;
-		this.cinemap_docInfoById = {};
+		this.docsById = {};
+		this.cinemapInfosById = {};
+		
+		this.selectedMediaRefId = undefined;
 		var config = opts.config;
 		if( config ){
 			if( config.directory ){
@@ -203,54 +206,99 @@ var ScriptEditorCanvas = $n2.Class({
 // 	 		};
 //
 // 		};
-		var scriptList = [];
-		scriptList.push({
+		var cinemapList = [];
+		cinemapList.push({
 			filename : 'demo_script'
 		});
-		this._renderCanvas(scriptList);
+		this._renderCanvas(cinemapList);
  	},
  	
  	_handle: function(m){
+ 		if( 'documentContent' === m.type ){
+			if( this.cinemapInfosById[m.docId] ){
+				if( !this.doc ){
+					this.doc = m.doc;
+					this._documentChanged();
+				} else if( this.doc._rev != m.doc._rev ){
+					this.doc = m.doc;
+					this._documentChanged();
+				};
+			};
+ 		}
  	},
  	_refreshList: function(){
  		
  	},
- 	_modelSourceUpdated(state){
-		if (sourceState.added) {
+ 	_modelSourceUpdated(sourceState){
+ 		/*
+ 		 * rst : {cinemapDocId: doc.atlascine2_cinemap};
+ 		 */
+ 		var cinemapInfosById = this.cinemapInfosById;
+		if (sourceState.added && sourceState.added.length > 0) {
 			for(var i=0,e=sourceState.added.length; i<e; ++i){
 				var doc = sourceState.added[i];
-				
 				var docId = doc._id;
 				
+				//update the docs ref store in canvasScriptEditor
+				if (doc.atlascine2_cinemap){
+					var cinemapInfo = {
+						mediaDocId : doc.atlascine2_cinemap.media_doc_ref.doc,
+						name : doc.atlascine2_cinemap.media_doc_ref.name,
+						mediaDoc : undefined,
+						doc: doc
+					};
+					cinemapInfosById[docId] = cinemapInfo;
+				}
+				
 			};
+			this._documentChanged();
+			this._renderCanvas();
 		}
- 	},
- 	_renderCanvas: function(scriptList){
- 		
- 		var _this = this;
- 		var $canvas = $('#' + this.canvasId);
- 		/** Create sidebar **/
- 		var $sidebar = $('<div>')
- 						.addClass('n2_scripteditor_sidebar')
- 						.appendTo($canvas);
- 		var $sidebarHeader = $('<div>')
- 			.addClass('n2_scripteditor_sidebar_header')
- 			.appendTo($sidebar);
- 		var $scriptlist = $('<ul>').addClass('n2_scripteditor_menu')
- 			.appendTo($sidebar);
- 		for(var script of scriptList) {
- 			var $scelem = $('<li>').appendTo($scriptlist);;
+	},
+	_documentChanged(selectedCmap){
+		
+		for (var cmapinfoId in this.cinemapInfosById) {
+			
+			var cmap = this.cinemapInfosById[cmapinfoId];
+			if (!cmap.mediaDoc){
+				this.dispatchService.send(DH, {
+					'type' : 'requestDocument',
+					'docId' : cmap.mediaDocId
+				});
+			} else if(false){}
+		}
+		
+	},
+	_renderCanvas: function(cinemapList){
+		var _this = this;
+		var $canvas = $('#' + this.canvasId);
+		$canvas.empty();
+		/** Create sidebar **/
+		var $sidebar = $('<div>')
+						.addClass('n2_scripteditor_sidebar')
+						.appendTo($canvas);
+		var $sidebarHeader = $('<div>')
+			.addClass('n2_scripteditor_sidebar_header')
+			.appendTo($sidebar);
+		var $sidebarMenu= $('<ul>').addClass('n2_scripteditor_menu')
+			.appendTo($sidebar);
+		for(var script of cinemapList) {
+			var name = script.media_doc_ref.name;
+			var docId = script.media_doc_ref;
+			var $scelem = $('<li>').appendTo($scriptlist);
  			var label = $('<span>').addClass('n2_scripteditor_label')	
- 						.text(script.filename)
+ 						.text(name)
+ 						.attr('media-doc-ref', docId)
  						.appendTo($scelem)
  						.click(function(e){
- 							_this._initialScriptEditor($(this), script, e);
+ 							_this.selectedMediaRefId = $(this).attr('media-doc-ref');
+ 							_this._initialScriptEditor($(this), doc, e);
  						})	
  		}
  		/********************/
  		/** Create content div **/
  		var $contentDiv = $('<div class = "n2_scriptEditor_script_content"></div>');
- 		$contentDiv.text("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nACCCCCCCC");
+ 		$contentDiv.text("Inital Empty");
  		
  		$contentDiv.appendTo($canvas);
  		/********************/
@@ -258,7 +306,8 @@ var ScriptEditorCanvas = $n2.Class({
  	
  	_initialScriptEditor: function($label, script, evt){
  		var $canvas = $('#' + this.canvasId);
- 		var $content = $('<div>').appendTo($canvas);
+ 		var $content = $('div.n2_scriptEditor_script_content');
+ 		$content.replaceWith();
  		$n2.log("Starting new scriptEditor");
  	},
  	_renderHtmlDocument: function(htmlDocument, cssContent){

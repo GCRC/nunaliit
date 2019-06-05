@@ -533,6 +533,58 @@ Polar Stereographic Projection Selector
    color: white;
    background-color: darkorange;
 }
+
+/* 
+==============================
+Drawer widget 
+==============================
+*/
+.drawer_content_mask {
+	background-color: rgba(0,0,0,0.25);
+	z-index:1006;
+	visibility:hidden;
+	position:absolute;
+	top:0;
+	left:0;
+	width:100%;
+	height:100%;
+}
+
+.n2widget_drawer {
+	position:absolute;
+	/* A z-index of 1007 is applied so that a container will appear above the Layer Switcher button */
+	z-index: 1007;
+	background-color: #FFFFFF;
+	transition: 0.5s;
+	/* Material Design css equivalent of 16dp elevation height */
+	box-shadow: 0 16px 24px 2px rgba(0, 0, 0, .14), 0 6px 30px 5px rgba(0, 0, 0, .12), 0 8px 10px -5px rgba(0, 0, 0, .2);
+	overflow-x: hidden;
+	border-radius: 2px;
+}
+
+.n2widget_drawer .n2widget_drawer_close_button {
+	color: #333333;
+	font-size: 16px;
+	padding: 5px;
+	float: right;
+	cursor: pointer;
+}
+
+.n2widget_drawer .n2widget_drawer_close_button:hover {
+	color: #FFFFFF;
+	text-shadow: #000000 1px 1px 1px;
+}
+
+.n2widget_drawer .n2widget_drawer_container > div {
+	position: inherit;
+}
+
+.n2widget_drawer_open_button {
+	color: #FFFFFF; 
+	text-shadow: black 1px 1px 1px;
+	cursor:pointer;
+}
+
 /* 
 ==============================
 Wait Widget 

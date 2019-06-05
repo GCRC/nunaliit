@@ -127,6 +127,8 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 		this.transcript_array = [];
 
 		this.lastTimeUserScroll = 0;
+		this.mediaDivId = undefined;
+		
 		// Get container
 		var containerClass = opts.containerClass;
 		if( !containerClass ){
@@ -480,7 +482,8 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 		};
 
 		if( attVideoUrl ) {
-			var mediaDivId = $n2.getUniqueId();
+			this.mediaDivId = $n2.getUniqueId();
+			var mediaDivId = this.mediaDivId;
 			this.videoId = $n2.getUniqueId();
 			this.transcriptId = $n2.getUniqueId();
 
@@ -576,7 +579,7 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 				temp = $('<span/>')
 					.attr('id', id)
 					.attr('data-start', transcriptElem.start)
-					.attr('data-end', transcriptElem.end)
+					.attr('data-fin', transcriptElem.fin)
 					.addClass('n2-transcriptWidget-sentence')
 					.text(transcriptElem.text+ ' ')
 					.appendTo($transcript)
@@ -596,6 +599,7 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 							$transcriptElem.removeClass('sentence-highlight-pending');
 						}
 						$(this).addClass('sentence-highlight-pending')
+						_this.renderTestDrawer();
 						 //var toRepl = "to=" + eid.toString()
 						 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)
 						 //alert(rgtClickContextMenu.innerHTML.toString())
@@ -620,6 +624,14 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 					});
 				
 			}
+			$transcript.on('scroll', function(){
+				contextMenu.addClass('transcript-context-menu-hide');
+				for(var i =0;i<_this.transcript_array.length;i++) {
+					var transcriptElem = _this.transcript_array[i];
+					var $transcriptElem = $('#'+transcriptElem.id);
+					$transcriptElem.removeClass('sentence-highlight-pending');
+				}
+			})
 			$(document).on('click', function(){
 				contextMenu.addClass('transcript-context-menu-hide');
 				for(var i =0;i<_this.transcript_array.length;i++) {
@@ -628,24 +640,27 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 					$transcriptElem.removeClass('sentence-highlight-pending');
 				}
 			})
-//			
-//			document.oncontextmenu = function(e){
-//				var elmnt = e.target;
-//				if( elmnt.className.startsWith("n2-transcriptWidget-sentence")){
-//					 e.preventDefault();
-//					 var eid = elmnt.id.replace(/link-/,"")
-//					 contextMenu[0].style.left = e.pageX + 'px'
-//					 contextMenu[0].style.top = e.pageY + 'px'
-//					 contextMenu[0].style.display = 'block'
-//						 //var toRepl = "to=" + eid.toString()
-//						 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)
-//						 //alert(rgtClickContextMenu.innerHTML.toString())
-//				}
-//			}
-			//$transcript.on("scroll", _this._onUserScrollAction);
 		}
 	},
-	
+	renderTestDrawer: function(){
+//		var divForDrawer = $('<div>')
+//							.attr('id', 'n2-div-for-drawer')
+//							.prependTo($('#'+this.mediaDivId))
+		var testDiv = $('<div>')
+						.attr('id','decheng' )
+						.append($.parseHTML("<form>First Name</form>"));
+		if(! this.drawer){
+			this.drawer = new $n2.ui.drawer({
+				containerId: 'content',
+				internalContainerId: 'decheng',
+				width : '500px'
+			});
+		}
+		this.drawer.open();
+		
+		
+		$n2.log('drawer opened');
+	},
 	_loadTranscript: function(doc){
 		var _this = this;
 		// Look for transcript in-line
@@ -796,7 +811,7 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 		var parent_height = $dst.parent().innerHeight();
 		var curr_pos = $dst.offset().top - $dst.parent().offset().top;
 		if (curr_pos > parent_height *2 / 3 || curr_pos < 0){
-			$('#'+ this.transcriptId).off("scroll");
+			$('#'+ this.transcriptId).off("scroll", _this._onUserScrollAction.bind(_this));
 			var oldOffset = $dst.parent().scrollTop();
 			$dst.parent().scrollTop(oldOffset + curr_pos);
 			
