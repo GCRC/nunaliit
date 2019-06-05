@@ -136,7 +136,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 
 		this.docFragment = $(document.createDocumentFragment());
 		$btn = $('<button>')
-			.attr('id',this.mdcId)
+			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
 			.text(_loc(this.btnLabel))
 			.appendTo(this.docFragment);
@@ -322,11 +322,11 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 
 		this.docFragment = $(document.createDocumentFragment());
 		MDCDialogElement = $('<div>')
-			.attr('id',this.mdcId)
-			.attr('role','alertdialog')
-			.attr('aria-modal','true')
-			.attr('aria-labelledby','my-dialog-title')
-			.attr('aria-describedby','my-dialog-content')
+			.attr('id', this.mdcId)
+			.attr('role', 'alertdialog')
+			.attr('aria-modal', 'true')
+			.attr('aria-labelledby', 'my-dialog-title')
+			.attr('aria-describedby', 'my-dialog-content')
 			.addClass(this.mdcClasses.join(' '))
 			.appendTo(this.docFragment);
 
@@ -593,7 +593,7 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 
 		this.docFragment = $(document.createDocumentFragment());
 		$formField = $('<div>')
-			.attr('id',this.mdcId)
+			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
 			.appendTo(this.docFragment);
 
@@ -610,7 +610,7 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 	}
-});
+}); 
 
 // Class MDCRadio
 // Description: Creates a material design radio button component
@@ -661,7 +661,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 
 		this.docFragment = $(document.createDocumentFragment());
 		$rbtn = $('<div>')
-			.attr('id',this.mdcId)
+			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
 			.appendTo(this.docFragment);
 
@@ -764,7 +764,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 		this.docFragment = $(document.createDocumentFragment());
 		$menu = $('<div>')
-			.attr('id',this.mdcId)
+			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
 			.appendTo(this.docFragment);
 
@@ -876,6 +876,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 	txtFldOutline: null,
 	txtFldInputId: null,
 	txtFldArea: null,
+	passwordFld: null,
 	inputRequired: null,
 
 	initialize: function(opts_){
@@ -884,6 +885,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			txtFldOutline: true,
 			txtFldInputId: null,
 			txtFldArea: false,
+			passwordFld: false,
 			inputRequired: false,
 		}, opts_);
 
@@ -893,6 +895,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.txtFldOutline = opts.txtFldOutline;
 		this.txtFldInputId = opts.txtFldInputId;
 		this.txtFldArea = opts.txtFldArea;
+		this.passwordFld = opts.passwordFld;
 		this.inputRequired = opts.inputRequired;
 
 		if (!this.parentId) {
@@ -934,14 +937,18 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			$txtFldInput = $('<textarea>')
 				.addClass('mdc-text-field__input')
 				.attr('id', this.txtFldInputId)
-				.attr('rows','8')
-				.attr('cols','40');
+				.attr('rows', '8')
+				.attr('cols', '40');
 
 		} else {
 			$txtFldInput = $('<input>')
 				.addClass('mdc-text-field__input')
-				.attr('id',this.txtFldInputId)
-				.attr('type','text');
+				.attr('id', this.txtFldInputId)
+				.attr('type', 'text');
+		}
+
+		if (this.passwordFld) {
+			$txtFldInput.attr('type', 'password');
 		}
 		
 		$txtFld.append($txtFldInput);
@@ -1018,7 +1025,7 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 
 		this.docFragment = $(document.createDocumentFragment());
 		$topAppBar = $('<header>')
-			.attr('id',this.mdcId)
+			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
 			.appendTo(this.docFragment);
 
