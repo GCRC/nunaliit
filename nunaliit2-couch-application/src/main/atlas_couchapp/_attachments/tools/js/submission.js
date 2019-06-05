@@ -413,12 +413,13 @@
 				});
 
 				// TextArea Rejection Reason
-				new $n2.mdc.MDCTextField({
+				var rejectionReason = new $n2.mdc.MDCTextField({
 					parentId: denyDialog.getContentId(),
 					txtFldArea: true,
 					txtFldLabel: 'Rejection Reason',
-					txtFldInputClasses: ['submission_deny_dialog_reason']
 				});
+
+				$('#' + rejectionReason.getInputId()).addClass('submission_deny_dialog_reason');
 				
 				// Email Checkbox
 				var optionsId = $n2.getUniqueId();

@@ -75,21 +75,20 @@ var UserManagementApplication = $n2.Class({
 		var _this = this;
 		
 		var div = this._getDiv();
-		var inputId = $n2.getUniqueId();
 
 		var $userInput = $('<div class="userAppInput"></div>')
 			.appendTo(div);
 		var $userOutput = $('<div class="userAppOutput"></div>')
 			.appendTo(div);
 		
-		new $n2.mdc.MDCTextField({
+		var userSearchField = new $n2.mdc.MDCTextField({
 			parentId: $n2.utils.getElementIdentifier($userInput),
-			txtFldInputClasses: inputId,
-			txtFldInputClasses: ['userAppSearchText'],
 			txtFldLabel: 'User Search'
 		});
 
-		var $textInput = $('#' + inputId);
+		$('#' + userSearchField.getInputId()).addClass('userAppSearchText');
+
+		var $textInput = $('#' + userSearchField.getInputId());
 
 		if( $textInput.autocomplete ) {
 			$textInput.autocomplete({

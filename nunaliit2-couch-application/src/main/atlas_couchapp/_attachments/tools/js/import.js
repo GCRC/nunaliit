@@ -57,12 +57,13 @@
 		});
 
 		// Input Textarea
-		new $n2.mdc.MDCTextField({
+		var inputTextField = new $n2.mdc.MDCTextField({
 			parentId: $n2.utils.getElementIdentifier($inputSection),
-			txtFldInputClasses: ['importData'],
 			txtFldArea: true,
 			txtFldLabel: 'Input'
 		});
+
+		$('#' + inputTextField.getInputId()).addClass('importData');
 
 		// Import Verify Button
 		new $n2.mdc.MDCButton({
