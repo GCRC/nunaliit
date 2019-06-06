@@ -2951,116 +2951,86 @@
 		};
 		
 		function getExportSettings(){
-			var dialogId = $n2.getUniqueId();
-			var $dialog = $('<div id="'+dialogId+'"></div>');
+			var exportDialog = new $n2.mdc.MDCDialog({
+				dialogTitle: 'Export'
+			});
 
 			var fileNameId = $n2.getUniqueId();
 			
-			$('<div>'+_loc('Exporting')+' <span></span></div>')
+			$('<div>'+_loc('Exporting')+' <span></span></div><br>')
 				.find('span').text(list.print()).end()
-				.appendTo($dialog);
+				.appendTo($('#' + exportDialog.getContentId()));
 
 			// Filter
-			var filterId = $n2.getUniqueId();
-			var $filterDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('Filter:') )
-				.attr('for',filterId)
-				.appendTo($filterDiv);
-			var $filterSelect = $('<select>')
-				.attr('id',filterId)
-				.appendTo($filterDiv);
-			$('<option value="all"></options>')
-				.text( _loc('All Documents') )
-				.appendTo($filterSelect);
-			$('<option value="points"></options>')
-				.text( _loc('All Point Geometries') )
-				.appendTo($filterSelect);
-			$('<option value="linestrings"></options>')
-				.text( _loc('All LineString Geometries') )
-				.appendTo($filterSelect);
-			$('<option value="polygons"></options>')
-				.text( _loc('All Polygon Geometries') )
-				.appendTo($filterSelect);
+			var exportFilter = new $n2.mdc.MDCSelect({
+				parentId: exportDialog.getContentId(),
+				menuLabel: 'Filter',
+				menuOpts: [
+					{'label': 'All Documents', 'value': 'all'},
+					{'label': 'All Point Geometries', 'value': 'points'},
+					{'label': 'All LineString Geometries', 'value': 'linestrings'},
+					{'label': 'All Polygon Geometries', 'value': 'polygons'}
+				]
+			});
+
+			$('<br><br>').appendTo($('#' + exportDialog.getContentId()));
 
 			// Format
-			var formatId = $n2.getUniqueId();
-			var $formatDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('Format:') )
-				.attr('for',formatId)
-				.appendTo($formatDiv);
-			var $formatSelect = $('<select>')
-				.attr('id',formatId)
-				.appendTo($formatDiv)
-				.change(formatChanged);
-			$('<option value="geojson"></options>')
-				.text( _loc('geojson') )
-				.appendTo($formatSelect);
-			$('<option value="csv"></options>')
-				.text( _loc('csv') )
-				.appendTo($formatSelect);
+			var exportFormat = new $n2.mdc.MDCSelect({
+				parentId: exportDialog.getContentId(),
+				menuLabel: 'Format',
+				menuChgFunction: formatChanged,
+				menuOpts: [
+					{'label': 'geojson', 'value': 'geojson'},
+					{'label': 'csv', 'value': 'csv'}
+				]
+			});
+
+			$('<br><br>').appendTo($('#' + exportDialog.getContentId()));
 			
 			// File name
-			var $fileNameDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('File Name:') )
-				.attr('for',fileNameId)
-				.appendTo($fileNameDiv);
-			$('<input>')
-				.attr('type','text')
-				.attr('id',fileNameId)
-				.addClass('n2_export_fileNameInput')
-				.val('export.geojson')
-				.appendTo($dialog);
-
-			$('<div><button>'+_loc('Export')+'</button></div>')
-				.appendTo($dialog);
-			$dialog.find('button').click(function(){
-				var filter = $('#'+filterId).val();
-				var format = $('#'+formatId).val();
-				
-				var fileName = $('#'+fileNameId).val();
-				if( '' === fileName ) {
-					fileName = null;
-				};
-				
-				$dialog.dialog('close');
-				performExport({
-					filter: filter
-					,fileName: fileName
-					,format: format
-				});
-				return false;
+			var exportFileName = new $n2.mdc.MDCTextField({
+				parentId: exportDialog.getContentId(),
+				txtFldLabel: 'File Name',
+				prefilled: 'export.geojson'
 			});
-			
-			var dialogOptions = {
-				autoOpen: true
-				,title: _loc('Export')
-				,modal: true
-				,width: 400
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
+
+			$('#' + exportFileName.getInputId())
+				.addClass('n2_export_fileNameInput');
+
+			new $n2.mdc.MDCButton({
+				parentId: exportDialog.getFooterId(),
+				btnLabel: 'Export',
+				onBtnClick: function(){
+					var filter = $('#'+exportFilter.getSelectId()).val();
+					var format = $('#'+exportFormat.getSelectId()).val();
+					
+					var fileName = $('#'+exportFileName.getInputId()).val();
+					if( '' === fileName ) {
+						fileName = null;
+					};
+
+					exportDialog.closeDialog();
+					performExport({
+						filter: filter
+						,fileName: fileName
+						,format: format
+					});
+					return false;
 				}
-			};
-			$dialog.dialog(dialogOptions);
+			});
 			
 			formatChanged();
 			
 			function formatChanged(){
-				var extension = $('#'+formatId).val();
-				var name = $('#'+fileNameId).val();
+				var extension = $('#'+exportFormat.getSelectId()).val();
+				var name = $('#'+exportFileName.getInputId()).val();
 				var i = name.lastIndexOf('.');
 				if( i >= 0 ){
 					name = name.substr(0,i);
 				};
 				name = name + '.' + extension;
-				$('#'+fileNameId).val(name);
+				$('#'+exportFileName.getInputId()).val(name);
 			};
 		};
 		
