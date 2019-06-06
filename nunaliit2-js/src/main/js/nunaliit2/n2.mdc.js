@@ -361,7 +361,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			.appendTo($dialogSurface);
 
 		if (this.dialogHtmlContent) {
-			$dialogMessage.html(this.dialogHtmlContent);
+			$dialogMessage.html(_loc(this.dialogHtmlContent));
 		} else if (this.dialogTextContent) {
 			$dialogMessage.text(_loc(this.dialogTextContent));
 		}
