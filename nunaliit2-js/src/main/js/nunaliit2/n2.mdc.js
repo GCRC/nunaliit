@@ -732,6 +732,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 	menuOpts: null,
 	preSelected: null,
 	select: null,
+	selectId: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -869,6 +870,8 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 //  - txtFldOutline (Boolean): Defines if the text-field should be outlined (default = true).
 //  - txtFldInputId (String): Defines the id of input or text-area element.
 //  - txtFldArea (Boolean): Defines if the text-field input should be a text-field-area (default = false).
+//  - passwordFld (Boolean): Sets the text-field type as password if true (default = false).
+//  - prefilled (String): Sets a prefilled value for the text field.
 //  - inputRequired (Boolean): Defines if the text-field is required field or not (default = false).
 var MDCTextField = $n2.Class('MDCTextField', MDC, {
 
@@ -877,6 +880,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 	txtFldInputId: null,
 	txtFldArea: null,
 	passwordFld: null,
+	prefilled: null,
 	inputRequired: null,
 
 	initialize: function(opts_){
@@ -886,6 +890,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			txtFldInputId: null,
 			txtFldArea: false,
 			passwordFld: false,
+			prefilled: null,
 			inputRequired: false,
 		}, opts_);
 
@@ -896,6 +901,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.txtFldInputId = opts.txtFldInputId;
 		this.txtFldArea = opts.txtFldArea;
 		this.passwordFld = opts.passwordFld;
+		this.prefilled = opts.prefilled;
 		this.inputRequired = opts.inputRequired;
 
 		if (!this.parentId) {
@@ -905,7 +911,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this._generateMDCTextField();
 	},
 	_generateMDCTextField: function(){
-		var $txtFld, $txtFldInput, $txtFldOutline, $txtFldOutlineNotch, keys;
+		var $txtFld, $txtFldInput, $txtFldLabel, $txtFldOutline, $txtFldOutlineNotch, keys;
 		var _this = this;
 
 		if (!this.txtFldInputId) {
@@ -950,6 +956,10 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		if (this.passwordFld) {
 			$txtFldInput.attr('type', 'password');
 		}
+
+		if (this.prefilled) {
+			$txtFldInput.val(this.prefilled);
+		}
 		
 		$txtFld.append($txtFldInput);
 
@@ -966,11 +976,15 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 				.addClass('mdc-notched-outline__notch')
 				.appendTo($txtFldOutline);
 			
-			$('<label>')
+			$txtFldLabel = $('<label>')
 				.attr('for', this.txtFldInputId)
 				.addClass('mdc-floating-label')
 				.text(_loc(this.txtFldLabel))
 				.appendTo($txtFldOutlineNotch);
+
+			if (this.prefilled) {
+				$txtFldLabel.addClass('mdc-floating-label--float-above');	
+			}
 		
 			$('<div>')
 				.addClass('mdc-notched-outline__trailing')
