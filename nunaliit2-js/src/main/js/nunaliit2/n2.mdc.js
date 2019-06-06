@@ -138,8 +138,12 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		$btn = $('<button>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
-			.text(_loc(this.btnLabel))
 			.appendTo(this.docFragment);
+
+		$('<span>')
+			.addClass('mdc-button__label')
+			.text(_loc(this.btnLabel))
+			.appendTo($btn);
 
 		if (this.onBtnClick) {
 			$btn.click(this.onBtnClick);
