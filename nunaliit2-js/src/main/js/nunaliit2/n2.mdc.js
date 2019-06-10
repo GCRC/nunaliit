@@ -57,7 +57,7 @@ var Service = $n2.Class({
 // Class: MDC
 // Description: Generic Material design component which all other material deign components are based off of.
 // Options:
-//  - parentId (String): The parent element that the component is appended to (Required).
+//  - parentId (String): The parent element that the component is appended to (Optional). If no parentId is provided, the document fragment is returned.
 //  - mdcId (String): The id of the element. If none is provided, Nunaliit will generate a unique id.
 //  - mdcClasses (Array): Specific classes to added to the component.
 //  - mdcAttributes (Object): Unique attributes to be added to the component.
@@ -117,15 +117,11 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		this.btnRaised = opts.btnRaised;
 		this.onBtnClick = opts.onBtnClick;
 
-		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Button Component');
-		}
-
 		this._generateMDCButton();
 	},
 
 	_generateMDCButton: function(){
-		var $btn, keys;
+		var btn, label, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-button', 'n2s_attachMDCButton');
@@ -134,29 +130,37 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 			this.mdcClasses.push('mdc-button--raised');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
-		$btn = $('<button>')
-			.attr('id', this.mdcId)
-			.addClass(this.mdcClasses.join(' '))
-			.appendTo(this.docFragment);
+		this.docFragment = document.createDocumentFragment();
 
-		$('<span>')
-			.addClass('mdc-button__label')
-			.text(_loc(this.btnLabel))
-			.appendTo($btn);
+		btn = document.createElement('button');
+		btn.setAttribute('id', this.mdcId);
+		this.mdcClasses.forEach(function(className){
+			btn.classList.add(className);
+		});
+
+		this.docFragment.appendChild(btn);
+	
+		label = document.createElement('span');
+		label.classList.add('mdc-button__label');
+		label.textContent = this.btnLabel;
+		btn.appendChild(label);
 
 		if (this.onBtnClick) {
-			$btn.click(this.onBtnClick);
+			btn.addEventListener('click', this.onBtnClick);
 		}
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				$btn.attr(key, _this.mdcAttributes[key]);
+				btn.setAttribute(key, _this.mdcAttributes[key]);
 			});
 		}
 		
-		this.docFragment.appendTo($('#' + this.parentId));
+		if (!this.parentId) {
+			return this.docFragment;
+		} else {
+			document.getElementById(this.parentId).appendChild(this.docFragment);
+		}
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -197,10 +201,6 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		this.chkboxDisabled = opts.chkboxDisabled;
 		this.chkboxChgFunc = opts.chkboxChgFunc;
 		this.chkboxInputId = $n2.getUniqueId();
-
-		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Check Box Component');
-		}
 
 		this._generateMDCCheckbox();
 	},
@@ -259,7 +259,11 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 			.text(_loc(this.chkboxLabel))
 			.appendTo(this.docFragment);
 
-		this.docFragment.appendTo($('#' + this.parentId));
+		if (!this.parentId) {
+			return this.docFragment;
+		} else {
+			this.docFragment.appendTo($('#' + this.parentId));
+		}
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -418,7 +422,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	addCloseBtn: function(){
-		new MDCButton({
+		var closeBtn = new MDCButton({
 			parentId: this.footerId,
 			btnLabel: this.closeBtnText,
 			onBtnClick: this.closeDialog
@@ -583,9 +587,6 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 
 		MDC.prototype.initialize.call(this, opts);
 
-		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Form Field Component');
-		}
 		this._generateMDCFormField();
 	},
 
@@ -608,7 +609,11 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 			});
 		}
 
-		this.docFragment.appendTo($('#' + this.parentId));
+		if (!this.parentId) {
+			return this.docFragment;
+		} else {
+			this.docFragment.appendTo($('#' + this.parentId));
+		}
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -645,10 +650,6 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		this.radioChecked = opts.radioChecked;
 		this.radioDisabled = opts.radioDisabled;
 		this.rbtnInputId = $n2.getUniqueId();
-
-		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Radio Button Component');
-		}
 
 		this._generateMDCRadio();
 	},
@@ -704,7 +705,11 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 			.text(this.radioLabel)
 			.appendTo($('#' + this.parentId));
 
-		this.docFragment.appendTo($('#' + this.parentId));
+		if (!this.parentId) {
+			return this.docFragment;
+		} else {
+			this.docFragment.appendTo($('#' + this.parentId));
+		}
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -753,10 +758,6 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.menuOpts = opts.menuOpts;
 		this.preSelected = opts.preSelected;
 		this.selectId = $n2.getUniqueId();
-
-		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Select Menu Component');
-		}
 
 		this._generateMDCSelectMenu();
 	},
@@ -823,8 +824,12 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 				_this._addOptionToSelectMenu(menuOpt);
 			});
 		}
-
-		this.docFragment.appendTo($('#' + this.parentId));
+		
+		if (!this.parentId) {
+			return this.docFragment;
+		} else {
+			this.docFragment.appendTo($('#' + this.parentId));
+		}
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -907,10 +912,6 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.passwordFld = opts.passwordFld;
 		this.prefilled = opts.prefilled;
 		this.inputRequired = opts.inputRequired;
-
-		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Text Field Component');
-		}
 
 		this._generateMDCTextField();
 	},
@@ -1006,7 +1007,11 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 				.appendTo($txtFld);
 		}
 
-		this.docFragment.appendTo($('#' + this.parentId));
+		if (!this.parentId) {
+			return this.docFragment;
+		} else {
+			this.docFragment.appendTo($('#' + this.parentId));
+		}
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
