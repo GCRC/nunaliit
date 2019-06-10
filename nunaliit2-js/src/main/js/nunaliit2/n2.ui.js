@@ -153,6 +153,11 @@ var drawer = new $n2.Class("drawer",{
 		} else {
 			$n2.log(this._classname + ": Not drawing because drawer is empty");
 		} ;
+	}
+	,getId : function(){
+		if(this.drawerId){
+			return this.drawerId;
+		}
 	},
 	_render: function(availableWidgets, opt_elem_id){
 
@@ -415,7 +420,23 @@ var drawer = new $n2.Class("drawer",{
 		$drawer_content_mask.css("visibility","visible");
 		//$n2.log($drawer_content_mask);
 	},
-
+	close: function(){
+		var _this = this;
+		// Set Transform translateX depending on pull direction
+		if (_this.drawer.pullDirection === "RIGHT") {					
+			$("#"+_this.drawerId).css("transform", "translateX(-" + _this.drawer.width + ")");		
+		} else if (_this.drawer.pullDirection === "LEFT") {
+			$("#"+_this.drawerId).css("transform", "translateX(0px)");
+		} else if (_this.drawer.pullDirection === "UP") {
+			$("#"+_this.drawerId).css("transform", "translateY(0px)");
+		} else if (_this.drawer.pullDirection === "DOWN") {
+			$("#"+_this.drawerId).css("transform", "translateY(-" + _this.drawer.height + ")");
+		};
+		
+		var $drawer_content_mask = $("#" + _this.maskId);
+		$drawer_content_mask.css("visibility","hidden");
+		//$n2.log($drawer_content_mask);
+	},
 	_addMask: function(){
 		var _this = this;
 

@@ -159,7 +159,7 @@ var CinemapMonitor = $n2.Construct('CinemapMonitor',{
 
  
 //+++++++++++++++++++++++++++++++++++++++++++++++
-var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
+var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			
@@ -179,9 +179,37 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 		if (!this.editorId){
 			this.editorId = $n2.getUniqueId();
 		}
-		this.$domNode = $('<div>')
-				.attr('id', this.editorId )
-				.n2TagBox();
+		var $formField = new $n2.mdc.MDCFormField({t:1});
+		
+		var $timepoints_start_label = $('<span>')
+									.addClass('n2transcript_label')
+									.text('Start: ' + '00.00.00,000');
+		var $timepoints_fin_label = $('<span>')
+									.addClass('n2transcript_label')
+									.text('End: ' + '00.00.00,000');
+		var tagBox = $('<div>')
+						.attr('id', this.editorId )
+						.n2TagBox();
+		var $saveBtn = new $n2.mdc.MDCButton({
+			onBtnClick: function(){
+				$n2.log("save button has been clicked");
+			}
+		});
+		var $cancelBtn = new $n2.mdc.MDCButton({
+			onBtnClick: function(){
+				$n2.log("cancel button has been clicked");
+			}
+		});
+		$formField.append($timepoints_start_label);
+		$formField.append($timepoints_fin_label);
+		$formField.append(tagBox);
+		$formField.append($saveBtn);
+		$formField.append($cancelBtn);
+		
+		
+		this.$domNode = $formField.getDomRef();
+		
+//		this.$domNode = 
 		return this.$domNode;
 	},
 	refresh: function(opts_){
@@ -721,10 +749,21 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		function prep_transcript($transcript, transcript_array){
 			var temp;
 			var contextMenu = $('div.transcript-context-menu').remove();
+			
+			var context_menu_text = ['Annotation', 'Extra'];
+			var transcript_context_menu_list = $('<ul>');
+			$.each(context_menu_text, function(i){
+				var li = $('<li/>')
+							.text(context_menu_text[i])
+							.click(function(){
+								
+							})
+							.appendTo(transcript_context_menu_list);
+			});
 			var contextMenu = $('<div>')
 								.addClass("transcript-context-menu")
 								.addClass("transcript-context-menu-hide")
-								.append($.parseHTML('<ul><li>link-1</li><li>link-2</li></ul>'))
+								.append(transcript_context_menu_list)
 								.appendTo(document.body);
 			for (var i = 0; i < transcript_array.length; i++) {
 				var transcriptElem = transcript_array[i];
@@ -755,7 +794,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							$transcriptElem.removeClass('sentence-highlight-pending');
 						}
 						$(this).addClass('sentence-highlight-pending')
-						_this.renderDrawer();
+						_this._renderDrawer();
 						 //var toRepl = "to=" + eid.toString()
 						 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)
 						 //alert(rgtClickContextMenu.innerHTML.toString())
@@ -781,32 +820,46 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				
 			}
 			$transcript.on('scroll', function(){
+				
 				contextMenu.addClass('transcript-context-menu-hide');
+				_this._closeDrawer();
+				
 				for(var i =0;i<_this.transcript_array.length;i++) {
 					var transcriptElem = _this.transcript_array[i];
 					var $transcriptElem = $('#'+transcriptElem.id);
 					$transcriptElem.removeClass('sentence-highlight-pending');
 				}
 			})
-			$(document).on('click', function(){
-				contextMenu.addClass('transcript-context-menu-hide');
-				for(var i =0;i<_this.transcript_array.length;i++) {
-					var transcriptElem = _this.transcript_array[i];
-					var $transcriptElem = $('#'+transcriptElem.id);
-					$transcriptElem.removeClass('sentence-highlight-pending');
-				}
+			$(document).on('click', function(e){
+				if(_this.drawer){
+					var $clickTarget = e.target;
+					if ( !$clickTarget.closest('#' + _this.drawer.getId())){
+						contextMenu.addClass('transcript-context-menu-hide');
+						_this._closeDrawer();
+						
+						for(var i =0;i<_this.transcript_array.length;i++) {
+							var transcriptElem = _this.transcript_array[i];
+							var $transcriptElem = $('#'+transcriptElem.id);
+							$transcriptElem.removeClass('sentence-highlight-pending');
+						}
+					}
+				}	
 			})
 		}
 	},
-	renderDrawer: function(){
+	_closeDrawer: function(){
+		if (this.drawer) {
+			this.drawer.close();
+		}
+	}
+	,
+	_renderDrawer: function(){
 		var editor = this.annotationEditor;
 //		var divForDrawer = $('<div>')
 //							.attr('id', 'n2-div-for-drawer')
 //							.prependTo($('#'+this.mediaDivId))
 		if (!editor) {
-			var $testDiv = $('<div>')
-				.attr('id','decheng' )
-				.n2TagBox();
+
 			editor = new CineAnnotationEditorView({
 				
 			});

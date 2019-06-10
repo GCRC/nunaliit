@@ -584,6 +584,11 @@ Drawer widget
 	text-shadow: black 1px 1px 1px;
 	cursor:pointer;
 }
+
+.n2widget_drawer span.n2transcript_label {
+	font: 400 .875rem Roboto, helvetica, sans-serif;
+}
+
 /* 
 ==============================
 tagbox

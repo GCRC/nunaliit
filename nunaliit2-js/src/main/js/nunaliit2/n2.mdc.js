@@ -81,12 +81,26 @@ var MDC = $n2.Class('MDC',{
 		this.mdcId = opts.mdcId;
 		this.mdcClasses = opts.mdcClasses;
 		this.mdcAttributes = opts.mdcAttributes;
-
+		this.docFragment = opts.docFragment;
+		
 		if (!this.mdcId) {
 			this.mdcId = $n2.getUniqueId();
 		}
 	},
-
+	append: function($element){
+		if ($element._classname
+			&& $element._classname.startsWith('MDC') ){
+			var $see = $element.getDomRef();
+			this.docFragment.append($element.getDomRef());
+		} else {
+			this.docFragment.append($element)
+		}
+		return this.docFragment;
+		
+	},
+	getDomRef: function(){
+		return this.docFragment;
+	},
 	getId: function(){
 		return this.mdcId;
 	}
@@ -117,11 +131,11 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		this.btnRaised = opts.btnRaised;
 		this.onBtnClick = opts.onBtnClick;
 
-		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Button Component');
-		}
+//		if (!this.parentId) {
+//			throw new Error('Parent Id must be provided, to add a Material Design Button Component');
+//		}
 
-		this._generateMDCButton();
+		this.docFragment = this._generateMDCButton();
 	},
 
 	_generateMDCButton: function(){
@@ -156,11 +170,13 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 			});
 		}
 		
-		this.docFragment.appendTo($('#' + this.parentId));
+		//this.docFragment.appendTo($('#' + this.parentId));
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
+		
+		return this.docFragment;
 	}
 });
 
@@ -584,11 +600,10 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 		MDC.prototype.initialize.call(this, opts);
 
 		if (!this.parentId) {
-			throw new Error('Parent Id must be provided, to add a Material Design Form Field Component');
+			//throw new Error('Parent Id must be provided, to add a Material Design Form Field Component');
 		}
-		this._generateMDCFormField();
+		this.docFragment = this._generateMDCFormField();
 	},
-
 	_generateMDCFormField: function(){
 		var $formField, keys;
 		var _this = this;
@@ -608,11 +623,12 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 			});
 		}
 
-		this.docFragment.appendTo($('#' + this.parentId));
+		//this.docFragment.appendTo($('#' + this.parentId));
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
+		return this.docFragment;
 	}
 }); 
 
