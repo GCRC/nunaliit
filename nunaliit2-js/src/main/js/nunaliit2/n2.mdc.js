@@ -57,7 +57,7 @@ var Service = $n2.Class({
 // Class: MDC
 // Description: Generic Material design component which all other material deign components are based off of.
 // Options:
-//  - parentId (String): The parent element that the component is appended to (Optional). If no parentId is provided, the document fragment is returned.
+//  - parentId (String): The parent element that the component is appended to (Optional). If no parentId is provided, the document fragment is returned. Note: If the document fragment is returned, the fragment will need to be attached through the show service using fixElementAndChildren.
 //  - mdcId (String): The id of the element. If none is provided, Nunaliit will generate a unique id.
 //  - mdcClasses (Array): Specific classes to added to the component.
 //  - mdcAttributes (Object): Unique attributes to be added to the component.
