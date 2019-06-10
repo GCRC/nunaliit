@@ -38,8 +38,162 @@ var
  ,DH = 'n2.widgetTranscript'
  ;
 
+ 
+//+++++++++++++++++++++++++++++++++++++++++++++++
+var CinemapMonitor = $n2.Construct('CinemapMonitor',{
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			cinemapUpdateCallback: function(cinemapByDocId){
+				$n2.log('a cinemapUpdateCallback need to be implemented'
+						+'and provided to cinemapMonitor');
+			},
+			sourceModelId: undefined
+		}, opts_);
+		var _this = this;
+		
+		this.cinemapUpdateCallback = opts.cinemapUpdateCallback
+		this.cinemapByDocId = {};
+		this.lastTargetCinemap = undefined;
+		
+		this.modelObserver = new $n2.model.DocumentModelObserver({
+			dispatchService : this.dispatchService,
+			sourceModelId: opts.sourceModelId,
+			updatedCallback : function(state){
+				_this._modelSourceUpdated(state);
+			}
+		});
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handleDispatch(m, addr, dispatcher);
+			};
+
+			//this.dispatchService.register(DH,'modelGetInfo',f);
+			//this.dispatchService.register(DH,'modelStateUpdated',f);
+			//this.dispatchService.register(DH,'simplifiedGeometryReport',f);
+		};
+	},
+	_modelSourceUpdated: function(state){
+		
+		var _this = this;
+		var hasChangedInCinemaps = false;
+		if( state.added ){
+			state.added.forEach(function(addedDoc){
+				if (addedDoc.atlascine2_cinemap){
+					var cinemapId = addedDoc._id;
+					var docInfo = _this.cinemapByDocId[cinemapId]
+					if (!docInfo){
+						docInfo = {};
+						_this.cinemapByDocId [cinemapId]= docInfo;
+					};
+					docInfo.doc = addedDoc;
+					hasChangedInCinemaps = true;
+				}
+			});
+		};
+		if( state.updated ){
+			state.updated.forEach(function(updatedDoc){
+				if(updatedDoc.atlascine2_cinemap){
+					var docId = updatedDoc._id;
+					var docInfo = _this.cinemapByDocId[docId];
+					if( !docInfo ){
+						docInfo = {};
+						_this.cinemapByDocId[docId] = docInfo;
+					};
+					if( docInfo.doc ){
+						if( docInfo.doc._rev !== updatedDoc._rev ){
+							// New version of document. Clear simplified info
+							delete docInfo.doc;
+						};
+					}
+					docInfo.doc = updatedDoc;
+					hasChangedInCinemaps = true;
+				}
+			});
+				
+		};
+		if( state.removed ){
+			state.removed.forEach(function(removedDoc){
+				if(updatedDoc.atlascine2_cinemap){
+					var docId = removedDoc._id;
+					delete _this.cinemapByDocId[docId];
+					hasChangedInCinemaps = true;
+				}
+			});
+		};
+		if( hasChangedInCinemaps) {
+			this._documentUpdated();
+		}
+	},
+	_documentUpdated: function(){
+		if (typeof this.cinemapUpdateCallback === 'function'){
+			this.cinemapUpdateCallback (this.cinemapByDocId);
+		}
+	}
+	,getCinemapById (cinemapId){
+		
+	}
+	,getCinemapByMediaDocId(mediaDocId){
+		var rstDocInfo = undefined;
+		for (var cinemapId in this.cinemapByDocId){
+			var docInfo = this.cinemapByDocId[cinemapId];
+			var cinemapProp = docInfo.doc.atlascine2_cinemap;
+			var mediaDocProp = cinemapProp.media_doc_ref;
+			var curMediaDocId = undefined;
+			if (mediaDocProp.nunaliit_type === "reference"){
+				curMediaDocId = mediaDocProp.doc;
+			} else {
+				throw new Error('The nunaliit_type prop in media_doc_ref must be a reference');
+			};
+			
+			if (curMediaDocId 
+				&& curMediaDocId === mediaDocId){
+				rstDocInfo = docInfo;
+			} 
+			
+		}
+		this.lastTargetCinemap = rstDocInfo;
+		return rstDocInfo;
+	}
+});
+
+
+ 
+//+++++++++++++++++++++++++++++++++++++++++++++++
+var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			
+		}, opts_);
+		
+		this.$domNode = null;
+		this.editorId = undefined;
+		
+		var mnt_opts = {};
+		mnt_opts.cinemapUpdateCallback = function(cinemapByDocId){
+			//TODO
+		};
+		mnt_opts.sourceModelId = "couchDb";
+		this.monitor = new CinemapMonitor(mnt_opts);
+	},
+	render: function(){
+		if (!this.editorId){
+			this.editorId = $n2.getUniqueId();
+		}
+		this.$domNode = $('<div>')
+				.attr('id', this.editorId )
+				.n2TagBox();
+		return this.$domNode;
+	},
+	refresh: function(opts_){
+		var thisData = opts_._data;
+		return this.$domNode;
+	},
+	_handle: function(){
+		
+	}
+});
 //--------------------------------------------------------------------------
-var TranscriptWidget = $n2.Construct('TranscriptWidget',{
+var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	
 	dispatchService: null,
 
@@ -111,7 +265,8 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 		this.name = opts.name;
 		this.docId = opts.docId;
 		this.sourceModelId = opts.sourceModelId;
-
+		
+		
 		this.isInsideContentTextPanel = opts.isInsideContentTextPanel;
 
 		if( opts.doc ){
@@ -128,6 +283,7 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 
 		this.lastTimeUserScroll = 0;
 		this.mediaDivId = undefined;
+		this.annotationEditor = undefined;
 		
 		// Get container
 		var containerClass = opts.containerClass;
@@ -599,7 +755,7 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 							$transcriptElem.removeClass('sentence-highlight-pending');
 						}
 						$(this).addClass('sentence-highlight-pending')
-						_this.renderTestDrawer();
+						_this.renderDrawer();
 						 //var toRepl = "to=" + eid.toString()
 						 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)
 						 //alert(rgtClickContextMenu.innerHTML.toString())
@@ -642,24 +798,31 @@ var TranscriptWidget = $n2.Construct('TranscriptWidget',{
 			})
 		}
 	},
-	renderTestDrawer: function(){
+	renderDrawer: function(){
+		var editor = this.annotationEditor;
 //		var divForDrawer = $('<div>')
 //							.attr('id', 'n2-div-for-drawer')
 //							.prependTo($('#'+this.mediaDivId))
-		var testDiv = $('<div>')
-						.attr('id','decheng' )
-						.append($.parseHTML("<form>First Name</form>"));
-		if(! this.drawer){
-			this.drawer = new $n2.ui.drawer({
-				containerId: 'content',
-				internalContainerId: 'decheng',
-				width : '500px'
+		if (!editor) {
+			var $testDiv = $('<div>')
+				.attr('id','decheng' )
+				.n2TagBox();
+			editor = new CineAnnotationEditorView({
+				
 			});
+			var drawerContainner = editor.render();
+			if(! this.drawer){
+				this.drawer = new $n2.ui.drawer({
+					containerId: 'content',
+					customizedContent: drawerContainner,
+					width : '500px'
+				});
+			}
+		} else {
+			editor.refresh();
 		}
 		this.drawer.open();
-		
-		
-		$n2.log('drawer opened');
+	
 	},
 	_loadTranscript: function(doc){
 		var _this = this;

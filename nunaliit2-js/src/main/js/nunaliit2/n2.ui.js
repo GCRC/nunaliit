@@ -79,7 +79,7 @@ var drawer = new $n2.Class("drawer",{
 			,pullDirection: "RIGHT"
 			,addClasses: null
 			,addButtonClasses: null
-			,internalContainerId: undefined
+			,customizedContent: undefined
 		},opts_);
 
 		var _this = this;
@@ -94,6 +94,8 @@ var drawer = new $n2.Class("drawer",{
 		this.maskId = $n2.getUniqueId();
 		this.drawer = {};
 		this.addClasses = opts.addClasses;
+		this._contentContainerId = undefined;
+		this.customizedContent = opts.customizedContent;
 
 		this.buttonContainerId = this.containerId;
 		if( typeof opts.buttonContainerId === 'string' ){
@@ -142,8 +144,8 @@ var drawer = new $n2.Class("drawer",{
 			args[0] =  availableWidgets;
 			hasElemInsideDrawer = true;
 		} 
-		if(opts.internalContainerId){
-			args[1] = opts.internalContainerId;
+		if(opts.customizedContent){
+			args[1] = opts.customizedContent;
 			hasElemInsideDrawer = true;
 		} 
 		if ( hasElemInsideDrawer ) {
@@ -154,6 +156,7 @@ var drawer = new $n2.Class("drawer",{
 	},
 	_render: function(availableWidgets, opt_elem_id){
 
+		var _this = this;
 		// Get container
 		if (!this.containerId) {
 			throw new Error("Drawer container class must be specified");
@@ -192,9 +195,9 @@ var drawer = new $n2.Class("drawer",{
 			});
 		};
 
-		var widgetContainerId = $n2.getUniqueId();
+		this._contentContainerId = $n2.getUniqueId();
 		var $widgetContainer = $("<div>")
-			.attr("id",widgetContainerId)
+			.attr("id",_this._contentContainerId)
 			.addClass("n2widget_drawer_container")
 			.appendTo($widget);
 		if (availableWidgets){
@@ -203,19 +206,28 @@ var drawer = new $n2.Class("drawer",{
 					type: "widgetDisplay"
 					,widgetType: widgetInfo.widgetType
 					,widgetOptions: widgetInfo
-					,containerId: widgetContainerId
+					,containerId: _this._contentContainerId
 					,config: _this.config
 				});
 			});
 		}
-		if (opt_elem_id){
-			$widgetContainer.append($('#' + opt_elem_id));
-		}
+//		if (opt_elem_id){
+//			var opt_elem_content = $('#' + opt_elem_id);
+//			//$widgetContainer.append($('#' + opt_elem_id));
+//		}
+		this._appendCustomizedContent();
 		this._addCloseButton();
 		this._addOpenButton();
 		//this._addMask();
 
 		$n2.log(this._classname, this);
+		
+	},
+	_appendCustomizedContent(){
+		
+		var customizedContent = this.customizedContent;
+		var $widgetContainer = $('#' +this._contentContainerId);
+		$widgetContainer.append(customizedContent);
 		
 	},
 	_setDrawerPosition: function(opts){
@@ -369,7 +381,7 @@ var drawer = new $n2.Class("drawer",{
 
 				var $drawer_content_mask = $("#"+_this.maskId);
 				$drawer_content_mask.css("visibility","visible");
-				$n2.log($drawer_content_mask);
+				//$n2.log($drawer_content_mask);
 			});
 
 		// Add button classes
@@ -398,9 +410,10 @@ var drawer = new $n2.Class("drawer",{
 			$("#"+_this.drawerId).css("transform", "translateY(0px)");
 		};
 
+		//_this._refreshContent();
 		var $drawer_content_mask = $("#"+_this.maskId);
 		$drawer_content_mask.css("visibility","visible");
-		$n2.log($drawer_content_mask);
+		//$n2.log($drawer_content_mask);
 	},
 
 	_addMask: function(){
@@ -468,13 +481,76 @@ function HandleWidgetDisplayRequests(m){
 			};
 		};
 
-		new DrawerWidget(options);
+		new drawer(options);
 	};
 };
 
+var tagbox = $n2.Class("tagbox", {
+	initialize : function(opts_){
+		var opts = $n2.extend({
+			container: undefined,
+			tagboxId : undefined
+		},opts_);
+		this.widget = opts.container;
+		var inputfield = $('<input>')
+							.attr('type', "text")
+							.attr('id', opts.tagboxId)
+							.attr('value', '')
+							.attr('placeholder', '')
+							.appendTo(this.widget);
+		
+		//var t = $("input#"+opts.tagboxId );
+		inputfield.on('focusout',function() {
+				var txt = this.value.replace(/[^a-z0-9\+\-\.\#]/ig,''); // allowed characters
+				if(txt) $("<span/>", {text:txt.toLowerCase(), insertBefore:this});
+				this.value = "";
+				});
+		
+		inputfield.on('keyup', function(ev) {
+				// if: comma|enter (delimit more keyCodes with | pipe)
+				if(/(188|13)/.test(ev.which)) $(this).focusout(); 
+		});
+		opts.container.on('click', 'span', function() {
+				if(confirm("Remove "+ $(this).text() +"?")) $(this).remove(); 
+		});
+	},
+	getWidget:function(){
+		return this.widget;
+	}
+	
+});
+jQuery.fn.n2TagBox = function(){
+	var _this = this;
+	$(this).addClass('n2_ui_tagbox');
+	var tagboxId = $n2.getUniqueId();
+	
+	var inst = new tagbox ({
+		container : _this,
+		tagboxId : tagboxId 
+	});
+	return inst.getWidget();
+//	$("input#"+tagboxId ).on({
+//		focusout : function() {
+//		      var txt = this.value.replace(/[^a-z0-9\+\-\.\#]/ig,''); // allowed characters
+//		      if(txt) $("<span/>", {text:txt.toLowerCase(), insertBefore:this});
+//		      this.value = "";
+//		    },
+//		keyup : function(ev) {
+//		      // if: comma|enter (delimit more keyCodes with | pipe)
+//		      if(/(188|13)/.test(ev.which)) $(this).focusout(); 
+//		}
+//	});
+//	$(this).on('click', 'span', function() {
+//		    if(confirm("Remove "+ $(this).text() +"?")) $(this).remove(); 
+//	});
+//	return this;
+	
+}
+
 //--------------------------------------------------------------------------
 $n2.ui = {
-	drawer: drawer
+	tagbox: tagbox
+	,drawer: drawer
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
 };
