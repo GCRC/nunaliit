@@ -98,6 +98,8 @@ var MDC = $n2.Class('MDC',{
 		return this.docFragment;
 		
 	},
+	
+	//return a jquery wrapped domnode (docfragment)
 	getDomRef: function(){
 		return this.docFragment;
 	},
@@ -148,7 +150,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 			this.mdcClasses.push('mdc-button--raised');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
+		this.docFragment = $('<div>');
 		$btn = $('<button>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
@@ -231,7 +233,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 			this.mdcClasses.push('mdc-checkbox--disabled');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
+		this.docFragment = $('<div>');
 		$chkbox = $('<div>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
@@ -340,7 +342,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			this.mdcClasses.push('mdc-dialog--scrollable');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
+		this.docFragment = $('<div>');
 		MDCDialogElement = $('<div>')
 			.attr('id', this.mdcId)
 			.attr('role', 'alertdialog')
@@ -494,7 +496,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 			this.mdcClasses.push('nunaliit_hamburger_drawer');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
+		this.docFragment = $('<div>');
 		$drawer = $('<aside>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
@@ -610,7 +612,7 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 
 		this.mdcClasses.push('mdc-form-field', 'n2s_attachMDCFormField');
 
-		this.docFragment = $(document.createDocumentFragment());
+		this.docFragment = $('<div>');
 		$formField = $('<div>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
@@ -679,7 +681,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 			this.mdcClasses.push('mdc-radio--disabled');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
+		this.docFragment = $('<div>');
 		$rbtn = $('<div>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
@@ -783,7 +785,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 		this.mdcClasses.push('mdc-select', 'mdc-select--outlined', 'n2s_attachMDCSelect');
 
-		this.docFragment = $(document.createDocumentFragment());
+		this.docFragment = $('<div>');
 		$menu = $('<div>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
@@ -946,7 +948,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			this.mdcClasses.push('mdc-text-field--outlined');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
+		this.docFragment = $('<div>');
 		$txtFld = $('<div>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))
@@ -1057,7 +1059,7 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 
 		this.mdcClasses.push('mdc-top-app-bar', 'n2s_attachMDCTopAppBar');
 
-		this.docFragment = $(document.createDocumentFragment());
+		this.docFragment = $('<div>');
 		$topAppBar = $('<header>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '))

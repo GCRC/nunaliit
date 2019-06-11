@@ -180,28 +180,43 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			this.editorId = $n2.getUniqueId();
 		}
 		var $formField = new $n2.mdc.MDCFormField({t:1});
-		
+		var $timepoints_start_label_name = $('<span>')
+								.addClass('n2transcript_label_name')
+								
+								.text('Start: ' );
 		var $timepoints_start_label = $('<span>')
-									.addClass('n2transcript_label')
-									.text('Start: ' + '00.00.00,000');
+									.addClass('n2transcript_label label_startTimeCode')
+									.text('00.00.00,000');
+		var $timepoints_fin_label_name = $('<span>')
+						.addClass('n2transcript_label_name')
+						.text('End: ');
 		var $timepoints_fin_label = $('<span>')
-									.addClass('n2transcript_label')
-									.text('End: ' + '00.00.00,000');
+									.addClass('n2transcript_label label_finTimeCode')
+									.text('00.00.00,000');
+		var $text_label = $('<span>')
+							.addClass('n2transcript_label label_transcriptText')
+							.text('');
 		var tagBox = $('<div>')
 						.attr('id', this.editorId )
 						.n2TagBox();
 		var $saveBtn = new $n2.mdc.MDCButton({
+			btnLabel : 'Save',
 			onBtnClick: function(){
 				$n2.log("save button has been clicked");
 			}
 		});
 		var $cancelBtn = new $n2.mdc.MDCButton({
+			btnLabel : 'Cancel',
 			onBtnClick: function(){
 				$n2.log("cancel button has been clicked");
 			}
 		});
+		
+		$formField.append($timepoints_start_label_name);
 		$formField.append($timepoints_start_label);
+		$formField.append($timepoints_fin_label_name);
 		$formField.append($timepoints_fin_label);
+		$formField.append($text_label);
 		$formField.append(tagBox);
 		$formField.append($saveBtn);
 		$formField.append($cancelBtn);
@@ -213,6 +228,20 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		return this.$domNode;
 	},
 	refresh: function(opts_){
+		var opt = opts_.option;
+		var data = opts_.data;
+		switch ( opt){
+		case 'Annotation': 
+			var see = this.$domNode.find('span.label_startTimeCode');
+			this.$domNode.find('span.label_startTimeCode').text('tt');
+			
+			break;
+		default:
+			break;
+		}
+			
+		
+		
 		var thisData = opts_._data;
 		return this.$domNode;
 	},
@@ -756,7 +785,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var li = $('<li/>')
 							.text(context_menu_text[i])
 							.click(function(){
-								
+								var curSentenceData = contextMenu.data();
+								if (curSentenceData){
+									_this._renderDrawer(context_menu_text[i], curSentenceData);
+								};
 							})
 							.appendTo(transcript_context_menu_list);
 			});
@@ -775,6 +807,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					.attr('id', id)
 					.attr('data-start', transcriptElem.start)
 					.attr('data-fin', transcriptElem.fin)
+					.attr('data-startcode', transcriptElem.startTimeCode)
+					.attr('data-fincode', transcriptElem.finTimeCode)
 					.addClass('n2-transcriptWidget-sentence')
 					.text(transcriptElem.text+ ' ')
 					.appendTo($transcript)
@@ -782,7 +816,19 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						var elmnt = e.target;
 				
 						e.preventDefault();
-						var eid = elmnt.id.replace(/link-/,"");
+						var eid = $(elmnt).attr('id');
+						var curStart =$(elmnt).attr('data-start');
+						var curFin = $(elmnt).attr('data-fin');
+						var startTimeCode = $(elmnt).attr('data-startcode');
+						var finTimeCode = $(elmnt).attr('data-fincode');
+						var curTxt = $(elmnt).text();
+						contextMenu.data({
+							start: curStart,
+							startTimeCode: startTimeCode,
+							finTimeCode: finTimeCode,
+							end: curFin,
+							text: curTxt
+						})
 						contextMenu[0].style.left = e.pageX + 'px';
 						contextMenu[0].style.top = e.pageY + 'px';
 						contextMenu.removeClass('transcript-context-menu-hide');
@@ -794,7 +840,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							$transcriptElem.removeClass('sentence-highlight-pending');
 						}
 						$(this).addClass('sentence-highlight-pending')
-						_this._renderDrawer();
+						//_this._renderDrawer();
 						 //var toRepl = "to=" + eid.toString()
 						 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)
 						 //alert(rgtClickContextMenu.innerHTML.toString())
@@ -833,7 +879,17 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			$(document).on('click', function(e){
 				if(_this.drawer){
 					var $clickTarget = e.target;
-					if ( !$clickTarget.closest('#' + _this.drawer.getId())){
+					if ( $clickTarget.closest('.transcript-context-menu')){
+
+						contextMenu.addClass('transcript-context-menu-hide');
+						for(var i =0;i<_this.transcript_array.length;i++) {
+							var transcriptElem = _this.transcript_array[i];
+							var $transcriptElem = $('#'+transcriptElem.id);
+							$transcriptElem.removeClass('sentence-highlight-pending');
+						}
+					}
+					//not click on editor drawer, close drawer
+					else if ( !$clickTarget.closest('#' + _this.drawer.getId())){
 						contextMenu.addClass('transcript-context-menu-hide');
 						_this._closeDrawer();
 						
@@ -842,7 +898,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							var $transcriptElem = $('#'+transcriptElem.id);
 							$transcriptElem.removeClass('sentence-highlight-pending');
 						}
-					}
+					} 
 				}	
 			})
 		}
@@ -853,17 +909,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 	}
 	,
-	_renderDrawer: function(){
+	_renderDrawer: function(ctxMenuOption, curSentenceData){
 		var editor = this.annotationEditor;
-//		var divForDrawer = $('<div>')
-//							.attr('id', 'n2-div-for-drawer')
-//							.prependTo($('#'+this.mediaDivId))
+		
 		if (!editor) {
-
-			editor = new CineAnnotationEditorView({
+			this.annotationEditor = new CineAnnotationEditorView({
 				
 			});
-			var drawerContainner = editor.render();
+			var drawerContainner = this.annotationEditor.render();
 			if(! this.drawer){
 				this.drawer = new $n2.ui.drawer({
 					containerId: 'content',
@@ -871,9 +924,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					width : '500px'
 				});
 			}
-		} else {
-			editor.refresh();
-		}
+			
+		}; 
+		
+		this.annotationEditor.refresh({
+			option : ctxMenuOption,
+			data :curSentenceData
+		} );
+		
 		this.drawer.open();
 	
 	},
@@ -1087,7 +1145,9 @@ var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 				} else {
 					var curEntry = {
 							"start": null,
+							"startTimeCode": matcher[1]+ ':' + matcher[2] + ':' + matcher[3] + matcher[4],
 							"fin": null,
+							"finTimeCode": matcher[6]+ ':' + matcher[7] + ':' + matcher[8] + matcher[9],
 							"text": ""
 					};
 					//$n2.log("The"+tmpIdx+"-th transcript");
