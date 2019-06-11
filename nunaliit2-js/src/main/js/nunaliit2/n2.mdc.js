@@ -621,6 +621,159 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 	}
 }); 
 
+// Class MDCList
+// Description: Create a material design list component
+// Options:
+//  - listItems (array): An array of object specifying list item details
+//   - Example: [{'itemText': 'foo', 'onItemClick': bar}]
+var MDCList = $n2.Class('MDCList', MDC, {
+
+	listItems: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			listItems: null,
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+
+		this.listItems = opts.listItems;
+
+		this._generateMDCList();
+	},
+
+	_generateMDCList: function(){
+		var list, item, keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-list', 'n2s_attachMDCList');
+
+		this.docFragment = document.createDocumentFragment();
+
+		list = document.createElement('ul');
+		list.setAttribute('id', this.mdcId);
+		list.setAttribute('role', 'menu');
+		list.setAttribute('aria-hidden', 'true');
+		list.setAttribute('aria-orientation', 'vertical');
+		list.setAttribute('tab-index', '-1');
+		this.mdcClasses.forEach(function(className){
+			list.classList.add(className);
+		});
+		this.docFragment.appendChild(list);
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				list.setAttribute(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		if (this.listItems && $n2.isArray(this.listItems)){
+			this.listItems.forEach(function(listItem){
+				item = this._generateMDCListItem(listItem.itemText, listItem.onItemClick);
+				list.appendChild(item);
+			});
+		}
+
+		if (!this.parentId) {
+			return this.docFragment;
+		} else {
+			document.getElementById(this.parentId).appendChild(this.docFragment);
+		}
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+	},
+
+	_generateMDCListItem: function(itemText, clickFunc){
+		var listItem, listItemText;
+		
+		listItem = document.createElement('li');
+		listItem.setAttribute('role', 'menuitem');
+		listItem.classList.add('mdc-list-item');
+
+		listItemText = document.createElement('span');
+		listItemText.classList.add('mdc-list-item__text');
+		listItemText.textContent(itemText);
+		listItemText.addEventListener('click', clickFunc);
+
+		return listItem;
+	}
+}); 
+
+// Class MDCMenu
+// Description: Create a material design menu component
+// Options:
+//  - anchorBtnId (string): The id of the button associated with the menu
+var MDCMenu = $n2.Class('MDCMenu', MDC, {
+	
+	anchorBtnId: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			anchorBtnId: null,
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+
+		this.anchorBtnId = opts.anchorBtnId;
+		this.menuId = $n2.getUniqueId();
+
+		if (!this.anchorBtnId) {
+					throw new Error('Anchor Btn Id required for creation of a MDCMenu Object');
+		}
+
+		this._generateMDCMenu();
+	},
+
+	_generateMDCMenu: function(){
+		var menu, menuSurfaceAnchor, keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-menu-surface--anchor', 'n2s_attachMDCMenu');
+
+		this.docFragment = document.createDocumentFragment();
+
+		menuSurfaceAnchor = document.createElement('div');
+		menuSurfaceAnchor.setAttribute('id', this.mdcId);
+		this.mdcClasses.forEach(function(className){
+			menuSurfaceAnchor.classList.add(className);
+		});
+		this.docFragment.appendChild(menuSurfaceAnchor);
+		
+		menu = document.createElement('div');
+		menu.setAttribute('id', this.menuId);
+		menu.classList.add('mdc-menu', 'mdc-menu-surface')
+		menuSurfaceAnchor.appendChild(menu);
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				menu.setAttribute(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		if (!this.parentId) {
+			return this.docFragment;
+		} else {
+			document.getElementById(this.parentId).appendChild(this.docFragment);
+		}
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+	},
+
+	getMenuId: function(){
+		return this.menuId;
+	},
+
+	getAnchorBtnId: function(){
+		return this.anchorBtnId;
+	}
+}); 
+
 // Class MDCRadio
 // Description: Creates a material design radio button component
 // Options:
@@ -1101,6 +1254,8 @@ $n2.mdc = {
 	MDCDialog: MDCDialog,
 	MDCDrawer: MDCDrawer,
 	MDCFormField: MDCFormField,
+	MDCList: MDCList,
+	MDCMenu: MDCMenu,
 	MDCRadio: MDCRadio,
 	MDCSelect: MDCSelect,
 	MDCTextField: MDCTextField,
