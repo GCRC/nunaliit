@@ -2113,9 +2113,18 @@ var DomStyler = $n2.Class({
 	},
 	
 	_attachMDCMenu: function($jq) {
+		var attachedMenu, menuBtnId;
 		var menu = $jq[0];
 		if (menu) {
-			$mdc.menu.MDCMenu.attachTo(menu);
+			attachedMenu = $mdc.menu.MDCMenu.attachTo(menu);
+			if ($jq.attr('n2associatedmdc')){
+				menuBtnId = $jq.attr('n2associatedmdc');
+				$('#' + menuBtnId).click(function(){
+					if (attachedMenu) {
+						attachedMenu.open = !attachedMenu.open;
+					}
+				});
+			}
 		}
 	},
 	

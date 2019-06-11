@@ -659,6 +659,98 @@ var CreateRelatedDocProcess = $n2.Class({
 		});
 	},
 	
+	insertAddRelatedMenu: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,classes: null
+			,parentId: null
+			,onRelatedDocumentCreated: function(docId){}
+		},opts_);
+		
+		var _this = this;
+		
+		var $placeHolder = $(opts.placeHolderElem);
+		var doc = opts.doc;
+		var classes = opts.classes;
+		var parentId = opts.parentId;
+		
+		var docSchemaName = doc.nunaliit_schema;
+		if (!docSchemaName) {
+			noButton();
+			return;
+		}
+		
+		this.schemaRepository.getSchema({
+			name: docSchemaName
+			,onSuccess: function(docSchema){
+				// Check if there are any related document schemas
+				if (docSchema.relatedSchemaNames 
+					&& docSchema.relatedSchemaNames.length > 0) {
+					_this.schemaRepository.getSchemas({
+						names: docSchema.relatedSchemaNames
+						,onSuccess: generateSchemaMenu
+						,onError: noButton
+					});
+				} else {
+					noButton();
+				}
+			}
+			,onError: noButton
+		});
+		
+		function noButton(){
+			$placeHolder.remove();
+		};
+
+		function generateSchemaMenu(relatedSchemas){
+			var menuBtn, menu, itemClicked;
+			var listItems = [];
+
+			var itemClicked = function(val){
+				return function(){
+					if (val) {
+						_this.createDocumentFromSchemaNames({
+							schemaNames: [val]
+							,relatedDoc: doc
+							,onSuccess: opts.onRelatedDocumentCreated
+						});
+					}
+					return false;	
+				}
+			};
+
+			if (relatedSchemas.length < 1) {
+				noButton();
+				return;
+			}
+
+			menuBtn = new $n2.mdc.MDCButton({
+				parentId: parentId
+				,btnLabel: 'Add Releated Item'
+			});
+
+			menu = new $n2.mdc.MDCMenu({
+				parentId: parentId
+				,mdcClasses: classes
+				,anchorBtnId: menuBtn.getId()
+			});
+
+			relatedSchemas.forEach(function(item){
+				listItems.push({
+					'itemText': item.getLabel(),
+					'onItemClick': itemClicked(item.name)
+				});
+			});
+
+			new $n2.mdc.MDCList({
+				parentId: menu.getMenuId()
+				,listItems: listItems
+			});
+			
+			$placeHolder.remove();
+		};
+	},
+
 	insertAddRelatedSelection: function(opts_){
 		var opts = $n2.extend({
 			placeHolderElem: null

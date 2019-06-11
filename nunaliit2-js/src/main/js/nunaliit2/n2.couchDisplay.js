@@ -1430,8 +1430,7 @@ var Display = $n2.Class({
 	}
 });
 
-//===================================================================================
-
+// ===================================================================================
 var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
 	legacyFunction: null,
 	
@@ -1450,7 +1449,8 @@ var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
 			,doc: null
 			,schema: null
 		},opts_);
-		
+	
+		var _this = this;
 		var display = opts.display;
 		var doc = opts.doc;
 		var $buttons = $(opts.div);
@@ -1458,22 +1458,18 @@ var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
 		
 		var $placeHolder = $('<span>')
 			.appendTo($buttons);
-		
-		createRelatedDocProcess.insertAddRelatedSelection({
-			placeHolderElem: $placeHolder
+
+		createRelatedDocProcess.insertAddRelatedMenu({
+			placeHolderElem: $placeHolder 
 			,doc: doc
-			,onElementCreated: function($addRelatedButton){
-				$addRelatedButton.addClass('nunaliit_form_link');
-				$addRelatedButton.addClass('nunaliit_form_link_add_related_item');
-				
-				$addRelatedButton.menuselector();
-			}
+			,parentId: $n2.utils.getElementIdentifier($buttons)
+			,classes: ['nunaliit_form_link', 'nunaliit_form_link_add_related_item']
 			,onRelatedDocumentCreated: function(docId){}
 		});
 	}
 });
 
-//===================================================================================
+// ===================================================================================
 
 function _displayRelatedDocuments(display_, contId, relatedSchemaName, relatedDocIds){
 	var $container = $('#'+contId);

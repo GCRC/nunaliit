@@ -121,7 +121,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 	},
 
 	_generateMDCButton: function(){
-		var btn, label, keys;
+		var btn, label, keys, parentElem;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-button', 'n2s_attachMDCButton');
@@ -159,7 +159,8 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		if (!this.parentId) {
 			return this.docFragment;
 		} else {
-			document.getElementById(this.parentId).appendChild(this.docFragment);
+			parentElem = document.getElementById(this.parentId);
+			parentElem.appendChild(this.docFragment);
 		}
 
 		if (showService) {
@@ -643,7 +644,7 @@ var MDCList = $n2.Class('MDCList', MDC, {
 	},
 
 	_generateMDCList: function(){
-		var list, item, keys;
+		var list, item, keys, parentElem;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-list', 'n2s_attachMDCList');
@@ -670,7 +671,7 @@ var MDCList = $n2.Class('MDCList', MDC, {
 
 		if (this.listItems && $n2.isArray(this.listItems)){
 			this.listItems.forEach(function(listItem){
-				item = this._generateMDCListItem(listItem.itemText, listItem.onItemClick);
+				item = _this._generateMDCListItem(listItem);
 				list.appendChild(item);
 			});
 		}
@@ -678,7 +679,8 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		if (!this.parentId) {
 			return this.docFragment;
 		} else {
-			document.getElementById(this.parentId).appendChild(this.docFragment);
+			parentElem = document.getElementById(this.parentId);
+			parentElem.appendChild(this.docFragment);
 		}
 
 		if (showService) {
@@ -686,7 +688,7 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		}
 	},
 
-	_generateMDCListItem: function(itemText, clickFunc){
+	_generateMDCListItem: function(item){
 		var listItem, listItemText;
 		
 		listItem = document.createElement('li');
@@ -695,8 +697,16 @@ var MDCList = $n2.Class('MDCList', MDC, {
 
 		listItemText = document.createElement('span');
 		listItemText.classList.add('mdc-list-item__text');
-		listItemText.textContent(itemText);
-		listItemText.addEventListener('click', clickFunc);
+
+		if (item.itemText) {
+			listItemText.textContent = item.itemText;
+		}
+			
+		if (item.onItemClick) {
+			listItemText.addEventListener('click', item.onItemClick);
+		}
+
+		listItem.appendChild(listItemText);
 
 		return listItem;
 	}
@@ -728,10 +738,10 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 	},
 
 	_generateMDCMenu: function(){
-		var menu, menuSurfaceAnchor, keys;
+		var menu, menuSurfaceAnchor, keys, parentElem;
 		var _this = this;
 
-		this.mdcClasses.push('mdc-menu-surface--anchor', 'n2s_attachMDCMenu');
+		this.mdcClasses.push('mdc-menu-surface--anchor');
 
 		this.docFragment = document.createDocumentFragment();
 
@@ -744,7 +754,8 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		
 		menu = document.createElement('div');
 		menu.setAttribute('id', this.menuId);
-		menu.classList.add('mdc-menu', 'mdc-menu-surface')
+		menu.setAttribute('n2associatedmdc', this.anchorBtnId);
+		menu.classList.add('mdc-menu', 'mdc-menu-surface', 'n2s_attachMDCMenu')
 		menuSurfaceAnchor.appendChild(menu);
 
 		if (this.mdcAttributes) {
@@ -757,7 +768,8 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		if (!this.parentId) {
 			return this.docFragment;
 		} else {
-			document.getElementById(this.parentId).appendChild(this.docFragment);
+			parentElem = document.getElementById(this.parentId);
+			parentElem.appendChild(this.docFragment);
 		}
 
 		if (showService) {
