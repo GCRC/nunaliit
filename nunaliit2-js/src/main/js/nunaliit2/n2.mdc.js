@@ -121,7 +121,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 	},
 
 	_generateMDCButton: function(){
-		var btn, label, keys, parentElem;
+		var btn, label, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-button', 'n2s_attachMDCButton');
@@ -159,8 +159,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		if (!this.parentId) {
 			return this.docFragment;
 		} else {
-			parentElem = document.getElementById(this.parentId);
-			parentElem.appendChild(this.docFragment);
+			document.getElementById(this.parentId).appendChild(this.docFragment);
 		}
 
 		if (showService) {
@@ -263,7 +262,9 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		if (!this.parentId) {
 			return this.docFragment;
 		} else {
-			this.docFragment.appendTo($('#' + this.parentId));
+			if (this.docFragment) {
+				this.docFragment.appendTo($('#' + this.parentId));
+			}
 		}
 
 		if (showService) {
@@ -644,7 +645,7 @@ var MDCList = $n2.Class('MDCList', MDC, {
 	},
 
 	_generateMDCList: function(){
-		var list, item, keys, parentElem;
+		var list, item, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-list', 'n2s_attachMDCList');
@@ -679,8 +680,9 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		if (!this.parentId) {
 			return this.docFragment;
 		} else {
-			parentElem = document.getElementById(this.parentId);
-			parentElem.appendChild(this.docFragment);
+			if (this.docFragment) {
+				document.getElementById(this.parentId).appendChild(this.docFragment);
+			}
 		}
 
 		if (showService) {
@@ -738,7 +740,7 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 	},
 
 	_generateMDCMenu: function(){
-		var menu, menuSurfaceAnchor, keys, parentElem;
+		var menu, menuSurfaceAnchor, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-menu-surface--anchor');
@@ -768,8 +770,9 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		if (!this.parentId) {
 			return this.docFragment;
 		} else {
-			parentElem = document.getElementById(this.parentId);
-			parentElem.appendChild(this.docFragment);
+			if (this.docFragment) {
+				document.getElementById(this.parentId).appendChild(this.docFragment);
+			}
 		}
 
 		if (showService) {
