@@ -232,9 +232,9 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		var data = opts_.data;
 		switch ( opt){
 		case 'Annotation': 
-			var see = this.$domNode.find('span.label_startTimeCode');
-			this.$domNode.find('span.label_startTimeCode').text('tt');
-			
+			this.$domNode.find('span.label_startTimeCode').text(data.startTimeCode);
+			this.$domNode.find('span.label_finTimeCode').text(data.finTimeCode);
+			this.$domNode.find('span.label_transcriptText').text(data.text);
 			break;
 		default:
 			break;

@@ -586,9 +586,13 @@ Drawer widget
 }
 
 .n2widget_drawer span.n2transcript_label {
+	display: block;
 	font: 400 .875rem Roboto, helvetica, sans-serif;
 }
-
+.n2widget_drawer span.n2transcript_label_name {
+	display: block;
+	font: 400 .875rem Roboto, helvetica, sans-serif;
+}
 /* 
 ==============================
 tagbox
