@@ -33,6 +33,12 @@
 	color: #1565c0;
 }
 
+/* Tree-view Styling */
+.n2Display_treeViewer_dialog .mdc-dialog__container .mdc-dialog__surface .mdc-dialog__content,
+.n2CouchEditor_tree {
+    font-family: monospace;
+}
+
 /* Nunaliit2 Tool Page Styling */
 
 .drawer-frame-root {
