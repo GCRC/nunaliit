@@ -137,7 +137,6 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		this.mdcClasses.forEach(function(className){
 			btn.classList.add(className);
 		});
-
 		this.docFragment.appendChild(btn);
 	
 		label = document.createElement('span');
@@ -480,7 +479,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 	},
 
 	_generateMDCDrawer: function(){
-		var $drawer, $drawerContent, $drawerHeader, $drawerNav, keys;
+		var drawer, drawerContent, drawerHeader, drawerHeaderTitle, drawerHeaderSubTitle, drawerNav, drawerScrim, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-drawer', 'mdc-drawer--modal', 'n2s_attachMDCDrawer');
@@ -488,90 +487,63 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 		if (this.hamburgerDrawer) {
 			this.mdcClasses.push('nunaliit_hamburger_drawer');
 		}
-
-		this.docFragment = $(document.createDocumentFragment());
-		$drawer = $('<aside>')
-			.attr('id', this.mdcId)
-			.addClass(this.mdcClasses.join(' '))
-			.appendTo(this.docFragment);
-
-		if (this.navHeaderTitle || this.navHeaderSubTitle) {
-			$drawerHeader = $('<div>')
-				.addClass('mdc-drawer__header')
-				.appendTo($drawer);
-
-			if (this.navHeaderTitle) {
-				$('<h3>').addClass('mdc-drawer__title')
-					.text(this.navHeaderTitle)
-					.appendTo($drawerHeader);
-			}
-
-			if (this.navHeaderSubTitle) {
-				$('<h6>').addClass('mdc-drawer__subtitle')
-					.text(this.navHeaderSubTitle)
-					.appendTo($drawerHeader);
-			}
-		}
-
-		$drawerContent = $('<div>')
-			.attr('id', this.navContentId)
-			.addClass('mdc-drawer__content')
-			.appendTo($drawer);
-
-		$drawerNav = $('<nav>')
-			.attr('id', this.navId)
-			.addClass('mdc-list')
-			.appendTo($drawerContent);
-
-		if (this.navItems && $n2.isArray(this.navItems)) {
-			this.navItems.forEach(function(item){
-				var link = _this._createNavItem(item);
-				link.appendTo($drawerNav);
-			});
-		}
+	
+		this.docFragment = document.createDocumentFragment();
+		
+		drawer = document.createElement('aside');
+		drawer.setAttribute('id', this.mdcId);
+		this.mdcClasses.forEach(function(className){
+			drawer.classList.add(className);
+		});
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				$drawer.attr(key, _this.mdcAttributes[key]);
+				drawer.setAttribute(key, _this.mdcAttributes[key]);
 			});
 		}
+		this.docFragment.appendChild(drawer);
 
-		$('<div>').addClass('mdc-drawer-scrim')
-			.appendTo(this.docFragment);
+		if (this.navHeaderTitle || this.navHeaderSubTitle) {
+			drawerHeader = document.createElement('div');
+			drawerHeader.classList.add('mdc-drawer__header');
+			drawer.appendChild(drawerHeader);
 
-		this.docFragment.prependTo($('body'));
+			if (this.navHeaderTitle) {
+				drawerHeaderTitle = document.createElement('h3');
+				drawerHeaderTitle.classList.add('mdc-drawer__title');
+				drawerHeaderTitle.textContent = this.navHeaderTitle;
+				drawerHeader.appendChild(drawerHeaderTitle);
+			}
+
+			if (this.navHeaderSubTitle) {
+				drawerHeaderSubTitle = document.createElement('h6');
+				drawerHeaderSubTitle.classList.add('mdc-drawer__subtitle');
+				drawerHeaderSubTitle.textContent = this.navHeaderSubTitle;
+				drawerHeader.appendChild(drawerHeaderSubTitle);
+			}
+		}
+
+		drawerContent = document.createElement('div');
+		drawerContent.setAttribute('id', this.navContentId);
+		drawerContent.classList.add('mdc-drawer__content');
+		drawer.appendChild(drawerContent);
+
+		drawerNav = new $n2.mdc.MDCList({
+			navList: true,
+			listItems: this.navItems
+		});
+		drawerContent.appendChild(drawerNav.docFragment);		
+		
+		drawerScrim = document.createElement('div');
+		drawerScrim.classList.add('mdc-drawer-scrim');
+		this.docFragment.appendChild(drawerScrim);
+
+		document.body.insertBefore(this.docFragment, document.body.firstChild);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
-	},
-
-	_createNavItem: function(item){
-		var $itemLink, $itemText;
-
-		$itemLink = $('<a>')
-			.addClass('mdc-list-item')
-			.attr('tabindex', '-1')
-			.attr('href', '#');
-
-		if (item.activated) {
-			$itemLink.attr('tabIndex', '0')
-				.attr('aria-selected', true)
-				.addClass('mdc-list-item--activated');
-		}
-
-		if (item.href && typeof item.href === 'string') {
-			$itemLink.attr('href', item.href);
-		}
-
-		if (item.text && typeof item.text === 'string') {
-			$itemText = $('<span>')
-				.addClass('mdc-list-item__text')
-				.text(item.text)
-				.appendTo($itemLink);
-		}
-		return $itemLink;
 	},
 
 	getContentId: function(){
@@ -641,14 +613,18 @@ var MDCList = $n2.Class('MDCList', MDC, {
 
 	listItems: null,
 
+	navList: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			listItems: null,
+			navList: false,
 		}, opts_);
 
 		MDC.prototype.initialize.call(this, opts);
 
 		this.listItems = opts.listItems;
+		this.navList = opts.navList;
 
 		this._generateMDCList();
 	},
@@ -661,7 +637,12 @@ var MDCList = $n2.Class('MDCList', MDC, {
 
 		this.docFragment = document.createDocumentFragment();
 
-		list = document.createElement('ul');
+		if (this.navList) {
+			list = document.createElement('nav');
+		} else {
+			list = document.createElement('ul');
+		}
+
 		list.setAttribute('id', this.mdcId);
 		list.setAttribute('role', 'menu');
 		list.setAttribute('aria-hidden', 'true');
@@ -702,22 +683,38 @@ var MDCList = $n2.Class('MDCList', MDC, {
 	_generateMDCListItem: function(item){
 		var listItem, listItemText;
 		
-		listItem = document.createElement('li');
+		if (this.navList) {
+			listItem = document.createElement('a');
+		} else {
+			listItem = document.createElement('li');
+		}
+
 		listItem.setAttribute('role', 'menuitem');
+		listItem.setAttribute('tabindex', '-1');
 		listItem.classList.add('mdc-list-item');
-
-		listItemText = document.createElement('span');
-		listItemText.classList.add('mdc-list-item__text');
-
-		if (item.itemText) {
-			listItemText.textContent = item.itemText;
-		}
 			
-		if (item.onItemClick) {
-			listItemText.addEventListener('click', item.onItemClick);
+
+		if (item.activated) {
+			listItem.setAttribute('tabIndex', '0');
+			listItem.setAttribute('aria-selected', true);
+			listItem.classList.add('mdc-list-item--activated');
 		}
 
-		listItem.appendChild(listItemText);
+		if (item.href && typeof item.href === 'string') {
+			listItem.setAttribute('href', item.href);
+		}
+
+		if (item.text && typeof item.text === 'string') {
+			listItemText = document.createElement('span');
+			listItemText.classList.add('mdc-list-item__text');
+			listItemText.textContent = item.text;
+
+			if (item.onItemClick) {
+				listItemText.addEventListener('click', item.onItemClick);
+			}
+
+			listItem.appendChild(listItemText);
+		}
 
 		return listItem;
 	}

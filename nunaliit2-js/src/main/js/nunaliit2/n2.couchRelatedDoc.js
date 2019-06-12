@@ -689,7 +689,7 @@ var CreateRelatedDocProcess = $n2.Class({
 
 			relatedSchemas.forEach(function(item){
 				listItems.push({
-					'itemText': item.getLabel(),
+					'text': item.getLabel(),
 					'onItemClick': itemClicked(item.name)
 				});
 			});
