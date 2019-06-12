@@ -91,7 +91,7 @@
 		,attachmentService: null
 		,divId: null
 		,logger: null
-		,mdcDialogComponent: null
+		,openDiag: null
 		
 		,initialize: function(opts_){
 			var opts = $n2.extend({
@@ -298,6 +298,8 @@
 
 		,_approve: function(subDocId, approvedDoc){
 			var _this = this;
+
+			this.openDiag.closeDialog();
 			
 			this._getSubmissionDocument({
 				subDocId: subDocId
@@ -341,6 +343,8 @@
 			var _this = this;
 			var mdcDenyDialogComponent;
 			
+			this.openDiag.closeDialog();
+
 			gatherDenyReason(function(reason,sendEmail){
 				_this._getSubmissionDocument({
 					subDocId: subDocId
@@ -758,7 +762,6 @@
 		
 		,_viewOriginal: function(subDocId){
 			var _this = this;
-			var openDiag;
 			
 			this._getOriginalDocument({
 				subDocId: subDocId
@@ -812,7 +815,6 @@
 
 		,_viewMerging: function(subDocId){
 			var _this = this;
-			var mdcDialogComponent;
 			
 			// Get current document
 			this._getCurrentDocument({
@@ -835,13 +837,13 @@
 			});
 
 			function openDialog(originalDoc, submittedDoc, currentDoc, subDoc){
-				this.openDiag = new $n2.mdc.MDCDialog({
+				_this.openDiag = new $n2.mdc.MDCDialog({
 					mdcClasses: ['submission_view_dialog_merging'],
 					dialogTitle: 'View Submission'
 				});
-				$('#' + this.openDiag.getFooterId()).addClass('submission_view_dialog_merging_buttons');
+				$('#' + _this.openDiag.getFooterId()).addClass('submission_view_dialog_merging_buttons');
 
-				initiateMergingView($('#' + this.openDiag.getContentId()), this.openDiag.getId(), originalDoc, submittedDoc, currentDoc, subDoc);
+				initiateMergingView($('#' + _this.openDiag.getContentId()), _this.openDiag.getId(), originalDoc, submittedDoc, currentDoc, subDoc);
 			};
 
 			function initiateMergingView($dialogContent, diagId, originalDoc, submittedDoc, currentDoc, subDoc){
@@ -963,12 +965,11 @@
 				};
 
 				new $n2.mdc.MDCButton({
-					parentId: this.openDiag.getFooterId(),
+					parentId: _this.openDiag.getFooterId(),
 					mdcClasses: ['n2_button_approve'],
 					btnLabel: 'Approve',
 					onBtnClick: function(){
 						_this._approve(subDocId, proposedDoc);
-						_this.openDiag.close();
 						var $dialog = $('#'+diagId);
 						$dialog.remove();
 						return false;
@@ -976,12 +977,11 @@
 				});
 
 				new $n2.mdc.MDCButton({
-					parentId: this.openDiag.getFooterId(),
+					parentId: _this.openDiag.getFooterId(),
 					mdcClasses: ['n2_button_deny', 'mdc-dialog__button'],
 					btnLabel: 'Reject',
 					onBtnClick: function(){
 						_this._deny(subDocId,function(){
-							_this.openDiag.close();
 							var $dialog = $('#'+diagId);
 							$dialog.remove();
 						});
@@ -991,7 +991,7 @@
 
 				if( originalDoc ) {
 					new $n2.mdc.MDCButton({
-						parentId: this.openDiag.getFooterId(),
+						parentId: _this.openDiag.getFooterId(),
 						mdcClasses: ['n2_button_original', 'mdc-dialog__button'],
 						btnLabel: 'View Original',
 						onBtnClick: function(){
@@ -1003,7 +1003,7 @@
 
 				if( submittedDoc ) {
 					new $n2.mdc.MDCButton({
-						parentId: this.openDiag.getFooterId(),
+						parentId: _this.openDiag.getFooterId(),
 						mdcClasses: ['n2_button_submitted', 'mdc-dialog__button'],
 						btnLabel: 'View Submitted',
 						onBtnClick: function(){
@@ -1015,7 +1015,7 @@
 
 				if( ! subDoc.nunaliit_submission.deletion ) {
 					new $n2.mdc.MDCButton({
-						parentId: this.openDiag.getFooterId(),
+						parentId: _this.openDiag.getFooterId(),
 						mdcClasses: ['n2_button_manual', 'mdc-dialog__button'],
 						btnLabel: 'Edit Proposed Document',
 						onBtnClick: function(){
