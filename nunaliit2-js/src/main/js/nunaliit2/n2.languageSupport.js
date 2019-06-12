@@ -151,7 +151,7 @@ var LanguageSwitcher = $n2.Class({
 			addLanguage(formFieldId, l.name, l.code);
 		};
 
-		addLanguage(formFieldId, _loc('Default'), null);
+		addLanguage(formFieldId, _loc('Default'), '');
 		
 		function addLanguage($list, name, code){
 
@@ -167,8 +167,11 @@ var LanguageSwitcher = $n2.Class({
 					var code = $input.attr('n2Code');
 					var local = $n2.l10n.getLocale();
 					if (local.lang !== code){
-						_this._selectLanguage(code);
-						langDialog.closeDialog();
+						// wait 400ms to allow checkbox animation to complete
+						window.setTimeout(function(){
+							_this._selectLanguage(code);
+							langDialog.closeDialog();
+						}, 400);
 					}
 				};
 				return false;
