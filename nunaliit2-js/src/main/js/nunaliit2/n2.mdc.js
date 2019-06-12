@@ -800,19 +800,22 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 //  - radioName (String): A string containing the radio button name.
 //  - radioChecked (Boolean): If true, the radio button is checked (default = false).
 //  - radioDisabled (Boolean): If true, the radio button is disabled (default = false). 
+//  - onRadioClicked (Function): A function which is called when the radio is clicked.
 var MDCRadio = $n2.Class('MDCRadio', MDC, {
 
 	radioLabel: null,
 	radioName: null,
 	radioChecked: null,
 	radioDisabled: null,
+	onRadioClick: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			radioLabel: null,
 			radioName: null,
 			radioChecked: false,
-			radioDisabled: false
+			radioDisabled: false,
+			onRadioClick: null
 		}, opts_);
 
 		MDC.prototype.initialize.call(this, opts);
@@ -821,6 +824,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		this.radioName = opts.radioName;
 		this.radioChecked = opts.radioChecked;
 		this.radioDisabled = opts.radioDisabled;
+		this.onRadioClick = opts.onRadioClick;
 		this.rbtnInputId = $n2.getUniqueId();
 
 		this._generateMDCRadio();
@@ -855,6 +859,10 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 			.attr('name', this.radioName)
 			.addClass('mdc-radio__native-control')
 			.appendTo($rbtn);
+
+		if (this.onRadioClick) {
+			$rbtnInput.click(this.onRadioClick);
+		}
 
 		if (this.radioChecked) {
 			$rbtnInput.attr('checked', 'checked');
