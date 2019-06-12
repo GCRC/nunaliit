@@ -424,7 +424,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	addCloseBtn: function(){
-		var closeBtn = new MDCButton({
+		new MDCButton({
 			parentId: this.footerId,
 			btnLabel: this.closeBtnText,
 			onBtnClick: this.closeDialog
@@ -593,28 +593,32 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 	},
 
 	_generateMDCFormField: function(){
-		var $formField, keys;
+		var formField, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-form-field', 'n2s_attachMDCFormField');
 
-		this.docFragment = $(document.createDocumentFragment());
-		$formField = $('<div>')
-			.attr('id', this.mdcId)
-			.addClass(this.mdcClasses.join(' '))
-			.appendTo(this.docFragment);
+		this.docFragment = document.createDocumentFragment();
+		formField = document.createElement('div');
+		formField.setAttribute('id', this.mdcId);
+		this.mdcClasses.forEach(function(className){
+			formField.classList.add(className);
+		});
+		this.docFragment.appendChild(formField);
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				$formField.attr(key, _this.mdcAttributes[key]);
+				formField.setAttribute(key, _this.mdcAttributes[key]);
 			});
 		}
 
 		if (!this.parentId) {
 			return this.docFragment;
 		} else {
-			this.docFragment.appendTo($('#' + this.parentId));
+			if (this.docFragment) {
+				document.getElementById(this.parentId).appendChild(this.docFragment);
+			}
 		}
 
 		if (showService) {
@@ -757,7 +761,7 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		menu = document.createElement('div');
 		menu.setAttribute('id', this.menuId);
 		menu.setAttribute('n2associatedmdc', this.anchorBtnId);
-		menu.classList.add('mdc-menu', 'mdc-menu-surface', 'n2s_attachMDCMenu')
+		menu.classList.add('mdc-menu', 'mdc-menu-surface', 'n2s_attachMDCMenu');
 		menuSurfaceAnchor.appendChild(menu);
 
 		if (this.mdcAttributes) {
