@@ -609,7 +609,11 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 // Description: Create a material design list component
 // Options:
 //  - listItems (array): An array of object specifying list item details
-//   - Example: [{'itemText': 'foo', 'onItemClick': bar}]
+//   - list item attributes: text (string), href (string), activated (boolean), onItemClick (function) 
+//   - Example: [
+//   	{'text': 'foo', 'onItemClick': bar},
+//   	{"href":"https://gcrc.carleton.ca", "text":"GCRC", "activated":true}
+//   	]
 var MDCList = $n2.Class('MDCList', MDC, {
 
 	listItems: null,
