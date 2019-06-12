@@ -156,10 +156,12 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 			});
 		}
 		
-		if (!this.parentId) {
-			return this.docFragment;
-		} else {
-			document.getElementById(this.parentId).appendChild(this.docFragment);
+		if (this.docFragment){	
+			if (!this.parentId) {
+				return this.docFragment;
+			} else {
+					document.getElementById(this.parentId).appendChild(this.docFragment);
+			}
 		}
 
 		if (showService) {
@@ -260,11 +262,12 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		chkboxLabel.textContent = _loc(this.chkboxLabel);
 		this.docFragment.appendChild(chkboxLabel);
 
-		
-		if (!this.parentId) {
-			return this.docFragment;
-		} else {
-			document.getElementById(this.parentId).appendChild(this.docFragment);
+		if (this.docFragment){	
+			if (!this.parentId) {
+				return this.docFragment;
+			} else {
+				document.getElementById(this.parentId).appendChild(this.docFragment);
+			}
 		}
 
 		if (showService) {
@@ -320,7 +323,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	_generateMDCDialog: function(){
-		var $dialogContainer, $dialogSurface, $dialogMessage, $footer, keys;
+		var dialogContainer, dialogSurface, dialogTitle, dialogMessage, dialogScrim, footer, keys;
 		var _this = this;
 		var content = "";
 
@@ -330,62 +333,64 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			this.mdcClasses.push('mdc-dialog--scrollable');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
-		MDCDialogElement = $('<div>')
-			.attr('id', this.mdcId)
-			.attr('role', 'alertdialog')
-			.attr('aria-modal', 'true')
-			.attr('aria-labelledby', 'my-dialog-title')
-			.attr('aria-describedby', 'my-dialog-content')
-			.addClass(this.mdcClasses.join(' '))
-			.appendTo(this.docFragment);
+		this.docFragment = document.createDocumentFragment();
+		MDCDialogElement = document.createElement('div');
+		MDCDialogElement.setAttribute('id', this.mdcId);
+		MDCDialogElement.setAttribute('role', 'alertdialog');
+		MDCDialogElement.setAttribute('aria-modal', 'true');
+		MDCDialogElement.setAttribute('aria-labelledby', 'my-dialog-title');
+		MDCDialogElement.setAttribute('aria-describedby', 'my-dialog-content');
+		this.mdcClasses.forEach(function(className){
+			MDCDialogElement.classList.add(className);
+		});
+		this.docFragment.appendChild(MDCDialogElement);
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				MDCDialogElement.attr(key, _this.mdcAttributes[key]);
+				MDCDialogElement.setAttribute(key, _this.mdcAttributes[key]);
 			});
 		}
 
-		$dialogContainer = $('<div>')
-			.addClass('mdc-dialog__container')
-			.appendTo(MDCDialogElement);
+		dialogContainer = document.createElement('div');
+		dialogContainer.classList.add('mdc-dialog__container');
+		MDCDialogElement.appendChild(dialogContainer);
 
-		$dialogSurface = $('<div>')
-			.addClass('mdc-dialog__surface')
-			.appendTo($dialogContainer);
+		dialogSurface = document.createElement('div');
+		dialogSurface.classList.add('mdc-dialog__surface');
+		dialogContainer.appendChild(dialogSurface);
 
-		$('<h2>')
-			.addClass('mdc-dialog__title')
-			.text(_loc(this.dialogTitle))
-			.appendTo($dialogSurface);
+		dialogTitle = document.createElement('h2');
+		dialogTitle.classList.add('mdc-dialog__title');
+		dialogTitle.textContent = _loc(this.dialogTitle);
+		dialogSurface.appendChild(dialogTitle);
 
-		$dialogMessage = $('<div>')
-			.attr('id', this.contentId)
-			.addClass('mdc-dialog__content')
-			.text(content)
-			.appendTo($dialogSurface);
+		dialogMessage = document.createElement('div');
+		dialogMessage.setAttribute('id', this.contentId);
+		dialogMessage.classList.add('mdc-dialog__content');
+		dialogMessage.textContent = content;
+		dialogSurface.appendChild(dialogMessage);
 
 		if (this.dialogHtmlContent) {
-			$dialogMessage.html(_loc(this.dialogHtmlContent));
+			dialogMessage.insertAdjacentHTML('afterbegin', _loc(this.dialogHtmlContent));
 		} else if (this.dialogTextContent) {
-			$dialogMessage.text(_loc(this.dialogTextContent));
+			dialogMessage.textContent = _loc(this.dialogTextContent);
 		}
 
-		$footer = $('<footer>')
-			.attr('id', this.footerId)
-			.addClass('mdc-dialog__actions')
-			.appendTo($dialogSurface);
+		footer = document.createElement('footer');
+		footer.setAttribute('id', this.footerId);
+		footer.classList.add('mdc-dialog__actions');
+		dialogSurface.appendChild(footer);
 
-		$('<div>')
-			.addClass('mdc-dialog__scrim')
-			.click(_this.closeDialog)
-			.appendTo(MDCDialogElement);
+		dialogScrim = document.createElement('div');
+		dialogScrim.classList.add('mdc-dialog__scrim');
+		dialogScrim.addEventListener('click', _this.closeDialog);
+		MDCDialogElement.appendChild(dialogScrim);
 
 		// Attach mdc component to dialog
 		this._attachDialog(this.mdcId);
 
-		this.docFragment.appendTo($('body'));
+		document.body.appendChild(this.docFragment);
 
 		if (this.closeBtn) {
 			this.addCloseBtn();
@@ -395,7 +400,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	_attachDialog: function(dialogId){
-		var dialog = this.docFragment[0].getElementById(dialogId);
+		var dialog = this.docFragment.getElementById(dialogId);
 		if (dialog) {
 			MDCDialogComponent = new $mdc.dialog.MDCDialog(dialog);
 		}
@@ -613,10 +618,10 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 			});
 		}
 
-		if (!this.parentId) {
-			return this.docFragment;
-		} else {
-			if (this.docFragment) {
+		if (this.docFragment){	
+			if (!this.parentId) {
+				return this.docFragment;
+			} else {
 				document.getElementById(this.parentId).appendChild(this.docFragment);
 			}
 		}
@@ -681,10 +686,10 @@ var MDCList = $n2.Class('MDCList', MDC, {
 			});
 		}
 
-		if (!this.parentId) {
-			return this.docFragment;
-		} else {
-			if (this.docFragment) {
+		if (this.docFragment){	
+			if (!this.parentId) {
+				return this.docFragment;
+			} else {
 				document.getElementById(this.parentId).appendChild(this.docFragment);
 			}
 		}
@@ -771,10 +776,10 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 			});
 		}
 
-		if (!this.parentId) {
-			return this.docFragment;
-		} else {
-			if (this.docFragment) {
+		if (this.docFragment){	
+			if (!this.parentId) {
+				return this.docFragment;
+			} else {
 				document.getElementById(this.parentId).appendChild(this.docFragment);
 			}
 		}
@@ -885,10 +890,12 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 			.text(this.radioLabel)
 			.appendTo($('#' + this.parentId));
 
-		if (!this.parentId) {
-			return this.docFragment;
-		} else {
-			this.docFragment.appendTo($('#' + this.parentId));
+		if (this.docFragment){	
+			if (!this.parentId) {
+				return this.docFragment;
+			} else {
+				this.docFragment.appendTo($('#' + this.parentId));
+			}
 		}
 
 		if (showService) {
@@ -1005,10 +1012,12 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			});
 		}
 		
-		if (!this.parentId) {
-			return this.docFragment;
-		} else {
-			this.docFragment.appendTo($('#' + this.parentId));
+		if (this.docFragment){	
+			if (!this.parentId) {
+				return this.docFragment;
+			} else {
+				this.docFragment.appendTo($('#' + this.parentId));
+			}
 		}
 
 		if (showService) {
@@ -1187,10 +1196,12 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 				.appendTo($txtFld);
 		}
 
-		if (!this.parentId) {
-			return this.docFragment;
-		} else {
-			this.docFragment.appendTo($('#' + this.parentId));
+		if (this.docFragment){	
+			if (!this.parentId) {
+				return this.docFragment;
+			} else {
+				this.docFragment.appendTo($('#' + this.parentId));
+			}
 		}
 
 		if (showService) {
