@@ -539,6 +539,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 		drawerScrim.classList.add('mdc-drawer-scrim');
 		this.docFragment.appendChild(drawerScrim);
 
+		// doc fragment needs to be prepended to body.
 		document.body.insertBefore(this.docFragment, document.body.firstChild);
 
 		if (showService) {
