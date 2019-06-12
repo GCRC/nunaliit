@@ -206,7 +206,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 	},
 
 	_generateMDCCheckbox: function(){
-		var $chkbox, $chkboxInput, $chkboxBackground, keys;
+		var chkbox, chkboxInput, chkboxBackground, chkboxMixedMark, chkboxLabel, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-checkbox', 'n2s_attachMDCCheckbox');
@@ -215,56 +215,56 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 			this.mdcClasses.push('mdc-checkbox--disabled');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
-		$chkbox = $('<div>')
-			.attr('id', this.mdcId)
-			.addClass(this.mdcClasses.join(' '))
-			.appendTo(this.docFragment);
+		this.docFragment = document.createDocumentFragment();
+		chkbox = document.createElement('div');
+		chkbox.setAttribute('id', this.mdcId);
+		this.mdcClasses.forEach(function(className){
+			chkbox.classList.add(className);
+		});
+		this.docFragment.appendChild(chkbox);
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				$chkbox.attr(key, _this.mdcAttributes[key]);
+				chkbox.setAttribute(key, _this.mdcAttributes[key]);
 			});
 		}
 
-		$chkboxInput = $('<input>')
-			.attr('id', this.chkboxInputId) 
-			.attr('type', 'checkbox')
-			.attr('name', this.chkboxName)
-			.addClass('mdc-checkbox__native-control')
-			.appendTo($chkbox);
+		chkboxInput = document.createElement('input');
+		chkboxInput.setAttribute('id', this.chkboxInputId);
+		chkboxInput.setAttribute('type', 'checkbox');
+		chkboxInput.setAttribute('name', this.chkboxName);
+		chkboxInput.classList.add('mdc-checkbox__native-control');
+		chkbox.appendChild(chkboxInput);
 
 		if (this.chkboxChgFunc) {
-			$chkboxInput.change(this.chkboxChgFunc);
+			chkboxInput.addEventListener('change', this.chkboxChgFunc);
 		}
 
 		if (this.chkboxChecked) {
-			$chkboxInput.attr('checked', 'checked');
+			chkboxInput.setAttribute('checked', 'checked');
 		}
 
-		$chkboxBackground = $('<div>')
-			.addClass('mdc-checkbox__background')
-			.appendTo($chkbox);
+		chkboxBackground = document.createElement('div');
+		chkboxBackground.classList.add('mdc-checkbox__background');
+		chkbox.appendChild(chkboxBackground);
 
-		$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>')
-			.appendTo($chkboxBackground);
+		chkboxBackground.insertAdjacentHTML('afterbegin', '<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>');
 
-		$('<div>')
-			.addClass('mdc-checkbox__mixedmark')
-			.appendTo($chkboxBackground);
+		chkboxMixedMark = document.createElement('div');
+		chkboxMixedMark.classList.add('mdc-checkbox__mixedmark');
+		chkboxBackground.appendChild(chkboxMixedMark);
 
-		$('<label>')
-			.attr('for', this.chkboxInputId)
-			.text(_loc(this.chkboxLabel))
-			.appendTo(this.docFragment);
+		chkboxLabel = document.createElement('label');
+		chkboxLabel.setAttribute('for', this.chkboxInputId);
+		chkboxLabel.textContent = _loc(this.chkboxLabel);
+		this.docFragment.appendChild(chkboxLabel);
 
+		
 		if (!this.parentId) {
 			return this.docFragment;
 		} else {
-			if (this.docFragment) {
-				this.docFragment.appendTo($('#' + this.parentId));
-			}
+			document.getElementById(this.parentId).appendChild(this.docFragment);
 		}
 
 		if (showService) {
