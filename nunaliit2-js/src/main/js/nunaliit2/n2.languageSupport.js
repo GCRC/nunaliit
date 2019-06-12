@@ -129,9 +129,7 @@ var LanguageSwitcher = $n2.Class({
 	},
 
 	_dialog: function(){
-		var mdcDialogComponent; 
 		var _this = this;
-		var diagId = $n2.getUniqueId();
 
 		var langDialog = new $n2.mdc.MDCDialog({
 			dialogTitle: 'Select Language',
@@ -146,26 +144,22 @@ var LanguageSwitcher = $n2.Class({
 		var formFieldId = languageSelect.getId();
 
 		var languages = this._getLanguages();
-		for(var i=0,e=languages.length;i<e;++i){
+		for (var i=0, e=languages.length; i<e; i += 1) {
 			var l = languages[i];
 			addLanguage(formFieldId, l.name, l.code);
 		};
 
-		addLanguage(formFieldId, _loc('Default'), '');
+		addLanguage(formFieldId, 'Default', null);
 		
 		function addLanguage($list, name, code){
-
-			var languageSelect = new $n2.mdc.MDCRadio({
+			var langSelectInput = new $n2.mdc.MDCRadio({
 				parentId: $list,
 				radioLabel: name,
 				radioName: "languageSelect",
-			});
-		
-			var onClick = function(e){
-				var $input = $(this);
-				if( $input.is(':checked') ){
-					var code = $input.attr('n2Code');
-					var local = $n2.l10n.getLocale();
+				onRadioClick: function(){
+					var code, local;
+					code = $(this).attr('n2Code');
+					local = $n2.l10n.getLocale();
 					if (local.lang !== code){
 						// wait 400ms to allow checkbox animation to complete
 						window.setTimeout(function(){
@@ -173,22 +167,20 @@ var LanguageSwitcher = $n2.Class({
 							langDialog.closeDialog();
 						}, 400);
 					}
-				};
 				return false;
-			};
+				}
+			});
 
-			if( code ){
-				var $radioInput = $('#' + languageSelect.getId()).find('input');
-				$radioInput.attr('n2Code',code);
-				$radioInput.click(onClick);
+			// Set n2Code attribute value
+			$('#' + langSelectInput.getInputId()).attr('n2Code',code);
 
+			if (code) {
 				var locale = $n2.l10n.getLocale();
 				if (locale.lang === code) {
-					languageSelect.radioChecked = true;
-					$radioInput.attr('checked', 'checked');
-				};
-			};
-		};
+					$('#' + langSelectInput.getInputId()).attr('checked', 'checked');
+				}
+			}
+		}
 	},
 	
 	_selectLanguage: function(code){
