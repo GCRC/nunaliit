@@ -1747,8 +1747,8 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		var filterFn = null;
-		if( $n2.modelUtils.FilterFunctionFromModelConfiguration ){
-			filterFn = $n2.modelUtils.FilterFunctionFromModelConfiguration(m.modelOptions);
+		if( $n2.modelFilter.FilterFunctionFromModelConfiguration ){
+			filterFn = $n2.modelFilter.FilterFunctionFromModelConfiguration(m.modelOptions);
 			if( filterFn.NAME ){
 				options.filterName = 'FilterModel - ' + filterFn.NAME;
 			};
