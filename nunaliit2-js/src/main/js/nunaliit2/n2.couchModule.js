@@ -900,38 +900,59 @@ var ModuleDisplay = $n2.Class({
 			var modelBrowserSpecified = false;
 			for(i=0,e=availableWidgets.length; i<e; ++i){
 				widgetInfo = availableWidgets[i];
-				var widgetDisplayMsg = {
-					type: 'widgetDisplay'
-					,widgetType: widgetInfo.widgetType
-					,widgetOptions: widgetInfo
-					,contentId: _this.contentName
-					,config: config
-					,moduleDisplay: _this
-				};
 
 				var widgetDisplayed = false;
 				
 				// Install at containerId
 				if( widgetInfo.containerId ){
-					widgetDisplayMsg.containerId = widgetInfo.containerId;
+					var widgetDisplayMsg = {
+							type: 'widgetDisplay'
+							,widgetType: widgetInfo.widgetType
+							,widgetOptions: widgetInfo
+							,contentId: _this.contentName
+							,config: config
+							,moduleDisplay: _this
+							,containerId: widgetInfo.containerId
+						};
 					_this._sendDispatchMessage(widgetDisplayMsg);
 					widgetDisplayed = true;
 				};
 				
 				// Install under each containerClass
 				if( widgetInfo.containerClass ){
-					$('.'+widgetInfo.containerClass).each(function(){
-						var containerId = $n2.utils.getElementIdentifier(this);
-						widgetDisplayMsg.containerId = containerId;
-						_this._sendDispatchMessage(widgetDisplayMsg);
-					});
-					widgetDisplayed = true;
+					var $set = $('.'+widgetInfo.containerClass);
+					if( $set && $set.length ){
+						$set.each(function(){
+							var containerId = $n2.utils.getElementIdentifier(this);
+							var widgetDisplayMsg = {
+									type: 'widgetDisplay'
+									,widgetType: widgetInfo.widgetType
+									,widgetOptions: widgetInfo
+									,contentId: _this.contentName
+									,config: config
+									,moduleDisplay: _this
+									,containerId: containerId
+								};
+							_this._sendDispatchMessage(widgetDisplayMsg);
+						});
+						widgetDisplayed = true;
+					} else {
+						$n2.logError('Container class not found for widget '+widgetInfo.widgetType+': '+widgetInfo.containerClass);
+					};
 				};
 				
 				if( !widgetDisplayed ) {
 					// At this point, neither containerId nor containerClass
 					// were specified
-					widgetDisplayMsg.containerId = _this.contentName;
+					var widgetDisplayMsg = {
+							type: 'widgetDisplay'
+							,widgetType: widgetInfo.widgetType
+							,widgetOptions: widgetInfo
+							,contentId: _this.contentName
+							,config: config
+							,moduleDisplay: _this
+							,containerId: _this.contentName
+						};
 					_this._sendDispatchMessage(widgetDisplayMsg);
 				};
 				

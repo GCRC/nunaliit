@@ -160,6 +160,9 @@ var CinemapMonitor = $n2.Construct('CinemapMonitor',{
  
 //+++++++++++++++++++++++++++++++++++++++++++++++
 var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
+	
+	currentDoc: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			
@@ -167,6 +170,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		
 		this.$domNode = null;
 		this.editorId = undefined;
+		this.currentDoc = undefined;
 		
 		var mnt_opts = {};
 		mnt_opts.cinemapUpdateCallback = function(cinemapByDocId){
@@ -230,17 +234,22 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 	refresh: function(opts_){
 		var opt = opts_.option;
 		var data = opts_.data;
-		switch ( opt){
-		case 'Annotation': 
-			this.$domNode.find('span.label_startTimeCode').text(data.startTimeCode);
-			this.$domNode.find('span.label_finTimeCode').text(data.finTimeCode);
-			this.$domNode.find('span.label_transcriptText').text(data.text);
-			break;
-		default:
-			break;
-		}
-			
+		var doc = opts_.doc;
+		if( opt ){
+			switch ( opt){
+			case 'Annotation': 
+				this.$domNode.find('span.label_startTimeCode').text(data.startTimeCode);
+				this.$domNode.find('span.label_finTimeCode').text(data.finTimeCode);
+				this.$domNode.find('span.label_transcriptText').text(data.text);
+				break;
+			default:
+				break;
+			}
+		};
 		
+		if( doc ){
+			this.currentDoc = doc;
+		};
 		
 		var thisData = opts_._data;
 		return this.$domNode;
@@ -814,36 +823,40 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					.appendTo($transcript)
 					.contextmenu( function(e){
 						var elmnt = e.target;
-				
+						
 						e.preventDefault();
-						var eid = $(elmnt).attr('id');
-						var curStart =$(elmnt).attr('data-start');
-						var curFin = $(elmnt).attr('data-fin');
-						var startTimeCode = $(elmnt).attr('data-startcode');
-						var finTimeCode = $(elmnt).attr('data-fincode');
-						var curTxt = $(elmnt).text();
-						contextMenu.data({
-							start: curStart,
-							startTimeCode: startTimeCode,
-							finTimeCode: finTimeCode,
-							end: curFin,
-							text: curTxt
-						})
-						contextMenu[0].style.left = e.pageX + 'px';
-						contextMenu[0].style.top = e.pageY + 'px';
-						contextMenu.removeClass('transcript-context-menu-hide');
-						//contextMenu[0].style.display = 'block';
 
-						for(var i =0;i<_this.transcript_array.length;i++) {
-							var transcriptElem = _this.transcript_array[i];
-							var $transcriptElem = $('#'+transcriptElem.id);
-							$transcriptElem.removeClass('sentence-highlight-pending');
-						}
-						$(this).addClass('sentence-highlight-pending')
-						//_this._renderDrawer();
-						 //var toRepl = "to=" + eid.toString()
-						 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)
-						 //alert(rgtClickContextMenu.innerHTML.toString())
+						var isEditorAvailable = _this._isAnnotationEditorAvailable();
+						if( isEditorAvailable ){
+							var eid = $(elmnt).attr('id');
+							var curStart =$(elmnt).attr('data-start');
+							var curFin = $(elmnt).attr('data-fin');
+							var startTimeCode = $(elmnt).attr('data-startcode');
+							var finTimeCode = $(elmnt).attr('data-fincode');
+							var curTxt = $(elmnt).text();
+							contextMenu.data({
+								start: curStart,
+								startTimeCode: startTimeCode,
+								finTimeCode: finTimeCode,
+								end: curFin,
+								text: curTxt
+							})
+							contextMenu[0].style.left = e.pageX + 'px';
+							contextMenu[0].style.top = e.pageY + 'px';
+							contextMenu.removeClass('transcript-context-menu-hide');
+							//contextMenu[0].style.display = 'block';
+
+							for(var i =0;i<_this.transcript_array.length;i++) {
+								var transcriptElem = _this.transcript_array[i];
+								var $transcriptElem = $('#'+transcriptElem.id);
+								$transcriptElem.removeClass('sentence-highlight-pending');
+							}
+							$(this).addClass('sentence-highlight-pending')
+							//_this._renderDrawer();
+							 //var toRepl = "to=" + eid.toString()
+							 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)
+							 //alert(rgtClickContextMenu.innerHTML.toString())
+						};
 					})
 					.click(function(e) {
 						switch(e.which){
@@ -877,6 +890,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				}
 			})
 			$(document).on('click', function(e){
+				// TBD: This will never be true
 				if(_this.drawer){
 					var $clickTarget = e.target;
 					if ( $clickTarget.closest('.transcript-context-menu')){
@@ -904,37 +918,31 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 	},
 	_closeDrawer: function(){
-		if (this.drawer) {
-			this.drawer.close();
-		}
+		this.dispatchService.send(DH,{
+			type: 'annotationEditorClose'
+		});
 	}
 	,
 	_renderDrawer: function(ctxMenuOption, curSentenceData){
-		var editor = this.annotationEditor;
 		
-		if (!editor) {
-			this.annotationEditor = new CineAnnotationEditorView({
-				
-			});
-			var drawerContainner = this.annotationEditor.render();
-			if(! this.drawer){
-				this.drawer = new $n2.ui.drawer({
-					containerId: 'content',
-					customizedContent: drawerContainner,
-					width : '500px'
-				});
-			}
-			
-		}; 
-		
-		this.annotationEditor.refresh({
-			option : ctxMenuOption,
-			data :curSentenceData
-		} );
-		
-		this.drawer.open();
-	
+		this.dispatchService.send(DH,{
+			type: 'annotationEditorStart'
+			,ctxMenuOption: ctxMenuOption
+			,curSentenceData: curSentenceData
+		});
 	},
+
+	_isAnnotationEditorAvailable: function(){
+		var m = {
+			type: 'annotationEditorIsAvailable'
+			,available: false
+		};
+
+		this.dispatchService.synchronousCall(DH,m);
+
+		return m.available;
+	},
+
 	_loadTranscript: function(doc){
 		var _this = this;
 		// Look for transcript in-line
@@ -1120,6 +1128,199 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 });
 
 //--------------------------------------------------------------------------
+var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
+	
+	dispatchService: null,
+
+	elemId: null,
+
+	// Model that selects the document to edit
+	sourceModelId: null,
+	
+	docsById: null,
+	
+	currentDocId: null,
+	
+	annotationEditor: null,
+	
+	drawer: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			containerId: undefined
+			,dispatchService: undefined
+			,sourceModelId: undefined
+		},opts_);
+
+		var _this = this;
+
+		this.dispatchService = opts.dispatchService;
+		this.sourceModelId = opts.sourceModelId;
+		
+		// Get container
+		var containerId = opts.containerId;
+		if( !containerId ){
+			throw new Error('containerId must be specified');
+		};
+		var $container = $('#'+containerId);
+
+		this.docsById = {};
+		this.currentDocId = null;
+		this.annotationEditor = null;
+		this.drawer = null;
+		
+		this.elemId = $n2.getUniqueId();
+		$('<div>')
+			.attr('id', this.elemId)
+			.addClass('n2AnnotationEditor')
+			.appendTo($container);
+		
+		
+		// Set up dispatcher
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			
+			this.dispatchService.register(DH, 'modelStateUpdated', f);
+			this.dispatchService.register(DH,'annotationEditorStart',f);
+			this.dispatchService.register(DH,'annotationEditorClose',f);
+			this.dispatchService.register(DH,'annotationEditorIsAvailable',f);
+
+			if( this.sourceModelId ){
+				// Initialize state
+				var state = $n2.model.getModelState({
+					dispatchService: this.dispatchService
+					,modelId: this.sourceModelId
+				});
+				if( state ){
+					this._sourceModelUpdated(state);
+				};
+			};
+		};
+
+		$n2.log(this._classname, this);
+	},
+	
+	_getElem: function(){
+		return $('#'+this.elemId);
+	},
+	
+	_startEditor: function(ctxMenuOption, curSentenceData){
+		if (!this.annotationEditor) {
+			this.annotationEditor = new CineAnnotationEditorView({
+				
+			});
+
+			var drawerContainer = this.annotationEditor.render();
+			if( !this.drawer ){
+				var $container = this._getElem();
+				var containerId = $n2.utils.getElementIdentifier($container);
+				this.drawer = new $n2.ui.drawer({
+					containerId: containerId,
+					customizedContent: drawerContainer,
+					width : '500px'
+				});
+			}
+			
+		};
+		
+		var currentDoc = undefined;
+		if( this.currentDocId ){
+			currentDoc = this.docsById[this.currentDocId];
+		};
+		
+		this.annotationEditor.refresh({
+			option: ctxMenuOption,
+			data: curSentenceData,
+			doc: currentDoc
+		});
+		
+		this.drawer.open();
+	},
+	
+	_closeEditor: function(){
+		if (this.drawer) {
+			this.drawer.close();
+		}
+	},
+
+	_handle: function(m, addr, dispatcher){
+		var _this = this;
+
+		if( 'annotationEditorStart' === m.type ){
+			var ctxMenuOption = m.ctxMenuOption;
+			var curSentenceData = m.curSentenceData;
+
+			this._startEditor(ctxMenuOption, curSentenceData);
+
+		} else if( 'annotationEditorClose' === m.type ){
+			this._closeEditor();
+
+		} else if( 'annotationEditorIsAvailable' === m.type ){
+			m.available = true;
+
+		} else if( 'modelStateUpdated' === m.type ){
+			// Does it come from one of our sources?
+			if( this.sourceModelId === m.modelId ){
+				this._sourceModelUpdated(m.state);
+			};
+		};
+	},
+	
+	_refreshCurrentDoc: function(){
+		if( this.docsById[this.currentDocId] ){
+			// OK, nothing has changed
+		} else {
+			// Select a new document
+			this.currentDocId = undefined;
+			for(var docId in this.docsById){
+				this.currentDocId = docId;
+			};
+			
+			if( !this.currentDocId ){
+				this._closeEditor();
+
+			} else if( this.annotationEditor ){
+				var doc = this.docsById[this.currentDocId];
+				this.annotationEditor.refresh({
+					doc: doc
+				});
+			};
+		};
+	},
+	
+	_sourceModelUpdated: function(sourceState){
+		if( sourceState.added ){
+			for(var i=0,e=sourceState.added.length; i<e; ++i){
+				var doc = sourceState.added[i];
+				var docId = doc._id;
+				
+				this.docsById[docId] = doc;
+			};
+		};
+		if( sourceState.updated ){
+			for(var i=0,e=sourceState.updated.length; i<e; ++i){
+				var doc = sourceState.updated[i];
+				var docId = doc._id;
+				
+				this.docsById[docId] = doc;
+			};
+		};
+		if( sourceState.removed ){
+			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+				var doc = sourceState.removed[i];
+				var docId = doc._id;
+				
+				delete this.docsById[docId];
+			};
+		};
+		
+		this._refreshCurrentDoc();
+	}
+});
+
+//--------------------------------------------------------------------------
 var reTimeCode = /([0-9][0-9]):([0-9][0-9]):([0-9][0-9])((\,|\.)[0-9]+)?\s*-->\s*([0-9][0-9]):([0-9][0-9]):([0-9][0-9])((\,|\.)[0-9]+)?/i;
 var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 	execute: function(srtData) {
@@ -1175,6 +1376,9 @@ var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 function HandleWidgetAvailableRequests(m){
 	if( m.widgetType === 'transcriptWidget' ){
 		m.isAvailable = true;
+
+	} else if( m.widgetType === 'annotationEditorWidget' ){
+		m.isAvailable = true;
 	};
 };
 
@@ -1202,12 +1406,35 @@ function HandleWidgetDisplayRequests(m){
 		};
 		
 		new TranscriptWidget(options);
+
+	} else if( m.widgetType === 'annotationEditorWidget' ){
+		var widgetOptions = m.widgetOptions;
+		var containerId = widgetOptions.containerId;
+		var config = m.config;
+		
+		var options = {};
+		
+		if( widgetOptions ){
+			for(var key in widgetOptions){
+				var value = widgetOptions[key];
+				options[key] = value;
+			};
+		};
+
+		options.containerId = containerId;
+		
+		if( config && config.directory ){
+			options.dispatchService = config.directory.dispatchService;
+		};
+		
+		new AnnotationEditorWidget(options);
 	};
 };
 
 //--------------------------------------------------------------------------
 $n2.widgetTranscript = {
 	TranscriptWidget: TranscriptWidget
+	,AnnotationEditorWidget: AnnotationEditorWidget
 	,SrtToJsonConvertor: SrtToJsonConvertor
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
