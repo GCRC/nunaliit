@@ -79,7 +79,7 @@ var drawer = new $n2.Class("drawer",{
 			,pullDirection: "RIGHT"
 			,addClasses: null
 			,addButtonClasses: null
-			,customizedContent: undefined
+			,customizedContentFn: undefined
 		},opts_);
 
 		var _this = this;
@@ -95,7 +95,6 @@ var drawer = new $n2.Class("drawer",{
 		this.drawer = {};
 		this.addClasses = opts.addClasses;
 		this._contentContainerId = undefined;
-		this.customizedContent = opts.customizedContent;
 
 		this.buttonContainerId = this.containerId;
 		if( typeof opts.buttonContainerId === 'string' ){
@@ -138,18 +137,15 @@ var drawer = new $n2.Class("drawer",{
 		};
 
 		// If at least one widget is available, then build container
-		var args = [null, null];
 		var hasElemInsideDrawer = false
 		if (availableWidgets.length > 0) {
-			args[0] =  availableWidgets;
 			hasElemInsideDrawer = true;
 		} 
-		if(opts.customizedContent){
-			args[1] = opts.customizedContent;
+		if(opts.customizedContentFn){
 			hasElemInsideDrawer = true;
 		} 
 		if ( hasElemInsideDrawer ) {
-			this._render.apply(this, args);
+			this._render(availableWidgets, opts.customizedContentFn);
 		} else {
 			$n2.log(this._classname + ": Not drawing because drawer is empty");
 		} ;
@@ -159,7 +155,7 @@ var drawer = new $n2.Class("drawer",{
 			return this.drawerId;
 		}
 	},
-	_render: function(availableWidgets, opt_elem_id){
+	_render: function(availableWidgets, customizedContentFn){
 
 		var _this = this;
 		// Get container
@@ -205,6 +201,7 @@ var drawer = new $n2.Class("drawer",{
 			.attr("id",_this._contentContainerId)
 			.addClass("n2widget_drawer_container")
 			.appendTo($widget);
+
 		if (availableWidgets){
 			availableWidgets.forEach(function(widgetInfo){
 				_this.dispatchService.send(DH,{
@@ -216,11 +213,15 @@ var drawer = new $n2.Class("drawer",{
 				});
 			});
 		}
-//		if (opt_elem_id){
-//			var opt_elem_content = $('#' + opt_elem_id);
-//			//$widgetContainer.append($('#' + opt_elem_id));
-//		}
-		this._appendCustomizedContent();
+
+		if( customizedContentFn ){
+			customizedContentFn({
+				container: $widgetContainer
+				,containerId: _this._contentContainerId
+				,config: _this.config
+			});
+		};
+
 		this._addCloseButton();
 		this._addOpenButton();
 		//this._addMask();
@@ -228,13 +229,7 @@ var drawer = new $n2.Class("drawer",{
 		$n2.log(this._classname, this);
 		
 	},
-	_appendCustomizedContent(){
-		
-		var customizedContent = this.customizedContent;
-		var $widgetContainer = $('#' +this._contentContainerId);
-		$widgetContainer.append(customizedContent);
-		
-	},
+
 	_setDrawerPosition: function(opts){
 
 		var validPullDirections = false;
@@ -507,23 +502,28 @@ function HandleWidgetDisplayRequests(m){
 };
 
 var tagbox = $n2.Class("tagbox", {
+
+	widgetId: null,
+	
 	initialize : function(opts_){
 		var opts = $n2.extend({
-			container: undefined,
-			tagboxId : undefined
+			container: undefined
 		},opts_);
-		this.widget = opts.container;
+
+		var widget = opts.container;
+		this.widgetId = $n2.utils.getElementIdentifier(widget);
+
 		var inputfield = $('<input>')
 							.attr('type', "text")
-							.attr('id', opts.tagboxId)
 							.attr('value', '')
 							.attr('placeholder', '')
-							.appendTo(this.widget);
+							.appendTo(widget);
 		
-		//var t = $("input#"+opts.tagboxId );
 		inputfield.on('focusout',function() {
 				var txt = this.value.replace(/[^a-z0-9\+\-\.\#]/ig,''); // allowed characters
-				if(txt) $("<span/>", {text:txt.toLowerCase(), insertBefore:this});
+				if(txt) {
+					$("<span/>", {text:txt.toLowerCase(), insertBefore:this});
+				}
 				this.value = "";
 				});
 		
@@ -531,41 +531,45 @@ var tagbox = $n2.Class("tagbox", {
 				// if: comma|enter (delimit more keyCodes with | pipe)
 				if(/(188|13)/.test(ev.which)) $(this).focusout(); 
 		});
-		opts.container.on('click', 'span', function() {
+		widget.on('click', 'span', function() {
 				if(confirm("Remove "+ $(this).text() +"?")) $(this).remove(); 
 		});
 	},
+
 	getWidget:function(){
-		return this.widget;
-	}
+		return $('#'+this.widgetId);
+	},
 	
+	getTags: function() {
+		var $widget = this.getWidget();
+		var $spans = $widget.children('span');
+		var tags = [];
+		$spans.each(function(){
+			var $span = $(this);
+			var text = $span.text();
+			if( typeof text === 'string' && text.length > 0 ){
+				tags.push( text );
+			}
+		});
+		return tags;
+	},
+	
+	reset: function(){
+		var $widget = this.getWidget();
+		var $spans = $widget.children('span');
+		$spans.remove();
+	}
 });
 jQuery.fn.n2TagBox = function(){
-	var _this = this;
-	$(this).addClass('n2_ui_tagbox');
-	var tagboxId = $n2.getUniqueId();
+	var $tb = $(this);
+	
+	$tb.addClass('n2_ui_tagbox');
 	
 	var inst = new tagbox ({
-		container : _this,
-		tagboxId : tagboxId 
+		container : $tb
 	});
-	return inst.getWidget();
-//	$("input#"+tagboxId ).on({
-//		focusout : function() {
-//		      var txt = this.value.replace(/[^a-z0-9\+\-\.\#]/ig,''); // allowed characters
-//		      if(txt) $("<span/>", {text:txt.toLowerCase(), insertBefore:this});
-//		      this.value = "";
-//		    },
-//		keyup : function(ev) {
-//		      // if: comma|enter (delimit more keyCodes with | pipe)
-//		      if(/(188|13)/.test(ev.which)) $(this).focusout(); 
-//		}
-//	});
-//	$(this).on('click', 'span', function() {
-//		    if(confirm("Remove "+ $(this).text() +"?")) $(this).remove(); 
-//	});
-//	return this;
-	
+
+	return inst;
 }
 
 //--------------------------------------------------------------------------

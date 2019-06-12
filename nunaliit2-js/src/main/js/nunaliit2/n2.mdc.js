@@ -98,6 +98,13 @@ var MDC = $n2.Class('MDC',{
 		return this.docFragment;
 		
 	},
+
+	appendTo: function($element){
+		if( this.docFragment && $element ){
+			$element.append(this.docFragment);
+		};
+		return this;
+	},
 	
 	//return a jquery wrapped domnode (docfragment)
 	getDomRef: function(){
@@ -119,6 +126,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 	btnLabel: null,
 	btnRaised: null,
 	onBtnClick: null,
+	docFragment: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({

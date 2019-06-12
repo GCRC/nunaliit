@@ -38,209 +38,294 @@ var
  ,DH = 'n2.widgetTranscript'
  ;
 
+//+++++++++++++++++++++++++++++++++++++++++++++++
+// Given start and end time, find timeLinks matching in the set
+// timeLink = {
+//    "starttime": "00:00:36,230"
+//    "endtime":   "00:00:42,780"
+//    "tags": [
+//        {
+//            "type": "place"
+//            "value": "rwanda"
+//        }
+//        {
+//            "type": "theme"
+//            "value": "violence"
+//        }
+//    ]
+//    "linkRef": {
+//        "nunaliit_type": "reference"
+//        "doc": "stock.rwanda"
+//    }
+// }
+function findTimeLink(timeLinks, startTime, endTime){
+	 var result = [];
+	 
+	 timeLinks.forEach(function(timeLink){
+		 if( timeLink.starttime === startTime
+		  && timeLink.endtime === endTime ){
+			result.push(timeLink);
+		 };
+	 });
+	 
+	 return result;
+};
+
+//+++++++++++++++++++++++++++++++++++++++++++++++
+// Given a timelink, find a tag by value
+function findTimeLinkTagByValue(timeLink, value){
+	 var result = undefined;
+	 
+	 if( timeLink && timeLink.tags ){
+		 timeLink.tags.forEach(function(tag){
+			 if( tag 
+			 && tag.value
+			 && tag.value === value ){
+				 result = tag; 
+			 };
+		 });
+	 };
+	 
+	 return result;
+};
  
 //+++++++++++++++++++++++++++++++++++++++++++++++
-var CinemapMonitor = $n2.Construct('CinemapMonitor',{
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			cinemapUpdateCallback: function(cinemapByDocId){
-				$n2.log('a cinemapUpdateCallback need to be implemented'
-						+'and provided to cinemapMonitor');
-			},
-			sourceModelId: undefined
-		}, opts_);
-		var _this = this;
-		
-		this.cinemapUpdateCallback = opts.cinemapUpdateCallback
-		this.cinemapByDocId = {};
-		this.lastTargetCinemap = undefined;
-		
-		this.modelObserver = new $n2.model.DocumentModelObserver({
-			dispatchService : this.dispatchService,
-			sourceModelId: opts.sourceModelId,
-			updatedCallback : function(state){
-				_this._modelSourceUpdated(state);
-			}
-		});
-		if( this.dispatchService ){
-			var f = function(m, addr, dispatcher){
-				_this._handleDispatch(m, addr, dispatcher);
-			};
+// Given a timelink and tags, update the timelink
+function updateTimeLinkWithTags(timeLink, tagValues){
+	 var updated = false;
+	 
+	 tagValues.forEach(function(tagValue){
+		 var tag = findTimeLinkTagByValue(timeLink, tagValue);
+		 if( !tag ){
+			 tag = {
+				value: tagValue
+			 };
+			 if( !timeLink.tags ){
+				 timeLink.tags = [];
+			 }
+			 timeLink.tags.push(tag);
+			 updated = true;
+		 }
+	 });
+	 
+	 return updated;
+};
 
-			//this.dispatchService.register(DH,'modelGetInfo',f);
-			//this.dispatchService.register(DH,'modelStateUpdated',f);
-			//this.dispatchService.register(DH,'simplifiedGeometryReport',f);
-		};
-	},
-	_modelSourceUpdated: function(state){
-		
-		var _this = this;
-		var hasChangedInCinemaps = false;
-		if( state.added ){
-			state.added.forEach(function(addedDoc){
-				if (addedDoc.atlascine2_cinemap){
-					var cinemapId = addedDoc._id;
-					var docInfo = _this.cinemapByDocId[cinemapId]
-					if (!docInfo){
-						docInfo = {};
-						_this.cinemapByDocId [cinemapId]= docInfo;
-					};
-					docInfo.doc = addedDoc;
-					hasChangedInCinemaps = true;
-				}
-			});
-		};
-		if( state.updated ){
-			state.updated.forEach(function(updatedDoc){
-				if(updatedDoc.atlascine2_cinemap){
-					var docId = updatedDoc._id;
-					var docInfo = _this.cinemapByDocId[docId];
-					if( !docInfo ){
-						docInfo = {};
-						_this.cinemapByDocId[docId] = docInfo;
-					};
-					if( docInfo.doc ){
-						if( docInfo.doc._rev !== updatedDoc._rev ){
-							// New version of document. Clear simplified info
-							delete docInfo.doc;
-						};
-					}
-					docInfo.doc = updatedDoc;
-					hasChangedInCinemaps = true;
-				}
-			});
-				
-		};
-		if( state.removed ){
-			state.removed.forEach(function(removedDoc){
-				if(updatedDoc.atlascine2_cinemap){
-					var docId = removedDoc._id;
-					delete _this.cinemapByDocId[docId];
-					hasChangedInCinemaps = true;
-				}
-			});
-		};
-		if( hasChangedInCinemaps) {
-			this._documentUpdated();
-		}
-	},
-	_documentUpdated: function(){
-		if (typeof this.cinemapUpdateCallback === 'function'){
-			this.cinemapUpdateCallback (this.cinemapByDocId);
-		}
-	}
-	,getCinemapById (cinemapId){
-		
-	}
-	,getCinemapByMediaDocId(mediaDocId){
-		var rstDocInfo = undefined;
-		for (var cinemapId in this.cinemapByDocId){
-			var docInfo = this.cinemapByDocId[cinemapId];
-			var cinemapProp = docInfo.doc.atlascine2_cinemap;
-			var mediaDocProp = cinemapProp.media_doc_ref;
-			var curMediaDocId = undefined;
-			if (mediaDocProp.nunaliit_type === "reference"){
-				curMediaDocId = mediaDocProp.doc;
-			} else {
-				throw new Error('The nunaliit_type prop in media_doc_ref must be a reference');
-			};
-			
-			if (curMediaDocId 
-				&& curMediaDocId === mediaDocId){
-				rstDocInfo = docInfo;
-			} 
-			
-		}
-		this.lastTargetCinemap = rstDocInfo;
-		return rstDocInfo;
-	}
-});
-
-
- 
 //+++++++++++++++++++++++++++++++++++++++++++++++
 var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
+
+	dispatchService: null,
 	
+	onSaved: null,
+
+	onCancel: null,
+
+	editorId: null,
+
 	currentDoc: null,
+
+	currentStartTime: null,
+
+	currentEndTime: null,
+	
+	tagbox: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			
+			dispatchService: undefined,
+			onSaved: undefined,
+			onCancel: undefined
 		}, opts_);
 		
-		this.$domNode = null;
-		this.editorId = undefined;
+		this.dispatchService = opts.dispatchService;
+		this.onSaved = opts.onSaved;
+		this.onCancel = opts.onCancel;
+		
+		this.editorId = $n2.getUniqueId();
 		this.currentDoc = undefined;
+		this.currentStartTime = undefined;
+		this.currentEndTime = undefined;
+	},
+	
+	getElem: function(){
+		return $('#'+this.editorId);
+	},
+
+	render: function(opts){
+		var _this = this;
 		
-		var mnt_opts = {};
-		mnt_opts.cinemapUpdateCallback = function(cinemapByDocId){
-			//TODO
+		var $container = opts.container;
+		
+		var $formField = $('<div>')
+			.attr('id', this.editorId);
+		
+		$('<span>')
+			.addClass('n2transcript_label_name')
+			.text('Start: ' )
+			.appendTo($formField);
+
+		$('<span>')
+			.addClass('n2transcript_label label_startTimeCode')
+			.text('00.00.00,000')
+			.appendTo($formField);
+			
+		$('<span>')
+			.addClass('n2transcript_label_name')
+			.text('End: ')
+			.appendTo($formField);
+
+		$('<span>')
+			.addClass('n2transcript_label label_finTimeCode')
+			.text('00.00.00,000')
+			.appendTo($formField);
+
+		$('<span>')
+			.addClass('n2transcript_label label_transcriptText')
+			.text('')
+			.appendTo($formField);
+			
+		var $tagBox = $('<div>')
+			.appendTo($formField);
+		this.tagbox = $tagBox.n2TagBox();
+
+		new $n2.mdc.MDCButton({
+				btnLabel : 'Save',
+				onBtnClick: function(){
+					_this._clickedSave();
+				}
+			})
+			.appendTo($formField);
+
+		if( this.onCancel ){
+			new $n2.mdc.MDCButton({
+					btnLabel : 'Cancel',
+					onBtnClick: function(){
+						_this._clickedCancel();
+					}
+				})
+				.appendTo($formField);
 		};
-		mnt_opts.sourceModelId = "couchDb";
-		this.monitor = new CinemapMonitor(mnt_opts);
+		
+		$formField.appendTo($container);
+		
+		return $formField;
 	},
-	render: function(){
-		if (!this.editorId){
-			this.editorId = $n2.getUniqueId();
-		}
-		var $formField = new $n2.mdc.MDCFormField({t:1});
-		var $timepoints_start_label_name = $('<span>')
-								.addClass('n2transcript_label_name')
-								
-								.text('Start: ' );
-		var $timepoints_start_label = $('<span>')
-									.addClass('n2transcript_label label_startTimeCode')
-									.text('00.00.00,000');
-		var $timepoints_fin_label_name = $('<span>')
-						.addClass('n2transcript_label_name')
-						.text('End: ');
-		var $timepoints_fin_label = $('<span>')
-									.addClass('n2transcript_label label_finTimeCode')
-									.text('00.00.00,000');
-		var $text_label = $('<span>')
-							.addClass('n2transcript_label label_transcriptText')
-							.text('');
-		var tagBox = $('<div>')
-						.attr('id', this.editorId )
-						.n2TagBox();
-		var $saveBtn = new $n2.mdc.MDCButton({
-			btnLabel : 'Save',
-			onBtnClick: function(){
-				$n2.log("save button has been clicked");
-			}
-		});
-		var $cancelBtn = new $n2.mdc.MDCButton({
-			btnLabel : 'Cancel',
-			onBtnClick: function(){
-				$n2.log("cancel button has been clicked");
-			}
-		});
+	
+	_clickedSave: function(){
+		var _this = this;
+
+		var tagValues = this.tagbox.getTags();
+		$n2.log("save button has been clicked: "+tagValues);
+
+		var docId = undefined;
+		if( this.currentDoc ){
+			docId = this.currentDoc._id;
+		} else {
+			alert('Current document not selected');
+			return;
+		};
 		
-		$formField.append($timepoints_start_label_name);
-		$formField.append($timepoints_start_label);
-		$formField.append($timepoints_fin_label_name);
-		$formField.append($timepoints_fin_label);
-		$formField.append($text_label);
-		$formField.append(tagBox);
-		$formField.append($saveBtn);
-		$formField.append($cancelBtn);
+		// Load current document
+		var documentSource = undefined;
+		if( this.dispatchService ){
+			var m = {
+				type: 'documentSourceFromDocument'
+				,doc: this.currentDoc
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			documentSource = m.documentSource;
+		};
+		if( !documentSource ){
+			$n2.logError('Can not find document source for: '+this.currentDoc._id);
+		};
+		documentSource.getDocument({
+				docId: this.currentDoc._id
+				,onSuccess: documentLoaded
+				,onError: function(err){
+					$n2.reportErrorForced( _loc('Unable to reload document: {err}',{err:err}) );
+				}
+			});
+
+		function documentLoaded(doc){
+			// Modify current document
+			var modified = false;
+			if( doc 
+			 && doc.atlascine2_cinemap ){
+				var timeLinks = doc.atlascine2_cinemap.timeLinks;
+				if( !timeLinks ){
+					// Create if it does not exist
+					timeLinks = [];
+					doc.atlascine2_cinemap.timeLinks = timeLinks;
+				};
+				
+				var matchingLinks = findTimeLink(
+						timeLinks, 
+						_this.currentStartTime, 
+						_this.currentEndTime
+					);
+				
+				if( matchingLinks.length < 1 ){
+					// Should I create one? If so, how?
+					var newTimeLink = {
+						'starttime': _this.currentStartTime
+						,'endtime': _this.currentEndTime
+						,'tags': []
+//						,"linkRef": {
+//							"nunaliit_type": "reference"
+//							"doc": "stock.rwanda"
+//						}
+					};
+					doc.atlascine2_cinemap.timeLinks.push(newTimeLink);
+					matchingLinks.push(newTimeLink);
+				};
+				
+				matchingLinks.forEach(function(timeLink){
+					if( updateTimeLinkWithTags(timeLink, tagValues) ){
+						modified = true;
+					};
+				});
+			};
+			
+			// Save document
+			if( modified ){
+				documentSource.updateDocument({
+					doc: doc
+					,onSuccess: onSaved
+					,onError: function(err){
+						$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
+					}
+				});
+
+			} else {
+				alert('Not changed!');
+			};
+		};
 		
-		
-		this.$domNode = $formField.getDomRef();
-		
-//		this.$domNode = 
-		return this.$domNode;
+		function onSaved(doc){
+			if( _this.onSaved ){
+				_this.onSaved(this);
+			};
+		};
 	},
+	
+	_clickedCancel: function(){
+		if( this.onCancel ){
+			this.onCancel(this);
+		};
+	},
+
 	refresh: function(opts_){
+		var $elem = this.getElem();
+
 		var opt = opts_.option;
 		var data = opts_.data;
 		var doc = opts_.doc;
-		if( opt ){
+		if( opt && data ){
 			switch ( opt){
 			case 'Annotation': 
-				this.$domNode.find('span.label_startTimeCode').text(data.startTimeCode);
-				this.$domNode.find('span.label_finTimeCode').text(data.finTimeCode);
-				this.$domNode.find('span.label_transcriptText').text(data.text);
+				$elem.find('span.label_startTimeCode').text(data.startTimeCode);
+				$elem.find('span.label_finTimeCode').text(data.finTimeCode);
+				$elem.find('span.label_transcriptText').text(data.text);
 				break;
 			default:
 				break;
@@ -250,10 +335,17 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		if( doc ){
 			this.currentDoc = doc;
 		};
+
+		if( data ){
+			this.currentStartTime = data.startTimeCode;
+			this.currentEndTime = data.finTimeCode;
+		};
 		
-		var thisData = opts_._data;
-		return this.$domNode;
+		if( this.tagbox ){
+			this.tagbox.reset();
+		};
 	},
+
 	_handle: function(){
 		
 	}
@@ -1205,24 +1297,42 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 	_getElem: function(){
 		return $('#'+this.elemId);
 	},
+
+	_drawEditor: function(opts_){
+		var opts = $n2.extend({
+			container: undefined
+			,containerId: undefined
+			,config: undefined
+		},opts_);
+		
+		this.annotationEditor.render(opts);
+	},
 	
 	_startEditor: function(ctxMenuOption, curSentenceData){
+		var _this = this;
+
 		if (!this.annotationEditor) {
 			this.annotationEditor = new CineAnnotationEditorView({
-				
+				dispatchService: this.dispatchService,
+				onSaved: function(){
+					_this._closeEditor();
+				},
+				onCancel: function(){
+					_this._closeEditor();
+				}
 			});
 
-			var drawerContainer = this.annotationEditor.render();
 			if( !this.drawer ){
 				var $container = this._getElem();
 				var containerId = $n2.utils.getElementIdentifier($container);
 				this.drawer = new $n2.ui.drawer({
 					containerId: containerId,
-					customizedContent: drawerContainer,
-					width : '500px'
+					width : '500px',
+					customizedContentFn: function(opts){
+						_this._drawEditor(opts);
+					}
 				});
 			}
-			
 		};
 		
 		var currentDoc = undefined;
