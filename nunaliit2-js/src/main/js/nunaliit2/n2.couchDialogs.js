@@ -192,7 +192,7 @@ function searchForDocumentId(options_){
 	});
 
 	new $n2.mdc.MDCTextField({
-		parentId: searchDocDialog.getContentId(),
+		parentElem: $('#' + searchDocDialog.getContentId()),
 		txtFldLabel: 'Search',
 		txtFldInputId: inputId
 	});
@@ -203,7 +203,7 @@ function searchForDocumentId(options_){
 		.appendTo('#' + searchDocDialog.getContentId());
 
 	new $n2.mdc.MDCButton({
-		parentId: searchDocDialog.getFooterId(), 
+		parentElem: $('#' + searchDocDialog.getFooterId()), 
 		mdcId: searchButtonId,
 		mdcClasses: ['mdc-dialog__button'],
 		btnLabel: 'Search'
@@ -334,7 +334,7 @@ function selectLayersDialog(opts_){
 	$('#' + selectLayerDialog.getFooterId()).addClass('editorSelectLayerButtons');
 
 	new $n2.mdc.MDCButton({
-		parentId: selectLayerDialog.getFooterId(),
+		parentElem: $('#' + selectLayerDialog.getFooterId()),
 		mdcClasses: ['ok', 'mdc-dialog__button'],
 		btnLabel: 'OK',
 		btnRaised: true,
@@ -423,7 +423,7 @@ function selectLayersDialog(opts_){
 				.appendTo($list);
 
 			var layerChkbox = new $n2.mdc.MDCCheckbox({
-				parentId: $n2.utils.getElementIdentifier($listItem),
+				parentElem: $listItem,
 				chkboxLabel: label,
 				chkboxName: layerId
 			});
@@ -1009,7 +1009,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 			.appendTo($('#' + searchRelatedMediaDialog.getContentId()));
 
 		new $n2.mdc.MDCTextField({
-			parentId: $n2.utils.getElementIdentifier($searchLine),
+			parentElem: $searchLine,
 			txtFldInputId: inputId,
 			txtFldLabel: 'Search'
 		});
@@ -1020,7 +1020,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 			.appendTo($('#' + searchRelatedMediaDialog.getContentId()));
 
 		new $n2.mdc.MDCButton({
-			parentId: searchRelatedMediaDialog.getFooterId(),
+			parentElem: $('#' + searchRelatedMediaDialog.getFooterId()),
 			mdcClasses: ['cancel', 'mdc-dialog__button'],
 			btnLabel: 'Cancel',
 			onBtnClick: function(){
@@ -1034,7 +1034,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: searchRelatedMediaDialog.getFooterId(),
+			parentElem: $('#' + searchRelatedMediaDialog.getFooterId()),
 			mdcId: searchButtonId,
 			mdcClasses: ['mdc-dialog__button'],
 			btnLabel: 'Search'

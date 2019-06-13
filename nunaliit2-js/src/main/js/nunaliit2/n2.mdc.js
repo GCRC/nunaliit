@@ -57,27 +57,26 @@ var Service = $n2.Class({
 // Class: MDC
 // Description: Generic Material design component which all other material design components are based off of.
 // Options:
-//  - parentId (String): The parent element that the component is appended to (Optional). If no parentId is provided, the document fragment is returned. Note: If the document fragment is returned, the fragment will need to be attached through the show service using fixElementAndChildren.
+//  - parentElem: A reference to the parent element that the component is appended to.
 //  - mdcId (String): The id of the element. If none is provided, Nunaliit will generate a unique id.
 //  - mdcClasses (Array): Specific classes to added to the component.
 //  - mdcAttributes (Object): Unique attributes to be added to the component.
 var MDC = $n2.Class('MDC',{
 
-	parentId: null,
+	parentElem: null,
 	mdcId: null,
 	mdcClasses: null,
 	mdcAttributes: null,
-	docFragment: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			parentId: null,
+			parentElem: null,
 			mdcId: null,
 			mdcClasses: [],
 			mdcAttributes: null
 		}, opts_);
 
-		this.parentId = opts.parentId;
+		this.parentElem = opts.parentElem;
 		this.mdcId = opts.mdcId;
 		this.mdcClasses = opts.mdcClasses;
 		this.mdcAttributes = opts.mdcAttributes;
@@ -89,6 +88,10 @@ var MDC = $n2.Class('MDC',{
 
 	getId: function(){
 		return this.mdcId;
+	},
+
+	getElem: function(){
+		return $('#' + this.mdcId);
 	}
 });
 
@@ -116,12 +119,16 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		this.btnLabel = opts.btnLabel;
 		this.btnRaised = opts.btnRaised;
 		this.onBtnClick = opts.onBtnClick;
+		
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Button Component');
+		}
 
 		this._generateMDCButton();
 	},
 
 	_generateMDCButton: function(){
-		var btn, label, keys;
+		var $btn, $label, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-button', 'n2s_attachMDCButton');
@@ -129,39 +136,29 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		if (this.btnRaised) {
 			this.mdcClasses.push('mdc-button--raised');
 		}
-
-		this.docFragment = document.createDocumentFragment();
-
-		btn = document.createElement('button');
-		btn.setAttribute('id', this.mdcId);
-		this.mdcClasses.forEach(function(className){
-			btn.classList.add(className);
-		});
-		this.docFragment.appendChild(btn);
+		
+		$btn = $('<button>')
+			.attr('id', this.mdcId)
+			.addClass(this.mdcClasses.join(' '));
 	
-		label = document.createElement('span');
-		label.classList.add('mdc-button__label');
-		label.textContent = this.btnLabel;
-		btn.appendChild(label);
+		$label = $('<span>')
+			.addClass('mdc-button__label')
+			.text(this.btnLabel)
+			.appendTo($btn);
 
 		if (this.onBtnClick) {
-			btn.addEventListener('click', this.onBtnClick);
+			$btn.click(this.onBtnClick);
 		}
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				btn.setAttribute(key, _this.mdcAttributes[key]);
+				$btn.attr(key, _this.mdcAttributes[key]);
 			});
 		}
 		
-		if (this.docFragment){	
-			if (!this.parentId) {
-				return this.docFragment;
-			} else {
-					document.getElementById(this.parentId).appendChild(this.docFragment);
-			}
-		}
+		// Add button to parent DOM element
+		$btn.appendTo(this.parentElem);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -202,12 +199,16 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		this.chkboxDisabled = opts.chkboxDisabled;
 		this.chkboxChgFunc = opts.chkboxChgFunc;
 		this.chkboxInputId = $n2.getUniqueId();
+		
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Check Box Component');
+		}
 
 		this._generateMDCCheckbox();
 	},
 
 	_generateMDCCheckbox: function(){
-		var chkbox, chkboxInput, chkboxBackground, chkboxMixedMark, chkboxLabel, keys;
+		var $chkbox, $chkboxInput, $chkboxBackground, $chkboxLabel, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-checkbox', 'n2s_attachMDCCheckbox');
@@ -216,58 +217,47 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 			this.mdcClasses.push('mdc-checkbox--disabled');
 		}
 
-		this.docFragment = document.createDocumentFragment();
-		chkbox = document.createElement('div');
-		chkbox.setAttribute('id', this.mdcId);
-		this.mdcClasses.forEach(function(className){
-			chkbox.classList.add(className);
-		});
-		this.docFragment.appendChild(chkbox);
+		$chkbox = $('<div>')
+			.attr('id', this.mdcId)
+			.addClass(this.mdcClasses.join(' '));
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				chkbox.setAttribute(key, _this.mdcAttributes[key]);
+				$chkbox.attr(key, _this.mdcAttributes[key]);
 			});
 		}
 
-		chkboxInput = document.createElement('input');
-		chkboxInput.setAttribute('id', this.chkboxInputId);
-		chkboxInput.setAttribute('type', 'checkbox');
-		chkboxInput.setAttribute('name', this.chkboxName);
-		chkboxInput.classList.add('mdc-checkbox__native-control');
-		chkbox.appendChild(chkboxInput);
+		$chkboxInput = $('<input>')
+			.attr('id', this.chkboxInputId)
+			.attr('type', 'checkbox')
+			.attr('name', this.chkboxName)
+			.addClass('mdc-checkbox__native-control')
+			.appendTo($chkbox);
 
 		if (this.chkboxChgFunc) {
-			chkboxInput.addEventListener('change', this.chkboxChgFunc);
+			$chkboxInput.change(this.chkboxChgFunc);
 		}
 
 		if (this.chkboxChecked) {
-			chkboxInput.setAttribute('checked', 'checked');
+			$chkboxInput.attr('checked', 'checked');
 		}
 
-		chkboxBackground = document.createElement('div');
-		chkboxBackground.classList.add('mdc-checkbox__background');
-		chkbox.appendChild(chkboxBackground);
+		$chkboxBackground = $('<div>')
+			.addClass('mdc-checkbox__background')
+			.appendTo($chkbox);
 
-		chkboxBackground.insertAdjacentHTML('afterbegin', '<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>');
+		$('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path class="mdc-checkbox__checkmark-path" fill="none" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>').appendTo($chkboxBackground);
 
-		chkboxMixedMark = document.createElement('div');
-		chkboxMixedMark.classList.add('mdc-checkbox__mixedmark');
-		chkboxBackground.appendChild(chkboxMixedMark);
+		$('<div>').addClass('mdc-checkbox__mixedmark')
+			.appendTo($chkboxBackground);
 
-		chkboxLabel = document.createElement('label');
-		chkboxLabel.setAttribute('for', this.chkboxInputId);
-		chkboxLabel.textContent = _loc(this.chkboxLabel);
-		this.docFragment.appendChild(chkboxLabel);
-
-		if (this.docFragment){	
-			if (!this.parentId) {
-				return this.docFragment;
-			} else {
-				document.getElementById(this.parentId).appendChild(this.docFragment);
-			}
-		}
+		$chkboxLabel = $('<label>')
+			.attr('for', this.chkboxInputId)
+			.text(_loc(this.chkboxLabel));
+		
+		$chkbox.appendTo(this.parentElem);
+		$chkboxLabel.appendTo(this.parentElem);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -322,7 +312,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	_generateMDCDialog: function(){
-		var dialogContainer, dialogSurface, dialogTitle, dialogMessage, dialogScrim, footer, keys;
+		var $dialogContainer, $dialogSurface, $dialogMessage, keys;
 		var _this = this;
 		var content = "";
 
@@ -332,64 +322,58 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			this.mdcClasses.push('mdc-dialog--scrollable');
 		}
 
-		this.docFragment = document.createDocumentFragment();
-		MDCDialogElement = document.createElement('div');
-		MDCDialogElement.setAttribute('id', this.mdcId);
-		MDCDialogElement.setAttribute('role', 'alertdialog');
-		MDCDialogElement.setAttribute('aria-modal', 'true');
-		MDCDialogElement.setAttribute('aria-labelledby', 'my-dialog-title');
-		MDCDialogElement.setAttribute('aria-describedby', 'my-dialog-content');
-		this.mdcClasses.forEach(function(className){
-			MDCDialogElement.classList.add(className);
-		});
-		this.docFragment.appendChild(MDCDialogElement);
+		MDCDialogElement = $('<div>')
+			.attr('id', this.mdcId)
+			.attr('role', 'alertdialog')
+			.attr('aria-modal', 'true')
+			.attr('aria-labelledby', 'my-dialog-title')
+			.attr('aria-describedby', 'my-dialog-content')
+			.addClass(this.mdcClasses.join(' '));
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				MDCDialogElement.setAttribute(key, _this.mdcAttributes[key]);
+				MDCDialogElement.attr(key, _this.mdcAttributes[key]);
 			});
 		}
 
-		dialogContainer = document.createElement('div');
-		dialogContainer.classList.add('mdc-dialog__container');
-		MDCDialogElement.appendChild(dialogContainer);
+		$dialogContainer = $('<div>')
+			.addClass('mdc-dialog__container')
+			.appendTo(MDCDialogElement);
 
-		dialogSurface = document.createElement('div');
-		dialogSurface.classList.add('mdc-dialog__surface');
-		dialogContainer.appendChild(dialogSurface);
+		$dialogSurface = $('<div>')
+			.addClass('mdc-dialog__surface')
+			.appendTo($dialogContainer);
 
-		dialogTitle = document.createElement('h2');
-		dialogTitle.classList.add('mdc-dialog__title');
-		dialogTitle.textContent = _loc(this.dialogTitle);
-		dialogSurface.appendChild(dialogTitle);
+		$('<h2>')
+			.addClass('mdc-dialog__title')
+			.text(_loc(this.dialogTitle))
+			.appendTo($dialogSurface);
 
-		dialogMessage = document.createElement('div');
-		dialogMessage.setAttribute('id', this.contentId);
-		dialogMessage.classList.add('mdc-dialog__content');
-		dialogMessage.textContent = content;
-		dialogSurface.appendChild(dialogMessage);
+		$dialogMessage = $('<div>')
+			.attr('id', this.contentId)
+			.addClass('mdc-dialog__content')
+			.text(content)
+			.appendTo($dialogSurface);
 
 		if (this.dialogHtmlContent) {
-			dialogMessage.insertAdjacentHTML('afterbegin', _loc(this.dialogHtmlContent));
+			$dialogMessage.html(_loc(this.dialogHtmlContent));
 		} else if (this.dialogTextContent) {
-			dialogMessage.textContent = _loc(this.dialogTextContent);
+			$dialogMessage.text(_loc(this.dialogTextContent));
 		}
 
-		footer = document.createElement('footer');
-		footer.setAttribute('id', this.footerId);
-		footer.classList.add('mdc-dialog__actions');
-		dialogSurface.appendChild(footer);
+		$('<footer>').attr('id', this.footerId)
+			.addClass('mdc-dialog__actions')
+			.appendTo($dialogSurface);
 
-		dialogScrim = document.createElement('div');
-		dialogScrim.classList.add('mdc-dialog__scrim');
-		dialogScrim.addEventListener('click', _this.closeDialog);
-		MDCDialogElement.appendChild(dialogScrim);
+		$('<div>').addClass('mdc-dialog__scrim')
+			.click(_this.closeDialog)
+			.appendTo(MDCDialogElement);
 
 		// Attach mdc component to dialog
 		this._attachDialog(this.mdcId);
 
-		document.body.appendChild(this.docFragment);
+		MDCDialogElement.appendTo($('body'));
 
 		if (this.closeBtn) {
 			this.addCloseBtn();
@@ -399,7 +383,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	_attachDialog: function(dialogId){
-		var dialog = this.docFragment.getElementById(dialogId);
+		var dialog = MDCDialogElement[0];
 		if (dialog) {
 			MDCDialogComponent = new $mdc.dialog.MDCDialog(dialog);
 		}
@@ -429,7 +413,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 
 	addCloseBtn: function(){
 		new MDCButton({
-			parentId: this.footerId,
+			parentElem: $('#' + this.footerId),
 			btnLabel: this.closeBtnText,
 			onBtnClick: this.closeDialog
 		});
@@ -479,7 +463,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 	},
 
 	_generateMDCDrawer: function(){
-		var drawer, drawerContent, drawerHeader, drawerHeaderTitle, drawerHeaderSubTitle, drawerNav, drawerScrim, keys;
+		var $drawer, $drawerContent, $drawerHeader, $drawerScrim, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-drawer', 'mdc-drawer--modal', 'n2s_attachMDCDrawer');
@@ -487,61 +471,54 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 		if (this.hamburgerDrawer) {
 			this.mdcClasses.push('nunaliit_hamburger_drawer');
 		}
-	
-		this.docFragment = document.createDocumentFragment();
 		
-		drawer = document.createElement('aside');
-		drawer.setAttribute('id', this.mdcId);
-		this.mdcClasses.forEach(function(className){
-			drawer.classList.add(className);
-		});
+		$drawer = $('<aside>')
+			.attr('id', this.mdcId)
+			.addClass(this.mdcClasses.join(' '));
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				drawer.setAttribute(key, _this.mdcAttributes[key]);
+				$drawer.attr(key, _this.mdcAttributes[key]);
 			});
 		}
-		this.docFragment.appendChild(drawer);
 
 		if (this.navHeaderTitle || this.navHeaderSubTitle) {
-			drawerHeader = document.createElement('div');
-			drawerHeader.classList.add('mdc-drawer__header');
-			drawer.appendChild(drawerHeader);
+			$drawerHeader = $('<div>')
+				.addClass('mdc-drawer__header')
+				.appendTo($drawer);
 
 			if (this.navHeaderTitle) {
-				drawerHeaderTitle = document.createElement('h3');
-				drawerHeaderTitle.classList.add('mdc-drawer__title');
-				drawerHeaderTitle.textContent = this.navHeaderTitle;
-				drawerHeader.appendChild(drawerHeaderTitle);
+				$('<h3>').addClass('mdc-drawer__title')
+					.text(this.navHeaderTitle)
+					.appendTo($drawerHeader);
 			}
 
 			if (this.navHeaderSubTitle) {
-				drawerHeaderSubTitle = document.createElement('h6');
-				drawerHeaderSubTitle.classList.add('mdc-drawer__subtitle');
-				drawerHeaderSubTitle.textContent = this.navHeaderSubTitle;
-				drawerHeader.appendChild(drawerHeaderSubTitle);
+				$('<h6>').addClass('mdc-drawer__subtitle')
+					.text(this.navHeaderSubTitle)
+					.appendTo($drawerHeader);
 			}
 		}
 
-		drawerContent = document.createElement('div');
-		drawerContent.setAttribute('id', this.navContentId);
-		drawerContent.classList.add('mdc-drawer__content');
-		drawer.appendChild(drawerContent);
+		$drawerContent = $('<div>')
+			.attr('id', this.navContentId)
+			.addClass('mdc-drawer__content')
+			.appendTo($drawer);
 
-		drawerNav = new $n2.mdc.MDCList({
+		$drawerScrim = $('<div>').addClass('mdc-drawer-scrim')
+			.prependTo($('body'));
+
+		// drawer needs to be prepend to body.
+		$drawer.prependTo($('body'));
+
+		// Added nav items to list
+		new $n2.mdc.MDCList({
+			parentElem: $drawerContent,
 			navList: true,
 			listItems: this.navItems
 		});
-		drawerContent.appendChild(drawerNav.docFragment);		
 		
-		drawerScrim = document.createElement('div');
-		drawerScrim.classList.add('mdc-drawer-scrim');
-		this.docFragment.appendChild(drawerScrim);
-
-		// doc fragment needs to be prepended to body.
-		document.body.insertBefore(this.docFragment, document.body.firstChild);
-
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
@@ -566,38 +543,32 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 		}, opts_);
 
 		MDC.prototype.initialize.call(this, opts);
+		
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Form Field Component');
+		}
 
 		this._generateMDCFormField();
 	},
 
 	_generateMDCFormField: function(){
-		var formField, keys;
+		var $formField, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-form-field', 'n2s_attachMDCFormField');
 
-		this.docFragment = document.createDocumentFragment();
-		formField = document.createElement('div');
-		formField.setAttribute('id', this.mdcId);
-		this.mdcClasses.forEach(function(className){
-			formField.classList.add(className);
-		});
-		this.docFragment.appendChild(formField);
+		$formField = $('<div>')
+			.attr('id', this.mdcId)
+			.addClass(this.mdcClasses.join(' '));
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				formField.setAttribute(key, _this.mdcAttributes[key]);
+				$formField.attr(key, _this.mdcAttributes[key]);
 			});
 		}
 
-		if (this.docFragment){	
-			if (!this.parentId) {
-				return this.docFragment;
-			} else {
-				document.getElementById(this.parentId).appendChild(this.docFragment);
-			}
-		}
+		$formField.appendTo(this.parentElem);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -630,55 +601,48 @@ var MDCList = $n2.Class('MDCList', MDC, {
 
 		this.listItems = opts.listItems;
 		this.navList = opts.navList;
+		
+		if (!this.parentElem) {
+			throw new Error('parentElem  must be provided, to add a Material Design List Component');
+		}
 
 		this._generateMDCList();
 	},
 
 	_generateMDCList: function(){
-		var list, item, keys;
+		var $list, $item, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-list', 'n2s_attachMDCList');
 
-		this.docFragment = document.createDocumentFragment();
-
 		if (this.navList) {
-			list = document.createElement('nav');
+			$list = $('<nav>');
 		} else {
-			list = document.createElement('ul');
+			$list = $('<ul>');
 		}
 
-		list.setAttribute('id', this.mdcId);
-		list.setAttribute('role', 'menu');
-		list.setAttribute('aria-hidden', 'true');
-		list.setAttribute('aria-orientation', 'vertical');
-		list.setAttribute('tab-index', '-1');
-		this.mdcClasses.forEach(function(className){
-			list.classList.add(className);
-		});
-		this.docFragment.appendChild(list);
+		$list.attr('id', this.mdcId)
+			.attr('role', 'menu')
+			.attr('aria-hidden', 'true')
+			.attr('aria-orientation', 'vertical')
+			.attr('tab-index', '-1')
+			.addClass(this.mdcClasses.join(' '));
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				list.setAttribute(key, _this.mdcAttributes[key]);
+				$list.attr(key, _this.mdcAttributes[key]);
 			});
 		}
 
 		if (this.listItems && $n2.isArray(this.listItems)){
 			this.listItems.forEach(function(listItem){
-				item = _this._generateMDCListItem(listItem);
-				list.appendChild(item);
+				$item = _this._generateMDCListItem(listItem);
+				$item.appendTo($list);
 			});
 		}
 
-		if (this.docFragment){	
-			if (!this.parentId) {
-				return this.docFragment;
-			} else {
-				document.getElementById(this.parentId).appendChild(this.docFragment);
-			}
-		}
+		$list.appendTo(this.parentElem);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -686,42 +650,42 @@ var MDCList = $n2.Class('MDCList', MDC, {
 	},
 
 	_generateMDCListItem: function(item){
-		var listItem, listItemText;
+		var $listItem, $listItemText;
 		
 		if (this.navList) {
-			listItem = document.createElement('a');
+			$listItem = $('<a>');
 		} else {
-			listItem = document.createElement('li');
+			$listItem = $('<li>');
 		}
 
-		listItem.setAttribute('role', 'menuitem');
-		listItem.setAttribute('tabindex', '-1');
-		listItem.classList.add('mdc-list-item');
+		$listItem.attr('role', 'menuitem')
+			.attr('tabindex', '-1')
+			.addClass('mdc-list-item');
 			
 
 		if (item.activated) {
-			listItem.setAttribute('tabIndex', '0');
-			listItem.setAttribute('aria-selected', true);
-			listItem.classList.add('mdc-list-item--activated');
+			$listItem.attr('tabIndex', '0')
+				.attr('aria-selected', true)
+				.addClass('mdc-list-item--activated');
 		}
 
 		if (item.href && typeof item.href === 'string') {
-			listItem.setAttribute('href', item.href);
+			$listItem.attr('href', item.href);
 		}
 
 		if (item.text && typeof item.text === 'string') {
-			listItemText = document.createElement('span');
-			listItemText.classList.add('mdc-list-item__text');
-			listItemText.textContent = item.text;
+			$listItemText = $('<span>')
+				.addClass('mdc-list-item__text')
+				.text(item.text);
 
 			if (item.onItemClick) {
-				listItemText.addEventListener('click', item.onItemClick);
+				$listItemText.click(item.onItemClick);
 			}
 
-			listItem.appendChild(listItemText);
+			$listItemText.appendTo($listItem);
 		}
 
-		return listItem;
+		return $listItem;
 	}
 }); 
 
@@ -732,6 +696,7 @@ var MDCList = $n2.Class('MDCList', MDC, {
 var MDCMenu = $n2.Class('MDCMenu', MDC, {
 	
 	anchorBtnId: null,
+	anchorBtnText: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -740,55 +705,55 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 
 		MDC.prototype.initialize.call(this, opts);
 
-		this.anchorBtnId = opts.anchorBtnId;
+		this.anchorBtnText = opts.anchorBtnText;
+		this.anchorBtnId = $n2.getUniqueId();
 		this.menuId = $n2.getUniqueId();
+		this.$menuSurfaceAnchor = null; 
 
-		if (!this.anchorBtnId) {
-					throw new Error('Anchor Btn Id required for creation of a MDCMenu Object');
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Menu Component');
 		}
 
 		this._generateMDCMenu();
 	},
 
 	_generateMDCMenu: function(){
-		var menu, menuSurfaceAnchor, keys;
+		var $menu, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-menu-surface--anchor');
 
-		this.docFragment = document.createDocumentFragment();
-
-		menuSurfaceAnchor = document.createElement('div');
-		menuSurfaceAnchor.setAttribute('id', this.mdcId);
-		this.mdcClasses.forEach(function(className){
-			menuSurfaceAnchor.classList.add(className);
-		});
-		this.docFragment.appendChild(menuSurfaceAnchor);
+		this.$menuSurfaceAnchor = $('<div>')
+			.attr('id', this.mdcId)
+			.addClass(this.mdcClasses.join(' '));
 		
-		menu = document.createElement('div');
-		menu.setAttribute('id', this.menuId);
-		menu.setAttribute('n2associatedmdc', this.anchorBtnId);
-		menu.classList.add('mdc-menu', 'mdc-menu-surface', 'n2s_attachMDCMenu');
-		menuSurfaceAnchor.appendChild(menu);
+		this._addAnchorBtn();
+
+		$menu = $('<div>').attr('id', this.menuId)
+			.attr('n2associatedmdc', this.anchorBtnId)
+			.addClass('mdc-menu mdc-menu-surface n2s_attachMDCMenu')
+			.appendTo(this.$menuSurfaceAnchor);
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
 			keys.forEach(function(key) {
-				menu.setAttribute(key, _this.mdcAttributes[key]);
+				$menu.attr(key, _this.mdcAttributes[key]);
 			});
 		}
 
-		if (this.docFragment){	
-			if (!this.parentId) {
-				return this.docFragment;
-			} else {
-				document.getElementById(this.parentId).appendChild(this.docFragment);
-			}
-		}
+		this.$menuSurfaceAnchor.appendTo(this.parentElem);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
+	},
+
+	_addAnchorBtn: function(){
+		new MDCButton({
+			parentElem: this.$menuSurfaceAnchor,
+			mdcId: this.anchorBtnId,
+			btnLabel: this.anchorBtnText
+		});
 	},
 
 	getMenuId: function(){
@@ -834,6 +799,10 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		this.onRadioClick = opts.onRadioClick;
 		this.rbtnInputId = $n2.getUniqueId();
 
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Radio Component');
+		}
+
 		this._generateMDCRadio();
 	},
 
@@ -847,11 +816,9 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 			this.mdcClasses.push('mdc-radio--disabled');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
 		$rbtn = $('<div>')
 			.attr('id', this.mdcId)
-			.addClass(this.mdcClasses.join(' '))
-			.appendTo(this.docFragment);
+			.addClass(this.mdcClasses.join(' '));
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -890,15 +857,9 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		$('<label>')
 			.attr('for', this.rbtnInputId)
 			.text(this.radioLabel)
-			.appendTo($('#' + this.parentId));
+			.appendTo(this.parentElem);
 
-		if (this.docFragment){	
-			if (!this.parentId) {
-				return this.docFragment;
-			} else {
-				this.docFragment.appendTo($('#' + this.parentId));
-			}
-		}
+		$rbtn.appendTo(this.parentElem);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -947,6 +908,10 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.menuOpts = opts.menuOpts;
 		this.preSelected = opts.preSelected;
 		this.selectId = $n2.getUniqueId();
+		
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Select Component');
+		}
 
 		this._generateMDCSelectMenu();
 	},
@@ -957,11 +922,9 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 		this.mdcClasses.push('mdc-select', 'mdc-select--outlined', 'n2s_attachMDCSelect');
 
-		this.docFragment = $(document.createDocumentFragment());
 		$menu = $('<div>')
 			.attr('id', this.mdcId)
-			.addClass(this.mdcClasses.join(' '))
-			.appendTo(this.docFragment);
+			.addClass(this.mdcClasses.join(' '));
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -970,8 +933,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			});
 		}
 
-		$('<i>')
-			.addClass('mdc-select__dropdown-icon')
+		$('<i>').addClass('mdc-select__dropdown-icon')
 			.appendTo($menu);
 
 		this.select = $('<select>')
@@ -984,8 +946,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			.addClass('mdc-notched-outline')
 			.appendTo($menu);
 
-		$('<div>')
-			.addClass('mdc-notched-outline__leading')
+		$('<div>').addClass('mdc-notched-outline__leading')
 			.appendTo($menuNotchedOutline);
 
 		$menuNotchedOutlineNotch = $('<div>')
@@ -1002,8 +963,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			label.addClass('mdc-floating-label--float-above');
 		}
 	
-		$('<div>')
-			.addClass('mdc-notched-outline__trailing')
+		$('<div>').addClass('mdc-notched-outline__trailing')
 			.appendTo($menuNotchedOutline);	
 
 		if (this.menuOpts 
@@ -1014,13 +974,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			});
 		}
 		
-		if (this.docFragment){	
-			if (!this.parentId) {
-				return this.docFragment;
-			} else {
-				this.docFragment.appendTo($('#' + this.parentId));
-			}
-		}
+		$menu.appendTo(this.parentElem);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -1103,6 +1057,10 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.passwordFld = opts.passwordFld;
 		this.prefilled = opts.prefilled;
 		this.inputRequired = opts.inputRequired;
+		
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Text Field Component');
+		}
 
 		this._generateMDCTextField();
 	},
@@ -1122,11 +1080,9 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			this.mdcClasses.push('mdc-text-field--outlined');
 		}
 
-		this.docFragment = $(document.createDocumentFragment());
 		$txtFld = $('<div>')
 			.attr('id', this.mdcId)
-			.addClass(this.mdcClasses.join(' '))
-			.appendTo(this.docFragment);
+			.addClass(this.mdcClasses.join(' '));
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -1164,8 +1120,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 				.addClass('mdc-notched-outline')
 				.appendTo($txtFld);
 		
-			$('<div>')
-				.addClass('mdc-notched-outline__leading')
+			$('<div>').addClass('mdc-notched-outline__leading')
 				.appendTo($txtFldOutline);
 		
 			$txtFldOutlineNotch = $('<div>')
@@ -1198,13 +1153,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 				.appendTo($txtFld);
 		}
 
-		if (this.docFragment){	
-			if (!this.parentId) {
-				return this.docFragment;
-			} else {
-				this.docFragment.appendTo($('#' + this.parentId));
-			}
-		}
+		$txtFld.appendTo(this.parentElem);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -1239,11 +1188,9 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 
 		this.mdcClasses.push('mdc-top-app-bar', 'n2s_attachMDCTopAppBar');
 
-		this.docFragment = $(document.createDocumentFragment());
 		$topAppBar = $('<header>')
 			.attr('id', this.mdcId)
-			.addClass(this.mdcClasses.join(' '))
-			.appendTo(this.docFragment);
+			.addClass(this.mdcClasses.join(' '));
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -1278,7 +1225,7 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 			.addClass('nunaliit_login mdc-top-app-bar__action-item')
 			.appendTo($topAppBarRSection);
 
-		this.docFragment.prependTo($('body'));
+		$topAppBar.prependTo($('body'));
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));

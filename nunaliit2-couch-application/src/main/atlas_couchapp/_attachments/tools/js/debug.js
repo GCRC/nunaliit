@@ -50,7 +50,7 @@
 				.appendTo($conf);
 
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($buttonsContainer),
+				parentElem: $buttonsContainer,
 				btnLabel: 'Clear Cache',
 				onBtnClick: function(){
 					$n2.indexedDb.openIndexedDb({
@@ -92,10 +92,6 @@
 				.attr('role', 'group')
 				.appendTo($confContent);
 			
-//			new $n2.mdc.MDCFormField({
-//				parentId: $n2.utils.getElementIdentifier($confContent)
-//			});
-			
 			// Bad Proxy
 			var $badProxyListItem = $('<li>')
 				.addClass('mdc-list-item')
@@ -107,7 +103,7 @@
 			};
 
 			new $n2.mdc.MDCCheckbox({
-				parentId: $n2.utils.getElementIdentifier($badProxyListItem),
+				parentElem: $badProxyListItem,
 				mdcClasses: ['n2debug_configuration_content_badProxy'],
 				chkboxChecked: badProxyChkboxChecked, 
 				chkboxLabel: 'Bad Proxy Circumvention',
@@ -133,7 +129,7 @@
 			};
 
 			new $n2.mdc.MDCCheckbox({
-				parentId: $n2.utils.getElementIdentifier($loggingListItem),
+				parentElem: $loggingListItem,
 				mdcClasses: ['n2debug_configuration_content_logging'],
 				chkboxChecked: loggingChkboxChecked, 
 				chkboxLabel: 'Dispatcher Event Logging',
@@ -159,7 +155,7 @@
 			};
 
 			new $n2.mdc.MDCCheckbox({
-				parentId: $n2.utils.getElementIdentifier($couchDBCachingListItem),
+				parentElem: $couchDBCachingListItem,
 				mdcClasses: ['n2debug_configuration_content_couchDbCaching'],
 				chkboxChecked: couchDBCachingChkboxChecked, 
 				chkboxLabel: 'CouchDb Caching',
@@ -185,7 +181,7 @@
 			};
 
 			new $n2.mdc.MDCCheckbox({
-				parentId: $n2.utils.getElementIdentifier($disableCouchDBCachingListItem),
+				parentElem: $disableCouchDBCachingListItem,
 				mdcClasses: ['n2debug_configuration_content_disableCouchDbCaching'],
 				chkboxChecked: disableCouchDBCachingCheckboxChecked, 
 				chkboxLabel: 'Disable CouchDb Caching',
@@ -211,7 +207,7 @@
 			};
 
 			new $n2.mdc.MDCCheckbox({
-				parentId: $n2.utils.getElementIdentifier($slowConnectionListItem),
+				parentElem: $slowConnectionListItem,
 				mdcClasses: ['n2debug_configuration_content_slowConnectionHandling'],
 				chkboxChecked: slowConnectionChkboxChecked, 
 				chkboxLabel: 'Force slow connection handling',

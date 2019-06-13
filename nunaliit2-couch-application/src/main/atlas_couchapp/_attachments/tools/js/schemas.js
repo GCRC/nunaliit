@@ -224,18 +224,16 @@
 				var $td = $('<td></td>');
 				$tr.append($td);
 
-				var btnParentId = $n2.utils.getElementIdentifier($td);
-
 				if( isInstalled ) {
 					new $n2.mdc.MDCButton({
-						parentId: btnParentId,
+						parentElem: $td,
 						btnLabel: 'Replace',
 						onBtnClick: createClickReplaceSchema(schema, received[name])
 					});
 
 				} else {
 					new $n2.mdc.MDCButton({
-						parentId: btnParentId,
+						parentElem: $td,
 						btnLabel: 'Install',
 						onBtnClick: createClickInstallSchema(schema)
 					});
@@ -348,7 +346,7 @@
 				.appendTo($e);
 
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($h),
+				parentElem: $h,
 				btnLabel: 'Clear',
 				onBtnClick: function(){
 					var $d = getLogsDiv();

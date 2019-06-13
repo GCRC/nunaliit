@@ -138,7 +138,7 @@ var LanguageSwitcher = $n2.Class({
 		});
 		
 		var languageSelect = new $n2.mdc.MDCFormField({
-			parentId: langDialog.getContentId()
+			parentElem: $('#' + langDialog.getContentId())
 		});
 
 		var formFieldId = languageSelect.getId();
@@ -153,7 +153,7 @@ var LanguageSwitcher = $n2.Class({
 		
 		function addLanguage($list, name, code){
 			var langSelectInput = new $n2.mdc.MDCRadio({
-				parentId: $list,
+				parentElem: $list,
 				radioLabel: name,
 				radioName: "languageSelect",
 				onRadioClick: function(){

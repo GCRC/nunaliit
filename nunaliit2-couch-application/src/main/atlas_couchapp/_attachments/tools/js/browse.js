@@ -379,7 +379,7 @@ function main(opts_) {
 
 	if( $addDocBtn.length < 1){
 		new $n2.mdc.MDCButton({
-			parentId: 'searchPanel',
+			parentElem: $addDocBtn,
 			mdcId: 'addDocumentButton',
 			btnLabel: 'New Document',
 			btnRaised: true,

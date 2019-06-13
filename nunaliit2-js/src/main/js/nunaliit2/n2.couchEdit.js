@@ -719,7 +719,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			};
 
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($displayRelationDiv),
+				parentElem: $displayRelationDiv,
 				mdcClasses: ['editorDisplayRelationButton'],
 				btnLabel: 'Remove',
 				onBtnClick: removeRelationFn
@@ -1395,7 +1395,7 @@ var CouchDocumentEditor = $n2.Class({
 			.appendTo($formButtonsContainer);
 
 		new $n2.mdc.MDCButton({
-			parentId: $n2.utils.getElementIdentifier($formButtons),
+			parentElem: $formButtons,
 			mdcClasses: ['save'],
 			btnLabel: 'Save',
 			btnRaised: true,
@@ -1408,7 +1408,7 @@ var CouchDocumentEditor = $n2.Class({
 		if( !this.isInsert && $n2.couchMap.canDeleteDoc(data) ) {
 
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($formButtons),
+				parentElem: $formButtons,
 				mdcClasses: ['delete'],
 				btnLabel: 'Delete',
 				onBtnClick: function(evt){
@@ -1427,7 +1427,7 @@ var CouchDocumentEditor = $n2.Class({
 		};
 
 		new $n2.mdc.MDCButton({
-			parentId: $n2.utils.getElementIdentifier($formButtons),
+			parentElem: $formButtons,
 			mdcClasses: ['relation'],
 			btnLabel: 'Add Relation',
 			onBtnClick: function(){
@@ -1437,7 +1437,7 @@ var CouchDocumentEditor = $n2.Class({
 		});
 		
 		new $n2.mdc.MDCButton({
-			parentId: $n2.utils.getElementIdentifier($formButtons),
+			parentElem: $formButtons,
 			mdcClasses: ['layers'],
 			btnLabel: 'Layers',
 			onBtnClick: function(){ 
@@ -1447,7 +1447,7 @@ var CouchDocumentEditor = $n2.Class({
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: $n2.utils.getElementIdentifier($formButtons),
+			parentElem: $formButtons,
 			mdcClasses: ['cancel'],
 			btnLabel: 'Cancel',
 			onBtnClick: function(){
@@ -2019,12 +2019,13 @@ var CouchDocumentEditor = $n2.Class({
 			var $brief = $('<span></span>')
 				.text(relDocId)
 				.appendTo($displayRelationDiv);
+
 			if( showService ){
 				showService.printBriefDescription($brief, relDocId);
 			};
 		
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($displayRelationDiv),
+				parentElem: $displayRelationDiv,
 				mdcClasses: ['editorDisplayRelationButton'],
 				btnLabel: 'Remove',
 				onBtnClick: removeRelationFn
@@ -2889,7 +2890,7 @@ var AttachmentEditor = $n2.Class({
 		var $elem = $(opts.elem);
 
 		var attachBtnOpts = {
-			parentId: $n2.utils.getElementIdentifier($elem),
+			parentElem: $elem,
 			btnLabel: 'Add File',
 			onBtnClick: function(){
 				_this._openAddFileDialog();
@@ -3232,7 +3233,6 @@ var AttachmentEditor = $n2.Class({
 		});
 
 		var dialogContentId = addFileDialog.getContentId();
-		var dialogFooterId = addFileDialog.getFooterId();
 
 		$('#' + dialogContentId).addClass('attachmentEditor_dialog_content');
 		$('#' + dialogContentId).addClass('attachmentEditor_dialog_buttons');
@@ -3247,7 +3247,7 @@ var AttachmentEditor = $n2.Class({
 			.appendTo($addFileForm);
 
 		new $n2.mdc.MDCButton({
-			parentId: dialogFooterId,
+			parentElem: $('#' + addFileDialog.getFooterId()),
 			mdcClasses: ['mdc-dialog__button'],
 			btnLabel: 'Attach',
 			onBtnClick: function(){
@@ -3870,7 +3870,7 @@ var AttachmentEditor = $n2.Class({
 		};
 
 		new $n2.mdc.MDCButton({
-			parentId: $n2.utils.getElementIdentifier($div),
+			parentElem: $div,
 			mdcClasses: ['attachmentEditor_delete'],
 			mdcAttributes: {
 				'n2AttName':'attName'

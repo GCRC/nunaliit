@@ -206,7 +206,7 @@ function showButtons(opts_){
 	$div.empty();
 
 	var formatSelect = new $n2.mdc.MDCSelect({
-		parentId: $n2.utils.getElementIdentifier($div),
+		parentElem: $div,
 		preSelected: true,
 		menuLabel: 'Export Format',
 		menuOpts: [
@@ -224,10 +224,8 @@ function showButtons(opts_){
 
 	$('#' + formatSelect.getSelectId()).addClass('exportControls_formatSelector');
 
-	var btnParentId = $n2.utils.getElementIdentifier($div);
-
 	new $n2.mdc.MDCButton({
-		parentId: btnParentId,
+		parentElem: $div,
 		btnLabel: 'Show',
 		onBtnClick: function(){
 			var $formatSel = $('#' + formatSelect.getSelectId());
@@ -242,7 +240,7 @@ function showButtons(opts_){
 	});
 
 	new $n2.mdc.MDCButton({
-		parentId: btnParentId,
+		parentElem: $div,
 		btnLabel: 'Download',
 		onBtnClick: function(){
 			var $formatSel = $('#' + formatSelect.getSelectId());
@@ -322,7 +320,7 @@ function layerSelected(layerId){
 function installSchemaLayerSelect(menuOptions) {
 	var $methodResult = $('.exportControls_methodResult');
 	var schemaLayerSelect = new $n2.mdc.MDCSelect({
-		parentId: $n2.utils.getElementIdentifier($methodResult),
+		parentElem: $methodResult,
 		menuChgFunction: function(){
 			var $sel = $(this);
 			var selectedType = $('.exportControls_methodSelector').val();
@@ -453,7 +451,7 @@ function installMethodButton(){
 		.empty();
 	
 	var typeSelect = new $n2.mdc.MDCSelect({
-		parentId: $n2.utils.getElementIdentifier($controls),
+		parentElem: $controls,
 		preSelected: true,
 		menuChgFunction: function(){
 			var $sel = $(this);
@@ -582,7 +580,7 @@ function addHamburgerMenu(){
 
 	// Top-App-Bar
 	new $n2.mdc.MDCTopAppBar({
-		barTitle: 'Export DataUser'
+		barTitle: 'Export Data'
 	});
 };
 

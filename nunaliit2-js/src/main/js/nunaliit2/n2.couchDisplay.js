@@ -1457,12 +1457,12 @@ var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
 		var createRelatedDocProcess = display.createRelatedDocProcess;
 		
 		var $placeHolder = $('<span>')
+			.css('display', 'inline-block')
 			.appendTo($buttons);
 
 		createRelatedDocProcess.insertAddRelatedMenu({
 			placeHolderElem: $placeHolder 
 			,doc: doc
-			,parentId: $n2.utils.getElementIdentifier($buttons)
 			,classes: ['nunaliit_form_link', 'nunaliit_form_link_add_related_item']
 			,onRelatedDocumentCreated: function(docId){}
 		});
@@ -1829,7 +1829,7 @@ var ButtonDisplay = $n2.Class({
 		};
 
 		var btnOpts = {
-			parentId: $n2.utils.getElementIdentifier($elem),
+			parentElem: $elem,
 			mdcClasses: ['nunaliit_form_link'],
 			btnLabel: label,
 			onBtnClick: wrapAndReturnFalse(opts.click)

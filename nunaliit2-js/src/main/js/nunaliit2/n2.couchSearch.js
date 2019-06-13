@@ -1560,7 +1560,7 @@ var SearchServer = $n2.Class({
 			// If Search widget is not installed in the module title bar
 			// update appearance
 			var searchTxtFldOpts = new $n2.mdc.MDCTextField({
-				parentId: $n2.utils.getElementIdentifier($elem),
+				parentElem: $elem,
 				txtFldLabel: searchWidgetLabel,
 				txtFldInputId: $searchInputId
 			});
@@ -1590,7 +1590,7 @@ var SearchServer = $n2.Class({
 		if( opts.useButton ){
 
 			var searchBtn = new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($elem),
+				parentElem: $elem,
 				btnLabel: searchButtonLabel,
 				btnRaised: true
 			});

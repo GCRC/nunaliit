@@ -95,7 +95,7 @@
 				$deletedList.append($deletedHeader);
 				
 				new $n2.mdc.MDCButton({
-					parentId: $n2.utils.getElementIdentifier($deletedHeader),
+					parentElem: $deletedHeader,
 					btnLabel: 'Refresh',
 					onBtnClick: function(){
 						var $div = _this._getDisplayDiv();
@@ -248,7 +248,7 @@
 					new $n2.tree.ObjectTree($content, doc);
 					
 					new $n2.mdc.MDCButton({
-						parentId: $n2.utils.getElementIdentifier($displayDiv),
+						parentElem: $displayDiv,
 						btnLabel: 'Restore this version',
 						btnRaised: true,
 						onBtnClick: function(){

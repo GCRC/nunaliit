@@ -46,7 +46,7 @@
 				.appendTo($buttonsLine);
 
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($buttonsLine),
+				parentElem: $buttonsLine,
 				btnLabel: 'Clear',
 				onBtnClick: function(){
 					_this.clear();
@@ -188,7 +188,7 @@
 				.appendTo($buttonsLine);
 
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($buttonsLine),
+				parentElem: $buttonsLine,
 				btnLabel: 'Refresh',
 				onBtnClick: function(){
 					_this._refreshSubmissions();
@@ -398,7 +398,7 @@
 				$('#' + denyDialog.getFooterId()).addClass('submission_deny_dialog_buttons');
 
 				new $n2.mdc.MDCButton({
-					parentId: denyDialog.getFooterId(),
+					parentElem: $('#' + denyDialog.getFooterId()),
 					mdcClasses: ['n2_button_ok', 'mdc-dialog__button'],
 					btnLabel: 'OK',
 					onBtnClick: function(){
@@ -418,7 +418,7 @@
 
 				// TextArea Rejection Reason
 				var rejectionReason = new $n2.mdc.MDCTextField({
-					parentId: denyDialog.getContentId(),
+					parentElem: $('#' + denyDialog.getContentId()),
 					txtFldArea: true,
 					txtFldLabel: 'Rejection Reason',
 				});
@@ -433,7 +433,7 @@
 					.appendTo($('#' + denyDialog.getContentId()));
 
 				new $n2.mdc.MDCCheckbox({
-					parentId: optionsId,
+					parentElem: $options,
 					chkboxName: 'send_email',
 					chkboxLabel: 'Send e-mail to submitter with reason for rejection'
 				});
@@ -708,7 +708,7 @@
 				.appendTo($entry);
 
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($views),
+				parentElem: $views,
 				btnLabel: 'View',
 				onBtnClick: function(){
 					_this._viewMerging(subDocId);
@@ -965,7 +965,7 @@
 				};
 
 				new $n2.mdc.MDCButton({
-					parentId: _this.openDiag.getFooterId(),
+					parentElem: $('#' + _this.openDiag.getFooterId()),
 					mdcClasses: ['n2_button_approve'],
 					btnLabel: 'Approve',
 					onBtnClick: function(){
@@ -977,7 +977,7 @@
 				});
 
 				new $n2.mdc.MDCButton({
-					parentId: _this.openDiag.getFooterId(),
+					parentElem: $('#' + _this.openDiag.getFooterId()),
 					mdcClasses: ['n2_button_deny', 'mdc-dialog__button'],
 					btnLabel: 'Reject',
 					onBtnClick: function(){
@@ -989,9 +989,9 @@
 					}
 				});
 
-				if( originalDoc ) {
+				if (originalDoc) {
 					new $n2.mdc.MDCButton({
-						parentId: _this.openDiag.getFooterId(),
+						parentElem: $('#' + _this.openDiag.getFooterId()),
 						mdcClasses: ['n2_button_original', 'mdc-dialog__button'],
 						btnLabel: 'View Original',
 						onBtnClick: function(){
@@ -1001,9 +1001,9 @@
 					});
 				};
 
-				if( submittedDoc ) {
+				if (submittedDoc) {
 					new $n2.mdc.MDCButton({
-						parentId: _this.openDiag.getFooterId(),
+						parentElem: $('#' + _this.openDiag.getFooterId()),
 						mdcClasses: ['n2_button_submitted', 'mdc-dialog__button'],
 						btnLabel: 'View Submitted',
 						onBtnClick: function(){
@@ -1013,9 +1013,9 @@
 					});
 				};
 
-				if( ! subDoc.nunaliit_submission.deletion ) {
+				if (!subDoc.nunaliit_submission.deletion) {
 					new $n2.mdc.MDCButton({
-						parentId: _this.openDiag.getFooterId(),
+						parentElem: $('#' + _this.openDiag.getFooterId()),
 						mdcClasses: ['n2_button_manual', 'mdc-dialog__button'],
 						btnLabel: 'Edit Proposed Document',
 						onBtnClick: function(){
@@ -1101,10 +1101,8 @@
 					]
 				});
 
-				var btnParentId = $n2.utils.getElementIdentifier($buttons);
-				
 				new $n2.mdc.MDCButton({
-					parentId: btnParentId,
+					parentElem: $buttons,
 					mdcClasses: ['n2_button_save'],
 					btnLabel: 'Save',
 					onBtnClick: function(){
@@ -1115,7 +1113,7 @@
 				});
 
 				new $n2.mdc.MDCButton({
-					parentId: btnParentId,
+					parentElem: $buttons,
 					mdcClasses: ['n2_button_cancel'],
 					btnLabel: 'Cancel',
 					onBtnClick: function(){

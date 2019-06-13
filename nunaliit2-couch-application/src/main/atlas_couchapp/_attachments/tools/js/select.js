@@ -522,7 +522,7 @@
 		});
 		
 		new $n2.mdc.MDCButton({
-			parentId: refineListDialog.getFooterId(),
+			parentElem: $('#' + refineListDialog.getFooterId()),
 			btnLabel: 'OK',
 			onBtnClick: okBtnFunc
 		});
@@ -537,7 +537,7 @@
 		};
 		
 		var refinementSelect = new $n2.mdc.MDCSelect({
-			parentId: refineListDialog.getContentId(),
+			parentElem: $('#' + refineListDialog.getContentId()),
 			menuLabel: 'Type of refinement',
 			menuOpts: menuOptions,
 			menuChgFunction: function(e){
@@ -2298,7 +2298,7 @@
 			.appendTo($buttonsLine);
 
 		new $n2.mdc.MDCButton({
-			parentId: $n2.utils.getElementIdentifier($buttonsLine),
+			parentElem: $buttonsLine,
 			btnLabel: 'Add',
 			onBtnClick: function(){
 				SearchFilter.createNewList({
@@ -2328,10 +2328,8 @@
 				.text( list.print() )
 				.appendTo($d);
 			
-			var btnParentId = $n2.utils.getElementIdentifier($d);
-
 			new $n2.mdc.MDCButton({
-				parentId: btnParentId,
+				parentElem: $d,
 				mdcAttributes: {
 					'href': '#',
 					'n2-list-id': listId
@@ -2342,7 +2340,7 @@
 			});
 
 			new $n2.mdc.MDCButton({
-				parentId: btnParentId,
+				parentElem: $d,
 				mdcAttributes: {
 					'href': '#',
 					'n2-list-id': listId
@@ -2353,7 +2351,7 @@
 			});
 
 			new $n2.mdc.MDCButton({
-				parentId: btnParentId,
+				parentElem: $d,
 				mdcAttributes: {
 					'href': '#',
 					'n2-list-id': listId
@@ -2479,10 +2477,8 @@
 			.text(_loc(list.name + ' '))
 			.appendTo($headerLine);
 
-		var btnParentId = $n2.utils.getElementIdentifier($headerLine);
-
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $headerLine,
 			btnLabel: 'Transform',
 			onBtnClick: function(){
 				transformList(list);
@@ -2491,7 +2487,7 @@
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $headerLine,
 			btnLabel: 'Delete',
 			onBtnClick: function(){
 				deleteDocumentsFromList(list);
@@ -2500,7 +2496,7 @@
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $headerLine,
 			btnLabel: 'Refine List',
 			onBtnClick: function(){
 				SearchFilter.refineList({
@@ -2514,7 +2510,7 @@
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $headerLine,
 			btnLabel: 'Report',
 			onBtnClick: function(){
 				reportList(list);
@@ -2523,7 +2519,7 @@
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $headerLine,
 			btnLabel: 'Export',
 			onBtnClick: function(){
 				exportList(list);
@@ -2532,7 +2528,7 @@
 		});
 		
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $headerLine,
 			btnLabel: 'Export by Script',
 			onBtnClick: function(){
 				exportListByScript(list);
@@ -2626,13 +2622,13 @@
 		});
 		
 		var transformSelect = new $n2.mdc.MDCSelect({
-			parentId: transformDialog.getContentId(),
+			parentElem: $('#' + transformDialog.getContentId()),
 			menuLabel: 'Transform Methods',
 			menuOpts: transformMenuOpts
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: transformDialog.getFooterId(),
+			parentElem: $('#' + transformDialog.getFooterId()),
 			btnLabel: 'Ok',
 			onBtnClick: function(){
 				var transformId = $('#' + transformSelect.getSelectId()).val();
@@ -2671,7 +2667,7 @@
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: deleteDialog.getFooterId(),
+			parentElem: $('#' + deleteDialog.getFooterId()),
 			btnLabel: 'OK',
 			onBtnClick: deleteConfirmFunc
 		});
@@ -2687,7 +2683,7 @@
 			});
 
 			new $n2.mdc.MDCButton({
-				parentId: deleteProgressDialog.getFooterId(),
+				parentElem: $('#' + deleteProgressDialog.getFooterId()),
 				btnLabel: 'Cancel',
 				onBtnClick: cancelFunc
 			});
@@ -2785,7 +2781,7 @@
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: reportListDialog.getFooterId(),
+			parentElem: $('#' + reportListDialog.getFooterId()),
 			btnLabel: 'OK',
 			onBtnClick: function(){
 				performReport(reportListDialog.getId());
@@ -2794,7 +2790,7 @@
 		});
 
 		var scriptTxtField = new $n2.mdc.MDCTextField({
-			parentId: reportListDialog.getContentId(),
+			parentElem: $('#' + reportListDialog.getContentId()),
 			txtFldLabel: 'Script',
 			txtFldArea: true
 		});
@@ -2963,7 +2959,7 @@
 
 			// Filter
 			var exportFilter = new $n2.mdc.MDCSelect({
-				parentId: exportDialog.getContentId(),
+				parentElem: $('#' + exportDialog.getContentId()),
 				menuLabel: 'Filter',
 				menuOpts: [
 					{'label': 'All Documents', 'value': 'all'},
@@ -2977,7 +2973,7 @@
 
 			// Format
 			var exportFormat = new $n2.mdc.MDCSelect({
-				parentId: exportDialog.getContentId(),
+				parentElem: $('#' + exportDialog.getContentId()),
 				menuLabel: 'Format',
 				menuChgFunction: formatChanged,
 				menuOpts: [
@@ -2990,7 +2986,7 @@
 			
 			// File name
 			var exportFileName = new $n2.mdc.MDCTextField({
-				parentId: exportDialog.getContentId(),
+				parentElem: $('#' + exportDialog.getContentId()),
 				txtFldLabel: 'File Name',
 				prefilled: 'export.geojson'
 			});
@@ -2999,7 +2995,7 @@
 				.addClass('n2_export_fileNameInput');
 
 			new $n2.mdc.MDCButton({
-				parentId: exportDialog.getFooterId(),
+				parentElem: $('#' + exportDialog.getFooterId()),
 				btnLabel: 'Export',
 				onBtnClick: function(){
 					var filter = $('#'+exportFilter.getSelectId()).val();
@@ -3321,7 +3317,7 @@
 					.appendTo($div);
 
 				new $n2.mdc.MDCButton({
-					parentId: $n2.utils.getElementIdentifier($buttons),
+					parentElem: $buttons,
 					btnLabel: 'Edit',
 					onBtnClick: function(){
 						editDocument(doc);
@@ -3358,7 +3354,7 @@
 					};
 					
 					new $n2.mdc.MDCSelect({
-						parentId: $n2.utils.getElementIdentifier($buttons),
+						parentElem: $buttons,
 						menuLabel: 'Select Revision',
 						menuChgFunction: function(){ revisionSelected(this, $revs) },
 						menuOpts: menuOptions
@@ -3454,7 +3450,7 @@
 				.appendTo($buttonsLine);
 
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($buttonsLine),
+				parentElem: $buttonsLine,
 				btnLabel: 'Clear',
 				onBtnClick: function(){
 					var $d = getLogsDiv();
@@ -3487,17 +3483,16 @@
 	// -----------------------------------------------------------------
 	function bs(){
 		
-		var btnParentId = $n2.utils.getElementIdentifier($selectAppDiv);
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $selectAppDiv,
 			btnLabel: 'Test Temporary View',
 			onBtnClick: function(){
 				atlasDb.queryTemporaryView({
 					map: 'function(doc){ emit(null,null); }'
 					,onSuccess: function(rows){
 						var docIds = [];
-						for(var i=0,e=rows.length; i<e; ++i){
-							docIds.push( rows[i].id );
+						for (var i=0,e=rows.length; i<e; i += 1) {
+							docIds.push(rows[i].id);
 						};
 						
 						var l = new DocumentList({
@@ -3512,7 +3507,7 @@
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $selectAppDiv,
 			btnLabel: 'All Documents',
 			onBtnClick: function(){
 				atlasDb.listAllDocuments({

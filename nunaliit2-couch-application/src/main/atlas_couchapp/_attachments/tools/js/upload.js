@@ -188,7 +188,7 @@
 		if( $select.length < 1 ) {
 			
 			var uploadTypeSelect = new $n2.mdc.MDCSelect({
-				parentId: btnLineId,
+				parentElem: $btnLine,
 				menuChgFunction: selectionChanged,
 				menuLabel: 'Upload Type',
 				menuOpts: [
@@ -210,7 +210,7 @@
 		if( $limit.length < 1 ){
 	
 			var limitSelect = new $n2.mdc.MDCSelect({
-				parentId: btnLineId,
+				parentElem: $btnLine,
 				menuChgFunction: limitChanged,
 				menuLabel: 'Limit',
 				menuOpts: [
@@ -243,7 +243,7 @@
 		var $approveSelected = $btnLine.find('.uploadApproveSelectedButton');
 		if( $approveSelected.length < 1 ) {
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($btnLine),
+				parentElem: $btnLine,
 				mdcClasses: ['uploadButton', 'uploadApproveSelectedButton'],
 				btnLabel: 'Approve Selected',
 				btnRaised: true,
@@ -258,7 +258,7 @@
 		var $denySelected = $btnLine.find('.uploadDenySelectedButton');
 		if( $denySelected.length < 1 ) {
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($btnLine),
+				parentElem: $btnLine,
 				mdcClasses: ['uploadButton', 'uploadDenySelectedButton'],
 				btnLabel: 'Deny Selected',
 				btnRaised: true,
@@ -273,7 +273,7 @@
 		var $selectAllButton = $btnLine.find('.uploadSelectAllButton');
 		if( $selectAllButton.length < 1 ) {
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($btnLine),
+				parentElem: $btnLine,
 				mdcClasses: ['uploadButton', 'uploadSelectAllButton'],
 				btnLabel: 'Selected All',
 				btnRaised: true,

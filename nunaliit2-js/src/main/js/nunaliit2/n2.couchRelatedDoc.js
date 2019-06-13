@@ -234,7 +234,7 @@ var Editor = $n2.Class({
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: this.dialog.getFooterId()
+			parentElem: $('#' + this.dialog.getFooterId())
 			,btnLabel: 'OK'
 			,onBtnClick: _this._clickOK(this)
 		});
@@ -615,7 +615,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		var opts = $n2.extend({
 			doc: null
 			,classes: null
-			,parentId: null
+			,placeHolderElem: null
 			,onRelatedDocumentCreated: function(docId){}
 		},opts_);
 		
@@ -624,7 +624,6 @@ var CreateRelatedDocProcess = $n2.Class({
 		var $placeHolder = $(opts.placeHolderElem);
 		var doc = opts.doc;
 		var classes = opts.classes;
-		var parentId = opts.parentId;
 		
 		var docSchemaName = doc.nunaliit_schema;
 		if (!docSchemaName) {
@@ -676,15 +675,10 @@ var CreateRelatedDocProcess = $n2.Class({
 				return;
 			}
 
-			menuBtn = new $n2.mdc.MDCButton({
-				parentId: parentId
-				,btnLabel: 'Add Releated Item'
-			});
-
 			menu = new $n2.mdc.MDCMenu({
-				parentId: parentId
+				parentElem: $placeHolder
+				,anchorBtnText: 'Add Related Item'
 				,mdcClasses: classes
-				,anchorBtnId: menuBtn.getId()
 			});
 
 			relatedSchemas.forEach(function(item){
@@ -695,11 +689,9 @@ var CreateRelatedDocProcess = $n2.Class({
 			});
 
 			new $n2.mdc.MDCList({
-				parentId: menu.getMenuId()
+				parentElem: $('#' + menu.getMenuId())
 				,listItems: listItems
 			});
-			
-			$placeHolder.remove();
 		};
 	},
 

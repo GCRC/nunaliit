@@ -82,7 +82,7 @@ var UserManagementApplication = $n2.Class({
 			.appendTo(div);
 		
 		var userSearchField = new $n2.mdc.MDCTextField({
-			parentId: $n2.utils.getElementIdentifier($userInput),
+			parentElem: $userInput,
 			txtFldLabel: 'User Search'
 		});
 
@@ -112,10 +112,9 @@ var UserManagementApplication = $n2.Class({
 			};
 		});
 
-		var btnParentId = $n2.utils.getElementIdentifier($userInput);
 
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $userInput,
 			mdcClasses: ['userAppQueryButton'],
 			btnLabel: 'Query Users',
 			btnRaised: true,
@@ -125,7 +124,7 @@ var UserManagementApplication = $n2.Class({
 		});
 
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $userInput,
 			mdcClasses: ['userAppAddUser'],
 			btnLabel: 'Add User',
 			btnRaised: true,
@@ -135,7 +134,7 @@ var UserManagementApplication = $n2.Class({
 		});
 		
 		new $n2.mdc.MDCButton({
-			parentId: btnParentId,
+			parentElem: $userInput,
 			mdcClasses: ['userAppMyUser'],
 			btnLabel: 'My User',
 			btnRaised: true,
@@ -228,7 +227,7 @@ var UserManagementApplication = $n2.Class({
 			.appendTo($userAppOutput);
 
 		new $n2.mdc.MDCTextField({
-			parentId: formId,
+			parentElem: $userForm,
 			txtFldInputId: 'addUserName',
 			txtFldLabel: 'User Name'
 		});
@@ -236,7 +235,7 @@ var UserManagementApplication = $n2.Class({
 		$userForm.append('</br>');
 
 		var password1 = new $n2.mdc.MDCTextField({
-			parentId: formId,
+			parentElem: $userForm,
 			passwordFld: true,
 			txtFldInputId: 'addUserPassword1',
 			txtFldLabel: 'Password'
@@ -245,7 +244,7 @@ var UserManagementApplication = $n2.Class({
 		$userForm.append('</br>');
 
 		var password2 = new $n2.mdc.MDCTextField({
-			parentId: formId,
+			parentElem: $userForm,
 			passwordFld: true,
 			txtFldInputId: 'addUserPassword2',
 			txtFldLabel: 'Repeat Password'
@@ -254,7 +253,7 @@ var UserManagementApplication = $n2.Class({
 		$userForm.append('</br>');
 
 		new $n2.mdc.MDCButton({
-			parentId: formId,
+			parentElem, $userForm,
 			mdcId: 'btnAddUser2',
 			btnLabel: 'Proceed',
 			btnRaised: true,

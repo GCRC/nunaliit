@@ -51,14 +51,14 @@
 
 		// Import Profile Select Menu
 		var importProfileSelect = new $n2.mdc.MDCSelect({
-			parentId: $n2.utils.getElementIdentifier($buttonLine),
+			parentElem: $buttonLine,
 			menuLabel: 'Import Profile',
 			menuOpts: importProfileMenuOpts
 		});
 
 		// Input Textarea
 		var inputTextField = new $n2.mdc.MDCTextField({
-			parentId: $n2.utils.getElementIdentifier($inputSection),
+			parentElem: $inputSection,
 			txtFldArea: true,
 			txtFldLabel: 'Input'
 		});
@@ -67,7 +67,7 @@
 
 		// Import Verify Button
 		new $n2.mdc.MDCButton({
-			parentId: $n2.utils.getElementIdentifier($buttonLine),
+			parentElem: $buttonLine,
 			btnLabel: 'Verify',
 			onBtnClick: function(){
 				var $inputSection = $appDiv.find('.importAppInput');
@@ -164,11 +164,11 @@
 			
 			$('<span>')
 				.addClass('mdc-typography--headline6')
-				.text( _loc('Logs') )
+				.text(_loc('Logs'))
 				.appendTo($h);
 		
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($h),
+				parentElem: $h,
 				btnLabel: 'Clear',
 				onBtnClick: function(){
 					var $d = getLogsDiv();

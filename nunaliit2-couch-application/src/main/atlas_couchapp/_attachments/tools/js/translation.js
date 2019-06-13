@@ -72,7 +72,7 @@ function showRequests(arr) {
 		$tr.append( $('<td class="packageName">'+req.packageName+'</td>') );
 		
 		new $n2.mdc.MDCButton({
-			parentId: $n2.utils.getElementIdentifier($btnTd),
+			parentElem: $btnTd,
 			mdcClasses: ['uploadBtn'],
 			btnLabel: 'Upload',
 			onBtnClick: upload
@@ -149,7 +149,7 @@ function displayTranslated() {
 				}
 
 				new $n2.mdc.MDCSelect({
-					parentId: $n2.utils.getElementIdentifier($('.translationButtonLine')),
+					parentElem: $('.translationButtonLine'),
 					mdcClasses: ['translationLangSelect'],
 					menuLabel: 'Language',
 					menuChgFunction: languageChanged,
@@ -254,7 +254,7 @@ function main() {
 	$('#'+requestPanelName).before($buttonLine);
 	
 	new $n2.mdc.MDCSelect({
-		parentId: $n2.utils.getElementIdentifier($buttonLine),
+		parentElem: $buttonLine,
 		preSelected: true,
 		menuLabel: 'Status',
 		menuChgFunction: selectionChanged,

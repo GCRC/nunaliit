@@ -1176,7 +1176,7 @@ var AnalysisReport = $n2.Class({
 			$div.text( _loc('This appears to be the first time that you are importing this profile. Accept all? ') );
 
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($div),
+				parentElem: $div,
 				btnLabel: 'Proceed',
 				onBtnClick: function(){
 					_this._proceedAll({
@@ -1186,7 +1186,7 @@ var AnalysisReport = $n2.Class({
 			});
 
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($div),
+				parentElem: $div,
 				btnLabel: 'Discard',
 				onBtnClick: function(){
 					var $button = $(this);
@@ -1214,7 +1214,7 @@ var AnalysisReport = $n2.Class({
 				}));
 
 				new $n2.mdc.MDCButton({
-					parentId: $n2.utils.getElementIdentifier($div),
+					parentElem: $div,
 					btnLabel: 'Proceed',
 					onBtnClick: function(){
 						_this._proceedAutomatics({
@@ -1224,7 +1224,7 @@ var AnalysisReport = $n2.Class({
 				});
 
 				new $n2.mdc.MDCButton({
-					parentId: $n2.utils.getElementIdentifier($div),
+					parentElem: $div,
 					btnLabel: 'Discard',
 					onBtnClick: function(){
 						var $button = $(this);
@@ -1333,11 +1333,11 @@ var AnalysisReport = $n2.Class({
 			};
 			
 			// Buttons
-			discardBtnOpts.parentId = $n2.utils.getElementIdentifier($div),
+			discardBtnOpts.parentElem = $div,
 			new $n2.mdc.MDCButton(discardBtnOpts);
 
 			var proceedBtnOpts = {
-				parentId: $n2.utils.getElementIdentifier($div),
+				parentElem: $div,
 				mdcId: change.changeId + '_proceed',
 				mdcClasses: ['proceed'],
 				btnLabel: 'Modify Document',
@@ -1505,11 +1505,11 @@ var AnalysisReport = $n2.Class({
 				$del.addClass('autoOperation');
 			};
 			
-			discardBtnOpts.parentId = $n2.utils.getElementIdentifier($del),
+			discardBtnOpts.parentElem = $del,
 			new $n2.mdc.MDCButton(discardBtnOpts);
 			
 			new $n2.mdc.MDCButton({
-				parentId: $n2.utils.getElementIdentifier($del),
+				parentElem: $del,
 				mdcClasses: ['proceed'],
 				btnLabel: 'Delete Database Document',
 				onBtnClick: proceedClickFn
