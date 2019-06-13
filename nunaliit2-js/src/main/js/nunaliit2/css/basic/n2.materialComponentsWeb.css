@@ -35,6 +35,8 @@
 
 /* Tree-view Styling */
 .n2Display_treeViewer_dialog .mdc-dialog__container .mdc-dialog__surface .mdc-dialog__content,
+.upload_body ul.tree,
+.submission_view_dialog_tree ul.tree,
 .n2CouchEditor_tree {
     font-family: monospace;
 }
