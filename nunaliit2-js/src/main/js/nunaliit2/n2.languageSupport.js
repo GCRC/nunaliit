@@ -151,9 +151,9 @@ var LanguageSwitcher = $n2.Class({
 
 		addLanguage(formFieldId, 'Default', null);
 		
-		function addLanguage($list, name, code){
+		function addLanguage(parentId, name, code){
 			var langSelectInput = new $n2.mdc.MDCRadio({
-				parentElem: $list,
+				parentElem: $('#' + parentId),
 				radioLabel: name,
 				radioName: "languageSelect",
 				onRadioClick: function(){
