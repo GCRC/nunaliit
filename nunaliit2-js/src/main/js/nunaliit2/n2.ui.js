@@ -539,7 +539,18 @@ var tagbox = $n2.Class("tagbox", {
 	getWidget:function(){
 		return $('#'+this.widgetId);
 	},
-	
+	setTags: function(tags){
+		var $widget = this.getWidget();
+		if (tags){
+			tags.forEach(function(tag){
+				$widget.children().last().before(
+						$('<span>')
+						.text(String(tag))
+						);
+			})
+		}
+		return $(this);
+	},
 	getTags: function() {
 		var $widget = this.getWidget();
 		var $spans = $widget.children('span');

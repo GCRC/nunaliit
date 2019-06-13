@@ -98,6 +98,7 @@ function updateTimeLinkWithTags(timeLink, tagValues){
 		 var tag = findTimeLinkTagByValue(timeLink, tagValue);
 		 if( !tag ){
 			 tag = {
+				type: 'default',
 				value: tagValue
 			 };
 			 if( !timeLink.tags ){
@@ -249,6 +250,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		function documentLoaded(doc){
 			// Modify current document
 			var modified = false;
+			var lastTagsMapByTimelink = {};
 			if( doc 
 			 && doc.atlascine2_cinemap ){
 				var timeLinks = doc.atlascine2_cinemap.timeLinks;
@@ -278,7 +280,39 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					doc.atlascine2_cinemap.timeLinks.push(newTimeLink);
 					matchingLinks.push(newTimeLink);
 				};
+				//Check and verify deleting tag(s)
+				matchingLinks.forEach(function(timeLink){
+					if (timeLink.tags
+						&& Array.isArray(timeLink.tags)){
+						timeLink.tags.forEach(function(tag){
+							var tagString = tag.value;
+							if (!lastTagsMapByTimelink[tagString]){
+								lastTagsMapByTimelink[tagString]= [];
+							}
+							lastTagsMapByTimelink[tagString].push( timeLink ) ;
+						})
+					}
+				});
+				for (var lsttag in lastTagsMapByTimelink ){
+					if ( tagValues.indexOf(lsttag) < 0){
+						lastTagsMapByTimelink[lsttag].forEach(function(link){
+							var trashbin = [];
+							for(var i = 0,e=link.tags.length;i<e ; i++){
+								if (link.tags[i].value === lsttag){
+									trashbin.push(i);
+								}
+							}
+							trashbin.forEach(function(tsh){
+								link.tags.splice(tsh, 1);
+							})
+						})
+						modified = true;
+					}
+				}
+
+			
 				
+				//Check and verify adding new tag(s)
 				matchingLinks.forEach(function(timeLink){
 					if( updateTimeLinkWithTags(timeLink, tagValues) ){
 						modified = true;
@@ -315,11 +349,17 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 	},
 
 	refresh: function(opts_){
+		var _this = this;
 		var $elem = this.getElem();
 
+
+		
 		var opt = opts_.option;
 		var data = opts_.data;
 		var doc = opts_.doc;
+		var lastTags = [];
+		
+		
 		if( opt && data ){
 			switch ( opt){
 			case 'Annotation': 
@@ -344,6 +384,46 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		if( this.tagbox ){
 			this.tagbox.reset();
 		};
+		
+		if( doc 
+		 && doc.atlascine2_cinemap ){
+				var timeLinks = doc.atlascine2_cinemap.timeLinks;
+				if( !timeLinks ){
+					//No timeLinks no worry
+					return;
+				};
+						
+				var matchingLinks = findTimeLink(
+								timeLinks, 
+								_this.currentStartTime, 
+								_this.currentEndTime
+							);
+						
+				if( matchingLinks.length < 1 ){
+					// No matching timelinks no worry
+					return;
+				};
+						
+				matchingLinks.forEach(function(timeLink){
+					if (timeLink.tags
+						&& Array.isArray(timeLink.tags)){
+						timeLink.tags.forEach(function(tag){
+							var tagString = tag.value;
+							var idx = lastTags.indexOf(tagString);
+							if (idx > -1){
+								lastTags.splice(idx, 1);
+							}
+							lastTags.push(tagString);
+						})
+					}
+				});
+				this.tagbox.setTags(lastTags);
+		} else {
+			alert('Current document not selected');
+			return;
+		};
+		
+		
 	},
 
 	_handle: function(){
@@ -377,6 +457,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	
 	transcript_array: null,
 	
+	_contextMenuClass: null,
 	// Time source variables
 	sourceModelId: null, // id of time model, or null
 
@@ -423,7 +504,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.name = opts.name;
 		this.docId = opts.docId;
 		this.sourceModelId = opts.sourceModelId;
-		
+		this._contextMenuClass = 'transcript-context-menu';
 		
 		this.isInsideContentTextPanel = opts.isInsideContentTextPanel;
 
@@ -878,7 +959,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		function prep_transcript($transcript, transcript_array){
 			var temp;
-			var contextMenu = $('div.transcript-context-menu').remove();
+			
+			var contextMenu = $('div.' + _this._contextMenuClass);
+			if (contextMenu.length > 0){
+				contextMenu.remove();
+			}
 			
 			var context_menu_text = ['Annotation', 'Extra'];
 			var transcript_context_menu_list = $('<ul>');
@@ -890,11 +975,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 								if (curSentenceData){
 									_this._renderDrawer(context_menu_text[i], curSentenceData);
 								};
+								$('div.' + _this._contextMenuClass).addClass("transcript-context-menu-hide");
 							})
 							.appendTo(transcript_context_menu_list);
 			});
-			var contextMenu = $('<div>')
-								.addClass("transcript-context-menu")
+			contextMenu = $('<div>')
+								.addClass( _this._contextMenuClass)
 								.addClass("transcript-context-menu-hide")
 								.append(transcript_context_menu_list)
 								.appendTo(document.body);
@@ -981,32 +1067,35 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					$transcriptElem.removeClass('sentence-highlight-pending');
 				}
 			})
-			$(document).on('click', function(e){
-				// TBD: This will never be true
-				if(_this.drawer){
-					var $clickTarget = e.target;
-					if ( $clickTarget.closest('.transcript-context-menu')){
-
-						contextMenu.addClass('transcript-context-menu-hide');
-						for(var i =0;i<_this.transcript_array.length;i++) {
-							var transcriptElem = _this.transcript_array[i];
-							var $transcriptElem = $('#'+transcriptElem.id);
-							$transcriptElem.removeClass('sentence-highlight-pending');
-						}
-					}
-					//not click on editor drawer, close drawer
-					else if ( !$clickTarget.closest('#' + _this.drawer.getId())){
-						contextMenu.addClass('transcript-context-menu-hide');
-						_this._closeDrawer();
-						
-						for(var i =0;i<_this.transcript_array.length;i++) {
-							var transcriptElem = _this.transcript_array[i];
-							var $transcriptElem = $('#'+transcriptElem.id);
-							$transcriptElem.removeClass('sentence-highlight-pending');
-						}
-					} 
-				}	
-			})
+//			$(document).on('click', function(e){
+//				// TBD: This will never be true
+//				if(_this.drawer){
+//					var $clickTarget = e.target;
+//					if ( $clickTarget.closest('.transcript-context-menu')){
+//
+//						contextMenu.addClass('transcript-context-menu-hide');
+//						for(var i =0;i<_this.transcript_array.length;i++) {
+//							var transcriptElem = _this.transcript_array[i];
+//							var $transcriptElem = $('#'+transcriptElem.id);
+//							$transcriptElem.removeClass('sentence-highlight-pending');
+//						}
+//					}
+//					//not click on editor drawer, close drawer
+//					else if ( !$clickTarget.closest('#' + _this.drawer.getId())){
+//						contextMenu.addClass('transcript-context-menu-hide');
+//						_this._closeDrawer();
+//						
+//						for(var i =0;i<_this.transcript_array.length;i++) {
+//							var transcriptElem = _this.transcript_array[i];
+//							var $transcriptElem = $('#'+transcriptElem.id);
+//							$transcriptElem.removeClass('sentence-highlight-pending');
+//						}
+//					} 
+//				}	
+//			})
+		};
+		function closeCtxMenu(){
+			
 		}
 	},
 	_closeDrawer: function(){
