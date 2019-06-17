@@ -134,8 +134,6 @@ var DomStyler = $n2.Class({
 	observerChangeMap: null,
 
 	mutationObserver: null,
-
-	hamburgerDrawer: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -2088,12 +2086,17 @@ var DomStyler = $n2.Class({
 	},
 	
 	_attachMDCDrawer: function($jq) {
+		var attachedDrawer, drawerBtnId;
 		var drawer = $jq[0];
 		if (drawer) {
-			if ($jq.hasClass('nunaliit_hamburger_drawer')){
-				this.hamburgerDrawer = $mdc.drawer.MDCDrawer.attachTo(drawer);
-			} else {
-				$mdc.drawer.MDCDrawer.attachTo(drawer);
+			attachedDrawer = $mdc.drawer.MDCDrawer.attachTo(drawer);
+			if ($jq.attr('n2associatedmdc')){
+				drawerBtnId = $jq.attr('n2associatedmdc');
+				$('#' + drawerBtnId).click(function(){
+					if (attachedDrawer) {
+						attachedDrawer.open = !attachedDrawer.open;
+					}
+				});
 			}
 		}
 	},
@@ -2156,11 +2159,6 @@ var DomStyler = $n2.Class({
 		if (topAppBar) {
 			mdcTopAppBar = $mdc.topAppBar.MDCTopAppBar.attachTo(topAppBar);
 			mdcTopAppBar.setScrollTarget(document.body);
-			mdcTopAppBar.listen('MDCTopAppBar:nav', function(){
-				if (_this.hamburgerDrawer) {
-					_this.hamburgerDrawer.open = !_this.hamburgerDrawer.open;
-				}
-			});
 		}
 	}
 });

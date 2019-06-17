@@ -405,9 +405,14 @@
 	};
 
 	function addHamburgerMenu(){
+		// Top-App-Bar
+		new $n2.mdc.MDCTopAppBar({
+			barTitle: 'Schemas'
+		});
+	
 		// Tools Drawer
 		new $n2.mdc.MDCDrawer({
-			hamburgerDrawer: true,
+			anchorBtnId: 'hamburger_menu_btn',
 			navHeaderTitle: 'Nunaliit Tools',
 			navItems: [
 				{"text": "User Management", "href": "./users.html"},
@@ -424,12 +429,6 @@
 				{"text": "Schema Editor", "href": "./schema_editor.html"}
 			]	
 		});
-	
-		// Top-App-Bar
-		new $n2.mdc.MDCTopAppBar({
-			barTitle: 'Schemas'
-		});
-	
 	};
 	
 	$n2.schemaApp = {

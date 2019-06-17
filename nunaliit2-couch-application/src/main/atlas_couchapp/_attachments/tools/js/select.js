@@ -3583,9 +3583,14 @@
 	};
 
 	function addHamburgerMenu(){
+		// Top-App-Bar
+		new $n2.mdc.MDCTopAppBar({
+			barTitle: 'Data Modification Application'
+		});
+
 		// Tools Drawer
 		new $n2.mdc.MDCDrawer({
-			hamburgerDrawer: true,
+			anchorBtnId: 'hamburger_menu_btn',
 			navHeaderTitle: 'Nunaliit Tools',
 			navItems: [
 				{"text": "User Management", "href": "./users.html"},
@@ -3601,11 +3606,6 @@
 				{"text": "Debug Tool", "href": "./debug.html"},
 				{"text": "Schema Editor", "href": "./schema_editor.html"}
 			]	
-		});
-	
-		// Top-App-Bar
-		new $n2.mdc.MDCTopAppBar({
-			barTitle: 'Data Modification Application'
 		});
 	};
 	

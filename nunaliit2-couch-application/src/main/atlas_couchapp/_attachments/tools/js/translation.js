@@ -291,9 +291,14 @@ function main_init(opts_) {
 };
 
 function addHamburgerMenu(){
+	// Top-App-Bar
+	new $n2.mdc.MDCTopAppBar({
+		barTitle: 'Translations'
+	});
+
 	//Tools Drawer
 	new $n2.mdc.MDCDrawer({
-		hamburgerDrawer: true,
+		anchorBtnId: 'hamburger_menu_btn',
 		navHeaderTitle: 'Nunaliit Tools',
 		navItems: [
 			{"text": "User Management", "href": "./users.html"},
@@ -309,11 +314,6 @@ function addHamburgerMenu(){
 			{"text": "Debug Tool", "href": "./debug.html"},
 			{"text": "Schema Editor", "href": "./schema_editor.html"}
 		]	
-	});
-
-	// Top-App-Bar
-	new $n2.mdc.MDCTopAppBar({
-		barTitle: 'Translations'
 	});
 };
 

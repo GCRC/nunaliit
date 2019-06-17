@@ -427,6 +427,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 // Class MDCDrawer
 // Description: Create a material design drawer component
 // Options:
+//  - anchorBtnId (String): Button Id associated with drawer
 //  - navHeaderTitle (String): Nav-Bar Header Title
 //  - navHeaderSubTitle (String): Nav-Bar Sub-Header Title
 //  - navItems (Array): An array of objects containing link text, href URL, and activated status
@@ -437,14 +438,14 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 //   ]
 var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 
-	hamburgerDrawer: null,
+	anchorBtnId: null,
 	navHeaderTitle: null,
 	navHeaderSubTitle: null,
 	navItems: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			hamburgerDrawer: false,
+			anchorBtnId: null,
 			navHeaderTitle: null,
 			navHeaderSubTitle: null,
 			navItems: null
@@ -452,7 +453,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 
 		MDC.prototype.initialize.call(this, opts);
 
-		this.hamburgerDrawer = opts.hamburgerDrawer;
+		this.anchorBtnId = opts.anchorBtnId;
 		this.navHeaderTitle = opts.navHeaderTitle;
 		this.navHeaderSubTitle = opts.navHeaderSubTitle;
 		this.navItems = opts.navItems;
@@ -467,14 +468,14 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 		var _this = this;
 
 		this.mdcClasses.push('mdc-drawer', 'mdc-drawer--modal', 'n2s_attachMDCDrawer');
-
-		if (this.hamburgerDrawer) {
-			this.mdcClasses.push('nunaliit_hamburger_drawer');
-		}
 		
 		$drawer = $('<aside>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '));
+
+		if (this.anchorBtnId) {
+			$drawer.attr('n2associatedmdc', this.anchorBtnId);
+		}
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -1208,6 +1209,7 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 			.appendTo($topAppBarRow);
 
 		$('<a>').attr('href', '#')
+			.attr('id', 'hamburger_menu_btn')
 			.addClass('material-icons mdc-top-app-bar__navigation-icon')
 			.css('text-decoration', 'none')
 			.text('☰')

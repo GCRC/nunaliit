@@ -82,9 +82,7 @@ var NavigationDisplay = $n2.Class({
 		var $nav = $('#'+this.elemId);
 		var doc = this.navigationDoc;
 		
-		if( this.navigationDoc 
-		 && this.navigationDoc.nunaliit_navigation 
-		 && $nav.length > 0 ){
+		if( doc && doc.nunaliit_navigation && $nav.length > 0 ){
 			// Get current module identifier
 			var msg = {
 				type: 'moduleGetCurrent'
@@ -97,21 +95,9 @@ var NavigationDisplay = $n2.Class({
 			
 			if( doc.nunaliit_navigation.items 
 			 && doc.nunaliit_navigation.items.length > 0 ) {
-				var $list;
-
-				if( this.hamburgerMenu ){
-					$list = $('<nav>')
-						.attr('role','menu')
-						.attr('aria-hidden',true)
-						.attr('aria-orientation',"vertical")
-						.addClass('n2nav_setChildModuleCurrent mdc-list')
-						.appendTo($nav);
-
-				} else {
-					$list = $('<ul>')
+				var $list = $('<ul>')
 					.addClass('n2nav_setChildModuleCurrent')
 					.appendTo($nav);
-				}
 				
 				insertItems($list, doc.nunaliit_navigation.items, currentModuleId);
 			}
@@ -126,21 +112,9 @@ var NavigationDisplay = $n2.Class({
 				var item = items[i];
 				var $listItem, $listItemText;
 				
-				if ( _this.hamburgerMenu ){
-					$listItem = $('<a>')
-						.attr('href','#')
-						.addClass('n2nav_setChildModuleCurrent mdc-list-item')
-						.appendTo($list);
-
-					if ( item.href ){
-						$listItem.attr('href',item.href);
-					}
-
-				} else {
-					$listItem = $('<li>')
-						.addClass('n2nav_setChildModuleCurrent')
-						.appendTo($list);
-				}
+				$listItem = $('<li>')
+					.addClass('n2nav_setChildModuleCurrent')
+					.appendTo($list);
 				
 				if( item.key ){
 					$listItem.attr('n2nav-key',item.key);
@@ -191,31 +165,15 @@ var NavigationDisplay = $n2.Class({
 				
 					// Install module class
 					$listItem.attr('n2nav-module',item.module);
-
-
-					if( _this.hamburgerMenu ){
-						$listItem.addClass('n2nav_setModuleCurrent mdc-list-item');
-	
-					} else {
-						$listItem.addClass('n2nav_setModuleCurrent');
-					}
+					$listItem.addClass('n2nav_setModuleCurrent');
 					
 					if( item.module === currentModuleId ){
 						setNavElementAsCurrentModule($listItem);
 					}
 					
-					if ( _this.hamburgerMenu ){
-						$listItem.attr('href', moduleUrl.getUrl());
-
-						$listItemText = $('<span>')
-							.addClass('mdc-list-item__text')
-							.appendTo($listItem);
-
-					} else {
-						$listItemText = $('<a>')
+					$listItemText = $('<a>')
 						.attr('href',moduleUrl.getUrl())
-							.appendTo($listItem);
-					}
+						.appendTo($listItem);
 
 					if( item.title ){
 						var title = _loc(item.title);
@@ -236,16 +194,10 @@ var NavigationDisplay = $n2.Class({
 				if( item.items && item.items.length > 0 ){
 					var $innerList;
 					
-					if (_this.hamburgerMenu ){
-						$innerList = $('<div>')
-							.addClass('n2nav_setChildModuleCurrent n2nav_nested-list')
-							.insertAfter($listItem);
+					$innerList = $('<ul>')
+						.addClass('n2nav_setChildModuleCurrent')
+						.appendTo($listItem);
 
-					} else {
-						$innerList = $('<ul>')
-							.addClass('n2nav_setChildModuleCurrent')
-							.appendTo($listItem);
-					}
 					insertItems($innerList, item.items, currentModuleId);
 				}
 			}
@@ -381,11 +333,8 @@ var NavigationService = $n2.Class({
 			$elem.removeClass('n2nav_insertMenu').addClass('n2nav_insertedMenu');
 			_this._insertMenu($elem, navigationDoc, false);
 
-			// Add menu items to Hamburger Menu
-			var $drawerContent = $('<div>')
-				.addClass('mdc-drawer__content')
-				.appendTo($drawer);
-			_this._insertMenu($drawerContent, navigationDoc, true);
+			// Add Hamburger Menu
+			_this._insertHamburgerMenu(navigationDoc);
 		});
 	},
 	
@@ -419,6 +368,91 @@ var NavigationService = $n2.Class({
 				,elem: $elem
 			});
 		};
+	},
+
+	_drawerHasActiveItem: function(listItems){
+		var foundStatus = false;
+		listItems.forEach(function(item){
+			if (item.activated) {
+				foundStatus = true;
+			}
+		});
+		return foundStatus;
+	},
+
+	_insertHamburgerMenu: function(navDoc){
+		var doc, list;
+		var listItems = [{'text': _loc('Home Page'), 'href':'./', "activated":true}];
+
+		if (navDoc && navDoc.nunaliit_navigation) {
+			doc = navDoc.nunaliit_navigation; 
+			list = this._insertHamburgerMenuList(doc.items);
+
+			// Ensure that a drawer list contains at least one active item
+			if (!this._drawerHasActiveItem(list)) {
+				if (list.length > 1) {
+					// Set first item as active
+					list[0].activated = true;
+				
+				} else {
+					// Set default drawer list if none provided.
+					list = listItems;
+				}
+			}
+
+			new $n2.mdc.MDCDrawer({
+				navHeaderTitle: _loc(doc.title),
+				navItems: list,
+				anchorBtnId: 'hamburger_menu_btn'
+			});
+		}
+	},
+
+	_insertHamburgerMenuList: function(items){
+		var _this = this;
+		var menuList = [];
+
+		items.forEach(function(item){
+			var text, href, nestedList;
+			var activated = false;
+
+			if (item.title) {
+				text = _loc(item.title);
+			}
+
+			if (item.href) {
+				href = item.href;
+
+				if (!item.title) {
+					text = item.href;
+				}
+			}
+
+			if (item.module) {
+				var currentUrl = $n2.url.getCurrentLocation();
+				var getUrl = $n2.url.getUrlWithoutParams();
+				var urlModule = $n2.url.getParamValue('module', null);
+
+				href = getUrl + '?module=' + item.module;
+
+				if (currentUrl === href || item.module === urlModule) {
+					activated = true;
+				}
+
+				if (!item.title) {
+					text = item.module;
+				}
+			}
+
+			menuList.push({'text':text, 'href':href, 'activated':activated});
+
+			if (item.items) {
+				nestedList = _this._insertHamburgerMenuList(item.items);
+				menuList = menuList.concat(nestedList);
+			}
+		});
+
+		return menuList;
 	},
 
 	_associateDocumentToElement: function(doc, $elem){
