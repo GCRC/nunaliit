@@ -214,7 +214,20 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 	
 	_clickedSave: function(){
 		var _this = this;
-
+		var isLoggedIn = undefined;
+		if( this.dispatchService ){
+			var m = {
+				type: 'authIsLoggedIn',
+				isLoggedIn: false
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			isLoggedIn = m.isLoggedIn;
+		};
+		if ( !isLoggedIn ){
+			$n2.log("Auth is not logged in.");
+			alert("Please sign in before adding annotations");
+			return;
+		}
 		var tagValues = this.tagbox.getTags();
 		$n2.log("save button has been clicked: "+tagValues);
 
