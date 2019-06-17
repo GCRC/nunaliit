@@ -72,6 +72,10 @@
     height: 48px;
 }
 
+section.mdc-top-app-bar__section.mdc-top-app-bar__section--align-end {
+    max-width: 250px;
+}
+
 #importApp .importAppInput .mdc-select.mdc-select--outlined select.mdc-select__native-control {
     min-width: 140px;
 }
@@ -154,7 +158,9 @@
 /* Nunaliit login button */
 .nunaliit_login .nunalitt_login_profile_icon.mdc-button__icon {
     width: 35px;
+	min-width: 35px;
     height: 35px;
+	min-height: 35px;
     margin-left: 10px;
 }
 
