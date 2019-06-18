@@ -375,6 +375,12 @@ var DomStyler = $n2.Class({
 				,acceptsContextDocument: false
 			},
 			{
+				source: 'n2s_attachMDCChipSet'
+				,target: 'n2s_attachedMDCChipSet'
+				,fn: this._attachMDCChipSet
+				,acceptsContextDocument: false
+			},
+			{
 				source: 'n2s_attachMDCDrawer'
 				,target: 'n2s_attachedMDCDrawer'
 				,fn: this._attachMDCDrawer
@@ -2082,6 +2088,54 @@ var DomStyler = $n2.Class({
 		var chkbox = $jq[0];
 		if (chkbox) {
 			$mdc.checkbox.MDCCheckbox.attachTo(chkbox);
+		}
+	},
+	
+	_attachMDCChipSet: function($jq) {
+		var attachedChipSet, $chipInput, chipInputId;
+		var chipSet = $jq[0];
+
+		function generateChip(chipText){
+			var $chip;
+			var chipId = $n2.getUniqueId();
+
+			$chip = $('<div>').addClass('mdc-chip')
+				.attr('id', chipId)
+				.attr('tabindex','0');
+
+			if (chipText) {
+				$('<div>').addClass('mdc-chip__text')
+					.text(chipText)
+					.appendTo($chip);
+			}
+
+			$('<i>')
+				.addClass('material-icons mdc-chip__icon mdc-chip__icon--trailing')
+			.attr('tabindex','0')
+			.attr('role','button')
+			.text('x')
+			.appendTo($chip);
+
+			return $chip;
+		};
+
+		if (chipSet) {
+			attachedChipSet = $mdc.chips.MDCChipSet.attachTo(chipSet);
+			if ($jq.attr('n2associatedmdc')){
+				chipInputId = $jq.attr('n2associatedmdc');
+				$chipInput = $('#' + chipInputId);
+				$chipInput.keydown(function(event){
+					if (event.key === 'Enter' || event.keyCode === 13) {
+						// Get Input Value
+    					var chipEl = generateChip($chipInput.val());
+						// Clear Input Field
+						$chipInput.val('');
+
+    					chipEl.appendTo($('#' + chipSet.id));
+    					attachedChipSet.addChip(chipEl[0]);
+					}
+				});
+			}
 		}
 	},
 	

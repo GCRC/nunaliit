@@ -269,6 +269,100 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 	}
 });
 
+// Class MDCChipSet
+// Description: Creates a material design chips component
+// Options:
+var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
+	
+	chips: null,
+	inputChips: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			chips: [],
+			inputChips: true,
+		}, opts_);
+
+		this.chips = opts.chips;
+		this.inputChips = opts.inputChips;
+		this.inputId = $n2.getUniqueId();
+
+		MDC.prototype.initialize.call(this, opts);
+
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Check Box Component');
+		}
+
+		this._generateMDCChips();
+	},
+
+	_generateMDCChips: function(){
+		var $chipSet, $chip, keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-chip-set', 'n2s_attachMDCChipSet');
+
+		if (this.inputChips) {
+			this.mdcClasses.push('mdc-chip-set--input');
+		}
+
+		$chipSet = $('<div>')
+			.attr('id', this.mdcId)
+			.attr('n2associatedmdc', this.inputId)
+			.addClass(this.mdcClasses.join(' '));
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$chipSet.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+	
+		this.chips.forEach(function(chip){
+			$chip = _this._generateChip(chip);
+			$chip.appendTo($chipSet);
+		});
+		
+		$chipSet.appendTo(this.parentElem);
+
+		$('<input>')
+			.attr('id', this.inputId)
+			.appendTo(this.parentElem);
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+	},
+
+	_generateChip: function(chipText){
+		var $chip;
+		var chipId = $n2.getUniqueId();
+
+		$chip = $('<div>').addClass('mdc-chip')
+			.attr('id', chipId)
+			.attr('tabindex','0');
+
+		if (chipText) {
+			$('<div>').addClass('mdc-chip__text')
+				.text(chipText)
+				.appendTo($chip);
+		}
+
+		$('<i>')
+			.addClass('material-icons mdc-chip__icon mdc-chip__icon--trailing')
+		.attr('tabindex','0')
+		.attr('role','button')
+		.text('x')
+		.appendTo($chip);
+
+		return $chip;
+	},
+
+	getInputId: function() {
+		return this.chkboxInputId;
+	}
+});
+
 // Class MDCDialog
 // Description: Creates a material design dialog component
 // Options:
@@ -1332,6 +1426,7 @@ $n2.mdc = {
 	MDC: MDC,
 	MDCButton: MDCButton,
 	MDCCheckbox: MDCCheckbox,
+	MDCChipSet: MDCChipSet,
 	MDCDialog: MDCDialog,
 	MDCDrawer: MDCDrawer,
 	MDCFormField: MDCFormField,
