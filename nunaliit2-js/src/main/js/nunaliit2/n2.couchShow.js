@@ -2135,6 +2135,13 @@ var DomStyler = $n2.Class({
     					attachedChipSet.addChip(chipEl[0]);
 					}
 				});
+				
+				attachedChipSet.listen('MDCChip:removal', function(event){
+					if (event.detail && event.detail.chipId) {
+						$('#' + event.detail.chipId).remove();
+					}
+				});
+
 			}
 		}
 	},

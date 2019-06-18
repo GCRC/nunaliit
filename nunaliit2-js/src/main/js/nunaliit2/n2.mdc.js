@@ -275,15 +275,21 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	
 	chips: null,
+	choiceChips: null,
+	filterChips: null,
 	inputChips: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			chips: [],
-			inputChips: true,
+			choiceChips: false,
+			filterChips: false,
+			inputChips: false,
 		}, opts_);
 
 		this.chips = opts.chips;
+		this.choiceChips = opts.choiceChips;
+		this.filterChips = opts.filterChips;
 		this.inputChips = opts.inputChips;
 		this.inputId = $n2.getUniqueId();
 
@@ -301,6 +307,14 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 		var _this = this;
 
 		this.mdcClasses.push('mdc-chip-set', 'n2s_attachMDCChipSet');
+
+		if (this.choiceChips) {
+			this.mdcClasses.push('mdc-chip-set--choice');
+		}
+
+		if (this.filterChips) {
+			this.mdcClasses.push('mdc-chip-set--filter');
+		}
 
 		if (this.inputChips) {
 			this.mdcClasses.push('mdc-chip-set--input');
