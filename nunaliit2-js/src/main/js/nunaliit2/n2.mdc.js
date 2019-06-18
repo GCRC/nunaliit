@@ -1018,6 +1018,98 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 	}
 });
 
+// Class MDCTabBar
+// Description: Create a material design tab bar component
+var MDCTabBar = $n2.Class('MDCMenu', MDC, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Tab Bar Component');
+		}
+
+		this._generateMDCTabBar();
+	},
+
+	_generateMDCTabBar: function(){
+		var $tabBar, $tabScroller, $tabScrollArea, $tabScrollAreaContent, keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-tab-bar');
+
+		$tabBar = $('<div>')
+			.attr('id', this.mdcId)
+			.attr('role', 'tablist')
+			.addClass(this.mdcClasses.join(' '));
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$tabBar.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		$tabScroller = $('<div>')
+			.addClass('mdc-tab-scroller')
+			.appendTo($tabBar);
+
+		$tabScrollArea = $('<div>')
+			.addClass('mdc-tab-scroller__scroll-area')
+			.appendTo($tabBar);
+
+		$tabScrollAreaContent = $('<div>')
+			.addClass('mdc-tab-scroller_scroll-content')
+			.appendTo($tabScrollArea);
+
+		this.$tabBar.appendTo(this.parentElem);
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+	},
+
+	_generateMDCTabButton: function(label){
+		var $tab, $tabContent, $tabIndicator;
+		var btnLabel = "";
+
+		if (label) {
+			btnLabel = label;
+		}
+
+		$tab = $('<button>')
+			.addClass('mdc-tab mdc-tab--active')
+			.attr('role', 'tab')
+			.attr('aria-selected',true)
+			.attr('tabindex', '0');
+
+		$tabContent = $('<span>')
+			.addClass('mdc-tab__content')
+			.appendTo($tab);
+
+		$('<span>')
+			.addClass('mdc-tab__text-label')
+			.text(btnLabel)
+			.appendTo($tabContent);
+
+		$tabIndicator = $('<span>')
+			.addClass('mdc-tab-indicator mdc-tab-indicator--active')
+			.appendTo($tab);
+
+		$('<span>')
+			.addClass('mdc-tab-indicator__content mdc-tab-indicator__content--underline')
+			.appendTo($tabIndicator);
+
+		$('<span>')
+			.addClass('mdc-tab__ripple')
+			.appendTo($tab);
+			
+	}
+}); 
+
 // Class MDCTextField
 // Description: Creates a material design text-field component
 // Options:
