@@ -2095,6 +2095,17 @@ var DomStyler = $n2.Class({
 		var attachedChipSet, $chipInput, chipInputId;
 		var chipSet = $jq[0];
 
+		function updateTagList(){
+			var chipsList = [];
+			var chips = $jq.find('.mdc-chip__text');
+			
+			for (var i = 0, e = chips.length; i < e; i += 1) {
+				chipsList.push("'" + chips[i].textContent + "'");
+			}
+
+			$('#' + chipSet.id).attr('data-tags', '[' + chipsList + ']');
+		};
+
 		function generateChip(chipText){
 			var $chip;
 			var chipId = $n2.getUniqueId();
@@ -2111,37 +2122,41 @@ var DomStyler = $n2.Class({
 
 			$('<i>')
 				.addClass('material-icons mdc-chip__icon mdc-chip__icon--trailing')
-			.attr('tabindex','0')
-			.attr('role','button')
-			.text('x')
-			.appendTo($chip);
+				.attr('tabindex','0')
+				.attr('role','button')
+				.text('x')
+				.appendTo($chip);
 
 			return $chip;
 		};
 
 		if (chipSet) {
 			attachedChipSet = $mdc.chips.MDCChipSet.attachTo(chipSet);
+
 			if ($jq.attr('n2associatedmdc')){
 				chipInputId = $jq.attr('n2associatedmdc');
 				$chipInput = $('#' + chipInputId);
 				$chipInput.keydown(function(event){
 					if (event.key === 'Enter' || event.keyCode === 13) {
 						// Get Input Value
-    					var chipEl = generateChip($chipInput.val());
+						var chipEl = generateChip($chipInput.val());
+
 						// Clear Input Field
 						$chipInput.val('');
+						chipEl.insertBefore($chipInput);
+						attachedChipSet.addChip(chipEl[0]);
 
-    					chipEl.appendTo($('#' + chipSet.id));
-    					attachedChipSet.addChip(chipEl[0]);
+						updateTagList();
 					}
 				});
 				
 				attachedChipSet.listen('MDCChip:removal', function(event){
 					if (event.detail && event.detail.chipId) {
 						$('#' + event.detail.chipId).remove();
+
+						updateTagList();
 					}
 				});
-
 			}
 		}
 	},

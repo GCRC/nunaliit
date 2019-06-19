@@ -269,15 +269,81 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 	}
 });
 
+// Class MDCTagBox
+// Description: Creates a material design tag box component
+// Options:
+//  - chips (Array): A collection of strings 
+//  - label (String): A label used for the outline of the tag box
+var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
+
+	chips: null,
+	label: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			chips: [],
+			label: '',
+		}, opts_);
+
+		this.chips = opts.chips;
+		this.label = opts.label;
+		this.inputId = $n2.getUniqueId();
+
+		MDC.prototype.initialize.call(this, opts);
+
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Tag Box Component');
+		}
+
+		this._generateMDCChips();
+	},
+
+	_generateMDCChips: function(){
+		var $chipInput, $chipSet, $clonedInput;
+		var _this = this;
+
+		$chipInput = new $n2.mdc.MDCTextField({
+			parentElem: this.parentElem,
+			mdcClasses: ['n2-tag-box'],
+			txtFldInputId: this.inputId,
+			txtFldLabel: this.label
+		});
+
+		$chipSet = new $n2.mdc.MDCChipSet({
+			parentElem: $('#' + $chipInput.getId()),
+			inputChips: true,
+			inputId: $chipInput.getInputId(),
+			chips: this.chips
+		});
+
+		// Move input form field into chipset component
+		$('#' + $chipInput.getInputId()).appendTo($('#' + $chipSet.getId()));
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+	},
+
+	getInputId: function() {
+		return this.InputId;
+	}
+});
+
 // Class MDCChipSet
 // Description: Creates a material design chips component
 // Options:
+//  - chips (Array): A collection of strings
+//  - choiceChips (Boolean): If true, the chip set is given the choice chips class.
+//  - filterChips (Boolean): If true, the chip set is given the filter chips class.
+//  - inputChips (Boolean): If true, the chip set is given the input chips class.
+//  - inputId (String): Id of the input field
 var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	
 	chips: null,
 	choiceChips: null,
 	filterChips: null,
 	inputChips: null,
+	inputId: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -285,13 +351,14 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 			choiceChips: false,
 			filterChips: false,
 			inputChips: false,
+			inputId: null
 		}, opts_);
 
 		this.chips = opts.chips;
 		this.choiceChips = opts.choiceChips;
 		this.filterChips = opts.filterChips;
 		this.inputChips = opts.inputChips;
-		this.inputId = $n2.getUniqueId();
+		this.inputId = opts.inputId;
 
 		MDC.prototype.initialize.call(this, opts);
 
@@ -322,8 +389,11 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 		$chipSet = $('<div>')
 			.attr('id', this.mdcId)
-			.attr('n2associatedmdc', this.inputId)
 			.addClass(this.mdcClasses.join(' '));
+
+		if (this.inputId) {
+			$chipSet.attr('n2associatedmdc', this.inputId);
+		}
 
 		if (this.mdcAttributes) {
 			keys = Object.keys(this.mdcAttributes);
@@ -336,12 +406,8 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 			$chip = _this._generateChip(chip);
 			$chip.appendTo($chipSet);
 		});
-		
-		$chipSet.appendTo(this.parentElem);
 
-		$('<input>')
-			.attr('id', this.inputId)
-			.appendTo(this.parentElem);
+		$chipSet.appendTo(this.parentElem);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -364,16 +430,12 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 		$('<i>')
 			.addClass('material-icons mdc-chip__icon mdc-chip__icon--trailing')
-		.attr('tabindex','0')
-		.attr('role','button')
-		.text('x')
-		.appendTo($chip);
+			.attr('tabindex','0')
+			.attr('role','button')
+			.text('x')
+			.appendTo($chip);
 
 		return $chip;
-	},
-
-	getInputId: function() {
-		return this.chkboxInputId;
 	}
 });
 
@@ -1232,8 +1294,9 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 
 	txtFldLabel: null,
 	txtFldOutline: null,
-	txtFldInputId: null,
 	txtFldArea: null,
+	txtFldFullWidth: null,
+	txtFldInputId: null,
 	passwordFld: null,
 	prefilled: null,
 	inputRequired: null,
@@ -1244,6 +1307,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			txtFldOutline: true,
 			txtFldInputId: null,
 			txtFldArea: false,
+			txtFldFullWidth: null,
 			passwordFld: false,
 			prefilled: null,
 			inputRequired: false,
@@ -1255,6 +1319,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.txtFldOutline = opts.txtFldOutline;
 		this.txtFldInputId = opts.txtFldInputId;
 		this.txtFldArea = opts.txtFldArea;
+		this.txtFldFullWidth = opts.txtFldFullWidth;
 		this.passwordFld = opts.passwordFld;
 		this.prefilled = opts.prefilled;
 		this.inputRequired = opts.inputRequired;
@@ -1277,6 +1342,9 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 
 		if (this.txtFldArea) {
 			this.mdcClasses.push('mdc-text-field--textarea');
+		} else if (this.txtFldFullWidth) {
+			this.mdcClasses.push('mdc-text-field--fullwidth');			this.txtFldOutline = false;
+
 		} else if (this.txtFldOutline) {
 			this.mdcClasses.push('mdc-text-field--outlined');
 		}
@@ -1341,6 +1409,9 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			$('<div>')
 				.addClass('mdc-notched-outline__trailing')
 				.appendTo($txtFldOutline);
+
+		} else if (this.txtFldFullWidth) {
+			// do nothing
 
 		} else {
 			$('<label>')
@@ -1448,6 +1519,7 @@ $n2.mdc = {
 	MDCMenu: MDCMenu,
 	MDCRadio: MDCRadio,
 	MDCSelect: MDCSelect,
+	MDCTagBox: MDCTagBox, 
 	MDCTextField: MDCTextField,
 	MDCTopAppBar: MDCTopAppBar
 };

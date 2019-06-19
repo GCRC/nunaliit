@@ -41,6 +41,31 @@
     font-family: monospace;
 }
 
+/* Custom Tag Box Styling */
+.n2-tag-box.mdc-text-field,
+.n2-tag-box.mdc-text-field input {
+    height: auto;
+}
+
+.n2-tag-box.mdc-text-field input {
+	max-width: 100px;
+}
+
+.n2-tag-box .mdc-chip-set {
+    padding: 8px 4px 4px 4px;
+}
+
+.n2-tag-box .mdc-notched-outline .mdc-notched-outline__notch {
+	padding-left: 0;
+    padding-right: 8px;
+    border-top: none;
+}
+
+.n2-tag-box .mdc-notched-outline .mdc-notched-outline__notch .mdc-floating-label {
+    -webkit-transform: translateY(-136%) scale(0.75);
+    transform: translateY(-136%) scale(0.75);
+} 
+
 /* Nunaliit2 Tool Page Styling */
 
 .drawer-frame-root {
