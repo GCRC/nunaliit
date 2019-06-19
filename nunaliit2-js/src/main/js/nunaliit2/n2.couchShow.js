@@ -2100,10 +2100,11 @@ var DomStyler = $n2.Class({
 			var chips = $jq.find('.mdc-chip__text');
 			
 			for (var i = 0, e = chips.length; i < e; i += 1) {
-				chipsList.push("'" + chips[i].textContent + "'");
+				chipsList.push(chips[i].textContent);
 			}
 
-			$('#' + chipSet.id).attr('data-tags', '[' + chipsList + ']');
+			// Store chips list data in chipset
+			$('#' + chipSet.id).data('tags',chipsList);
 		};
 
 		function generateChip(chipText){
@@ -2133,20 +2134,24 @@ var DomStyler = $n2.Class({
 		if (chipSet) {
 			attachedChipSet = $mdc.chips.MDCChipSet.attachTo(chipSet);
 
+			updateTagList();
+
 			if ($jq.attr('n2associatedmdc')){
 				chipInputId = $jq.attr('n2associatedmdc');
 				$chipInput = $('#' + chipInputId);
 				$chipInput.keydown(function(event){
 					if (event.key === 'Enter' || event.keyCode === 13) {
-						// Get Input Value
-						var chipEl = generateChip($chipInput.val());
+						if ($chipInput.val()){
+							// Get Input Value
+							var chipEl = generateChip($chipInput.val());
 
-						// Clear Input Field
-						$chipInput.val('');
-						chipEl.insertBefore($chipInput);
-						attachedChipSet.addChip(chipEl[0]);
+							// Clear Input Field
+							$chipInput.val('');
+							chipEl.insertBefore($chipInput);
+							attachedChipSet.addChip(chipEl[0]);
 
-						updateTagList();
+							updateTagList();
+						}
 					}
 				});
 				

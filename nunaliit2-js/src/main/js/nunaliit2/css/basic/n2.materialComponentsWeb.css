@@ -57,13 +57,13 @@
 
 .n2-tag-box .mdc-notched-outline .mdc-notched-outline__notch {
 	padding-left: 0;
-    padding-right: 8px;
     border-top: none;
 }
 
 .n2-tag-box .mdc-notched-outline .mdc-notched-outline__notch .mdc-floating-label {
     -webkit-transform: translateY(-136%) scale(0.75);
-    transform: translateY(-136%) scale(0.75);
+    transform: translateY(-136%) scale(0.75); 
+	text-overflow: clip;
 } 
 
 /* Nunaliit2 Tool Page Styling */

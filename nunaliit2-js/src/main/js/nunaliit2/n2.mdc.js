@@ -276,6 +276,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 //  - label (String): A label used for the outline of the tag box
 var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 
+	$chipInput: null,
 	chips: null,
 	label: null,
 
@@ -299,10 +300,9 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 	},
 
 	_generateMDCChips: function(){
-		var $chipInput, $chipSet, $clonedInput;
-		var _this = this;
+		var $chipSet;
 
-		$chipInput = new $n2.mdc.MDCTextField({
+		this.$chipInput = new $n2.mdc.MDCTextField({
 			parentElem: this.parentElem,
 			mdcClasses: ['n2-tag-box'],
 			txtFldInputId: this.inputId,
@@ -310,14 +310,14 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 		});
 
 		$chipSet = new $n2.mdc.MDCChipSet({
-			parentElem: $('#' + $chipInput.getId()),
+			parentElem: $('#' + this.$chipInput.getId()),
 			inputChips: true,
-			inputId: $chipInput.getInputId(),
+			inputId: this.$chipInput.getInputId(),
 			chips: this.chips
 		});
 
 		// Move input form field into chipset component
-		$('#' + $chipInput.getInputId()).appendTo($('#' + $chipSet.getId()));
+		$('#' + this.$chipInput.getInputId()).appendTo($('#' + $chipSet.getId()));
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
@@ -325,7 +325,7 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 	},
 
 	getInputId: function() {
-		return this.InputId;
+		return this.inputId;
 	}
 });
 
