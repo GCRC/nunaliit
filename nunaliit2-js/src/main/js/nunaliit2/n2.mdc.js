@@ -112,6 +112,9 @@ var MDC = $n2.Class('MDC',{
 	},
 	getId: function(){
 		return this.mdcId;
+	},
+	on: function(evt, callback){
+		alert('need to implement a listen function for the MDC compoment instance');
 	}
 });
 

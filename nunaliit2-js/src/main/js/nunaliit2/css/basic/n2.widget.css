@@ -601,9 +601,10 @@ tagbox
 
 .n2_ui_tagbox{
   float:center;
-  border:1px solid #ccc;
+ /* border:1px solid #ccc;*/
   padding:5px;
   font-family:Arial;
+  margin-top: 10px;
 }
 .n2_ui_tagbox > span{
 cursor: pointer;
@@ -612,8 +613,8 @@ cursor: pointer;
     color: #fff;
     background: #789;
     padding: 10px;
-    padding-top: 3px;
-    padding-bottom: 3px;
+   /* padding-top: 3px;*/
+   /* padding-bottom: 3px;*/
     /* padding-left: 5px; */
     /* padding-right: 5px; */
     border-radius: 15px;
@@ -630,9 +631,9 @@ cursor: pointer;
 /*  font-size:4px; */
 /* } */
 .n2_ui_tagbox > input{
-  background:#eee;
-  border:0;
-  margin:4px;
+ /* background:#eee;*/
+  /* border:0;*/
+ /* margin:4px;*/
   padding:7px;
   width:80%;
 }

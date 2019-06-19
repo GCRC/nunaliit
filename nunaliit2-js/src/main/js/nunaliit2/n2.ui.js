@@ -517,6 +517,7 @@ var tagbox = $n2.Class("tagbox", {
 							.attr('type', "text")
 							.attr('value', '')
 							.attr('placeholder', '')
+							.addClass('mdc-text-field__input')
 							.appendTo(widget);
 		
 		inputfield.on('focusout',function() {
