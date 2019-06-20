@@ -134,8 +134,6 @@ var DomStyler = $n2.Class({
 	observerChangeMap: null,
 
 	mutationObserver: null,
-
-	hamburgerDrawer: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -377,6 +375,12 @@ var DomStyler = $n2.Class({
 				,acceptsContextDocument: false
 			},
 			{
+				source: 'n2s_attachMDCChipSet'
+				,target: 'n2s_attachedMDCChipSet'
+				,fn: this._attachMDCChipSet
+				,acceptsContextDocument: false
+			},
+			{
 				source: 'n2s_attachMDCDrawer'
 				,target: 'n2s_attachedMDCDrawer'
 				,fn: this._attachMDCDrawer
@@ -392,6 +396,12 @@ var DomStyler = $n2.Class({
 				source: 'n2s_attachMDCList'
 				,target: 'n2s_attachedMDCList'
 				,fn: this._attachMDCList
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_attachMDCMenu'
+				,target: 'n2s_attachedMDCMenu'
+				,fn: this._attachMDCMenu
 				,acceptsContextDocument: false
 			},
 			{
@@ -2081,13 +2091,93 @@ var DomStyler = $n2.Class({
 		}
 	},
 	
+	_attachMDCChipSet: function($jq) {
+		var attachedChipSet, $chipInput, chipInputId;
+		var chipSet = $jq[0];
+
+		function updateTagList(){
+			var chipsList = [];
+			var chips = $jq.find('.mdc-chip__text');
+			
+			for (var i = 0, e = chips.length; i < e; i += 1) {
+				chipsList.push(chips[i].textContent);
+			}
+
+			// Store chips list data in chipset
+			$('#' + chipSet.id).data('tags',chipsList);
+		};
+
+		function generateChip(chipText){
+			var $chip;
+			var chipId = $n2.getUniqueId();
+
+			$chip = $('<div>').addClass('mdc-chip')
+				.attr('id', chipId)
+				.attr('tabindex','0');
+
+			if (chipText) {
+				$('<div>').addClass('mdc-chip__text')
+					.text(chipText)
+					.appendTo($chip);
+			}
+
+			$('<i>')
+				.addClass('material-icons mdc-chip__icon mdc-chip__icon--trailing')
+				.attr('tabindex','0')
+				.attr('role','button')
+				.text('x')
+				.appendTo($chip);
+
+			return $chip;
+		};
+
+		if (chipSet) {
+			attachedChipSet = $mdc.chips.MDCChipSet.attachTo(chipSet);
+
+			updateTagList();
+
+			if ($jq.attr('n2associatedmdc')){
+				chipInputId = $jq.attr('n2associatedmdc');
+				$chipInput = $('#' + chipInputId);
+				$chipInput.keydown(function(event){
+					if (event.key === 'Enter' || event.keyCode === 13) {
+						if ($chipInput.val()){
+							// Get Input Value
+							var chipEl = generateChip($chipInput.val());
+
+							// Clear Input Field
+							$chipInput.val('');
+							chipEl.insertBefore($chipInput);
+							attachedChipSet.addChip(chipEl[0]);
+
+							updateTagList();
+						}
+					}
+				});
+				
+				attachedChipSet.listen('MDCChip:removal', function(event){
+					if (event.detail && event.detail.chipId) {
+						$('#' + event.detail.chipId).remove();
+
+						updateTagList();
+					}
+				});
+			}
+		}
+	},
+	
 	_attachMDCDrawer: function($jq) {
+		var attachedDrawer, drawerBtnId;
 		var drawer = $jq[0];
 		if (drawer) {
-			if ($jq.hasClass('nunaliit_hamburger_drawer')){
-				this.hamburgerDrawer = $mdc.drawer.MDCDrawer.attachTo(drawer);
-			} else {
-				$mdc.drawer.MDCDrawer.attachTo(drawer);
+			attachedDrawer = $mdc.drawer.MDCDrawer.attachTo(drawer);
+			if ($jq.attr('n2associatedmdc')){
+				drawerBtnId = $jq.attr('n2associatedmdc');
+				$('#' + drawerBtnId).click(function(){
+					if (attachedDrawer) {
+						attachedDrawer.open = !attachedDrawer.open;
+					}
+				});
 			}
 		}
 	},
@@ -2103,6 +2193,22 @@ var DomStyler = $n2.Class({
 		var list = $jq[0];
 		if (list) {
 			$mdc.list.MDCList.attachTo(list);
+		}
+	},
+	
+	_attachMDCMenu: function($jq) {
+		var attachedMenu, menuBtnId;
+		var menu = $jq[0];
+		if (menu) {
+			attachedMenu = $mdc.menu.MDCMenu.attachTo(menu);
+			if ($jq.attr('n2associatedmdc')){
+				menuBtnId = $jq.attr('n2associatedmdc');
+				$('#' + menuBtnId).click(function(){
+					if (attachedMenu) {
+						attachedMenu.open = !attachedMenu.open;
+					}
+				});
+			}
 		}
 	},
 	
@@ -2134,11 +2240,6 @@ var DomStyler = $n2.Class({
 		if (topAppBar) {
 			mdcTopAppBar = $mdc.topAppBar.MDCTopAppBar.attachTo(topAppBar);
 			mdcTopAppBar.setScrollTarget(document.body);
-			mdcTopAppBar.listen('MDCTopAppBar:nav', function(){
-				if (_this.hamburgerDrawer) {
-					_this.hamburgerDrawer.open = !_this.hamburgerDrawer.open;
-				}
-			});
 		}
 	}
 });

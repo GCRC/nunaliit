@@ -199,7 +199,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 //		this.tagbox = $tagBox.n2TagBox();
 
 		new $n2.mdc.MDCButton({
-				parentId: this.editorId,
+				parentElem: $formField,
 				btnLabel : 'Save',
 				onBtnClick: function(){
 					_this._clickedSave();
@@ -209,7 +209,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 
 		if( this.onCancel ){
 			new $n2.mdc.MDCButton({
-					parentId: this.editorId,
+				parentElem: $formField,
 					btnLabel : 'Cancel',
 					onBtnClick: function(){
 						_this._clickedCancel();
@@ -282,7 +282,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					.text();
 				var end = $(this).find('span.n2transcript_label.label_finTimeCode')
 					.text();
-				var tagValues =$(this).find('div.n2transcript_label.label_tagbox')
+				var tagValues =$(this).find('div.n2-tag-box')
+									.data('tags');
 					//.first()
 					//.getTags();
 				if (typeof start !== undefined
@@ -430,12 +431,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			.text(opts.text)
 			.appendTo($formFieldSection);
 			
-		var tagbox = new $n2.mdc.MDCTagBox({
-			parentId : this.innerFormId,
-            label: 'Tags',
-            mdcClasses: ['n2transcript_label','label_tagbox'],
-            chips: []
-        });
+
 		//.appendTo($formFieldSection);
 		
 		var doc = this.currentDoc;
@@ -456,6 +452,12 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 							
 					if( matchingLinks.length < 1 ){
 						// No matching timelinks no worry
+						new $n2.mdc.MDCTagBox({
+							parentElem : $formFieldSection,
+				            label: 'Tags',
+				            mdcClasses: ['n2transcript_label','label_tagbox'],
+				            chips: []
+				        });
 						return;
 					};
 							
@@ -472,7 +474,14 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 							})
 						}
 					});
-					tagbox.getElem.data('tags', lastTags);
+					//tagbox.getElem.data('tags', lastTags);
+					
+					new $n2.mdc.MDCTagBox({
+						parentElem : $formFieldSection,
+			            label: 'Tags',
+			            mdcClasses: ['n2transcript_label','label_tagbox'],
+			            chips: lastTags
+			        });
 			} else {
 				alert('Current document doesnot have (atlascine2_cinemap) property');
 				return;
@@ -1101,9 +1110,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						e.preventDefault();
 	
 						var isEditorAvailable = _this._isAnnotationEditorAvailable();
+						
 						if( isEditorAvailable ){
 							
-
 							var ctxdata = [];
 							var mulSel = _this._isMultiSelected();
 							if(mulSel.length > 0){
@@ -1118,6 +1127,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 									
 									ctxdata.push(_d);
 								})
+								
+								for(var i =0;i<_this.transcript_array.length;i++) {
+									var transcriptElem = _this.transcript_array[i];
+									var $transcriptElem = $('#'+transcriptElem.id);
+									$transcriptElem.removeClass('sentence-highlight-pending');
+								}
 							} else {
 								var eid = $(elmnt).attr('id');
 								var curStart =$(elmnt).attr('data-start');
@@ -1134,6 +1149,13 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 										text: curTxt
 								};
 								ctxdata.push(_d);
+								
+								for(var i =0;i<_this.transcript_array.length;i++) {
+									var transcriptElem = _this.transcript_array[i];
+									var $transcriptElem = $('#'+transcriptElem.id);
+									$transcriptElem.removeClass('sentence-highlight-pending');
+								}
+								$(this).addClass('sentence-highlight-pending')
 							}
 							contextMenu.data({value: ctxdata});
 							contextMenu[0].style.left = e.pageX + 'px';
@@ -1141,12 +1163,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							contextMenu.removeClass('transcript-context-menu-hide');
 							//contextMenu[0].style.display = 'block';
 
-							for(var i =0;i<_this.transcript_array.length;i++) {
-								var transcriptElem = _this.transcript_array[i];
-								var $transcriptElem = $('#'+transcriptElem.id);
-								$transcriptElem.removeClass('sentence-highlight-pending');
-							}
-							$(this).addClass('sentence-highlight-pending')
+							
 							//_this._renderDrawer();
 							 //var toRepl = "to=" + eid.toString()
 							 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)

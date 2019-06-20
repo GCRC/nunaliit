@@ -64,6 +64,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		var className = null;
 		var isContructorProvided = false;
 		var dispatchService = null;
+		var showService = null;
 		// This function is the class. It also represents the constructor
 		// that is called when a new instance of the class is created.
 		var childClass = function(options) {
@@ -86,6 +87,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 			;
 			this.dispatchService = $n2.Construct.dispatchService;
+			this.showService = $n2.Construct.showService;
 			// Assign class name
 			if (typeof (className) === 'string') {
 				this._classname = className;
@@ -107,6 +109,11 @@ POSSIBILITY OF SUCH DAMAGE.
 				&&	typeof this.dispatchService !== 'undefined'
 				&& this.dispatchService){
 				$n2.Construct.dispatchService = this.dispatchService;
+			}
+			if (typeof $n2.Construct.showService === 'undefined'
+				&&	typeof this.showService !== 'undefined'
+				&& this.showService){
+				$n2.Construct.showService = this.showService;
 			}
 			//
 		};

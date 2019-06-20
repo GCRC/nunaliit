@@ -801,6 +801,7 @@ var Service = $n2.Construct({
 		
 		if( this.config && this.config.directory ){
 			this.dispatchService = this.config.directory.dispatchService;
+			this.showService = this.config.directory.showService;
 		};
 		
 		// Register to events

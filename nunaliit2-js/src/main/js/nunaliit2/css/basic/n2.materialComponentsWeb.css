@@ -33,6 +33,39 @@
 	color: #1565c0;
 }
 
+/* Tree-view Styling */
+.n2Display_treeViewer_dialog .mdc-dialog__container .mdc-dialog__surface .mdc-dialog__content,
+.upload_body ul.tree,
+.submission_view_dialog_tree ul.tree,
+.n2CouchEditor_tree {
+    font-family: monospace;
+}
+
+/* Custom Tag Box Styling */
+.n2-tag-box.mdc-text-field,
+.n2-tag-box.mdc-text-field input {
+    height: auto;
+}
+
+.n2-tag-box.mdc-text-field input {
+	max-width: 100px;
+}
+
+.n2-tag-box .mdc-chip-set {
+    padding: 8px 4px 4px 4px;
+}
+
+.n2-tag-box .mdc-notched-outline .mdc-notched-outline__notch {
+	padding-left: 0;
+    border-top: none;
+}
+
+.n2-tag-box .mdc-notched-outline .mdc-notched-outline__notch .mdc-floating-label {
+    -webkit-transform: translateY(-136%) scale(0.75);
+    transform: translateY(-136%) scale(0.75); 
+	text-overflow: clip;
+} 
+
 /* Nunaliit2 Tool Page Styling */
 
 .drawer-frame-root {
@@ -62,6 +95,14 @@
 .mdc-top-app-bar .nunaliit_login.mdc-top-app-bar__action-item {
     width: 150px;
     height: 48px;
+}
+
+section.mdc-top-app-bar__section.mdc-top-app-bar__section--align-end {
+    max-width: 250px;
+}
+
+#importApp .importAppInput .mdc-select.mdc-select--outlined select.mdc-select__native-control {
+    min-width: 140px;
 }
 
 /* Display docIds on separate lines in dialog window */
@@ -142,7 +183,9 @@
 /* Nunaliit login button */
 .nunaliit_login .nunalitt_login_profile_icon.mdc-button__icon {
     width: 35px;
+	min-width: 35px;
     height: 35px;
+	min-height: 35px;
     margin-left: 10px;
 }
 
