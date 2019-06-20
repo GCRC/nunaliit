@@ -2105,6 +2105,7 @@ var DomStyler = $n2.Class({
 
 			// Store chips list data in chipset
 			$('#' + chipSet.id).data('tags',chipsList);
+			//alert($('#' + chipSet.id).first().data('tags'));
 		};
 
 		function generateChip(chipText){

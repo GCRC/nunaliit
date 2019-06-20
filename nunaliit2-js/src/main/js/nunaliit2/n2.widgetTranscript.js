@@ -282,14 +282,12 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					.text();
 				var end = $(this).find('span.n2transcript_label.label_finTimeCode')
 					.text();
-				var tagValues =$(this).find('div.n2-tag-box')
-									.data('tags');
-					//.first()
-					//.getTags();
+				var tagbox =$(this).find('div.n2-tag-box > div.mdc-chip-set');
+				var tagValues = (tagbox.first().data('tags'));
 				if (typeof start !== undefined
 					&& typeof end !== undefined
 					&& typeof tagValues !== undefined){
-					modified = singleSectionUpdate (doc, tagValues, start, end);
+					modified |= singleSectionUpdate (doc, tagValues, start, end);
 				}
 				
 				
@@ -326,7 +324,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 						timeLinks, 
 						start, 
 						end
-					);
+				);
 				
 				if( matchingLinks.length < 1 ){
 					// Should I create one? If so, how?
