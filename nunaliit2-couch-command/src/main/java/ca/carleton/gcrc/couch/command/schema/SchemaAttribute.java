@@ -450,9 +450,7 @@ public class SchemaAttribute {
 			}
 			
 		} else if( "localized".equals(type) ){
-			if( null != id ){
-				schemaDoc.put(id, JSONObject.NULL);
-			}
+			// leave localized attributes as undefined
 			
 		} else if( "date".equals(type) ){
 			// leave date attributes as undefined
@@ -734,9 +732,9 @@ public class SchemaAttribute {
 			}
 
 			if( "title".equals(type) ) {
-				pw.println("<div class=\"title\">");
+				pw.println("<div class=\"title mdc-typography--headline6\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t<div class=\"value"+labelLocalizeClass+"\">"+label+"</div>");
 				pw.println("\t<div class=\"end\"></div>");
 				
 				pw.println("</div>");
@@ -749,7 +747,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 
 					String fixUrlClass = "";
 					String fixMaxHeight = "";
@@ -789,7 +787,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">{{date}}</div>");
 					pw.println("\t\t\t<div class=\"end\"></div>");
 					
@@ -807,7 +805,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					
 					if( "thumbnail".equals(referenceType) ){
 						pw.println("\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{doc}}\"></div>");
@@ -831,7 +829,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					
 					pw.println("\t\t\t<div class=\"value n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
@@ -855,7 +853,7 @@ public class SchemaAttribute {
 
 					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
 					pw.println("\t\t{{#"+id+"}}");
 					pw.print("\t\t\t<div class=\"array_element");
@@ -904,7 +902,7 @@ public class SchemaAttribute {
 	
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 	
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					
 					for(SelectionOption option : options){
@@ -935,7 +933,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">");
 					pw.println("\t\t\t\t{{#if "+id+"}}");
 					pw.println("\t\t\t\t\t<span class=\"n2s_localize\">Yes</span>");
@@ -957,7 +955,7 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">");
 					for(CheckboxGroupItem item : checkboxes){
 						String itemId = item.getId();
@@ -1005,7 +1003,7 @@ public class SchemaAttribute {
 
 				pw.println("{{#nunaliit_geom}}");
 				pw.println("\t\t<div class=\"nunaliit_geom\">");
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 				pw.println("\t\t\t<div class=\"value\">{{wkt}}</div>");
 				pw.println("\t\t\t<div class=\"end\"></div>");
 				pw.println("\t\t</div>");
@@ -1018,7 +1016,7 @@ public class SchemaAttribute {
 
 				pw.println("{{#nunaliit_hoverSound}}");
 				pw.println("\t\t<div class=\"nunaliit_hoverSound\">");
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 				pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
 				pw.println("\t\t\t<div class=\"end\"></div>");
 				pw.println("\t\t</div>");
@@ -1035,7 +1033,7 @@ public class SchemaAttribute {
 
 				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created\">");
 
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 
 				pw.println("\t\t\t<div class=\"value n2s_insertUserName\">{{name}}</div>");
 				
@@ -1057,7 +1055,7 @@ public class SchemaAttribute {
 
 				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created_time\">");
 
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 
 				pw.println("\t\t\t<div class=\"value n2s_insertTime\">{{time}}</div>");
 				
@@ -1086,10 +1084,43 @@ public class SchemaAttribute {
 			if( "title".equals(type) ){
 				pw.println("<div class=\"title\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"end\"></div>");
+				pw.println("\t<div class=\"value mdc-typography--headline6"+labelLocalizeClass+"\">"+label+"</div>");
 				
 				pw.println("</div>");
+
+ 			} else if( isTextarea() ){
+				if( null != id ){
+					String fieldType = "";
+					fieldType += ",id="+encodeFieldParameter(id);
+					fieldType += ",textarea";
+
+					if( null != label ){
+						fieldType += ",label="+encodeFieldParameter(label);
+					}
+
+					if( "localized".equals(type) ){
+						fieldType += ",localized";
+					} else if( "custom".equals(type) ){
+						fieldType += ",custom="+encodeFieldParameter(customType);
+					}
+					if( isWikiTransform() ){
+						fieldType += ",wikiTransform";
+					}
+
+					if( null != placeholder ){
+						fieldType += ",placeholder="+encodeFieldParameter(placeholder);
+					}
+
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("<div class=\""+schemaClass+"_"+id+"\">");
+
+					pw.println("\t<div class=\"value\">");
+					pw.println("\t\t{{#:field}}"+id+fieldType+"{{/:field}}");
+					pw.println("\t</div>");
+
+					pw.println("</div>");
+					pw.println("{{/"+schemaStructure+"}}");
+				}
 
 			} else if( "string".equals(type) 
 			 || "localized".equals(type) 
@@ -1099,20 +1130,22 @@ public class SchemaAttribute {
 			 || "date".equals(type) ){
 				if( null != id ){
 					String fieldType = "";
-					if( "localized".equals(type) ){
-						fieldType = ",localized";
-					} else if( "date".equals(type) ){
-						fieldType = ",date";
-					} else if( "reference".equals(type) ){
-						fieldType = ",reference";
-					} else if( "custom".equals(type) ){
-						fieldType = ",custom="+encodeFieldParameter(customType);
-					} else if( "checkbox".equals(type) ){
-						fieldType = ",checkbox";
+					fieldType += ",id="+encodeFieldParameter(id);
+
+					if( null != label ){
+						fieldType += ",label="+encodeFieldParameter(label);
 					}
 
-					if( isTextarea() ){
-						fieldType += ",textarea";
+					if( "localized".equals(type) ){
+						fieldType += ",localized";
+					} else if( "date".equals(type) ){
+						fieldType += ",date";
+					} else if( "reference".equals(type) ){
+						fieldType += ",reference";
+					} else if( "custom".equals(type) ){
+						fieldType += ",custom="+encodeFieldParameter(customType);
+					} else if( "checkbox".equals(type) ){
+						fieldType += ",checkbox";
 					}
 
 					if( isWikiTransform() ){
@@ -1125,21 +1158,18 @@ public class SchemaAttribute {
 
 					if( null != searchFunction ){
 						fieldType += ",search="+encodeFieldParameter(searchFunction);
-					}
+					}					
 					
-					pw.println("{{#"+schemaStructure+"}}");
+						pw.println("{{#"+schemaStructure+"}}");
+						pw.println("<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
-
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
-					
-					pw.println("\t</div>");
-					
-					
-					pw.println("{{/"+schemaStructure+"}}");
-				}
+						pw.println("\t<div class=\"value\">");
+						pw.println("\t\t{{#:field}}"+id+fieldType+"{{/:field}}");
+						pw.println("\t</div>");
+						pw.println("</div>");
+						
+						pw.println("{{/"+schemaStructure+"}}");
+			 	}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
@@ -1147,12 +1177,13 @@ public class SchemaAttribute {
 
 					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
-					pw.println("\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}}\">");
+					pw.println("\t\t\t<div class=\"mdc-select mdc-select--outlined n2s_attachMDCSelect\">");
+					pw.println("\t\t\t\t<i class=\"mdc-select__dropdown-icon\"></i>");
+					pw.println("\t\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}} mdc-select__native-control\">");
 					
 					for(SelectionOption option : options){
-						pw.print("\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
+						pw.print("\t\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
 						String optLabel = option.getLabel();
 						if( null == optLabel ){
 							optLabel = option.getValue();
@@ -1161,34 +1192,47 @@ public class SchemaAttribute {
 						pw.println("</option>");
 					}
 					
-					pw.println("\t\t\t</select>");
+					pw.println("\t\t\t\t</select>");
+
+					pw.println("\t\t\t\t<div class=\"mdc-notched-outline\">");
+					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__leading\"></div>");
+					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__notch\">");
+					pw.println("\t\t\t\t\t\t<label class=\"mdc-floating-label "+labelLocalizeClass+"\">"+label+"</label>");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__trailing\"></div>");
+					pw.println("\t\t\t\t</div>");
+					pw.println("\t\t\t</div>");
+
 					pw.println("\t\t</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
-					
+
 					pw.println("\t</div>");
-					
 					
 					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "array".equals(type) ){
 				if( null != id ){
-					String fieldType = null;
+					String fieldType = ",array";
 					String arrayType = "";
+					
+					if( null != label ){
+						fieldType += ",label="+encodeFieldParameter(label);
+					}
+
 					if( "string".equals(elementType) ){
-						fieldType = "";
+						fieldType += "";
 						arrayType = " \"string\"";
 					} else if( "localized".equals(elementType) ){
-						fieldType = ",localized";
+						fieldType += ",localized";
 						arrayType = " \"localized\"";
 					} else if( "date".equals(elementType) ){
-						fieldType = ",date";
+						fieldType += ",date";
 						arrayType = " \"date\"";
 					} else if( "reference".equals(elementType) ){
-						fieldType = ",reference";
+						fieldType += ",reference";
 						arrayType = " \"reference\"";
 					} else if( "custom".equals(elementType) ){
-						fieldType = ",custom="+customType;
+						fieldType += ",custom="+customType;
 						arrayType = " \"custom\"";
 					}
 					
@@ -1206,16 +1250,13 @@ public class SchemaAttribute {
 
 						pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
-						pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 						pw.println("\t\t<div class=\"value\">");
 						pw.println("\t\t\t{{#:array "+id+arrayType+"}}");
 						pw.println("\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
 						pw.println("\t\t\t{{/:array}}");
 						pw.println("\t\t</div>");
-						pw.println("\t\t<div class=\"end\"></div>");
 						
 						pw.println("\t</div>");
-						
 						
 						pw.println("{{/"+schemaStructure+"}}");
 					}
@@ -1225,31 +1266,38 @@ public class SchemaAttribute {
 				if( null != id ){
 					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t<div class=\"mdc-list-group "+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">");
+					pw.println("\t\t<h3 class=\"label mdc-list-group__subheader"+labelLocalizeClass+"\">"+label+"</h3>");
+					pw.println("\t\t<ul class=\"mdc-list value\" role=\"group\" aria-orientation=\"vertical\">");
 					
 					for(CheckboxGroupItem item : checkboxes){
 						String itemId = item.getId();
 						String itemLabel = item.getLabel();
 						String forId = id+"_"+itemId;
 						
-						pw.println("\t\t\t\t<div>");
-						pw.print("\t\t\t\t\t<input type=\"checkbox\" class=\"{{#:input}}"+itemId+"{{/:input}}\" id=\""+forId+"\"/>");
+						pw.println("\t\t\t<li class=\"mdc-list-item\">");
+						pw.println("\t\t\t\t<div class=\"mdc-checkbox n2s_attachMDCCheckbox\">");
+						pw.println("\t\t\t\t\t<input type=\"checkbox\" class=\"mdc-checkbox__native-control {{#:input}}"+itemId+"{{/:input}}\" id=\""+forId+"\" />");
+						pw.println("\t\t\t\t\t<div class=\"mdc-checkbox__background\">");
+						pw.println("\t\t\t\t\t\t<svg class=\"mdc-checkbox__checkmark\" viewBox=\"0 0 24 24\">");
+						pw.println("\t\t\t\t\t\t\t<path fill=\"none\" stroke=\"white\" class=\"mdc-checkbox__checkmark-path\" d=\"M1.73,12.91 8.1,19.28 22.79,4.59\" />");
+						pw.println("\t\t\t\t\t\t</svg>");
+						pw.println("\t\t\t\t\t\t<div class=\"mdc-checkbox__mixedmark\"></div>");
+						pw.println("\t\t\t\t\t</div>");
+						pw.println("\t\t\t\t</div>");
+
 						if( null == itemLabel ) {
 							pw.println(" <label for=\""+forId+"\">"+itemId+"</label>");
 						} else {
 							pw.println(" <label for=\""+forId+"\" class=\"n2s_localize\">"+itemLabel+"</label>");
 						}
-						pw.println("\t\t\t\t</div>");
+
+						pw.println("\t\t\t</li>");
 					}
 
-					pw.println("\t\t</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
-					
+					pw.println("\t\t</ul>");
 					pw.println("\t</div>");
-					
 					
 					pw.println("{{/"+schemaStructure+"}}");
 				}
@@ -1258,33 +1306,39 @@ public class SchemaAttribute {
 				// nothing to do
 				
 			} else if( "geometry".equals(type) ){
+				String labelValue = "";
+
 				if( null != id ){
 					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
 				}
 
-				pw.println("<div class=\"nunaliit_geom\">");
+				if( null != label ){
+					labelValue = ",label="+encodeFieldParameter(label);
+				}
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_geom,geometry{{/:field}}</div>");
-				pw.println("\t<div class=\"end\"></div>");
-				
+				pw.println("<div class=\"nunaliit_geom\">");
+				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_geom,geometry"+labelValue+"{{/:field}}</div>");
 				pw.println("</div>");
 
 			} else if( "hover_sound".equals(type) ){
+				String labelValue = "";
+				String searchFunctionString = ",search=getHoverSound"; 
+				
 				if( null != id ){
 					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
 				}
 
-				String searchFunctionString = ",search=getHoverSound"; 
+				if( null != label ){
+					labelValue = ",label="+encodeFieldParameter(label);
+				}
+
 				if( null != searchFunction ){
 					searchFunctionString = ",search="+encodeFieldParameter(searchFunction);
 				}
 
 				pw.println("<div class=\"nunaliit_hoverSound\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_hoverSound,reference"+searchFunctionString+"{{/:field}}</div>");
-				pw.println("\t<div class=\"end\"></div>");
+				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_hoverSound,reference"+labelValue+searchFunctionString+"{{/:field}}</div>");
 				
 				pw.println("</div>");
 

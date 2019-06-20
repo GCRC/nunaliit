@@ -24,43 +24,52 @@
 		};
 		
 		// Title
-		$('<div class="title">')
-			.appendTo($inputSection)
-			.text( _loc('Input') );
-		
-		// Import Profile
-		var $line = $('<div class="line">').appendTo($inputSection);
-		$('<div class="label">')
-			.text( _loc('Import Profile') )
-			.appendTo($line);
-		var $selectLine = $('<div>')
-			.addClass('value')
-			.appendTo($line);
-		var $select = $('<select>')
-			.addClass('import_profile')
-			.appendTo($selectLine);
-		for(var i=0,e=importProfiles.length; i<e; ++i){
-			var importProfile = importProfiles[i];
-			$('<option>')
-				.val(importProfile.getId())
-				.text( _loc(importProfile.getLabel())+' ('+importProfile.getType()+')' )
-				.appendTo($select);
-		};
+		var $inputTitle = $('<div>')
+			.addClass('title')			
+			.appendTo($inputSection);
 
-		// Json
-		var $line = $('<div class="line">').appendTo($inputSection);
-		$('<div class="label">')
+		$('<span>')
+			.addClass('mdc-typography--headline6')
 			.text( _loc('Input') )
-			.appendTo($line);
-		$('<div class="value"><textarea class="importData"></textarea></div>')
-			.appendTo($line);
+			.appendTo($inputTitle);
+		
+		var $buttonLine = $('<div class="buttonline">')
+			.appendTo($inputSection);
 
-		// Import Button
-		var $line = $('<div class="line">').appendTo($inputSection);
-		$('<button>')
-			.text( _loc('Verify') )
-			.appendTo($line)
-			.click(function(){
+		if (importProfiles && importProfiles.length > 0) {
+			var importProfileMenuOpts = [];
+			for(var i=0,e=importProfiles.length; i<e; ++i){
+				var importProfile = importProfiles[i];
+				importProfileMenuOpts.push({
+					"value": importProfile.getId(),
+					"label": _loc(importProfile.getLabel()) + ' (' + importProfile.getType() + ')'
+				});
+			}
+		} else {
+			// do nothing
+		}
+
+		// Import Profile Select Menu
+		var importProfileSelect = new $n2.mdc.MDCSelect({
+			parentElem: $buttonLine,
+			menuLabel: 'Import Profile',
+			menuOpts: importProfileMenuOpts
+		});
+
+		// Input Textarea
+		var inputTextField = new $n2.mdc.MDCTextField({
+			parentElem: $inputSection,
+			txtFldArea: true,
+			txtFldLabel: 'Input'
+		});
+
+		$('#' + inputTextField.getInputId()).addClass('importData');
+
+		// Import Verify Button
+		new $n2.mdc.MDCButton({
+			parentElem: $buttonLine,
+			btnLabel: 'Verify',
+			onBtnClick: function(){
 				var $inputSection = $appDiv.find('.importAppInput');
 				var importProfileId = $inputSection.find('.import_profile').val();
 				var importData = $inputSection.find('.importData').val();
@@ -125,7 +134,8 @@
 						fatalError( _loc('Unable to parse import data: {err}',{err:err}) );
 					}
 				});
-			});
+			}
+		});
 		
 		function fatalError(err){
 			reportError( err );
@@ -141,24 +151,32 @@
 	function getLogsDiv(){
 		var $e = $appDiv.find('.importAppLogs');
 		if( $e.length < 1 ) {
-			$e = $('<div class="importAppLogs"></div>');
+			$e = $('<div class="importAppLogs mdc-card"></div>');
 			$appDiv.append($e);
 			addHeader($e);
 		};
 		return $e;
 		
 		function addHeader($e){
-			var $h = $('<div class="title"><span></span> <button></button></div>');
-			$e.append($h);
-			$h.find('span').text( _loc('Logs') );
-			$h.find('button')
-				.text( _loc('Clear') )
-				.click(function(){
+			var $h = $('<div>')
+				.addClass('title')
+				.appendTo($e);
+			
+			$('<span>')
+				.addClass('mdc-typography--headline6')
+				.text(_loc('Logs'))
+				.appendTo($h);
+		
+			new $n2.mdc.MDCButton({
+				parentElem: $h,
+				btnLabel: 'Clear',
+				onBtnClick: function(){
 					var $d = getLogsDiv();
 					$d.empty();
 					addHeader($d);
 					return false;
-				});
+				}
+			});
 		};
 	};
 	
@@ -214,8 +232,8 @@
 		
 		$appDiv
 			.empty()
-			.append( $('<div class="importAppInput"><div>') )
-			.append( $('<div class="importAppVerify"><div>') )
+			.append( $('<div class="importAppInput mdc-card"><div>') )
+			.append( $('<div class="importAppVerify mdc-card"><div>') )
 			;
 		
 		refreshInputSection();
@@ -236,9 +254,36 @@
 
 		log( _loc('Upgrade Json Application Started') );
 	};
-
 	
+	function addHamburgerMenu(){
+		// Top-App-Bar
+		new $n2.mdc.MDCTopAppBar({
+			barTitle: 'Import Data Tool'
+		});
+
+		// Tools Drawer
+		new $n2.mdc.MDCDrawer({
+			anchorBtnId: 'hamburger_menu_btn',
+			navHeaderTitle: 'Nunaliit Tools',
+			navItems: [
+				{"text": "User Management", "href": "./users.html"},
+				{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+				{"text": "Data Browser", "href": "./browse.html"},
+				{"text": "Localization", "href": "./translation.html"},
+				{"text": "Data Export", "href": "./export.html"},
+				{"text": "Data Modification", "href": "./select.html"},
+				{"text": "Schemas", "href": "./schemas.html"},
+				{"text": "Restore Tool", "href": "./restore.html"},
+				{"text": "Submission Tool", "href": "./submission.html"},
+				{"text": "Import Tool", "href": "./import.html", "activated": true},
+				{"text": "Debug Tool", "href": "./debug.html"},
+				{"text": "Schema Editor", "href": "./schema_editor.html"}
+			]	
+		});
+	};
+
 	$n2.importApp = {
 		main: main
+		,addHamburgerMenu: addHamburgerMenu
 	};
 })(jQuery,nunaliit2);

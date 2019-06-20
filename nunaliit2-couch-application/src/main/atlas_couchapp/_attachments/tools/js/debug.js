@@ -32,114 +32,27 @@
 
 			// Configuration
 			var $conf = $('<div>')
-				.addClass('n2debug_configuration')
+				.addClass('n2debug_configuration mdc-card')
 				.appendTo($outer);
 			var $header = $('<div>')
 				.addClass('n2debug_header')
 				.appendTo($conf);
 			$('<span>')
 				.text( _loc('Debug Configuration') )
+				.addClass('mdc-typography--headline6')
 				.appendTo($header);
 			$('<div>')
 				.addClass('n2debug_configuration_content')
 				.appendTo($conf);
-			
-			this._refresh();
-		},
 
-		_getDiv: function(){
-			return $('#'+this.divId);
-		},
-		
-		_refresh: function(){
-			var _this = this;
+			var $buttonsContainer = $('<div>')
+				.addClass('mdc-card__actions')
+				.appendTo($conf);
 
-			var $outer = this._getDiv();
-
-			var $confContent = $outer.find('.n2debug_configuration_content');
-			$confContent.empty();
-
-			// Bad Proxy
-			var $div = $('<div>')
-				.addClass('n2debug_configuration_content_badProxy')
-				.appendTo($confContent);
-			var badProxyId = $n2.getUniqueId();
-			$('<label>')
-				.attr('for',badProxyId)
-				.text( _loc('Bad Proxy Circumvention') )
-				.appendTo($div);
-			var $cb = $('<input>')
-				.attr('type','checkbox')
-				.attr('name',badProxyId)
-				.appendTo($div)
-				.change(function(){
-					var $cb = $(this);
-					if( $cb.attr('checked') ) {
-						_this.debugConfiguration.setBadProxyEnabled(true);
-					} else {
-						_this.debugConfiguration.setBadProxyEnabled(false);
-					};
-					_this._refresh();
-				});
-			if( this.debugConfiguration.isBadProxyEnabled() ){
-				$cb.attr('checked','checked');
-			};
-
-			// Logging
-			var $div = $('<div>')
-				.addClass('n2debug_configuration_content_logging')
-				.appendTo($confContent);
-			var loggingId = $n2.getUniqueId();
-			$('<label>')
-				.attr('for',loggingId)
-				.text( _loc('Dispatcher Event Logging') )
-				.appendTo($div);
-			var $cb = $('<input>')
-				.attr('type','checkbox')
-				.attr('name',loggingId)
-				.appendTo($div)
-				.change(function(){
-					var $cb = $(this);
-					if( $cb.attr('checked') ) {
-						_this.debugConfiguration.setEventLoggingEnabled(true);
-					} else {
-						_this.debugConfiguration.setEventLoggingEnabled(false);
-					};
-					_this._refresh();
-				});
-			if( this.debugConfiguration.isEventLoggingEnabled() ){
-				$cb.attr('checked','checked');
-			};
-
-			// CouchDb Caching
-			var $div = $('<div>')
-				.addClass('n2debug_configuration_content_couchDbCaching')
-				.appendTo($confContent);
-			var couchDbCachingId = $n2.getUniqueId();
-			$('<label>')
-				.attr('for',couchDbCachingId)
-				.text( _loc('CouchDb Caching') )
-				.appendTo($div);
-			var $cb = $('<input>')
-				.attr('type','checkbox')
-				.attr('name',couchDbCachingId)
-				.appendTo($div)
-				.change(function(){
-					var $cb = $(this);
-					if( $cb.attr('checked') ) {
-						_this.debugConfiguration.setCouchDbCachingEnabled(true);
-					} else {
-						_this.debugConfiguration.setCouchDbCachingEnabled(false);
-					};
-					_this._refresh();
-				});
-			if( this.debugConfiguration.isCouchDbCachingEnabled() ){
-				$cb.attr('checked','checked');
-			};
-			var $cb = $('<button>')
-				.text( _loc('Clear Cache') )
-				.appendTo($div)
-				.click(function(){
+			new $n2.mdc.MDCButton({
+				parentElem: $buttonsContainer,
+				btnLabel: 'Clear Cache',
+				onBtnClick: function(){
 					$n2.indexedDb.openIndexedDb({
 						onSuccess: function(indexedDbConnection){
 							var documentCache = indexedDbConnection.getDocumentCache({});
@@ -156,22 +69,123 @@
 							alert('Error while obtaining cache: '+err);
 						}
 					});
-				});
+				}
+			});
+
+			this._refresh();
+		},
+
+		_getDiv: function(){
+			return $('#'+this.divId);
+		},
+		
+		_refresh: function(){
+			var _this = this;
+
+			var $outer = this._getDiv();
+
+			var $confContent = $outer.find('.n2debug_configuration_content');
+			$confContent.empty();
+
+			var $debugList = $('<ul>')
+				.addClass('mdc-list')
+				.attr('role', 'group')
+				.appendTo($confContent);
+			
+			// Bad Proxy
+			var $badProxyListItem = $('<li>')
+				.addClass('mdc-list-item')
+				.attr('role', 'checkbox')
+				.appendTo($debugList);
+
+			if (this.debugConfiguration.isBadProxyEnabled()) {
+				var badProxyChkboxChecked = true;
+			};
+
+			new $n2.mdc.MDCCheckbox({
+				parentElem: $badProxyListItem,
+				mdcClasses: ['n2debug_configuration_content_badProxy'],
+				chkboxChecked: badProxyChkboxChecked, 
+				chkboxLabel: 'Bad Proxy Circumvention',
+				chkboxChgFunc: function(){
+					var $cb = $(this);
+					if ($cb.attr('checked')) {
+						_this.debugConfiguration.setBadProxyEnabled(true);
+					} else {
+						_this.debugConfiguration.setBadProxyEnabled(false);
+					}
+					_this._refresh();
+				}
+			});
+
+			// Logging
+			var $loggingListItem = $('<li>')
+				.addClass('mdc-list-item')
+				.attr('role', 'checkbox')
+				.appendTo($debugList);
+
+			if( this.debugConfiguration.isEventLoggingEnabled() ){
+				var loggingChkboxChecked = true;
+			};
+
+			new $n2.mdc.MDCCheckbox({
+				parentElem: $loggingListItem,
+				mdcClasses: ['n2debug_configuration_content_logging'],
+				chkboxChecked: loggingChkboxChecked, 
+				chkboxLabel: 'Dispatcher Event Logging',
+				chkboxChgFunc: function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setEventLoggingEnabled(true);
+					} else {
+						_this.debugConfiguration.setEventLoggingEnabled(false);
+					};
+					_this._refresh();
+				}
+			});
+
+			// CouchDb Caching
+			var $couchDBCachingListItem = $('<li>')
+				.addClass('mdc-list-item')
+				.attr('role', 'checkbox')
+				.appendTo($debugList);
+
+			if( this.debugConfiguration.isCouchDbCachingEnabled() ){
+				var couchDBCachingChkboxChecked = true;
+			};
+
+			new $n2.mdc.MDCCheckbox({
+				parentElem: $couchDBCachingListItem,
+				mdcClasses: ['n2debug_configuration_content_couchDbCaching'],
+				chkboxChecked: couchDBCachingChkboxChecked, 
+				chkboxLabel: 'CouchDb Caching',
+				chkboxChgFunc: function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setCouchDbCachingEnabled(true);
+					} else {
+						_this.debugConfiguration.setCouchDbCachingEnabled(false);
+					};
+					_this._refresh();
+				}
+			});
 
 			// Disable CouchDb Caching
-			var $div = $('<div>')
-				.addClass('n2debug_configuration_content_disableCouchDbCaching')
-				.appendTo($confContent);
-			var disableCouchDbCachingId = $n2.getUniqueId();
-			$('<label>')
-				.attr('for',disableCouchDbCachingId)
-				.text( _loc('Disable CouchDb Caching') )
-				.appendTo($div);
-			var $cb = $('<input>')
-				.attr('type','checkbox')
-				.attr('name',disableCouchDbCachingId)
-				.appendTo($div)
-				.change(function(){
+			var $disableCouchDBCachingListItem = $('<li>')
+				.addClass('mdc-list-item')
+				.attr('role', 'checkbox')
+				.appendTo($debugList);
+
+			if( this.debugConfiguration.isCouchDbCachingDisabled() ){
+				var disableCouchDBCachingCheckboxChecked = true;
+			};
+
+			new $n2.mdc.MDCCheckbox({
+				parentElem: $disableCouchDBCachingListItem,
+				mdcClasses: ['n2debug_configuration_content_disableCouchDbCaching'],
+				chkboxChecked: disableCouchDBCachingCheckboxChecked, 
+				chkboxLabel: 'Disable CouchDb Caching',
+				chkboxChgFunc: function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setCouchDbCachingDisabled(true);
@@ -179,25 +193,25 @@
 						_this.debugConfiguration.setCouchDbCachingDisabled(false);
 					};
 					_this._refresh();
-				});
-			if( this.debugConfiguration.isCouchDbCachingDisabled() ){
-				$cb.attr('checked','checked');
-			};
+				}
+			});
 
 			// Force slow connection handling
-			var $div = $('<div>')
-				.addClass('n2debug_configuration_content_slowConnectionHandling')
-				.appendTo($confContent);
-			var slowConnectionHandlingId = $n2.getUniqueId();
-			$('<label>')
-				.attr('for',slowConnectionHandlingId)
-				.text( _loc('Force slow connection handling') )
-				.appendTo($div);
-			var $cb = $('<input>')
-				.attr('type','checkbox')
-				.attr('name',slowConnectionHandlingId)
-				.appendTo($div)
-				.change(function(){
+			var $slowConnectionListItem = $('<li>')
+				.addClass('mdc-list-item')
+				.attr('role', 'checkbox')
+				.appendTo($debugList);
+
+			if( this.debugConfiguration.forceSlowConnectionHandling() ){
+				var slowConnectionChkboxChecked = true;
+			};
+
+			new $n2.mdc.MDCCheckbox({
+				parentElem: $slowConnectionListItem,
+				mdcClasses: ['n2debug_configuration_content_slowConnectionHandling'],
+				chkboxChecked: slowConnectionChkboxChecked, 
+				chkboxLabel: 'Force slow connection handling',
+				chkboxChgFunc: function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setForceSlowConnectionHandling(true);
@@ -205,10 +219,8 @@
 						_this.debugConfiguration.setForceSlowConnectionHandling(false);
 					};
 					_this._refresh();
-				});
-			if( this.debugConfiguration.forceSlowConnectionHandling() ){
-				$cb.attr('checked','checked');
-			};
+				}
+			});
 		}
 	});
 
@@ -271,13 +283,38 @@
 			div: $div
 			,dispatchService: dispatchService
 		});
-
-		$('.debugAppTitle').text( _loc('Debug Application') );
 	};
 
+	function addHamburgerMenu(){
+		// Top-App-Bar
+		new $n2.mdc.MDCTopAppBar({
+			barTitle: 'Debug Application'
+		});
+
+		// Tools Drawer
+		new $n2.mdc.MDCDrawer({
+			anchorBtnId: 'hamburger_menu_btn',
+			navHeaderTitle: 'Nunaliit Tools',
+			navItems: [
+				{"text": "User Management", "href": "./users.html"},
+				{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+				{"text": "Data Browser", "href": "./browse.html"},
+				{"text": "Localization", "href": "./translation.html"},
+				{"text": "Data Export", "href": "./export.html"},
+				{"text": "Data Modification", "href": "./select.html"},
+				{"text": "Schemas", "href": "./schemas.html"},
+				{"text": "Restore Tool", "href": "./restore.html"},
+				{"text": "Submission Tool", "href": "./submission.html"},
+				{"text": "Import Tool", "href": "./import.html"},
+				{"text": "Debug Tool", "href": "./debug.html", "activated": true},
+				{"text": "Schema Editor", "href": "./schema_editor.html"}
+			]	
+		});
+	};
 	
 	$n2.debugApp = {
 		main: main
 		,DebugApp: DebugApp
+		,addHamburgerMenu: addHamburgerMenu
 	};
 })(jQuery,nunaliit2);

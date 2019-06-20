@@ -72,27 +72,24 @@ var UserManagementApplication = $n2.Class({
 	}
 
 	,_display: function(){
-//		<div class="userAppInput">
-//		<input id="userSearchBox" type="text"/>
-//		<input id="btnQueryUsers" type="button" value="Query Users"/>
-//		<input id="btnAddUser" type="button" value="Add User"/>
-//		<input id="btnMyUser" type="button" value="My User"/>
-//	</div>	
-//	<div id="requests" class="userAppOutput">
-//	</div>
-		
 		var _this = this;
 		
 		var div = this._getDiv();
-		
+
 		var $userInput = $('<div class="userAppInput"></div>')
 			.appendTo(div);
 		var $userOutput = $('<div class="userAppOutput"></div>')
 			.appendTo(div);
 		
-		
-		var $textInput = $('<input class="userAppSearchText" type="text"></input>')
-			.appendTo($userInput);
+		var userSearchField = new $n2.mdc.MDCTextField({
+			parentElem: $userInput,
+			txtFldLabel: 'User Search'
+		});
+
+		$('#' + userSearchField.getInputId()).addClass('userAppSearchText');
+
+		var $textInput = $('#' + userSearchField.getInputId());
+
 		if( $textInput.autocomplete ) {
 			$textInput.autocomplete({
 				source: this.userSearchService.getJqAutoCompleteSource()
@@ -114,27 +111,37 @@ var UserManagementApplication = $n2.Class({
 				_this.queryUsers();
 			};
 		});
-		
-		$('<input class="userAppQueryButton" type="button">')
-			.val( _loc('Query Users') )
-			.appendTo($userInput)
-			.click(function(){
+
+
+		new $n2.mdc.MDCButton({
+			parentElem: $userInput,
+			mdcClasses: ['userAppQueryButton'],
+			btnLabel: 'Query Users',
+			btnRaised: true,
+			onBtnClick: function(){
 				_this.queryUsers();
-			});
-			
-		$('<input class="userAppAddUser" type="button">')
-			.val( _loc('Add User') )
-			.appendTo($userInput)
-			.click(function(){
+			}
+		});
+
+		new $n2.mdc.MDCButton({
+			parentElem: $userInput,
+			mdcClasses: ['userAppAddUser'],
+			btnLabel: 'Add User',
+			btnRaised: true,
+			onBtnClick: function(){
 				_this.addUser();
-			});
+			}
+		});
 		
-		$('<input class="userAppMyUser" type="button">')
-			.val( _loc('My User') )
-			.appendTo($userInput)
-			.click(function(){
+		new $n2.mdc.MDCButton({
+			parentElem: $userInput,
+			mdcClasses: ['userAppMyUser'],
+			btnLabel: 'My User',
+			btnRaised: true,
+			onBtnClick: function(){
 				_this.queryMyUser();
-			});
+			}
+		});
 	}
 	
 	,_reportErrorsOnElem: function(errors, $elem) {
@@ -212,27 +219,60 @@ var UserManagementApplication = $n2.Class({
 		var _this = this;
 
 		var $div = this._getDiv();
-		
-		$div.find('.userAppOutput').html('<div>'
-			+'User Name: <input id="addUserName" type="text"/><br/>'
-			+'Password: <input id="addUserPassword1" type="password"/><br/>'
-			+'Repeat Password: <input id="addUserPassword2" type="password"/><br/>'
-			+'<input id="btnAddUser2" type="button" value="Proceed"/></div>');
-		$('#addUserName').focus();
-		
-		$('#btnAddUser2').click(function(){
-			var userName = $('#addUserName').val();
-			var pw1 = $('#addUserPassword1').val();
-			var pw2 = $('#addUserPassword2').val();
+		var formId = $n2.getUniqueId();
 
-			if( pw1 != pw2 ) {
-				alert('Passwords do not match');
-			} else if( pw1.length < 6 ) {
-				alert('Password is too short');
-			} else {
-				createInitialUser(userName, pw1);
+		var $userAppOutput = $div.find('.userAppOutput').empty();
+		var $userForm = $('<form>')
+			.attr('id', formId)
+			.appendTo($userAppOutput);
+
+		new $n2.mdc.MDCTextField({
+			parentElem: $userForm,
+			txtFldInputId: 'addUserName',
+			txtFldLabel: 'User Name'
+		});
+		
+		$userForm.append('</br>');
+
+		var password1 = new $n2.mdc.MDCTextField({
+			parentElem: $userForm,
+			passwordFld: true,
+			txtFldInputId: 'addUserPassword1',
+			txtFldLabel: 'Password'
+		});
+
+		$userForm.append('</br>');
+
+		var password2 = new $n2.mdc.MDCTextField({
+			parentElem: $userForm,
+			passwordFld: true,
+			txtFldInputId: 'addUserPassword2',
+			txtFldLabel: 'Repeat Password'
+		});
+
+		$userForm.append('</br>');
+
+		new $n2.mdc.MDCButton({
+			parentElem, $userForm,
+			mdcId: 'btnAddUser2',
+			btnLabel: 'Proceed',
+			btnRaised: true,
+			onBtnClick: function(){
+				var userName = $('#addUserName').val();
+				var pw1 = $('#addUserPassword1').val();
+				var pw2 = $('#addUserPassword2').val();
+
+				if( pw1 != pw2 ) {
+					alert('Passwords do not match');
+				} else if( pw1.length < 6 ) {
+					alert('Password is too short');
+				} else {
+					createInitialUser(userName, pw1);
+				}
 			}
 		});
+
+		$('#addUserName').focus();
 
 		function createInitialUser(userName, pw) {
 			_this._startRequestWait();
@@ -321,23 +361,23 @@ var UserManagementApplication = $n2.Class({
 		};
 
 		function reportUsers(arr) {
-			var $outterDiv = $('<div class="n2UserList"></div>');
-			$div.find('.userAppOutput').empty().append($outterDiv);
+			var $outterList = $('<ul class="n2UserList mdc-list"></ul>');
+			$div.find('.userAppOutput').empty().append($outterList);
 
 			for(var i=0,e=arr.length; i<e; ++i) {
 				var doc = arr[i];
 
-				reportUserDoc(doc, $outterDiv);
+				reportUserDoc(doc, $outterList);
 			};
 		};
 
-		function reportUserDoc(userDoc, $outterDiv) {
+		function reportUserDoc(userDoc, $outterList) {
 			if( _this.userSchema && _this.showService ){
-				var $div = $('<div></div>');
-				$outterDiv.append($div);
+				var $listItem = $('<li class="mdc-list-item"></li>');
+				$outterList.append($listItem);
 
-				var $a = $('<a href="#" alt="'+userDoc.name+'">'+userDoc._id+'</a>');
-				$div.append( $a );
+				var $a = $('<a href="#" alt="'+userDoc.name+'" class="mdc-list-item__text">'+userDoc._id+'</a>');
+				$listItem.append( $a ); 
 				$a.click(function(){
 					var $a = $(this);
 					var userName = $a.attr('alt');
@@ -354,8 +394,8 @@ var UserManagementApplication = $n2.Class({
 				);
 				
 			} else {
-				var $userDiv = $('<div class="n2UserListEntry"></div>')
-					.appendTo($outterDiv);
+				var $userDiv = $('<li class="n2UserListEntry mdc-list-item"></li>')
+					.appendTo($outterList);
 				
 				$('<span class="userId"></span>')
 					.text(userDoc._id)
@@ -1274,10 +1314,38 @@ var PasswordRecoveryApplication = $n2.Class({
 	}
 });
 
+function addHamburgerMenu(){
+	// Top-App-Bar
+	new $n2.mdc.MDCTopAppBar({
+		barTitle: 'User Management'
+	});
+
+	// Tools Drawer
+	new $n2.mdc.MDCDrawer({
+		anchorBtnId: 'hamburger_menu_btn',
+		navHeaderTitle: 'Nunaliit Tools',
+		navItems: [
+			{"text": "User Management", "href": "./users.html", "activated": true},
+			{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+			{"text": "Data Browser", "href": "./browse.html"},
+			{"text": "Localization", "href": "./translation.html"},
+			{"text": "Data Export", "href": "./export.html"},
+			{"text": "Data Modification", "href": "./select.html"},
+			{"text": "Schemas", "href": "./schemas.html"},
+			{"text": "Restore Tool", "href": "./restore.html"},
+			{"text": "Submission Tool", "href": "./submission.html"},
+			{"text": "Import Tool", "href": "./import.html"},
+			{"text": "Debug Tool", "href": "./debug.html"},
+			{"text": "Schema Editor", "href": "./schema_editor.html"}
+		]	
+	});
+};
+
 $n2.userApp = {
 	UserManagementApplication: UserManagementApplication
 	,UserCreationApplication: UserCreationApplication
 	,PasswordRecoveryApplication: PasswordRecoveryApplication
+	,addHamburgerMenu: addHamburgerMenu
 };
 	
 })(jQuery,nunaliit2);

@@ -111,7 +111,6 @@ var LanguageSwitcher = $n2.Class({
 	
 	_display: function(){
 		var _this = this;
-		
 		var $elem = this._getElem();
 		
 		$elem.empty();
@@ -122,72 +121,66 @@ var LanguageSwitcher = $n2.Class({
 			.appendTo($elem)
 			.click(function(){
 				_this._dialog();
+				// Material Design library has styling for radio buttons in focus. Initially
+				// setting inputs to blur, prevents the first radio button from being in focus
+				$('.n2lang_langSelect_list input').blur();
 				return false;
 			});
 	},
-	
+
 	_dialog: function(){
 		var _this = this;
-		
-		var diagId = $n2.getUniqueId();
-		var $langDialog = $('<div id="'+diagId+'" class="n2lang_langSelect_dialog"></div>');
 
-		var $langList = $('<div class="n2lang_langSelect_list"></div>')
-			.appendTo($langDialog);
+		var langDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Select Language',
+			mdcClasses: ['n2Lang_langSelect_dialog'],
+			closeBtn: true
+		});
 		
-		var onChange = function(e){
-			var $input = $(this);
-			if( $input.is(':checked') ){
-				var code = $input.attr('n2Code');
-				_this._selectLanguage(code);
-				$('#'+diagId).dialog('close');
-			};
-			return false;
-		};
-		
+		var languageSelect = new $n2.mdc.MDCFormField({
+			parentElem: $('#' + langDialog.getContentId())
+		});
+
+		var formFieldId = languageSelect.getId();
+
 		var languages = this._getLanguages();
-		for(var i=0,e=languages.length;i<e;++i){
+		for (var i=0, e=languages.length; i<e; i += 1) {
 			var l = languages[i];
-			addLanguage($langList, l.name, l.code);
+			addLanguage(formFieldId, l.name, l.code);
 		};
 
-		addLanguage($langList, _loc('Default'), null);
-
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Select Language')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
-		$langDialog.dialog(dialogOptions);
+		addLanguage(formFieldId, 'Default', null);
 		
-		function addLanguage($list, name, code){
-			var $div = $('<div/>').appendTo($list);
-			var id = $n2.getUniqueId();
-			var $input = $('<input type="radio" name="languageSelect"/>')
-				.attr('id',id)
-				.appendTo($div)
-				.change(onChange);
-			
-			if( code ){
-				$input.attr('n2Code',code);
-			};
-			
-			var locale = $n2.l10n.getLocale();
-			if( locale.lang === code ){
-				$input.attr('checked', 'checked');
-			};
-			
-			$('<label/>')
-				.attr('for',id)
-				.text(name)
-				.appendTo($div);
-		};
+		function addLanguage(parentId, name, code){
+			var langSelectInput = new $n2.mdc.MDCRadio({
+				parentElem: $('#' + parentId),
+				radioLabel: name,
+				radioName: "languageSelect",
+				onRadioClick: function(){
+					var code, local;
+					code = $(this).attr('n2Code');
+					local = $n2.l10n.getLocale();
+					if (local.lang !== code){
+						// wait 400ms to allow checkbox animation to complete
+						window.setTimeout(function(){
+							_this._selectLanguage(code);
+							langDialog.closeDialog();
+						}, 400);
+					}
+				return false;
+				}
+			});
+
+			// Set n2Code attribute value
+			$('#' + langSelectInput.getInputId()).attr('n2Code',code);
+
+			if (code) {
+				var locale = $n2.l10n.getLocale();
+				if (locale.lang === code) {
+					$('#' + langSelectInput.getInputId()).attr('checked', 'checked');
+				}
+			}
+		}
 	},
 	
 	_selectLanguage: function(code){

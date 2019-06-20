@@ -307,9 +307,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			} else {
 				alert('Not changed!');
 			};
-			//TODO need to refactor to save multi annotation altogether
-			
-			
+
 		};
 		function singleSectionUpdate(doc, tagValues, start, end){
 			// Modify current document
@@ -478,10 +476,10 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					
 					new $n2.mdc.MDCTagBox({
 						parentElem : $formFieldSection,
-			            label: 'Tags',
-			            mdcClasses: ['n2transcript_label','label_tagbox'],
-			            chips: lastTags
-			        });
+						label: 'Tags',
+						mdcClasses: ['n2transcript_label','label_tagbox'],
+						chips: lastTags
+					});
 			} else {
 				alert('Current document doesnot have (atlascine2_cinemap) property');
 				return;

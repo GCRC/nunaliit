@@ -136,7 +136,7 @@
 	function getOptionalSchemaDiv(){
 		var $e = $schemaAppDiv.find('.schemaAppOptionalSchemas');
 		if( $e.length < 1 ) {
-			$e = $('<div class="schemaAppOptionalSchemas"></div>');
+			$e = $('<div class="schemaAppOptionalSchemas mdc-card"></div>');
 			$schemaAppDiv.append($e);
 			addHeader($e);
 		};
@@ -149,8 +149,10 @@
 		return $c;
 		
 		function addHeader($e){
-			var $h = $('<h1>Optional Schemas</h1>');
-			$e.append($h);
+			var $h = $('<h1>')
+				.addClass('mdc-typography--headline6')
+				.text('Optional Schemas')
+				.appendTo($e);
 			return $h;
 		};
 
@@ -221,14 +223,20 @@
 				
 				var $td = $('<td></td>');
 				$tr.append($td);
+
 				if( isInstalled ) {
-					var $b = $('<button>Replace</button>');
-					$td.append($b);
-					$b.click( createClickReplaceSchema(schema, received[name]) );
+					new $n2.mdc.MDCButton({
+						parentElem: $td,
+						btnLabel: 'Replace',
+						onBtnClick: createClickReplaceSchema(schema, received[name])
+					});
+
 				} else {
-					var $b = $('<button>Install</button>');
-					$td.append($b);
-					$b.click( createClickInstallSchema(schema) );
+					new $n2.mdc.MDCButton({
+						parentElem: $td,
+						btnLabel: 'Install',
+						onBtnClick: createClickInstallSchema(schema)
+					});
 				};
 			};
 		};
@@ -324,20 +332,28 @@
 	function getLogsDiv(){
 		var $e = $schemaAppDiv.find('.schemaAppLogs');
 		if( $e.length < 1 ) {
-			$e = $('<div class="schemaAppLogs"></div>');
+			$e = $('<div class="schemaAppLogs mdc-card"></div>');
 			$schemaAppDiv.append($e);
 			addHeader($e);
 		};
 		return $e;
 		
 		function addHeader($e){
-			var $h = $('<h1>Logs <button>Clear</button></h1>');
-			$e.append($h);
-			$h.find('button').click(function(){
-				var $d = getLogsDiv();
-				$d.empty();
-				addHeader($d);
-				return false;
+
+			var $h = $('<h1>')
+				.addClass('mdc-typography--headline6')
+				.text('Logs')
+				.appendTo($e);
+
+			new $n2.mdc.MDCButton({
+				parentElem: $h,
+				btnLabel: 'Clear',
+				onBtnClick: function(){
+					var $d = getLogsDiv();
+					$d.empty();
+					addHeader($d);
+					return false;
+				}
 			});
 		};
 	};
@@ -388,8 +404,35 @@
 		refreshOptionalSchemaList();
 	};
 
+	function addHamburgerMenu(){
+		// Top-App-Bar
+		new $n2.mdc.MDCTopAppBar({
+			barTitle: 'Schemas'
+		});
+	
+		// Tools Drawer
+		new $n2.mdc.MDCDrawer({
+			anchorBtnId: 'hamburger_menu_btn',
+			navHeaderTitle: 'Nunaliit Tools',
+			navItems: [
+				{"text": "User Management", "href": "./users.html"},
+				{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+				{"text": "Data Browser", "href": "./browse.html"},
+				{"text": "Localization", "href": "./translation.html"},
+				{"text": "Data Export", "href": "./export.html"},
+				{"text": "Data Modification", "href": "./select.html"},
+				{"text": "Schemas", "href": "./schemas.html", "activated": true},
+				{"text": "Restore Tool", "href": "./restore.html"},
+				{"text": "Submission Tool", "href": "./submission.html"},
+				{"text": "Import Tool", "href": "./import.html"},
+				{"text": "Debug Tool", "href": "./debug.html"},
+				{"text": "Schema Editor", "href": "./schema_editor.html"}
+			]	
+		});
+	};
 	
 	$n2.schemaApp = {
 		main: main
+		,addHamburgerMenu: addHamburgerMenu
 	};
 })(jQuery,nunaliit2);

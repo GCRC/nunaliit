@@ -98,6 +98,11 @@ var Service = $n2.Class({
 			 && $n2.canvasTree.HandleCanvasAvailableRequest ){
 				$n2.canvasTree.HandleCanvasAvailableRequest(m);
 			};
+			
+			if( $n2.canvasVerticalTimeline 
+			 && $n2.canvasVerticalTimeline.HandleCanvasAvailableRequest ){
+				$n2.canvasVerticalTimeline.HandleCanvasAvailableRequest(m);
+			};
 
 			if( $n2.canvasCustomSvg 
 			 && $n2.canvasCustomSvg.HandleCanvasAvailableRequest ){
@@ -122,11 +127,6 @@ var Service = $n2.Class({
 			if( $n2.canvasMap 
 			 && $n2.canvasMap.HandleCanvasAvailableRequest ){
 				$n2.canvasMap.HandleCanvasAvailableRequest(m);
-			};
-			
-			if( $n2.canvasScriptEditor 
-			 && $n2.canvasScriptEditor.HandleCanvasAvailableRequest ){
-				$n2.canvasScriptEditor.HandleCanvasAvailableRequest(m);
 			};
 
 		} else if( 'canvasDisplay' === m.type ) {
@@ -183,18 +183,17 @@ var Service = $n2.Class({
 			if( $n2.canvasTable 
 			 && $n2.canvasTable.HandleCanvasDisplayRequest ){
 				$n2.canvasTable.HandleCanvasDisplayRequest(m);
+			};	
+			
+			if( $n2.canvasVerticalTimeline 
+			&& $n2.canvasVerticalTimeline.HandleCanvasDisplayRequest ){
+				$n2.canvasVerticalTimeline.HandleCanvasDisplayRequest(m);
 			};
 
 			if( $n2.canvasMap
 			 && $n2.canvasMap.HandleCanvasDisplayRequest ){
 				$n2.canvasMap.HandleCanvasDisplayRequest(m);
 			};
-			
-			if( $n2.canvasScriptEditor 
-			 && $n2.canvasScriptEditor.HandleCanvasDisplayRequest ){
-				$n2.canvasScriptEditor.HandleCanvasDisplayRequest(m);
-			};
-
 		};
 	}
 });

@@ -4,16 +4,6 @@
    - Theme styles for nunaliit demo atlas (Fonts, colors, images, textures etc)
    ========================================================================== */
 
-/*START - Form Styles*/
-input[type="text"], input[type="password"], textarea { 
-	border: 1px solid #cccccc; 
-	-webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); 
-	-moz-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); 
-	box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1); 
-	color: rgba(0, 0, 0, 0.75); 
-	padding: 8px;
-}
-
 /* Desktop screens */
 
 /* ============================== */
@@ -38,20 +28,28 @@ input[type="text"], input[type="password"], textarea {
 .nunaliit_atlas .nunaliit_title {
 	font-size: 2.2em;
 	font-weight: 500;
+	margin: 0px;
+	line-height: 71px;
 	text-shadow: black 1px 1px 1px;
 	color: {{header.color}};
 }
 .nunaliit_atlas .nunaliit_title_link {
-	color: {{header.color}};
+	color: {{header.color.hover}};
+	padding: 0px 50px 0px 20px;
 }
 .nunaliit_atlas .nunaliit_title_link:hover {
 	text-decoration: none;
+	color: {{header.color.hover}};
+	transition: ease all 0.3s;
 }
 
-/* Sub-Header Title */
+/* ============================== */
+/* ! Sub-Header Title  SECTION   */
+/* ============================== */
 .nunaliit_atlas .nunaliit_module_title {
 	background-color: {{header.background.module}};
 	border-top: 1px solid {{header.border.color.module}};
+	border-bottom: 1px solid {{header.border.color.module}};
 	color: {{header.color}};
 }
 
@@ -66,6 +64,8 @@ input[type="text"], input[type="password"], textarea {
 
 .nunaliit_atlas .nunaliit_module_title_link:hover {
 	text-decoration: none;
+	color: {{header.color.hover}};
+	transition: ease all 0.3s;
 }
 
 /* Header Menu */
@@ -75,14 +75,32 @@ input[type="text"], input[type="password"], textarea {
 .nunaliit_atlas .nunaliit_header-nav span {
 	color: {{header.color}};
 }
+
+/*
 .nunaliit_atlas .nunaliit_header-nav li {
 	background-color: {{header.background}};
 	border-left: 1px solid {{header.border.color}};
 	border-right: 1px solid {{header.border.color}};
 	border-bottom: 1px solid {{header.border.color}};
 }
+*/
+
+.nunaliit_atlas .nunaliit_header-nav li.n2_nav_currentModule > a,
+.nunaliit_atlas .nunaliit_header-nav > ul > li.n2_nav_currentModule > a:hover,
+.nunaliit_atlas .nunaliit_header-nav > ul > li.n2_nav_currentModule:hover > a {
+	color: {{header.color.hover}};
+	transition: ease all 0.3s;
+	font-weight: bold;
+}
+
+.nunaliit_atlas .nunaliit_header-nav > ul > li:hover > a {
+	color: {{header.color.hover}};
+	transition: ease all 0.3s;
+}
+
 .nunaliit_atlas .nunaliit_header-nav li:hover {
-	background-color: {{header.background.hover}};
+	color: {{header.color.hover}};
+	text-decoration: none !important;
 }
 .nunaliit_atlas .nunaliit_header-nav li:hover ul li:first-child {
 	border-left: 1px solid rgba(0,0,0,0.9);
@@ -92,13 +110,10 @@ input[type="text"], input[type="password"], textarea {
 }
 .nunaliit_atlas .nunaliit_header-nav>ul>li {
 	position: relative;
-	border-left: 1px solid #838383;
-	border-right: 1px solid #838383;
+/*	border-left: 1px solid {{header.border.color.module}};
+	border-right: 1px solid {{header.border.color.module}}; */
 	padding: 0 20px;
-	margin: 0 0 0 -1px;
-	background-color: {{header.background.button}};
-	-webkit-box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
-	box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
+	margin: 0px;
 	height: 100%;
 	display: -moz-inline-stack;
 	display: inline-block;
@@ -106,16 +121,18 @@ input[type="text"], input[type="password"], textarea {
 	*display: inline;
 	border-bottom: 0;
 }
-.nunaliit_atlas .nunaliit_header-nav li.n2_nav_currentModule {
-	background-color: {{header.background.selected}};
-}
+
 .nunaliit_atlas .nunaliit_header-nav ul>li>a:hover {
-	background-color: {{header.background.hover}};
 	border-right: 0;
+	color: {{header.color.hover}};
 }
-.nunaliit_atlas .nunaliit_header-nav>ul>li:hover>ul>li:first-child {
-	border-left: 1px solid rgba(255,255,255,0.6);
+
+.nunaliit_atlas .nunaliit_header-nav>ul>li>a {
+	margin-right: 0px;
+	font-size: 1.2em;
+	transition: ease color 0.3s;
 }
+
 .nunaliit_atlas .nunaliit_header-nav>ul>li>a,
 .nunaliit_atlas .nunaliit_header-nav>ul>li>span {
 	font-weight: normal;
@@ -127,7 +144,15 @@ input[type="text"], input[type="password"], textarea {
 	top: 35px;	
 	padding: 0;
 }
-.nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li, .nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li:hover {
+
+.nunaliit_header-nav li:hover>ul {
+    background-color: {{header.background}};
+    border-radius: 2px;
+    box-shadow: 3px 3px 10px rgba(50,50,50,0.5);
+}
+
+.nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li, 
+.nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li:hover {
 	/* background-image: url('../images/left-arrow.png'); */
 	background-repeat: no-repeat;
 	background-position: center right;
@@ -136,34 +161,27 @@ input[type="text"], input[type="password"], textarea {
 	cursor: default;
 	text-decoration: none;
 }
-.nunaliit_atlas .nunaliit_header-nav>ul>li>a {
-	margin-right: -1px;
+.nunaliit_atlas .nunaliit_header-nav > ul > li a:-webkit-any-link {
+	text-decoration: none !important;
 }
 
-/* Login (within nunaliit_header_container) */
+/* Login (within nunaliit_header_container) 
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login {
 	position: absolute;
 	display: table-row;
 	top: 0;
-	right: 20px;
+	right: 0px;
 	height: 71px;
 	overflow: hidden;
 	z-index: 10;
-}	
+}*/
+
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login_link_outer_container {
 	display: table-cell;
 	vertical-align: middle;
 	height: 71px;
 	width: 36px;
-	border-left: 1px solid {{header.border.button.color}};
-	border-right: 1px solid {{header.border.button.color}};
-	padding: 0 20px;
-	background-color: {{header.background.button}};
-	-webkit-box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
-	box-shadow: inset 0 2px 3px rgba(0,0,0,0.2);
-}
-.nunaliit_atlas .nunaliit_header_container .nunaliit_login_link_outer_container:hover {
-	background-color: {{header.background.hover}};
+	padding: 0px;
 }
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login_link_inner_container {
 	display: inline;
@@ -171,16 +189,24 @@ input[type="text"], input[type="password"], textarea {
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login_link {
 	text-decoration: none;
 	color: {{header.color}};
+    height: 70px;
 }
+
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login_greeting_outer_container {
 	display: table-cell;
 	vertical-align: middle;
 	height: 70px;
 	padding: 0 20px;
+	max-width: 200px;
+    word-break: break-all;
 }
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login_greeting_inner_container {
 	display: inline;
 	color: {{header.color}};
+}
+
+.nunaliit_atlas .nunaliit_header_container .nunaliit_login_greeting_welcome .nunaliit_login_menu{
+	display: none;
 }
 
 .nunaliit_login_greeting_with_editor {
@@ -203,13 +229,141 @@ input[type="text"], input[type="password"], textarea {
 	color: {{header.color}};
 	text-decoration: none;
 }
+
+.nunaliit_atlas .nunaliit_module_title .nunaliit_login_link:hover {
+	color: {{header.color.hover}};
+}
+
 .nunaliit_atlas .nunaliit_module_title .nunaliit_login_greeting_outer_container {
 	display: none;
 }
 
-/*
-Language Switcher
-*/
+/* ============================== */
+/* ! Login User Menu  SECTION   */
+/* ============================== */
+.nunaliit_login_menu {
+	display: none;
+	position: absolute; 
+	top: 60px;
+	right: 10px;
+	z-index: 11;
+	background-color: {{loginmenu.background}};
+	color: {{loginmenu.color.hover}};
+	padding: 10px;
+	border-radius: 2px;
+	box-shadow: -1px 0px 1px #aaaaaa, 1px 0px 1px #aaaaaa, 0px 3px 5px 1px rgba(200,200,200,0.5);
+	transition: ease all 0.5s;
+}
+.nunaliit_login_menu a:-webkit-any-link {
+	color: {{loginmenu.color}};
+	text-decoration: none;
+}
+.nunaliit_login_menu.show_menu {
+	display: block;
+	transition: ease all 0.5s;
+}
+
+.nunaliit_login_menu.show_menu .n2ShowInsertedUserDisplayName .n2Show_userName {
+	display: none;
+} 
+
+.nunaliit_login_menu ul {
+	padding: 0px;
+	margin: 0px;
+}
+
+.nunaliit_login_link,
+.nunalitt_login_profile_icon,
+.nunaliit_login_menu li {
+	cursor: pointer;
+}
+
+.nunalitt_login_profile_icon {
+	background: url(./images/profile_icon.png) {{loginmenu.background}};
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    object-fit: cover;
+	width: 35px;
+	height: 35px;
+	border-radius: 50px;
+	vertical-align: middle;
+}
+
+.nunaliit_login_menu_list_container,
+.nunaliit_login_menu_profile_container {
+    display: inline-block;
+    padding: 5px;
+}
+
+.nunaliit_login_menu_profile_container {
+	max-width: 91px;
+	text-align: center;
+}
+
+.nunaliit_login_menu_list_container {
+	vertical-align: top;
+    padding-top: 10px;
+    color: {{loginmenu.color}};
+    transition: ease all 0.3s;	
+}
+
+.nunaliit_login_menu_list_container li,
+.nunaliit_login_menu_list_container a {
+    color: {{loginmenu.color}};
+    text-decoration: none;
+}
+.nunaliit_login_menu_list_container li:hover,
+.nunaliit_login_menu_list_container a:hover {
+	color: {{loginmenu.color.hover}};
+	transition: ease all 0.3s;	
+}
+
+.nunaliit_login_menu_profile_container .n2s_insertedMediaView,  
+.nunaliit_login_menu_profile_image {
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+    object-fit: cover;
+    border-radius: 50px;
+    border: 3px solid {{loginmenu.color}};
+	width: 85px;
+	height: 85px;
+	margin-left: auto;
+    margin-right: auto;
+}
+
+.nunaliit_login_menu_profile_image {
+	background-image: url(./images/profile_icon.png);
+}
+
+.nunaliit_login_menu_profile_container .n2s_insertedMediaView img {
+	border: 0;
+	border-radius: 50px;
+}
+
+.nunaliit_login_menu_profile_username {
+    text-align: center;
+    font-size: 1.2em;
+    font-weight: bold;
+    padding-top: 5px;
+    text-transform: capitalize;
+    color: {{loginmenu.color}};
+    max-width: 85px;
+}
+
+.nunaliit_login_menu_mask {
+	position: absolute;
+	top: 0;
+	left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+}
+
+/* ============================== */
+/* ! Language Switcher  SECTION   */
+/* ============================== */
 .nunaliit_atlas .nunaliit_header_language {
 	float: right;
 	padding: 8px 20px;
@@ -220,22 +374,32 @@ Language Switcher
 	text-decoration: none;
 }
 
-/*
-Help Button
-*/
+/* ============================== */
+/* ! Help Button SECTION   */
+/* ============================== */
 .nunaliit_atlas .nunaliit_help_button {
 	float: right;
-	padding: 8px 20px;
+	margin: 3px 10px;
+	background: url(./images/help.png);
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: 23px 23px;
+	object-fit: cover;
+	width: 23px;
+	height: 23px;
 }
 .nunaliit_atlas .nunaliit_help_button a
 ,.nunaliit_atlas .nunaliit_help_button a:visited {
 	color: {{header.color}};
 	text-decoration: none;
+	padding: 6px 12px;
+	vertical-align: bottom;
+	line-height: 23px;
 }
 
-/*
-CreateDocument widget
-*/
+/* ============================== */
+/* ! CreateDocument widget  SECTION   */
+/* ============================== */
 .nunaliit_atlas .nunaliit_module_title .n2widget_createDocument {
 	float: right;
 	padding: 4px 10px;
@@ -365,6 +529,7 @@ CreateDocument widget
 	color: #fff;
 	padding: 8px;
 	border: 0;
+	border-radius: 2px;
 	opacity: 0.7;
 }
 .nunaliit_atlas .map_interaction input:hover
@@ -441,27 +606,20 @@ CreateDocument widget
 }
 
 /* Buttons */
-.nunaliit_atlas .n2Display_buttons {
+.nunaliit_atlas .n2Display_buttons,
+.nunaliit_atlas .editorButtons  {
 	margin: 10px 0;
 	display: block;
 }
-.nunaliit_form_link
-,.n2s_adjustedExternalMediaLink {
-	padding: 10px 10px 10px 15px;
-	text-decoration: none;
-	margin-right: 3px;
-	border: 1px solid #c3c1c1;
-	background-color: #eee;
-	font-weight: normal;
-	color: #000;
-	display: -moz-inline-stack;
-	display: inline-block;
-	zoom: 1;
-	vertical-align: top;
+
+.nunaliit_form_link {
+	margin: 3px;
 }
+
 .nunaliit_form_link.n2show_findNotAvailable {
 	display: none;
 }
+
 .nunaliit_atlas .n2ModuleIntro {
 	padding: 20px;
 }
@@ -470,14 +628,6 @@ CreateDocument widget
 	vertical-align: text-top;
 	margin: 0 0 10px 0;
 	display: inline-block;
-}
-.nunaliit_form_link:hover
-,.n2s_adjustedExternalMediaLink:hover { 
-	background-color: #e9e6e6;
-	-moz-box-shadow: 1px 1px 2px #b8b8b8;
-	-webkit-box-shadow: 1px 1px 2px #b8b8b8;
-	box-shadow: 1px 1px 2px #b8b8b8;
-	border: 1px solid #9e9e9e;
 }
 
 .nunaliit_form_link_tree_view {
@@ -497,6 +647,10 @@ CreateDocument widget
 }
 
 /* Attachment status */
+.n2Display_attProgress {
+    padding: 16px 16px 0px 16px;
+}
+
 .n2Display_attProgress_icon {
 	display: none;
 	float: left;
@@ -570,6 +724,7 @@ CreateDocument widget
 .ui-accordion .ui-accordion-header .ui-icon {
 	left: 12px;
 }
+
 .olkitSearchMod2_0, .olkitSearchMod2_1 {
 	background-color: #fff;
 	padding: 10px;
@@ -577,21 +732,20 @@ CreateDocument widget
 	-webkit-box-shadow: 1px 1px 3px #e1dfdf;
 	box-shadow: 1px 1px 3px #e1dfdf;
 }
-.editorSelectDocumentDialog .olkitSearchMod2_0, 
+.editorSelectDocumentDialog .olkitSearchMod2_0,
 .editorSelectDocumentDialog .olkitSearchMod2_1 {
 	-moz-box-shadow: none;
 	-webkit-box-shadow: none;
 	box-shadow: none;
 }
 
-.editorSelectDocumentDialog_suggestedHeader {
-	font-weight: bold;
+.editorSelectDocumentDialog_suggested {
+	margin-bottom: 16px;
 }
 
-.editorSelectDocumentDialog_suggestedList {
-	min-height: 50px;
-	overflow: auto;
-	max-height: 400px;
+.editorAttachments,
+.editorDisplayRelations {
+	margin: 8px 16px;  
 }
 
 ._n2DocumentListEntry {
@@ -695,22 +849,11 @@ CreateDocument widget
 	border: 0;
 	background: transparent;
 }
-.editorButtons {
-	margin: 10px 0;
-}
 /*END - Override Styles for Jquery UI styling*/
 
 /* Side Bar Labels */
-.nunaliit_atlas .value {
-	margin: 5px 0;
-}
-.nunaliit_atlas .label {
-	margin: 5px 0;
-	padding-right: 8px;
-	width: 30%;
-	font-size: 1em/1.2em;	
-}
-.nunaliit_atlas span.label {
+
+.nunaliit_atlas .n2_documentDisplay span.label {
 	display: inline-block;
 }
 
@@ -721,8 +864,8 @@ CreateDocument widget
 .nunaliit_atlas .nunaliit_footer {
 	font-size: 0.75em;	
 	color: white;
-	border-top: 1px solid rgba(255,255,255,1);
-	background-color: {{header.background}};
+	border-top: 1px solid {{header.border.color.module}};
+	background-color: {{header.background.module}};
 	-moz-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 	-webkit-box-shadow: 0 3px 8px rgba(0,0,0,0.5);
 	box-shadow: 0 3px 8px rgba(0,0,0,0.5);
@@ -748,8 +891,9 @@ CreateDocument widget
 	color: {{header.color}};
 	text-decoration: none;
 }
-.nunaliit_atlas .nunaliit_footer_nav ul li a:hover {
-	text-decoration: underline;
+.nunaliit_atlas .nunaliit_footer_nav ul li a:hover {	
+	text-decoration: none;
+	color: {{header.color.hover}};
 }
 
 /* Smaller screens */

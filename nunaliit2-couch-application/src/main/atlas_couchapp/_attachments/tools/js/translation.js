@@ -1,6 +1,9 @@
 ;(function($,$n2){
 "use strict";
 
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+
 //var DH = 'translation.js';	
 
 var atlasDb = null;
@@ -32,6 +35,10 @@ function upload() {
 };
 
 function showRequests(arr) {
+
+	if( $('.translationButtonLine .translationLangSelect').length ){
+		$('.translationButtonLine .translationLangSelect').remove();
+	}
 	
 	var $table = $('<table class="translations"></table>');
 	$('#'+requestPanelName).empty().append($table);
@@ -54,14 +61,23 @@ function showRequests(arr) {
 		
 		var row = arr[i];
 		var req = row.doc;
-		
+	
+		var $btnTd = $('<td>');
+
 		$tr.append( $('<td>'+req.str+'</td>') );
 		$tr.append( $('<td>'+req.lang+'</td>') );
 		$tr.append( $('<td><input class="trans" type="text"/></td>') );
-		$tr.append( $('<td><input class="uploadBtn" type="button" value="Upload"/></td>') );
+		$tr.append($btnTd);
 		$tr.append( $('<td class="docId">'+req._id+'</td>') );
 		$tr.append( $('<td class="packageName">'+req.packageName+'</td>') );
 		
+		new $n2.mdc.MDCButton({
+			parentElem: $btnTd,
+			mdcClasses: ['uploadBtn'],
+			btnLabel: 'Upload',
+			onBtnClick: upload
+		});
+
 		if( req.nunaliit_created && req.nunaliit_created.name ){
 			// Insert name
 			$('<td></td>')
@@ -90,12 +106,9 @@ function showRequests(arr) {
 //				.appendTo($tr);
 //		} else {
 //			$tr.append('<td></td>');
-//		};
-		
+//		};		
 		
 		$tr.append( $('<td><input class="json" type="hidden"/></td>') );
-		
-		
 		
 		var json = JSON.stringify(req);
 		$tr.find('.json').val(json);
@@ -104,45 +117,53 @@ function showRequests(arr) {
 			$tr.find('.trans').val(req.trans);
 		};
 	};
-	
-	$table.find('.uploadBtn').click(upload);
 };
 
 function displayTranslated() {
-	
 	$('#'+requestPanelName)
 		.empty()
-		.append( $('<div class="translationLangSelect"></div>') )
-		.append( $('<div class="translationResult"></div>') )
-		;
+		.append( $('<div class="translationResult mdc-card"></div>') );
+
+	addLanguageSelectionMenu();
+
+	function addLanguageSelectionMenu(){
+		var langList = [];
+
+		atlasDesign.queryView({
+			viewName: 'l10n-translated'
+			,reduce: true
+			,group: true
+			,onSuccess: function(rows){
+				for(var i=0,e=rows.length;i<e;++i){
+					var selected = false;
+					var r = rows[i];
+					if (!langList.length) {
+						selected = 'selected';
+					}
 	
-	// Fetch all pending requests
-	atlasDesign.queryView({
-		viewName: 'l10n-translated'
-		,reduce: true
-		,group: true
-		,onSuccess: function(rows){
-			var $select = $('<select></select>');
-			for(var i=0,e=rows.length;i<e;++i){
-				var r = rows[i];
-				var $opt = $('<option></option>');
-				$opt.text(r.key);
-				$opt.attr('value',r.key);
-				$select.append( $opt );
-			};
-			
-			$('#'+requestPanelName).find('.translationLangSelect')
-				.empty()
-				.append($select)
-				;
-			$select.change(languageChanged);
-			
-			languageChanged();
-		}
-	});
+					langList.push({
+						'value':r.key,
+						'label':r.key,
+						'selected': selected
+					});
+				}
+
+				new $n2.mdc.MDCSelect({
+					parentElem: $('.translationButtonLine'),
+					mdcClasses: ['translationLangSelect'],
+					menuLabel: 'Language',
+					menuChgFunction: languageChanged,
+					menuOpts: langList
+				});
+
+				// Initialize language selection
+				languageChanged();
+			}
+		});
+	};
 	
 	function languageChanged(){
-		var $select = $('#'+requestPanelName).find('.translationLangSelect').find('select');
+		var $select = $('.translationButtonLine').find('.translationLangSelect').find('select');
 		var lang = $select.val();
 		
 		atlasDesign.queryView({
@@ -227,13 +248,22 @@ function refreshView() {
 };
 
 function main() {
-	var $select = $('<select></select>');
-	$select.append( $('<option value="l10n-pending" selected="selected">Pending</option>') );
-	$select.append( $('<option value="l10n-all">All</option>') );
-	$select.append( $('<option value="translated">Translated</option>') );
-	$('#'+requestPanelName).before($select);
-	$select.change(selectionChanged);
+	var $buttonLine = $('<div>')
+		.addClass('translationButtonLine');
+
+	$('#'+requestPanelName).before($buttonLine);
 	
+	new $n2.mdc.MDCSelect({
+		parentElem: $buttonLine,
+		preSelected: true,
+		menuLabel: 'Status',
+		menuChgFunction: selectionChanged,
+		menuOpts: [
+			{'value': 'l10n-pending', 'label': 'Pending', 'selected': 'selected'},
+			{'value': 'l10n-all', 'label': 'All'},
+			{'value': 'translated', 'label': 'Translated'}
+		]
+	});
 	refreshView();
 };
 
@@ -260,8 +290,36 @@ function main_init(opts_) {
  	main(atlasDb, atlasDesign);
 };
 
+function addHamburgerMenu(){
+	// Top-App-Bar
+	new $n2.mdc.MDCTopAppBar({
+		barTitle: 'Translations'
+	});
+
+	//Tools Drawer
+	new $n2.mdc.MDCDrawer({
+		anchorBtnId: 'hamburger_menu_btn',
+		navHeaderTitle: 'Nunaliit Tools',
+		navItems: [
+			{"text": "User Management", "href": "./users.html"},
+			{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+			{"text": "Data Browser", "href": "./browse.html"},
+			{"text": "Localization", "href": "./translation.html", "activated": true},
+			{"text": "Data Export", "href": "./export.html"},
+			{"text": "Data Modification", "href": "./select.html"},
+			{"text": "Schemas", "href": "./schemas.html"},
+			{"text": "Restore Tool", "href": "./restore.html"},
+			{"text": "Submission Tool", "href": "./submission.html"},
+			{"text": "Import Tool", "href": "./import.html"},
+			{"text": "Debug Tool", "href": "./debug.html"},
+			{"text": "Schema Editor", "href": "./schema_editor.html"}
+		]	
+	});
+};
+
 $n2.translation = {
-	main_init: main_init
+	main_init: main_init,
+	addHamburgerMenu: addHamburgerMenu
 };
 	
 })(jQuery,nunaliit2);

@@ -69,4 +69,83 @@ public class InReachProcessorTest extends TestCase {
 			fail("Unexpected data");
 		}
 	}
+
+	public void testMissingField() throws Exception {
+		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
+		File docFile = TestSupport.findResourceFile("inreach_doc_missing.json");
+		
+		InReachSettingsFromXmlFile settings = new InReachSettingsFromXmlFile(settingsFile);
+		settings.load();
+		InReachConfiguration.setInReachSettings(settings);
+		
+		InReachProcessorImpl processor = new InReachProcessorImpl();
+		
+		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
+		
+		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
+		
+		processor.performSubmission(conversionContext);
+		
+		JSONObject savedDocJson = conversionContext.getSavedDocument();
+		if( null == savedDocJson ){
+			fail("Document not saved");
+		}
+		MockFileConversionContext2 savedContext = new MockFileConversionContext2(savedDocJson);
+		DocumentDescriptor savedDoc = savedContext.getDocument();
+		
+		// Test schema name
+		String schemaName = savedDoc.getSchemaName();
+		if( false == "inReach_Conditions".equals(schemaName) ){
+			fail("Unexpected schema name: "+schemaName);
+		}
+		
+		// Check data
+		JSONObject data = savedDocJson.getJSONObject("inReach_Conditions");
+		{
+			String condition = data.getString("Condition");
+			if( false == "other (put in notes)".equals(condition) ){
+				fail("Unexpected data for 'Condition'");
+			}
+		}
+		{
+			String probs = data.optString("Causing problems?",null);
+			if( null != probs ){
+				fail("Unexpected data for 'Causing problems?'");
+			}
+		}
+	}
+
+	public void testGpsTimestamp() throws Exception {
+		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
+		File docFile = TestSupport.findResourceFile("inreach_doc_missing.json");
+		
+		InReachSettingsFromXmlFile settings = new InReachSettingsFromXmlFile(settingsFile);
+		settings.load();
+		InReachConfiguration.setInReachSettings(settings);
+		
+		InReachProcessorImpl processor = new InReachProcessorImpl();
+		
+		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
+		
+		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
+		
+		processor.performSubmission(conversionContext);
+		
+		JSONObject savedDocJson = conversionContext.getSavedDocument();
+		if( null == savedDocJson ){
+			fail("Document not saved");
+		}
+
+		// Look for time structure
+		JSONObject jsonItem = savedDocJson.getJSONObject("Item");
+		JSONObject jsonTimestamp = jsonItem.optJSONObject("NunaliitTimestamp");
+		if( null == jsonTimestamp ){
+			fail("Can not find nunaliit timestamp");
+		} else {
+			String dateType = jsonTimestamp.getString("nunaliit_type");
+			if( false == "date".equals(dateType) ) {
+				fail("Unexpected time structure");
+			}
+		}
+	}
 }

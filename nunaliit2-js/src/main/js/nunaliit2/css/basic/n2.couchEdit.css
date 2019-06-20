@@ -23,10 +23,6 @@ div.n2CouchEditor_container .ui-accordion-content {
 	display: none;
 }
 
-.editorSelectDocumentDialogResults {
-	overflow: auto;
-	max-height: 400px;
-}
 
 /* Attachment Editor */
 .attachmentEditor_att form.attachmentEditor_form input {
@@ -49,10 +45,6 @@ form.attachmentEditor_creationFormWithVideo {
 
 .attachmentEditor_label {
 	padding-right: 3px;
-}
-
-.attachmentEditor_delete {
-	padding-left: 3px;
 }
 
 .attachmentEditor_photoPreview {
@@ -99,7 +91,7 @@ form.attachmentEditor_creationFormWithVideo {
 .attachmentEditor_uploadTabs button {
 	display: block;
 	color: black;
-	padding: 6px 6px;
+	padding: 6px;
 	width: 100%;
 	border: 1px solid #ddd;
 	outline: none;

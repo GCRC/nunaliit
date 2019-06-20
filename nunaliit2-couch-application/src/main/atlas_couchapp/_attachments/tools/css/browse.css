@@ -1,0 +1,16 @@
+main {
+	width: 100%;
+}
+
+#searchPanel {
+	margin: 10px;
+}
+
+#searchPanel div.mdc-text-field {
+	margin-right: 5px;
+}
+
+#results {
+	margin: 0px 10px 10px;
+}
+

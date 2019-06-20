@@ -282,8 +282,9 @@ var Display = $n2.Class({
 		var $elem = $('<div class="couchDisplay_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
 		$side.append($elem);
 
-		var $sElem = $('<div class="n2s_handleHover"></div>');
-		$elem.append($sElem);
+		var $sElem = $('<div>')
+			.addClass('n2s_handleHover mdc-card')
+			.appendTo($elem);
 		
 		this.showService.displayDocument($sElem, {
 			onDisplayed: onDisplayed
@@ -311,20 +312,20 @@ var Display = $n2.Class({
 		};
 		
 		function continueDisplay(schema){
-			_this._addAttachmentProgress($elem, data);
+			_this._addAttachmentProgress($sElem, data);
 			
-			_this._addButtons($elem, data, {
+			_this._addButtons($sElem, data, {
 				schema: schema
 				,related: true
 				,reply: true
 				,geom: true
 				,edit: true
-				,'delete': true
+				,'delete': false
 				,addLayer: true
 				,treeView: true
 				,simplifiedGeoms: true
 			});
-			
+
 			var $div = $('<div>')
 				.addClass('n2Display_relatedInfo couchDisplayRelated_'+$n2.utils.stringToHtmlId(data._id))
 				.appendTo($elem);
@@ -355,7 +356,7 @@ var Display = $n2.Class({
 			};
 		};
 	}
-	
+
 	,_addButtons: function($elem, data, opt_) {
 		var _this = this;
 		
@@ -372,10 +373,13 @@ var Display = $n2.Class({
 			,simplifiedGeoms: false
 		},opt_);
 
-		var $buttons = $('<div></div>');
-		$buttons.addClass('n2Display_buttons');
-		$buttons.addClass('n2Display_buttons_'+$n2.utils.stringToHtmlId(data._id));
-		$elem.append( $buttons );
+		var $buttonsContainer = $('<div>')
+			.addClass('mdc-card__actions')
+			.appendTo($elem);
+
+		var $buttons = $('<div>')
+			.addClass('mdc-card_action-buttons n2Display_buttons n2Display_buttons_'+$n2.utils.stringToHtmlId(data._id))
+			.appendTo($buttonsContainer);
 		
 		var optionClass = 'options';
 		if( opt.focus ) optionClass += '_focus';
@@ -906,7 +910,7 @@ var Display = $n2.Class({
 		} else {
 			refreshDocWithSchema(doc, null);
 		};
-	
+
 		function refreshDocWithSchema(doc, schema){
 			var docId = doc._id;
 
@@ -1093,22 +1097,17 @@ var Display = $n2.Class({
 			};
 			
 			var $content = $('<div>')
-				.attr('id', contentId)
-				;
-			
-			display($content);
-			
-			$content.dialog({
-				autoOpen: true
-				,title: _loc('Geometries')
-				,modal: true
-				,width: 600
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
-				}
+				.attr('id', contentId);
+						
+			var geometriesDialog = new $n2.mdc.MDCDialog({
+				dialogTitle: 'Geometries',
+				scrollable: true,
+				closeBtn: true
 			});
+
+			$content.appendTo($('#' + geometriesDialog.getContentId()));
+
+			display($content);
 
 			// Request attachments
 			for(var i=0,e=geometries.length; i<e; ++i){
@@ -1152,7 +1151,7 @@ var Display = $n2.Class({
 				};
 			};
 		};
-		
+
 		function loadAttachment(attName, url){
 			$.ajax({
 				url: url
@@ -1431,8 +1430,7 @@ var Display = $n2.Class({
 	}
 });
 
-//===================================================================================
-
+// ===================================================================================
 var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
 	legacyFunction: null,
 	
@@ -1451,30 +1449,27 @@ var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
 			,doc: null
 			,schema: null
 		},opts_);
-		
+	
+		var _this = this;
 		var display = opts.display;
 		var doc = opts.doc;
 		var $buttons = $(opts.div);
 		var createRelatedDocProcess = display.createRelatedDocProcess;
 		
 		var $placeHolder = $('<span>')
+			.css('display', 'inline-block')
 			.appendTo($buttons);
-		
-		createRelatedDocProcess.insertAddRelatedSelection({
-			placeHolderElem: $placeHolder
+
+		createRelatedDocProcess.insertAddRelatedMenu({
+			placeHolderElem: $placeHolder 
 			,doc: doc
-			,onElementCreated: function($addRelatedButton){
-				$addRelatedButton.addClass('nunaliit_form_link');
-				$addRelatedButton.addClass('nunaliit_form_link_add_related_item');
-				
-				$addRelatedButton.menuselector();
-			}
+			,classes: ['nunaliit_form_link', 'nunaliit_form_link_add_related_item']
 			,onRelatedDocumentCreated: function(docId){}
 		});
 	}
 });
 
-//===================================================================================
+// ===================================================================================
 
 function _displayRelatedDocuments(display_, contId, relatedSchemaName, relatedDocIds){
 	var $container = $('#'+contId);
@@ -1792,7 +1787,7 @@ var CommentRelatedInfo = $n2.Class({
 	}
 });
 
-//===================================================================================
+// ===================================================================================
 // An instance of this class is used to draw a HTML button in the DOM structure.
 var ButtonDisplay = $n2.Class({
 
@@ -1828,20 +1823,18 @@ var ButtonDisplay = $n2.Class({
 		var $elem = $(opts.elem);
 		var name = opts.name;
 		var label = opts.label;
+
 		if( !label ){
 			label = name;
 		};
-		
-		var $linkButton = $('<a>')
-			.attr('href','#')
-			.appendTo($elem)
-			.addClass('nunaliit_form_link')
-			.click(wrapAndReturnFalse(opts.click));
-		
-		if( label ){
-			$linkButton.text(label);
-		};
 
+		var btnOpts = {
+			parentElem: $elem,
+			mdcClasses: ['nunaliit_form_link'],
+			btnLabel: label,
+			onBtnClick: wrapAndReturnFalse(opts.click)
+		};
+		
 		if( name ){
 			var compactTag = name;
 			var spaceIndex = compactTag.indexOf(' ');
@@ -1850,20 +1843,22 @@ var ButtonDisplay = $n2.Class({
 					compactTag.slice(spaceIndex + 1);
 				spaceIndex = compactTag.indexOf(' ');
 			};
-			$linkButton.addClass('nunaliit_form_link_' + compactTag.toLowerCase());
+			btnOpts.mdcClasses.push('nunaliit_form_link_' + compactTag.toLowerCase());
 		};
 		
 		if( typeof opts.className === 'string' ){
-			$linkButton.addClass(opts.className);
+			btnOpts.mdcClasses.push(opts.className);
 		};
 		
 		if( $n2.isArray(opts.classNames) ){
 			opts.classNames.forEach(function(className){
 				if( typeof className === 'string' ){
-					$linkButton.addClass(className);
+					btnOpts.mdcClasses.push(className);
 				};
 			});
 		};
+
+		var $linkButton = new $n2.mdc.MDCButton(btnOpts);
 		
 		return $linkButton;
 
@@ -1878,7 +1873,7 @@ var ButtonDisplay = $n2.Class({
 	}
 });
 
-//===================================================================================
+// ===================================================================================
 
 var TreeDocumentViewer = $n2.Class({
 	
@@ -1895,45 +1890,22 @@ var TreeDocumentViewer = $n2.Class({
 				this.doc[key] = opts.doc[key];
 			};
 		};
-		
 		this._display();
 	},
 	
 	_display: function(){
-		var $dialog = $('<div>')
-			.addClass('n2Display_treeViewer_dialog');
-		var diagId = $n2.utils.getElementIdentifier($dialog);
-		
-		var $container = $('<div>')
-			.addClass('n2Display_treeViewer_content')
-			.appendTo($dialog);
-		
-		new $n2.tree.ObjectTree($container, this.doc);
-		
-		var $buttons = $('<div>')
-			.addClass('n2Display_treeViewer_buttons')
-			.appendTo($dialog);
-		
-		$('<button>')
-			.text( _loc('Close') )
-			.appendTo($buttons)
-			.click(function(){
-				var $diag = $('#'+diagId);
-				$diag.dialog('close');
-				return false;
-			});
-		
-		$dialog.dialog({
-			autoOpen: true
-			,title: _loc('Tree View')
-			,modal: true
-			,width: 370
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
+
+		var treeViewDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: ['n2Display_treeViewer_dialog'],
+			dialogTitle: 'Tree View',
+			scrollable: true,
+			closeBtn: true
 		});
+
+		$('#' + treeViewDialog.getContentId()).addClass('n2Display_treeViewer_content');
+		$('#' + treeViewDialog.getFooterId()).addClass('n2Display_treeViewer_buttons');
+
+		new $n2.tree.ObjectTree($('#' + treeViewDialog.getContentId()), this.doc);
 	}
 });
 

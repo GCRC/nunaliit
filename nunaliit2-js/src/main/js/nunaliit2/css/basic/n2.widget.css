@@ -29,7 +29,6 @@
 	width: 100%;
 	margin: 0;
 	padding: 0;
-	z-index: 10;
 }
 .nunaliit_title_link {
 	padding: 8px 20px;
@@ -177,6 +176,7 @@
 	background: url('openlayers/popup_bg.png') no-repeat top left;
 	padding: 11px 20px;
 	margin: 6px 0 0 5px;
+	border-radius: 2px;
 }
 div.olControlZoom {
 	top: 35px;
@@ -255,25 +255,6 @@ div.olControlMousePosition {
 
 /* 
 ==============================
-LAYER DIALOG SECTION 
-==============================
-*/
-
-.editorSelectLayerContent {
-	overflow: auto;
-}
-.editorSelectLayerContent div {
-	padding: 3px 5px;
-}
-.editorSelectLayerContent label {
-	padding: 0 5px;
-}
-.editorSelectLayerButtons {
-	padding: 10px 0;
-}
-
-/* 
-==============================
 ROLE LIST 
 ==============================
 */
@@ -317,18 +298,6 @@ Max Height Widget
 	-webkit-background-clip: text;
 	-webkit-text-fill-color: transparent;
 */
-}
-
-/* 
-==============================
-Help Dialog 
-==============================
-*/
-.n2help_dialog .ui-dialog-titlebar {
-	background: {{header.background}};
-	color: {{header.color}};
-	font-family: helvetica, sans-serif;
-	font-weight: 500;
 }
 
 /* 
@@ -509,7 +478,6 @@ Polar Stereographic Projection Selector
 ==============================
 */
  
-
 .n2widgetTranscript_transcript {
 	overflow-y: scroll;
 	margin-top: 1em;
@@ -517,21 +485,21 @@ Polar Stereographic Projection Selector
 }
 
 .n2widgetTranscript_transcript span {
-   cursor: pointer;
-   transition: all 0.1s ease-in;
-   line-height: 1.8;
-   font-family: "Times New Roman", Times, serif;
-   font-size: 1.5em; 
+	cursor: pointer;
+	transition: all 0.1s ease-in;
+	line-height: 1.8;
+	font-family: "Times New Roman", Times, serif;
+	font-size: 1.5em; 
 
 }
 
 .n2widgetTranscript_transcript span:hover {
-   color: green;
+	color: green;
 }
 
 .n2widgetTranscript_transcript .highlight {
-   color: white;
-   background-color: darkorange;
+	color: white;
+	background-color: darkorange;
 }
 
 /* 
@@ -643,16 +611,16 @@ Wait Widget
 ==============================
 */
 .n2wait {
-    position: absolute;
-    display: block;
-    background-color: #ffffff;
-    right: 0;
-    bottom: 0;
-    border: solid #000000 1px;
+	position: absolute;
+	display: block;
+	background-color: #ffffff;
+	right: 0;
+	bottom: 0;
+	border: solid #000000 1px;
 }
 
 .n2_content_contains_text.n2_content_contains_map .n2wait {
-    right: 450px;
+	right: 450px;
 	bottom: 15px;
 }
 
@@ -934,7 +902,7 @@ Map Legend
 	color: #fff;
 	padding: 10px;
 	border-radius: 2px;
-	border: 1px solid #FFFFFF;
+	border: 1px solid #ffffff;
 	box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.25);
 }
 

@@ -699,7 +699,7 @@ var ModuleDisplay = $n2.Class({
 				_this.sidePanelName = $n2.getUniqueId();
 				$('<div></div>')
 					.attr('id',_this.sidePanelName)
-					.addClass('n2_content_text')
+					.addClass('n2_content_text mdc-elevation--z8')
 					.appendTo($contentDiv);
 				$contentDiv.addClass('n2_content_contains_text');
 			};
@@ -1497,7 +1497,6 @@ var ModuleDisplay = $n2.Class({
 		function installHelpButton(){
 			
 			var $a = $('<a class="nunaliit_module_help_button" href="#"></a>');
-			$a.text( _loc('Help') );
 			
 			$('#'+_this.helpButtonName)
 				.empty()
@@ -1506,7 +1505,7 @@ var ModuleDisplay = $n2.Class({
 			$a.click(function(){
 				var $btn = $(this);
 				
-				$n2.help.ToggleHelp('main', $btn);
+				$n2.help.ShowHelp('main', $btn);
 
 				return false;
 			});

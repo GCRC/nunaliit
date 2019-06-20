@@ -1,4 +1,68 @@
-.selectApp_list_button {
+body {
+	overflow: auto;
+	margin: 0;
+	padding: 0;
+}
+
+main {
+	width: 100%;
+}
+
+/* Others */
+.selectAppSearchFilterJavascript textarea, .selectAppDocumentTransformJavascript textarea {
+	width: 500px;
+	height: 300px;
+}
+
+.n2select_report_script {
+	width: 500px;
+	height: 300px;
+}
+
+#selectApp {
+	margin: 10px;
+}
+
+#selectApp>div {
+	margin-bottom: 10px;
+}
+
+#selectApp .title {
+	background-color: #f0f0f0;
+}
+
+#selectApp .title>span {
+    margin: 10px;
+}
+
+#selectApp .selectApp_list_button {
 	padding-left: 1px;
 	padding-right: 1px;
+}
+
+#selectApp .selectAppMinHeight {
+	height: 40px;
+}
+
+/* Lists */
+#selectApp .selectAppListSelected {
+	background-color: #f7fcff;
+}
+
+#selectApp .selectAppDocument .tree_container,
+#selectApp .selectAppLogs .log {
+	padding-left: 10px;
+}
+
+#selectApp .selectAppLists>div>span,
+#selectApp .selectAppListView div a {
+	margin-left: 10px;
+}
+
+/* Logs */
+#selectApp .selectAppLogs .error {
+	color: #ff0000;
+}
+#selectApp .selectAppLogs .log {
+	color: #0000ff;
 }

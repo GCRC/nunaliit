@@ -1,34 +1,39 @@
 
-.n2_documentDisplay .label, .n2_documentForm .label {
+.n2_documentDisplay .label {
 	font-weight: bold;
 }
 
-.n2_documentDisplay .n2_layoutFloat div.label, .n2_documentForm .n2_layoutFloat div.label {
-	float: left;
-	width: 30%;
+.n2_documentDisplay .n2_layoutFloat,
+.n2_documentForm .n2_layoutFloat {
+	margin: 10px 0px 5px;
 }
 
-.n2_documentDisplay .n2_layoutFloat div.value, .n2_documentForm .n2_layoutFloat div.value {
-	float: left;
-	width: 65%;
+.n2_documentForm .n2_layoutFloat > div > div {
+    margin: 8px 10px;
 }
 
-.n2_documentDisplay .n2_layoutFloat div.end, .n2_documentForm .n2_layoutFloat div.end {
-	clear: both;
+.n2_documentDisplay .n2_layoutFloat div.label,
+.n2_documentDisplay .n2_layoutFloat div.value {
+	margin: 0px 16px;
+} 
+
+.n2_documentDisplay .n2_layoutFloat div.value {
+    margin-bottom: 16px !important;
 }
 
-.n2_documentForm .n2_layoutFloat input {
-	width: 90%;
-}
-.n2_documentForm .n2_layoutFloat input.n2schema_type_date {
-	width: 80%;
+.n2_documentForm .n2_layoutFloat span.n2schema_field_localized_label {
+	display: block;
+	color: rgba(0,0,0,0.6);
 }
 
-.n2_documentForm .n2_layoutFloat input[type="checkbox"] {
-	width: auto;
+.n2_documentForm .n2_layoutFloat div.n2schema_field_container_localized {
+	margin: 5px 0px;
+}
+
+.n2_documentForm .n2_layoutFloat .n2schema_field_wrapper>div {
+    width: 100%;
 }
 
 .n2_documentForm .n2_layoutFloat textarea {
-	width: 90%;
 	height: 200px;
 }

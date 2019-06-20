@@ -40,7 +40,7 @@ var
 
 //=========================================================================
 function setNavElementAsCurrentModule($elem){
-	$elem.addClass('n2_nav_currentModule');
+	$elem.addClass('n2_nav_currentModule mdc-list-item--activated');
 	$elem.parents('.n2nav_setChildModuleCurrent').addClass('n2_nav_childModuleCurrent');
 };
 	
@@ -55,17 +55,21 @@ var NavigationDisplay = $n2.Class({
 	
 	elemId: null,
 
+	hamburgerMenu: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
 			,showService: null
 			,navigationDoc: null
 			,elem: null
+			,hamburgerMenu: false
 		},opts_);
 		
 		this.dispatchService = opts.dispatchService;
 		this.showService = opts.showService;
 		this.navigationDoc = opts.navigationDoc;
+		this.hamburgerMenu = opts.hamburgerMenu;
 		
 		var $elem = $(opts.elem);
 		this.elemId = $n2.utils.getElementIdentifier($elem);
@@ -74,12 +78,11 @@ var NavigationDisplay = $n2.Class({
 	},
 	
 	_display: function(){
+		var _this = this;
 		var $nav = $('#'+this.elemId);
 		var doc = this.navigationDoc;
 		
-		if( this.navigationDoc 
-		 && this.navigationDoc.nunaliit_navigation 
-		 && $nav.length > 0 ){
+		if( doc && doc.nunaliit_navigation && $nav.length > 0 ){
 			// Get current module identifier
 			var msg = {
 				type: 'moduleGetCurrent'
@@ -92,29 +95,30 @@ var NavigationDisplay = $n2.Class({
 			
 			if( doc.nunaliit_navigation.items 
 			 && doc.nunaliit_navigation.items.length > 0 ) {
-				var $ul = $('<ul>')
+				var $list = $('<ul>')
 					.addClass('n2nav_setChildModuleCurrent')
 					.appendTo($nav);
 				
-				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId);
-			};
+				insertItems($list, doc.nunaliit_navigation.items, currentModuleId);
+			}
 			
 			if( this.showService ){
 				this.showService.fixElementAndChildren($nav);
-			};
-		};
+			}
+		}
 		
-		function insertItems($ul, items, currentModuleId){
+		function insertItems($list, items, currentModuleId){
 			for(var i=0,e=items.length; i<e; ++i){
 				var item = items[i];
+				var $listItem, $listItemText;
 				
-				var $li = $('<li>')
+				$listItem = $('<li>')
 					.addClass('n2nav_setChildModuleCurrent')
-					.appendTo($ul);
+					.appendTo($list);
 				
 				if( item.key ){
-					$li.attr('n2nav-key',item.key);
-				};
+					$listItem.attr('n2nav-key',item.key);
+				}
 
 				if( item.title && item.href ) {
 					// Compute module class
@@ -122,26 +126,37 @@ var NavigationDisplay = $n2.Class({
 					var url = new $n2.url.Url({
 						url: item.href
 					});
+					
 					if( url ){
 						moduleId = url.getParamValue('module',null);
-					};
+					}
+
 					if( moduleId ){
-						$li.attr('n2nav-module',moduleId);
-						$li.addClass('n2nav_setModuleCurrent');
-					};
+						$listItem.attr('n2nav-module',moduleId);
+						$listItem.addClass('n2nav_setModuleCurrent');
+					}
 					
 					if( moduleId && moduleId === currentModuleId ){
-						setNavElementAsCurrentModule($li);
-					};
+						setNavElementAsCurrentModule($listItem);
+					}
 					
 					var title = _loc(item.title);
-					$('<a>')
+
+					if ( _this.hamburgerMenu ){
+						$listItemText = $('<span>')
+							.text(title)
+							.addClass('mdc-list-item__text')
+							.appendTo($listItem);
+
+					} else {
+						$listItemText = $('<a>')
 						.attr('href',item.href)
 						.text(title)
-						.appendTo($li);
+						.appendTo($listItem);
+					}
 					
 				} else if( item.module ) {
-						// Compute URL based on current one
+					// Compute URL based on current one
 					var currentUrl = $n2.url.getCurrentLocation();
 					var moduleUrl = currentUrl
 						.clone()
@@ -149,41 +164,43 @@ var NavigationDisplay = $n2.Class({
 						.setParamValue('module',item.module);
 				
 					// Install module class
-					$li.attr('n2nav-module',item.module);
-					$li.addClass('n2nav_setModuleCurrent');
+					$listItem.attr('n2nav-module',item.module);
+					$listItem.addClass('n2nav_setModuleCurrent');
 					
 					if( item.module === currentModuleId ){
-						setNavElementAsCurrentModule($li);
-					};
+						setNavElementAsCurrentModule($listItem);
+					}
 					
-					var $a = $('<a>')
+					$listItemText = $('<a>')
 						.attr('href',moduleUrl.getUrl())
-						.appendTo($li);
+						.appendTo($listItem);
 
 					if( item.title ){
 						var title = _loc(item.title);
-						$a.text(title);
+						$listItemText.text(title);
 					} else {
 						// Obtain title from show service
-						$a.attr('nunaliit-document',item.module);
-						$a.addClass('n2s_insertModuleName');
-						$a.text(item.module);
-					};
+						$listItemText.attr('nunaliit-document',item.module);
+						$listItemText.addClass('n2s_insertModuleName');
+						$listItemText.text(item.module);
+					}
 						
 				} else if( item.title ) {
-					var $span = $('<span></span>');
-					var title = _loc(item.title);
-					$span.text(title);
-					$li.append($span);
-				};
+					$('<span>')
+						.text(_loc(item.title))
+						.appendTo($listItem);
+				}
 				
 				if( item.items && item.items.length > 0 ){
-					var $innerUl = $('<ul>')
+					var $innerList;
+					
+					$innerList = $('<ul>')
 						.addClass('n2nav_setChildModuleCurrent')
-						.appendTo($li);
-					insertItems($innerUl, item.items, currentModuleId);
-				};
-			};
+						.appendTo($listItem);
+
+					insertItems($innerList, item.items, currentModuleId);
+				}
+			}
 		};
 	}
 });
@@ -287,19 +304,37 @@ var NavigationService = $n2.Class({
 		var _this = this;
 		
 		var $set = $root.find('*').addBack();
+		var $drawer = $('#nunaliit_hamburgermenu');
 		
 		// Title
 		$set.filter('.n2nav_insertTitle').each(function(){
+			// Add title to Nav-Bar
 			var $elem = $(this);
 			$elem.removeClass('n2nav_insertTitle').addClass('n2nav_insertedTitle');
 			_this._insertTitle($elem, navigationDoc);
+
+			// Add title to Hamburger Menu
+			$drawer.empty();
+			var $drawerMenuHeader = $('<div>')
+				.addClass('mdc-drawer__header')
+				.prependTo($drawer);
+	
+			var $drawerMenuHeaderTitle = $('<h3>')
+				.addClass('mdc-drawer__title')
+				.appendTo($drawerMenuHeader);
+
+			_this._insertTitle($drawerMenuHeaderTitle, navigationDoc);
 		});
 		
 		// Menu
 		$set.filter('.n2nav_insertMenu').each(function(){
+			// Add menu items to Nav-Bar Menu
 			var $elem = $(this);
 			$elem.removeClass('n2nav_insertMenu').addClass('n2nav_insertedMenu');
-			_this._insertMenu($elem, navigationDoc);
+			_this._insertMenu($elem, navigationDoc, false);
+
+			// Add Hamburger Menu
+			_this._insertHamburgerMenu(navigationDoc);
 		});
 	},
 	
@@ -320,7 +355,7 @@ var NavigationService = $n2.Class({
 		};
 	},
 	
-	_insertMenu: function($elem, doc){
+	_insertMenu: function($elem, doc, hamburgerMenu){
 
 		var docId = this._associateDocumentToElement(doc, $elem);
 		
@@ -329,9 +364,95 @@ var NavigationService = $n2.Class({
 				dispatchService: this.dispatchService
 				,showService: this.showService
 				,navigationDoc: doc
+				,hamburgerMenu: hamburgerMenu
 				,elem: $elem
 			});
 		};
+	},
+
+	_drawerHasActiveItem: function(listItems){
+		var foundStatus = false;
+		listItems.forEach(function(item){
+			if (item.activated) {
+				foundStatus = true;
+			}
+		});
+		return foundStatus;
+	},
+
+	_insertHamburgerMenu: function(navDoc){
+		var doc, list;
+		var listItems = [{'text': _loc('Home Page'), 'href':'./', "activated":true}];
+
+		if (navDoc && navDoc.nunaliit_navigation) {
+			doc = navDoc.nunaliit_navigation; 
+			list = this._insertHamburgerMenuList(doc.items);
+
+			// Ensure that a drawer list contains at least one active item
+			if (!this._drawerHasActiveItem(list)) {
+				if (list.length > 1) {
+					// Set first item as active
+					list[0].activated = true;
+				
+				} else {
+					// Set default drawer list if none provided.
+					list = listItems;
+				}
+			}
+
+			new $n2.mdc.MDCDrawer({
+				navHeaderTitle: _loc(doc.title),
+				navItems: list,
+				anchorBtnId: 'hamburger_menu_btn'
+			});
+		}
+	},
+
+	_insertHamburgerMenuList: function(items){
+		var _this = this;
+		var menuList = [];
+
+		items.forEach(function(item){
+			var text, href, nestedList;
+			var activated = false;
+
+			if (item.title) {
+				text = _loc(item.title);
+			}
+
+			if (item.href) {
+				href = item.href;
+
+				if (!item.title) {
+					text = item.href;
+				}
+			}
+
+			if (item.module) {
+				var currentUrl = $n2.url.getCurrentLocation();
+				var getUrl = $n2.url.getUrlWithoutParams();
+				var urlModule = $n2.url.getParamValue('module', null);
+
+				href = getUrl + '?module=' + item.module;
+
+				if (currentUrl === href || item.module === urlModule) {
+					activated = true;
+				}
+
+				if (!item.title) {
+					text = item.module;
+				}
+			}
+
+			menuList.push({'text':text, 'href':href, 'activated':activated});
+
+			if (item.items) {
+				nestedList = _this._insertHamburgerMenuList(item.items);
+				menuList = menuList.concat(nestedList);
+			}
+		});
+
+		return menuList;
 	},
 
 	_associateDocumentToElement: function(doc, $elem){
@@ -379,7 +500,7 @@ var NavigationService = $n2.Class({
 	_handle: function(m, addr, d){
 		if( 'reportModuleDocument' === m.type ){
 			var currentModuleId = m.moduleId;
-			$('.n2nav_setModuleCurrent').removeClass('n2_nav_currentModule');
+			$('.n2nav_setModuleCurrent').removeClass('n2_nav_currentModule mdc-list-item--activated');
 			$('.n2nav_setChildModuleCurrent').removeClass('n2_nav_childModuleCurrent');
 			$('.n2nav_setModuleCurrent').each(function(){
 				var $elem = $(this);

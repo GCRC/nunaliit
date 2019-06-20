@@ -13,6 +13,7 @@
 .n2schema_array_item {
 	position: relative;
 	min-height: 58px;
+	padding-bottom: 5px;
 }
 
 .n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down, .n2schema_array_item_up {
@@ -29,10 +30,10 @@
 }
 
 .n2schema_array_add {
-	display: inline-block;
+	display: block;
 	background: url(tree/icons.png) no-repeat;
 	background-position: 0px 0px;
-	float: right;
+	padding-bottom: 5px;
 }
 
 .n2schema_array_add:hover {
@@ -79,9 +80,12 @@
 }
 
 .n2schema_referenceDelete {
-	display: inline-block;
+	position: absolute;
+	top: 12px;
+	right: 7px;
 	width: 0px;
 	height: 0px;
+	z-index: 2;
 	padding: 15px 15px 0px 0px;
 	background: url(images/x_icon_naked_15.png) no-repeat;
 }
@@ -92,30 +96,20 @@
 	background-position: -15px 0px;
 }
 
-.n2schema_help_date {
-	display: inline-block;
-	width: 0px;
-	height: 0px;
-	padding: 15px 15px 0px 0px;
-	background: url(images/question_icon_naked_15.png) no-repeat;
-}
-
-.n2schema_field_container {
-	position: relative;
-}
-
+.n2schema_help_date,
 .n2schema_help_wiki {
-	position:absolute;
-	top: 17px;
+	position: absolute;
+	top: 12px;
 	right: 7px;
 	width: 0;
 	height: 0;
 	margin: 0;
 	border: 0;
 	padding: 15px 15px 0px 0px;
+	z-index: 2;
 	background: url(images/question_icon_naked_15.png) no-repeat;
 }
 
-.n2help_content {
-	max-width: 500px;
+.n2schema_field_container {
+	position: relative;
 }

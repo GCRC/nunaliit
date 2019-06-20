@@ -1,24 +1,24 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 	<head>
-		<title>User Management</title>
-		
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-		<title>Translation</title>
-
+		<title>User Management</title>
 		<link rel="shortcut icon" href="../favicon.ico" />
+		<link rel="stylesheet" href="../js-external/materialcomponentsweb/material-components-web.min.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/css/jquery.lightbox-0.5.css" type="text/css" />
 		<link rel="stylesheet" href="../nunaliit2/css/basic/nunaliit2.css" type="text/css" />
 		<link rel="stylesheet" href="../_list/css_merge/css" type="text/css" />
 		<link rel="stylesheet" href="../css/atlas.css" type="text/css" />
-		
+		<link rel="stylesheet" href="css/users.css" type="text/css" />
 	</head>
 	<body class="nunaliit_application nunaliit_application_users">
-
-		<h1>User Management</h1>
-		<div id="login" class="nunaliit_login"></div>
-		<div id="userApp"></div>
+		<main class="main-content" id="main-content">
+			<div class="mdc-top-app-bar--fixed-adjust"></div>
+			<div id="userApp"></div>
+		</main>
+		
+		<script type="text/javascript" src="../js-external/materialcomponentsweb/material-components-web.min.js"></script>
 		
 		<script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery-ui.min.js"></script>
@@ -33,7 +33,6 @@
 
 		<script type="text/javascript" src="../lib/atlas.js"></script>
 		<script type="text/javascript" src="../nunaliit2/nunaliit2-debug.js"></script>
-		<script type="text/javascript" src="../nunaliit2/nunaliit2-couch-debug.js"></script>
 		<script type="text/javascript" src="../config/configuration.js"></script>
 		<script type="text/javascript" src="../nunaliit_custom.js"></script>
 		<script type="text/javascript" src="js/users.js"></script>
@@ -42,6 +41,8 @@
 			// <!--
 
 			function main_init(config) {
+
+				$n2.userApp.addHamburgerMenu();
 
 				if( config.directory && config.directory.authService ) {
 					config.directory.authService.createAuthWidget({

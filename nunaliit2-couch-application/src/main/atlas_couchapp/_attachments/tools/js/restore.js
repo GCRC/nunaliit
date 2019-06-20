@@ -34,7 +34,7 @@
 				var rev = $link.attr('data-rev');
 				
 				_this._deletedDocSelected(docId,rev);
-				
+
 				return false;
 			};
 			
@@ -46,7 +46,7 @@
 				var lastRev = $link.attr('data-lastrev');
 				
 				_this._docRevisionSelected(docId,rev,lastRev);
-				
+
 				return false;
 			};
 			
@@ -59,23 +59,27 @@
 				// Deleted list
 				var $deletedList = $div.find('.restoreDeletedList');
 				if( $deletedList.length < 1 ){
-					$deletedList = $('<div class="restoreDeletedList"></div>');
+					$deletedList = $('<div class="restoreDeletedList mdc-layout-grid__cell"></div>');
 					$div.append($deletedList);
 				};
 				this._refreshDeletedList($deletedList);
 				
+				var $restoreSelection = $('<div>')
+					.addClass('restoreSelectionCell mdc-layout-grid__cell')
+					.appendTo($div);
+
 				// Revision list
 				var $revisionList = $div.find('.restoreRevisionList');
 				if( $revisionList.length < 1 ){
 					$revisionList = $('<div class="restoreRevisionList"></div>');
-					$div.append($revisionList);
+					$restoreSelection.append($revisionList);
 				};
 				
 				// Display Div
 				var $displayDiv = $div.find('.restoreDisplay');
 				if( $displayDiv.length < 1 ){
 					$displayDiv = $('<div class="restoreDisplay"></div>');
-					$div.append($displayDiv);
+					$restoreSelection.append($displayDiv);
 				};
 			};
 		}
@@ -85,13 +89,20 @@
 			
 			var $deletedHeader = $deletedList.find('.restoreDeletedHeader');
 			if( $deletedHeader.length < 1 ){
-				$deletedHeader = $('<div class="restoreDeletedHeader">Deleted Documents <button>Refresh</button></div>');
+				$deletedHeader = $('<div class="restoreDeletedHeader"></div>');
+				$deletedHeaderHeadline = $('<span class="mdc-typography--headline6">Deleted Documents</span>');
+				$deletedHeader.append($deletedHeaderHeadline);
 				$deletedList.append($deletedHeader);
-				$deletedHeader.find('button').click(function(){
-					var $div = _this._getDisplayDiv();
-					$div.find('.restoreDeletedDocs').remove();
-					_this._refresh();
-					return false;
+				
+				new $n2.mdc.MDCButton({
+					parentElem: $deletedHeader,
+					btnLabel: 'Refresh',
+					onBtnClick: function(){
+						var $div = _this._getDisplayDiv();
+						$div.find('.restoreDeletedDocs').remove();
+						_this._refresh();
+						return false;
+					}
 				});
 			};
 
@@ -168,9 +179,11 @@
 						var $div = _this._getDisplayDiv();
 						var $revisionList = $div.find('.restoreRevisionList');
 						$revisionList.empty();
-						var $head = $('<div></div>');
-						$head.text('Revisions for '+docId);
-						$revisionList.append( $head );
+						$('<div>')
+							.addClass('mdc-typography--headline6')
+							.text('Revisions for '+docId)
+							.appendTo($revisionList);
+
 						var revisions = [];
 						if( doc._revisions ) {
 							var start = doc._revisions.start;
@@ -224,21 +237,25 @@
 					var $displayDiv = $div.find('.restoreDisplay');
 					$displayDiv.empty();
 					
-					var $head = $('<div></div>');
-					$head.text('Content for '+docId+'/'+rev);
-					$displayDiv.append( $head );
+					$('<div>')
+						.addClass('mdc-typography--headline6')
+						.text('Content for '+docId+'/'+rev)
+						.appendTo($displayDiv);
 					
 					var $content = $('<div></div>');
 					$displayDiv.append( $content );
 					
 					new $n2.tree.ObjectTree($content, doc);
 					
-					var $button = $('<button>Restore this version</button>');
-					$displayDiv.append($button);
-					$button.click(function(){
-						var $btn = $(this);
-						_this._restoreRevision($btn, doc, lastRev);
-						return false;
+					new $n2.mdc.MDCButton({
+						parentElem: $displayDiv,
+						btnLabel: 'Restore this version',
+						btnRaised: true,
+						onBtnClick: function(){
+							var $btn = $(this);
+							_this._restoreRevision($btn, doc, lastRev);
+							return false;
+						}
 					});
 				}
 				,onError: function(errorMsg){ 
@@ -312,7 +329,35 @@
 		}
 	});
 
+	function addHamburgerMenu(){
+		// Top-App-Bar
+		new $n2.mdc.MDCTopAppBar({
+			barTitle: 'Restore Tool'
+		});
+
+		// Tools Drawer
+		new $n2.mdc.MDCDrawer({
+			anchorBtnId: 'hamburger_menu_btn',
+			navHeaderTitle: 'Nunaliit Tools',
+			navItems: [
+				{"text": "User Management", "href": "./users.html"},
+				{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+				{"text": "Data Browser", "href": "./browse.html"},
+				{"text": "Localization", "href": "./translation.html"},
+				{"text": "Data Export", "href": "./export.html"},
+				{"text": "Data Modification", "href": "./select.html"},
+				{"text": "Schemas", "href": "./schemas.html"},
+				{"text": "Restore Tool", "href": "./restore.html", "activated": true},
+				{"text": "Submission Tool", "href": "./submission.html"},
+				{"text": "Import Tool", "href": "./import.html"},
+				{"text": "Debug Tool", "href": "./debug.html"},
+				{"text": "Schema Editor", "href": "./schema_editor.html"}
+			]	
+		});
+	};
+
 	$n2.restoreTool = {
 		RestoreTool: RestoreTool
+		,addHamburgerMenu: addHamburgerMenu
 	};
 })(jQuery,nunaliit2);

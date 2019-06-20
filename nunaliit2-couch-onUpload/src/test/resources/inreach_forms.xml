@@ -75,6 +75,7 @@
 <value>strong current </value>
 <value>weather unusual</value>
 <required>N</required>
+<default>10</default>
 </field>
 <field id="2">
 <name>Causing problems?</name>

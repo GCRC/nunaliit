@@ -716,6 +716,10 @@ function Configure(options_){
 	 	configuration.directory.widgetService = new $n2.widgetBasic.Service({
 	 		config: configuration
 		});
+
+		configuration.directory.mdcService = new $n2.mdc.Service({
+			showService: configuration.directory.showService
+		});
 	 	
 	 	$n2.mapAndControls.DefaultPopupHtmlFunction = function(opt_){
 	 		var feature = opt_.feature;

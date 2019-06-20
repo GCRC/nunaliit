@@ -3,8 +3,8 @@
 	<head>
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 		<title>Data Modification</title>
-
 		<link rel="shortcut icon" href="../favicon.ico" />
+		<link rel="stylesheet" href="../js-external/materialcomponentsweb/material-components-web.min.css" type="text/css">
 		<link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/OpenLayers/theme/default/style.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/css/jquery.lightbox-0.5.css" type="text/css" />
@@ -14,78 +14,14 @@
 		<link rel="stylesheet" href="../_list/css_merge/css" type="text/css" />
 		<link rel="stylesheet" href="css/select.css" type="text/css" />
 		<link rel="stylesheet" href="../css/atlas.css" type="text/css" />
-
-		<style type="text/css">
-			body {
-				overflow: auto;
-				margin: 0;
-				padding: 0;
-			}
-			
-			.selectAppBody {
-				margin: 5px;
-			}
-		
-			.selectAppLogs, .selectAppLists, .selectAppListView, .selectAppDocument {
-				border-width: 1px;
-				border-style: solid;
-				border-color: #000000;
-				margin-top: 3px;
-			}
-			.selectAppLogs h1, .selectAppLists h1, .selectAppDocument h1, .selectAppListView h1 {
-				font-weight: bold;
-				background-color: #cccccc;
-				margin: 0;
-				font-size: 1.3em;
-			}
-			.selectAppMinHeight {
-				height: 40px;
-			}
-
-			/* Logs */
-			.selectAppLogs .error {
-				color: #ff0000;
-			}
-			.selectAppLogs .log {
-				color: #0000ff;
-			}
-
-			/* Lists */
-			.selectAppListSelected {
-				background-color: #dedede;
-			}
-			
-			/* Others */
-			.selectAppSearchFilterJavascript textarea, .selectAppDocumentTransformJavascript textarea {
-				width: 500px;
-				height: 300px;
-			}
-			
-			.selectAppTextDialog {
-				width: 850px !important;
-			}
-			
-			.selectAppTextDocIds {
-				width: 800px;
-				height: 500px;
-			}
-			
-			.n2select_report_script {
-				width: 500px;
-				height: 300px;
-			}
-
-		</style>		
 	</head>
 	<body class="nunaliit_application nunaliit_application_select">
-		<div class="selectAppBody">
-
-		<h1 class="selectAppTitle"></h1>	
-		<div id="login" class="nunaliit_login"></div>
-		<div id="selectApp"></div>
-
-		</div>
+		<main class="main-content selectAppBody" id="main-content">
+			<div class="mdc-top-app-bar--fixed-adjust"></div>
+			<div id="selectApp"></div>
+		</main>
 		
+		<script type="text/javascript" src="../js-external/materialcomponentsweb/material-components-web.min.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery-ui.min.js"></script>
 		
@@ -97,8 +33,7 @@
 		<script type="text/javascript" src="../js-external/js/jquery.cookie-1.0.js"></script>
 
 		<script type="text/javascript" src="../lib/atlas.js"></script>
-		<script type="text/javascript" src="../nunaliit2/nunaliit2-debug.js"></script>
-		<script type="text/javascript" src="../nunaliit2/nunaliit2-couch-debug.js"></script>
+		<script type="text/javascript" src="../nunaliit2/nunaliit2.js"></script>
 		<script type="text/javascript" src="../config/configuration.js"></script>
 		<script type="text/javascript" src="../nunaliit_custom.js"></script>
 
@@ -108,6 +43,8 @@
 			// <!--
 
 			function main_init(config) {
+
+				$n2.selectApp.addHamburgerMenu();
 
 				if( config.directory && config.directory.authService ) {
 					config.directory.authService.createAuthWidget({
@@ -120,7 +57,7 @@
 			 		,div: $('#selectApp')
 			 	});
 			};
-			
+
 			jQuery().ready(function() {
 				nunaliitConfigure({
 					configuredFunction: main_init

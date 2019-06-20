@@ -36,18 +36,26 @@
 			
 			$div.empty();
 
-			var $buttons = $('<div class="n2LoggerButtons"><span></span> <button></button></div>')
+			var $buttonsLine = $('<div>')
+				.addClass('n2LoggerButtons')
 				.appendTo($div);
 
-			$buttons.find('span').text( _loc('Logs') );
-			$buttons.find('button')
-				.text( _loc('Clear') )
-				.click(function(){
+			$('<span>')
+				.addClass('mdc-typography--headline6')
+				.text(_loc('Logs '))
+				.appendTo($buttonsLine);
+
+			new $n2.mdc.MDCButton({
+				parentElem: $buttonsLine,
+				btnLabel: 'Clear',
+				onBtnClick: function(){
 					_this.clear();
 					return false;
-				});
-			
-			$('<div class="n2LoggerEntries"></div>')
+				}
+			});
+
+			$('<div>')
+				.addClass('n2LoggerEntries')
 				.appendTo($div);
 		}
 		
@@ -65,7 +73,7 @@
 			var $d = $('<div class="log"></div>');
 			$d.text(msg);
 			$e.append($d);
-		}
+		}		
 	});
 
 	// -----------------------------------------------------------------
@@ -83,6 +91,7 @@
 		,attachmentService: null
 		,divId: null
 		,logger: null
+		,openDiag: null
 		
 		,initialize: function(opts_){
 			var opts = $n2.extend({
@@ -157,27 +166,40 @@
 			var _this = this;
 			
 			var $appDiv = this._getDiv();
-			$appDiv
-				.empty()
-				.append( $('<div class="submissionAppButtons"><div>') )
-				.append( $('<div class="submissionAppList"><div>') )
-				;
+			$appDiv.empty();
 			
-			var $log = $('<div class="submissionAppLog"><div>')
+			var $submissionListContainer = $('<div>')
+				.addClass('mdc-card')
+				.appendTo($appDiv);
+
+			var $log = $('<div>')
+				.addClass('submissionAppLog mdc-card')
 				.appendTo($appDiv);
 			
 			this.logger = new Logger({div:$log});
 			
-			var $buttons = $appDiv.find('.submissionAppButtons');
-			
-			$('<button>')
-				.text( _loc('Refresh') )
-				.appendTo($buttons)
-				.click(function(){
+			var $buttonsLine = $('<div>')
+				.addClass('submissionAppButtons')
+				.appendTo($submissionListContainer);
+
+			$('<span>')
+				.addClass('mdc-typography--headline6')
+				.text(_loc('Submissions '))
+				.appendTo($buttonsLine);
+
+			new $n2.mdc.MDCButton({
+				parentElem: $buttonsLine,
+				btnLabel: 'Refresh',
+				onBtnClick: function(){
 					_this._refreshSubmissions();
 					return false;
-				});
-			
+				}
+			});
+
+			$('<div>')
+				.addClass('submissionAppList')
+				.appendTo($submissionListContainer);
+
 			this._refreshSubmissions();
 		}
 		
@@ -220,23 +242,19 @@
 					isEmpty = false;
 					
 					var cName = 'submission_' + $n2.utils.stringToHtmlId(subDocId);
-					var $div = $('<div>')
-						.addClass('submission')
-						.addClass('submission_state_'+state)
-						.addClass(cName)
+					$('<div>')
+						.addClass('submission submission_state_' + state + ' ' + cName)
 						.appendTo($list)
-						.text(subDocId)
-						;
+						.text(subDocId);
 					
 					subDocIds.push(subDocId);
 				};
 
 				if( isEmpty ){
-					var $div = $('<div>')
+					$('<div>')
 						.addClass('submission')
 						.appendTo($list)
-						.text( _loc('No submission available') )
-						;
+						.text( _loc('No submission available') );
 				};
 				
 				_this._fetchSubmissionDocs(subDocIds);
@@ -280,6 +298,8 @@
 
 		,_approve: function(subDocId, approvedDoc){
 			var _this = this;
+
+			this.openDiag.closeDialog();
 			
 			this._getSubmissionDocument({
 				subDocId: subDocId
@@ -321,7 +341,10 @@
 
 		,_deny: function(subDocId, onDeniedFn){
 			var _this = this;
+			var mdcDenyDialogComponent;
 			
+			this.openDiag.closeDialog();
+
 			gatherDenyReason(function(reason,sendEmail){
 				_this._getSubmissionDocument({
 					subDocId: subDocId
@@ -363,70 +386,56 @@
 			});
 			
 			function gatherDenyReason(callback,sendEmail){
-				var diagId = $n2.getUniqueId();
-				var $diag = $('<div>')
-					.attr('id',diagId)
-					.addClass('submission_deny_dialog')
-					.appendTo( $('body') );
-				
-				$('<textarea>')
-					.addClass('submission_deny_dialog_reason')
-					.appendTo($diag);
-				
-				var $options = $('<div>')
-					.addClass('submission_deny_dialog_options')
-					.appendTo($diag);
-				
-				var cbId = $n2.getUniqueId();
-				$('<input type="checkbox">')
-					.attr('id',cbId)
-					.attr('name','send_email')
-					.appendTo($options);
-				$('<label>')
-					.attr('for',cbId)
-					.text( _loc('Send e-mail to submitter with reason for rejection') )
-					.appendTo($options);
-				
-				var $buttons = $('<div>')
-					.addClass('submission_deny_dialog_buttons')
-					.appendTo($diag);
+				var denyDialogId = $n2.getUniqueId();
 
-				$('<button>')
-					.addClass('n2_button_ok')
-					.text( _loc('OK') )
-					.appendTo($buttons)
-					.click(function(){
-						var $diag = $('#'+diagId);
+				var denyDialog = new $n2.mdc.MDCDialog({
+					mdcClasses: ['submission_deny_dialog'],
+					dialogTitle: 'Enter reason for rejecting submission',
+					clostBtn: true,
+					closeBtnText: 'Cancel'
+				});
+
+				$('#' + denyDialog.getFooterId()).addClass('submission_deny_dialog_buttons');
+
+				new $n2.mdc.MDCButton({
+					parentElem: $('#' + denyDialog.getFooterId()),
+					mdcClasses: ['n2_button_ok', 'mdc-dialog__button'],
+					btnLabel: 'OK',
+					onBtnClick: function(){
+						var $diag = $('#'+denyDialogId);
 						
 						var comment = $diag.find('textarea.submission_deny_dialog_reason').val();
 						var email = $diag.find('input[name="send_email"]').is(':checked');
-						
-						$diag.dialog('close');
-						if( typeof callback === 'function' ){
-							callback(comment,email);
-						};
-					});
+												
+						denyDialog.closeDialog();
+						$('#' + denyDialog.getId()).remove();
 
-				$('<button>')
-					.addClass('n2_button_cancel')
-					.text( _loc('Cancel') )
-					.appendTo($buttons)
-					.click(function(){
-						var $diag = $('#'+diagId);
-						$diag.dialog('close');
-					});
-				
-				$diag.dialog({
-					autoOpen: true
-					,title: _loc('Enter reason for rejecting submission')
-					,modal: true
-					//,width: '90%'
-					,width: 'auto'
-					,close: function(event, ui){
-						var diag = $(event.target);
-						diag.dialog('destroy');
-						diag.remove();
+						if (typeof callback === 'function') {
+							callback(comment,email);
+						}
 					}
+				});
+
+				// TextArea Rejection Reason
+				var rejectionReason = new $n2.mdc.MDCTextField({
+					parentElem: $('#' + denyDialog.getContentId()),
+					txtFldArea: true,
+					txtFldLabel: 'Rejection Reason',
+				});
+
+				$('#' + rejectionReason.getInputId()).addClass('submission_deny_dialog_reason');
+				
+				// Email Checkbox
+				var optionsId = $n2.getUniqueId();
+				var $options = $('<div>')
+					.attr('id', optionsId)
+					.addClass('submission_deny_dialog_options mdc-form-field n2s_attachMDCFormField')
+					.appendTo($('#' + denyDialog.getContentId()));
+
+				new $n2.mdc.MDCCheckbox({
+					parentElem: $options,
+					chkboxName: 'send_email',
+					chkboxLabel: 'Send e-mail to submitter with reason for rejection'
 				});
 			};
 		}
@@ -697,13 +706,15 @@
 			// View button
 			var $views = $('<div class="submission_views">')
 				.appendTo($entry);
-			$('<button>')
-				.text( _loc('View') )
-				.appendTo($views)
-				.click(function(){
+
+			new $n2.mdc.MDCButton({
+				parentElem: $views,
+				btnLabel: 'View',
+				onBtnClick: function(){
 					_this._viewMerging(subDocId);
 					return false;
-				});
+				}
+			});
 
 			// Brief display
 			var $brief = $('<div class="submission_brief">')
@@ -755,60 +766,31 @@
 			this._getOriginalDocument({
 				subDocId: subDocId
 				,onSuccess: function(doc, subDoc){
-					var diagId = $n2.getUniqueId();
-					var $diag = $('<div>')
-						.attr('id',diagId)
-						.addClass('submission_view_dialog_original')
-						.appendTo( $('body') );
-					
-					var $content = $('<div>')
-						.appendTo($diag);
-					
-					_this._addDocumentAccordion($content, doc);
-					
-					$diag.dialog({
-						autoOpen: true
-						,title: _loc('View Original')
-						,modal: true
-						,width: 500
-						,close: function(event, ui){
-							var diag = $(event.target);
-							diag.dialog('destroy');
-							diag.remove();
-						}
+					var viewOrgDialog = new $n2.mdc.MDCDialog({
+						mdcClasses: ['submission_view_dialog_original'],
+						dialogTitle: 'View Original',
+						scrollable: true
 					});
+
+					_this._addDocumentAccordion($('#' + viewOrgDialog.getContentId()), doc);
 				}
 			});
 		}
 
 		,_viewSubmitted: function(subDocId){
 			var _this = this;
+			var mdcSubmittedDialogComponent;
 			
 			this._getSubmittedDocument({
 				subDocId: subDocId
 				,onSuccess: function(doc, subDoc){
-					var diagId = $n2.getUniqueId();
-					var $diag = $('<div>')
-						.attr('id',diagId)
-						.addClass('submission_view_dialog_submitted')
-						.appendTo( $('body') );
-					
-					var $content = $('<div>')
-						.appendTo($diag);
-					
-					_this._addDocumentAccordion($content, doc);
-					
-					$diag.dialog({
-						autoOpen: true
-						,title: _loc('View Submission')
-						,modal: true
-						,width: 500
-						,close: function(event, ui){
-							var diag = $(event.target);
-							diag.dialog('destroy');
-							diag.remove();
-						}
+					var viewSubmissionDialog = new $n2.mdc.MDCDialog({
+						mdcClasses: ['submission_view_dialog_submitted'],
+						dialogTitle: 'View Submission',
+						scrollable: true
 					});
+
+					_this._addDocumentAccordion($('#' + viewSubmissionDialog.getContentId()), doc);
 				}
 			});
 		}
@@ -819,28 +801,14 @@
 			this._getCurrentDocument({
 				subDocId: subDocId
 				,onSuccess: function(doc, subDoc){
-					var diagId = $n2.getUniqueId();
-					var $diag = $('<div>')
-						.attr('id',diagId)
-						.addClass('submission_view_dialog_latest')
-						.appendTo( $('body') );
-					
-					var $content = $('<div>')
-						.appendTo($diag);
-					
-					_this._addDocumentAccordion($content, doc);
-					
-					$diag.dialog({
-						autoOpen: true
-						,title: _loc('View Submission')
-						,modal: true
-						,width: 500
-						,close: function(event, ui){
-							var diag = $(event.target);
-							diag.dialog('destroy');
-							diag.remove();
-						}
+
+					var viewLatestDialog = new $n2.mdc.MDCDialog({
+						mdcClasses: ['submission_view_dialog_latest'],
+						dialogTitle: 'View Submission',
+						scrollable: true
 					});
+
+					_this._addDocumentAccordion($(viewLatestDialog.getContentId()), doc);
 				}
 			});
 		}
@@ -869,28 +837,16 @@
 			});
 
 			function openDialog(originalDoc, submittedDoc, currentDoc, subDoc){
-				var diagId = $n2.getUniqueId();
-				var $diag = $('<div>')
-					.attr('id',diagId)
-					.addClass('submission_view_dialog_merging')
-					.appendTo( $('body') );
-				
-				initiateMergingView($diag, diagId, originalDoc, submittedDoc, currentDoc, subDoc);
-				
-				$diag.dialog({
-					autoOpen: true
-					,title: _loc('View Submission')
-					,modal: true
-					,width: '90%'
-					,close: function(event, ui){
-						var diag = $(event.target);
-						diag.dialog('destroy');
-						diag.remove();
-					}
+				_this.openDiag = new $n2.mdc.MDCDialog({
+					mdcClasses: ['submission_view_dialog_merging'],
+					dialogTitle: 'View Submission'
 				});
+				$('#' + _this.openDiag.getFooterId()).addClass('submission_view_dialog_merging_buttons');
+
+				initiateMergingView($('#' + _this.openDiag.getContentId()), _this.openDiag.getId(), originalDoc, submittedDoc, currentDoc, subDoc);
 			};
 
-			function initiateMergingView($diag, diagId, originalDoc, submittedDoc, currentDoc, subDoc){
+			function initiateMergingView($dialogContent, diagId, originalDoc, submittedDoc, currentDoc, subDoc){
 				var submittedPatch = null;
 				if( originalDoc && submittedDoc ) {
 					submittedPatch = patcher.computePatch(originalDoc, submittedDoc);
@@ -918,7 +874,7 @@
 				
 				$('<div>')
 					.addClass('submission_view_dialog_inner')
-					.appendTo($diag);
+					.appendTo($dialogContent);
 				
 				displayDocuments(
 					diagId
@@ -930,8 +886,11 @@
 			};
 
 			function displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc){
-				var $innerDiag = $('#'+diagId).find('.submission_view_dialog_inner')
-					.empty();
+				var $buttons = $('#' + diagId).find('.submission_view_dialog_merging_buttons');
+				$buttons.empty();
+
+				var $innerDiag = $('#' + diagId).find('.submission_view_dialog_inner');
+				$innerDiag.empty();
 
 				var submittedPatch = null;
 				if( originalDoc && submittedDoc ) {
@@ -1004,71 +963,68 @@
 						.appendTo($deltaOuter);
 					new $n2.tree.ObjectTree($delta, submittedPatch);
 				};
-				
-				var $buttons = $('<div>')
-					.addClass('submission_view_dialog_merging_buttons')
-					.appendTo($innerDiag);
-				$('<button>')
-					.addClass('n2_button_approve')
-					.text( _loc('Approve') )
-					.appendTo($buttons)
-					.click(function(){
+
+				new $n2.mdc.MDCButton({
+					parentElem: $('#' + _this.openDiag.getFooterId()),
+					mdcClasses: ['n2_button_approve'],
+					btnLabel: 'Approve',
+					onBtnClick: function(){
 						_this._approve(subDocId, proposedDoc);
-						var $diag = $('#'+diagId);
-						$diag.dialog('close');
+						var $dialog = $('#'+diagId);
+						$dialog.remove();
 						return false;
-					});
-				$('<button>')
-					.addClass('n2_button_deny')
-					.text( _loc('Reject') )
-					.appendTo($buttons)
-					.click(function(){
+					}
+				});
+
+				new $n2.mdc.MDCButton({
+					parentElem: $('#' + _this.openDiag.getFooterId()),
+					mdcClasses: ['n2_button_deny', 'mdc-dialog__button'],
+					btnLabel: 'Reject',
+					onBtnClick: function(){
 						_this._deny(subDocId,function(){
-							var $diag = $('#'+diagId);
-							$diag.dialog('close');
+							var $dialog = $('#'+diagId);
+							$dialog.remove();
 						});
 						return false;
-					});
-				if( originalDoc ) {
-					$('<button>')
-						.addClass('n2_button_original')
-						.text( _loc('View Original') )
-						.appendTo($buttons)
-						.click(function(){
+					}
+				});
+
+				if (originalDoc) {
+					new $n2.mdc.MDCButton({
+						parentElem: $('#' + _this.openDiag.getFooterId()),
+						mdcClasses: ['n2_button_original', 'mdc-dialog__button'],
+						btnLabel: 'View Original',
+						onBtnClick: function(){
 							_this._viewOriginal(subDocId);
 							return false;
-						});
+						}
+					});
 				};
-				if( submittedDoc ) {
-					$('<button>')
-						.addClass('n2_button_submitted')
-						.text( _loc('View Submitted') )
-						.appendTo($buttons)
-						.click(function(){
+
+				if (submittedDoc) {
+					new $n2.mdc.MDCButton({
+						parentElem: $('#' + _this.openDiag.getFooterId()),
+						mdcClasses: ['n2_button_submitted', 'mdc-dialog__button'],
+						btnLabel: 'View Submitted',
+						onBtnClick: function(){
 							_this._viewSubmitted(subDocId);
 							return false;
-						});
+						}
+					});
 				};
-				if( ! subDoc.nunaliit_submission.deletion ) {
-					$('<button>')
-						.addClass('n2_button_manual')
-						.text( _loc('Edit Proposed Document') )
-						.appendTo($buttons)
-						.click(function(){
+
+				if (!subDoc.nunaliit_submission.deletion) {
+					new $n2.mdc.MDCButton({
+						parentElem: $('#' + _this.openDiag.getFooterId()),
+						mdcClasses: ['n2_button_manual', 'mdc-dialog__button'],
+						btnLabel: 'Edit Proposed Document',
+						onBtnClick: function(){
 							editProposedDocument(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
 							return false;
-						});
-				};
-				$('<button>')
-					.addClass('n2_button_cancel')
-					.text( _loc('Cancel') )
-					.appendTo($buttons)
-					.click(function(){
-						var $diag = $('#'+diagId);
-						$diag.dialog('close');
-						return false;
+						}
 					});
-				
+				};
+			
 				// Install mouse over: On mouse over, change style of all
 				// similar keys, in the other trees. Include the parent
 				// keys as well.
@@ -1120,7 +1076,8 @@
 				var $diag = $('#'+diagId);
 				var $inner = $diag.find('.submission_view_dialog_inner');
 				var $proposed = $inner.find('.submission_view_dialog_merging_submitted_outer');
-				var $buttons = $inner.find('.submission_view_dialog_merging_buttons');
+				var $buttons = $diag.find('.submission_view_dialog_merging_buttons');
+				$buttons.empty();
 				
 				var editedDoc = $n2.document.clone(proposedDoc);
 				
@@ -1143,25 +1100,27 @@
 						,$n2.couchEdit.Constants.RELATION_EDITOR
 					]
 				});
-				
-				$buttons.empty();
-				$('<button>')
-					.addClass('n2_button_save')
-					.text( _loc('Save') )
-					.appendTo($buttons)
-					.click(function(){
+
+				new $n2.mdc.MDCButton({
+					parentElem: $buttons,
+					mdcClasses: ['n2_button_save'],
+					btnLabel: 'Save',
+					onBtnClick: function(){
 						var updatedDoc = editor.getDocument();
 						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, updatedDoc, subDoc);
 						return false;
-					});
-				$('<button>')
-					.addClass('n2_button_cancel')
-					.text( _loc('Cancel') )
-					.appendTo($buttons)
-					.click(function(){
+					}
+				});
+
+				new $n2.mdc.MDCButton({
+					parentElem: $buttons,
+					mdcClasses: ['n2_button_cancel'],
+					btnLabel: 'Cancel',
+					onBtnClick: function(){
 						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
 						return false;
-					});
+					}
+				});
 			};
 			
 			// level 0 is on current document (submitted patch)
@@ -1412,9 +1371,37 @@
 	function main(opts_){
 		return new $n2.submissionApp.SubmissionApplication(opts_);
 	};
+
+	function addHamburgerMenu(){
+		// Top-App-Bar
+		new $n2.mdc.MDCTopAppBar({
+			barTitle: 'Submission Tool'
+		});
+
+		// Tools Drawer
+		new $n2.mdc.MDCDrawer({
+			anchorBtnId: 'hamburger_menu_btn',
+			navHeaderTitle: 'Nunaliit Tools',
+			navItems: [
+				{"text": "User Management", "href": "./users.html"},
+				{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+				{"text": "Data Browser", "href": "./browse.html"},
+				{"text": "Localization", "href": "./translation.html"},
+				{"text": "Data Export", "href": "./export.html"},
+				{"text": "Data Modification", "href": "./select.html"},
+				{"text": "Schemas", "href": "./schemas.html"},
+				{"text": "Restore Tool", "href": "./restore.html"},
+				{"text": "Submission Tool", "href": "./submission.html", "activated": true},
+				{"text": "Import Tool", "href": "./import.html"},
+				{"text": "Debug Tool", "href": "./debug.html"},
+				{"text": "Schema Editor", "href": "./schema_editor.html"}
+			]	
+		});
+	};
 	
 	$n2.submissionApp = {
 		main: main
 		,SubmissionApplication: SubmissionApplication
+		,addHamburgerMenu: addHamburgerMenu
 	};
 })(jQuery,nunaliit2);

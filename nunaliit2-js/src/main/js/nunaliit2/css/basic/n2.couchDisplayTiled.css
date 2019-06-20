@@ -48,6 +48,8 @@ div.n2DisplayTiled_tile_image {
 .n2DisplayTiled_thumb img {
 	width: 125%;
 	height: 100%;
+	object-fit: cover;
+	object-position: top;
 }
 
 .n2DisplayTiled_tile_brief {
@@ -62,7 +64,7 @@ div.n2DisplayTiled_tile_image {
 	background-color: rgba(255,255,255,0.8);
 	word-wrap: break-word;
 	max-height: 50px;
-	text-overflow: ellipsis;    
+	text-overflow: ellipsis;
 	display: -webkit-box;
 	-webkit-line-clamp: 3;
 	-webkit-box-orient: vertical;    

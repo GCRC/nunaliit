@@ -1,5 +1,8 @@
 ;(function($,$n2){
 
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+
 var DH = 'browse.js';	
 	
 var HASH_SEARCH_PREFIX="search_";
@@ -369,10 +372,20 @@ function main(opts_) {
 		elem: $('#searchPanel')
 		,useButton: true
 		,doNotDisable: true
+		,onModuleTitle: false
 	});
 	
-	
-	$('#addDocumentButton').click(addDocument);
+	var $addDocBtn = $('#searchPanel').find('#addDocumentButton');
+
+	if( $addDocBtn.length < 1){
+		new $n2.mdc.MDCButton({
+			parentElem: $addDocBtn,
+			mdcId: 'addDocumentButton',
+			btnLabel: 'New Document',
+			btnRaised: true,
+			onBtnClick: addDocument
+		});
+	}
 	
 	// Editor
 	couchEditor.options.enableAddFile = true;
@@ -389,12 +402,39 @@ function main(opts_) {
 			$n2.log('Unable to load schema for editor',err);
 		}
 	});
-
 	config.start();
 };
 
+function addHamburgerMenu(){
+	// Top-App-Bar
+	new $n2.mdc.MDCTopAppBar({
+		barTitle: 'Data Browser'
+	});
+
+	//Tools Drawer
+	new $n2.mdc.MDCDrawer({
+		anchorBtnId: 'hamburger_menu_btn',
+		navHeaderTitle: 'Nunaliit Tools',
+		navItems: [
+			{"text": "User Management", "href": "./users.html"},
+			{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+			{"text": "Data Browser", "href": "./browse.html", "activated": true},
+			{"text": "Localization", "href": "./translation.html"},
+			{"text": "Data Export", "href": "./export.html"},
+			{"text": "Data Modification", "href": "./select.html"},
+			{"text": "Schemas", "href": "./schemas.html"},
+			{"text": "Restore Tool", "href": "./restore.html"},
+			{"text": "Submission Tool", "href": "./submission.html"},
+			{"text": "Import Tool", "href": "./import.html"},
+			{"text": "Debug Tool", "href": "./debug.html"},
+			{"text": "Schema Editor", "href": "./schema_editor.html"}
+		]	
+	});
+};
+
 $n2.browseApp = {
-	main: main
+	main: main,
+	addHamburgerMenu: addHamburgerMenu
 };
 
 })(jQuery,nunaliit2);

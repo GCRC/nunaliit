@@ -196,29 +196,37 @@ function _localizeString() {
 };
 
 function _formSingleField(r,completeSelectors,options){
+	var labelLocalizeClass = " n2s_localize";
+	var textFieldId = $n2.getUniqueId();
 	
-	// option: textarea
+	if( options.id && options.label ){
+
+		if( options.id === options.label ){
+			labelLocalizeClass = "";
+		}
+	}
+
+	if( options.date ){
+		r.push('<div class="n2schema_help_date"></div>');
+	};
+	
+	if( options.wikiTransform ){
+		r.push('<div class="n2schema_help_wiki"></div>');
+	};
+
 	if( options.textarea ){
-		r.push('<textarea');
+		r.push('<textarea id="' + textFieldId + '"');
+		r.push(' class="n2schema_input mdc-text-field__input');
+
 	} else if( options.checkbox ){
-		r.push('<input type="checkbox"');
+		r.push('<div class="mdc-form-field n2s_attachMDCFormField">');
+		r.push('<div class="mdc-checkbox n2s_attachMDCCheckbox">');
+		r.push('<input id="' + textFieldId + '" type="checkbox" class="n2schema_input mdc-checkbox__native-control');
 	} else {
-		r.push('<input type="text"');
-	};
-	
-	// placeholder
-	if( options.placeholder 
-	 && typeof options.placeholder[0] === 'string' ){
-		var placeHolderValue = options.placeholder[0];
-		placeHolderValue = placeHolderValue.replace(/&/g, '&amp;');
-		placeHolderValue = placeHolderValue.replace(/"/g, '&quot;');
-		r.push(' placeholder="');
-		r.push( _loc(placeHolderValue) );
-		r.push('"');
-	};
-	
-	r.push(' class="n2schema_input');
-	
+		r.push('<input type="text" id="' + textFieldId + '"');
+		r.push(' class="n2schema_input mdc-text-field__input');
+	}
+
 	var selClass = createClassStringFromSelector(completeSelectors);
 	r.push(' '+selClass);
 	
@@ -238,18 +246,33 @@ function _formSingleField(r,completeSelectors,options){
 
 	if( options.textarea ){
 		r.push('"></textarea>');
+		r.push('<div class="mdc-notched-outline">');
+		r.push('<div class="mdc-notched-outline__leading"></div>');
+		r.push('<div class="mdc-notched-outline__notch">');
+		r.push('<label for="' + textFieldId + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ options.label + '</label>');		
+		r.push('</div>');
+		r.push('<div class="mdc-notched-outline__trailing"></div>');
+		r.push('</div>');
+
 	} else if( options.checkbox ){
 		r.push('"/>');
+		r.push('<div class="mdc-checkbox__background">');
+		r.push('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>');
+		r.push('<div class="mdc-checkbox__mixedmark"></div>');
+		r.push('</div>');
+		r.push('</div>');
+		r.push('<label for="' + textFieldId + '">' + options.label + '</label>');
+		r.push('</div>');
+
 	} else {
 		r.push('"/>');
-	};
-
-	if( options.date ){
-		r.push('<div class="n2schema_help_date"></div>');
-	};
-	
-	if( options.wikiTransform ){
-		r.push('<div class="n2schema_help_wiki"></div>');
+		r.push('<div class="mdc-notched-outline">');
+		r.push('<div class="mdc-notched-outline__leading"></div>');
+		r.push('<div class="mdc-notched-outline__notch">');
+		r.push('<label for="' + textFieldId + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ options.label + '</label>');		
+		r.push('</div>');
+		r.push('<div class="mdc-notched-outline__trailing"></div>');
+		r.push('</div>');
 	};
 };
 
@@ -268,7 +291,7 @@ function _formField() {
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
-	
+
 	// Compute current selector
 	var currentSelector = null;
 	if( options 
@@ -318,8 +341,13 @@ function _formField() {
 		};
 	};
 	
+	if( opts.array ){
+		if( options.data.itemNum ){
+			opts.label += " (" + options.data.itemNum + ")";
+		}
+	}
+
 	var r = [];
-	
 	r.push('<div class="n2schema_field_wrapper">');
 
 	if( opts.custom ){
@@ -335,11 +363,17 @@ function _formField() {
 		
 		
 	} else if( obj && obj.nunaliit_type === 'localized' ) {
+
+		var fieldLabel;
 		var langs = getSortedLanguages(opts.localized, obj);
 		
 		// Turn on "localized" option, if not already on
 		if( !opts.localized ){
 			opts.localized = [];
+		};
+
+		if( opts.label ){
+			fieldLabel = opts.label;
 		};
 		
 		for(var i=0,e=langs.length;i<e;++i){
@@ -347,13 +381,16 @@ function _formField() {
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized');
+			opts.label = fieldLabel + " (" + lang + ")";
+
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field n2s_attachMDCTextField');
 			if( opts.textarea ){
-				r.push(' n2schema_field_container_textarea');
+				r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
+				_formSingleField(r,langSel,opts);
+			} else {
+				r.push(' mdc-text-field--outlined">');
+				_formSingleField(r,langSel,opts);
 			};
-			r.push('">');
-			r.push('<span class="n2_localize_lang">('+lang+')</span>');
-			_formSingleField(r,langSel,opts);
 			r.push('</div>');
 		};
 		
@@ -362,47 +399,79 @@ function _formField() {
 		// This condition is true if obj is an empty string or
 		// if obj is undefined (or null)
 
+		var fieldLabel;
 		var langs = getSortedLanguages(opts.localized, null);
-		
+
+		if( opts.label ){
+			fieldLabel = opts.label;
+		};
+
 		for(var i=0,e=langs.length;i<e;++i){
 			var lang = langs[i];
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 			
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized');
+			opts.label = fieldLabel + " (" + lang + ")";
+			
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field n2s_attachMDCTextField');
 			if( opts.textarea ){
-				r.push(' n2schema_field_container_textarea');
+				r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
+				_formSingleField(r,langSel,opts);
+			} else {
+				r.push(' mdc-text-field--outlined">');
+				_formSingleField(r,langSel,opts);
 			};
-			r.push('">');
-			r.push('<span class="n2_localize_lang">('+lang+')</span>');
-			_formSingleField(r,langSel,opts);
 			r.push('</div>');
 		};
 
 	} else if( opts.reference ) {
 		var attr = completeSelectors.encodeForDomAttribute();
-		r.push('<span class="n2schema_field_reference" nunaliit-selector="'+attr+'"');
+
+		r.push('<div class="n2schema_field_reference mdc-text-field mdc-text-field--outlined n2s_attachMDCTextField" ');
+		if( opts.label ){
+			r.push('nunaliit-label="'+opts.label+'" ');
+		}
+		r.push('nunaliit-selector="'+attr+'"');
+		
 		if( opts.search 
 		 && opts.search[0] ){
 			r.push(' n2-search-func="'+opts.search[0]+'"');
 		};
-		r.push('></span>');
+		r.push('></div>');
 
 	} else if( opts.geometry ) {
+		var geometryTextareaId = $n2.getUniqueId();
 		var attr = completeSelectors.encodeForDomAttribute();
-		r.push('<textarea class="n2schema_field_geometry" nunaliit-selector="'+attr+'"');
-		r.push('></textarea>');
+		r.push('<div class="n2schema_field_container n2schema_field_container_textarea mdc-text-field mdc-text-field--textarea n2s_attachMDCTextField">');
+		r.push('<textarea id="' + geometryTextareaId + '" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"></textarea>');
+		r.push('<div class="mdc-notched-outline">');
+		r.push('<div class="mdc-notched-outline__leading"></div>');
+		r.push('<div class="mdc-notched-outline__notch">');
+		
+		if( opts.label ){
+			r.push('<label for="' + geometryTextareaId + '" class="label mdc-floating-label n2s_localize">'+opts.label+'</label>');
+		}
+
+		r.push('</div>');
+		r.push('<div class="mdc-notched-outline__trailing"></div>'); 
+		r.push('</div>');
+		r.push('</div>');
 		
 	} else {
-		r.push('<div class="n2schema_field_container');
+		r.push('<div class="n2schema_field_container mdc-text-field n2s_attachMDCTextField');
 		if( opts.textarea ){
-			r.push(' n2schema_field_container_textarea');
+			r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
+			_formSingleField(r,completeSelectors,opts);
+		} else {
+			r.push(' mdc-text-field--outlined">');
+			_formSingleField(r,completeSelectors,opts);
 		};
-		r.push('">');
-		_formSingleField(r,completeSelectors,opts);
 		r.push('</div>');
 	};
 
+	if( opts.placeholder ){
+		r.push('<p class="mdc-text-field-helper-text" aria-hidden="true">' + opts.placeholder + '</p>');
+	}
 	r.push('</div>');
 	
 	return r.join('');
@@ -511,7 +580,7 @@ function _arrayField() {
 	if( obj && obj.length ) {
 		for(var i=0,e=obj.length; i<e; ++i){
 			var item = obj[i];
-	
+
 			var completeSelectors = obj[SELECT];
 			completeSelectors = completeSelectors.getChildSelector(i);
 			var cl = createClassStringFromSelector(completeSelectors);
@@ -530,7 +599,7 @@ function _arrayField() {
 	
 			r.push('<div class="n2schema_array_item_wrapper">');
 	
-			r.push( options.fn(item,{data:{n2_selector:completeSelectors}}) );
+			r.push( options.fn(item,{data:{n2_selector:completeSelectors, itemNum:i+1}}) );
 			
 			r.push('</div></div>');
 		};
@@ -1763,7 +1832,7 @@ var Form = $n2.Class({
 						
 						var $item = $clicked.parents('.n2schema_array_item').first();
 						$item.remove();
-						//_this.refresh($elem);
+						_this.refresh($elem);
 
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
@@ -1779,7 +1848,7 @@ var Form = $n2.Class({
 							var $item = $clicked.parents('.n2schema_array_item').first();
 							var $prevItem = $item.prev();
 							$item.insertBefore($prevItem);
-							//_this.refresh($elem);
+							_this.refresh($elem);
 
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
@@ -1796,7 +1865,7 @@ var Form = $n2.Class({
 							var $item = $clicked.parents('.n2schema_array_item').first();
 							var $nextItem = $item.next();
 							$item.insertAfter($nextItem);
-							//_this.refresh($elem);
+							_this.refresh($elem);
 
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
@@ -1812,10 +1881,10 @@ var Form = $n2.Class({
 						};
 						
 					} else if( $clicked.hasClass('n2schema_help_date') ){
-						$n2.help.ToggleHelp('dates', $clicked);
+						$n2.help.ShowHelp('dates', $clicked);
 						
 					} else if( $clicked.hasClass('n2schema_help_wiki') ){
-						$n2.help.ToggleHelp('wiki', $clicked);
+						$n2.help.ShowHelp('wiki', $clicked);
 					};
 				});
 			};
@@ -2080,6 +2149,7 @@ var Form = $n2.Class({
 		var _this = this;
 		
 		var domSelector = $elem.attr('nunaliit-selector');
+		var referenceLabel = $elem.attr('nunaliit-label');
 		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
 		var parentSelector = objSel.getParentSelector();
 		var key = objSel.getKey();
@@ -2089,15 +2159,44 @@ var Form = $n2.Class({
 		var ref = objSel.getValue(this.obj);
 		
 		if( ref && ref.doc ) {
+
+			// Update $elem height
+			$elem.css('height', 'inherit');
+
 			// There is a reference
 			$elem.empty();
-			
+
 			// Brief
 			$('<span>')
 				.addClass('n2s_briefDisplay')
 				.text(ref.doc)
 				.appendTo($elem);
-			
+
+			var $notchedOutline = $('<div>')
+				.attr('class','mdc-notched-outline mdc-notched-outline--notched')
+				.appendTo($elem);
+
+			$('<div>')
+				.attr('class','mdc-notched-outline__leading')
+				.appendTo($notchedOutline);
+
+			var $notch = $('<div>')
+				.attr('class','mdc-notched-outline__notch')
+				.appendTo($notchedOutline);
+
+			var $notchLabel = $('<label>')
+				.attr('class','label n2s_localized mdc-floating-label mdc-floating-label--float-above')
+				.text(referenceLabel)
+				.appendTo($notch);
+
+			// Update width of $notch based on label width
+			var labelWidth = $notchLabel.width();
+			$notch.width(labelWidth);
+
+			$('<div>')
+				.attr('class','mdc-notched-outline__trailing')
+				.appendTo($notchedOutline);
+				
 			// Delete button
 			$('<div>')
 				.addClass('n2schema_referenceDelete')
@@ -2126,9 +2225,13 @@ var Form = $n2.Class({
 			// There is no reference. Install a
 			// text input
 			$elem.empty();
+			
+			var referenceFieldId = $n2.getUniqueId();
 
 			var $input = $('<input>')
+				.attr('id', referenceFieldId)
 				.attr('type','text')
+				.attr('class','n2schema_input mdc-text-field__input')
 				.appendTo($elem);
 			
 			// Handle changes
@@ -2163,6 +2266,27 @@ var Form = $n2.Class({
 			};
 			$input.change(changeHandler);
 			
+			var $notchedOutline = $('<div>')
+				.attr('class','mdc-notched-outline')
+				.appendTo($elem);
+
+			$('<div>')
+				.attr('class','mdc-notched-outline__leading')
+				.appendTo($notchedOutline);
+
+			var $notch = $('<div>')
+				.attr('class','mdc-notched-outline__notch')
+				.appendTo($notchedOutline);
+
+			$('<label>')
+				.attr('class','label n2s_localized mdc-floating-label')
+				.text(referenceLabel)
+				.appendTo($notch);
+
+			$('<div>')
+				.attr('class','mdc-notched-outline__trailing')
+				.appendTo($notchedOutline);
+
 			// Handle focus
 			var focusHandler = {
 				fn: this.functionMap['getDocumentId']

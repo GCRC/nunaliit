@@ -836,6 +836,8 @@ public class JSONObject {
         Object object = this.get(key);
         if (object instanceof String) {
             return (String) object;
+        } else if( NULL.equals(object) ) {
+            return (String) null;
         }
         throw new JSONException("JSONObject[" + quote(key) + "] not a string.");
     }

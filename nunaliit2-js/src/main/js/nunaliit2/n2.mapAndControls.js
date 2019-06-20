@@ -5828,23 +5828,26 @@ var MapAndControls = $n2.Class({
 		var mapLayer = layerInfo.olLayer;
 
 		var mustReproject = false;
-        var remoteProjection = mapLayer.projection;
-	    var localProjection = layerInfo.olLayer.map.getProjectionObject();
-        if( localProjection 
-         && false == localProjection.equals(remoteProjection) ) {
-        	mustReproject = true;
-        };
+		var remoteProjection = mapLayer.projection;
+		var localProjection = layerInfo.olLayer.map.getProjectionObject();
+		if( localProjection 
+		 && false == localProjection.equals(remoteProjection) ) {
+			mustReproject = true;
+		};
 		
 		// Remove features. Remove features that are to be updated
-        var featureIdsToRemoveMap = {};
-        state.removed.forEach(function(f){
-        	featureIdsToRemoveMap[f.fid] = true;
-        });
-        state.updated.forEach(function(f){
-        	featureIdsToRemoveMap[f.fid] = true;
-        });
-        var featuresToRemove = [];
-        var featuresToAdd = [];
+		var featureIdsToRemoveMap = {};
+		state.removed.forEach(function(f){
+			featureIdsToRemoveMap[f.fid] = true;
+		});
+		state.updated.forEach(function(f){
+			featureIdsToRemoveMap[f.fid] = true;
+		});
+		state.added.forEach(function(f){
+			featureIdsToRemoveMap[f.fid] = true;
+		});
+		var featuresToRemove = [];
+		var featuresToAdd = [];
 		if( mapLayer && mapLayer.features ) {
 			var loop;
 			var features = mapLayer.features;

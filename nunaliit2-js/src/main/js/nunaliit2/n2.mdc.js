@@ -274,7 +274,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 // Options:
 //  - chips (Array): A collection of strings 
 //  - label (String): A label used for the outline of the tag box
-var MDCTagBox = $n2.Construct('MDCTagBox', MDC, {
+var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 
 	$chipInput: null,
 	chips: null,
@@ -317,13 +317,10 @@ var MDCTagBox = $n2.Construct('MDCTagBox', MDC, {
 		});
 
 		// Move input form field into chipset component
-		if ($('#' + $chipSet.getId()).length == 0 ){
-			$('#' + this.$chipInput.getInputId()).appendTo(this.parentElem);
-		} else {
-			$('#' + this.$chipInput.getInputId()).appendTo($('#' + $chipSet.getId()));
-		}	
-		if (this.showService) {
-			this.showService.fixElementAndChildren($('#' + this.mdcId));
+		$('#' + this.$chipInput.getInputId()).appendTo($('#' + $chipSet.getId()));
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 	},
 
@@ -340,7 +337,7 @@ var MDCTagBox = $n2.Construct('MDCTagBox', MDC, {
 //  - filterChips (Boolean): If true, the chip set is given the filter chips class.
 //  - inputChips (Boolean): If true, the chip set is given the input chips class.
 //  - inputId (String): Id of the input field
-var MDCChipSet = $n2.Construct('MDCChipSet', MDC, {
+var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	
 	chips: null,
 	choiceChips: null,
@@ -412,8 +409,8 @@ var MDCChipSet = $n2.Construct('MDCChipSet', MDC, {
 
 		$chipSet.appendTo(this.parentElem);
 
-		if (this.showService) {
-			this.showService.fixElementAndChildren($('#' + this.mdcId));
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 	},
 

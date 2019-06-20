@@ -18,6 +18,7 @@
 		<title>Atlas</title>
 
 		<link rel="shortcut icon" href="favicon.ico" />
+		<link rel="stylesheet" href="js-external/materialcomponentsweb/material-components-web.min.css" type="text/css" />
 		<link rel="stylesheet" href="js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
 		<link rel="stylesheet" href="js-external/mediaelement/mediaelementplayer.min.css" type="text/css" />
 		<link rel="stylesheet" href="js-external/OpenLayers/theme/default/style.css" type="text/css" />
@@ -29,22 +30,21 @@
 		<link rel="stylesheet" href="css/atlas.css" type="text/css" />
 	</head>
 	<body class="nunaliit_atlas">
-		
-		<!--/HEADER SECTION/-->
-		<div class="nunaliit_header">
+		<header id="nunaliit_header" class="nunaliit_header mdc-top-app-bar mdc-top-app-bar--fixed">
 			
-			<!-- Added second header div to contain Atlas title, menu and login-->
-			<div id="header_container" class="nunaliit_header_container">
-				<span class="nunaliit_title"><a id="title" class="nunaliit_title_link" href="index.html"></a></span>
-				
-				<!-- Added Main Nav inside header-->
-				<div id="navigation" class="nunaliit_header-nav">
-				</div>
-				
-				<!-- Moved login inside header-->
-				<!-- Added a new container div - nunaliit_login_container -->
-				<!-- Changed login buttons to new layout (Accommodate liquid header)-->
-				<div id="login1" class="nunaliit_login"></div>
+			<div id="header_container" class="mdc-top-app-bar__row nunaliit_header_container">
+				<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-start">
+				  <a href="#" class="mdc-top-app-bar__navigation-icon">☰</a>
+				  <span class="nunaliit_title"><a id="title" class="nunaliit_title_link" href="index.html"></a></span>
+				  <!-- Added Main Nav inside header-->
+				  <div id="navigation" class="nunaliit_header-nav"></div>
+				</section>
+				<section class="mdc-top-app-bar__section mdc-top-app-bar__section--align-end" role="toolbar">
+					<!-- Moved login inside header-->
+					<!-- Added a new container div - nunaliit_login_container -->
+					<!-- Changed login buttons to new layout (Accommodate liquid header)-->
+					<div id="login1" class="nunaliit_login"></div>
+				</section>
 			</div>
 			
 			<!-- Moved Map Title inside header-->
@@ -56,10 +56,14 @@
 				<div id="search_panel" class="nunaliit_search_input"></div>
 				<span id="module_title" class="nunaliit_module_title_item"></span>
 			</div>
-		</div>
+		</header>
+		<aside id="nunaliit_hamburgermenu" class="mdc-drawer mdc-drawer--modal">
+			<!-- Hamburger Menu Drawer Content-->
+		</aside>
 		
 		<!--/CONTENT SECTION/-->
 		<!-- Added New Container Div around body content-->
+		<div class="mdc-drawer-scrim"></div>
 		<div id="content" class="nunaliit_content">
 			<noscript>
 				<p>You appear to have disabled Javascript support in your browser. You have to enable Javascript for proper functioning of this site.</p>
@@ -81,6 +85,7 @@
 			</div>
 		</div>
 
+		<script type="text/javascript" src="js-external/materialcomponentsweb/material-components-web.min.js"></script>
 		<script type="text/javascript" src="js-external/js/proj4js/lib/proj4js-compressed.js"></script>
 		<script type="text/javascript" src="js-external/js/jquery.min.js"></script>
 		<script type="text/javascript" src="js-external/js/jquery-ui.min.js"></script>
@@ -95,6 +100,7 @@
 		<script type="text/javascript" src="js-external/DetectRTC/DetectRTC.min.js"></script>
 		<script type="text/javascript" src="js-external/RecordRTC/RecordRTC.min.js"></script>
 		<script type="text/javascript" src="js-external/lamejs/lame.min.js"></script>
+		<script type="text/javascript" src="js-external/moment/moment.js"></script>
 		
 		<script type="text/javascript" src="lib/atlas.js"></script>
 		<script type="text/javascript" src="nunaliit2/nunaliit2.js"></script>

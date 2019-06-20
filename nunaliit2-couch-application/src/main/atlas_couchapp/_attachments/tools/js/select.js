@@ -514,76 +514,64 @@
 			,onSuccess: function(list){}
 			,onError: function(err){ alert( _loc('Unable to create a new list')+': '+err); }
 		},opts_);
-		
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+dialogId+'">'
-			+'<div>'+_loc('Type of refinement')+': <select class="searchFilterSelector"></select></div>'
-			+'<div class="searchFilterOptions"></div>'
-			+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
-			+'</div>');
 
-		var $select = $dialog.find('select.searchFilterSelector');
-		for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
-			var searchFilter = SearchFilter.availableSearchFilters[i];
-			var $o = $('<option></option>');
-			$o.text(searchFilter.name);
-			$o.attr('value',searchFilter.id);
-			$select.append( $o );
-		};
-		$select.change(function(e){
-			var $dialog = $('#'+dialogId);
-			adjustOptions($dialog);
+		var refineListDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Refine List: '+opts.list.name,
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
+		
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + refineListDialog.getFooterId()),
+			btnLabel: 'OK',
+			onBtnClick: okBtnFunc
 		});
 
-		adjustOptions($dialog);
-		
-		$dialog.find('button')
-			.first()
-				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					var $options = $dialog.find('.searchFilterOptions');
-					var filterId = $dialog.find('select.searchFilterSelector').val();
-					
-					$dialog.dialog('close');
-
-					var useFilter = findSearchFilterFromId(filterId);
-					if( useFilter ) {
-						useFilter.refineList({
-							list: opts.list
-							,options: $options
-							,onSuccess: opts.onSuccess
-							,onError: function(err){
-								$n2.log('Error refining list: '+err);
-							}
-						});
-					} else {
-						alert( _loc('Unable to find document search filter') );
-					};
-					
-					return false;
-				})
-			.next()
-				.button({icons:{primary:'ui-icon-cancel'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					$dialog.dialog('close');
-					return false;
-				})
-			;
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Refine List')+': '+opts.list.name
-			,modal: true
-			,width: 400
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
+		var menuOptions = [];
+		for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
+			var searchFilter = SearchFilter.availableSearchFilters[i];
+			menuOptions.push({
+				'value': searchFilter.id,
+				'label': searchFilter.name
+			});
 		};
-		$dialog.dialog(dialogOptions);
+		
+		var refinementSelect = new $n2.mdc.MDCSelect({
+			parentElem: $('#' + refineListDialog.getContentId()),
+			menuLabel: 'Type of refinement',
+			menuOpts: menuOptions,
+			menuChgFunction: function(e){
+				adjustOptions($('#' + refineListDialog.getId()));
+			}
+		});
+
+		$('#' + refinementSelect.getSelectId()).addClass('searchFilterSelector');
+		$('<div>').addClass('searchFilterOptions').appendTo('#' + refineListDialog.getContentId());
+
+		adjustOptions($('#' + refineListDialog.getId()));
+
+		function okBtnFunc(){
+			var $dialog = $('#'+refineListDialog.getId());
+			var $options = $dialog.find('.searchFilterOptions');
+			var filterId = $dialog.find('select.searchFilterSelector').val();
+			
+			refineListDialog.closeDialog();
+
+			var useFilter = findSearchFilterFromId(filterId);
+			if(useFilter) {
+				useFilter.refineList({
+					list: opts.list
+					,options: $options
+					,onSuccess: opts.onSuccess
+					,onError: function(err){
+						$n2.log('Error refining list: '+err);
+					}
+				});
+			} else {
+				alert( _loc('Unable to find document search filter') );
+			};
+			return false;
+		};
 
 		function adjustOptions($dialog){
 			var $select = $dialog.find('select.searchFilterSelector');
@@ -2289,7 +2277,7 @@
 	function getListsDiv(){
 		var $e = $selectAppDiv.find('.selectAppLists');
 		if( $e.length < 1 ) {
-			$e = $('<div class="selectAppLists"></div>');
+			$e = $('<div class="selectAppLists mdc-card"></div>');
 			$selectAppDiv.append($e);
 		};
 		return $e;
@@ -2299,24 +2287,29 @@
 	function refreshAllLists(){
 		var $lists = getListsDiv();
 		$lists.empty();
-		
-		var $h = $('<h1>')
+
+		var $buttonsLine = $('<div>')
+			.addClass('title')
 			.appendTo($lists);
+
 		$('<span>')
-			.text( _loc('Queries') )
-			.appendTo($h);
-		$('<button>')
-			.text( _loc('Add') )
-			.click(function(){
+			.addClass('mdc-typography--headline6')
+			.text(_loc('Queries '))
+			.appendTo($buttonsLine);
+
+		new $n2.mdc.MDCButton({
+			parentElem: $buttonsLine,
+			btnLabel: 'Add',
+			onBtnClick: function(){
 				SearchFilter.createNewList({
 					onSuccess: function(list){
 						addList(list);
 					}
 				});
 				return false;
-			})
-			.appendTo($h);
-		
+			}
+		});
+
 		for(var i=0,e=allLists.length; i<e; ++i){
 			var list = allLists[i];
 			var listId = list.listId;
@@ -2331,32 +2324,42 @@
 			};
 			
 			$('<span>')
+				.addClass('mdc-typography--subtitle1')
 				.text( list.print() )
 				.appendTo($d);
 			
-			$('<a>')
-				.addClass('selectApp_list_button')
-				.attr('href','#')
-				.attr('n2-list-id', listId)
-				.text( _loc('View') )
-				.click(onListClick)
-				.appendTo($d);
-			
-			$('<a>')
-				.addClass('selectApp_list_button')
-				.attr('href','#')
-				.attr('n2-list-id', listId)
-				.text( _loc('Text') )
-				.click(onTextClick)
-				.appendTo($d);
+			new $n2.mdc.MDCButton({
+				parentElem: $d,
+				mdcAttributes: {
+					'href': '#',
+					'n2-list-id': listId
+				},
+				mdcClasses: ['selectApp_list_button'],
+				btnLabel: 'View',
+				onBtnClick: onListClick
+			});
 
-			$('<a>')
-				.addClass('selectApp_list_button')
-				.attr('href','#')
-				.attr('n2-list-id', listId)
-				.text( _loc('Remove') )
-				.click(onRemoveClick)
-				.appendTo($d);
+			new $n2.mdc.MDCButton({
+				parentElem: $d,
+				mdcAttributes: {
+					'href': '#',
+					'n2-list-id': listId
+				},
+				mdcClasses: ['selectApp_list_button'],
+				btnLabel: 'Text',
+				onBtnClick: onTextClick
+			});
+
+			new $n2.mdc.MDCButton({
+				parentElem: $d,
+				mdcAttributes: {
+					'href': '#',
+					'n2-list-id': listId
+				},
+				mdcClasses: ['selectApp_list_button'],
+				btnLabel: 'Remove',
+				onBtnClick: onRemoveClick
+			});
 		};
 		
 		function onListClick(e){
@@ -2435,7 +2438,7 @@
 	function getListViewDiv(){
 		var $e = $selectAppDiv.find('.selectAppListView');
 		if( $e.length < 1 ) {
-			$e = $('<div class="selectAppListView"></div>');
+			$e = $('<div class="selectAppListView mdc-card"></div>');
 			$selectAppDiv.append($e);
 		};
 		return $e;
@@ -2446,9 +2449,15 @@
 		var $div = getListViewDiv();
 		
 		clearDocument();
-		
-		$div.html('<h1></h1><div class="selectAppMinHeight"></div>');
-		$div.find('h1').text( _loc('No list Selected') );
+
+		var $headerLine = $('<div>')
+			.addClass('title')
+			.appendTo($div);
+
+		$('<span>')
+			.addClass('mdc-typography--headline6 selectAppMinHeight')
+			.text(_loc('No list Selected '))
+			.appendTo($headerLine);
 	};
 	
 	// -----------------------------------------------------------------
@@ -2459,30 +2468,37 @@
 		
 		$div.empty();
 
-		var $h = $('<h1></h1>');
-		$div.append($h);
-		$h.text(list.name);
-		
-		$('<button>')
-			.text( _loc('Transform') )
-			.appendTo($h)
-			.click(function(){
+		var $headerLine = $('<div>')
+			.addClass('title')
+			.appendTo($div);
+
+		$('<span>')
+			.addClass('mdc-typography--headline6 selectAppMinHeight')
+			.text(_loc(list.name + ' '))
+			.appendTo($headerLine);
+
+		new $n2.mdc.MDCButton({
+			parentElem: $headerLine,
+			btnLabel: 'Transform',
+			onBtnClick: function(){
 				transformList(list);
 				return false;
-			});
-		
-		$('<button>')
-			.text( _loc('Delete') )
-			.appendTo($h)
-			.click(function(){
+			}
+		});
+
+		new $n2.mdc.MDCButton({
+			parentElem: $headerLine,
+			btnLabel: 'Delete',
+			onBtnClick: function(){
 				deleteDocumentsFromList(list);
 				return false;
-			});
-		
-		$('<button>')
-			.text( _loc('Refine List') )
-			.appendTo($h)
-			.click(function(){
+			}
+		});
+
+		new $n2.mdc.MDCButton({
+			parentElem: $headerLine,
+			btnLabel: 'Refine List',
+			onBtnClick: function(){
 				SearchFilter.refineList({
 					list: list
 					,onSuccess: function(refinedList){
@@ -2490,31 +2506,35 @@
 					}
 				});
 				return false;
-			});
-		
-		$('<button>')
-			.text( _loc('Report') )
-			.appendTo($h)
-			.click(function(){
+			}
+		});
+
+		new $n2.mdc.MDCButton({
+			parentElem: $headerLine,
+			btnLabel: 'Report',
+			onBtnClick: function(){
 				reportList(list);
 				return false;
-			});
-		
-		$('<button>')
-			.text( _loc('Export') )
-			.appendTo($h)
-			.click(function(){
+			}
+		});
+
+		new $n2.mdc.MDCButton({
+			parentElem: $headerLine,
+			btnLabel: 'Export',
+			onBtnClick: function(){
 				exportList(list);
 				return false;
-			});
+			}
+		});
 		
-		$('<button>')
-			.text( _loc('Export by Script') )
-			.appendTo($h)
-			.click(function(){
+		new $n2.mdc.MDCButton({
+			parentElem: $headerLine,
+			btnLabel: 'Export by Script',
+			onBtnClick: function(){
 				exportListByScript(list);
 				return false;
-			});
+			}
+		});
 
 		for(var i=0,e=list.docIds.length; i<e; ++i){
 			var docId = list.docIds[i];
@@ -2576,244 +2596,213 @@
 	
 	// -----------------------------------------------------------------
 	function transformList(list){
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+dialogId+'">'
-			+'<select></select>'
-			+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
-			+'</div>');
+		var _this = this;
+		var transformMenuOpts = [{value:''}];
+		var transformDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Select Document Transform',
+			closeBtn: true,
+			closeBtnText: 'Cancel'
 
-		var $select = $dialog.find('select');
-		for(var i=0,e=documentTransforms.length; i<e; ++i) {
-			var documentTransform = documentTransforms[i];
-			var $o = $('<option></option>');
-			$o.attr('value',documentTransform.id);
-			$o.text(documentTransform.name);
-			$select.append( $o );
-		};
-		
-		$dialog.find('button')
-			.first()
-				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					var $select = $dialog.find('select');
-					var transformId = $select.val();
-	
-					$dialog.dialog('close');
+		});
 
-					var useTransform = null;
-					for(var i=0,e=documentTransforms.length; i<e; ++i) {
-						var documentTransform = documentTransforms[i];
-						if( documentTransform.id === transformId ) {
-							useTransform = documentTransform;
-							break;
-						};
-					};
-					if( useTransform ) {
-						transformListUsing(list, useTransform);
-					} else {
-						alert(_loc('Unable to find document transform'));
-					};
-					
-					return false;
-				})
-			.next()
-				.button({icons:{primary:'ui-icon-cancel'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					$dialog.dialog('close');
-					return false;
-				})
-			;
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Select Document Transform')
-			,modal: true
-			,width: 400
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
+		// Create a list of menu options
+		documentTransforms.forEach(function(option){
+			if (option) {
+				var transformOpt = {};
+				if (option.id) {
+					transformOpt.value = option.id;
+				}
+
+				if (option.name) {
+					transformOpt.label = option.name;
+				}
+
+				transformMenuOpts.push(transformOpt);
 			}
-		};
-		$dialog.dialog(dialogOptions);
+		});
+		
+		var transformSelect = new $n2.mdc.MDCSelect({
+			parentElem: $('#' + transformDialog.getContentId()),
+			menuLabel: 'Transform Methods',
+			menuOpts: transformMenuOpts
+		});
+
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + transformDialog.getFooterId()),
+			btnLabel: 'Ok',
+			onBtnClick: function(){
+				var transformId = $('#' + transformSelect.getSelectId()).val();
+				transformDialog.closeDialog();
+				var useTransform = null;
+
+				for (var i = 0, e = documentTransforms.length; i < e; i += 1) {
+					var documentTransform = documentTransforms[i];
+					if (documentTransform.id === transformId) {
+						useTransform = documentTransform;
+						break;
+					}
+				}
+				if (useTransform) {
+					transformListUsing(list, useTransform);
+				} else {
+					alert(_loc('Unable to find document transform'));
+				}
+				
+				return false;
+			}
+		});
 	};
 	
 	// -----------------------------------------------------------------
 	function deleteDocumentsFromList(list){
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+dialogId+'">'
-			+'<span class="deleteDocumentsApproveText"></span>'
-			+'<div><button class="buttonOK">'+_loc('OK')+'</button>'
-			+'<button class="buttonCancel">'+_loc('Cancel')+'</button></div>'
-			+'</div>');
-
-		var $span = $dialog.find('span.deleteDocumentsApproveText');
 		var locStr = _loc('Do you really wish to delete the {count} document(s) referenced by this list?',{
 			count: list.docIds.length
 		});
-		$span.text(locStr);
+
+		var deleteDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Confirm',
+			dialogTextContent: locStr,
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
+
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + deleteDialog.getFooterId()),
+			btnLabel: 'OK',
+			onBtnClick: deleteConfirmFunc
+		});
 		
-		$dialog.find('button.buttonOK')
-			.button({icons:{primary:'ui-icon-check'}})
-			.click(function(){
-				var $dialog = $('#'+dialogId);
+		function deleteConfirmFunc(){
 
-				$dialog.dialog('close');
+			deleteDialog.closeDialog();
+			var opCancelled = false;
 
-				var opCancelled = false;
-				var progressDialog = new $n2.couchDialogs.ProgressDialog({
-					title: _loc('Deletion Progress')
-					,onCancelFn: function(){
-						opCancelled = true;
-					}
-				});
-				
-				var docIdsLeft = [];
-				for(var i=0,e=list.docIds.length; i<e; ++i){
-					docIdsLeft.push( list.docIds[i] );
+			var deleteProgressDialog = new $n2.mdc.MDCDialog({
+				dialogTitle: 'Deletion Progress',
+				dialogHtmlContent: '<span id="deleteDialogProgress"></span>'
+			});
+
+			new $n2.mdc.MDCButton({
+				parentElem: $('#' + deleteProgressDialog.getFooterId()),
+				btnLabel: 'Cancel',
+				onBtnClick: cancelFunc
+			});
+
+			var docIdsLeft = [];
+			for(var i=0,e=list.docIds.length; i<e; i += 1){
+				docIdsLeft.push(list.docIds[i]);
+			}
+
+			var totalCount = docIdsLeft.length;
+			var okCount = 0;
+			var failCount = 0;
+
+			processNext();
+			
+			function processNext(){
+				if (opCancelled) {
+					cancelFunc();
+					return;
 				};
-				
-				var totalCount = docIdsLeft.length;
-				var okCount = 0;
-				var failCount = 0;
-				
-				processNext();
-				
-				function processNext(){
-					if( opCancelled ) {
-						cancel();
-						return;
-					};
 
-					if(docIdsLeft.length < 1){
-						progressDialog.updatePercent(100);
-						progressDialog.close();
+				if(docIdsLeft.length < 1){
+					updatePercent(100);
+					deleteProgressDialog.closeDialog();
 
+				} else {
+					if (totalCount) {
+						updatePercent((okCount + failCount) * 100 / totalCount);
 					} else {
-						if( totalCount ) {
-							progressDialog.updatePercent( (okCount + failCount) * 100 / totalCount );
-						} else {
-							progressDialog.updatePercent(0);
-						};
-						
-						var docId = docIdsLeft.pop();
-						atlasDb.getDocument({
-							docId: docId
-							,skipCache: true
-							,onSuccess: retrievedDocument
-							,onError: function(err){
-								var locStr = _loc('Failure to fetch {docId}',{
-									docId: docId
-								});
-								reportError(locStr);
-								failCount += 1;
-								processNext();
-							}
-						});
-					};
-				};
-				
-				function retrievedDocument(doc){
-					if( opCancelled ) {
-						cancel();
-						return;
-					};
-
-					atlasDb.deleteDocument({
-						data: doc
-						,onSuccess: function(docInfo){
-							log( _loc('{docId} deleted',{
-								docId: doc._id
-							}) );
-							okCount += 1;
-							processNext();
-						}
-						,onError: function(errorMsg){ 
-							var locStr = _loc('Failure to delete {docId}',{
-								docId: doc._id
+						updatePercent(0);
+					}
+					
+					var docId = docIdsLeft.pop();
+					atlasDb.getDocument({
+						docId: docId
+						,skipCache: true
+						,onSuccess: retrievedDocument
+						,onError: function(err){
+							var locStr = _loc('Failure to fetch {docId}',{
+								docId: docId
 							});
-							reportError(locStr+': '+errorMsg);
+							reportError(locStr);
 							failCount += 1;
 							processNext();
 						}
 					});
 				};
-				
-				function cancel(){
-					reportError( _loc('Operation cancelled by user') );
-					progressDialog.close();
-				};
-				
-				return false;
-			});
-		
-		$dialog.find('button.buttonCancel')
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
-				var $dialog = $('#'+dialogId);
-				$dialog.dialog('close');
-				return false;
-			});
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Confirm')
-			,modal: true
-			,width: 400
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
+			};
+
+			function updatePercent(value){
+				$('#deleteDialogProgress').text('Progress: ' + Math.round(value) + '%');
+			};
+
+			function retrievedDocument(doc){
+				if (opCancelled) {
+					cancelFunc();
+					return;
+				}
+
+				atlasDb.deleteDocument({
+					data: doc
+					,onSuccess: function(docInfo){
+						log(_loc('{docId} deleted',{
+							docId: doc._id
+						}));
+						okCount += 1;
+						processNext();
+					}
+					,onError: function(errorMsg){
+						var locStr = _loc('Failure to delete {docId}',{
+							docId: doc._id
+						});
+						reportError(locStr+': '+errorMsg);
+						failCount += 1;
+						processNext();
+					}
+				});
+			};
+			
+			function cancelFunc(){
+				opCancelled = true;
+				reportError(_loc('Operation cancelled by user'));
+				deleteProgressDialog.closeDialog();
+			};
+			return false;
 		};
-		$dialog.dialog(dialogOptions);
 	};
 
 	// -----------------------------------------------------------------
 	function reportList(list){
-		
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div>')
-			.attr('id',dialogId)
-			;
-		
-		$('<textarea>')
-			.addClass('n2select_report_script')
-			.val( 'function(opts_){\n\tvar opts = nunaliit2.extend({\n\t\tconfig: null\n\t\t,doc: null\n\t\t,logger: null\n\t},opts_);\n\n\tif( opts.doc ){\n\n\t} else {\n\t\topts.logger.log("Finished");\n\t}\n}' )
-			.appendTo($dialog);
+	
+		var reportListDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Enter Report Script',
+			scrollable: true
+		});
+
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + reportListDialog.getFooterId()),
+			btnLabel: 'OK',
+			onBtnClick: function(){
+				performReport(reportListDialog.getId());
+				return false;
+			}
+		});
+
+		var scriptTxtField = new $n2.mdc.MDCTextField({
+			parentElem: $('#' + reportListDialog.getContentId()),
+			txtFldLabel: 'Script',
+			txtFldArea: true
+		});
 
 		$('<div>')
 			.addClass('n2select_report_result')
-			.appendTo($dialog);
+			.appendTo($('#' + reportListDialog.getContentId()));
 
-		var $buttons = $('<div>')
-			.addClass('n2select_report_buttons')
-			.appendTo($dialog);
-
-		$('<button>')
-			.text( _loc('OK') )
-			.click(function(){
-				performReport();
-				return false;
-			})
-			.appendTo($buttons);
+		$('#' + scriptTxtField.getInputId()).addClass('n2select_report_script')
+			.val('function(opts_){\n\tvar opts = nunaliit2.extend({\n\t\tconfig: null\n\t\t,doc: null\n\t\t,logger: null\n\t},opts_);\n\n\tif( opts.doc ){\n\n\t} else {\n\t\topts.logger.log("Finished");\n\t}\n}');
 		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Enter Report Script')
-			,modal: true
-			,width: 550
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
-		$dialog.dialog(dialogOptions);
-		
-		function performReport(){
+		function performReport(dialogId){
 			var funcStr = $('#'+dialogId).find('.n2select_report_script').val();
 			
 			var func = null;
@@ -2829,21 +2818,20 @@
 			};
 			
 			var docIdsLeft = [];
-			for(var i=0,e=list.docIds.length; i<e; ++i){
+			for(var i=0,e=list.docIds.length; i<e; i += 1){
 				docIdsLeft.push( list.docIds[i] );
 			};
 			var totalCount = docIdsLeft.length;
 			var processedCount = 0;
 			var failCount = 0;
 			var opCancelled = false;
-			
-			var progressDialog = new $n2.couchDialogs.ProgressDialog({
-				title: _loc('Preparing Report')
-				,onCancelFn: function(){
-					opCancelled = true;
-				}
+	
+			var progressDialog = new $n2.mdc.MDCDialog({
+				dialogTitle: 'Preparing Report',
+				closeBtn: true,
+				closeBtnText: 'Cancel'
 			});
-			
+
 			var logger = new $n2.logger.HtmlLogger({
 				elem: $('#'+dialogId).find('.n2select_report_result')
 			});
@@ -2853,15 +2841,19 @@
 			var my_scriptConfig = $n2.extend({},g_scriptConfig);
 			
 			processNext();
+
+			function updateProgressMsg(msg){
+				$('#' + progressDialog.getContentId()).html(msg);
+			};
 			
 			function processNext(){
 				if( opCancelled ) {
 					cancel();
 					return;
-				};
+				}
 
 				if(docIdsLeft.length < 1){
-					progressDialog.updateHtmlMessage('<span>100%</span>');
+					updateProgressMsg('<span>100%</span>');
 
 					// Call one last time, without a document
 					my_scriptConfig.continueOnExit = true;
@@ -2870,10 +2862,10 @@
 						config: my_scriptConfig
 						,logger: logger
 					});
+
 					if( my_scriptConfig.continueOnExit ){
 						onFinish();
-					};
-					
+					}
 					
 				} else {
 					if( totalCount ) {
@@ -2883,10 +2875,10 @@
 						html.push('<span>Processed: '+processedCount+'</span><br/>');
 						html.push('<span>Failures: '+failCount+'</span><br/>');
 						html.push('</div>');
-						progressDialog.updateHtmlMessage( html.join('') );
+						updateProgressMsg(html.join(''));
 					} else {
-						progressDialog.updateHtmlMessage('<span>0%</span>');
-					};
+						updateProgressMsg('<span>0%</span>');
+					}
 					
 					var docId = docIdsLeft.pop();
 					atlasDb.getDocument({
@@ -2901,14 +2893,14 @@
 							processNext();
 						}
 					});
-				};
+				}
 			};
 			
 			function retrievedDocument(doc){
 				if( opCancelled ) {
 					cancel();
 					return;
-				};
+				}
 
 				my_scriptConfig.continueOnExit = true;
 				my_scriptConfig.onContinue = onContinue;
@@ -2920,23 +2912,21 @@
 				
 				if( my_scriptConfig.continueOnExit ){
 					onContinue();
-				};
-				
+				}
 			};
 
 			function onFinish(){
-				progressDialog.close();
+				progressDialog.closeDialog();
 			};
 
 			function onContinue(){
 				processedCount += 1;
-
 				processNext();
 			};
 			
 			function cancel(){
 				reportError(_loc('Operation cancelled by user'));
-				progressDialog.close();
+				progressDialog.closeDialog();
 			};
 		};
 	};
@@ -2957,116 +2947,86 @@
 		};
 		
 		function getExportSettings(){
-			var dialogId = $n2.getUniqueId();
-			var $dialog = $('<div id="'+dialogId+'"></div>');
+			var exportDialog = new $n2.mdc.MDCDialog({
+				dialogTitle: 'Export'
+			});
 
 			var fileNameId = $n2.getUniqueId();
 			
-			$('<div>'+_loc('Exporting')+' <span></span></div>')
+			$('<div>'+_loc('Exporting')+' <span></span></div><br>')
 				.find('span').text(list.print()).end()
-				.appendTo($dialog);
+				.appendTo($('#' + exportDialog.getContentId()));
 
 			// Filter
-			var filterId = $n2.getUniqueId();
-			var $filterDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('Filter:') )
-				.attr('for',filterId)
-				.appendTo($filterDiv);
-			var $filterSelect = $('<select>')
-				.attr('id',filterId)
-				.appendTo($filterDiv);
-			$('<option value="all"></options>')
-				.text( _loc('All Documents') )
-				.appendTo($filterSelect);
-			$('<option value="points"></options>')
-				.text( _loc('All Point Geometries') )
-				.appendTo($filterSelect);
-			$('<option value="linestrings"></options>')
-				.text( _loc('All LineString Geometries') )
-				.appendTo($filterSelect);
-			$('<option value="polygons"></options>')
-				.text( _loc('All Polygon Geometries') )
-				.appendTo($filterSelect);
+			var exportFilter = new $n2.mdc.MDCSelect({
+				parentElem: $('#' + exportDialog.getContentId()),
+				menuLabel: 'Filter',
+				menuOpts: [
+					{'label': 'All Documents', 'value': 'all'},
+					{'label': 'All Point Geometries', 'value': 'points'},
+					{'label': 'All LineString Geometries', 'value': 'linestrings'},
+					{'label': 'All Polygon Geometries', 'value': 'polygons'}
+				]
+			});
+
+			$('<br><br>').appendTo($('#' + exportDialog.getContentId()));
 
 			// Format
-			var formatId = $n2.getUniqueId();
-			var $formatDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('Format:') )
-				.attr('for',formatId)
-				.appendTo($formatDiv);
-			var $formatSelect = $('<select>')
-				.attr('id',formatId)
-				.appendTo($formatDiv)
-				.change(formatChanged);
-			$('<option value="geojson"></options>')
-				.text( _loc('geojson') )
-				.appendTo($formatSelect);
-			$('<option value="csv"></options>')
-				.text( _loc('csv') )
-				.appendTo($formatSelect);
+			var exportFormat = new $n2.mdc.MDCSelect({
+				parentElem: $('#' + exportDialog.getContentId()),
+				menuLabel: 'Format',
+				menuChgFunction: formatChanged,
+				menuOpts: [
+					{'label': 'geojson', 'value': 'geojson'},
+					{'label': 'csv', 'value': 'csv'}
+				]
+			});
+
+			$('<br><br>').appendTo($('#' + exportDialog.getContentId()));
 			
 			// File name
-			var $fileNameDiv = $('<div>')
-				.appendTo($dialog);
-			$('<label>')
-				.text( _loc('File Name:') )
-				.attr('for',fileNameId)
-				.appendTo($fileNameDiv);
-			$('<input>')
-				.attr('type','text')
-				.attr('id',fileNameId)
-				.addClass('n2_export_fileNameInput')
-				.val('export.geojson')
-				.appendTo($dialog);
-
-			$('<div><button>'+_loc('Export')+'</button></div>')
-				.appendTo($dialog);
-			$dialog.find('button').click(function(){
-				var filter = $('#'+filterId).val();
-				var format = $('#'+formatId).val();
-				
-				var fileName = $('#'+fileNameId).val();
-				if( '' === fileName ) {
-					fileName = null;
-				};
-				
-				$dialog.dialog('close');
-				performExport({
-					filter: filter
-					,fileName: fileName
-					,format: format
-				});
-				return false;
+			var exportFileName = new $n2.mdc.MDCTextField({
+				parentElem: $('#' + exportDialog.getContentId()),
+				txtFldLabel: 'File Name',
+				prefilled: 'export.geojson'
 			});
-			
-			var dialogOptions = {
-				autoOpen: true
-				,title: _loc('Export')
-				,modal: true
-				,width: 400
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
+
+			$('#' + exportFileName.getInputId())
+				.addClass('n2_export_fileNameInput');
+
+			new $n2.mdc.MDCButton({
+				parentElem: $('#' + exportDialog.getFooterId()),
+				btnLabel: 'Export',
+				onBtnClick: function(){
+					var filter = $('#'+exportFilter.getSelectId()).val();
+					var format = $('#'+exportFormat.getSelectId()).val();
+					
+					var fileName = $('#'+exportFileName.getInputId()).val();
+					if( '' === fileName ) {
+						fileName = null;
+					};
+
+					exportDialog.closeDialog();
+					performExport({
+						filter: filter
+						,fileName: fileName
+						,format: format
+					});
+					return false;
 				}
-			};
-			$dialog.dialog(dialogOptions);
+			});
 			
 			formatChanged();
 			
 			function formatChanged(){
-				var extension = $('#'+formatId).val();
-				var name = $('#'+fileNameId).val();
+				var extension = $('#'+exportFormat.getSelectId()).val();
+				var name = $('#'+exportFileName.getInputId()).val();
 				var i = name.lastIndexOf('.');
 				if( i >= 0 ){
 					name = name.substr(0,i);
 				};
 				name = name + '.' + extension;
-				$('#'+fileNameId).val(name);
+				$('#'+exportFileName.getInputId()).val(name);
 			};
 		};
 		
@@ -3239,51 +3199,26 @@
 	
 	// -----------------------------------------------------------------
 	function selectText(list){
-		var docIds = list.docIds;
-		
+		var mdcDialogComponent;
+		var docIds = list.docIds;		
 		var dialogId = $n2.getUniqueId();
 
-		var $dialog = $('<div id="'+dialogId+'">'
-			+'<textarea class="selectAppTextDocIds"></textarea>'
-			+'</div></div>');
-		
-		var text = docIds.join('\n');
-		
-		$dialog.find('textarea.selectAppTextDocIds').text( text );
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Document Identifiers')
-			,modal: true
-			,closeOnEscape: false
-			,dialogClass: 'selectAppTextDialog'
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
-		};
-		$dialog.dialog(dialogOptions);
+		var docIdsDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: [],
+			dialogTitle: 'Document Identifiers',
+			scrollable: true,
+			closeBtn: true,
+			closeBtnText: 'OK',
+			dialogTextContent: docIds.join('\n')
+		});
 	};
 	
 	// -----------------------------------------------------------------
 	function getDocumentDiv(){
 		var $e = $selectAppDiv.find('.selectAppDocument');
 		if( $e.length < 1 ) {
-			$e = $('<div class="selectAppDocument"></div>');
+			$e = $('<div class="selectAppDocument mdc-card"></div>');
 			$selectAppDiv.append($e);
-		};
-		return $e;
-	};
-
-	// -----------------------------------------------------------------
-	function getDocumentRevisionsDiv(){
-		var $e = $selectAppDiv.find('.selectAppRevisions');
-		if( $e.length < 1 ) {
-			var $docDiv = getDocumentDiv();
-			$e = $('<div>')
-				.addClass('selectAppRevisions')
-				.insertAfter($docDiv);
 		};
 		return $e;
 	};
@@ -3292,20 +3227,38 @@
 	function clearDocument(){
 		var $div = getDocumentDiv();
 		
-		$div.html('<h1></h1><div class="selectAppMinHeight"></div>');
-		$div.find('h1').text( _loc('No Document') );
+		$div.empty();
 
-		var $revs = getDocumentRevisionsDiv();
-		$revs.empty();
+		var $headerLine = $('<div>')
+			.addClass('title')
+			.appendTo($div);
+
+		$('<span>')
+			.addClass('mdc-typography--headline6 selectAppMinHeight')
+			.text(_loc('No Document '))
+			.appendTo($headerLine);
 	};
 	
 	// -----------------------------------------------------------------
 	function viewDocument(docId){
 		var $div = getDocumentDiv();
-		var $revs = getDocumentRevisionsDiv();
+
+		$div.empty();
 		
-		$div.html('<h1>'+docId+'</h1><div class="olkit_wait"></div>');
-		$revs.empty();
+		var $headerLine = $('<div>')
+			.addClass('title')
+			.appendTo($div);
+
+		$('<span>')
+			.addClass('mdc-typography--headline6 selectAppMinHeight')
+			.text(_loc(docId + ' '))
+			.appendTo($headerLine);
+
+		$('<div>')
+			.addClass('olkit_wait')
+			.appendTo($headerLine);
+
+		//$revs.empty();
 		
 		atlasDb.getDocument({
 			docId: docId
@@ -3318,32 +3271,94 @@
 				var revsInfo = doc._revs_info;
 				delete doc._revs_info;
 				
-				var $h = $('<h1></h1>');
-				$div.append($h);
+				var $headerLine = $('<div>')
+					.addClass('title')
+					.appendTo($div);
+
+				var $h = $('<span>')
+					.addClass('mdc-typography--headline6 selectAppMinHeight')
+					.appendTo($headerLine);
+
 				if( showService ){
 					showService.printBriefDescription($h,docId);
 				} else {
 					$h.text(docId);
 				};
 
-				var $tree = $('<div></div>');
-				$div.append($tree);
+				var $grid = $('<div>')
+					.addClass('mdc-layout-grid mdc-layout-grid--align-left')
+					.appendTo($div);
 				
+				var $innerGrid = $('<div>')
+					.addClass('mdc-layout-grid__inner')
+					.appendTo($grid);				
+
+				var $treeContainer = $('<div>')
+					.addClass('tree_container mdc-layout-grid__cell')
+					.appendTo($innerGrid);
+				
+				$('<span>')
+					.text('Selected Document')
+					.addClass('mdc-typography--subtitle1')
+					.appendTo($treeContainer);
+				
+				var $tree = $('<div>')
+					.addClass('selected_tree_container')
+					.appendTo($treeContainer);
+
+				var $revs = $('<div>')
+					.addClass('selectAppRevisions mdc-layout-grid__cell')
+					.appendTo($innerGrid);
+
 				new $n2.tree.ObjectTree($tree, doc);
 
-				var $buttons = $('<div></div>');
-				$div.append($buttons);
-				
-				var $edit = $('<button></button>');
-				$edit.text( _loc('Edit') );
-				$buttons.append($edit);
-				$edit.click(function(){
-					editDocument(doc);
-					return false;
+				var $buttons = $('<div>')
+					.addClass('mdc-card__actions')
+					.appendTo($div);
+
+				new $n2.mdc.MDCButton({
+					parentElem: $buttons,
+					btnLabel: 'Edit',
+					onBtnClick: function(){
+						editDocument(doc);
+						return false;
+					}
 				});
 				
 				if( revsInfo ){
-					loadRevs(revsInfo);
+					$revs.empty();
+
+					$('<span>')
+						.text('Revision Document')
+						.addClass('mdc-typography--subtitle1')
+						.appendTo($revs);
+
+					$('<div>')
+						.addClass('selectAppRevisionSelector')
+						.appendTo($revs);
+				
+					$('<div>')
+						.addClass('selectAppRevisionDisplay')
+						.appendTo($revs);
+					
+					var menuOptions = [{'value': '', 'label': ''}];
+					if( $n2.isArray(revsInfo) ){
+						revsInfo.forEach(function(revInfo){
+							if( typeof revInfo.rev === 'string' ){
+								menuOptions.push({
+									'value': revInfo.rev,
+									'label': revInfo.rev
+								});
+							};
+						});
+					};
+					
+					new $n2.mdc.MDCSelect({
+						parentElem: $buttons,
+						menuLabel: 'Select Revision',
+						menuChgFunction: function(){ revisionSelected(this, $revs) },
+						menuOpts: menuOptions
+					});
 				};
 			}
 			,onError: function(err){
@@ -3351,43 +3366,12 @@
 			}
 		});
 		
-		function loadRevs(revsInfo){
-			$revs.empty();
-			
-			var $selectorDiv = $('<div>')
-				.addClass('selectAppRevisionSelector')
-				.appendTo($revs);
-			var $selector = $('<select>')
-				.change(revisionSelected)
-				.appendTo($selectorDiv);
-			var $o = $('<option>')
-				.text('Select Revision')
-				.val('')
-				.appendTo($selector);
-			
-			if( $n2.isArray(revsInfo) ){
-				revsInfo.forEach(function(revInfo){
-					if( typeof revInfo.rev === 'string' ){
-						$('<option>')
-							.text(revInfo.rev)
-							.val(revInfo.rev)
-							.appendTo($selector);
-					};
-				});
-			};
-			
-			var $displayDiv = $('<div>')
-				.addClass('selectAppRevisionDisplay')
-				.appendTo($revs);
-		};
-		
-		function revisionSelected() {
-			var $selector = $(this);
+		function revisionSelected($selector, $revs) {
 			
 			var $displayDiv = $revs.find('.selectAppRevisionDisplay');
 			$displayDiv.empty();
 			
-			var revSelected = $selector.val();
+			var revSelected = $($selector).val();
 			$displayDiv.text(revSelected);
 
 			if( revSelected ){
@@ -3418,9 +3402,15 @@
 		var $div = getDocumentDiv();
 		
 		$div.empty();
-		
-		var $h = $('<h1></h1>');
-		$div.append($h);
+
+		var $headerLine = $('<div>')
+			.addClass('title')
+			.appendTo($div);
+
+		var $h = $('<span>')
+			.addClass('mdc-typography--headline6 selectAppMinHeight')
+			.appendTo($headerLine);
+
 		if( showService ){
 			showService.displayBriefDescription($h,null,editDoc);
 		} else {
@@ -3443,24 +3433,32 @@
 	function getLogsDiv(){
 		var $e = $selectAppDiv.find('.selectAppLogs');
 		if( $e.length < 1 ) {
-			$e = $('<div class="selectAppLogs"></div>');
+			$e = $('<div class="selectAppLogs mdc-card"></div>');
 			$selectAppDiv.append($e);
 			addHeader($e);
 		};
 		return $e;
 		
 		function addHeader($e){
-			var $h = $('<h1><span></span> <button></button></h1>');
-			$e.append($h);
-			$h.find('span').text( _loc('Logs') );
-			$h.find('button')
-				.text( _loc('Clear') )
-				.click(function(){
+			var $buttonsLine = $('<div>')
+				.addClass('title')
+				.appendTo($e);
+
+			$('<span>')
+				.addClass('mdc-typography--headline6')
+				.text(_loc('Logs '))
+				.appendTo($buttonsLine);
+
+			new $n2.mdc.MDCButton({
+				parentElem: $buttonsLine,
+				btnLabel: 'Clear',
+				onBtnClick: function(){
 					var $d = getLogsDiv();
 					$d.empty();
 					addHeader($d);
 					return false;
-				});
+				}
+			});
 		};
 	};
 	
@@ -3484,44 +3482,45 @@
 	
 	// -----------------------------------------------------------------
 	function bs(){
-		var $b = $('<button></button>');
-		$b.text( _loc('Test Temporary View') );
-		$selectAppDiv.append($b);
 		
-		$b.click(function(){
-			atlasDb.queryTemporaryView({
-				map: 'function(doc){ emit(null,null); }'
-				,onSuccess: function(rows){
-					var docIds = [];
-					for(var i=0,e=rows.length; i<e; ++i){
-						docIds.push( rows[i].id );
-					};
-					
-					var l = new DocumentList({
-						docIds: docIds
-						,name: _loc('Temporary View')
-					});
-					addList(l);
-				}
-			});
-			return false;
+		new $n2.mdc.MDCButton({
+			parentElem: $selectAppDiv,
+			btnLabel: 'Test Temporary View',
+			onBtnClick: function(){
+				atlasDb.queryTemporaryView({
+					map: 'function(doc){ emit(null,null); }'
+					,onSuccess: function(rows){
+						var docIds = [];
+						for (var i=0,e=rows.length; i<e; i += 1) {
+							docIds.push(rows[i].id);
+						};
+						
+						var l = new DocumentList({
+							docIds: docIds
+							,name: _loc('Temporary View')
+						});
+						addList(l);
+					}
+				});
+				return false;
+			}
 		});
 
-		var $b = $('<button></button>');
-		$b.text( _loc('All Documents') );
-		$selectAppDiv.append($b);
-		
-		$b.click(function(){
-			atlasDb.listAllDocuments({
-				onSuccess: function(docIds){
-					var l = new DocumentList({
-						docIds: docIds
-						,name: _loc('All Documents')
-					});
-					addList(l);
-				}
-			});
-			return false;
+		new $n2.mdc.MDCButton({
+			parentElem: $selectAppDiv,
+			btnLabel: 'All Documents',
+			onBtnClick: function(){
+				atlasDb.listAllDocuments({
+					onSuccess: function(docIds){
+						var l = new DocumentList({
+							docIds: docIds
+							,name: _loc('All Documents')
+						});
+						addList(l);
+					}
+				});
+				return false;
+			}
 		});
 	};
 	
@@ -3547,8 +3546,6 @@
 
 		$selectAppDiv = opts_.div;
 		
-		$('.selectAppTitle').text( _loc('Data Modification Application') );
-		
 		if( config.directory ){
 			showService = config.directory.showService;
 			exportService = config.directory.exportService;
@@ -3570,9 +3567,9 @@
 		
 		$selectAppDiv
 			.empty()
-			.append( $('<div class="selectAppLists"><div>') )
-			.append( $('<div class="selectAppListView"><div>') )
-			.append( $('<div class="selectAppDocument"><div>') )
+			.append( $('<div class="selectAppLists mdc-card"><div>') )
+			.append( $('<div class="selectAppListView mdc-card"><div>') )
+			.append( $('<div class="selectAppDocument mdc-card"><div>') )
 			;
 		
 		refreshAllLists();
@@ -3585,8 +3582,35 @@
 		log( _loc('Select application started') );
 	};
 
+	function addHamburgerMenu(){
+		// Top-App-Bar
+		new $n2.mdc.MDCTopAppBar({
+			barTitle: 'Data Modification Application'
+		});
+
+		// Tools Drawer
+		new $n2.mdc.MDCDrawer({
+			anchorBtnId: 'hamburger_menu_btn',
+			navHeaderTitle: 'Nunaliit Tools',
+			navItems: [
+				{"text": "User Management", "href": "./users.html"},
+				{"text": "Approval for Uploaded Files", "href": "./upload.html"},
+				{"text": "Data Browser", "href": "./browse.html"},
+				{"text": "Localization", "href": "./translation.html"},
+				{"text": "Data Export", "href": "./export.html"},
+				{"text": "Data Modification", "href": "./select.html", "activated": true},
+				{"text": "Schemas", "href": "./schemas.html"},
+				{"text": "Restore Tool", "href": "./restore.html"},
+				{"text": "Submission Tool", "href": "./submission.html"},
+				{"text": "Import Tool", "href": "./import.html"},
+				{"text": "Debug Tool", "href": "./debug.html"},
+				{"text": "Schema Editor", "href": "./schema_editor.html"}
+			]	
+		});
+	};
 	
 	$n2.selectApp = {
 		main: main
+		,addHamburgerMenu: addHamburgerMenu
 	};
 })(jQuery,nunaliit2);

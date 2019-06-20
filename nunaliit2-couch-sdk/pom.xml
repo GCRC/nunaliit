@@ -5,9 +5,7 @@
 		<groupId>ca.carleton.gcrc</groupId>
 		<version>2.2.9-SNAPSHOT</version>
 	</parent>
-	<groupId>ca.carleton.gcrc</groupId>
 	<artifactId>nunaliit2-couch-sdk</artifactId>
-	<version>2.2.9-SNAPSHOT</version>
 	<packaging>pom</packaging>
 	<name>nunaliit2-couch-sdk</name>
 	<build>
@@ -49,15 +47,15 @@
 					<programs>
 						<program>
 							<mainClass>ca.carleton.gcrc.couch.command.Main</mainClass>
-							<name>nunaliit</name>
+							<id>nunaliit</id>
 						</program>
 						<program>
 							<mainClass>ca.carleton.gcrc.couch.command.dump.DumpMain</mainClass>
-							<name>couch-dump</name>
+							<id>couch-dump</id>
 						</program>
 						<program>
 							<mainClass>ca.carleton.gcrc.couch.command.dump.RestoreMain</mainClass>
-							<name>couch-restore</name>
+							<id>couch-restore</id>
 						</program>
 					</programs>
 				</configuration>

@@ -54,7 +54,7 @@ function SplitSearchTerms(line) {
 	return searchTerms;
 };
 
-//============ ResearchResult ========================
+// ============ ResearchResult ========================
 // Class that convey the result of a research
 var ResearchResult = $n2.Class({
 	
@@ -93,7 +93,7 @@ var ResearchResult = $n2.Class({
 	}
 });
 
-//============ Research ========================
+// ============ Research ========================
 // Abstract class that defines the API for researching
 // a concept in the database
 var Research = $n2.Class({
@@ -119,7 +119,7 @@ var Research = $n2.Class({
 	}
 });
 
-//============ ResearchTerm ========================
+// ============ ResearchTerm ========================
 // Specialization of Research that looks up all documents
 // associated with one search term
 var ResearchTerm = $n2.Class(Research,{
@@ -265,7 +265,7 @@ var ResearchTerm = $n2.Class(Research,{
 	}
 });
 
-//============ ResearchDate ========================
+// ============ ResearchDate ========================
 // Specialization of Research that looks up all documents
 // associated with a date interval
 var ResearchDate = $n2.Class(Research,{
@@ -331,7 +331,7 @@ var ResearchDate = $n2.Class(Research,{
 	}
 });
 
-//============ ResearchUnion ========================
+// ============ ResearchUnion ========================
 // Specialization of Research that accepts a number
 // of instances of Research and provides a result which
 // is a union of all research results from children.
@@ -439,7 +439,7 @@ var ResearchUnion = $n2.Class(Research,{
 	}
 });
 
-//============ ResearchIntersection ========================
+// ============ ResearchIntersection ========================
 // Specialization of Research that accepts a number
 // of instances of Research and provides a result which
 // is an intersection of all research results from children.
@@ -568,7 +568,7 @@ var ResearchIntersection = $n2.Class(Research,{
 	}
 });
 
-//============ SearchRequest ========================
+// ============ SearchRequest ========================
 /*
  * Returns a search result:
  * {
@@ -817,7 +817,7 @@ var SearchRequest = $n2.Class({
 	}
 });
 
-//============ LookAheadService ========================
+// ============ LookAheadService ========================
 
 var LookAheadService = $n2.Class({
 
@@ -1042,7 +1042,7 @@ var LookAheadService = $n2.Class({
 
 });
 
-//============ SearchInput ========================
+// ============ SearchInput ========================
 
 var SearchInput = $n2.Class({
 	options: null
@@ -1520,12 +1520,17 @@ var SearchServer = $n2.Class({
 			,buttonLabel: null
 			,doNotDisable: false
 			,constraint: null
+			,onModuleTitle: true
 		},opts_);
 		
+		var searchInput;
+
 		var customService = this.customService;
 
 		// Parent element
 		var $elem = $(opts.elem);
+
+		var $searchInputId = $n2.getUniqueId();
 
 		// Text box label
 		var searchWidgetLabel = opts.label;
@@ -1539,16 +1544,30 @@ var SearchServer = $n2.Class({
 
 		$elem.empty();
 
-		// Search icon
-		var searchIcon = $('<div>')
-			.addClass('searchIcon')
-			.appendTo($elem);
-
 		// Text box
-		var searchInput = $('<input type="text">')
-			.addClass('search_panel_input')
-			.val( searchWidgetLabel )
-			.appendTo($elem);
+		if( opts.onModuleTitle ){
+			// Search icon used in module title
+			var searchIcon = $('<div>')
+				.addClass('searchIcon')
+				.appendTo($elem);
+
+			searchInput = $('<input type="text">')
+				.addClass('search_panel_input')
+				.val( searchWidgetLabel )
+				.appendTo($elem);
+
+		} else {
+			// If Search widget is not installed in the module title bar
+			// update appearance
+			var searchTxtFldOpts = new $n2.mdc.MDCTextField({
+				parentElem: $elem,
+				txtFldLabel: searchWidgetLabel,
+				txtFldInputId: $searchInputId
+			});
+			$('#' + searchTxtFldOpts.getInputId()).addClass('search_panel_input');
+
+			searchInput = $('#' + searchTxtFldOpts.getInputId());
+		}
 
 		if( opts.doNotDisable ){
 			// OK
@@ -1569,17 +1588,20 @@ var SearchServer = $n2.Class({
 		// Search button
 		var searchButton = null;
 		if( opts.useButton ){
-			searchButton = $('<input type="button">')
-				.val( searchButtonLabel )
-				.appendTo($elem);
-		};
+
+			var searchBtn = new $n2.mdc.MDCButton({
+				parentElem: $elem,
+				btnLabel: searchButtonLabel,
+				btnRaised: true
+			});
+			searchButton = $('#' + searchBtn.getId());
+		}
 		
 		return new SearchInput({
-				textInput: searchInput
-				,initialSearchText: searchWidgetLabel
-				,dispatchService: this.dispatchService
-				,searchButton: searchButton
-				,constraint: opts.constraint
+			textInput: searchInput
+			,dispatchService: this.dispatchService
+			,searchButton: searchButton
+			,constraint: opts.constraint
 			}, this);
 	},
 	

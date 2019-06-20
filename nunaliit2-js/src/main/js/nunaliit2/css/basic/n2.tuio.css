@@ -119,7 +119,7 @@
 
 .n2tuio_rotate_handle {
 	background-color: #000;
-	color: #EED;
+	color: #eed;
 	cursor: move;
 	font-size: xx-large;
 	height: 260px;
@@ -135,8 +135,8 @@
 .n2tuio_feedback_circle {
 	background-color: #000;
 	border-radius: 50%;
-	border: 2px solid #EED;
-	color: #EED;
+	border: 2px solid #eed;
+	color: #eed;
 	opacity: 0.5;
 	pointer-events: none;
 	position: absolute;

@@ -132,6 +132,8 @@ var Editor = $n2.Class({
 
 	diagId: null,
 	
+	dialog: null,
+	
 	attachmentUploadHandler: null,
 	
 	initialize: function(opts_) {
@@ -174,36 +176,34 @@ var Editor = $n2.Class({
 		};
 
 		var _this = this;
-		
-		var diagId = $n2.getUniqueId();
-		this.diagId = diagId;
-		var $dialog = $('<div>')
-			.attr('id',diagId)
-			.addClass('n2RelatedDoc_dialog');
-		
-		if( opts.elem ){
-			var $elem = $(opts.elem);
-			$dialog
-				.addClass('n2RelatedDoc_located')
-				.appendTo($elem);
-		} else {
-			$dialog.appendTo( $('body') );
-		};
-		
+
+		this.dialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Fill Out Related Document'
+			,mdcClasses: ['n2RelatedDoc_dialog']
+			,closeBtn: true
+			,closeBtnText: 'Cancel'
+		});
+
+		if (opts.elem) {
+			$('#' + this.dialog.getId()).addClass('n2RelatedDoc_located')
+		}
+
 		var obj = this.obj;
 		var schema = this.schema;
-		
 		var funcMap = {};
 		if( this.dialogService ){
 			funcMap = this.dialogService.getFunctionMap();
 		};
+
+		var $dialogContentDiv = $('#' + this.dialog.getContentId());
+		$dialogContentDiv.addClass('n2RelatedDoc_dialogContent');
 		
-		var $diagContent = $('<div>')
-			.addClass('n2RelatedDoc_dialogContent')
-			.appendTo($dialog);
-		
-		var $form = $('<div>')
-			.appendTo($diagContent);
+		if (window.cordova){
+			$dialogContentDiv.attr('width', '100%');
+		}
+
+		var $form = $('<div>').appendTo($dialogContentDiv);
+
 		schema.form(
 			obj
 			,$form
@@ -221,7 +221,8 @@ var Editor = $n2.Class({
 		};
 
 		var $fileElement = $('<div>')
-			.appendTo($diagContent);
+			.appendTo($dialogContentDiv);
+
 		this.attachmentUploadHandler = new $n2.couchEdit.AttachmentEditor({
 			doc: obj
 			,elem: $fileElement
@@ -231,79 +232,45 @@ var Editor = $n2.Class({
 			,disableRemoveFile: true
 			,moduleEditInfo: this.moduleEditInfo
 		});
-		
-		// OK
-		$('<button>')
-			.text( _loc('OK') )
-			.button({icons:{primary:'ui-icon-check'}})
-			.appendTo($diagContent)
-			.click(function(){
-				_this._clickOK();
-				return false;
-			});
-		
-		// Cancel
-		$('<button>')
-			.text( _loc('Cancel') )
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.appendTo( $diagContent )
-			.click(function(){
-				_this._clickCancel();
-				return false;
-			});
-		
-		if( !opts.elem ){
-			var dialogOptions = {
-				autoOpen: true
-				,title: _loc('Fill Out Related Document')
-				,modal: !window.cordova
-				,width: window.cordova ? '100%' : 740
-				,close: function(event, ui){
-					var diag = $('#'+diagId);
-					diag.remove();
-				}
-			};
-			$dialog.dialog(dialogOptions);
-		};
+
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + this.dialog.getFooterId())
+			,btnLabel: 'OK'
+			,onBtnClick: _this._clickOK(this)
+		});
 	},
 
-	_clickOK: function(){
+	_clickOK: function(context){
+		return function(){
+			var _this = context;
+			var obj = _this.obj;
 
-		var _this = this;
-		var obj = this.obj;
-
-		if (window.cordova) {
-			// Check that a file was provided
-			if (_this.attachmentUploadHandler.cordovaAttachment) {
-				_this._saveObj();
-			} else {
-				alert(_loc('A file must be selected or recorded'));
-				return;
-			}
-		} else {
-			// Check that a file was provided
-			this.attachmentUploadHandler.performPreSavingActions({
-				doc: obj
-				,documentSource: this.documentSource
-				,onSuccess: function(){
+			if (window.cordova) {
+				// Check that a file was provided
+				if (_this.attachmentUploadHandler.cordovaAttachment) {
 					_this._saveObj();
+				} else {
+					alert(_loc('A file must be selected or recorded'));
+					return;
 				}
-				,onError: function(err){
-					alert(err);
-				}
-			});
+			} else {
+				// Check that a file was provided
+				_this.attachmentUploadHandler.performPreSavingActions({
+					doc: obj
+					,documentSource: _this.documentSource
+					,onSuccess: function(){
+						_this._saveObj();
+					}
+					,onError: function(err){
+						alert(err);
+					}
+				});
+			}
 		}
 	},
 
 	_clickCancel: function(){
-		var $diag = $('#'+this.diagId);
-		
-		if( $diag.hasClass('n2RelatedDoc_located') ){
-			$diag.remove();
-		} else {
-			$diag.dialog('close');
-		};
-
+		this.dialog.dialogClose();
 		this.onCancel();
 	},
 	
@@ -351,13 +318,7 @@ var Editor = $n2.Class({
 	
 	_success: function(docId){
 		// Close upload dialog
-		var $diag = $('#'+this.diagId);
-		
-		if( $diag.hasClass('n2RelatedDoc_located') ){
-			$diag.remove();
-		} else {
-			$diag.dialog('close');
-		};
+		this.dialog.closeDialog();
 		
 		// Call back client
 		this.onSuccess(docId);
@@ -366,22 +327,13 @@ var Editor = $n2.Class({
 	_error: function(err){
 		var _this = this;
 		
-		var $content = $('#'+this.diagId).find('.n2RelatedDoc_dialogContent')
+		var $content = $('#' + this.dialog.getId()).find('.n2RelatedDoc_dialogContent')
 			.empty();
 		
 		$('<div>')
 			.addClass('n2RelatedDoc_error')
 			.text( err )
 			.appendTo($content);
-
-		$('<button>')
-			.text( _loc('Cancel') )
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.appendTo( $content )
-			.click(function(){
-				_this._clickCancel();
-				return false;
-			});
 		
 		// Call back client
 		this.onError(err);
@@ -659,6 +611,90 @@ var CreateRelatedDocProcess = $n2.Class({
 		});
 	},
 	
+	insertAddRelatedMenu: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,classes: null
+			,placeHolderElem: null
+			,onRelatedDocumentCreated: function(docId){}
+		},opts_);
+		
+		var _this = this;
+		
+		var $placeHolder = $(opts.placeHolderElem);
+		var doc = opts.doc;
+		var classes = opts.classes;
+		
+		var docSchemaName = doc.nunaliit_schema;
+		if (!docSchemaName) {
+			noButton();
+			return;
+		}
+		
+		this.schemaRepository.getSchema({
+			name: docSchemaName
+			,onSuccess: function(docSchema){
+				// Check if there are any related document schemas
+				if (docSchema.relatedSchemaNames 
+					&& docSchema.relatedSchemaNames.length > 0) {
+					_this.schemaRepository.getSchemas({
+						names: docSchema.relatedSchemaNames
+						,onSuccess: generateSchemaMenu
+						,onError: noButton
+					});
+				} else {
+					noButton();
+				}
+			}
+			,onError: noButton
+		});
+		
+		function noButton(){
+			$placeHolder.remove();
+		};
+
+		function generateSchemaMenu(relatedSchemas){
+			var menuBtn, menu, itemClicked;
+			var listItems = [];
+
+			var itemClicked = function(val){
+				return function(){
+					if (val) {
+						_this.createDocumentFromSchemaNames({
+							schemaNames: [val]
+							,relatedDoc: doc
+							,onSuccess: opts.onRelatedDocumentCreated
+						});
+					}
+					return false;	
+				}
+			};
+
+			if (relatedSchemas.length < 1) {
+				noButton();
+				return;
+			}
+
+			menu = new $n2.mdc.MDCMenu({
+				parentElem: $placeHolder
+				,anchorBtnText: 'Add Related Item'
+				,mdcClasses: classes
+			});
+
+			relatedSchemas.forEach(function(item){
+				listItems.push({
+					'text': item.getLabel(),
+					'onItemClick': itemClicked(item.name)
+				});
+			});
+
+			new $n2.mdc.MDCList({
+				parentElem: $('#' + menu.getMenuId())
+				,listItems: listItems
+			});
+		};
+	},
+
 	insertAddRelatedSelection: function(opts_){
 		var opts = $n2.extend({
 			placeHolderElem: null

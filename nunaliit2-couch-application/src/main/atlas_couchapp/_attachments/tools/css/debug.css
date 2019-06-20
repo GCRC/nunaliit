@@ -1,0 +1,27 @@
+main {
+	width: 100%;
+}
+
+#debugApp {
+	margin: 10px;
+}
+
+.debugAppBody h1 {
+	color: #000;
+	font-family: helvetica, sans-serif;
+	font-weight: 400;
+	font-size: 1.5em;
+}
+
+.n2debug_header {
+	background-color: #f0f0f0;
+}
+
+.n2debug_header span{
+	margin: 10px;
+}
+
+.debugAppBody label {
+	padding-right: 5px;
+}
+
