@@ -169,10 +169,10 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 // Class MDCCheckbox
 // Description: Creates a material design checkbox component
 // Options:
-//  - chkboxLabel (String): A string containing the radio button label.
-//  - chkboxName (String): A string containing the radio button name.
-//  - chkboxChecked (Boolean): If true, the radio button is checked (default = false).
-//  - chkboxDisabled (Boolean): If true, the radio button is disabled (default = false). 
+//  - chkboxLabel (String): A string containing the checkbox button label.
+//  - chkboxName (String): A string containing the checkbox button name.
+//  - chkboxChecked (Boolean): If true, the checkbox button is checked (default = false).
+//  - chkboxDisabled (Boolean): If true, the checkbox button is disabled (default = false). 
 //  - chkboxChgFunc (Function): A function which handles the functionality when the checkbox changes.
 var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 
@@ -266,66 +266,6 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 
 	getInputId: function() {
 		return this.chkboxInputId;
-	}
-});
-
-// Class MDCTagBox
-// Description: Creates a material design tag box component
-// Options:
-//  - chips (Array): A collection of strings 
-//  - label (String): A label used for the outline of the tag box
-var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
-
-	$chipInput: null,
-	chips: null,
-	label: null,
-
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			chips: [],
-			label: '',
-		}, opts_);
-
-		this.chips = opts.chips;
-		this.label = opts.label;
-		this.inputId = $n2.getUniqueId();
-
-		MDC.prototype.initialize.call(this, opts);
-
-		if (!this.parentElem) {
-			throw new Error('parentElem must be provided, to add a Material Design Tag Box Component');
-		}
-
-		this._generateMDCChips();
-	},
-
-	_generateMDCChips: function(){
-		var $chipSet;
-
-		this.$chipInput = new $n2.mdc.MDCTextField({
-			parentElem: this.parentElem,
-			mdcClasses: ['n2-tag-box'],
-			txtFldInputId: this.inputId,
-			txtFldLabel: this.label
-		});
-
-		$chipSet = new $n2.mdc.MDCChipSet({
-			parentElem: $('#' + this.$chipInput.getId()),
-			inputChips: true,
-			inputId: this.$chipInput.getInputId(),
-			chips: this.chips
-		});
-
-		// Move input form field into chipset component
-		$('#' + this.$chipInput.getInputId()).appendTo($('#' + $chipSet.getId()));
-
-		if (showService) {
-			showService.fixElementAndChildren($('#' + this.mdcId));
-		}
-	},
-
-	getInputId: function() {
-		return this.inputId;
 	}
 });
 
@@ -1280,6 +1220,66 @@ var MDCTabBar = $n2.Class('MDCMenu', MDC, {
 	}
 }); 
 
+// Class MDCTagBox
+// Description: Creates a material design tag box component
+// Options:
+//  - chips (Array): A collection of strings 
+//  - label (String): A label used for the outline of the tag box
+var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
+
+	$chipInput: null,
+	chips: null,
+	label: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			chips: [],
+			label: '',
+		}, opts_);
+
+		this.chips = opts.chips;
+		this.label = opts.label;
+		this.inputId = $n2.getUniqueId();
+
+		MDC.prototype.initialize.call(this, opts);
+
+		if (!this.parentElem) {
+			throw new Error('parentElem must be provided, to add a Material Design Tag Box Component');
+		}
+
+		this._generateMDCChips();
+	},
+
+	_generateMDCChips: function(){
+		var $chipSet;
+
+		this.$chipInput = new $n2.mdc.MDCTextField({
+			parentElem: this.parentElem,
+			mdcClasses: ['n2-tag-box'],
+			txtFldInputId: this.inputId,
+			txtFldLabel: this.label
+		});
+
+		$chipSet = new $n2.mdc.MDCChipSet({
+			parentElem: $('#' + this.$chipInput.getId()),
+			inputChips: true,
+			inputId: this.$chipInput.getInputId(),
+			chips: this.chips
+		});
+
+		// Move input form field into chipset component
+		$('#' + this.$chipInput.getInputId()).appendTo($('#' + $chipSet.getId()));
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+	},
+
+	getInputId: function() {
+		return this.inputId;
+	}
+});
+
 // Class MDCTextField
 // Description: Creates a material design text-field component
 // Options:
@@ -1343,7 +1343,8 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		if (this.txtFldArea) {
 			this.mdcClasses.push('mdc-text-field--textarea');
 		} else if (this.txtFldFullWidth) {
-			this.mdcClasses.push('mdc-text-field--fullwidth');			this.txtFldOutline = false;
+			this.mdcClasses.push('mdc-text-field--fullwidth');
+			this.txtFldOutline = false;
 
 		} else if (this.txtFldOutline) {
 			this.mdcClasses.push('mdc-text-field--outlined');

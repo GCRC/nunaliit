@@ -195,87 +195,6 @@ function _localizeString() {
 	};
 };
 
-function _formSingleField(r,completeSelectors,options){
-	var labelLocalizeClass = " n2s_localize";
-	var textFieldId = $n2.getUniqueId();
-	
-	if( options.id && options.label ){
-
-		if( options.id === options.label ){
-			labelLocalizeClass = "";
-		}
-	}
-
-	if( options.date ){
-		r.push('<div class="n2schema_help_date"></div>');
-	};
-	
-	if( options.wikiTransform ){
-		r.push('<div class="n2schema_help_wiki"></div>');
-	};
-
-	if( options.textarea ){
-		r.push('<textarea id="' + textFieldId + '"');
-		r.push(' class="n2schema_input mdc-text-field__input');
-
-	} else if( options.checkbox ){
-		r.push('<div class="mdc-form-field n2s_attachMDCFormField">');
-		r.push('<div class="mdc-checkbox n2s_attachMDCCheckbox">');
-		r.push('<input id="' + textFieldId + '" type="checkbox" class="n2schema_input mdc-checkbox__native-control');
-	} else {
-		r.push('<input type="text" id="' + textFieldId + '"');
-		r.push(' class="n2schema_input mdc-text-field__input');
-	}
-
-	var selClass = createClassStringFromSelector(completeSelectors);
-	r.push(' '+selClass);
-	
-	if( options.date ){
-		r.push(' ' + typeClassStringPrefix + 'date');
-		
-	} else if( options.numeric ){
-		r.push(' ' + typeClassStringPrefix + 'numeric');
-		
-	} else if( options.layers ){
-		r.push(' ' + typeClassStringPrefix + 'layers');
-		
-	} else if( options.localized ){
-		r.push(' ' + typeClassStringPrefix + 'localized');
-	
-	};
-
-	if( options.textarea ){
-		r.push('"></textarea>');
-		r.push('<div class="mdc-notched-outline">');
-		r.push('<div class="mdc-notched-outline__leading"></div>');
-		r.push('<div class="mdc-notched-outline__notch">');
-		r.push('<label for="' + textFieldId + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ options.label + '</label>');		
-		r.push('</div>');
-		r.push('<div class="mdc-notched-outline__trailing"></div>');
-		r.push('</div>');
-
-	} else if( options.checkbox ){
-		r.push('"/>');
-		r.push('<div class="mdc-checkbox__background">');
-		r.push('<svg class="mdc-checkbox__checkmark" viewBox="0 0 24 24"><path fill="none" stroke="white" class="mdc-checkbox__checkmark-path" d="M1.73,12.91 8.1,19.28 22.79,4.59" /></svg>');
-		r.push('<div class="mdc-checkbox__mixedmark"></div>');
-		r.push('</div>');
-		r.push('</div>');
-		r.push('<label for="' + textFieldId + '">' + options.label + '</label>');
-		r.push('</div>');
-
-	} else {
-		r.push('"/>');
-		r.push('<div class="mdc-notched-outline">');
-		r.push('<div class="mdc-notched-outline__leading"></div>');
-		r.push('<div class="mdc-notched-outline__notch">');
-		r.push('<label for="' + textFieldId + '" class="label mdc-floating-label' + labelLocalizeClass + '">'+ options.label + '</label>');		
-		r.push('</div>');
-		r.push('<div class="mdc-notched-outline__trailing"></div>');
-		r.push('</div>');
-	};
-};
-
 function _formField() {
 	// The arguments to handlebars block expression functions are:
 	// ([obj,]options)
@@ -288,23 +207,25 @@ function _formField() {
 	//
 	// Syntax to :form is:
 	// {{#:field}}<selector>(,<option>)*{{/:field}}
+	var $formField;
+
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
 
 	// Compute current selector
 	var currentSelector = null;
-	if( options 
-	 && options.data 
-	 && options.data.n2_selector ){
+	if (options 
+		&& options.data 
+		&& options.data.n2_selector) {
 		// Within an array, the current selector is passed in options
 		currentSelector = options.data.n2_selector;
 
-	} else if( typeof this === 'object' 
-     && this !== null 
-     && this[SELECT]){
+	} else if (typeof this === 'object' 
+    	&& this !== null 
+    	&& this[SELECT]) {
 		currentSelector = this[SELECT];
-	};
+	}
 
 	// Gets the text between start and end tags and
 	// parse it
@@ -315,86 +236,150 @@ function _formField() {
 	var objSel = parseSelectorString(identifier);
 	var obj = objSel.getValue(this);
 	var completeSelectors = currentSelector.getChildSelector(objSel);
+	var selClass = createClassStringFromSelector(completeSelectors);
+	var labelLocalizeClass = "n2s_localize";
 	
-	if( obj
-	 && typeof obj === 'object'
-	 && !obj[SELECT] ){
+	if (obj
+		&& typeof obj === 'object'
+		&& !obj[SELECT]) {
 		obj[SELECT] = completeSelectors;
-	};
+	}
 	
 	// <option> is one of:
 	// - optionName
 	// - optionName=optionValue
 	// - optionsName=value1+value2+...
 	var opts = {};
-	for(var i=1,e=splits.length;i<e;++i){
+	for (var i=1, e=splits.length; i<e; i += 1){
 		var optStr = splits[i];
 		var optSplit = optStr.split('=');
-		if( optSplit.length > 1 ){
+		if (optSplit.length > 1) {
 			var valSplits = optSplit[1].split('+');
-			for(var j=0,k=valSplits.length; j<k; ++j){
-				valSplits[j] = decodeURIComponent( valSplits[j] );
+			for (var j=0, k=valSplits.length; j<k; j += 1){
+				valSplits[j] = decodeURIComponent(valSplits[j]);
 			};
 			opts[optSplit[0]]=valSplits;
 		} else {
 			opts[optSplit[0]]=[];
-		};
-	};
+		}
+	}
 	
-	if( opts.array ){
-		if( options.data.itemNum ){
+	if (opts.id && opts.label) {
+
+		if (opts.id === opts.label) {
+			labelLocalizeClass = "";
+		}
+	}
+
+	if (opts.array) {
+		if (options.data.itemNum) {
 			opts.label += " (" + options.data.itemNum + ")";
 		}
 	}
 
-	var r = [];
-	r.push('<div class="n2schema_field_wrapper">');
+	var r = $('<div>');
 
-	if( opts.custom ){
-		r.push('<div class="n2schema_field_container n2schema_field_custom"');
-		if( opts.custom.length > 0 && typeof opts.custom[0] === 'string'){
-			r.push(' n2-custom-type="'+opts.custom+'"');
+	$formField = $('<div>')
+		.addClass('n2schema_field_wrapper')
+		.appendTo(r);
+
+	if (opts.custom) {
+		var $customDiv = $('<div>')
+			.addClass('n2schema_field_container n2schema_field_custom')
+			.attr('nunaliit-selector',completeSelectors.encodeForDomAttribute());
+
+		if (opts.custom.length > 0 && typeof opts.custom[0] === 'string') {
+			$customDiv.attr('n2-custom-type',opts.custom);
 		} else {
-			r.push(' nunaliit-error="Custom type not specified"');
-		};
-		r.push(' nunaliit-selector="'+completeSelectors.encodeForDomAttribute()+'"');
-		r.push('>');
-		r.push('</div>');
+			$customDiv.attr('nunaliit-error', 'Custom type not specified');
+		}
+
+		$customDiv.appendTo($formField);
 		
-		
-	} else if( obj && obj.nunaliit_type === 'localized' ) {
+	} else if (opts.checkbox) {
+
+		var chkboxFormField = new $n2.mdc.MDCFormField({
+			parentElem: $formField
+		});
+
+		var chkbox = new $n2.mdc.MDCCheckbox({
+			parentElem: $formField.find('#' + chkboxFormField.getId()),
+			chkboxLabel: opts.label
+		});
+
+		$formField.find('#' + chkbox.getInputId())
+			.addClass(selClass);
+
+		$formField.find('#' + chkbox.getInputId())
+			.addClass('n2schema_input');
+
+		$formField.find('#' + chkbox.getId())
+			.find('label')
+			.addClass(labelLocalizeClass); 
+
+	} else if (obj && obj.nunaliit_type === 'localized') {
 
 		var fieldLabel;
 		var langs = getSortedLanguages(opts.localized, obj);
 		
 		// Turn on "localized" option, if not already on
-		if( !opts.localized ){
+		if (!opts.localized) {
 			opts.localized = [];
-		};
+		}
 
-		if( opts.label ){
+		if (opts.label) {
 			fieldLabel = opts.label;
-		};
+		}
 		
-		for(var i=0,e=langs.length;i<e;++i){
+		for (var i=0, e=langs.length; i<e; i += 1) {
 			var lang = langs[i];
-			
 			var langSel = completeSelectors.getChildSelector(lang);
+			var mdcClasses = ['n2schema_field_container', 'n2schema_field_container_localized'];
+			var txtFldArea = false;
+
+			if (opts.textarea) {
+				txtFldArea = true;
+				mdcClasses.push('n2schema_field_container_textarea');
+			}
 
 			opts.label = fieldLabel + " (" + lang + ")";
 
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field n2s_attachMDCTextField');
-			if( opts.textarea ){
-				r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
-				_formSingleField(r,langSel,opts);
-			} else {
-				r.push(' mdc-text-field--outlined">');
-				_formSingleField(r,langSel,opts);
-			};
-			r.push('</div>');
-		};
+			var locTextField =	new $n2.mdc.MDCTextField({
+				parentElem: $formField,
+				mdcClasses: mdcClasses,
+				txtFldLabel: opts.label,
+				txtFldArea: txtFldArea
+			});
+			
+			$formField.find('#' + locTextField.getInputId())
+				.addClass(selClass + '-s' + lang);
+
+			$formField.find('#' + locTextField.getInputId())
+				.addClass('n2schema_input');
+
+			$formField.find('#' + locTextField.getId())
+				.find('label')
+				.addClass(labelLocalizeClass); 
+				
+			if (opts.date) {
+				$formField.find('#' + locTextField.getInputId())
+					.addClass(typeClassStringPrefix + 'date');
+
+			} else if (opts.numeric) {
+				$formField.find('#' + locTextField.getInputId())
+					.addClass(typeClassStringPrefix + 'numeric');
+				
+			} else if (opts.layers) {
+				$formField.find('#' + locTextField.getInputId())
+					.addClass(typeClassStringPrefix + 'layers');
+				
+			} else if (opts.localized) {
+				$formField.find('#' + locTextField.getInputId())
+					.addClass(typeClassStringPrefix + 'localized');
+			}
+		}
 		
-	} else if( !obj && opts.localized ) {
+	} else if (!obj && opts.localized) {
 		// This is a localized string that does not yet exist
 		// This condition is true if obj is an empty string or
 		// if obj is undefined (or null)
@@ -402,79 +387,215 @@ function _formField() {
 		var fieldLabel;
 		var langs = getSortedLanguages(opts.localized, null);
 
-		if( opts.label ){
+		if (opts.label) {
 			fieldLabel = opts.label;
-		};
+		}
 
-		for(var i=0,e=langs.length;i<e;++i){
+		for (var i=0, e=langs.length; i<e; i += 1) {
 			var lang = langs[i];
 			
 			var langSel = completeSelectors.getChildSelector(lang);
-			
+			var mdcClasses = ['n2schema_field_container', 'n2schema_field_container_localized'];
+			var txtFldArea = false;
+
+			if (opts.textarea) {
+				txtFldArea = true;
+				mdcClasses.push('n2schema_field_container_textarea');
+			}
+
 			opts.label = fieldLabel + " (" + lang + ")";
-			
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized mdc-text-field n2s_attachMDCTextField');
-			if( opts.textarea ){
-				r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
-				_formSingleField(r,langSel,opts);
-			} else {
-				r.push(' mdc-text-field--outlined">');
-				_formSingleField(r,langSel,opts);
-			};
-			r.push('</div>');
-		};
 
-	} else if( opts.reference ) {
-		var attr = completeSelectors.encodeForDomAttribute();
+			var undefinedLocTextField =	new $n2.mdc.MDCTextField({
+				parentElem: $formField,
+				mdcClasses: mdcClasses,
+				txtFldLabel: opts.label,
+				txtFldArea: txtFldArea
+			});
 
-		r.push('<div class="n2schema_field_reference mdc-text-field mdc-text-field--outlined n2s_attachMDCTextField" ');
-		if( opts.label ){
-			r.push('nunaliit-label="'+opts.label+'" ');
-		}
-		r.push('nunaliit-selector="'+attr+'"');
-		
-		if( opts.search 
-		 && opts.search[0] ){
-			r.push(' n2-search-func="'+opts.search[0]+'"');
-		};
-		r.push('></div>');
+			$formField.find('#' + undefinedLocTextField.getInputId())
+				.addClass(selClass + '-s' + lang);
 
-	} else if( opts.geometry ) {
-		var geometryTextareaId = $n2.getUniqueId();
-		var attr = completeSelectors.encodeForDomAttribute();
-		r.push('<div class="n2schema_field_container n2schema_field_container_textarea mdc-text-field mdc-text-field--textarea n2s_attachMDCTextField">');
-		r.push('<textarea id="' + geometryTextareaId + '" class="n2schema_field_geometry mdc-text-field__input" nunaliit-selector="'+attr+'"></textarea>');
-		r.push('<div class="mdc-notched-outline">');
-		r.push('<div class="mdc-notched-outline__leading"></div>');
-		r.push('<div class="mdc-notched-outline__notch">');
-		
-		if( opts.label ){
-			r.push('<label for="' + geometryTextareaId + '" class="label mdc-floating-label n2s_localize">'+opts.label+'</label>');
+			$formField.find('#' + undefinedLocTextField.getInputId())
+				.addClass('n2schema_input');
+
+			$formField.find('#' + undefinedLocTextField.getId())
+				.find('label')
+				.addClass(labelLocalizeClass); 
+				
+			if (opts.date) {
+				$formField.find('#' + undefinedLocTextField.getInputId())
+					.addClass(typeClassStringPrefix + 'date');
+
+			} else if (opts.numeric) {
+				$formField.find('#' + undefinedLocTextField.getInputId())
+					.addClass(typeClassStringPrefix + 'numeric');
+				
+			} else if (opts.layers) {
+				$formField.find('#' + undefinedLocTextField.getInputId())
+					.addClass(typeClassStringPrefix + 'layers');
+				
+			} else if (opts.localized) {
+				$formField.find('#' + undefinedLocTextField.getInputId())
+					.addClass(typeClassStringPrefix + 'localized');
+			}
 		}
 
-		r.push('</div>');
-		r.push('<div class="mdc-notched-outline__trailing"></div>'); 
-		r.push('</div>');
-		r.push('</div>');
+	} else if (opts.reference) {
+		var attr = completeSelectors.encodeForDomAttribute();
+		var mdcClasses = ['n2schema_field_reference'];
+		var mdcAttributes = {'nunaliit-selector': attr};
+
+		if (opts.label) {
+			mdcAttributes['nunaliit-label'] = opts.label;
+		}
 		
+		if (opts.search && opts.search[0]) {
+			mdcAttributes['n2-search-func'] = opts.search[0];
+		}
+
+		var refField = new $n2.mdc.MDCTextField({
+			parentElem: $formField,
+			mdcClasses: mdcClasses,
+			mdcAttributes: mdcAttributes,
+			txtFldLabel: opts.label
+		});
+
+		$formField.find('#' + refField.getId())
+			.find('label')
+			.addClass(labelLocalizeClass); 
+
+	} else if (opts.geometry) {
+		var attr = completeSelectors.encodeForDomAttribute();
+		var mdcClasses = ['n2schema_field_container', 'n2schema_field_container_textarea'];
+
+		var geoTextArea = new $n2.mdc.MDCTextField({
+			parentElem: $formField,
+			mdcClasses: mdcClasses,
+			mdcAttributes: mdcAttributes,
+			txtFldLabel: opts.label,
+			txtFldArea: true
+		});
+
+		$formField.find('#' + geoTextArea.getInputId())
+			.addClass('n2schema_field_geometry')
+			.attr('nunaliit-selector', attr);
+
+		if (opts.label) {
+			$formField.find('#' + geoTextArea.getId())
+				.find('label')
+				.addClass('label');
+		}
+
 	} else {
-		r.push('<div class="n2schema_field_container mdc-text-field n2s_attachMDCTextField');
-		if( opts.textarea ){
-			r.push(' n2schema_field_container_textarea mdc-text-field--textarea">');
-			_formSingleField(r,completeSelectors,opts);
-		} else {
-			r.push(' mdc-text-field--outlined">');
-			_formSingleField(r,completeSelectors,opts);
-		};
-		r.push('</div>');
-	};
+		var mdcClasses = ['n2schema_field_container'];
+		var mdcAttributes = {};
+		if (opts.textarea) {
+			mdcClasses.push('n2schema_field_container_textarea');
 
-	if( opts.placeholder ){
-		r.push('<p class="mdc-text-field-helper-text" aria-hidden="true">' + opts.placeholder + '</p>');
-	}
-	r.push('</div>');
+			var txtFldArea = new $n2.mdc.MDCTextField({
+				parentElem: $formField,
+				mdcClasses: mdcClasses,
+				mdcAttributes: mdcAttributes,
+				txtFldArea: true,
+				txtFldLabel: opts.label
+			});
+
+			var $txtFldAreaInput = $formField.find('#' + txtFldArea.getInputId());
+			$txtFldAreaInput.addClass(selClass);
+			$txtFldAreaInput.addClass('n2schema_input');
+
+			$formField.find('#' + txtFldArea.getId())
+				.find('label')
+				.addClass(labelLocalizeClass); 
+
+			if (opts.date) {
+				$('<div>')
+					.addClass('n2schema_help_date')
+					.appendTo($formField.find('#' + txtFldArea.getId()));
+				
+				$formField.find('#' + txtFldArea.getInputId())
+					.addClass(typeClassStringPrefix + 'date');
+
+			} else if (opts.numeric) {
+				$formField.find('#' + txtFldArea.getInputId())
+					.addClass(typeClassStringPrefix + 'numeric');
+				
+			} else if (opts.layers) {
+				$formField.find('#' + txtFldArea.getInputId())
+					.addClass(typeClassStringPrefix + 'layers');
+				
+			} else if (opts.localized) {
+				$formField.find('#' + txtFldArea.getInputId())
+					.addClass(typeClassStringPrefix + 'localized');
+			}
 	
-	return r.join('');
+			if (opts.wikiTransform) {
+				$('<div>')
+					.addClass('n2schema_help_wiki')
+					.appendTo($formField.find('#' + txtFldArea.getId()));
+			}
+
+			if (opts.placeholder) {
+				$('<p>')
+					.addClass('mdc-text-field-helper-text')
+					.attr('aria-hidden', 'true')
+					.text(opts.placeholder)
+					.insertAfter($formField.find('#' + txtFldArea.getId()));
+			}
+
+		} else {
+			var txtFld = new $n2.mdc.MDCTextField({
+				parentElem: $formField,
+				mdcClasses: mdcClasses,
+				mdcAttributes: mdcAttributes,
+				txtFldLabel: opts.label
+			});
+
+			var $txtFldInput = $formField.find('#' + txtFld.getInputId());
+			$txtFldInput.addClass(selClass);
+			$txtFldInput.addClass('n2schema_input');
+
+			$formField.find('#' + txtFld.getId())
+				.find('label')
+				.addClass(labelLocalizeClass); 
+
+			if (opts.date) {
+				$('<div>')
+					.addClass('n2schema_help_date')
+					.appendTo($formField.find('#' + txtFld.getId()));
+		
+				$formField.find('#' + txtFld.getInputId())
+					.addClass(typeClassStringPrefix + 'date');
+
+			} else if (opts.numeric) {
+				$formField.find('#' + txtFld.getInputId())
+					.addClass(typeClassStringPrefix + 'numeric');
+				
+			} else if (opts.layers) {
+				$formField.find('#' + txtFld.getInputId())
+					.addClass(typeClassStringPrefix + 'layers');
+				
+			} else if (opts.localized) {
+				$formField.find('#' + txtFld.getInputId())
+					.addClass(typeClassStringPrefix + 'localized');
+			}
+	
+			if (opts.wikiTransform) {
+				$('<div>')
+					.addClass('n2schema_help_wiki')
+					.appendTo($formField.find('#' + txtFld.getId()));
+			}
+
+			if (opts.placeholder) {
+				$('<p>')
+					.addClass('mdc-text-field-helper-text')
+					.attr('aria-hidden', 'true')
+					.text(opts.placeholder)
+					.insertAfter($formField.find('#' + txtFld.getId()));
+			}
+		}
+	};
+	return r.html();
 	
 	function getSortedLanguages(langOpts, localizedStr){
 		var langMap = {};
@@ -572,7 +693,7 @@ function _arrayField() {
 	if( args.length > 1 ){
 		newType = args[1];
 	};
-	
+
 	var r = [];
 	
 	r.push('<div class="n2schema_array">');
