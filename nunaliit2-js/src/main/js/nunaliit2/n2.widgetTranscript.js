@@ -199,21 +199,23 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 //		this.tagbox = $tagBox.n2TagBox();
 
 		new $n2.mdc.MDCButton({
+				parentId: this.editorId,
 				btnLabel : 'Save',
 				onBtnClick: function(){
 					_this._clickedSave();
 				}
-			})
-			.appendTo($formField);
+			});
+			//.appendTo($formField);
 
 		if( this.onCancel ){
 			new $n2.mdc.MDCButton({
+					parentId: this.editorId,
 					btnLabel : 'Cancel',
 					onBtnClick: function(){
 						_this._clickedCancel();
 					}
-				})
-				.appendTo($formField);
+				});
+				//.appendTo($formField);
 		};
 		
 		$formField.appendTo($container);
@@ -240,9 +242,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			//alert("Please sign in before adding annotations");
 			return;
 		}
-		//TODO need to refactor to save multi annotation altogether
-		var tagValues = this.tagbox.getTags();
-		$n2.log("save button has been clicked: "+tagValues);
+		
+		
 
 		var docId = undefined;
 		if( this.currentDoc ){
@@ -267,13 +268,49 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		};
 		documentSource.getDocument({
 				docId: this.currentDoc._id
-				,onSuccess: documentLoaded
+				,onSuccess:updateDocs
 				,onError: function(err){
 					$n2.reportErrorForced( _loc('Unable to reload document: {err}',{err:err}) );
 				}
 			});
 
-		function documentLoaded(doc){
+		function updateDocs(doc){
+			var $formfieldSections = $('div#'+_this.innerFormId + ' > div.n2WidgetAnnotation_formfieldSection')
+			var modified = false;
+			$formfieldSections.each(function(){
+				var start = $(this).find('span.n2transcript_label.label_startTimeCode')
+					.text();
+				var end = $(this).find('span.n2transcript_label.label_finTimeCode')
+					.text();
+				var tagValues =$(this).find('div.n2transcript_label.label_tagbox')
+					//.first()
+					//.getTags();
+				if (typeof start !== undefined
+					&& typeof end !== undefined
+					&& typeof tagValues !== undefined){
+					modified = singleSectionUpdate (doc, tagValues, start, end);
+				}
+				
+				
+			});
+			
+			if( modified ){
+				documentSource.updateDocument({
+					doc: doc
+					,onSuccess: onSaved
+					,onError: function(err){
+						$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
+					}
+				});
+
+			} else {
+				alert('Not changed!');
+			};
+			//TODO need to refactor to save multi annotation altogether
+			
+			
+		};
+		function singleSectionUpdate(doc, tagValues, start, end){
 			// Modify current document
 			var modified = false;
 			var lastTagsMapByTimelink = {};
@@ -288,15 +325,15 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				
 				var matchingLinks = findTimeLink(
 						timeLinks, 
-						_this.currentStartTime, 
-						_this.currentEndTime
+						start, 
+						end
 					);
 				
 				if( matchingLinks.length < 1 ){
 					// Should I create one? If so, how?
 					var newTimeLink = {
-						'starttime': _this.currentStartTime
-						,'endtime': _this.currentEndTime
+						'starttime': start
+						,'endtime': end
 						,'tags': []
 //						,"linkRef": {
 //							"nunaliit_type": "reference"
@@ -345,20 +382,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					};
 				});
 			};
-			
-			// Save document
-			if( modified ){
-				documentSource.updateDocument({
-					doc: doc
-					,onSuccess: onSaved
-					,onError: function(err){
-						$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
-					}
-				});
-
-			} else {
-				alert('Not changed!');
-			};
+			return modified;
 		};
 		
 		function onSaved(doc){
@@ -377,37 +401,42 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		
 		var $formField = $parent;
 		
-		$('<hr>').appendTo($formField);
+		var $formFieldSection = $('<div>')
+									.addClass('n2WidgetAnnotation_formfieldSection')
+									.appendTo($formField);
+		$('<hr>').appendTo($formFieldSection);
 		$('<span>')
 		.addClass('n2transcript_label_name')
 		.text('Start: ' )
-		.appendTo($formField);
+		.appendTo($formFieldSection);
 
 		$('<span>')
 			.addClass('n2transcript_label label_startTimeCode')
 			.text(opts.startTimeCode)
-			.appendTo($formField);
+			.appendTo($formFieldSection);
 			
 		$('<span>')
 			.addClass('n2transcript_label_name')
 			.text('End: ')
-			.appendTo($formField);
+			.appendTo($formFieldSection);
 	
 		$('<span>')
 			.addClass('n2transcript_label label_finTimeCode')
 			.text(opts.finTimeCode)
-			.appendTo($formField);
+			.appendTo($formFieldSection);
 	
 		$('<span>')
 			.addClass('n2transcript_label label_transcriptText')
 			.text(opts.text)
-			.appendTo($formField);
+			.appendTo($formFieldSection);
 			
-		var $tagBox = $('<div>')
-			.addClass('mdc-text-field')
-			.appendTo($formField)
-			.n2TagBox();
-		
+		var tagbox = new $n2.mdc.MDCTagBox({
+			parentId : this.innerFormId,
+            label: 'Tags',
+            mdcClasses: ['n2transcript_label','label_tagbox'],
+            chips: []
+        });
+		//.appendTo($formFieldSection);
 		
 		var doc = this.currentDoc;
 		var lastTags = [];
@@ -443,7 +472,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 							})
 						}
 					});
-					$tagBox.setTags(lastTags);
+					tagbox.getElem.data('tags', lastTags);
 			} else {
 				alert('Current document doesnot have (atlascine2_cinemap) property');
 				return;

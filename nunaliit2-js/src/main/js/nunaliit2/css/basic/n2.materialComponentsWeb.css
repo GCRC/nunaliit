@@ -1,0 +1,151 @@
+/* MDC Theme Colour Palette */
+:root {
+    --mdc-theme-primary: #1565c0;
+    --mdc-theme-secondary: #673ab7;/*
+    --mdc-theme-background: #fff;
+    --mdc-theme-surface: #fff;
+    --mdc-theme-error: #b00020;
+    --mdc-theme-on-primary: #fff;
+    --mdc-theme-on-secondary: #fff;
+    --mdc-theme-on-surface: #000;
+    --mdc-theme-on-error: #fff;
+    --mdc-theme-text-primary-on-background: rgba(0,0,0,0.87);
+    --mdc-theme-text-secondary-on-background: rgba(0,0,0,0.54);
+    --mdc-theme-text-hint-on-background: rgba(0,0,0,0.38);
+    --mdc-theme-text-disabled-on-background: rgba(0,0,0,0.38);
+    --mdc-theme-text-icon-on-background: rgba(0,0,0,0.38);
+    --mdc-theme-text-primary-on-light: rgba(0,0,0,0.87);
+    --mdc-theme-text-secondary-on-light: rgba(0,0,0,0.54);
+    --mdc-theme-text-hint-on-light: rgba(0,0,0,0.38);
+    --mdc-theme-text-disabled-on-light: rgba(0,0,0,0.38);
+    --mdc-theme-text-icon-on-light: rgba(0,0,0,0.38);
+    --mdc-theme-text-primary-on-dark: #fff;
+    --mdc-theme-text-secondary-on-dark: rgba(255,255,255,0.7);
+    --mdc-theme-text-hint-on-dark: rgba(255,255,255,0.5);
+    --mdc-theme-text-disabled-on-dark: rgba(255,255,255,0.5);
+    --mdc-theme-text-icon-on-dark: rgba(255,255,255,0.5); */
+}
+
+.mdc-text-field:not(.mdc-text-field--disabled).mdc-text-field--focused .mdc-floating-label,
+.mdc-select:not(.mdc-select--disabled).mdc-select--focused .mdc-floating-label,
+.mdc-drawer .mdc-list-item--activated,
+.mdc-drawer .mdc-drawer__title a {
+	color: #1565c0;
+}
+
+/* Nunaliit2 Tool Page Styling */
+
+.drawer-frame-root {
+    display: -ms-flexbox;
+    display: flex;
+    height: 100vh;
+}
+
+.mdc-drawer-app-content {
+    width: 100%;
+}
+
+.drawer-main-content {
+    padding: 16px;
+}
+
+.mdc-drawer .mdc-drawer__content .mdc-list .mdc-list-item,
+.mdc-drawer .mdc-drawer__title {
+    font-weight: bold;
+}
+
+.mdc-top-app-bar__navigation-icon {
+    font-size: 2em;
+    text-decoration: none;
+}
+
+.mdc-top-app-bar .nunaliit_login.mdc-top-app-bar__action-item {
+    width: 150px;
+    height: 48px;
+}
+
+/* Display docIds on separate lines in dialog window */
+.selectAppTextDialog .mdc-dialog__content {
+    white-space: pre-line;
+}
+
+/* Overriding material-components-web.min.css styling */
+
+.mdc-dialog {
+    z-index: 1000 !important;
+}
+
+.mdc-button {
+	margin: 3px;
+}
+
+.mdc-dialog__title+.mdc-dialog__content {
+    padding-top: 5px;
+}
+
+.mdc-dialog.mdc-dialog--scrollable .mdc-dialog__title, 
+.mdc-dialog.mdc-dialog--scrollable .mdc-dialog__actions {
+    border-color: rgba(0,0,0,0);
+}
+/*
+.mdc-text-field::before, .mdc-text-field::after {
+    width: 100%;
+    height: 100%;
+}
+*/
+.mdc-text-field span.n2s_briefDisplayed {
+    padding: 10px 20px 10px 16px;
+}
+
+.n2_documentForm .n2_layoutFloat .mdc-switch,
+.n2_documentForm .n2_layoutFloat .mdc-checkbox {
+    display: inline-flex;
+}
+
+.n2_documentForm .n2_layoutFloat .mdc-switch input[type="checkbox"] {
+    width: 54px;
+}
+
+.n2_documentForm .n2_layoutFloat .mdc-switch label,
+.n2_documentForm .n2_layoutFloat .mdc-checkbox label {
+    padding-left: 16px;
+}
+
+.submission_view_dialog_merging .mdc-dialog__container .mdc-dialog__surface {
+    max-width: 800px;
+}
+
+/* NavBar hamburger button on main page */
+.nunaliit_atlas .nunaliit_header.mdc-top-app-bar .mdc-top-app-bar__row a.mdc-top-app-bar__navigation-icon {
+    display: none;
+}
+.nunaliit_atlas .mdc-drawer-scrim {
+    z-index: 11;
+}
+.nunaliit_atlas aside.mdc-drawer {
+    z-index: 12;
+}
+.nunaliit_atlas aside.mdc-drawer a.mdc-list-item {
+    display: block;
+    height: auto;
+    line-height: 40px;
+    min-height: 40px;
+}
+.nunaliit_atlas aside.mdc-drawer a.mdc-list-item>nav {
+    display: flex;
+    flex-direction: column;
+}
+.nunaliit_atlas aside.mdc-drawer .mdc-drawer__content .n2nav_nested-list {
+    margin-left: 10px;
+}
+
+/* Nunaliit login button */
+.nunaliit_login .nunalitt_login_profile_icon.mdc-button__icon {
+    width: 35px;
+    height: 35px;
+    margin-left: 10px;
+}
+
+.nunaliit_application .nunaliit_login .mdc-button {
+    color: #ffffff;
+}
