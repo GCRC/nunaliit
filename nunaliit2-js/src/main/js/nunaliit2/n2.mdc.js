@@ -838,7 +838,6 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '));
 		
-		this._addAnchorBtn();
 
 		$menu = $('<div>').attr('id', this.menuId)
 			.attr('n2associatedmdc', this.anchorBtnId)
@@ -854,6 +853,8 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 
 		this.$menuSurfaceAnchor.appendTo(this.parentElem);
 
+		this._addAnchorBtn();
+
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
@@ -861,7 +862,7 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 
 	_addAnchorBtn: function(){
 		new MDCButton({
-			parentElem: this.$menuSurfaceAnchor,
+			parentElem: this.parentElem.find('#' + this.mdcId),
 			mdcId: this.anchorBtnId,
 			btnLabel: this.anchorBtnText
 		});
@@ -1247,10 +1248,10 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 			throw new Error('parentElem must be provided, to add a Material Design Tag Box Component');
 		}
 
-		this._generateMDCChips();
+		this._generateMDCTagBox();
 	},
 
-	_generateMDCChips: function(){
+	_generateMDCTagBox: function(){
 		var $chipSet;
 
 		this.$chipInput = new $n2.mdc.MDCTextField({
@@ -1261,14 +1262,15 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 		});
 
 		$chipSet = new $n2.mdc.MDCChipSet({
-			parentElem: $('#' + this.$chipInput.getId()),
+			parentElem: this.parentElem.find('#' + this.$chipInput.getId()),
 			inputChips: true,
 			inputId: this.$chipInput.getInputId(),
 			chips: this.chips
 		});
 
 		// Move input form field into chipset component
-		$('#' + this.$chipInput.getInputId()).appendTo($('#' + $chipSet.getId()));
+		this.parentElem.find('#' + this.$chipInput.getInputId())
+			.appendTo(this.parentElem.find('#' + $chipSet.getId()));
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
