@@ -154,7 +154,7 @@ public class StreamProducerDocumentUpdate implements StreamProducer {
 					osw.write(",\"data\":\"");
 					Base64Transcoder.encode(is, osw);
 					osw.write("\"");
-					
+					osw.flush();
 					builder.endObject();
 				}
 			}
