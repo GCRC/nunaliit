@@ -40,6 +40,7 @@ public class Base64Transcoder {
 				String outputBuffer = Base64.encodeBase64String(inputBuffer);
 				writer.write(outputBuffer);
 			}
+			writer.flush();
 		}
 	}
 }
