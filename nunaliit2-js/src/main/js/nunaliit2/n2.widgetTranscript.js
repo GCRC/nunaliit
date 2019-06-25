@@ -686,7 +686,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			var f = function(m, addr, dispatcher){
 				_this._handle(m, addr, dispatcher);
 			};
-			
+
+			this.dispatchService.register(DH, 'modelStateUpdated', f);
 			this.dispatchService.register(DH,'mediaTimeChanged',f);
 			this.dispatchService.register(DH,'documentContent',f);
 			if( this.intervalChangeEventName ){
@@ -696,7 +697,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			// If the widget was built specifying a specific document, then do not change
 			// content on user selection. If no document specified, then listen to user selection.
 			if( !this.docId ){
-				this.dispatchService.register(DH,'selected',f);
+				//this.docId = m.docId;
+				//this.doc = m.doc;
+				this.timeTable = [];
+				this.transcript = undefined;
+				this.srtData = undefined;
+				//this.dispatchService.register(DH,'selected',f);
 			};
 		};
 
@@ -752,6 +758,16 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				};
 			};
 			
+		} else if ('modelStateUpdated' === m.type){
+			if( this.sourceModelId === m.modelId ){
+				var mediaDocChanged = this._cinemapUpdated(m.state);
+				if (mediaDocChanged){
+					this.timeTable = [];
+					this.transcript = undefined;
+					this.srtData = undefined;
+					this._documentChanged();
+				}
+			}
 		} else if( 'selected' === m.type ){
 			if( m.docId != this.docId ){
 				this.docId = m.docId;
@@ -764,6 +780,58 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		};
 	},
 
+	_cinemapUpdated(sourceState){
+		var _this = this;
+		var cineIsUpdated = false;
+		
+
+		// Loop through all removed documents
+		if( sourceState.removed ){
+			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+				var doc = sourceState.removed[i];
+				var docId = doc._id;
+				if( doc.atlascine2_cinemap ){
+					//_this.docId = undefined;
+				};
+				
+			};
+		};
+		
+		if( sourceState.added ){
+			for(var i=0,e=sourceState.added.length; i<e; ++i){
+				var doc = sourceState.added[i];
+				var docId = doc._id;
+
+				if( doc.atlascine2_cinemap ){
+					var media_doc_ref = doc.atlascine2_cinemap.media_doc_ref;
+					var mediaDocId = media_doc_ref.doc;
+					if (mediaDocId
+						&& mediaDocId !== _this.docId)
+					_this.docId = mediaDocId;
+					cineIsUpdated = true;
+				};
+			};
+		};
+
+		// Loop through all updated documents
+		if( sourceState.updated ){
+			for(var i=0,e=sourceState.updated.length; i<e; ++i){
+				var doc = sourceState.updated[i];
+				var docId = doc._id;
+					if( doc.atlascine2_cinemap ){
+						var media_doc_ref = doc.atlascine2_cinemap.media_doc_ref;
+						var mediaDocId = media_doc_ref.doc;
+						if (mediaDocId
+							&& mediaDocId !== _this.docId)
+						_this.docId = mediaDocId;
+						cineIsUpdated = true;
+					};
+				};
+		};
+
+
+		return cineIsUpdated;
+	},
 	_convertTimeToVideoTime: function(t){
 		var vTime = undefined;
 		
@@ -801,9 +869,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	 */
 	_documentChanged: function(){
 		var _this = this;
-
-		if( !this.doc ){
+		if (!this.docId){
+			$n2.log('n2.widgetTranscript inital document change');
+			return;
+		} else if( !this.doc || this.docId !== this.doc._id ){
 			// We do not have the document. Request it.
+			this.doc = undefined;
 			this.dispatchService.send(DH, {
 				'type': 'requestDocument'
 				,'docId': this.docId
@@ -851,63 +922,63 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			};
 
 		} else if( this.transcript.timeTable ){
-			if( !$n2.isArray(this.transcript.timeTable) ){
-				_this._renderError('timeTable must be an array');
-			} else {
-				this.timeTable = [];
-
-				var videoMinStart = undefined;
-				var videoMaxEnd = undefined;
-
-				this.transcript.timeTable.forEach(function(timeEntry){
-					if( typeof timeEntry !== 'object' ){
-						throw new Error('Entries in timeTable must be objects');
-					} else if( null === timeEntry ){
-						throw new Error('Entries in timeTable can not be null');
-					};
-					
-					var videoStart = timeEntry.videoStart;
-					var videoEnd = timeEntry.videoEnd;
-					var timeStart = timeEntry.timeStart;
-					var timeEnd = timeEntry.timeEnd;
-
-					if( typeof videoStart !== 'number' ){
-						throw new Error('videoStart in timeTable must be a number');
-					};
-					if( typeof videoEnd !== 'number' ){
-						throw new Error('videoEnd in timeTable must be a number');
-					};
-					
-					if( undefined === videoMinStart ){
-						videoMinStart = videoStart;
-					} else if(videoMinStart > videoStart) {
-						videoMinStart = videoStart;
-					};
-					if( undefined === videoMaxEnd ){
-						videoMaxEnd = videoEnd;
-					} else if(videoMaxEnd < videoEnd) {
-						videoMaxEnd = videoEnd;
-					};
-
-					// Try to parse time
-					var timeStartInt = $n2.date.parseUserDate(timeStart);
-					var timeEndInt = $n2.date.parseUserDate(timeEnd);
-					
-					var timeObj = {
-						intervalStart: timeStartInt
-						,intervalEnd: timeEndInt
-						,timeStart: timeStartInt.min
-						,timeEnd: timeEndInt.min
-						,videoStart: videoStart
-						,videoEnd: videoEnd
-					};
-					_this.timeTable.push(timeObj);
-				});
-				
-				// Report video start and end
-				$n2.log('Video start:'+videoMinStart+' end:'+videoMaxEnd);
-				_this._rangeChanged(videoMinStart,videoMaxEnd);
-			};
+//			if( !$n2.isArray(this.transcript.timeTable) ){
+//				_this._renderError('timeTable must be an array');
+//			} else {
+//				this.timeTable = [];
+//
+//				var videoMinStart = undefined;
+//				var videoMaxEnd = undefined;
+//
+//				this.transcript.timeTable.forEach(function(timeEntry){
+//					if( typeof timeEntry !== 'object' ){
+//						throw new Error('Entries in timeTable must be objects');
+//					} else if( null === timeEntry ){
+//						throw new Error('Entries in timeTable can not be null');
+//					};
+//					
+//					var videoStart = timeEntry.videoStart;
+//					var videoEnd = timeEntry.videoEnd;
+//					var timeStart = timeEntry.timeStart;
+//					var timeEnd = timeEntry.timeEnd;
+//
+//					if( typeof videoStart !== 'number' ){
+//						throw new Error('videoStart in timeTable must be a number');
+//					};
+//					if( typeof videoEnd !== 'number' ){
+//						throw new Error('videoEnd in timeTable must be a number');
+//					};
+//					
+//					if( undefined === videoMinStart ){
+//						videoMinStart = videoStart;
+//					} else if(videoMinStart > videoStart) {
+//						videoMinStart = videoStart;
+//					};
+//					if( undefined === videoMaxEnd ){
+//						videoMaxEnd = videoEnd;
+//					} else if(videoMaxEnd < videoEnd) {
+//						videoMaxEnd = videoEnd;
+//					};
+//
+//					// Try to parse time
+//					var timeStartInt = $n2.date.parseUserDate(timeStart);
+//					var timeEndInt = $n2.date.parseUserDate(timeEnd);
+//					
+//					var timeObj = {
+//						intervalStart: timeStartInt
+//						,intervalEnd: timeEndInt
+//						,timeStart: timeStartInt.min
+//						,timeEnd: timeEndInt.min
+//						,videoStart: videoStart
+//						,videoEnd: videoEnd
+//					};
+//					_this.timeTable.push(timeObj);
+//				});
+//				
+//				// Report video start and end
+//				$n2.log('Video start:'+videoMinStart+' end:'+videoMaxEnd);
+//				_this._rangeChanged(videoMinStart,videoMaxEnd);
+//			};
 		};
 
 		// At the end of all this, refresh
@@ -1052,7 +1123,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				})
 				.bind('durationchange', function(e) {
 					var duration = this.duration;
-					$n2.log('duration changed: '+duration);
+					$n2.log('video duration changed: '+duration);
 				});
 
 		} else {
