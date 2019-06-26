@@ -112,7 +112,7 @@ function updateTimeLinkWithTags(timeLink, tagValues){
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++
-var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
+var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 
 	dispatchService: null,
 	
@@ -394,6 +394,45 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			this.onCancel(this);
 		};
 	},
+	_addTagGroupEditing: function($parent){
+		var _this = this;
+		new $n2.mdc.MDCButton({
+			parentElem: $parent,
+			mdcClasses: ['n2WidgetAnnotation_tagGroup_addNewGroupBtn'],
+			btnLabel : 'Add new tag group',
+			onBtnClick: function(){
+				var _self = this;
+				var $taggroupContainer = $('<div>')
+						.addClass('.n2WidgetAnnotation_tagGroup_container')
+						.insertBefore($('.n2WidgetAnnotation_tagGroup_addNewGroupBtn'));
+				_this._addEmptyTagGroupSingleUnit($taggroupContainer);	
+				//$taggroupContainer;
+				
+				//$('.n2WidgetAnnotation_tagGroup_addNewGroupBtn').before($taggroupContainer);
+				//_this.showService.fixElementAndChildren($taggroupContainer);
+			}
+		});
+		//.appendTo($formField);
+	},
+	_addEmptyTagGroupSingleUnit:function($parent, opts){
+		var $formField = $parent;
+		var $formFieldSection = $('<div>')
+			.addClass('n2WidgetAnnotation_tagGroup_formfieldSection')
+			.appendTo($formField);
+		$('<input>')
+			.colorPicker()
+			.appendTo($formFieldSection);
+		$('<input>')
+			.attr('id', 'tagName')
+			.appendTo($formFieldSection);
+		new $n2.mdc.MDCTagBox({
+			parentElem : $formFieldSection,
+			label: 'TagGroupMember',
+			mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
+			chips: []
+		});
+		
+	},
 	_addFormViewForSingleUnit: function($parent, opts){
 		
 		var $formField = $parent;
@@ -502,11 +541,14 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		
 		if( opt && data ){
 			switch ( opt){
-			case 'Annotation': 
+			case 'Tag Selection...': 
 				data.forEach(function(_d){
 					_this._addFormViewForSingleUnit($elem, _d)
 				})
 				
+				break;
+			case 'Group Tags...':
+				_this._addTagGroupEditing($elem);
 				break;
 			default:
 				break;
@@ -1138,7 +1180,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				contextMenu.remove();
 			}
 			
-			var context_menu_text = ['Annotation', 'Extra'];
+			var context_menu_text = ['Tag Selection...', 'Group Tags...'];
 			var transcript_context_menu_list = $('<ul>');
 			$.each(context_menu_text, function(i){
 				var li = $('<li/>')
