@@ -539,18 +539,34 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 				.addClass('n2WidgetAnnotation_tagGroup_formfieldSection')
 				.appendTo($formField);
 			$('<hr>').appendTo($formFieldSection);
-			$('<input>')
+			var colorPk = new $n2.mdc.MDCTextField({
+				txtFldLabel: 'color',
+				parentElem: $formFieldSection
+			});
+			var colorPkInputId = colorPk.getInputId();
+			$('input#'+ colorPkInputId)
 				.addClass('n2transcript_input input_colorpicker')
 				.colorPicker({
-					opacity: false
+					opacity: false,
+				    renderCallback: function($elm, toggled) {
+				        $elm.val('#' + this.color.colors.HEX);
+				    }
 				})
 				.val(taginfo.color)
-				.css("background-color", taginfo.color)
-				.appendTo($formFieldSection);
-			$('<input>')
+				.css("background-color", taginfo.color);
+				//.appendTo($formFieldSection);
+				
+			var tagNa = new $n2.mdc.MDCTextField({
+				txtFldLabel: 'tagName',
+				parentElem: $formFieldSection,
+				txtFldOutline: false
+			});
+			var tagNaInputId = tagNa.getInputId();
+			$('input#'+ tagNaInputId)
 				.addClass('n2transcript_input input_tagname')
-				.val(taginfo.name)
-				.appendTo($formFieldSection);
+				.val(taginfo.name);
+			tagNa.getElem().click();
+				//.appendTo($formFieldSection);
 			new $n2.mdc.MDCTagBox({
 				parentElem : $formFieldSection,
 				label: 'TagGroupMember',
