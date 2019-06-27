@@ -112,6 +112,11 @@ function updateTimeLinkWithTags(timeLink, tagValues){
 };
 
 //+++++++++++++++++++++++++++++++++++++++++++++++
+
+var CineAnnotationEditorMode = {
+		TAGSELECTION: 'tagselection',
+		TAGGROUPING : 'taggrouping'
+}
 var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 
 	dispatchService: null,
@@ -132,6 +137,8 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 	
 	tagbox: null,
 	
+	editorMode: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: undefined,
@@ -148,6 +155,7 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 		this.currentDoc = undefined;
 		this.currentStartTime = undefined;
 		this.currentEndTime = undefined;
+		this.editorMode = undefined;
 	},
 	
 	getElem: function(){
@@ -168,35 +176,6 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 		var $innerForm = $('<div>')
 			.attr('id', this.innerFormId)
 			.appendTo($formField);
-//		$('<span>')
-//			.addClass('n2transcript_label_name')
-//			.text('Start: ' )
-//			.appendTo($formField);
-//
-//		$('<span>')
-//			.addClass('n2transcript_label label_startTimeCode')
-//			.text('00.00.00,000')
-//			.appendTo($formField);
-//			
-//		$('<span>')
-//			.addClass('n2transcript_label_name')
-//			.text('End: ')
-//			.appendTo($formField);
-//
-//		$('<span>')
-//			.addClass('n2transcript_label label_finTimeCode')
-//			.text('00.00.00,000')
-//			.appendTo($formField);
-//
-//		$('<span>')
-//			.addClass('n2transcript_label label_transcriptText')
-//			.text('')
-//			.appendTo($formField);
-//			
-//		var $tagBox = $('<div>')
-//			.addClass('mdc-text-field')
-//			.appendTo($formField);
-//		this.tagbox = $tagBox.n2TagBox();
 
 		new $n2.mdc.MDCButton({
 				parentElem: $formField,
@@ -268,13 +247,23 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 		};
 		documentSource.getDocument({
 				docId: this.currentDoc._id
-				,onSuccess:updateDocs
+				,onSuccess:function(doc){
+					switch( _this.editorMode ){
+						case CineAnnotationEditorMode.TAGSELECTION:
+							updateDocForTags(doc);
+							break;
+						case CineAnnotationEditorMode.TAGGROUPING: 
+							updateDocForTagGrouping(doc);
+							alert('Tag group info has been saved');
+							break;
+						}
+				}
 				,onError: function(err){
 					$n2.reportErrorForced( _loc('Unable to reload document: {err}',{err:err}) );
 				}
 			});
 
-		function updateDocs(doc){
+		function updateDocForTags(doc){
 			var $formfieldSections = $('div#'+_this.innerFormId + ' > div.n2WidgetAnnotation_formfieldSection')
 			var modified = false;
 			$formfieldSections.each(function(){
@@ -381,7 +370,102 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 			};
 			return modified;
 		};
+		function updateDocForTagGrouping (doc){
+			var $formfieldSections = $('div#'+_this.innerFormId + ' div.n2WidgetAnnotation_tagGroup_formfieldSection');
+			var modified = false;
+			var oldTagColors = doc.atlascine2_cinemap.tagColors;
+			var oldTagGroups = doc.atlascine2_cinemap.tagGroups;
+			var newTagColors = {};
+			var newTagGroups  = {};
+			$formfieldSections.each(function(){
+				var color = $(this).find('input.n2transcript_input.input_colorpicker')
+					.val();
+				var name = $(this).find('input.n2transcript_input.input_tagname')
+					.val();
+				var tagbox =$(this).find('div.n2-tag-box > div.mdc-chip-set');
+				var tagValues = (tagbox.first().data('tags'));
+				if (typeof color !== undefined
+							&& color.length == 7
+							&& typeof name !== undefined ) {
+					newTagColors[name] = color;
+				}
+				if (typeof tagValues !== undefined
+					&& Array.isArray(tagValues) 
+					&& tagValues.length > 0) {
+					newTagGroups[name] = tagValues;
+				}
+			});
+			modified = tagGroupsIsModified(oldTagColors, 
+					oldTagGroups, newTagColors, newTagGroups);
+			
+			if( modified ){
+				doc.atlascine2_cinemap.tagColors = newTagColors;
+				doc.atlascine2_cinemap.tagGroups = newTagGroups;
+				$n2.log('newTagColors: ', newTagColors);
+				$n2.log('newtagGroups: ', newTagGroups);
+				documentSource.updateDocument({
+					doc: doc
+					,onSuccess: onSaved
+					,onError: function(err){
+						$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
+					}
+				});
+
+			} else {
+				alert('Nothing has been changed!');
+			};
+			
+		};
+		function tagGroupsIsModified(oldTagColors, 
+				oldTagGroups, newTagColors, newTagGroups){
+			
+			if( !oldTagColors || !oldTagGroups
+					|| !newTagColors || !newTagGroups){
+				// same
+				return true;
+			};
+			if( $n2.keys(oldTagColors).length != $n2.keys( newTagColors).length ){
+				return true;
+			};
+			
+			if( $n2.keys(oldTagGroups).length != $n2.keys( newTagGroups ).length ){
+				return true;
+			};
+			for(var otagname in oldTagColors){
+				if (!(otagname in newTagColors)){
+					return true;
+				}
+				if (newTagColors[otagname] !== oldTagColors[otagname]){
+					return true;
+				}
+			}
+			for(var otagname in oldTagGroups){
+				if (!(otagname in newTagGroups)){
+					return true;
+				}
+				if (typeof (newTagGroups[otagname]) !==  typeof (oldTagGroups[otagname] )){
+					return true;
+				}
+				if ( newTagGroups[otagname].length !== oldTagGroups[otagname].length){
+					return true;
+				}
+				for (var i=0,e=newTagGroups[otagname].length;i<e;i++){
+					if( newTagGroups[otagname][i] != oldTagGroups[otagname][i]){
+						return true;
+					}
+				}
+			}
+
+			
+			return false;
 		
+		};
+		function singleSectionUpForTagGrouping (doc, tagname, tagcolor, chilrenTags){
+			if( doc 
+				&& doc.atlascine2_cinemap ){
+				
+			}
+		};
 		function onSaved(doc){
 			if( _this.onSaved ){
 				_this.onSaved(this);
@@ -396,6 +480,29 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 	},
 	_addTagGroupEditing: function($parent){
 		var _this = this;
+		var doc = this.currentDoc;
+		var existingTagGroupArr = [];
+		if (doc
+			&& doc.atlascine2_cinemap 
+			&& doc.atlascine2_cinemap.tagColors ){
+			for (var tagna in doc.atlascine2_cinemap.tagColors ){
+				var taginfo = {
+						name: tagna,
+						color: doc.atlascine2_cinemap.tagColors[tagna],
+						children: []
+				};
+				var tagchildren = findChildTags(tagna);
+				if (tagchildren){
+					taginfo.children = tagchildren;
+				}
+				existingTagGroupArr.push(taginfo);
+			}
+			
+			//generate existing tagGroupEditors
+			_this._addExistingTagGroupSingleUnit($parent, existingTagGroupArr);
+		}
+		
+		$('<hr>').appendTo($parent);
 		new $n2.mdc.MDCButton({
 			parentElem: $parent,
 			mdcClasses: ['n2WidgetAnnotation_tagGroup_addNewGroupBtn'],
@@ -403,16 +510,61 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 			onBtnClick: function(){
 				var _self = this;
 				var $taggroupContainer = $('<div>')
-						.addClass('.n2WidgetAnnotation_tagGroup_container')
+						.addClass('n2WidgetAnnotation_tagGroup_container')
 						.insertBefore($('.n2WidgetAnnotation_tagGroup_addNewGroupBtn'));
 				_this._addEmptyTagGroupSingleUnit($taggroupContainer);	
-				//$taggroupContainer;
-				
-				//$('.n2WidgetAnnotation_tagGroup_addNewGroupBtn').before($taggroupContainer);
-				//_this.showService.fixElementAndChildren($taggroupContainer);
 			}
 		});
-		//.appendTo($formField);
+		function findChildTags(target){
+			var rst = undefined;
+			for(var tagna in doc.atlascine2_cinemap.tagGroups){
+				if (tagna === target 
+					&& doc.atlascine2_cinemap.tagGroups[tagna].length > 0){
+					if(!rst){
+						rst = [];
+					}
+					//clone the children tags group
+					rst = doc.atlascine2_cinemap.tagGroups[tagna].slice(0);
+				}
+
+			}
+			return rst;
+		}
+	},
+	_addExistingTagGroupSingleUnit: function($parent, tagGroupArr){
+		var $formField = $parent;
+		tagGroupArr.forEach(function(taginfo){
+			
+			var $formFieldSection = $('<div>')
+				.addClass('n2WidgetAnnotation_tagGroup_formfieldSection')
+				.appendTo($formField);
+			$('<hr>').appendTo($formFieldSection);
+			$('<input>')
+				.addClass('n2transcript_input input_colorpicker')
+				.colorPicker({
+					opacity: false
+				})
+				.val(taginfo.color)
+				.css("background-color", taginfo.color)
+				.appendTo($formFieldSection);
+			$('<input>')
+				.addClass('n2transcript_input input_tagname')
+				.val(taginfo.name)
+				.appendTo($formFieldSection);
+			new $n2.mdc.MDCTagBox({
+				parentElem : $formFieldSection,
+				label: 'TagGroupMember',
+				mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
+				chips: taginfo.children
+			});
+			new $n2.mdc.MDCButton({
+				parentElem: $formFieldSection,
+				btnLabel : 'Delete',
+				onBtnClick: function(){
+					$formFieldSection.remove();
+				}
+			});
+		})
 	},
 	_addEmptyTagGroupSingleUnit:function($parent, opts){
 		var $formField = $parent;
@@ -420,16 +572,24 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 			.addClass('n2WidgetAnnotation_tagGroup_formfieldSection')
 			.appendTo($formField);
 		$('<input>')
-			.colorPicker()
+			.addClass('n2transcript_input input_colorpicker')
+			.colorPicker({opacity: false})
 			.appendTo($formFieldSection);
 		$('<input>')
-			.attr('id', 'tagName')
+			.addClass('n2transcript_input input_tagname')
 			.appendTo($formFieldSection);
 		new $n2.mdc.MDCTagBox({
 			parentElem : $formFieldSection,
 			label: 'TagGroupMember',
 			mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
 			chips: []
+		});
+		new $n2.mdc.MDCButton({
+			parentElem: $formFieldSection,
+			btnLabel : 'Delete',
+			onBtnClick: function(){
+				$formFieldSection.remove();
+			}
 		});
 		
 	},
@@ -489,10 +649,10 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 						// No matching timelinks no worry
 						new $n2.mdc.MDCTagBox({
 							parentElem : $formFieldSection,
-				            label: 'Tags',
-				            mdcClasses: ['n2transcript_label','label_tagbox'],
-				            chips: []
-				        });
+							label: 'Tags',
+							mdcClasses: ['n2transcript_label','label_tagbox'],
+							chips: []
+						});
 						return;
 					};
 							
@@ -535,39 +695,27 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 		if( doc ){
 			this.currentDoc = doc;
 		};
-
-		//var lastTags = [];
-		
-		
 		if( opt && data ){
-			switch ( opt){
-			case 'Tag Selection...': 
-				data.forEach(function(_d){
-					_this._addFormViewForSingleUnit($elem, _d)
-				})
-				
-				break;
-			case 'Group Tags...':
-				_this._addTagGroupEditing($elem);
-				break;
-			default:
-				break;
+			
+			if( opt === 'Tag Selection...'){
+				this.editorMode = CineAnnotationEditorMode.TAGSELECTION;
+			} else if ( opt === 'Group Tags...'){
+				this.editorMode = CineAnnotationEditorMode.TAGGROUPING;
 			}
+			
+			switch( this.editorMode ){
+				case CineAnnotationEditorMode.TAGSELECTION: 
+					data.forEach(function(_d){
+						_this._addFormViewForSingleUnit($elem, _d)
+					});
+					break;
+				case CineAnnotationEditorMode.TAGGROUPING:
+					_this._addTagGroupEditing($elem);
+					break;
+				default:
+					break;
+				}
 		};
-		
-
-//		if( data ){
-//			this.currentStartTime = data.startTimeCode;
-//			this.currentEndTime = data.finTimeCode;
-//		};
-		
-//		if( this.tagbox ){
-//			this.tagbox.reset();
-//		};
-		
-
-		
-		
 	},
 
 	_handle: function(){
@@ -1281,19 +1429,19 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					})
 					.click(function(e) {
 						switch(e.which){
-						case 1:
-							contextMenu.addClass('transcript-context-menu-hide');
-							$(this).removeClass('sentence-highlight-pending')
-							var $span = $(this);
-							var currentTime = $span.attr('data-start');
-							_this._updateCurrentTime(currentTime, 'text');
-							break;
-						case 2:
-							break;
-						case 3:
-							break;
-						
-						}
+							case 1:
+								contextMenu.addClass('transcript-context-menu-hide');
+								$(this).removeClass('sentence-highlight-pending')
+								var $span = $(this);
+								var currentTime = $span.attr('data-start');
+								_this._updateCurrentTime(currentTime, 'text');
+								break;
+							case 2:
+								break;
+							case 3:
+								break;
+							
+							}
 						// close the context menu, if it still exists
 						
 					});
@@ -1750,6 +1898,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 				this._closeEditor();
 
 			} else if( this.annotationEditor ){
+				this._closeEditor();
 				var doc = this.docsById[this.currentDocId];
 				this.annotationEditor.refresh({
 					doc: doc

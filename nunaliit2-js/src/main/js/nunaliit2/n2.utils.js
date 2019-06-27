@@ -1245,4 +1245,20 @@ $n2.utils.DFS = function(item, predicate1, predicate2, callback){
 
 	}
 };
+
+$n2.keys = function (obj) {
+	if (!Object.keys){
+		var arr = [];
+		for (var key in obj) {
+			if (obj.hasOwnProperty(key)) {
+				arr.push(key);
+			}
+		}
+	} else {
+		arr = Object.keys(obj);
+	}
+	return arr;
+}
+	
+
 })(nunaliit2);
