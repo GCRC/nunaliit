@@ -273,9 +273,9 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 					.text();
 				var tagbox =$(this).find('div.n2-tag-box > div.mdc-chip-set');
 				var tagValues = (tagbox.first().data('tags'));
-				if (typeof start !== undefined
-					&& typeof end !== undefined
-					&& typeof tagValues !== undefined){
+				if (typeof start !== "undefined"
+					&& typeof end !== "undefined"
+					&& typeof tagValues !== "undefined"){
 					modified |= singleSectionUpdate (doc, tagValues, start, end);
 				}
 				
@@ -384,12 +384,12 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 					.val();
 				var tagbox =$(this).find('div.n2-tag-box > div.mdc-chip-set');
 				var tagValues = (tagbox.first().data('tags'));
-				if (typeof color !== undefined
+				if (typeof color !== "undefined"
 							&& color.length == 7
-							&& typeof name !== undefined ) {
+							&& typeof name !== "undefined" ) {
 					newTagColors[name] = color;
 				}
-				if (typeof tagValues !== undefined
+				if (typeof tagValues !== "undefined"
 					&& Array.isArray(tagValues) 
 					&& tagValues.length > 0) {
 					newTagGroups[name] = tagValues;
@@ -548,9 +548,9 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 				.addClass('n2transcript_input input_colorpicker')
 				.colorPicker({
 					opacity: false,
-				    renderCallback: function($elm, toggled) {
-				        $elm.val('#' + this.color.colors.HEX);
-				    }
+					renderCallback: function($elm, toggled) {
+						$elm.val('#' + this.color.colors.HEX);
+					}
 				})
 				.val(taginfo.color)
 				.css("background-color", taginfo.color);
@@ -831,6 +831,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.lastTimeUserScroll = 0;
 		this.mediaDivId = undefined;
 		this.annotationEditor = undefined;
+		this._lastCtxTime = undefined;
 		
 		// Get container
 		var containerClass = opts.containerClass;
@@ -1335,6 +1336,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		} else {
 			_this._renderError('Can not compute URL for video');
 		};
+		if (typeof _this._lastCtxTime !== 'undefined'){
+			_this._updateCurrentTime(_this._lastCtxTime, 'savedState');
+		}
+		
 
 		function prep_transcript($transcript, transcript_array){
 			var temp;
@@ -1351,6 +1356,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							.text(context_menu_text[i])
 							.click(function(){
 								var senDataArr = contextMenu.data().value;
+								if (senDataArr && senDataArr.length == 1 ){
+									
+									var currentTime = senDataArr[0].start;
+									if (typeof currentTime !== "undefined"){
+										_this._updateCurrentTime(currentTime, 'startEditing');
+									}
+									
+								}
 								if (senDataArr && senDataArr.length > 0){
 									_this._renderDrawer(context_menu_text[i], senDataArr);
 								};
@@ -1434,13 +1447,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							contextMenu[0].style.left = e.pageX + 'px';
 							contextMenu[0].style.top = e.pageY + 'px';
 							contextMenu.removeClass('transcript-context-menu-hide');
-							//contextMenu[0].style.display = 'block';
-
-							
-							//_this._renderDrawer();
-							 //var toRepl = "to=" + eid.toString()
-							 //contextMenu.innerHTML = contextMenu.innerHTML.replace(/to=\d+/g,toRepl)
-							 //alert(rgtClickContextMenu.innerHTML.toString())
+						
 						};
 					})
 					.click(function(e) {
@@ -1538,7 +1545,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	}
 	,
 	_renderDrawer: function(ctxMenuOption, senDataArr){
-		
+
 		this.dispatchService.send(DH,{
 			type: 'annotationEditorStart'
 			,ctxMenuOption: ctxMenuOption
@@ -1658,8 +1665,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	_timeChanged: function(currentTime, origin){
 		
 		var _this = this;
-		
-		// console.dir($._data($('#'+ this.transcriptId)[0], 'events'));
+
+			// console.dir($._data($('#'+ this.transcriptId)[0], 'events'));
 		// Act upon the text
 		for(var i =0;i<this.transcript_array.length;i++) {
 			var transcriptElem = this.transcript_array[i];
@@ -1696,7 +1703,45 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			var $video = $('#'+this.videoId);
 			$video[0].currentTime = currentTime;
 			$video[0].play();
-		}
+		} else if('startEditing' === origin){
+			_this._lastCtxTime = currentTime;
+			var $video = $('#'+this.videoId);
+			$video[0].currentTime = currentTime;
+			$video[0].play();
+			var inid = setInterval(function(){
+				var isPlaying = $video[0].currentTime > 0 && !$video[0].paused && !$video[0].ended 
+					&& $video[0].readyState > 2;
+
+				if(!isPlaying){
+					
+				} else {
+					$video[0].pause();
+					clearInterval(inid);
+				}
+				
+			},100);
+
+
+		} else if ( 'savedState' === origin ){
+		
+			var $video = $('#'+this.videoId);
+			$video[0].load();
+			$video[0].currentTime = currentTime;
+
+//			$video[0].play();
+//			var inid = setInterval(function(){
+//				var isPlaying = $video[0].currentTime > 0 && !$video[0].paused && !$video[0].ended 
+//					&& $video[0].readyState > 2;
+//
+//				if(!isPlaying){
+//					
+//				} else {
+//					$video[0].pause();
+//					clearInterval(inid);
+//				}
+//				
+//			},100);
+		} 
 	},
 	
 	_onUserScrollAction: function(evt){
@@ -1832,12 +1877,15 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 	
 	_startEditor: function(ctxMenuOption, senDataArr){
 		var _this = this;
-
+		
 		if (!this.annotationEditor) {
 			this.annotationEditor = new CineAnnotationEditorView({
 				dispatchService: this.dispatchService,
 				onSaved: function(){
 					_this._closeEditor();
+					_this.dispatchService.send(DH,{
+						type: 'annotationEditorFinished'
+					});
 				},
 				onCancel: function(){
 					_this._closeEditor();
@@ -1870,7 +1918,6 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		
 		this.drawer.open();
 	},
-	
 	_closeEditor: function(){
 		if (this.drawer) {
 			this.drawer.close();
@@ -1883,7 +1930,6 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		if( 'annotationEditorStart' === m.type ){
 			var ctxMenuOption = m.ctxMenuOption;
 			var senDataArr = m.senDataArr;
-
 			this._startEditor(ctxMenuOption, senDataArr);
 
 		} else if( 'annotationEditorClose' === m.type ){
