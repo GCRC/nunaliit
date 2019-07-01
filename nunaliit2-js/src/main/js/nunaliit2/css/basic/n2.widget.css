@@ -505,13 +505,14 @@ Polar Stereographic Projection Selector
 /* For Annotation Editor*/
 
 .input_group_for_customMDC { 
-  position:relative; 
-  margin-bottom:45px; 
+  position:relative;
+  margin-top: 25px; 
+  margin-bottom:25px; 
 }
 .input_group_for_customMDC input				{
   font-size:18px;
   padding:10px 10px 10px 5px;
-  display:block;
+/*   display:block; */
   width:75px;
   border:none;
   border-bottom:1px solid #757575;
@@ -660,50 +661,7 @@ Drawer widget
 	font: 400 .875rem Roboto, helvetica, sans-serif;
 }
 /* 
-==============================
-tagbox
-==============================
-*/
 
-/* .n2_ui_tagbox{ */
-/*   float:center; */
-/*  /* border:1px solid #ccc;*/ */
-/*   padding:5px; */
-/*   font-family:Arial; */
-/*   margin-top: 10px; */
-/* } */
-/* .n2_ui_tagbox > span{ */
-/* cursor: pointer; */
-/*     display: block; */
-/*     float: left; */
-/*     color: #fff; */
-/*     background: #789; */
-/*     padding: 10px; */
-/*    padding-top: 3px; */
-/*    padding-bottom: 3px; */
-/*     padding-left: 5px; */
-/*     padding-right: 5px; */
-/*     border-radius: 15px; */
-/* } */
-/* .n2_ui_tagbox > span:hover{ */
-/*   opacity:0.7; */
-/* } */
-/* /* .n2_ui_tagbox > span:after{ */ */
-/* /*  position:absolute; */ */
-/* /*  content:"×"; */ */
-/* /*  border:1px solid; */ */
-/* /*  padding:2px 5px; */ */
-/* /*  margin-left:3px; */ */
-/* /*  font-size:4px; */ */
-/* /* } */ */
-/* .n2_ui_tagbox > input{ */
-/*  /* background:#eee;*/ */
-/*   border:0; */
-/*  /* margin:4px;*/ */
-/*   padding:7px; */
-/*   width:80%; */
-/* } */
-/* 
 ==============================
 Wait Widget 
 ==============================
