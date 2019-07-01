@@ -832,7 +832,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.mediaDivId = undefined;
 		this.annotationEditor = undefined;
 		this._lastCtxTime = undefined;
-		this.instanceCnt = 0;
+		
 		
 		// Get container
 		var containerClass = opts.containerClass;
@@ -1267,7 +1267,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					.attr('id', mediaDivId)
 					.appendTo($elem);
 			
-		
 			//DIV for the Video
 			var $video = $('<video>')
 				.attr('id', this.videoId)
@@ -1288,6 +1287,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			$video.mediaelementplayer({
 				poster: thumbnailUrl
 				,alwaysShowControls : true
+				, pauseOtherPlayers : false
 				,features: ['playpause','progress','volume','sourcechooser','fullscreen']
 			}); 
 
@@ -1725,7 +1725,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		} else if ( 'savedState' === origin ){
 		
-			var __curRestoreId = _this.instanceCnt += 1;
 			var $video = $('#'+this.videoId);
 			$video[0].load();
 			$video[0].currentTime = currentTime;
@@ -1735,11 +1734,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var isPlaying = $video[0].currentTime > 0 && !$video[0].paused && !$video[0].ended 
 					&& $video[0].readyState > 2;
 
-				if( __curRestoreId !== 	_this.instanceCnt ){
-					
-					clearInterval(inid);
-					
-				} else if(!isPlaying){
+				if(!isPlaying){
 						
 				} else {
 						$video[0].pause();
