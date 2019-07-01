@@ -832,6 +832,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.mediaDivId = undefined;
 		this.annotationEditor = undefined;
 		this._lastCtxTime = undefined;
+		this.instanceCnt = 0;
 		
 		// Get container
 		var containerClass = opts.containerClass;
@@ -1724,23 +1725,28 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		} else if ( 'savedState' === origin ){
 		
+			var __curRestoreId = _this.instanceCnt += 1;
 			var $video = $('#'+this.videoId);
 			$video[0].load();
 			$video[0].currentTime = currentTime;
 
-//			$video[0].play();
-//			var inid = setInterval(function(){
-//				var isPlaying = $video[0].currentTime > 0 && !$video[0].paused && !$video[0].ended 
-//					&& $video[0].readyState > 2;
-//
-//				if(!isPlaying){
-//					
-//				} else {
-//					$video[0].pause();
-//					clearInterval(inid);
-//				}
-//				
-//			},100);
+			$video[0].play();
+			var inid = setInterval(function(){
+				var isPlaying = $video[0].currentTime > 0 && !$video[0].paused && !$video[0].ended 
+					&& $video[0].readyState > 2;
+
+				if( __curRestoreId !== 	_this.instanceCnt ){
+					
+					clearInterval(inid);
+					
+				} else if(!isPlaying){
+						
+				} else {
+						$video[0].pause();
+						clearInterval(inid);
+				}
+				
+			},100);
 		} 
 	},
 	
