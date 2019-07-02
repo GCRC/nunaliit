@@ -709,10 +709,18 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 						// No matching timelinks no worry
 						new $n2.mdc.MDCTagBox({
 							parentElem : $formFieldSection,
-							label: 'Tags',
-							mdcClasses: ['n2transcript_label','label_tagbox'],
+							label: 'Theme Tags',
+							mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 							chips: []
 						});
+						
+						new $n2.mdc.MDCTagBox({
+							parentElem : $formFieldSection,
+							label: 'Place Tags',
+							mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
+							chips:[]
+						});
+						
 						return;
 					};
 							
@@ -733,10 +741,17 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 					
 					new $n2.mdc.MDCTagBox({
 						parentElem : $formFieldSection,
-						label: 'Tags',
-						mdcClasses: ['n2transcript_label','label_tagbox'],
+						label: 'Theme Tags',
+						mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 						chips: lastTags
 					});
+					
+					new $n2.mdc.MDCTagBox({
+						parentElem : $formFieldSection,
+						label: 'Place Tags',
+						mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
+						chips:[]
+					})
 			} else {
 				alert('Current document doesnot have (atlascine2_cinemap) property');
 				return;
