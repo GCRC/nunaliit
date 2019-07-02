@@ -503,6 +503,40 @@ Polar Stereographic Projection Selector
 }
 
 /* For Annotation Editor*/
+.n2WidgetAnnotation_formfieldSection {
+	max-width: 420px;
+	margin: 10px;
+    border: 1px solid #ccc!important;
+    display: grid;
+    grid-template-columns: auto;
+    grid-gap: 5px;
+    padding: 10px;
+    margin-left: 20px;
+}
+.n2WidgetAnnotation_tagGroup_formfieldSection {
+	max-width: 420px;
+	margin: 10px;
+    border: 1px solid #ccc!important;
+    padding: 10px;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-gap: 10px;
+    margin-left: 20px;
+}
+
+.formfieldSection_leftcol {
+	grid-column: 1;
+	grid-row: 1;
+}
+.formfieldSection_rightcol {
+	grid-column: 2;
+    grid-row: 1;
+    margin-top: 12px;
+}
+
+.n2-tag-box.mdc-text-field.n2s_attachedMDCTextField.mdc-text-field--outlined {
+	width: 260px;
+}
 
 .input_group_for_customMDC { 
   position:relative;
