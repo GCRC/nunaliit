@@ -1131,9 +1131,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				'type': 'requestDocument'
 				,'docId': this.docId
 			});
-
+			return;
 		} else if( !this.transcript ){
 			this._loadTranscript(this.doc);
+			return;
 
 		} else if( !this.srtData ){
 			var attSrt = undefined;
@@ -1172,7 +1173,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				// element is wronly configured. Report error
 				_this._renderError('Can not compute URL for SRT');
 			};
-
+			
 		} else if( this.transcript.timeTable ){
 //			if( !$n2.isArray(this.transcript.timeTable) ){
 //				_this._renderError('timeTable must be an array');
