@@ -1,3 +1,8 @@
+/* MDC Bug Fixes */
+.mdc-floating-label {
+  will-change: unset;
+}
+
 /* MDC Theme Colour Palette */
 :root {
     --mdc-theme-primary: #1565c0;
