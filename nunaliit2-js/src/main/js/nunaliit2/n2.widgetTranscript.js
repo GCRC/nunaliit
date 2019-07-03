@@ -1588,6 +1588,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			};
 			this.dispatchService.synchronousCall(DH,m);
 			var rangySel = m.selection;
+			if (!rangySel){
+				return null;
+			}
 			$.each(rangySel,  function(i, el){
 				var _d = $n2.extend({
 					text: el.innerText
