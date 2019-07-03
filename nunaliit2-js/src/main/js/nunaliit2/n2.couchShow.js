@@ -2227,9 +2227,21 @@ var DomStyler = $n2.Class({
 	},
 	
 	_attachMDCTextField: function($jq) {
+		var attachedTextField;
 		var txtFld = $jq[0];
+		var $txtFldLabel = $jq.find('label');
 		if (txtFld) {
-			$mdc.textField.MDCTextField.attachTo(txtFld);
+			attachedTextField = $mdc.textField.MDCTextField.attachTo(txtFld);
+			attachedTextField.layout();
+
+			// Update Notch width to match text field width if tag box
+			if ($jq.hasClass('n2-tag-box')) {
+				var labelWidth = $txtFldLabel.width();
+				var labelScaleFactor = 0.75;
+				var labelPadding = 8;
+				var notchWidth = (labelWidth * labelScaleFactor) + labelPadding;
+				$txtFldLabel.parent().css('max-width', notchWidth + 'px');
+			}
 		}
 	},
 	

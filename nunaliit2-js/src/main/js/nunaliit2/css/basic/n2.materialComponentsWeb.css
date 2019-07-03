@@ -38,13 +38,14 @@
 .upload_body ul.tree,
 .submission_view_dialog_tree ul.tree,
 .n2CouchEditor_tree {
-    font-family: monospace;
+	font-family: monospace;
 }
 
-/* Custom Tag Box Styling */
+/* Nunaliit Tag Box Styling */
 .n2-tag-box.mdc-text-field,
 .n2-tag-box.mdc-text-field input {
-    height: auto;
+	height: auto;
+	width: 100%;
 }
 
 .n2-tag-box.mdc-text-field input {
@@ -52,68 +53,66 @@
 }
 
 .n2-tag-box .mdc-chip-set {
-    padding: 8px 4px 4px 4px;
+	padding: 8px 4px 4px 4px;
 }
 
 .n2-tag-box .mdc-notched-outline .mdc-notched-outline__notch {
-	padding-left: 0;
-    border-top: none;
+	border-top: none;
 }
 
 .n2-tag-box .mdc-notched-outline .mdc-notched-outline__notch .mdc-floating-label {
-    -webkit-transform: translateY(-136%) scale(0.75);
-    transform: translateY(-136%) scale(0.75); 
+	-webkit-transform: translateY(-136%) scale(0.75);
+	transform: translateY(-136%) scale(0.75);
 	text-overflow: clip;
-} 
+	max-width: none;
+}
 
 /* Nunaliit2 Tool Page Styling */
-
 .drawer-frame-root {
-    display: -ms-flexbox;
-    display: flex;
-    height: 100vh;
+	display: -ms-flexbox;
+	display: flex;
+	height: 100vh;
 }
 
 .mdc-drawer-app-content {
-    width: 100%;
+	width: 100%;
 }
 
 .drawer-main-content {
-    padding: 16px;
+	padding: 16px;
 }
 
 .mdc-drawer .mdc-drawer__content .mdc-list .mdc-list-item,
 .mdc-drawer .mdc-drawer__title {
-    font-weight: bold;
+	font-weight: bold;
 }
 
 .mdc-top-app-bar__navigation-icon {
-    font-size: 2em;
-    text-decoration: none;
+	font-size: 2em;
+	text-decoration: none;
 }
 
 .mdc-top-app-bar .nunaliit_login.mdc-top-app-bar__action-item {
-    width: 150px;
-    height: 48px;
+	width: 150px;
+	height: 48px;
 }
 
 section.mdc-top-app-bar__section.mdc-top-app-bar__section--align-end {
-    max-width: 250px;
+	max-width: 250px;
 }
 
 #importApp .importAppInput .mdc-select.mdc-select--outlined select.mdc-select__native-control {
-    min-width: 140px;
+	min-width: 140px;
 }
 
 /* Display docIds on separate lines in dialog window */
 .selectAppTextDialog .mdc-dialog__content {
-    white-space: pre-line;
+	white-space: pre-line;
 }
 
 /* Overriding material-components-web.min.css styling */
-
 .mdc-dialog {
-    z-index: 1000 !important;
+	z-index: 1000 !important;
 }
 
 .mdc-button {
@@ -121,13 +120,14 @@ section.mdc-top-app-bar__section.mdc-top-app-bar__section--align-end {
 }
 
 .mdc-dialog__title+.mdc-dialog__content {
-    padding-top: 5px;
+	padding-top: 5px;
 }
 
 .mdc-dialog.mdc-dialog--scrollable .mdc-dialog__title, 
 .mdc-dialog.mdc-dialog--scrollable .mdc-dialog__actions {
-    border-color: rgba(0,0,0,0);
+	border-color: rgba(0,0,0,0);
 }
+
 /*
 .mdc-text-field::before, .mdc-text-field::after {
     width: 100%;
@@ -135,60 +135,60 @@ section.mdc-top-app-bar__section.mdc-top-app-bar__section--align-end {
 }
 */
 .mdc-text-field span.n2s_briefDisplayed {
-    padding: 10px 20px 10px 16px;
+	padding: 10px 20px 10px 16px;
 }
 
 .n2_documentForm .n2_layoutFloat .mdc-switch,
 .n2_documentForm .n2_layoutFloat .mdc-checkbox {
-    display: inline-flex;
+	display: inline-flex;
 }
 
 .n2_documentForm .n2_layoutFloat .mdc-switch input[type="checkbox"] {
-    width: 54px;
+	width: 54px;
 }
 
 .n2_documentForm .n2_layoutFloat .mdc-switch label,
 .n2_documentForm .n2_layoutFloat .mdc-checkbox label {
-    padding-left: 16px;
+	padding-left: 16px;
 }
 
 .submission_view_dialog_merging .mdc-dialog__container .mdc-dialog__surface {
-    max-width: 800px;
+	max-width: 800px;
 }
 
 /* NavBar hamburger button on main page */
 .nunaliit_atlas .nunaliit_header.mdc-top-app-bar .mdc-top-app-bar__row a.mdc-top-app-bar__navigation-icon {
-    display: none;
+	display: none;
 }
 .nunaliit_atlas .mdc-drawer-scrim {
-    z-index: 11;
+	z-index: 11;
 }
 .nunaliit_atlas aside.mdc-drawer {
-    z-index: 12;
+	z-index: 12;
 }
 .nunaliit_atlas aside.mdc-drawer a.mdc-list-item {
-    display: block;
-    height: auto;
-    line-height: 40px;
-    min-height: 40px;
+	display: block;
+	height: auto;
+	line-height: 40px;
+	min-height: 40px;
 }
 .nunaliit_atlas aside.mdc-drawer a.mdc-list-item>nav {
-    display: flex;
-    flex-direction: column;
+	display: flex;
+	flex-direction: column;
 }
 .nunaliit_atlas aside.mdc-drawer .mdc-drawer__content .n2nav_nested-list {
-    margin-left: 10px;
+	margin-left: 10px;
 }
 
 /* Nunaliit login button */
 .nunaliit_login .nunalitt_login_profile_icon.mdc-button__icon {
-    width: 35px;
+	width: 35px;
 	min-width: 35px;
-    height: 35px;
+	height: 35px;
 	min-height: 35px;
-    margin-left: 10px;
+	margin-left: 10px;
 }
 
 .nunaliit_application .nunaliit_login .mdc-button {
-    color: #ffffff;
+	color: #ffffff;
 }

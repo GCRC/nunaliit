@@ -1261,6 +1261,10 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 			txtFldLabel: this.label
 		});
 
+		this.parentElem.find('#' + this.$chipInput.getId())
+			.find('label')
+			.addClass('mdc-floating-label--float-above');
+
 		$chipSet = new $n2.mdc.MDCChipSet({
 			parentElem: this.parentElem.find('#' + this.$chipInput.getId()),
 			inputChips: true,
