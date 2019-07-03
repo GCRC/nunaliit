@@ -1110,7 +1110,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			if (value || value === '') {
 				$opt = $('<option>')
 					.attr('value', value)
-					.attr('label', label)
+					.text(label)
 					.appendTo(this.select);
 
 				if (menuOpt.selected) {
