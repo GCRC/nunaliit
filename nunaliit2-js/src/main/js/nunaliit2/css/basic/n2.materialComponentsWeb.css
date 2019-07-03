@@ -44,6 +44,7 @@
 .submission_view_dialog_tree ul.tree,
 .n2CouchEditor_tree {
 	font-family: monospace;
+	font-size: medium;
 }
 
 /* Nunaliit Tag Box Styling */
