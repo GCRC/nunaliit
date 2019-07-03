@@ -11,6 +11,10 @@ div.n2CouchEditor_container .ui-accordion-content {
 	padding: 0;
 }
 
+div.n2CouchEditor_container .n2CouchEditor {
+	margin: 10px;
+}
+
 /* Hide portion of the 'add file' form that should not
    appear during the dialog */
 .editorAddFileDialog .editorAddFileFormEditorLine {

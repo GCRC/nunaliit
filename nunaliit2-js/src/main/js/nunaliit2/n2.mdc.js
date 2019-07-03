@@ -1131,13 +1131,25 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 // Class MDCTabBar
 // Description: Create a material design tab bar component
-var MDCTabBar = $n2.Class('MDCMenu', MDC, {
+// Options:
+//  - tabs (Array): An array of objects containing tabs labels and onTabClick function, and active.
+//   - Example:
+//   [{label:"tab 1", onTabClick:tab1ClickFn, active: true},{"label":"tab 2", "onTabClick":tab2ClickFn}]
+var MDCTabBar = $n2.Class('MDCTabBar', MDC, {
+
+	tabs: null,
+
+	tabIndex: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
+			tabs: []
 		}, opts_);
 
 		MDC.prototype.initialize.call(this, opts);
+
+		this.tabs = opts.tabs;
+		this.tabIndex = 0;
 
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Tab Bar Component');
@@ -1150,7 +1162,7 @@ var MDCTabBar = $n2.Class('MDCMenu', MDC, {
 		var $tabBar, $tabScroller, $tabScrollArea, $tabScrollAreaContent, keys;
 		var _this = this;
 
-		this.mdcClasses.push('mdc-tab-bar');
+		this.mdcClasses.push('mdc-tab-bar', 'n2s_attachMDCTabBar');
 
 		$tabBar = $('<div>')
 			.attr('id', this.mdcId)
@@ -1170,32 +1182,43 @@ var MDCTabBar = $n2.Class('MDCMenu', MDC, {
 
 		$tabScrollArea = $('<div>')
 			.addClass('mdc-tab-scroller__scroll-area')
-			.appendTo($tabBar);
+			.appendTo($tabScroller);
 
 		$tabScrollAreaContent = $('<div>')
-			.addClass('mdc-tab-scroller_scroll-content')
+			.addClass('mdc-tab-scroller__scroll-content')
 			.appendTo($tabScrollArea);
 
-		this.$tabBar.appendTo(this.parentElem);
+		this.tabs.forEach(function(tab){
+			var tabBtn = _this._generateMDCTabButton(tab, _this.tabIndex);
+			tabBtn.appendTo($tabScrollAreaContent);
+		});
+
+		$tabBar.appendTo(this.parentElem);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 	},
 
-	_generateMDCTabButton: function(label){
+	_generateMDCTabButton: function(tab, index){
 		var $tab, $tabContent, $tabIndicator;
 		var btnLabel = "";
 
-		if (label) {
-			btnLabel = label;
+		if (tab.label) {
+			btnLabel = tab.label;
 		}
 
 		$tab = $('<button>')
-			.addClass('mdc-tab mdc-tab--active')
+			.addClass('mdc-tab')
 			.attr('role', 'tab')
-			.attr('aria-selected',true)
-			.attr('tabindex', '0');
+			.attr('aria-selected', false)
+			.attr('tabindex', tab.index)
+			.click(tab.onTabClick);
+
+		if (tab.active) {
+			$tab.attr('aria-selected', true);
+			$tab.addClass('mdc-tab--active');
+		}
 
 		$tabContent = $('<span>')
 			.addClass('mdc-tab__content')
@@ -1207,17 +1230,25 @@ var MDCTabBar = $n2.Class('MDCMenu', MDC, {
 			.appendTo($tabContent);
 
 		$tabIndicator = $('<span>')
-			.addClass('mdc-tab-indicator mdc-tab-indicator--active')
+			.addClass('mdc-tab-indicator')
 			.appendTo($tab);
 
+		if (tab.active) {
+			$tabIndicator.addClass('mdc-tab-indicator--active');
+		}
+
 		$('<span>')
-			.addClass('mdc-tab-indicator__content mdc-tab-indicator__content--underline')
+			.addClass('mdc-tab-indicator__content')
+			.addClass('mdc-tab-indicator__content--underline')
 			.appendTo($tabIndicator);
 
 		$('<span>')
 			.addClass('mdc-tab__ripple')
 			.appendTo($tab);
-			
+
+		this.tabIndex += 1;
+
+		return $tab;
 	}
 }); 
 
@@ -1526,6 +1557,7 @@ $n2.mdc = {
 	MDCMenu: MDCMenu,
 	MDCRadio: MDCRadio,
 	MDCSelect: MDCSelect,
+	MDCTabBar: MDCTabBar,
 	MDCTagBox: MDCTagBox, 
 	MDCTextField: MDCTextField,
 	MDCTopAppBar: MDCTopAppBar

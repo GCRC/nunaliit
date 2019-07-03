@@ -1875,7 +1875,7 @@ var DialogService = $n2.Class({
 			parentElem: $('#' + selectSchemaDialog.getContentId()),
 			menuLabel: 'Select schema',
 			menuOpts: dialogSelectItems,
-			mdcClasses: dialogSelectClasses
+			mdcClasses: dialogSelectClasses,
 		});
 
 		var mustReset = true;

@@ -417,6 +417,12 @@ var DomStyler = $n2.Class({
 				,acceptsContextDocument: false
 			},
 			{
+				source: 'n2s_attachMDCTabBar'
+				,target: 'n2s_attachedMDCTabBar'
+				,fn: this._attachMDCTabBar
+				,acceptsContextDocument: false
+			},
+			{
 				source: 'n2s_attachMDCTextField'
 				,target: 'n2s_attachedMDCTextField'
 				,fn: this._attachMDCTextField
@@ -2220,9 +2226,24 @@ var DomStyler = $n2.Class({
 	},
 	
 	_attachMDCSelect: function($jq) {
+		var attachedSelect;
 		var menu = $jq[0];
 		if (menu) {
-			$mdc.select.MDCSelect.attachTo(menu);
+			attachedSelect = $mdc.select.MDCSelect.attachTo(menu);
+			attachedSelect.layout();
+		}
+	},
+
+	_attachMDCTabBar: function($jq) {
+		var attachedTabBar;
+		var tabBar = $jq[0];
+		if (tabBar) {
+			attachedTabBar = $mdc.tabBar.MDCTabBar.attachTo(tabBar);
+			attachedTabBar.listen('MDCTabBar:activated', function(event){
+				if (event.detail && event.detail.index) {
+					attachedTabBar.activateTab(event.detail.index);
+				}
+			});
 		}
 	},
 	
