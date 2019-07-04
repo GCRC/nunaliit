@@ -790,14 +790,16 @@
 	border: none !important;
 }
 .ui-accordion .ui-accordion-header .ui-icon.ui-icon-triangle-1-e { 
-	background-image: url('images/bullet_add.png');
-	background-position: -8px -7px; 
+	background-image: url('images/arrow_down.png');
+	background-position: center; 
 	background-repeat: no-repeat;
+	background-size: cover;
 }
 .ui-accordion .ui-accordion-header.ui-state-active .ui-icon.ui-icon-triangle-1-s { 
-	background-image: url('images/bullet_minus.png');
-	background-position: -8px -7px; 
+	background-image: url('images/arrow_up.png');
+	background-position: center; 
 	background-repeat: no-repeat;
+	background-size: cover;
 }
 .n2CouchEditor_container .ui-accordion-content {
 	padding: 0;
