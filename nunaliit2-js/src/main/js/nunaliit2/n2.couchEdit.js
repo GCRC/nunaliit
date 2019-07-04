@@ -352,6 +352,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 				relationEditorNeeded = true;
 			};
 		};
+
 		if( editorCount > 1 ){
 			accordionNeeded = true;
 		};
@@ -378,10 +379,6 @@ var CouchSimpleDocumentEditor = $n2.Class({
 						.text( _loc('Form View') )
 						.appendTo($schemaHeader);
 				};
-				
-				var $schemaContainer = $('<div>')
-					.addClass('n2CouchEditor_schema')
-					.appendTo($editorsContainer);
 				
 				this.schemaEditor = this.schemaEditorService.editDocument({
 					doc: data
@@ -1166,6 +1163,8 @@ var CouchDocumentEditor = $n2.Class({
 	},
 
 	_displayEditor: function() {
+		var tabBar, $editorView;
+
 		var _this = this;
 		
 		var selectedSchema = this.editedDocumentSchema;
@@ -1189,26 +1188,18 @@ var CouchDocumentEditor = $n2.Class({
 		var showFormView = false;
 		var showTreeView = false;
 		var showSlideView = false;
-		var viewCount = 0;
-		var showAccordion = false;
 		var schemaEditorService = this.schemaEditorService;
-		if( !this.editorSuppressFormView 
-		 && selectedSchema 
-		 && schemaEditorService ){
+		if (!this.editorSuppressFormView 
+			&& selectedSchema 
+			&& schemaEditorService) {
 			showFormView = true;
-			++viewCount;
-		};
-		if( !this.editorSuppressTreeView ){
+		}
+		if (!this.editorSuppressTreeView) {
 			showTreeView = true;
-			++viewCount;
-		};
-		if( !this.editorSuppressTreeView ){
+		}
+		if (!this.editorSuppressTreeView) {
 			showSlideView = true;
-			++viewCount;
-		};
-		if( viewCount > 1 ){
-			showAccordion = true;
-		};
+		}
 
 		var attributeDialog = $('#'+this.panelName);
 		attributeDialog.empty();
@@ -1217,113 +1208,137 @@ var CouchDocumentEditor = $n2.Class({
 		var $editorContainer = $('<div id="'+this.editorContainerId+'" class="n2CouchEditor_container mdc-card"></div>');
 		attributeDialog.append($editorContainer);
 
-		if( showFormView ) {
-			if( showAccordion ) {
-				var $schemaHeader = $('<h3>').appendTo($editorContainer);
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Form View') )
-					.appendTo($schemaHeader);
-			};
+		var openEditor = function(editorType){
+			return function(){
 
-			var $schemaContainer = $('<div>')
-				.addClass('n2CouchEditor_schema')
-				.appendTo($editorContainer);
-			
-			this.schemaEditor = schemaEditorService.editDocument({
-				doc: data
-				,schema: selectedSchema
-				,$div: $schemaContainer
-				,onChanged: function(){
-					_this._adjustInternalValues(_this.editedDocument);
-					if( _this.treeEditor ) {
-						_this.treeEditor.refresh();
-					};
-					if( _this.slideEditor ) {
-						_this.slideEditor.refresh();
-					};
-					if( _this.attachmentEditor ) {
-						_this.attachmentEditor.refresh();
-					};
-					_this._refreshRelations(data);
-					_this.onEditorObjectChanged(data);
+				// hide all types of editor
+				$editorView.children('div').css('display', 'none');
+
+				// Set all view types to false 
+				showFormView = false;
+				showTreeView = false;
+				showSlideView = false;
+
+				if (editorType === "formView") {
+					showFormView = true;
+					$editorView.find('.n2CouchEditor_schema').css('display', 'block');
+
+				} else if (editorType === "treeView") {
+					showTreeView = true;
+					$editorView.find('.n2CouchEditor_tree').css('display', 'block');
+
+				} else if (editorType === "slideView") {
+					showSlideView = true;
+					$editorView.find('.n2CouchEditor_slide').css('display', 'block');
+
+				} else {
+					showFormView = true;
+					$editorView.find('.n2CouchEditor_schema').css('display', 'block');
 				}
-			});
+			};
 		};
 
-		if( showTreeView ) {
-			if( showAccordion ) {
-				var $treeHeader = $('<h3>').appendTo($editorContainer);
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Tree View') )
-					.appendTo($treeHeader);
-			};
-			
-			var $treeContainer = $('<div>')
-				.addClass('n2CouchEditor_tree')
-				.appendTo($editorContainer);
-			var editorOptions = {
-				onObjectChanged: function() {
-					_this._adjustInternalValues(_this.editedDocument);
-					if( _this.slideEditor ) {
-						_this.slideEditor.refresh();
-					};
-					if( _this.schemaEditor ) {
-						_this.schemaEditor.refresh();
-					};
-					if( _this.attachmentEditor ) {
-						_this.attachmentEditor.refresh();
-					};
-					_this._refreshRelations(data);
-					_this.onEditorObjectChanged(data);
+		tabBar = new $n2.mdc.MDCTabBar({
+			parentElem: $editorContainer,
+			tabs: [
+				{label: 'Form View', onTabClick: openEditor('formView'), active: true},
+				{label: 'Tree View', onTabClick: openEditor('treeView')},
+				{label: 'Editor View', onTabClick: openEditor('slideView')}
+			]
+		});
+
+		// Editor View
+		$editorView = $('<div>')
+			.addClass('n2CouchEditor')
+			.appendTo($editorContainer);
+
+		// Add Form Editor View
+		var $schemaContainer = $('<div>')
+			.addClass('n2CouchEditor_schema')
+			.appendTo($editorView);
+
+		_this.schemaEditor = _this.schemaEditorService.editDocument({
+			doc: data
+			,schema: selectedSchema
+			,$div: $schemaContainer
+			,onchanged: function(){
+				_this._adjustInternalValues(_this.editedDocument);
+				if (_this.treeEditor) {
+					_this.treeEditor.refresh();
 				}
-				,isKeyEditingAllowed: isKeyEditingAllowed
-				,isValueEditingAllowed: isValueEditingAllowed
-				,isKeyDeletionAllowed: isKeyDeletionAllowed
-			};
-			var objectTree = new $n2.tree.ObjectTree($treeContainer, data, editorOptions);
-			this.treeEditor = new $n2.tree.ObjectTreeEditor(objectTree, data, editorOptions);
-		};
-		
-		if( showSlideView ) {
-			if( showAccordion ) {
-				var $slideHeader = $('<h3>').appendTo($editorContainer);
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Editor View') )
-					.appendTo($slideHeader);
-			};
-			
-			var $slideContainer = $('<div>')
-				.addClass('n2CouchEditor_slide')
-				.appendTo($editorContainer);
-			var slideEditorOptions = {
-				onObjectChanged: function() {
-					_this._adjustInternalValues(_this.editedDocument);
-					if( _this.treeEditor ) {
-						_this.treeEditor.refresh();
-					};
-					if( _this.schemaEditor ) {
-						_this.schemaEditor.refresh();
-					};
-					if( _this.attachmentEditor ) {
-						_this.attachmentEditor.refresh();
-					};
-					_this._refreshRelations(data);
-					_this.onEditorObjectChanged(data);
+
+				if (_this.slideEditor) {
+					_this.slideEditor.refresh();
 				}
-				,isKeyEditingAllowed: isKeyEditingAllowed
-				,isValueEditingAllowed: isValueEditingAllowed
-				,isKeyDeletionAllowed: isKeyDeletionAllowed
-			};
-			this.slideEditor = new $n2.slideEditor.Editor($slideContainer, data, slideEditorOptions);
+
+				if (_this.attachmentEditor) {
+					_this.attachmentEditor.refresh();
+				}
+
+				_this._refreshRelations(data);
+				_this.onEditorObjectChanged(data);
+			}
+		});
+
+		// Add Tree Editor View
+		var $treeContainer = $('<div>')
+			.addClass('n2CouchEditor_tree')
+			.css('display', 'none')
+			.appendTo($editorView);
+		var editorOptions = {
+			onObjectChanged: function() {
+				_this._adjustInternalValues(_this.editedDocument);
+				if (_this.slideEditor) {
+					_this.slideEditor.refresh();
+				}
+
+				if (_this.schemaEditor) {
+					_this.schemaEditor.refresh();
+				}
+
+				if (_this.attachmentEditor) {
+					_this.attachmentEditor.refresh();
+				}
+
+				_this._refreshRelations(data);
+				_this.onEditorObjectChanged(data);
+			}
+			,isKeyEditingAllowed: isKeyEditingAllowed
+			,isValueEditingAllowed: isValueEditingAllowed
+			,isKeyDeletionAllowed: isKeyDeletionAllowed
 		};
-		
-		if( showAccordion ) {
-			$editorContainer.accordion({ collapsible: true });
+		var objectTree = new $n2.tree.ObjectTree($treeContainer, data, editorOptions);
+		_this.treeEditor = new $n2.tree.ObjectTreeEditor(objectTree, data, editorOptions);
+
+		// Add Slide Editor View
+		var $slideContainer = $('<div>')
+			.addClass('n2CouchEditor_slide')
+			.css('display', 'none')
+			.appendTo($editorView);
+		var slideEditorOptions = {
+			onObjectChanged: function() {
+				_this._adjustInternalValues(_this.editedDocument);
+				if (_this.treeEditor) {
+					_this.treeEditor.refresh();
+				}
+
+				if (_this.schemaEditor) {
+					_this.schemaEditor.refresh();
+				}
+
+				if (_this.attachmentEditor) {
+					_this.attachmentEditor.refresh();
+				}
+
+				_this._refreshRelations(data);
+				_this.onEditorObjectChanged(data);
+			}
+			,isKeyEditingAllowed: isKeyEditingAllowed
+			,isValueEditingAllowed: isValueEditingAllowed
+			,isKeyDeletionAllowed: isKeyDeletionAllowed
 		};
-		
+		_this.slideEditor = new $n2.slideEditor.Editor($slideContainer, data, slideEditorOptions);
+
 		// Report relations
 		$('<div>')
 			.addClass('editorDisplayRelations')
@@ -1405,8 +1420,7 @@ var CouchDocumentEditor = $n2.Class({
 			}
 		});
 
-		if( !this.isInsert && $n2.couchMap.canDeleteDoc(data) ) {
-
+		if (!this.isInsert && $n2.couchMap.canDeleteDoc(data)) {
 			new $n2.mdc.MDCButton({
 				parentElem: $formButtons,
 				mdcClasses: ['delete'],
@@ -1418,13 +1432,13 @@ var CouchDocumentEditor = $n2.Class({
 					return false;
 				}
 			});
-		};
-		
-		if( this.attachmentEditor ){
+		}
+
+		if (this.attachmentEditor) {
 			this.attachmentEditor.printButtons({
 				elem: $formButtons
 			});
-		};
+		}
 
 		new $n2.mdc.MDCButton({
 			parentElem: $formButtons,

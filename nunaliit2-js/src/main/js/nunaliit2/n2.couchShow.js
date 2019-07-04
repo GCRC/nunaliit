@@ -417,6 +417,12 @@ var DomStyler = $n2.Class({
 				,acceptsContextDocument: false
 			},
 			{
+				source: 'n2s_attachMDCTabBar'
+				,target: 'n2s_attachedMDCTabBar'
+				,fn: this._attachMDCTabBar
+				,acceptsContextDocument: false
+			},
+			{
 				source: 'n2s_attachMDCTextField'
 				,target: 'n2s_attachedMDCTextField'
 				,fn: this._attachMDCTextField
@@ -2221,16 +2227,43 @@ var DomStyler = $n2.Class({
 	},
 	
 	_attachMDCSelect: function($jq) {
+		var attachedSelect;
 		var menu = $jq[0];
 		if (menu) {
-			$mdc.select.MDCSelect.attachTo(menu);
+			attachedSelect = $mdc.select.MDCSelect.attachTo(menu);
+			attachedSelect.layout();
+		}
+	},
+
+	_attachMDCTabBar: function($jq) {
+		var attachedTabBar;
+		var tabBar = $jq[0];
+		if (tabBar) {
+			attachedTabBar = $mdc.tabBar.MDCTabBar.attachTo(tabBar);
+			attachedTabBar.listen('MDCTabBar:activated', function(event){
+				if (event.detail && event.detail.index) {
+					attachedTabBar.activateTab(event.detail.index);
+				}
+			});
 		}
 	},
 	
 	_attachMDCTextField: function($jq) {
+		var attachedTextField;
 		var txtFld = $jq[0];
+		var $txtFldLabel = $jq.find('label');
 		if (txtFld) {
-			$mdc.textField.MDCTextField.attachTo(txtFld);
+			attachedTextField = $mdc.textField.MDCTextField.attachTo(txtFld);
+			attachedTextField.layout();
+
+			// Update Notch width to match text field width if tag box
+			if ($jq.hasClass('n2-tag-box')) {
+				var labelWidth = $txtFldLabel.width();
+				var labelScaleFactor = 0.75;
+				var labelPadding = 8;
+				var notchWidth = (labelWidth * labelScaleFactor) + labelPadding;
+				$txtFldLabel.parent().css('max-width', notchWidth + 'px');
+			}
 		}
 	},
 	
