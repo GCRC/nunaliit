@@ -375,17 +375,13 @@ function main(opts_) {
 		,onModuleTitle: false
 	});
 	
-	var $addDocBtn = $('#searchPanel').find('#addDocumentButton');
-
-	if( $addDocBtn.length < 1){
-		new $n2.mdc.MDCButton({
-			parentElem: $addDocBtn,
-			mdcId: 'addDocumentButton',
-			btnLabel: 'New Document',
-			btnRaised: true,
-			onBtnClick: addDocument
-		});
-	}
+	new $n2.mdc.MDCButton({
+		parentElem: $('#searchPanel'),
+		mdcId: 'addDocumentButton',
+		btnLabel: 'New Document',
+		btnRaised: true,
+		onBtnClick: addDocument
+	});
 	
 	// Editor
 	couchEditor.options.enableAddFile = true;
@@ -411,7 +407,7 @@ function addHamburgerMenu(){
 		barTitle: 'Data Browser'
 	});
 
-	//Tools Drawer
+	// Tools Drawer
 	new $n2.mdc.MDCDrawer({
 		anchorBtnId: 'hamburger_menu_btn',
 		navHeaderTitle: 'Nunaliit Tools',
