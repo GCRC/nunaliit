@@ -2274,49 +2274,21 @@ var Form = $n2.Class({
 		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
 		var parentSelector = objSel.getParentSelector();
 		var key = objSel.getKey();
+		var $input = $elem.find('input');
 
 		var funcIdentifier = $elem.attr('n2-search-func');
 		
 		var ref = objSel.getValue(this.obj);
 		
-		if( ref && ref.doc ) {
+		if (ref && ref.doc) {
 
-			// Update $elem height
-			$elem.css('height', 'inherit');
+			// Hide input element to show document brief
+			$input.css('display','none')
+				.val(ref.doc);
 
-			// There is a reference
-			$elem.empty();
-
-			// Brief
-			$('<span>')
-				.addClass('n2s_briefDisplay')
+			$('<span>').addClass('n2s_briefDisplay')
 				.text(ref.doc)
-				.appendTo($elem);
-
-			var $notchedOutline = $('<div>')
-				.attr('class','mdc-notched-outline mdc-notched-outline--notched')
-				.appendTo($elem);
-
-			$('<div>')
-				.attr('class','mdc-notched-outline__leading')
-				.appendTo($notchedOutline);
-
-			var $notch = $('<div>')
-				.attr('class','mdc-notched-outline__notch')
-				.appendTo($notchedOutline);
-
-			var $notchLabel = $('<label>')
-				.attr('class','label n2s_localized mdc-floating-label mdc-floating-label--float-above')
-				.text(referenceLabel)
-				.appendTo($notch);
-
-			// Update width of $notch based on label width
-			var labelWidth = $notchLabel.width();
-			$notch.width(labelWidth);
-
-			$('<div>')
-				.attr('class','mdc-notched-outline__trailing')
-				.appendTo($notchedOutline);
+				.insertBefore($input);
 				
 			// Delete button
 			$('<div>')
@@ -2343,21 +2315,10 @@ var Form = $n2.Class({
 				});
 			
 		} else {
-			// There is no reference. Install a
-			// text input
-			$elem.empty();
-			
-			var referenceFieldId = $n2.getUniqueId();
-
-			var $input = $('<input>')
-				.attr('id', referenceFieldId)
-				.attr('type','text')
-				.attr('class','n2schema_input mdc-text-field__input')
-				.appendTo($elem);
 			
 			// Handle changes
 			var changeHandler = function(e) {
-				var $input = $(this);
+			//	var $input = $(this);
 				
 				var parentObj = parentSelector.getValue(_this.obj);
 				if( parentObj ){
@@ -2386,27 +2347,6 @@ var Form = $n2.Class({
 				};
 			};
 			$input.change(changeHandler);
-			
-			var $notchedOutline = $('<div>')
-				.attr('class','mdc-notched-outline')
-				.appendTo($elem);
-
-			$('<div>')
-				.attr('class','mdc-notched-outline__leading')
-				.appendTo($notchedOutline);
-
-			var $notch = $('<div>')
-				.attr('class','mdc-notched-outline__notch')
-				.appendTo($notchedOutline);
-
-			$('<label>')
-				.attr('class','label n2s_localized mdc-floating-label')
-				.text(referenceLabel)
-				.appendTo($notch);
-
-			$('<div>')
-				.attr('class','mdc-notched-outline__trailing')
-				.appendTo($notchedOutline);
 
 			// Handle focus
 			var focusHandler = {
@@ -2435,6 +2375,7 @@ var Form = $n2.Class({
 					};
 				};
 			};
+
 			if( focusHandler ) {
 				$input.focus(function(e, eventParam){
 					var $input = $(this);
