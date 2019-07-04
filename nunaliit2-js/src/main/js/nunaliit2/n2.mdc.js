@@ -341,11 +341,13 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 				$chipSet.attr(key, _this.mdcAttributes[key]);
 			});
 		}
-	
-		this.chips.forEach(function(chip){
-			$chip = _this._generateChip(chip);
-			$chip.appendTo($chipSet);
-		});
+
+		if (this.chips) {	
+			this.chips.forEach(function(chip){
+				$chip = _this._generateChip(chip);
+				$chip.appendTo($chipSet);
+			});
+		}
 
 		$chipSet.appendTo(this.parentElem);
 
