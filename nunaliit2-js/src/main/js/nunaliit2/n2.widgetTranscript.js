@@ -690,7 +690,8 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 		//.appendTo($formFieldSection);
 		
 		var doc = this.currentDoc;
-		var lastTags = [];
+		var lastThemeTags = [];
+		var lastPlaceTags = [];
 		if( doc 
 			 && doc.atlascine2_cinemap ){
 					var timeLinks = doc.atlascine2_cinemap.timeLinks;
@@ -728,12 +729,24 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 						if (timeLink.tags
 							&& Array.isArray(timeLink.tags)){
 							timeLink.tags.forEach(function(tag){
-								var tagString = tag.value;
-								var idx = lastTags.indexOf(tagString);
-								if (idx > -1){
-									lastTags.splice(idx, 1);
+								
+								if ( !tag.type || 'place' !==  tag.type) {
+									var tagString = tag.value;
+									var idx = lastThemeTags.indexOf(tagString);
+									if (idx > -1){
+										lastThemeTags.splice(idx, 1);
+									}
+									lastThemeTags.push(tagString);
+								} else {
+									
+									var tagString = tag.value;
+									var idx = lastPlaceTags.indexOf(tagString);
+									if (idx > -1){
+										lastPlaceTags.splice(idx, 1);
+									}
+									lastPlaceTags.push(tagString);
 								}
-								lastTags.push(tagString);
+			
 							})
 						}
 					});
@@ -743,14 +756,14 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 						parentElem : $formFieldSection,
 						label: 'Theme Tags',
 						mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
-						chips: lastTags
+						chips: lastThemeTags
 					});
 					
 					new $n2.mdc.MDCTagBox({
 						parentElem : $formFieldSection,
 						label: 'Place Tags',
 						mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
-						chips:[]
+						chips:lastPlaceTags
 					})
 			} else {
 				alert('Current document doesnot have (atlascine2_cinemap) property');
@@ -2036,6 +2049,11 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 	_sourceModelUpdated: function(sourceState){
 		if( sourceState.added ){
 			for(var i=0,e=sourceState.added.length; i<e; ++i){
+				
+				//Temporary workup for single cinemap selection
+				//Better bug fix the SelectableDocumentFilter
+				this.docsById = {};
+				
 				var doc = sourceState.added[i];
 				var docId = doc._id;
 				
