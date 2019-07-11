@@ -2111,17 +2111,42 @@ var DomStyler = $n2.Class({
 
 			// Store chips list data in chipset
 			$('#' + chipSet.id).data('tags',chipsList);
+			return chipsList;
 			//alert($('#' + chipSet.id).first().data('tags'));
 		};
 
-		function generateChip(chipText){
+		function generateChip(chipObj){
 			var $chip;
-			var chipId = $n2.getUniqueId();
+			var chipText;
+			if (typeof chipObj === 'string'){
+				chipText = chipObj;
+				var chipId = $n2.getUniqueId();
 
-			$chip = $('<div>').addClass('mdc-chip')
-				.attr('id', chipId)
-				.attr('tabindex','0');
+				$chip = $('<div>').addClass('mdc-chip')
+					.attr('id', chipId)
+					.attr('tabindex','0');
+				
+			} else if ( typeof chipObj === 'object'){
+				chipText = chipObj.chipText;
+				var fraction= undefined;
+				if ( chipObj.fraction ){
+					fraction = chipObj.fraction;
+				};
+				var chipId = $n2.getUniqueId();
 
+				$chip = $('<div>').addClass('mdc-chip')
+					.attr('id', chipId)
+					.attr('tabindex','0');
+				
+				if (!fraction){
+					
+				} else if (fraction === 'full'){
+					$chip.addClass('mdc-chip-full');
+				} else {
+					$chip.addClass('mdc-chip-partial');
+				}
+			}
+			
 			if (chipText) {
 				$('<div>').addClass('mdc-chip__text')
 					.text(chipText)
@@ -2146,6 +2171,7 @@ var DomStyler = $n2.Class({
 			if ($jq.attr('n2associatedmdc')){
 				chipInputId = $jq.attr('n2associatedmdc');
 				$chipInput = $('#' + chipInputId);
+				var chipsetsUpdateCallback = $('#' + chipSet.id).data('chipsetsUpdateCallback');
 				$chipInput.keydown(function(event){
 					if (event.key === 'Enter' || event.keyCode === 13) {
 						if ($chipInput.val()){
@@ -2157,7 +2183,10 @@ var DomStyler = $n2.Class({
 							chipEl.insertBefore($chipInput);
 							attachedChipSet.addChip(chipEl[0]);
 
-							updateTagList();
+							var chiplist = updateTagList();
+							if (typeof chipsetsUpdateCallback === 'function'){
+								chipsetsUpdateCallback(chiplist, "ADD");
+							}
 						}
 					}
 				});
@@ -2166,7 +2195,10 @@ var DomStyler = $n2.Class({
 					if (event.detail && event.detail.chipId) {
 						$('#' + event.detail.chipId).remove();
 
-						updateTagList();
+						var chiplist = updateTagList();
+						if (typeof chipsetsUpdateCallback === 'function'){
+							chipsetsUpdateCallback(chiplist, "DELETE");
+						}
 					}
 				});
 			}

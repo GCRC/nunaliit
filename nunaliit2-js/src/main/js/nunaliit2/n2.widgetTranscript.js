@@ -113,11 +113,36 @@ function updateTimeLinkWithTags(timeLink, tagValues){
 
 //+++++++++++++++++++++++++++++++++++++++++++++++
 
+
+var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: undefined
+		}, opts_);
+		
+		this.dispatchService = opts.dispatchService;
+		this.editorMode = undefined;
+		this.focusSentences = [];
+	},
+	addFullTag : function(){
+		
+	},
+	addPartialTag: function(){
+		
+	},
+	getData : function(){
+		
+	},
+	reset: function(){
+		this.focusSentences.length = 0;
+	}
+	
+});
 var CineAnnotationEditorMode = {
 		TAGSELECTION: 'tagselection',
 		TAGGROUPING : 'taggrouping'
 }
-var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
+var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 
 	dispatchService: null,
 	
@@ -156,6 +181,8 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 		this.currentStartTime = undefined;
 		this.currentEndTime = undefined;
 		this.editorMode = undefined;
+		this.editorAggragateMode = undefined;
+		this.dataDepot = new AnnotationEditorDataDepot({});
 	},
 	
 	getElem: function(){
@@ -171,8 +198,16 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 		var $container = opts.container;
 		
 		var $formField = $('<div>')
-			.attr('id', this.editorId);
+			.attr('id', this.editorId)
+			.appendTo($container);
 		
+		new $n2.mdc.MDCSwitch({
+			parentElem: $formField,
+			onChangeCallBack: function(checked){
+				_this.editorAggragateMode = checked; 
+			}
+		
+		});
 		var $innerForm = $('<div>')
 			.attr('id', this.innerFormId)
 			.appendTo($formField);
@@ -196,8 +231,6 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 				});
 				//.appendTo($formField);
 		};
-		
-		$formField.appendTo($container);
 		
 		return $formField;
 	},
@@ -756,7 +789,10 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 						parentElem : $formFieldSection,
 						label: 'Theme Tags',
 						mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
-						chips: lastThemeTags
+						chips: lastThemeTags,
+						chipsetsUpdateCallback: function(tagList, operation){
+							$n2.log('I wonder what is this: ', tagList);
+						}
 					});
 					
 					new $n2.mdc.MDCTagBox({
@@ -769,6 +805,13 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 				alert('Current document doesnot have (atlascine2_cinemap) property');
 				return;
 			};
+	},
+	_addTagSelEditing: function(data){
+		var _this = this;
+		$n2.log("tell me if aggragate: ", _this.editorAggragateMode);
+		data.forEach(function(_d){
+			_this._addFormViewForSingleUnit(_this.getInnerForm(), _d)
+		});
 	},
 	refresh: function(opts_){
 		var _this = this;
@@ -793,9 +836,8 @@ var CineAnnotationEditorView = $n2.Construct('CineAnnotationEditorView',{
 			
 			switch( this.editorMode ){
 				case CineAnnotationEditorMode.TAGSELECTION: 
-					data.forEach(function(_d){
-						_this._addFormViewForSingleUnit($elem, _d)
-					});
+					_this._addTagSelEditing(data);
+					
 					break;
 				case CineAnnotationEditorMode.TAGGROUPING:
 					_this._addTagGroupEditing($elem);

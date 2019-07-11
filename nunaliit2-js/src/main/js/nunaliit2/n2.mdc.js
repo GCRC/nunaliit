@@ -285,13 +285,16 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	inputChips: null,
 	inputId: null,
 
+	chipsetsUpdateCallback : null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			chips: [],
 			choiceChips: false,
 			filterChips: false,
 			inputChips: false,
-			inputId: null
+			inputId: null,
+			chipsetsUpdateCallback: undefined
 		}, opts_);
 
 		this.chips = opts.chips;
@@ -299,7 +302,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 		this.filterChips = opts.filterChips;
 		this.inputChips = opts.inputChips;
 		this.inputId = opts.inputId;
-
+		this.chipsetsUpdateCallback = opts.chipsetsUpdateCallback;
 		MDC.prototype.initialize.call(this, opts);
 
 		if (!this.parentElem) {
@@ -350,20 +353,45 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 		}
 
 		$chipSet.appendTo(this.parentElem);
+		$chipSet.data('chipsetsUpdateCallback', this.chipsetsUpdateCallback);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 	},
 
-	_generateChip: function(chipText){
+	_generateChip: function(chipObj){
 		var $chip;
-		var chipId = $n2.getUniqueId();
+		var chipText;
+		if (typeof chipObj === 'string'){
+			chipText = chipObj;
+			var chipId = $n2.getUniqueId();
 
-		$chip = $('<div>').addClass('mdc-chip')
-			.attr('id', chipId)
-			.attr('tabindex','0');
+			$chip = $('<div>').addClass('mdc-chip')
+				.attr('id', chipId)
+				.attr('tabindex','0');
+			
+		} else if ( typeof chipObj === 'object'){
+			chipText = chipObj.chipText;
+			var fraction= undefined;
+			if ( chipObj.fraction ){
+				fraction = chipObj.fraction;
+			};
+			var chipId = $n2.getUniqueId();
 
+			$chip = $('<div>').addClass('mdc-chip')
+				.attr('id', chipId)
+				.attr('tabindex','0');
+			
+			if (!fraction){
+				
+			} else if (fraction === 'full'){
+				$chip.addClass('mdc-chip-full');
+			} else {
+				$chip.addClass('mdc-chip-partial');
+			}
+		}
+		
 		if (chipText) {
 			$('<div>').addClass('mdc-chip__text')
 				.text(chipText)
@@ -1264,17 +1292,19 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 	$chipInput: null,
 	chips: null,
 	label: null,
-
+	chipsetsUpdateCallback : null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			chips: [],
 			label: '',
+			chipsetsUpdateCallback : undefined
 		}, opts_);
 
 		this.chips = opts.chips;
 		this.label = opts.label;
 		this.inputId = $n2.getUniqueId();
-
+		this.chipsetsUpdateCallback = opts.chipsetsUpdateCallback;
 		MDC.prototype.initialize.call(this, opts);
 
 		if (!this.parentElem) {
@@ -1302,7 +1332,8 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 			parentElem: this.parentElem.find('#' + this.$chipInput.getId()),
 			inputChips: true,
 			inputId: this.$chipInput.getInputId(),
-			chips: this.chips
+			chips: this.chips,
+			chipsetsUpdateCallback : this.chipsetsUpdateCallback
 		});
 
 		// Move input form field into chipset component
@@ -1545,6 +1576,44 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 		}
 	}
 });
+var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parentElem: null,
+			mdcId: null,
+			mdcClasses: [],
+			mdcAttributes: null,
+			onChangeCallBack: undefined
+		}, opts_);
+		this.onChangeCallBack = opts.onChangeCallBack;
+		MDC.prototype.initialize.call(this, opts);
+		this._generateMDCSwitch();
+	},
+	_generateMDCSwitch: function(){
+		var _this = this;
+		var $switch = $($.parseHTML('<div class="mdc-switch"><div class="mdc-switch__track">'+
+										'</div><div class="mdc-switch__thumb-underlay">'+
+											'<div class="mdc-switch__thumb">'+
+													'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch">'+
+												'</div>'+
+											'</div>'+
+									'</div>'+
+									'<label for="basic-switch">off/on</label>'));
+		$switch.appendTo(this.parentElem);
+		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
+		if (this.onChangeCallBack 
+				&& typeof this.onChangeCallBack === 'function'){
+			vanilla.nativeControl_.addEventListener('change', function(){
+				_this.onChangeCallBack(this.checked);
+			})
+		}
+		
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+	}
+});
+
 
 $n2.mdc = {
 	Service: Service,
@@ -1562,7 +1631,8 @@ $n2.mdc = {
 	MDCTabBar: MDCTabBar,
 	MDCTagBox: MDCTagBox, 
 	MDCTextField: MDCTextField,
-	MDCTopAppBar: MDCTopAppBar
+	MDCTopAppBar: MDCTopAppBar,
+	MDCSwitch: MDCSwitch
 };
 
 })(jQuery,nunaliit2);
