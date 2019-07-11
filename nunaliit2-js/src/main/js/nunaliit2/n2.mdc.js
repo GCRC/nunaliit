@@ -1583,22 +1583,36 @@ var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
 			mdcId: null,
 			mdcClasses: [],
 			mdcAttributes: null,
-			onChangeCallBack: undefined
+			onChangeCallBack: undefined,
+			initiallyOn : false
 		}, opts_);
 		this.onChangeCallBack = opts.onChangeCallBack;
+		this.initiallyOn = opts.initiallyOn;
 		MDC.prototype.initialize.call(this, opts);
 		this._generateMDCSwitch();
 	},
 	_generateMDCSwitch: function(){
 		var _this = this;
-		var $switch = $($.parseHTML('<div class="mdc-switch"><div class="mdc-switch__track">'+
-										'</div><div class="mdc-switch__thumb-underlay">'+
-											'<div class="mdc-switch__thumb">'+
-													'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch">'+
-												'</div>'+
-											'</div>'+
-									'</div>'+
-									'<label for="basic-switch">off/on</label>'));
+		var $switch;
+		if (this.initiallyOn){
+			$switch = $($.parseHTML('<div class="mdc-switch mdc-switch--checked"><div class="mdc-switch__track">'+
+					'</div><div class="mdc-switch__thumb-underlay">'+
+						'<div class="mdc-switch__thumb">'+
+								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch" checked>'+
+							'</div>'+
+						'</div>'+
+				'</div>'+
+				'<label for="basic-switch">off/on</label>'));
+		} else {
+			$switch = $($.parseHTML('<div class="mdc-switch"><div class="mdc-switch__track">'+
+					'</div><div class="mdc-switch__thumb-underlay">'+
+						'<div class="mdc-switch__thumb">'+
+								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch">'+
+							'</div>'+
+						'</div>'+
+				'</div>'+
+				'<label for="basic-switch">off/on</label>'));
+		}
 		$switch.appendTo(this.parentElem);
 		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
 		if (this.onChangeCallBack 

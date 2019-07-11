@@ -2175,6 +2175,7 @@ var DomStyler = $n2.Class({
 				$chipInput.keydown(function(event){
 					if (event.key === 'Enter' || event.keyCode === 13) {
 						if ($chipInput.val()){
+							var newTagText = $chipInput.val()
 							// Get Input Value
 							var chipEl = generateChip($chipInput.val());
 
@@ -2185,7 +2186,7 @@ var DomStyler = $n2.Class({
 
 							var chiplist = updateTagList();
 							if (typeof chipsetsUpdateCallback === 'function'){
-								chipsetsUpdateCallback(chiplist, "ADD");
+								chipsetsUpdateCallback(chiplist, "ADD", newTagText);
 							}
 						}
 					}
@@ -2193,11 +2194,13 @@ var DomStyler = $n2.Class({
 				
 				attachedChipSet.listen('MDCChip:removal', function(event){
 					if (event.detail && event.detail.chipId) {
-						$('#' + event.detail.chipId).remove();
-
+						var $removedChip = $(event.target);
+						var $removedChipText = $removedChip.find('.mdc-chip__text')[0];
+						var delTagText = $removedChipText.innerText.slice();
+						$removedChip.remove();
 						var chiplist = updateTagList();
 						if (typeof chipsetsUpdateCallback === 'function'){
-							chipsetsUpdateCallback(chiplist, "DELETE");
+							chipsetsUpdateCallback(chiplist, "DELETE", delTagText );
 						}
 					}
 				});

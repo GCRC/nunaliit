@@ -123,18 +123,138 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 		this.dispatchService = opts.dispatchService;
 		this.editorMode = undefined;
 		this.focusSentences = [];
+	/*	focusSentences : [
+			
+			{
+				start: '0',
+				end: '10',
+				tags : {
+					'a':'alpha',
+					'b': 'beta'
+				}
+			},
+			{
+				start: '11',
+				end: '20',
+				tags : {
+					'a':'alpha',
+					'c': 'charlie'
+				}
+			}
+		]*/
+		this._doc = undefined;
+		this._data = undefined;
+		this._option = undefined
 	},
-	addFullTag : function(){
+	addFullTag : function(tag){
+		this.focusSentences.forEach(function(s){
+			s.tags[tag] = tag;
+		})
+	},
+	addPartialTag: function(start, end, tag){
 		
 	},
-	addPartialTag: function(){
+	deleteTag : function(tag){
+		this.focusSentences.forEach(function(s){
+			delete s.tags[tag];
+		})
+	},
+	getAllTags: function(){
 		
 	},
 	getData : function(){
+		return this.focusSentences;
+	},
+	setData: function(data){
+		var _this = this;
+		this.reset();
+		var doc = this._doc;
+		
+		if( doc
+			&& doc.atlascine2_cinemap ){
+				var timeLinks = doc.atlascine2_cinemap.timeLinks;
+				if( !timeLinks ){
+					// Create if it does not exist
+					timeLinks = [];
+					doc.atlascine2_cinemap.timeLinks = timeLinks;
+					return;
+				};
+				
+				data.forEach(function(d){
+					var start= d.startTimeCode,
+						end = d.finTimeCode;
+					var matchingLinks = findTimeLink(
+							timeLinks, 
+							start, 
+							end );
+					if( matchingLinks.length < 1 ){
+						// Should I create one? If so, how?
+						var newTimeLink = {
+							'starttime': start
+							,'endtime': end
+							,'tags': []
+//							,"linkRef": {
+//								"nunaliit_type": "reference"
+//								"doc": "stock.rwanda"
+//							}
+						};
+						matchingLinks.push(newTimeLink);
+					}
+					var totalTags = [];
+					matchingLinks.forEach(function(e){
+						totalTags.push.apply(totalTags, e.tags.slice());
+					})
+					var senRec = {
+							start: start,
+							end: end,
+							tags: totalTags
+					}
+					_this.focusSentences.push(senRec);
+					
+					
+					
+					
+					
+				});
+				
+				
+				
+				
+			}
+				
+			function findTimeLink(timeLinks, startTime, endTime){
+				 var result = [];
+				 
+				 timeLinks.forEach(function(timeLink){
+					 if( timeLink.starttime === startTime
+					  && timeLink.endtime === endTime ){
+						result.push(timeLink);
+					 };
+				 });
+				 
+				 return result;
+			};
+		data.forEach(function(d){
+			var 
+		});
+	},
+	getDoc: function(){
+		return this._doc;
+	},
+	setDoc: function(doc){
+		this._doc = doc;
+	},
+	getOption: function(){
+		
+	},
+	setOption: function(){
 		
 	},
 	reset: function(){
 		this.focusSentences.length = 0;
+	},
+	workOnTagSel(){
+		
 	}
 	
 });
@@ -181,7 +301,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		this.currentStartTime = undefined;
 		this.currentEndTime = undefined;
 		this.editorMode = undefined;
-		this.editorAggragateMode = undefined;
+		this.editorAggregateMode = false;
 		this.dataDepot = new AnnotationEditorDataDepot({});
 	},
 	
@@ -203,8 +323,9 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		
 		new $n2.mdc.MDCSwitch({
 			parentElem: $formField,
+			initiallyOn: _this.editorAggregateMode,
 			onChangeCallBack: function(checked){
-				_this.editorAggragateMode = checked; 
+				_this.editorAggregateMode = checked; 
 			}
 		
 		});
@@ -790,8 +911,14 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 						label: 'Theme Tags',
 						mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 						chips: lastThemeTags,
-						chipsetsUpdateCallback: function(tagList, operation){
-							$n2.log('I wonder what is this: ', tagList);
+						chipsetsUpdateCallback: function(tagList, operation, target){
+//							switch(operation){
+//								case 'ADD':
+//									break;
+//								case 'DELETE':
+//									break;
+//							}
+//							$n2.log('I wonder what is this: ', tagList);
 						}
 					});
 					
@@ -806,12 +933,23 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				return;
 			};
 	},
+	_addFormViewAggregated : function($parent, data){
+		//Instead read and parsing the tags from cinemap
+		//We receive the data from dataDepot now for aggregateView
+		var $formField = $parent;
+		var depot = this.dataDepot;
+		var senData = depot.getData();
+	},
 	_addTagSelEditing: function(data){
 		var _this = this;
-		$n2.log("tell me if aggragate: ", _this.editorAggragateMode);
-		data.forEach(function(_d){
-			_this._addFormViewForSingleUnit(_this.getInnerForm(), _d)
-		});
+		if(_this.editorAggregateMode){
+			_this._addFormViewAggregated(_this.getInnerForm(),data);
+		} else {
+			data.forEach(function(_d){
+				_this._addFormViewForSingleUnit(_this.getInnerForm(), _d);
+			});
+		};
+		
 	},
 	refresh: function(opts_){
 		var _this = this;
@@ -822,6 +960,11 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		var opt = opts_.option;
 		var data = opts_.data;
 		var doc = opts_.doc;
+		
+		this.dataDepot.setDoc(doc);
+		this.dataDepot.setOption(opt);
+		this.dataDepot.setData(data);
+	
 		
 		if( doc ){
 			this.currentDoc = doc;
