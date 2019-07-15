@@ -1818,7 +1818,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					.attr('data-startcode', transcriptElem.startTimeCode)
 					.attr('data-fincode', transcriptElem.finTimeCode)
 					.addClass('n2-transcriptWidget-sentence')
-					.text(transcriptElem.text+ ' ')
+					.html(transcriptElem.text+ " ")
 					.appendTo($transcript)
 					.contextmenu( function(e){
 						var elmnt = e.target;
