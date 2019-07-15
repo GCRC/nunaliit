@@ -294,6 +294,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 			filterChips: false,
 			inputChips: false,
 			inputId: null,
+			initialChipFull: false,
 			chipsetsUpdateCallback: undefined
 		}, opts_);
 
@@ -302,6 +303,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 		this.filterChips = opts.filterChips;
 		this.inputChips = opts.inputChips;
 		this.inputId = opts.inputId;
+		this.initialChipFull = opts.initialChipFull;
 		this.chipsetsUpdateCallback = opts.chipsetsUpdateCallback;
 		MDC.prototype.initialize.call(this, opts);
 
@@ -347,7 +349,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 		if (this.chips) {	
 			this.chips.forEach(function(chip){
-				$chip = _this._generateChip(chip);
+				$chip = _this._generateChip(chip, null, _this.initialChipFull);
 				$chip.appendTo($chipSet);
 			});
 		}
@@ -360,7 +362,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 		}
 	},
 
-	_generateChip: function(chipObj, type_opt){
+	_generateChip: function(chipObj, type_opt, initialChipFull){
 		var $chip;
 		var chipText;
 		if (typeof chipObj === 'string'){
@@ -1306,18 +1308,21 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 	$chipInput: null,
 	chips: null,
 	label: null,
+	initialChipFull : null,
 	chipsetsUpdateCallback : null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			chips: [],
 			label: '',
+			initialChipFull : false, 
 			chipsetsUpdateCallback : undefined
 		}, opts_);
 
 		this.chips = opts.chips;
 		this.label = opts.label;
 		this.inputId = $n2.getUniqueId();
+		this.initialChipFull = opts.initialChipFull;
 		this.chipsetsUpdateCallback = opts.chipsetsUpdateCallback;
 		MDC.prototype.initialize.call(this, opts);
 
@@ -1330,7 +1335,7 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 
 	_generateMDCTagBox: function(){
 		var $chipSet;
-
+		var _this = this;
 		this.$chipInput = new $n2.mdc.MDCTextField({
 			parentElem: this.parentElem,
 			mdcClasses: ['n2-tag-box'],
@@ -1346,6 +1351,7 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 			parentElem: this.parentElem.find('#' + this.$chipInput.getId()),
 			inputChips: true,
 			inputId: this.$chipInput.getInputId(),
+			initialChipFull : _this.initialChipFull,
 			chips: this.chips,
 			chipsetsUpdateCallback : this.chipsetsUpdateCallback
 		});
@@ -1598,9 +1604,11 @@ var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
 			mdcClasses: [],
 			mdcAttributes: null,
 			onChangeCallBack: undefined,
+			label: undefined,
 			initiallyOn : false
 		}, opts_);
 		this.onChangeCallBack = opts.onChangeCallBack;
+		this.label = opts.label;
 		this.initiallyOn = opts.initiallyOn;
 		MDC.prototype.initialize.call(this, opts);
 		this._generateMDCSwitch();
@@ -1608,6 +1616,10 @@ var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
 	_generateMDCSwitch: function(){
 		var _this = this;
 		var $switch;
+		var label_t = 'off/on';
+		if (this.label){
+			label_t = this.label;
+		}
 		if (this.initiallyOn){
 			$switch = $($.parseHTML('<div class="mdc-switch mdc-switch--checked"><div class="mdc-switch__track">'+
 					'</div><div class="mdc-switch__thumb-underlay">'+
@@ -1616,7 +1628,9 @@ var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
 							'</div>'+
 						'</div>'+
 				'</div>'+
-				'<label for="basic-switch">off/on</label>'));
+				'<label for="basic-switch">' + 
+				label_t +
+				'</label>'));
 		} else {
 			$switch = $($.parseHTML('<div class="mdc-switch"><div class="mdc-switch__track">'+
 					'</div><div class="mdc-switch__thumb-underlay">'+

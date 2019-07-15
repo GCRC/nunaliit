@@ -79,7 +79,7 @@ function findTimeLinkTagByValue(timeLink, value){
 		 timeLink.tags.forEach(function(tag){
 			 if( tag 
 			 && tag.value
-			 && tag.value === value ){
+			 && tag.value+ '--'+tag.type === value ){
 				 result = tag; 
 			 };
 		 });
@@ -93,20 +93,18 @@ function findTimeLinkTagByValue(timeLink, value){
 function updateTimeLinkWithTags(timeLink, tagValues){
 	 var updated = false;
 	 
-	 tagValues.forEach(function(tagValue){
-		 var tag = findTimeLinkTagByValue(timeLink, tagValue);
+	 for (var kv in tagValues){
+		 var tag = findTimeLinkTagByValue(timeLink, kv);
 		 if( !tag ){
-			 tag = {
-				type: 'default',
-				value: tagValue
-			 };
+			 tag = tagValues[kv];
+			 delete tag['fraction'];
 			 if( !timeLink.tags ){
 				 timeLink.tags = [];
 			 }
 			 timeLink.tags.push(tag);
 			 updated = true;
 		 }
-	 });
+	 };
 	 
 	 return updated;
 };
@@ -166,6 +164,15 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 		this.focusSentences.forEach(function(s){
 			var k = tagProfile.value + '--' + tagProfile.type;
 			delete s.tags[k];
+		})
+	},
+	deletePartialTag: function(start, end, tagProfile){
+		this.focusSentences.forEach(function(s){
+			if (s.start === start
+					&& s.end === end){
+				var k = tagProfile.value + '--' + tagProfile.type;
+				delete s.tags[k];
+			}
 		})
 	},
 	getAllTags: function(){
@@ -319,7 +326,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		this.currentStartTime = undefined;
 		this.currentEndTime = undefined;
 		this.editorMode = undefined;
-		this.editorAggregateMode = false;
+		this.editorAggregateMode = true;
 		this.dataDepot = new AnnotationEditorDataDepot({});
 	},
 	
@@ -341,6 +348,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		
 		new $n2.mdc.MDCSwitch({
 			parentElem: $formField,
+			label : 'Aggregation',
 			initiallyOn: _this.editorAggregateMode,
 			onChangeCallBack: function(checked){
 				_this.editorAggregateMode = checked; 
@@ -395,8 +403,6 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			return;
 		}
 		
-		
-
 		var docId = undefined;
 		if( this.currentDoc ){
 			docId = this.currentDoc._id;
@@ -423,7 +429,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				,onSuccess:function(doc){
 					switch( _this.editorMode ){
 						case CineAnnotationEditorMode.TAGSELECTION:
-							updateDocForTags(doc);
+							updateDocForTags(doc, _this.dataDepot);
 							break;
 						case CineAnnotationEditorMode.TAGGROUPING: 
 							updateDocForTagGrouping(doc);
@@ -436,25 +442,40 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				}
 			});
 
-		function updateDocForTags(doc){
-			var $formfieldSections = $('div#'+_this.innerFormId + ' > div.n2WidgetAnnotation_formfieldSection')
+		function updateDocForTags(doc, depot){
+			
+			var senData = depot.getData();
 			var modified = false;
-			$formfieldSections.each(function(){
-				var start = $(this).find('span.n2transcript_label.label_startTimeCode')
-					.text();
-				var end = $(this).find('span.n2transcript_label.label_finTimeCode')
-					.text();
-				var tagbox =$(this).find('div.n2-tag-box > div.mdc-chip-set');
-				var tagValues = (tagbox.first().data('tags'));
+			senData.forEach(function(sd){
+				var start = sd.start;
+				var end = sd.end;
+				var tagValues = sd.tags;
 				if (typeof start !== "undefined"
 					&& typeof end !== "undefined"
 					&& typeof tagValues !== "undefined"){
 					modified |= singleSectionUpdate (doc, tagValues, start, end);
 				}
 				
-				
-			});
+			})
 			
+	
+//			var modified = false;
+//			$formfieldSections.each(function(){
+//				var start = $(this).find('span.n2transcript_label.label_startTimeCode')
+//					.text();
+//				var end = $(this).find('span.n2transcript_label.label_finTimeCode')
+//					.text();
+//				var tagbox =$(this).find('div.n2-tag-box > div.mdc-chip-set');
+//				var tagValues = (tagbox.first().data('tags'));
+//				if (typeof start !== "undefined"
+//					&& typeof end !== "undefined"
+//					&& typeof tagValues !== "undefined"){
+//					modified |= singleSectionUpdate (doc, tagValues, start, end);
+//				}
+//				
+//				
+//			});
+//			
 			if( modified ){
 				documentSource.updateDocument({
 					doc: doc
@@ -502,12 +523,13 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					doc.atlascine2_cinemap.timeLinks.push(newTimeLink);
 					matchingLinks.push(newTimeLink);
 				};
+				
 				//Check and verify deleting tag(s)
 				matchingLinks.forEach(function(timeLink){
 					if (timeLink.tags
 						&& Array.isArray(timeLink.tags)){
 						timeLink.tags.forEach(function(tag){
-							var tagString = tag.value;
+							var tagString = tag.value + '--' + tag.type;
 							if (!lastTagsMapByTimelink[tagString]){
 								lastTagsMapByTimelink[tagString]= [];
 							}
@@ -516,11 +538,12 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					}
 				});
 				for (var lsttag in lastTagsMapByTimelink ){
-					if ( tagValues.indexOf(lsttag) < 0){
+					if ( tagValues[lsttag] == undefined){
 						lastTagsMapByTimelink[lsttag].forEach(function(link){
 							var trashbin = [];
 							for(var i = 0,e=link.tags.length;i<e ; i++){
-								if (link.tags[i].value === lsttag){
+								var tarkey = link.tags[i].value + '--' + link.tags[i].type;
+								if (tarkey === lsttag){
 									trashbin.push(i);
 								}
 							}
@@ -898,13 +921,22 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 					chips: lastThemeTags,
 					chipsetsUpdateCallback: function(tagList, operation, target){
-//						switch(operation){
-//						case 'ADD':
-//						break;
-//						case 'DELETE':
-//						break;
-//						}
-//						$n2.log('I wonder what is this: ', tagList);
+						switch(operation){
+							case 'ADD':
+								var value = target.chipText;
+								var addtar = $n2.extend({value: value}, target);
+								delete addtar['fraction'];
+								_this.dataDepot.addPartialTag(opts.start, opts.end, addtar)
+								$n2.log('I see adding tags', target);
+								break;
+							case 'DELETE':
+								var value = target.chipText;
+								var deltar = $n2.extend({value: value}, target);
+								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
+								$n2.log('I see deleting tags', target);
+								break;
+						}
+						//$n2.log('I wonder what is this: ', tagList);
 					}
 				});
 
@@ -912,7 +944,27 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					parentElem : $formFieldSection,
 					label: 'Place Tags',
 					mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
-					chips:lastPlaceTags
+					chips:lastPlaceTags,
+					chipsetsUpdateCallback: function(tagList, operation, target){
+						switch(operation){
+							case 'ADD':
+								var value = target.chipText;
+								var addtar = $n2.extend({value: value}, target);
+								addtar['type'] = 'place';
+								delete addtar['fraction'];
+								_this.dataDepot.addPartialTag(opts.start, opts.end, addtar)
+								$n2.log('I see adding tags', addtar);
+								break;
+							case 'DELETE':
+								var value = target.chipText;
+								var deltar = $n2.extend({value: value}, target);
+								deltar['type'] = 'place';
+								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
+								$n2.log('I see deleting tags', deltar);
+								break;
+						}
+						//$n2.log('I wonder what is this: ', tagList);
+					}
 				})
 			} else {
 				alert('Current document doesnot have (atlascine2_cinemap) property');
@@ -926,6 +978,9 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		//We receive the data from dataDepot now for aggregateView
 		var _this = this;
 		var $formField = $parent;
+		var $formFieldSection = $('<div>')
+				.addClass('n2WidgetAnnotation_formfieldSection')
+				.appendTo($formField);
 		var depot = this.dataDepot;
 		var senData = depot.getData();
 
@@ -940,12 +995,12 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		$('<span>')
 		.addClass('n2transcript_label label_transcriptText')
 		.text(aggreText)
-		.appendTo($formField);
+		.appendTo($formFieldSection);
 
-		$('<hr>').appendTo($formField);
+		$('<hr>').appendTo($formFieldSection);
 		
 		new $n2.mdc.MDCTagBox({
-			parentElem : $formField,
+			parentElem : $formFieldSection,
 			label: 'Theme Tags',
 			mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 			chips: lastThemeTags,
@@ -969,10 +1024,29 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		});
 		
 		new $n2.mdc.MDCTagBox({
-			parentElem : $formField,
+			parentElem : $formFieldSection,
 			label: 'Place Tags',
 			mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
-			chips:lastPlaceTags
+			chips:lastPlaceTags,
+			chipsetsUpdateCallback: function(tagList, operation, target){
+				switch(operation){
+					case 'ADD':
+						var value = target.chipText;
+						var addtar = $n2.extend({value: value, type: 'place'}, target);
+						addtar['type'] = 'place';
+						_this.dataDepot.addFullTag(addtar)
+						$n2.log('I see adding tags', addtar);
+						break;
+					case 'DELETE':
+						var value = target.chipText;
+						var deltar = $n2.extend({value: value, type: 'place'}, target);
+						deltar['type'] = 'place';
+						_this.dataDepot.deleteTag(deltar);
+						$n2.log('I see deleting tags', deltar);
+						break;
+				}
+				//$n2.log('I wonder what is this: ', tagList);
+			}
 		})
 		function buildThemeTagProfiles(senData){
 			var rst = [];

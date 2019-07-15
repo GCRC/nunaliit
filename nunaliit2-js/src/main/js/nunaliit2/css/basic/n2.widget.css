@@ -638,7 +638,7 @@ Polar Stereographic Projection Selector
 
 
 .mdc-chip-partial {
-	border: dashed;
+	border: dotted;
 }
 .mdc-chip-full {
 	border: solid;
