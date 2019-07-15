@@ -360,7 +360,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 		}
 	},
 
-	_generateChip: function(chipObj){
+	_generateChip: function(chipObj, type_opt){
 		var $chip;
 		var chipText;
 		if (typeof chipObj === 'string'){
@@ -370,11 +370,20 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 			$chip = $('<div>').addClass('mdc-chip')
 				.attr('id', chipId)
 				.attr('tabindex','0');
+			var chipOriType = 'unknown';
+			if (type_opt){
+				chipOriType = type_opt;
+			}
+			$chip.data('n2Chip', {
+				chipText: chipObj,
+				type: chipOriType,
+				fraction: 'full'
+			})
 			
 		} else if ( typeof chipObj === 'object'){
-			chipText = chipObj.chipText;
+			chipText = chipObj.value;
 			var fraction= undefined;
-			if ( chipObj.fraction ){
+			if ( typeof chipObj.fraction !== 'undefined'){
 				fraction = chipObj.fraction;
 			};
 			var chipId = $n2.getUniqueId();
@@ -383,13 +392,18 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 				.attr('id', chipId)
 				.attr('tabindex','0');
 			
-			if (!fraction){
+			if (typeof fraction === 'undefined'){
 				
 			} else if (fraction === 'full'){
 				$chip.addClass('mdc-chip-full');
 			} else {
 				$chip.addClass('mdc-chip-partial');
 			}
+			var chipOriType = 'unknown';
+			if (type_opt){
+				chipOriType = type_opt;
+			}
+			$chip.data('n2Chip', $n2.extend({type: chipOriType }, chipObj));
 		}
 		
 		if (chipText) {

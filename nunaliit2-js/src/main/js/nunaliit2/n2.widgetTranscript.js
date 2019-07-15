@@ -129,16 +129,16 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 				start: '0',
 				end: '10',
 				tags : {
-					'a':'alpha',
-					'b': 'beta'
+					'a (k+'--'+ v)':'alpha',
+					'b (k+'--'+ v)': 'beta'
 				}
 			},
 			{
 				start: '11',
 				end: '20',
 				tags : {
-					'a':'alpha',
-					'c': 'charlie'
+					'a (k+'--'+ v)':'alpha',
+					'c (k+'--'+ v)': 'charlie'
 				}
 			}
 		]*/
@@ -146,21 +146,45 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 		this._data = undefined;
 		this._option = undefined
 	},
-	addFullTag : function(tag){
+	addFullTag : function(tagProfile){
 		this.focusSentences.forEach(function(s){
-			s.tags[tag] = tag;
+			var k = tagProfile.value+ '--' + tagProfile.type;;
+			s.tags[k] = tagProfile;
 		})
 	},
-	addPartialTag: function(start, end, tag){
-		
-	},
-	deleteTag : function(tag){
+	addPartialTag: function(start, end, tagProfile){
 		this.focusSentences.forEach(function(s){
-			delete s.tags[tag];
+			if (s.start === start
+					&& s.end === end){
+				var k = tagProfile.value + '--' + tagProfile.type;
+				s.tags[k] = tagProfile;
+			}
+
+		})
+	},
+	deleteTag : function(tagProfile){
+		this.focusSentences.forEach(function(s){
+			var k = tagProfile.value + '--' + tagProfile.type;
+			delete s.tags[k];
 		})
 	},
 	getAllTags: function(){
 		
+	},
+	getMatchingSen: function(startTimeCode, finTimeCode){
+		var rst = undefined;
+		this.focusSentences.forEach(function(fs){
+			var start = fs.start;
+			var end = fs.end;
+			if (start === startTimeCode
+				&& end === finTimeCode){
+				if (!rst){
+					rst = [];
+				}
+				rst.push(fs);
+			}
+		});
+		return rst;
 	},
 	getData : function(){
 		return this.focusSentences;
@@ -182,7 +206,8 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 				
 				data.forEach(function(d){
 					var start= d.startTimeCode,
-						end = d.finTimeCode;
+						end = d.finTimeCode,
+						text = d.text;
 					var matchingLinks = findTimeLink(
 							timeLinks, 
 							start, 
@@ -200,26 +225,22 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 						};
 						matchingLinks.push(newTimeLink);
 					}
-					var totalTags = [];
+					var totalTags = {};
 					matchingLinks.forEach(function(e){
-						totalTags.push.apply(totalTags, e.tags.slice());
+						e.tags.forEach(function(t){
+							var key = t.value +'--'+ t.type;
+							totalTags[key] = t;
+						});
 					})
 					var senRec = {
 							start: start,
 							end: end,
-							tags: totalTags
+							tags: totalTags,
+							text: text
 					}
 					_this.focusSentences.push(senRec);
-					
-					
-					
-					
-					
+
 				});
-				
-				
-				
-				
 			}
 				
 			function findTimeLink(timeLinks, startTime, endTime){
@@ -234,9 +255,6 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 				 
 				 return result;
 			};
-		data.forEach(function(d){
-			var 
-		});
 	},
 	getDoc: function(){
 		return this._doc;
@@ -326,6 +344,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			initiallyOn: _this.editorAggregateMode,
 			onChangeCallBack: function(checked){
 				_this.editorAggregateMode = checked; 
+				_this.refresh();
 			}
 		
 		});
@@ -807,147 +826,226 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		});
 		
 	},
-	_addFormViewForSingleUnit: function($parent, opts){
-		
+	_addFormViewForSingleUnit: function($parent, data){
+		var _this = this;
 		var $formField = $parent;
+		var depot = this.dataDepot;
+		var senData = depot.getData();
 		
-		var $formFieldSection = $('<div>')
-									.addClass('n2WidgetAnnotation_formfieldSection')
-									.appendTo($formField);
-		
-		$('<span>')
-		.addClass('n2transcript_label_name')
-		.text('Start: ' )
-		.appendTo($formFieldSection);
+		senData.forEach(function(opts){
+			var $formFieldSection = $('<div>')
+			.addClass('n2WidgetAnnotation_formfieldSection')
+			.appendTo($formField);
 
-		$('<span>')
-			.addClass('n2transcript_label label_startTimeCode')
-			.text(opts.startTimeCode)
+			$('<span>')
+			.addClass('n2transcript_label_name')
+			.text('Start: ' )
 			.appendTo($formFieldSection);
-			
-		$('<span>')
+
+			$('<span>')
+			.addClass('n2transcript_label label_startTimeCode')
+			.text(opts.start)
+			.appendTo($formFieldSection);
+
+			$('<span>')
 			.addClass('n2transcript_label_name')
 			.text('End: ')
 			.appendTo($formFieldSection);
-	
-		$('<span>')
+
+			$('<span>')
 			.addClass('n2transcript_label label_finTimeCode')
-			.text(opts.finTimeCode)
+			.text(opts.end)
 			.appendTo($formFieldSection);
-	
-		$('<span>')
+
+			$('<span>')
 			.addClass('n2transcript_label label_transcriptText')
 			.text(opts.text)
 			.appendTo($formFieldSection);
-			
-		$('<hr>').appendTo($formFieldSection);
-		//.appendTo($formFieldSection);
-		
-		var doc = this.currentDoc;
-		var lastThemeTags = [];
-		var lastPlaceTags = [];
-		if( doc 
-			 && doc.atlascine2_cinemap ){
-					var timeLinks = doc.atlascine2_cinemap.timeLinks;
-					if( !timeLinks ){
-						//No timeLinks no worry
-						return;
-					};
-							
-					var matchingLinks = findTimeLink(
-									timeLinks, 
-									opts.startTimeCode, 
-									opts.finTimeCode
-								);
-							
-					if( matchingLinks.length < 1 ){
-						// No matching timelinks no worry
-						new $n2.mdc.MDCTagBox({
-							parentElem : $formFieldSection,
-							label: 'Theme Tags',
-							mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
-							chips: []
-						});
-						
-						new $n2.mdc.MDCTagBox({
-							parentElem : $formFieldSection,
-							label: 'Place Tags',
-							mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
-							chips:[]
-						});
-						
-						return;
-					};
-							
-					matchingLinks.forEach(function(timeLink){
-						if (timeLink.tags
-							&& Array.isArray(timeLink.tags)){
-							timeLink.tags.forEach(function(tag){
-								
-								if ( !tag.type || 'place' !==  tag.type) {
-									var tagString = tag.value;
-									var idx = lastThemeTags.indexOf(tagString);
-									if (idx > -1){
-										lastThemeTags.splice(idx, 1);
-									}
-									lastThemeTags.push(tagString);
+
+			$('<hr>').appendTo($formFieldSection);
+//			.appendTo($formFieldSection);
+
+			var doc = _this.currentDoc;
+			var lastThemeTags = [];
+			var lastPlaceTags = [];
+			if( doc 
+					&& doc.atlascine2_cinemap ){
+				var timeLinks = doc.atlascine2_cinemap.timeLinks;
+				if( !timeLinks ){
+//					No timeLinks no worry
+					return;
+				};
+
+				var matchingSen = depot.getMatchingSen(opts.start, opts.end);
+				if (matchingSen){
+					matchingSen.forEach(function(timeLink){
+						if (timeLink.tags){
+							for (var tag in timeLink.tags){
+								var tagProfile = timeLink.tags[tag];
+								if ( !tagProfile.type || 'place' !==  tagProfile.type) {
+									lastThemeTags.push(tagProfile);
 								} else {
-									
-									var tagString = tag.value;
-									var idx = lastPlaceTags.indexOf(tagString);
-									if (idx > -1){
-										lastPlaceTags.splice(idx, 1);
-									}
-									lastPlaceTags.push(tagString);
+									lastPlaceTags.push(tagProfile);
 								}
-			
-							})
+							}
 						}
 					});
-					//tagbox.getElem.data('tags', lastTags);
-					
-					new $n2.mdc.MDCTagBox({
-						parentElem : $formFieldSection,
-						label: 'Theme Tags',
-						mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
-						chips: lastThemeTags,
-						chipsetsUpdateCallback: function(tagList, operation, target){
-//							switch(operation){
-//								case 'ADD':
-//									break;
-//								case 'DELETE':
-//									break;
-//							}
-//							$n2.log('I wonder what is this: ', tagList);
-						}
-					});
-					
-					new $n2.mdc.MDCTagBox({
-						parentElem : $formFieldSection,
-						label: 'Place Tags',
-						mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
-						chips:lastPlaceTags
-					})
+				}
+
+				new $n2.mdc.MDCTagBox({
+					parentElem : $formFieldSection,
+					label: 'Theme Tags',
+					mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
+					chips: lastThemeTags,
+					chipsetsUpdateCallback: function(tagList, operation, target){
+//						switch(operation){
+//						case 'ADD':
+//						break;
+//						case 'DELETE':
+//						break;
+//						}
+//						$n2.log('I wonder what is this: ', tagList);
+					}
+				});
+
+				new $n2.mdc.MDCTagBox({
+					parentElem : $formFieldSection,
+					label: 'Place Tags',
+					mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
+					chips:lastPlaceTags
+				})
 			} else {
 				alert('Current document doesnot have (atlascine2_cinemap) property');
 				return;
 			};
+		});
+		
 	},
 	_addFormViewAggregated : function($parent, data){
 		//Instead read and parsing the tags from cinemap
 		//We receive the data from dataDepot now for aggregateView
+		var _this = this;
 		var $formField = $parent;
 		var depot = this.dataDepot;
 		var senData = depot.getData();
+
+		var lastThemeTags = buildThemeTagProfiles(senData);
+		lastThemeTags  = lastThemeTags || [];
+		var lastPlaceTags = buildPlaceTagProfiles(senData);
+		
+		var aggreText = '';
+		senData.forEach(function(sd){
+			aggreText += sd.text+ ' ';
+		})
+		$('<span>')
+		.addClass('n2transcript_label label_transcriptText')
+		.text(aggreText)
+		.appendTo($formField);
+
+		$('<hr>').appendTo($formField);
+		
+		new $n2.mdc.MDCTagBox({
+			parentElem : $formField,
+			label: 'Theme Tags',
+			mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
+			chips: lastThemeTags,
+			chipsetsUpdateCallback: function(tagList, operation, target){
+				switch(operation){
+					case 'ADD':
+						var value = target.chipText;
+						var addtar = $n2.extend({value: value}, target);
+						_this.dataDepot.addFullTag(addtar)
+						$n2.log('I see adding tags', target);
+						break;
+					case 'DELETE':
+						var value = target.chipText;
+						var deltar = $n2.extend({value: value}, target);
+						_this.dataDepot.deleteTag(deltar);
+						$n2.log('I see deleting tags', target);
+						break;
+				}
+				//$n2.log('I wonder what is this: ', tagList);
+			}
+		});
+		
+		new $n2.mdc.MDCTagBox({
+			parentElem : $formField,
+			label: 'Place Tags',
+			mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
+			chips:lastPlaceTags
+		})
+		function buildThemeTagProfiles(senData){
+			var rst = [];
+			var fracMap = undefined;
+			if(senData.length > 0){
+				fracMap = {};//true means full cover; false means partial
+				
+				senData.forEach(function(sd){
+					for (var tag in sd.tags){
+						if ( sd.tags[tag].type !== 'place' ){
+							fracMap[tag] = $n2.extend({fraction: 'full'}, sd.tags[tag]);
+						}
+					}
+				});
+				
+				for(var tag in fracMap){
+					senData.forEach(function(se){
+						if  ( !(tag in se.tags) ) {
+							fracMap[tag].fraction = 'partial';
+						}
+					});
+				};
+			} else {
+				$n2.log("focusSentences data is not valid");
+			}
+			if (fracMap){
+				for (var tag in fracMap){
+					rst.push(fracMap[tag]);
+				}
+			}
+			return rst;
+		};
+		function buildPlaceTagProfiles(senData){
+			var rst = [];
+			var fracMap = undefined;
+			if(senData.length > 0){
+				fracMap = {};//true means full cover; false means partial
+				
+				senData.forEach(function(sd){
+					for (var tag in sd.tags){
+						if ( sd.tags[tag].type
+								&& sd.tags[tag].type === 'place'){
+							fracMap[tag] = $n2.extend({fraction: 'full'}, sd.tags[tag]);
+						}
+						
+					}
+				});
+				
+				for(var tag in fracMap){
+					senData.forEach(function(se){
+						if  ( !(tag in se.tags) ) {
+							fracMap[tag].fraction = 'partial';
+						}
+					});
+				};
+			} else {
+				$n2.log("focusSentences data is not valid");
+			}
+			if (fracMap){
+				for (var tag in fracMap){
+					rst.push(fracMap[tag]);
+				}
+			}
+			return rst;
+		}
 	},
-	_addTagSelEditing: function(data){
+	_addTagSelEditing: function(){
 		var _this = this;
 		if(_this.editorAggregateMode){
-			_this._addFormViewAggregated(_this.getInnerForm(),data);
+			_this._addFormViewAggregated(_this.getInnerForm());
 		} else {
-			data.forEach(function(_d){
-				_this._addFormViewForSingleUnit(_this.getInnerForm(), _d);
-			});
+			_this._addFormViewForSingleUnit(_this.getInnerForm());
+			
 		};
 		
 	},
@@ -955,40 +1053,38 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		var _this = this;
 		var $elem = this.getInnerForm();
 		$elem.empty();
-
-		
-		var opt = opts_.option;
-		var data = opts_.data;
-		var doc = opts_.doc;
-		
-		this.dataDepot.setDoc(doc);
-		this.dataDepot.setOption(opt);
-		this.dataDepot.setData(data);
-	
-		
-		if( doc ){
-			this.currentDoc = doc;
-		};
-		if( opt && data ){
+		var opt, data, doc;
+		if (opts_){
+			opt = opts_.option;
+			data = opts_.data;
+			doc = opts_.doc;
 			
 			if( opt === 'Tag Selection...'){
 				this.editorMode = CineAnnotationEditorMode.TAGSELECTION;
 			} else if ( opt === 'Group Tags...'){
 				this.editorMode = CineAnnotationEditorMode.TAGGROUPING;
 			}
-			
-			switch( this.editorMode ){
-				case CineAnnotationEditorMode.TAGSELECTION: 
-					_this._addTagSelEditing(data);
-					
-					break;
-				case CineAnnotationEditorMode.TAGGROUPING:
-					_this._addTagGroupEditing($elem);
-					break;
-				default:
-					break;
-				}
+			this.dataDepot.setDoc(doc);
+			this.dataDepot.setOption(opt);
+			this.dataDepot.setData(data);
+		
+		}
+
+		
+		if( doc ){
+			this.currentDoc = doc;
 		};
+		switch( this.editorMode ){
+			case CineAnnotationEditorMode.TAGSELECTION: 
+				_this._addTagSelEditing();
+				break;
+			case CineAnnotationEditorMode.TAGGROUPING:
+				_this._addTagGroupEditing($elem);
+				break;
+			default:
+				break;
+			}
+	
 	},
 
 	_handle: function(){

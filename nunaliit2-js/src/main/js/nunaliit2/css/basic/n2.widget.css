@@ -635,6 +635,14 @@ Polar Stereographic Projection Selector
   to 	{ width:0; background:transparent; }
 }
 
+
+
+.mdc-chip-partial {
+	border: dashed;
+}
+.mdc-chip-full {
+	border: solid;
+}
 /* 
 ==============================
 Drawer widget 

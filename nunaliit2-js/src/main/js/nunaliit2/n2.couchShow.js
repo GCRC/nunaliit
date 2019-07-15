@@ -2115,7 +2115,7 @@ var DomStyler = $n2.Class({
 			//alert($('#' + chipSet.id).first().data('tags'));
 		};
 
-		function generateChip(chipObj){
+		function generateChip(chipObj, type_opt){
 			var $chip;
 			var chipText;
 			if (typeof chipObj === 'string'){
@@ -2125,9 +2125,17 @@ var DomStyler = $n2.Class({
 				$chip = $('<div>').addClass('mdc-chip')
 					.attr('id', chipId)
 					.attr('tabindex','0');
-				
+				var chipOriType = 'unknown';
+				if (type_opt){
+					chipOriType = type_opt;
+				}
+				$chip.data('n2Chip', {
+					chipText: chipObj,
+					type: chipOriType,
+					fraction: 'full'
+				})
 			} else if ( typeof chipObj === 'object'){
-				chipText = chipObj.chipText;
+				chipText = chipObj.value;
 				var fraction= undefined;
 				if ( chipObj.fraction ){
 					fraction = chipObj.fraction;
@@ -2138,13 +2146,18 @@ var DomStyler = $n2.Class({
 					.attr('id', chipId)
 					.attr('tabindex','0');
 				
-				if (!fraction){
+				if (typeof fraction === 'undefined'){
 					
 				} else if (fraction === 'full'){
 					$chip.addClass('mdc-chip-full');
 				} else {
 					$chip.addClass('mdc-chip-partial');
 				}
+				var chipOriType = 'unknown';
+				if (type_opt){
+					chipOriType = type_opt;
+				}
+				$chip.data('n2Chip', $n2.extend({type: chipOriType }, chipObj));
 			}
 			
 			if (chipText) {
@@ -2177,7 +2190,11 @@ var DomStyler = $n2.Class({
 						if ($chipInput.val()){
 							var newTagText = $chipInput.val()
 							// Get Input Value
-							var chipEl = generateChip($chipInput.val());
+							var chipEl = generateChip({
+								value: $chipInput.val()+'',
+								fraction: 'full',
+								type: 'unknown'
+							});
 
 							// Clear Input Field
 							$chipInput.val('');
@@ -2186,7 +2203,12 @@ var DomStyler = $n2.Class({
 
 							var chiplist = updateTagList();
 							if (typeof chipsetsUpdateCallback === 'function'){
-								chipsetsUpdateCallback(chiplist, "ADD", newTagText);
+								chipsetsUpdateCallback(chiplist, "ADD", {
+									chipText: newTagText,
+									type: 'unknown',
+									fraction: 'full'}
+								);
+								
 							}
 						}
 					}
@@ -2196,11 +2218,15 @@ var DomStyler = $n2.Class({
 					if (event.detail && event.detail.chipId) {
 						var $removedChip = $(event.target);
 						var $removedChipText = $removedChip.find('.mdc-chip__text')[0];
-						var delTagText = $removedChipText.innerText.slice();
+						var delTagProfile = $removedChip.data('n2Chip');
+						if (!delTagProfile){
+							alert('NO delTagProfile');
+						}
+//						var delTagText = $removedChipText.innerText.slice();
 						$removedChip.remove();
 						var chiplist = updateTagList();
 						if (typeof chipsetsUpdateCallback === 'function'){
-							chipsetsUpdateCallback(chiplist, "DELETE", delTagText );
+							chipsetsUpdateCallback(chiplist, "DELETE", delTagProfile );
 						}
 					}
 				});
