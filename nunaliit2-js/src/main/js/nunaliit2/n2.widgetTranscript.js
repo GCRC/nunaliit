@@ -1785,7 +1785,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							.text(context_menu_text[i])
 							.click(function(){
 								var senDataArr = contextMenu.data().value;
-								if (senDataArr && senDataArr.length == 1 ){
+								if (senDataArr && senDataArr.length > 0 ){
 									
 									var currentTime = senDataArr[0].start;
 									if (typeof currentTime !== "undefined"){
