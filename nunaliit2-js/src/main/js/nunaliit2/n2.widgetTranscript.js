@@ -2114,12 +2114,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	 */
 	_updateCurrentTime: function(currentTime, origin){
 		// Send notice to dispatcher
+		
 		this.dispatchService.send(DH,{
 			type: 'mediaTimeChanged'
 			,name: this.name
 			,currentTime: currentTime
 			,origin: origin
 		});
+	
+
 		
 		 //Inform time model
 		if( this.intervalSetEventName ){
@@ -2200,21 +2203,21 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			},100);
 		} else if('startEditing' === origin){
 			_this._lastCtxTime = currentTime;
-			var $video = $('#'+this.videoId);
-			$video[0].currentTime = currentTime;
-			$video[0].play();
-			var inid = setInterval(function(){
-				var isPlaying = $video[0].currentTime > 0 && !$video[0].paused && !$video[0].ended 
-					&& $video[0].readyState > 2;
-
-				if(!isPlaying){
-					
-				} else {
-					$video[0].pause();
-					clearInterval(inid);
-				}
-				
-			},100);
+//			var $video = $('#'+this.videoId);
+//			$video[0].currentTime = currentTime;
+//			$video[0].play();
+//			var inid = setInterval(function(){
+//				var isPlaying = $video[0].currentTime > 0 && !$video[0].paused && !$video[0].ended 
+//					&& $video[0].readyState > 2;
+//
+//				if(!isPlaying){
+//					
+//				} else {
+//					$video[0].pause();
+//					clearInterval(inid);
+//				}
+//				
+//			},100);
 
 
 		} else if ( 'savedState' === origin ){
