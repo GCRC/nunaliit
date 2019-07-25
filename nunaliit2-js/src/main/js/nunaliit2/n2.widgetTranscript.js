@@ -210,44 +210,46 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 					doc.atlascine2_cinemap.timeLinks = timeLinks;
 					return;
 				};
-				
-				data.forEach(function(d){
-					var start= d.startTimeCode,
-						end = d.finTimeCode,
-						text = d.text;
-					var matchingLinks = findTimeLink(
-							timeLinks, 
-							start, 
-							end );
-					if( matchingLinks.length < 1 ){
-						// Should I create one? If so, how?
-						var newTimeLink = {
-							'starttime': start
-							,'endtime': end
-							,'tags': []
-//							,"linkRef": {
-//								"nunaliit_type": "reference"
-//								"doc": "stock.rwanda"
-//							}
-						};
-						matchingLinks.push(newTimeLink);
-					}
-					var totalTags = {};
-					matchingLinks.forEach(function(e){
-						e.tags.forEach(function(t){
-							var key = t.value +'--'+ t.type;
-							totalTags[key] = t;
-						});
-					})
-					var senRec = {
-							start: start,
-							end: end,
-							tags: totalTags,
-							text: text
-					}
-					_this.focusSentences.push(senRec);
+				if (data && $n2.isArray(data)){
+					data.forEach(function(d){
+						var start= d.startTimeCode,
+							end = d.finTimeCode,
+							text = d.text;
+						var matchingLinks = findTimeLink(
+								timeLinks, 
+								start, 
+								end );
+						if( matchingLinks.length < 1 ){
+							// Should I create one? If so, how?
+							var newTimeLink = {
+								'starttime': start
+								,'endtime': end
+								,'tags': []
+//								,"linkRef": {
+//									"nunaliit_type": "reference"
+//									"doc": "stock.rwanda"
+//								}
+							};
+							matchingLinks.push(newTimeLink);
+						}
+						var totalTags = {};
+						matchingLinks.forEach(function(e){
+							e.tags.forEach(function(t){
+								var key = t.value +'--'+ t.type;
+								totalTags[key] = t;
+							});
+						})
+						var senRec = {
+								start: start,
+								end: end,
+								tags: totalTags,
+								text: text
+						}
+						_this.focusSentences.push(senRec);
 
-				});
+					});
+				}
+
 			}
 				
 			function findTimeLink(timeLinks, startTime, endTime){
@@ -1800,7 +1802,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							.text(context_menu_text[i])
 							.click(function(){
 								var senDataArr = contextMenu.data().value;
-								if (senDataArr && senDataArr.length > 0 ){
+								if (senDataArr && senDataArr.length == 1 ){
 									
 									var currentTime = senDataArr[0].start;
 									if (typeof currentTime !== "undefined"){
