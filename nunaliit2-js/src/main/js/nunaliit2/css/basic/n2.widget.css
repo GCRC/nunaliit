@@ -513,25 +513,43 @@ Polar Stereographic Projection Selector
     padding: 10px;
     margin-left: 20px;
 }
+
+
 .n2WidgetAnnotation_tagGroup_formfieldSection {
 	max-width: 420px;
 	margin: 10px;
     border: 1px solid #ccc!important;
     padding: 10px;
     display: grid;
+    grid-template-areas:
+    	"header header"
+    	"left right"
+    	"footer footer";
+    grid-template-rows: 70px 1fr 40px;
     grid-template-columns: 1fr 2fr;
     grid-gap: 10px;
     margin-left: 20px;
 }
-
+.formfieldSection_header {
+	grid-area: header
+}
 .formfieldSection_leftcol {
-	grid-column: 1;
-	grid-row: 1;
+/* 	grid-column: 1; */
+/* 	grid-row: 1; */
+	grid-area: left;
 }
 .formfieldSection_rightcol {
-	grid-column: 2;
-    grid-row: 1;
+/* 	grid-column: 2; */
+/*     grid-row: 1; */
+    grid-area: right;
     margin-top: 12px;
+}
+
+.formfieldSection_footer {
+/* 	grid-column: 2; */
+/*     grid-row: 1; */
+	grid-area: footer;
+  
 }
 
 .n2-tag-box.mdc-text-field.n2s_attachedMDCTextField.mdc-text-field--outlined {
@@ -542,6 +560,15 @@ Polar Stereographic Projection Selector
   position:relative;
   margin-top: 25px; 
   margin-bottom:25px; 
+}
+
+.input_group_for_customMDC.for_tagname input				{
+  font-size:18px;
+  padding:10px 10px 10px 5px;
+/*   display:block; */
+  width: 92%;
+  border:none;
+  border-bottom:1px solid #757575;
 }
 .input_group_for_customMDC input				{
   font-size:18px;
@@ -578,7 +605,7 @@ Polar Stereographic Projection Selector
 .input_group_for_customMDC .bar {
 	position:relative;
 	display:block; 
-	width:90px; 
+	width:95%; 
 }
 .input_group_for_customMDC .bar:before, .bar:after 	{
   content:'';

@@ -741,13 +741,19 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 //			});
 //			var colorPkInputId = colorPk.getInputId();
 //			$('input#'+ colorPkInputId)
-			
+			var $headdiv = $('<div>')
+							.addClass('formfieldSection_header')
+							.appendTo($formFieldSection);
 			var $leftdiv = $('<div>')
 							.addClass('formfieldSection_leftcol')
 							.appendTo($formFieldSection);
 			var $rightdiv = $('<div>')
 							.addClass('formfieldSection_rightcol')
 							.appendTo($formFieldSection);
+			var $footerdiv = $('<div>')
+							.addClass('formfieldSection_footer')
+							.appendTo($formFieldSection);
+			
 			var $mdcInputDiv= $('<div>')
 					.addClass('input_group_for_customMDC for_color')
 					.appendTo($leftdiv);
@@ -768,7 +774,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			
 			var $mdcInputDiv= $('<div>')
 			.addClass('input_group_for_customMDC for_tagname')
-			.appendTo($leftdiv);
+			.appendTo($headdiv);
 			
 			$('<input>')
 				.addClass('n2transcript_input input_tagname')
@@ -785,7 +791,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				chips: taginfo.children
 			});
 			new $n2.mdc.MDCButton({
-				parentElem: $formFieldSection,
+				parentElem: $footerdiv,
 				btnLabel : 'Delete',
 				onBtnClick: function(){
 					$formFieldSection.remove();
@@ -801,13 +807,22 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		
 		$('<hr>').appendTo($formFieldSection);
 		
+		var $headdiv = $('<div>')
+			.addClass('formfieldSection_header')
+			.appendTo($formFieldSection);
+		
 		var $leftdiv = $('<div>')
 			.addClass('formfieldSection_leftcol')
 			.appendTo($formFieldSection);
+		
 		var $rightdiv = $('<div>')
 			.addClass('formfieldSection_rightcol')
 			.appendTo($formFieldSection);
 
+		var $footerdiv = $('<div>')
+		.addClass('formfieldSection_footer')
+		.appendTo($formFieldSection);
+		
 		var $mdcInputDiv= $('<div>')
 		.addClass('input_group_for_customMDC for_color')
 		.appendTo($leftdiv);
@@ -825,8 +840,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		$('<label>').text('Color').appendTo($mdcInputDiv);
 		
 		var $mdcInputDiv= $('<div>')
-		.addClass('input_group_for_customMDC for_tagname')
-		.appendTo($leftdiv);
+			.addClass('input_group_for_customMDC for_tagname')
+			.appendTo($headdiv);
 		
 		$('<input>')
 			.addClass('n2transcript_input input_tagname')
@@ -1805,9 +1820,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 								.addClass("transcript-context-menu-hide")
 								.append(transcript_context_menu_list)
 								.appendTo(document.body);
-			for (var i = 0; i < transcript_array.length; i++) {
+			for (var i = 0,e = transcript_array.length; i < e; i++) {
 				var transcriptElem = transcript_array[i];
-				
+				//hack to seperate single click and double click
+				var DELAY = 300, clicks = 0, timer = null;
 				var id = $n2.getUniqueId();
 				transcriptElem.id = id;
 				
@@ -1878,26 +1894,57 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							contextMenu.removeClass('transcript-context-menu-hide');
 						
 						};
-					})
-					.click(function(e) {
-						switch(e.which){
+					}).on('click', function(e){
+						var _that = this;
+					clicks++;
+					if(clicks === 1) {
+
+						timer = setTimeout(function() {
+							//perform single-click action  
+							switch(e.which){
 							case 1:
 								contextMenu.addClass('transcript-context-menu-hide');
-								$(this).removeClass('sentence-highlight-pending')
-								var $span = $(this);
+								$(_that).removeClass('sentence-highlight-pending')
+								var $span = $(_that);
 								var currentTime = $span.attr('data-start');
-								_this._updateCurrentTime(currentTime, 'text');
+								_this._updateCurrentTime(currentTime, 'text-oneclick');
 								break;
 							case 2:
 								break;
 							case 3:
 								break;
 							
-							}
-						// close the context menu, if it still exists
+							}  
+							clicks = 0;             //after action performed, reset counter
+
+						}, DELAY);
+
+					} else {
+
+						clearTimeout(timer);    //prevent single-click action
+						//perform double-click action
+						switch(e.which){
+						case 1:
+							contextMenu.addClass('transcript-context-menu-hide');
+							$(_that).removeClass('sentence-highlight-pending')
+							var $span = $(_that);
+							var currentTime = $span.attr('data-start');
+							_this._updateCurrentTime(currentTime, 'text');
+							break;
+						case 2:
+							break;
+						case 3:
+							break;
 						
-					});
-				
+						}
+						clicks = 0;             //after action performed, reset counter
+					}
+
+				// close the context menu, if it still exists
+				})
+				.on('dblclick', function(e){
+					e.preventDefault();
+				})	
 			}
 			$transcript.on('scroll', function(){
 				
@@ -2135,6 +2182,22 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			var $video = $('#'+this.videoId);
 			$video[0].currentTime = currentTime;
 			$video[0].play();
+		} else if ('text-oneclick' === origin){
+			var $video = $('#'+this.videoId);
+			$video[0].currentTime = currentTime;
+			$video[0].play();
+			var inid = setInterval(function(){
+				var isPlaying = $video[0].currentTime > 0 && !$video[0].paused && !$video[0].ended 
+					&& $video[0].readyState > 2;
+
+				if(!isPlaying){
+					
+				} else {
+					$video[0].pause();
+					clearInterval(inid);
+				}
+				
+			},100);
 		} else if('startEditing' === origin){
 			_this._lastCtxTime = currentTime;
 			var $video = $('#'+this.videoId);
