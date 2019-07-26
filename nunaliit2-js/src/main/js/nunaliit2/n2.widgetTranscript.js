@@ -1848,7 +1848,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							
 							var ctxdata = [];
 							var mulSel = _this._isMultiSelected();
-							if(mulSel.length > 0){
+							if(mulSel && $n2.isArray(mulSel)
+								&& mulSel.length > 0){
 								mulSel.forEach(function(e){
 									var _d = {
 												start: e.start,
@@ -2052,6 +2053,61 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			this.transcript = doc.nunaliit_transcript;
 			this._documentChanged();
 
+		} else if (doc) {
+			var transcriptAttName = this._findTranscriptAttachmentName(this.doc);
+			var mediaAttName = this._findVideoAttachmentName(this.doc);
+			if (transcriptAttName && mediaAttName){
+				var trans = {
+						srtAttName : transcriptAttName,
+						videoAttName: mediaAttName
+				};
+//				var documentSource = undefined;
+//				if( this.dispatchService ){
+//					var m = {
+//						type: 'documentSourceFromDocument'
+//						,doc: doc
+//					};
+//					this.dispatchService.synchronousCall(DH,m);
+//					documentSource = m.documentSource;
+//				};
+//				if( !documentSource ){
+//					$n2.logError('Can not find document source for: '+doc._id);
+//				};
+//				documentSource.getDocument({
+//						docId: doc._id
+//						,onSuccess:function(doc){
+//							assignNunaliitTranscriptProperty(doc, trans);
+//						}
+//						,onError: function(err){
+//							$n2.reportErrorForced( _loc('Unable to reload document: {err}',{err:err}) );
+//						}
+//					});
+//
+//				function assignNunaliitTranscriptProperty(doc, n2_transcript){
+//					
+//						doc['nunaliit_transcript'] = n2_transcript;
+//						documentSource.updateDocument({
+//							doc: doc
+//							,onSuccess: function(doc){
+//								if( doc && doc.nunaliit_transcript ){
+				_this.transcript = trans
+				_this._documentChanged();
+//								}
+//							}
+//							,onError: function(err){
+//								$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
+//							}
+//						});
+
+				
+
+//				};
+			} else {	
+				_this._renderError('Transcript or media attachment names not found for '+this.doc._id);
+				
+			}
+
+			
 		} else {
 			// Find the attachment for the transcript
 			var transcriptAttName = this._findTranscriptAttachmentName(this.doc);
@@ -2102,7 +2158,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		 && doc.nunaliit_attachments.files ){
 			for(var attName in doc.nunaliit_attachments.files){
 				var att = doc.nunaliit_attachments.files[attName];
-				if( 'transcript.json' === attName ){
+				if( attName.endsWith('.srt') ){
 					return attName;
 				};
 			};
@@ -2110,7 +2166,21 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		
 		return undefined;
 	},
-
+	_findVideoAttachmentName: function(doc){
+		if( doc 
+		 && doc.nunaliit_attachments 
+		 && doc.nunaliit_attachments.files ){
+			for(var attName in doc.nunaliit_attachments.files){
+				var att = doc.nunaliit_attachments.files[attName];
+				if( (att.fileClass === 'video'|| att.fileClass === 'audio')
+						&& att.conversionPerformed){
+					return attName;
+				};
+			};
+		};
+		
+		return undefined;
+	},
 	/**
 	 * Receives the current time as video time
 	 */
