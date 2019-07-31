@@ -759,7 +759,9 @@ var LayerInfo = $n2.Class({
 			
 			clustering: null,
 			
-			useHoverSound: false
+			useHoverSound: false,
+			
+			refreshCallback: null
 			
 		},opts_);
 		
@@ -784,7 +786,8 @@ var LayerInfo = $n2.Class({
 		this.clusterClickCallback = opts.clusterClickCallback;
 		this.clustering = opts.clustering;
 		this.useHoverSound = opts.useHoverSound;
-
+		this.refreshCallback = opts.refreshCallback;
+		
 		// Derive database projection from name
 		if( this.sourceSrsName ){
 			this.sourceProjection = new OpenLayers.Projection(this.sourceSrsName);
@@ -820,6 +823,16 @@ var LayerInfo = $n2.Class({
 		if( !this.clusterClickCallback ){
 			this.clusterClickCallback = $n2.mapAndControls.ZoomInClusterClickCallback;
 		};
+		
+		//Refresh call back;
+		if ( !this.refreshCallback ){
+			if ( this.customService ){
+				var cb = this.customService.getOption('mapRefreshCallback' );
+				if ( typeof cb === 'function' ){
+					this.refreshCallback = cb;
+				}
+			}
+		}
 	},
 	
 	forEachFeature: function(callback){

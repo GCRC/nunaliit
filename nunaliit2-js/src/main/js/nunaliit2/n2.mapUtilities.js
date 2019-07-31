@@ -142,7 +142,33 @@ var MapClusterClickHandler = $n2.Class('MapClusterClickHandler',{
 		};
 	}
 });
+//=========================================================================
+var MapAlwaysIncludesExtentsZoom = $n2.Class('MapAlwaysIncludesExtentsZoom',{
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			customService: undefined
+			,minimumCountToZoom: 0
+			,minimumResolutionToZoom: -1
+		},opts_);
+		
+		var _this = this;
+	
+		this.customService = opts.customService;
+		
+		if( this.customService ){
+			var f = function(feature, mapAndControls){
+				_this._mapRefreshCallback(feature, mapAndControls);
+			};
 
+			this.customService.setOption('mapRefreshCallback',f);
+		};
+		
+		$n2.log(this._classname, this);
+	},
+	_mapRefreshCallback(feature, mapAndControls){
+		$n2.log('-->>, need to resetExtent');
+	}
+});
 //=========================================================================
 function HandleUtilityCreateRequests(m, addr, dispatcher){
 	if( 'mapClusterClickToZoom' === m.utilityType ){
@@ -204,6 +230,25 @@ function HandleUtilityCreateRequests(m, addr, dispatcher){
 		new MapClusterClickHandler(options);
 
 		m.created = true;
+	} else if ('mapAlwaysIncludesExtentsZoom' === m.utilityType ){
+		var options = {};
+		
+		if( typeof m.utilityOptions === 'object' ){
+			for(var key in m.utilityOptions){
+				var value = m.utilityOptions[key];
+				options[key] = value;
+			};
+		};
+		
+		if( m.config ){
+			if( m.config.directory ){
+				options.customService = m.config.directory.customService;
+			};
+		};
+		
+		new MapAlwaysIncludesExtentsZoom(options);
+
+		m.created = true;
 	};
 };
 
@@ -213,6 +258,7 @@ $n2.mapUtilities = {
 	,MapClusterClickToZoom: MapClusterClickToZoom
 	,MapClusterClickToMultiSelect: MapClusterClickToMultiSelect
 	,MapClusterClickHandler: MapClusterClickHandler
+	,MapAlwaysIncludesExtentsZoom : MapAlwaysIncludesExtentsZoom
 };
 
 })(nunaliit2);
