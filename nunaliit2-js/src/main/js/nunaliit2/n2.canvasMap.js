@@ -104,7 +104,7 @@ var MapCanvas = $n2.Class('MapCanvas',{
 			
 			this._drawMap();
 			
-		} catch(e) {
+		} catch(err) {
 			var error = new Error('Unable to create '+this._classname+': '+err);
 			opts.onError(error);
 		};
