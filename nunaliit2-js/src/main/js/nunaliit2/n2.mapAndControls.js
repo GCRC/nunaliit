@@ -142,7 +142,6 @@ var MapBridge = $n2.Class({
                 };
             };
         };
-        $n2.log('I wonder how frequent this get called');
     },
     
     _getMapControl: function(){
@@ -787,7 +786,6 @@ var LayerInfo = $n2.Class({
 		this.clusterClickCallback = opts.clusterClickCallback;
 		this.clustering = opts.clustering;
 		this.useHoverSound = opts.useHoverSound;
-		this.refreshCallback = opts.refreshCallback;
 		
 		// Derive database projection from name
 		if( this.sourceSrsName ){
@@ -824,16 +822,6 @@ var LayerInfo = $n2.Class({
 		if( !this.clusterClickCallback ){
 			this.clusterClickCallback = $n2.mapAndControls.ZoomInClusterClickCallback;
 		};
-		
-		//Refresh call back;
-		if ( !this.refreshCallback ){
-			if ( this.customService ){
-				var cb = this.customService.getOption('mapRefreshCallback' );
-				if ( typeof cb === 'function' ){
-					this.refreshCallback = cb;
-				}
-			}
-		}
 	},
 	
 	forEachFeature: function(callback){
@@ -1211,8 +1199,12 @@ var MapAndControls = $n2.Class({
 			,features: []
 		};
 		
+		
+		
 		var addOrEditLabel = _loc('Add or Edit a Map Feature');
 		var cancelLabel = _loc('Cancel Feature Editing');
+		
+		this.refreshCallback = null;
 		var customService = this._getCustomService();
 		if( customService ){
 			var customAdd = customService.getOption('mapLabelEditFeature',null);
@@ -1224,6 +1216,14 @@ var MapAndControls = $n2.Class({
 			if( customCancel ){
 				cancelLabel = customCancel;
 			};
+			
+			//Refresh call back;
+			if ( !this.refreshCallback ){
+					var cb = customService.getOption('mapRefreshCallback' );
+					if ( typeof cb === 'function' ){
+						this.refreshCallback = cb;
+					}
+			}
 		};
 
 		// MODES
@@ -1347,6 +1347,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('mapSwitchToEditMode');
 	    this._registerDispatch('simplifiedGeometryReport');
 	    this._registerDispatch('canvasGetStylesInUse');
+	    this._registerDispatch('mapRefreshCallbackRequest');
 	    
 		// Layers
 		this.infoLayers = [];
@@ -5049,7 +5050,7 @@ var MapAndControls = $n2.Class({
 			alert('redefineFeatureLayerStylesAndRules: unknown layer name: ' + layerName);
 		} else {
     		//this._endClicked();
-    		layerInfo.olLayer.redraw();    			
+    		layerInfo.olLayer.redraw();
 		};
 	},
 	
@@ -5832,6 +5833,12 @@ var MapAndControls = $n2.Class({
 			if( this.getCanvasName() === m.canvasName ){
 				m.stylesInUse = this._getMapStylesInUse();
 			};
+		} else if ( 'mapRefreshCallbackRequest' === type ){
+			if ( m.cnt + 1 === this.refreshCnt) {
+				var cb = this.refreshCallback;
+				cb(null, this);
+			}
+
 		};
 	},
 	
@@ -5842,6 +5849,8 @@ var MapAndControls = $n2.Class({
 		var layerInfo = layerOptions._layerInfo;
 		var mapLayer = layerInfo.olLayer;
 
+		var dispatchService = this._getDispatchService();
+		
 		var mustReproject = false;
 		var remoteProjection = mapLayer.projection;
 		var localProjection = layerInfo.olLayer.map.getProjectionObject();
@@ -5928,6 +5937,21 @@ var MapAndControls = $n2.Class({
 		
 		// Update styles
 		this._updatedStylesInUse();
+    	
+		if( this.refreshCallback ){
+			if (!this.refreshCnt){
+				this.refreshCnt = 1;
+			}
+			
+			var curCnt = this.refreshCnt ;
+			dispatchService.send(DH, {
+				type: 'mapRefreshCallbackRequest',
+				cnt : curCnt
+	 		});
+			this.refreshCnt++;
+//			var cb = this.refreshCallback;
+//			cb(null, this);
+		};
 	},
 	
 	_handleAddLayerToMap: function(m){

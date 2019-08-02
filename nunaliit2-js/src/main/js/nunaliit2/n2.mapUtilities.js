@@ -147,14 +147,22 @@ var MapAlwaysIncludesExtentsZoom = $n2.Class('MapAlwaysIncludesExtentsZoom',{
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			customService: undefined
-			,minimumCountToZoom: 0
-			,minimumResolutionToZoom: -1
+			,includes: undefined
 		},opts_);
 		
 		var _this = this;
 	
 		this.customService = opts.customService;
-		
+		var includes = opts.includes;
+		if (includes){
+			if (typeof includes[0] === 'object'){
+				this.alwaysIncludes = includes;
+			} else if (typeof includes[0] === 'number' || 'string' === includes[0]){
+				this.alwaysIncludes = [includes];
+			}
+		} else {
+			this.alwaysIncludes = null;
+		}
 		if( this.customService ){
 			var f = function(feature, mapAndControls){
 				_this._mapRefreshCallback(feature, mapAndControls);
@@ -165,8 +173,48 @@ var MapAlwaysIncludesExtentsZoom = $n2.Class('MapAlwaysIncludesExtentsZoom',{
 		
 		$n2.log(this._classname, this);
 	},
-	_mapRefreshCallback: function(feature, mapAndControls){
-		$n2.log('-->>, need to resetExtent');
+	_mapRefreshCallback: function(features, mapAndControls){
+		if (mapAndControls.map
+			&& mapAndControls.map.layers)
+		var map = mapAndControls.map;
+		var target_extent;
+		if (this.alwaysIncludes){
+			this.alwaysIncludes.forEach(function(bound){
+				if (bound.length === 4){
+					var alpha_extent = new OpenLayers.Bounds(bound[0], bound[1], bound[2], bound[3]);
+					var dstProj = new OpenLayers.Projection('EPSG:900913');
+					var srtProj = new OpenLayers.Projection('EPSG:4326');
+					alpha_extent.transform(srtProj, dstProj);
+					if (!target_extent){
+						target_extent = alpha_extent;
+					} else {
+						target_extent.extend (alpha_extent);
+					}
+				}
+			})
+		}
+		var layers = map.layers;
+		for (var i=0,e=layers.length; i<e; i++){
+			if (layers[i].isBaseLayer){
+				
+			} else {
+				var tmp_extent = layers[i].getDataExtent();
+				if (tmp_extent){
+					if (!target_extent){
+						target_extent = tmp_extent;
+					} else {
+						target_extent.extend( tmp_extent );
+					}
+					
+				}
+				
+			}
+		}
+		if (target_extent){
+			mapAndControls.map.zoomToExtent(target_extent, true);
+			$n2.log('-->>, need to resetExtent', target_extent);
+		}
+		
 	}
 });
 //=========================================================================
