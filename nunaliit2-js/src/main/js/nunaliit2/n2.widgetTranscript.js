@@ -2104,7 +2104,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 //				};
 			} else {	
 				_this._renderError('Transcript or media attachment names not found for '+this.doc._id);
-				
+				alert('Transcript or media attachment not found in media document ' + this.doc._id);
 			}
 
 			
