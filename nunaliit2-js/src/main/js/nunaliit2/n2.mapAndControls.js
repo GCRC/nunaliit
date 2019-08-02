@@ -142,6 +142,7 @@ var MapBridge = $n2.Class({
                 };
             };
         };
+        $n2.log('I wonder how frequent this get called');
     },
     
     _getMapControl: function(){

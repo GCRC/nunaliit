@@ -165,7 +165,7 @@ var MapAlwaysIncludesExtentsZoom = $n2.Class('MapAlwaysIncludesExtentsZoom',{
 		
 		$n2.log(this._classname, this);
 	},
-	_mapRefreshCallback(feature, mapAndControls){
+	_mapRefreshCallback: function(feature, mapAndControls){
 		$n2.log('-->>, need to resetExtent');
 	}
 });
