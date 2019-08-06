@@ -1597,6 +1597,7 @@ class N2MapCanvas  {
 			if( config.directory ){
 				this.dispatchService = config.directory.dispatchService;
 				this.showService = config.directory.showService;
+				this.customService = config.directory.customService;
 			};
 		};
 
@@ -2086,15 +2087,33 @@ class N2MapCanvas  {
 		if (_this.popupOverlay) {
 
 			var popup = _this.popupOverlay;
+			var featurePopupHtmlFn;
 			if (! $n2.isArray(feature)){
 				
-				var contentArr = feature.data._ldata.tags;
-				var content = '';
-				if (contentArr && $n2.isArray(contentArr)){
-					content = contentArr.join(', ');
+				if (_this.customService){
+					var cb = _this.customService.getOption('mapFeaturePopupCallback');
+					if( typeof cb === 'function' ) {
+						featurePopupHtmlFn = cb;
+					};
 				}
-				var mousepoint = mapBrowserEvent.coordinate;
-				popup.show(mousepoint, content);
+				//var contentArr = feature.data._ldata.tags;
+				if( featurePopupHtmlFn ){
+					featurePopupHtmlFn({
+						feature: feature
+						,onSuccess: function(content){
+							var mousepoint = mapBrowserEvent.coordinate;
+							popup.show(mousepoint, content);
+						}
+						,onError: function(){}//ignore
+					});
+					
+					//var content = featurePopupHtmlFn
+					//	if (contentArr && $n2.isArray(contentArr)){
+					//		content = contentArr.join(', ');
+					//	}
+						
+				};
+
 			} else {
 				//n2es6 does not support multi hover, so does nunaliit2 
 			}
