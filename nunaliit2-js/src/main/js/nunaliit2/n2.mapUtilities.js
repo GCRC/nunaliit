@@ -211,8 +211,12 @@ var MapAlwaysIncludesExtentsZoom = $n2.Class('MapAlwaysIncludesExtentsZoom',{
 			}
 		}
 		if (target_extent){
-			mapAndControls.map.zoomToExtent(target_extent, true);
-			$n2.log('-->>, need to resetExtent', target_extent);
+			mapAndControls.map.zoomToExtent(target_extent, false);
+			//$n2.log('-->>, need to resetExtent', target_extent);
+			//var dstProj = new OpenLayers.Projection('EPSG:900913');
+			//var srtProj = new OpenLayers.Projection('EPSG:4326');
+			//target_extent.transform(dstProj, srtProj);
+			//$n2.log('-->>, need to resetExtent-es4326', target_extent);
 		}
 		
 	}
