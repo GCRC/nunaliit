@@ -2707,6 +2707,66 @@ var MapAndControls = $n2.Class({
 				$n2.log('Image layer can not be added since OpenLayers does not support this type of background');
 			};
 			
+		} else if( 'wmts' === layerDefinition.type ){
+			var options = layerDefinition.options;
+			
+			if( options ) {
+				var wmtsUrl = null;
+				var wmtsOptions = {};
+				var layerOptions = {
+					isBaseLayer: isBaseLayer
+					,name: "Default WMTS Layer"
+					,url : null
+					,layer: "default:wmts_layer"
+					,style: "_null"
+					,matrixSet : "EPSG:900913"
+				};
+				if( typeof(layerDefinition.visibility) === 'boolean' ){
+					layerOptions.visibility = layerDefinition.visibility;
+				};
+				if ($n2.isDefined(layerDefinition.gutter)) {
+					layerOptions.gutter = layerDefinition.gutter;
+				};
+				if ($n2.isDefined(layerDefinition.displayInLayerSwitcher)) {
+					layerOptions.displayInLayerSwitcher = layerDefinition.displayInLayerSwitcher;
+				};
+				for(var key in options){
+					if( 'url' === key ) {
+						//wmsUrl = options[key];
+						layerOptions.url = options[key];
+
+					} else if( 'srsName' === key ) {
+						var proj = new OpenLayers.Projection( options[key] );
+						layerOptions.projection = proj;
+
+					} else if( 'opacity' === key
+							|| 'scales' === key 
+							|| 'resolutions' === key  ) {
+						layerOptions[key] = options[key];
+						
+					} else if( 'numZoomLevels' === key){
+						var matrixIds = new Array(options["numZoomLevels"]);
+						var srsName = options['srsName'];
+						var numzoom = options["numZoomLevels"];
+					    for (var i=0; i< numzoom; ++i) {
+					        matrixIds[i] = srsName + ":" + i;
+					    }
+					    layerOptions.matrixIds = matrixIds;
+					    layerOptions.numZoomLevels = options[key];
+					} else {
+						layerOptions[key] = options[key];
+					};
+				};
+				var l = new OpenLayers.Layer.WMTS( layerOptions );
+				
+				return l;
+				
+			} else {
+				$n2.reportError('Bad configuration for layer: '+name);
+				return null;
+			};
+			
+			
 		} else {
 			$n2.reportError('Unknown layer type: '+layerDefinition.type);
 		};
