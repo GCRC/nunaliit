@@ -1010,7 +1010,7 @@ var LayerInfo = $n2.Class({
                       atlas after it is created.
  */
 
-var MapAndControls = $n2.Class({
+var MapAndControls = $n2.Class('MapAndControls',{
 	
 	options: null,
 	dbSearchEngine: null,

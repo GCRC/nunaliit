@@ -1453,28 +1453,28 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var ol_layer_Image_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ol/layer/Image.js */ "./node_modules/ol/layer/Image.js");
 /* harmony import */ var ol_View_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ol/View.js */ "./node_modules/ol/View.js");
 /* harmony import */ var _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ../ol5support/N2DonutCluster.js */ "./dist/n2es6/ol5support/N2DonutCluster.js");
-/* harmony import */ var ol_proj_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ol/proj.js */ "./node_modules/ol/proj.js");
-/* harmony import */ var ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ol/proj/Projection.js */ "./node_modules/ol/proj/Projection.js");
-/* harmony import */ var ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ol/layer/Tile.js */ "./node_modules/ol/layer/Tile.js");
-/* harmony import */ var ol_events_condition_js__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ol/events/condition.js */ "./node_modules/ol/events/condition.js");
-/* harmony import */ var ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ol/interaction/MouseWheelZoom.js */ "./node_modules/ol/interaction/MouseWheelZoom.js");
-/* harmony import */ var ol_interaction_js__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ol/interaction.js */ "./node_modules/ol/interaction.js");
-/* harmony import */ var ol_Observable__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ol/Observable */ "./node_modules/ol/Observable.js");
-/* harmony import */ var ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ol/interaction/Draw.js */ "./node_modules/ol/interaction/Draw.js");
-/* harmony import */ var ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ol/source/Stamen.js */ "./node_modules/ol/source/Stamen.js");
-/* harmony import */ var ol_source_OSM__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ol/source/OSM */ "./node_modules/ol/source/OSM.js");
-/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ol-layerswitcher */ "./node_modules/ol-layerswitcher/dist/ol-layerswitcher.js");
-/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_31___default = /*#__PURE__*/__webpack_require__.n(ol_layerswitcher__WEBPACK_IMPORTED_MODULE_31__);
-/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ol-ext/dist/ol-ext.css */ "./node_modules/ol-ext/dist/ol-ext.css");
-/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_32___default = /*#__PURE__*/__webpack_require__.n(ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_32__);
-/* harmony import */ var ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ol-ext/control/Bar */ "./node_modules/ol-ext/control/Bar.js");
-/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
-/* harmony import */ var ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ol-ext/control/Timeline */ "./node_modules/ol-ext/control/Timeline.js");
-/* harmony import */ var ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ol-ext/overlay/Popup */ "./node_modules/ol-ext/overlay/Popup.js");
+/* harmony import */ var ol_extent_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ol/extent.js */ "./node_modules/ol/extent.js");
+/* harmony import */ var ol_proj_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ol/proj.js */ "./node_modules/ol/proj.js");
+/* harmony import */ var ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ol/proj/Projection.js */ "./node_modules/ol/proj/Projection.js");
+/* harmony import */ var ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ol/layer/Tile.js */ "./node_modules/ol/layer/Tile.js");
+/* harmony import */ var ol_events_condition_js__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ol/events/condition.js */ "./node_modules/ol/events/condition.js");
+/* harmony import */ var ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ol/interaction/MouseWheelZoom.js */ "./node_modules/ol/interaction/MouseWheelZoom.js");
+/* harmony import */ var ol_interaction_js__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ol/interaction.js */ "./node_modules/ol/interaction.js");
+/* harmony import */ var ol_Observable__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ol/Observable */ "./node_modules/ol/Observable.js");
+/* harmony import */ var ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ol/interaction/Draw.js */ "./node_modules/ol/interaction/Draw.js");
+/* harmony import */ var ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ol/source/Stamen.js */ "./node_modules/ol/source/Stamen.js");
+/* harmony import */ var ol_source_OSM__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ol/source/OSM */ "./node_modules/ol/source/OSM.js");
+/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ol-layerswitcher */ "./node_modules/ol-layerswitcher/dist/ol-layerswitcher.js");
+/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_32___default = /*#__PURE__*/__webpack_require__.n(ol_layerswitcher__WEBPACK_IMPORTED_MODULE_32__);
+/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ol-ext/dist/ol-ext.css */ "./node_modules/ol-ext/dist/ol-ext.css");
+/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_33___default = /*#__PURE__*/__webpack_require__.n(ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_33__);
+/* harmony import */ var ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ol-ext/control/Bar */ "./node_modules/ol-ext/control/Bar.js");
+/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
+/* harmony import */ var ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ol-ext/control/Timeline */ "./node_modules/ol-ext/control/Timeline.js");
+/* harmony import */ var ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ol-ext/overlay/Popup */ "./node_modules/ol-ext/overlay/Popup.js");
 /**
  * @module n2es6/n2mapModule/N2MapCanvas
  */
-
 
 
 
@@ -1584,6 +1584,7 @@ class N2MapCanvas  {
 		},opts_);
 
 		var _this = this;
+		this._classname = 'N2MapCanvas';
 		this.dispatchService  = null;
 
 		this.showService = null;
@@ -1626,8 +1627,17 @@ class N2MapCanvas  {
 		this.n2Map = undefined;
 		this.popupOverlay = undefined;
 		this.n2MapStyles = new _N2MapStyles_js__WEBPACK_IMPORTED_MODULE_4__["default"]();
+		this.refreshCallback = null;
 
-
+		if ( this.customService ){
+			var customService = this.customService;
+			if ( !this.refreshCallback ){
+				var cb = customService.getOption('mapRefreshCallback' );
+				if ( typeof cb === 'function' ){
+					this.refreshCallback = cb;
+				}
+		}
+		}
 		this.interactionSet = {
 				selectInteraction : null,
 				drawInteraction : null
@@ -1640,10 +1650,11 @@ class N2MapCanvas  {
 			var f = function(m){
 				_this._handleDispatch(m);
 			};
-			this.dispatchService.register(DH,'n2ViewAnimation',f);
+			this.dispatchService.register(DH, 'n2ViewAnimation', f);
 			this.dispatchService.register(DH, 'n2rerender', f);
 			this.dispatchService.register(DH, 'time_interval_change', f);
 			this.dispatchService.register(DH, 'focusOn', f);
+			this.dispatchService.register(DH, 'mapRefreshCallbackRequest', f);
 		};
 
 		$n2.log(this._classname,this);
@@ -1742,9 +1753,9 @@ class N2MapCanvas  {
 						sourceModelId: sourceModelId
 						,dispatchService: this.dispatchService
 						,projCode: 'EPSG:3857'
-							,onUpdateCallback : function(state){
-								//_this._modelLayerUpdated(layerOptions, state);
-							}
+						,onUpdateCallback : function(state){
+							//_this._modelLayerUpdated(layerOptions, state);
+						}
 					,notifications: {
 						readStart: function(){
 							//_this._mapBusyStatus(1);
@@ -1754,6 +1765,16 @@ class N2MapCanvas  {
 					}
 					}
 					});
+					
+					
+					var listenerKey = source.on('change', function(e) {
+						if (source.getState() == 'ready') {
+							_this.dispatchService.send(DH, {
+								type: 'mapRefreshCallbackRequest'
+							})
+						}
+					});
+						//      unByKey(listenerKey);
 					this.sources.push(source);
 				};
 			} else if ('wfs' === overlay.type) {
@@ -1800,14 +1821,14 @@ class N2MapCanvas  {
 		var _this = this;
 
 		var olView = new ol_View_js__WEBPACK_IMPORTED_MODULE_19__["default"]({
-			center: Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_21__["transform"])([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
+			center: Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transform"])([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
 			projection: 'EPSG:3857',
 			zoom: 6
 		});
 		this.n2View = olView;
 		var customMap = new ol_Map_js__WEBPACK_IMPORTED_MODULE_14__["default"]({
-			interactions: Object(ol_interaction_js__WEBPACK_IMPORTED_MODULE_26__["defaults"])({mouseWheelZoom : false}).extend([
-				new ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_25__["default"]({
+			interactions: Object(ol_interaction_js__WEBPACK_IMPORTED_MODULE_27__["defaults"])({mouseWheelZoom : false}).extend([
+				new ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_26__["default"]({
 					duration: 200,
 					constrainResolution: false
 				})
@@ -1821,9 +1842,9 @@ class N2MapCanvas  {
 		//Config the initial bound on the ol5 map
 		if (this.coordinates && !this.coordinates.autoInitialBounds) {
 			let bbox = this.coordinates.initialBounds;
-			let boundInProj = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_21__["transformExtent"])(bbox,
-					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_22__["default"]({code: 'EPSG:4326'}),
-					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_22__["default"]({code: 'EPSG:3857'})
+			let boundInProj = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transformExtent"])(bbox,
+					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"]({code: 'EPSG:4326'}),
+					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"]({code: 'EPSG:3857'})
 			);
 			customMap.once('postrender', function(evt){
 				customMap.getView().fit(boundInProj, {size:customMap.getSize()});
@@ -1856,50 +1877,8 @@ class N2MapCanvas  {
 		this.overlayLayers = this._genOverlayMapLayers(this.sources);
 		this.mapLayers = this._genBackgroundMapLayers(this.bgSources);
 
-		var timelineCache = {};
-		  function style(select){
-		    return function(f) {
-		      var style = timelineCache[f.get('img')+'-'+select];
-		      if (!style) {
-		        var img = new ol_ext_style_Photo__WEBPACK_IMPORTED_MODULE_7__["default"]({
-		          src: f.get('img'),
-		          radius: select ? 20:15,
-		          shadow: true,
-		          stroke: new ol_style_js__WEBPACK_IMPORTED_MODULE_6__["Stroke"]({
-		            width: 4,
-		            color: select ? '#fff':'#fafafa'
-		          }),
-		          onload: function() { f.changed(); }
-		        })
-		        style = timelineCache[f.get('img')+'-'+select] = new ol_style_js__WEBPACK_IMPORTED_MODULE_6__["Style"]({
-		          image: img
-		        })
-		      }
-		      return style;
-		    }
-		  };
-
-		  var vectorSource = new ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_11__["default"]({
-			    url: '../../data/fond_guerre.geojson',
-			    projection: 'EPSG:3857',
-			    format: new ol_format_GeoJSON__WEBPACK_IMPORTED_MODULE_9__["default"](),
-					attributions: [ "&copy; <a href='https://data.culture.gouv.fr/explore/dataset/fonds-de-la-guerre-14-18-extrait-de-la-base-memoire'>data.culture.gouv.fr</a>" ],
-			    logo:"https://www.data.gouv.fr/s/avatars/37/e56718abd4465985ddde68b33be1ef.jpg"
-			  });
-			  var listenerKey = vectorSource.on('change', function(e) {
-			    if (vectorSource.getState() == 'ready') {
-			      Object(ol_Observable__WEBPACK_IMPORTED_MODULE_27__["unByKey"])(listenerKey);
-			      customTimeline.refresh();
-			    }
-			  });
-			  var timelineLyr = new ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_16__["default"]({
-			    name: '1914-18',
-			    preview: "http://www.culture.gouv.fr/Wave/image/memoire/2445/sap40_z0004141_v.jpg",
-			    source: vectorSource,
-			    style: style()
-			  });
-			  
-		var customPopup= new ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_36__["default"]({
+		
+		var customPopup= new ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_37__["default"]({
 			popupClass: "",
 			positioning: 'auto',
 			autoPan: true,
@@ -1907,8 +1886,7 @@ class N2MapCanvas  {
 		});
 		this.popupOverlay = customPopup;
 		this.n2Map.addOverlay(customPopup);
-		//this.overlayLayers.push();
-		//this.overlayLayers.push(timelineLyr);
+
 
 
 		/**
@@ -1929,72 +1907,22 @@ class N2MapCanvas  {
 		);
 
 
-		var customLayerSwitcher = new ol_layerswitcher__WEBPACK_IMPORTED_MODULE_31___default.a({
+		var customLayerSwitcher = new ol_layerswitcher__WEBPACK_IMPORTED_MODULE_32___default.a({
 					tipLabel: 'Legend' // Optional label for button
 				});
 		customMap.addControl(customLayerSwitcher);
 
-		var customTimeline = new ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_35__["default"]({
-		    className: 'ol-zoomhover',
-		    source: vectorSource,
-		    graduation: 'day', // 'month'
-		    zoomButton: true,
-		    getHTML: function(f){
-		      return '<img src="'+f.get('img')+'"/> '+(f.get('text')||'');
-		    },
-		    getFeatureDate: function(f) {
-		      return f.get('date');
-		    },
-		    endFeatureDate: function(f) {
-		      var d = f.get('endDate');
-		      // Create end date
-		      if (!d) {
-		        d = new Date (f.get('date'));
-		        d = new Date( d.getTime() + (5 + 10*Math.random())*10*24*60*60*1000);
-		        f.set('endDate', d);
-		      }
-		      return d;
-		    }
-		  });
-
-
-		customMap.addControl(customTimeline);
-		customTimeline.on('select', function(e){
-			    // Center map on feature
-			customMap.getView().animate({
-			      center: e.feature.getGeometry().getCoordinates(),
-			      zoom: 10
-			    });
-			    // Center time line on feature
-			customTimeline.setDate(e.feature);
-			    // Select feature on the map
-			    //select.getFeatures().clear();
-			    //select.getFeatures().push(e.feature);
-			  });
-			  // Collapse the line
-		customTimeline.on('collapse', function(e) {
-			    if (e.collapsed) $(_this.canvasId).addClass('noimg')
-			    else $(_this.canvasId).removeClass('noimg')
-			  });
-			  // >croll the line
-		customTimeline.on('scroll', function(e){
-			    $('.options .date').text(e.date.toLocaleDateString());
-			  });
-
-
-
-
-		var mainbar = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_33__["default"]();
+		var mainbar = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_34__["default"]();
 		customMap.addControl(mainbar);
 		mainbar.setPosition("top");
 		/* Nested toobar with one control activated at once */
-		var nested = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_33__["default"] ({ toggleOne: true, group:true });
+		var nested = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_34__["default"] ({ toggleOne: true, group:true });
 //		var selectInteraction= new SelectInteraction ();
 		mainbar.addControl (nested);
 
 
 		// Add selection tool (a toggle control with a select interaction)
-		var selectCtrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_34__["default"](
+		var selectCtrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_35__["default"](
 				{	html: '<i class="fa fa-hand-pointer-o"></i>',
 					className: "select",
 					title: "Select",
@@ -2024,12 +1952,12 @@ class N2MapCanvas  {
 		
 		nested.addControl(selectCtrl);
 
-		this.interactionSet.drawInteraction = new ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_28__["default"]
+		this.interactionSet.drawInteraction = new ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_29__["default"]
 		({	type: 'Point',
 			source: this.overlayLayers[0].getSource()
 		});
 		// Add editing tools
-		var pedit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_34__["default"](
+		var pedit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_35__["default"](
 				{	html: '<i class="fa fa-map-marker" ></i>',
 					className: "edit",
 					title: 'Point',
@@ -2039,7 +1967,7 @@ class N2MapCanvas  {
 					}
 				});
 		//nested.addControl ( pedit );
-		var pcluster = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_34__["default"]({
+		var pcluster = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_35__["default"]({
 			html: '<i class="fa fa-map-marker" ></i>',
 			className: "cluster_toggle",
 			title: 'Toggle clustering',
@@ -2386,7 +2314,7 @@ class N2MapCanvas  {
 		var _this = this;
 
 		if( layerDefinition ) {
-			var ol5layer = new ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_23__["default"]({
+			var ol5layer = new ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_24__["default"]({
 				title: layerDefinition.name,
 				type: 'base',
 				visible: isDefaultLayer,
@@ -2447,7 +2375,7 @@ class N2MapCanvas  {
 
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.url ){
-				return new ol_source_OSM__WEBPACK_IMPORTED_MODULE_30__["default"]({
+				return new ol_source_OSM__WEBPACK_IMPORTED_MODULE_31__["default"]({
 					url : sourceOptionsInternal.url
 				});
 			} else {
@@ -2458,7 +2386,7 @@ class N2MapCanvas  {
 		} else if ( sourceTypeInternal == VENDOR.STAMEN) {
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.layerName ){
-				return new ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_29__["default"]({
+				return new ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_30__["default"]({
 					layer:  sourceOptionsInternal.layerName
 				});
 			} else {
@@ -2485,7 +2413,7 @@ class N2MapCanvas  {
 			let targetProjCode = 'EPSG:3857';
 			var targetCenter = [x, y];
 			if ( targetProjCode !== sourceProjCode){
-				var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_21__["getTransform"])( sourceProjCode, targetProjCode);
+				var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["getTransform"])( sourceProjCode, targetProjCode);
 				// Convert [0,0] and [0,1] to proj
 				targetCenter = transformFn([x, y]);
 			}
@@ -2521,7 +2449,13 @@ class N2MapCanvas  {
 
 				});
 			}
-		} 
+		} else if ( 'mapRefreshCallbackRequest' === type ){
+			if ( m.cnt + 1 === this.refreshCnt) {
+				var cb = this.refreshCallback;
+				cb(null, this);
+			}
+
+		};
 //		else if ('focusOn' === type) {
 //			
 //			if (_this.popupOverlay) {
@@ -2595,9 +2529,9 @@ class N2MapCanvas  {
 			let bbox = f.nunaliit_geom.bbox;
 			let geomBounds = undefined;
 			if ( Array.isArray(bbox)) {
-				geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_21__["transformExtent"])(bbox,
-						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_22__["default"]({code: srcProj}),
-						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_22__["default"]({code: dstProj})
+				geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transformExtent"])(bbox,
+						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"]({code: srcProj}),
+						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"]({code: dstProj})
 				);
 				return geomBounds;
 
@@ -2631,7 +2565,7 @@ class N2MapCanvas  {
 				geomBounds = bbox;
 
 				if (mapProj.getCode() !== f.n2GeomProj.getCode) {
-					geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_21__["transformExtent"])(bbox, f.n2GeomProj, mapProj);
+					geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transformExtent"])(bbox, f.n2GeomProj, mapProj);
 				}
 
 				f.n2ConvertedBbox = geomBounds;
@@ -2684,7 +2618,11 @@ function HandleCanvasDisplayRequest(m){
 };
 
 //--------------------------------------------------------------------------
-
+nunaliit2.n2es6 = {
+		ol_proj_Projection : ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"],
+		ol_proj_transformExtent : ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transformExtent"],
+		ol_extent_extend : ol_extent_js__WEBPACK_IMPORTED_MODULE_21__["extend"]	
+};
 
 nunaliit2.canvasMap = {
 		MapCanvas: N2MapCanvas
