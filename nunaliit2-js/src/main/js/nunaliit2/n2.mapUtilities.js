@@ -245,25 +245,33 @@ var MapAutoZoom = $n2.Class('MapAutoZoom',{
 							}
 						})
 					}
-					var layers = map.getLayers();
-					for (var i=0,e=layers.length; i<e; i++){
-						if (layers[i].isBaseLayer){
+					//layers here is a vanilla array;
+					var layergroups = map.getLayers().getArray();
+					
+					for (var i=0,e=layergroups.length; i<e; i++){
+						if (layergroups[i].get('title') !== 'Overlays'){
 
 						} else {
-							var tmp_extent = layers[i].getDataExtent();
-							if (tmp_extent){
-								if (!target_extent){
-									target_extent = tmp_extent;
-								} else {
-									target_extent.extend( tmp_extent );
+							//layergroup overlay;
+							var innerLayers = layergroups[i].get('layers').getArray();
+							if ( innerLayers && Array.isArray(innerLayers) ){
+								for (var j = 0, k=innerLayers.length; j<k ; j++){
+									var layer = innerLayers[j];
+									var tmp_extent = layer.getSource().getExtent();
+									if (tmp_extent){
+										if (!target_extent){
+											target_extent = tmp_extent;
+										} else {
+											nunaliit2.n2es6.ol_extent_extend (target_extent, tmp_extent);
+										}
+									}
 								}
-
 							}
-
 						}
 					}
-					if (target_extent){
-						mapAndControls.map.zoomToExtent(target_extent, false);
+					if ( target_extent
+						&& !nunaliit2.n2es6.ol_extent_isEmpty(target_extent) ){
+						map.getView().fit(target_extent, map.getSize());
 						//$n2.log('-->>, need to resetExtent', target_extent);
 						//var dstProj = new OpenLayers.Projection('EPSG:900913');
 						//var srtProj = new OpenLayers.Projection('EPSG:4326');

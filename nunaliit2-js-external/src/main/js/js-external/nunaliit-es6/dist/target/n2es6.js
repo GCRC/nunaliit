@@ -1616,6 +1616,7 @@ class N2MapCanvas  {
 		this.lastTime = null;
 		this.initialTime = null;
 		this.endIdx = 0;
+		this.refreshCnt = undefined;
 		
 		var t = new $n2.N2Editor.Base();
 		//==============
@@ -1769,9 +1770,15 @@ class N2MapCanvas  {
 					
 					var listenerKey = source.on('change', function(e) {
 						if (source.getState() == 'ready') {
+							if (!_this.refreshCnt){
+								_this.refreshCnt = 1;
+							}
+							var curCnt = _this.refreshCnt;
 							_this.dispatchService.send(DH, {
-								type: 'mapRefreshCallbackRequest'
-							})
+								type: 'mapRefreshCallbackRequest',
+								cnt:curCnt
+							});
+							_this.refreshCnt++;
 						}
 					});
 						//      unByKey(listenerKey);
@@ -2452,7 +2459,10 @@ class N2MapCanvas  {
 		} else if ( 'mapRefreshCallbackRequest' === type ){
 			if ( m.cnt + 1 === this.refreshCnt) {
 				var cb = this.refreshCallback;
-				cb(null, this);
+				if ( cb && typeof cb === 'function'){
+					cb(null, this);
+				}
+				
 			}
 
 		};
@@ -2621,7 +2631,8 @@ function HandleCanvasDisplayRequest(m){
 nunaliit2.n2es6 = {
 		ol_proj_Projection : ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"],
 		ol_proj_transformExtent : ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transformExtent"],
-		ol_extent_extend : ol_extent_js__WEBPACK_IMPORTED_MODULE_21__["extend"]	
+		ol_extent_extend : ol_extent_js__WEBPACK_IMPORTED_MODULE_21__["extend"],
+		ol_extent_isEmpty : ol_extent_js__WEBPACK_IMPORTED_MODULE_21__["isEmpty"]
 };
 
 nunaliit2.canvasMap = {

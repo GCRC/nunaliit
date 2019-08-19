@@ -5895,7 +5895,10 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		} else if ( 'mapRefreshCallbackRequest' === type ){
 			if ( m.cnt + 1 === this.refreshCnt) {
 				var cb = this.refreshCallback;
-				cb(null, this);
+				if (cb && typeof cb === 'function'){
+					cb(null, this);
+				}
+
 			}
 
 		};
