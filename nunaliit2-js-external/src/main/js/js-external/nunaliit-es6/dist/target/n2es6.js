@@ -1443,38 +1443,42 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var ol_style_Style_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/style/Style.js */ "./node_modules/ol/style/Style.js");
 /* harmony import */ var ol_format_GeoJSON__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/format/GeoJSON */ "./node_modules/ol/format/GeoJSON.js");
 /* harmony import */ var ol_source_Image_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/source/Image.js */ "./node_modules/ol/source/Image.js");
-/* harmony import */ var ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ol/source/Vector.js */ "./node_modules/ol/source/Vector.js");
-/* harmony import */ var _N2Select_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ./N2Select.js */ "./dist/n2es6/n2mapModule/N2Select.js");
-/* harmony import */ var _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./N2SourceWithN2Intent.js */ "./dist/n2es6/n2mapModule/N2SourceWithN2Intent.js");
-/* harmony import */ var ol_Map_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ol/Map.js */ "./node_modules/ol/Map.js");
-/* harmony import */ var ol_WebGLMap__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ol/WebGLMap */ "./node_modules/ol/WebGLMap.js");
-/* harmony import */ var ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ol/layer/Vector.js */ "./node_modules/ol/layer/Vector.js");
-/* harmony import */ var ol_layer_Group_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ol/layer/Group.js */ "./node_modules/ol/layer/Group.js");
-/* harmony import */ var ol_layer_Image_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ol/layer/Image.js */ "./node_modules/ol/layer/Image.js");
-/* harmony import */ var ol_View_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ol/View.js */ "./node_modules/ol/View.js");
-/* harmony import */ var _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ../ol5support/N2DonutCluster.js */ "./dist/n2es6/ol5support/N2DonutCluster.js");
-/* harmony import */ var ol_extent_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ol/extent.js */ "./node_modules/ol/extent.js");
-/* harmony import */ var ol_proj_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ol/proj.js */ "./node_modules/ol/proj.js");
-/* harmony import */ var ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ol/proj/Projection.js */ "./node_modules/ol/proj/Projection.js");
-/* harmony import */ var ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ol/layer/Tile.js */ "./node_modules/ol/layer/Tile.js");
-/* harmony import */ var ol_events_condition_js__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ol/events/condition.js */ "./node_modules/ol/events/condition.js");
-/* harmony import */ var ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ol/interaction/MouseWheelZoom.js */ "./node_modules/ol/interaction/MouseWheelZoom.js");
-/* harmony import */ var ol_interaction_js__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ol/interaction.js */ "./node_modules/ol/interaction.js");
-/* harmony import */ var ol_Observable__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ol/Observable */ "./node_modules/ol/Observable.js");
-/* harmony import */ var ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ol/interaction/Draw.js */ "./node_modules/ol/interaction/Draw.js");
-/* harmony import */ var ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ol/source/Stamen.js */ "./node_modules/ol/source/Stamen.js");
-/* harmony import */ var ol_source_OSM__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ol/source/OSM */ "./node_modules/ol/source/OSM.js");
-/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ol-layerswitcher */ "./node_modules/ol-layerswitcher/dist/ol-layerswitcher.js");
-/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_32___default = /*#__PURE__*/__webpack_require__.n(ol_layerswitcher__WEBPACK_IMPORTED_MODULE_32__);
-/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ol-ext/dist/ol-ext.css */ "./node_modules/ol-ext/dist/ol-ext.css");
-/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_33___default = /*#__PURE__*/__webpack_require__.n(ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_33__);
-/* harmony import */ var ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ol-ext/control/Bar */ "./node_modules/ol-ext/control/Bar.js");
-/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
-/* harmony import */ var ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ol-ext/control/Timeline */ "./node_modules/ol-ext/control/Timeline.js");
-/* harmony import */ var ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ol-ext/overlay/Popup */ "./node_modules/ol-ext/overlay/Popup.js");
+/* harmony import */ var ol_source_WMTS_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ol/source/WMTS.js */ "./node_modules/ol/source/WMTS.js");
+/* harmony import */ var ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ol/source/Vector.js */ "./node_modules/ol/source/Vector.js");
+/* harmony import */ var _N2Select_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./N2Select.js */ "./dist/n2es6/n2mapModule/N2Select.js");
+/* harmony import */ var _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ./N2SourceWithN2Intent.js */ "./dist/n2es6/n2mapModule/N2SourceWithN2Intent.js");
+/* harmony import */ var ol_Map_js__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ol/Map.js */ "./node_modules/ol/Map.js");
+/* harmony import */ var ol_WebGLMap__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ol/WebGLMap */ "./node_modules/ol/WebGLMap.js");
+/* harmony import */ var ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ol/layer/Vector.js */ "./node_modules/ol/layer/Vector.js");
+/* harmony import */ var ol_layer_Group_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ol/layer/Group.js */ "./node_modules/ol/layer/Group.js");
+/* harmony import */ var ol_layer_Image_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ol/layer/Image.js */ "./node_modules/ol/layer/Image.js");
+/* harmony import */ var ol_View_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ol/View.js */ "./node_modules/ol/View.js");
+/* harmony import */ var _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ../ol5support/N2DonutCluster.js */ "./dist/n2es6/ol5support/N2DonutCluster.js");
+/* harmony import */ var ol_extent_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ol/extent.js */ "./node_modules/ol/extent.js");
+/* harmony import */ var ol_proj_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ol/proj.js */ "./node_modules/ol/proj.js");
+/* harmony import */ var ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ol/proj/Projection.js */ "./node_modules/ol/proj/Projection.js");
+/* harmony import */ var ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ol/layer/Tile.js */ "./node_modules/ol/layer/Tile.js");
+/* harmony import */ var ol_tilegrid_WMTS_js__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ol/tilegrid/WMTS.js */ "./node_modules/ol/tilegrid/WMTS.js");
+/* harmony import */ var ol_events_condition_js__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ol/events/condition.js */ "./node_modules/ol/events/condition.js");
+/* harmony import */ var ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ol/interaction/MouseWheelZoom.js */ "./node_modules/ol/interaction/MouseWheelZoom.js");
+/* harmony import */ var ol_interaction_js__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ol/interaction.js */ "./node_modules/ol/interaction.js");
+/* harmony import */ var ol_Observable__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ol/Observable */ "./node_modules/ol/Observable.js");
+/* harmony import */ var ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ol/interaction/Draw.js */ "./node_modules/ol/interaction/Draw.js");
+/* harmony import */ var ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ol/source/Stamen.js */ "./node_modules/ol/source/Stamen.js");
+/* harmony import */ var ol_source_OSM__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ol/source/OSM */ "./node_modules/ol/source/OSM.js");
+/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ol-layerswitcher */ "./node_modules/ol-layerswitcher/dist/ol-layerswitcher.js");
+/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_34___default = /*#__PURE__*/__webpack_require__.n(ol_layerswitcher__WEBPACK_IMPORTED_MODULE_34__);
+/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ol-ext/dist/ol-ext.css */ "./node_modules/ol-ext/dist/ol-ext.css");
+/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_35___default = /*#__PURE__*/__webpack_require__.n(ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_35__);
+/* harmony import */ var ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ol-ext/control/Bar */ "./node_modules/ol-ext/control/Bar.js");
+/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
+/* harmony import */ var ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_38__ = __webpack_require__(/*! ol-ext/control/Timeline */ "./node_modules/ol-ext/control/Timeline.js");
+/* harmony import */ var ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_39__ = __webpack_require__(/*! ol-ext/overlay/Popup */ "./node_modules/ol-ext/overlay/Popup.js");
 /**
  * @module n2es6/n2mapModule/N2MapCanvas
  */
+
+
 
 
 
@@ -1541,6 +1545,7 @@ const VENDOR =  {
 		GOOGLEMAP : 'googlemaps',
 		BING : 'bing',
 		WMS : 'wms',
+		WMTS: 'wmts',
 		OSM : 'osm',
 		STAMEN : 'stamen',
 		IMAGE : 'image',
@@ -1827,15 +1832,15 @@ class N2MapCanvas  {
 	_drawMap() {
 		var _this = this;
 
-		var olView = new ol_View_js__WEBPACK_IMPORTED_MODULE_19__["default"]({
-			center: Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transform"])([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
+		var olView = new ol_View_js__WEBPACK_IMPORTED_MODULE_20__["default"]({
+			center: Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["transform"])([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
 			projection: 'EPSG:3857',
 			zoom: 6
 		});
 		this.n2View = olView;
-		var customMap = new ol_Map_js__WEBPACK_IMPORTED_MODULE_14__["default"]({
-			interactions: Object(ol_interaction_js__WEBPACK_IMPORTED_MODULE_27__["defaults"])({mouseWheelZoom : false}).extend([
-				new ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_26__["default"]({
+		var customMap = new ol_Map_js__WEBPACK_IMPORTED_MODULE_15__["default"]({
+			interactions: Object(ol_interaction_js__WEBPACK_IMPORTED_MODULE_29__["defaults"])({mouseWheelZoom : false}).extend([
+				new ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_28__["default"]({
 					duration: 200,
 					constrainResolution: false
 				})
@@ -1849,9 +1854,9 @@ class N2MapCanvas  {
 		//Config the initial bound on the ol5 map
 		if (this.coordinates && !this.coordinates.autoInitialBounds) {
 			let bbox = this.coordinates.initialBounds;
-			let boundInProj = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transformExtent"])(bbox,
-					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"]({code: 'EPSG:4326'}),
-					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"]({code: 'EPSG:3857'})
+			let boundInProj = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["transformExtent"])(bbox,
+					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__["default"]({code: 'EPSG:4326'}),
+					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__["default"]({code: 'EPSG:3857'})
 			);
 			customMap.once('postrender', function(evt){
 				customMap.getView().fit(boundInProj, {size:customMap.getSize()});
@@ -1877,7 +1882,7 @@ class N2MapCanvas  {
 		//========================================
 		
 		
-		this.interactionSet.selectInteraction = new _N2Select_js__WEBPACK_IMPORTED_MODULE_12__["default"]({map: customMap});
+		this.interactionSet.selectInteraction = new _N2Select_js__WEBPACK_IMPORTED_MODULE_13__["default"]({map: customMap});
 
 //		------------------------------
 //		------------------------------ create and add layers
@@ -1885,7 +1890,7 @@ class N2MapCanvas  {
 		this.mapLayers = this._genBackgroundMapLayers(this.bgSources);
 
 		
-		var customPopup= new ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_37__["default"]({
+		var customPopup= new ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_39__["default"]({
 			popupClass: "",
 			positioning: 'auto',
 			autoPan: true,
@@ -1899,37 +1904,37 @@ class N2MapCanvas  {
 		/**
 		 * Two Groups : Overlay and Background
 		 */
-		var overlayGroup = new ol_layer_Group_js__WEBPACK_IMPORTED_MODULE_17__["default"]({
+		var overlayGroup = new ol_layer_Group_js__WEBPACK_IMPORTED_MODULE_18__["default"]({
 			title: 'Overlays',
 			layers: this.overlayLayers
 		});
-		var bgGroup = new ol_layer_Group_js__WEBPACK_IMPORTED_MODULE_17__["default"]({
+		var bgGroup = new ol_layer_Group_js__WEBPACK_IMPORTED_MODULE_18__["default"]({
 			title: 'Background',
 			layers: this.mapLayers
 		});
 
 
 		customMap.set("layergroup",
-				new ol_layer_Group_js__WEBPACK_IMPORTED_MODULE_17__["default"]({layers: [bgGroup, overlayGroup]})
+				new ol_layer_Group_js__WEBPACK_IMPORTED_MODULE_18__["default"]({layers: [bgGroup, overlayGroup]})
 		);
 
 
-		var customLayerSwitcher = new ol_layerswitcher__WEBPACK_IMPORTED_MODULE_32___default.a({
+		var customLayerSwitcher = new ol_layerswitcher__WEBPACK_IMPORTED_MODULE_34___default.a({
 					tipLabel: 'Legend' // Optional label for button
 				});
 		customMap.addControl(customLayerSwitcher);
 
-		var mainbar = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_34__["default"]();
+		var mainbar = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_36__["default"]();
 		customMap.addControl(mainbar);
 		mainbar.setPosition("top");
 		/* Nested toobar with one control activated at once */
-		var nested = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_34__["default"] ({ toggleOne: true, group:true });
+		var nested = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_36__["default"] ({ toggleOne: true, group:true });
 //		var selectInteraction= new SelectInteraction ();
 		mainbar.addControl (nested);
 
 
 		// Add selection tool (a toggle control with a select interaction)
-		var selectCtrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_35__["default"](
+		var selectCtrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__["default"](
 				{	html: '<i class="fa fa-hand-pointer-o"></i>',
 					className: "select",
 					title: "Select",
@@ -1959,12 +1964,12 @@ class N2MapCanvas  {
 		
 		nested.addControl(selectCtrl);
 
-		this.interactionSet.drawInteraction = new ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_29__["default"]
+		this.interactionSet.drawInteraction = new ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_31__["default"]
 		({	type: 'Point',
 			source: this.overlayLayers[0].getSource()
 		});
 		// Add editing tools
-		var pedit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_35__["default"](
+		var pedit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__["default"](
 				{	html: '<i class="fa fa-map-marker" ></i>',
 					className: "edit",
 					title: 'Point',
@@ -1974,7 +1979,7 @@ class N2MapCanvas  {
 					}
 				});
 		//nested.addControl ( pedit );
-		var pcluster = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_35__["default"]({
+		var pcluster = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__["default"]({
 			html: '<i class="fa fa-map-marker" ></i>',
 			className: "cluster_toggle",
 			title: 'Toggle clustering',
@@ -1985,7 +1990,7 @@ class N2MapCanvas  {
 				if(active && !_this.isClustering){
 					let c_source =  _this.overlayLayers[0].getSource();
 					let a_source = c_source.getSource();
-					let b_source = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_20__["default"]({source: a_source});
+					let b_source = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_21__["default"]({source: a_source});
 					a_source.changed();
 					
 					c_source.setSource(b_source);
@@ -2124,14 +2129,14 @@ class N2MapCanvas  {
 					}
 					var clsOpt = Object.assign({}, overlayInfo.clustering
 							,{source: alphasource});
-					betaSource = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_20__["default"](clsOpt);
+					betaSource = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_21__["default"](clsOpt);
 				}
-				var charlieSource = new _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_13__["default"]({
+				var charlieSource = new _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_14__["default"]({
 					interaction: _this.interactionSet.selectInteraction,
 					source: betaSource,
 					dispatchService: _this.dispatchService
 				});
-				var vectorLayer = new ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_16__["default"]({
+				var vectorLayer = new ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_17__["default"]({
 					title: "CouchDb",
 					renderMode : 'vector',
 					source: charlieSource,
@@ -2321,7 +2326,7 @@ class N2MapCanvas  {
 		var _this = this;
 
 		if( layerDefinition ) {
-			var ol5layer = new ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_24__["default"]({
+			var ol5layer = new ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_25__["default"]({
 				title: layerDefinition.name,
 				type: 'base',
 				visible: isDefaultLayer,
@@ -2341,7 +2346,8 @@ class N2MapCanvas  {
 		var sourceTypeInternal =
 			layerDefinition.type.replace(/\W/g,'').toLowerCase();
 		var sourceOptionsInternal = layerDefinition.options;
-
+		var name = layerDefinition.name;
+		
 		if ( sourceTypeInternal == VENDOR.GOOGLEMAP ) {
 
 			$n2.log('Background of Google map is under construction');
@@ -2378,11 +2384,54 @@ class N2MapCanvas  {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
 
+		} else if (sourceTypeInternal == VENDOR.WMTS ){
+			
+			var options = sourceOptionsInternal;
+			if ( options ){
+				var wmtsOpt = {
+					url: null
+					,layer: null
+					,matrixSet: null
+					,projection: null
+					,style: null
+					,wrapX: false
+				};
+				
+				if ( options.matrixSet && options.numZoomLevels){
+					var projection = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["get"])(options.matrixSet);
+					var projectionExtent = projection.getExtent();
+					var numofzoom = parseInt(options.numZoomLevels);
+					var size = Object(ol_extent_js__WEBPACK_IMPORTED_MODULE_22__["getWidth"])(projectionExtent) / 256;
+					var resolutions = new Array(numofzoom);
+					var matrixIds = new Array(numofzoom);
+					for (var z = 0; z < numofzoom; ++z) {
+						// generate resolutions and matrixIds arrays for this WMTS
+						resolutions[z] = size / Math.pow(2, z);
+						matrixIds[z] = options.matrixSet + ":" + z;
+					}
+					
+					wmtsOpt.projection = projection;
+					wmtsOpt.tileGrid = new ol_tilegrid_WMTS_js__WEBPACK_IMPORTED_MODULE_26__["default"]({
+						origin: Object(ol_extent_js__WEBPACK_IMPORTED_MODULE_22__["getTopLeft"])(projectionExtent),
+						resolutions: resolutions,
+						matrixIds: matrixIds
+					});
+				}
+				
+				for (var key in options){
+					wmtsOpt[key] = options[key];
+				}
+				return new ol_source_WMTS_js__WEBPACK_IMPORTED_MODULE_11__["default"](wmtsOpt);
+			} else {
+				$n2.reportError('Bad configuration for layer: '+name);
+				return null;
+			}
+
 		} else if ( sourceTypeInternal == VENDOR.OSM) {
 
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.url ){
-				return new ol_source_OSM__WEBPACK_IMPORTED_MODULE_31__["default"]({
+				return new ol_source_OSM__WEBPACK_IMPORTED_MODULE_33__["default"]({
 					url : sourceOptionsInternal.url
 				});
 			} else {
@@ -2393,7 +2442,7 @@ class N2MapCanvas  {
 		} else if ( sourceTypeInternal == VENDOR.STAMEN) {
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.layerName ){
-				return new ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_30__["default"]({
+				return new ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_32__["default"]({
 					layer:  sourceOptionsInternal.layerName
 				});
 			} else {
@@ -2420,7 +2469,7 @@ class N2MapCanvas  {
 			let targetProjCode = 'EPSG:3857';
 			var targetCenter = [x, y];
 			if ( targetProjCode !== sourceProjCode){
-				var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["getTransform"])( sourceProjCode, targetProjCode);
+				var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["getTransform"])( sourceProjCode, targetProjCode);
 				// Convert [0,0] and [0,1] to proj
 				targetCenter = transformFn([x, y]);
 			}
@@ -2539,9 +2588,9 @@ class N2MapCanvas  {
 			let bbox = f.nunaliit_geom.bbox;
 			let geomBounds = undefined;
 			if ( Array.isArray(bbox)) {
-				geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transformExtent"])(bbox,
-						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"]({code: srcProj}),
-						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"]({code: dstProj})
+				geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["transformExtent"])(bbox,
+						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__["default"]({code: srcProj}),
+						new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__["default"]({code: dstProj})
 				);
 				return geomBounds;
 
@@ -2575,7 +2624,7 @@ class N2MapCanvas  {
 				geomBounds = bbox;
 
 				if (mapProj.getCode() !== f.n2GeomProj.getCode) {
-					geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transformExtent"])(bbox, f.n2GeomProj, mapProj);
+					geomBounds = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["transformExtent"])(bbox, f.n2GeomProj, mapProj);
 				}
 
 				f.n2ConvertedBbox = geomBounds;
@@ -2629,10 +2678,10 @@ function HandleCanvasDisplayRequest(m){
 
 //--------------------------------------------------------------------------
 nunaliit2.n2es6 = {
-		ol_proj_Projection : ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_23__["default"],
-		ol_proj_transformExtent : ol_proj_js__WEBPACK_IMPORTED_MODULE_22__["transformExtent"],
-		ol_extent_extend : ol_extent_js__WEBPACK_IMPORTED_MODULE_21__["extend"],
-		ol_extent_isEmpty : ol_extent_js__WEBPACK_IMPORTED_MODULE_21__["isEmpty"]
+		ol_proj_Projection : ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__["default"],
+		ol_proj_transformExtent : ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["transformExtent"],
+		ol_extent_extend : ol_extent_js__WEBPACK_IMPORTED_MODULE_22__["extend"],
+		ol_extent_isEmpty : ol_extent_js__WEBPACK_IMPORTED_MODULE_22__["isEmpty"]
 };
 
 nunaliit2.canvasMap = {
@@ -64198,6 +64247,584 @@ __webpack_require__.r(__webpack_exports__);
 
 /***/ }),
 
+/***/ "./node_modules/ol/source/WMTS.js":
+/*!****************************************!*\
+  !*** ./node_modules/ol/source/WMTS.js ***!
+  \****************************************/
+/*! exports provided: default, optionsFromCapabilities */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "optionsFromCapabilities", function() { return optionsFromCapabilities; });
+/* harmony import */ var _tileurlfunction_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../tileurlfunction.js */ "./node_modules/ol/tileurlfunction.js");
+/* harmony import */ var _array_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../array.js */ "./node_modules/ol/array.js");
+/* harmony import */ var _extent_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../extent.js */ "./node_modules/ol/extent.js");
+/* harmony import */ var _obj_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../obj.js */ "./node_modules/ol/obj.js");
+/* harmony import */ var _proj_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../proj.js */ "./node_modules/ol/proj.js");
+/* harmony import */ var _TileImage_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./TileImage.js */ "./node_modules/ol/source/TileImage.js");
+/* harmony import */ var _WMTSRequestEncoding_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./WMTSRequestEncoding.js */ "./node_modules/ol/source/WMTSRequestEncoding.js");
+/* harmony import */ var _tilegrid_WMTS_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../tilegrid/WMTS.js */ "./node_modules/ol/tilegrid/WMTS.js");
+/* harmony import */ var _uri_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ../uri.js */ "./node_modules/ol/uri.js");
+/**
+ * @module ol/source/WMTS
+ */
+
+
+
+
+
+
+
+
+
+
+
+/**
+ * @typedef {Object} Options
+ * @property {import("./Source.js").AttributionLike} [attributions] Attributions.
+ * @property {number} [cacheSize=2048] Cache size.
+ * @property {null|string} [crossOrigin] The `crossOrigin` attribute for loaded images.  Note that
+ * you must provide a `crossOrigin` value if you are using the WebGL renderer or if you want to
+ * access pixel data with the Canvas renderer.  See
+ * https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image for more detail.
+ * @property {import("../tilegrid/WMTS.js").default} tileGrid Tile grid.
+ * @property {import("../proj.js").ProjectionLike} projection Projection.
+ * @property {number} [reprojectionErrorThreshold=0.5] Maximum allowed reprojection error (in pixels).
+ * Higher values can increase reprojection performance, but decrease precision.
+ * @property {import("./WMTSRequestEncoding.js").default|string} [requestEncoding='KVP'] Request encoding.
+ * @property {string} layer Layer name as advertised in the WMTS capabilities.
+ * @property {string} style Style name as advertised in the WMTS capabilities.
+ * @property {typeof import("../ImageTile.js").default} [tileClass]  Class used to instantiate image tiles. Default is {@link module:ol/ImageTile~ImageTile}.
+ * @property {number} [tilePixelRatio=1] The pixel ratio used by the tile service.
+ * For example, if the tile service advertizes 256px by 256px tiles but actually sends 512px
+ * by 512px images (for retina/hidpi devices) then `tilePixelRatio`
+ * should be set to `2`.
+ * @property {string} [format='image/jpeg'] Image format. Only used when `requestEncoding` is `'KVP'`.
+ * @property {string} [version='1.0.0'] WMTS version.
+ * @property {string} matrixSet Matrix set.
+ * @property {!Object} [dimensions] Additional "dimensions" for tile requests.
+ * This is an object with properties named like the advertised WMTS dimensions.
+ * @property {string} [url]  A URL for the service.
+ * For the RESTful request encoding, this is a URL
+ * template.  For KVP encoding, it is normal URL. A `{?-?}` template pattern,
+ * for example `subdomain{a-f}.domain.com`, may be used instead of defining
+ * each one separately in the `urls` option.
+ * @property {import("../Tile.js").LoadFunction} [tileLoadFunction] Optional function to load a tile given a URL. The default is
+ * ```js
+ * function(imageTile, src) {
+ *   imageTile.getImage().src = src;
+ * };
+ * ```
+ * @property {Array<string>} [urls] An array of URLs.
+ * Requests will be distributed among the URLs in this array.
+ * @property {boolean} [wrapX=false] Whether to wrap the world horizontally.
+ * @property {number} [transition] Duration of the opacity transition for rendering.
+ * To disable the opacity transition, pass `transition: 0`.
+ */
+
+
+/**
+ * @classdesc
+ * Layer source for tile data from WMTS servers.
+ * @api
+ */
+var WMTS = /*@__PURE__*/(function (TileImage) {
+  function WMTS(options) {
+
+    // TODO: add support for TileMatrixLimits
+
+    var requestEncoding = options.requestEncoding !== undefined ?
+      /** @type {import("./WMTSRequestEncoding.js").default} */ (options.requestEncoding) :
+      _WMTSRequestEncoding_js__WEBPACK_IMPORTED_MODULE_6__["default"].KVP;
+
+    // FIXME: should we create a default tileGrid?
+    // we could issue a getCapabilities xhr to retrieve missing configuration
+    var tileGrid = options.tileGrid;
+
+    var urls = options.urls;
+    if (urls === undefined && options.url !== undefined) {
+      urls = Object(_tileurlfunction_js__WEBPACK_IMPORTED_MODULE_0__["expandUrl"])(options.url);
+    }
+
+    TileImage.call(this, {
+      attributions: options.attributions,
+      cacheSize: options.cacheSize,
+      crossOrigin: options.crossOrigin,
+      projection: options.projection,
+      reprojectionErrorThreshold: options.reprojectionErrorThreshold,
+      tileClass: options.tileClass,
+      tileGrid: tileGrid,
+      tileLoadFunction: options.tileLoadFunction,
+      tilePixelRatio: options.tilePixelRatio,
+      tileUrlFunction: _tileurlfunction_js__WEBPACK_IMPORTED_MODULE_0__["nullTileUrlFunction"],
+      urls: urls,
+      wrapX: options.wrapX !== undefined ? options.wrapX : false,
+      transition: options.transition
+    });
+
+    /**
+     * @private
+     * @type {string}
+     */
+    this.version_ = options.version !== undefined ? options.version : '1.0.0';
+
+    /**
+     * @private
+     * @type {string}
+     */
+    this.format_ = options.format !== undefined ? options.format : 'image/jpeg';
+
+    /**
+     * @private
+     * @type {!Object}
+     */
+    this.dimensions_ = options.dimensions !== undefined ? options.dimensions : {};
+
+    /**
+     * @private
+     * @type {string}
+     */
+    this.layer_ = options.layer;
+
+    /**
+     * @private
+     * @type {string}
+     */
+    this.matrixSet_ = options.matrixSet;
+
+    /**
+     * @private
+     * @type {string}
+     */
+    this.style_ = options.style;
+
+    // FIXME: should we guess this requestEncoding from options.url(s)
+    //        structure? that would mean KVP only if a template is not provided.
+
+    /**
+     * @private
+     * @type {import("./WMTSRequestEncoding.js").default}
+     */
+    this.requestEncoding_ = requestEncoding;
+
+    this.setKey(this.getKeyForDimensions_());
+
+    if (urls && urls.length > 0) {
+      this.tileUrlFunction = Object(_tileurlfunction_js__WEBPACK_IMPORTED_MODULE_0__["createFromTileUrlFunctions"])(urls.map(createFromWMTSTemplate.bind(this)));
+    }
+
+  }
+
+  if ( TileImage ) WMTS.__proto__ = TileImage;
+  WMTS.prototype = Object.create( TileImage && TileImage.prototype );
+  WMTS.prototype.constructor = WMTS;
+
+  /**
+   * Set the URLs to use for requests.
+   * URLs may contain OCG conform URL Template Variables: {TileMatrix}, {TileRow}, {TileCol}.
+   * @override
+   */
+  WMTS.prototype.setUrls = function setUrls (urls) {
+    this.urls = urls;
+    var key = urls.join('\n');
+    this.setTileUrlFunction(Object(_tileurlfunction_js__WEBPACK_IMPORTED_MODULE_0__["createFromTileUrlFunctions"])(urls.map(createFromWMTSTemplate.bind(this))), key);
+  };
+
+  /**
+   * Get the dimensions, i.e. those passed to the constructor through the
+   * "dimensions" option, and possibly updated using the updateDimensions
+   * method.
+   * @return {!Object} Dimensions.
+   * @api
+   */
+  WMTS.prototype.getDimensions = function getDimensions () {
+    return this.dimensions_;
+  };
+
+
+  /**
+   * Return the image format of the WMTS source.
+   * @return {string} Format.
+   * @api
+   */
+  WMTS.prototype.getFormat = function getFormat () {
+    return this.format_;
+  };
+
+
+  /**
+   * Return the layer of the WMTS source.
+   * @return {string} Layer.
+   * @api
+   */
+  WMTS.prototype.getLayer = function getLayer () {
+    return this.layer_;
+  };
+
+
+  /**
+   * Return the matrix set of the WMTS source.
+   * @return {string} MatrixSet.
+   * @api
+   */
+  WMTS.prototype.getMatrixSet = function getMatrixSet () {
+    return this.matrixSet_;
+  };
+
+
+  /**
+   * Return the request encoding, either "KVP" or "REST".
+   * @return {import("./WMTSRequestEncoding.js").default} Request encoding.
+   * @api
+   */
+  WMTS.prototype.getRequestEncoding = function getRequestEncoding () {
+    return this.requestEncoding_;
+  };
+
+
+  /**
+   * Return the style of the WMTS source.
+   * @return {string} Style.
+   * @api
+   */
+  WMTS.prototype.getStyle = function getStyle () {
+    return this.style_;
+  };
+
+
+  /**
+   * Return the version of the WMTS source.
+   * @return {string} Version.
+   * @api
+   */
+  WMTS.prototype.getVersion = function getVersion () {
+    return this.version_;
+  };
+
+
+  /**
+   * @private
+   * @return {string} The key for the current dimensions.
+   */
+  WMTS.prototype.getKeyForDimensions_ = function getKeyForDimensions_ () {
+    var i = 0;
+    var res = [];
+    for (var key in this.dimensions_) {
+      res[i++] = key + '-' + this.dimensions_[key];
+    }
+    return res.join('/');
+  };
+
+
+  /**
+   * Update the dimensions.
+   * @param {Object} dimensions Dimensions.
+   * @api
+   */
+  WMTS.prototype.updateDimensions = function updateDimensions (dimensions) {
+    Object(_obj_js__WEBPACK_IMPORTED_MODULE_3__["assign"])(this.dimensions_, dimensions);
+    this.setKey(this.getKeyForDimensions_());
+  };
+
+  return WMTS;
+}(_TileImage_js__WEBPACK_IMPORTED_MODULE_5__["default"]));
+
+/* harmony default export */ __webpack_exports__["default"] = (WMTS);
+
+/**
+ * Generate source options from a capabilities object.
+ * @param {Object} wmtsCap An object representing the capabilities document.
+ * @param {!Object} config Configuration properties for the layer.  Defaults for
+ *                  the layer will apply if not provided.
+ *
+ * Required config properties:
+ *  - layer - {string} The layer identifier.
+ *
+ * Optional config properties:
+ *  - matrixSet - {string} The matrix set identifier, required if there is
+ *       more than one matrix set in the layer capabilities.
+ *  - projection - {string} The desired CRS when no matrixSet is specified.
+ *       eg: "EPSG:3857". If the desired projection is not available,
+ *       an error is thrown.
+ *  - requestEncoding - {string} url encoding format for the layer. Default is
+ *       the first tile url format found in the GetCapabilities response.
+ *  - style - {string} The name of the style
+ *  - format - {string} Image format for the layer. Default is the first
+ *       format returned in the GetCapabilities response.
+ *  - crossOrigin - {string|null|undefined} Cross origin. Default is `undefined`.
+ * @return {?Options} WMTS source options object or `null` if the layer was not found.
+ * @api
+ */
+function optionsFromCapabilities(wmtsCap, config) {
+  var layers = wmtsCap['Contents']['Layer'];
+  var l = Object(_array_js__WEBPACK_IMPORTED_MODULE_1__["find"])(layers, function(elt, index, array) {
+    return elt['Identifier'] == config['layer'];
+  });
+  if (l === null) {
+    return null;
+  }
+  var tileMatrixSets = wmtsCap['Contents']['TileMatrixSet'];
+  var idx;
+  if (l['TileMatrixSetLink'].length > 1) {
+    if ('projection' in config) {
+      idx = Object(_array_js__WEBPACK_IMPORTED_MODULE_1__["findIndex"])(l['TileMatrixSetLink'],
+        function(elt, index, array) {
+          var tileMatrixSet = Object(_array_js__WEBPACK_IMPORTED_MODULE_1__["find"])(tileMatrixSets, function(el) {
+            return el['Identifier'] == elt['TileMatrixSet'];
+          });
+          var supportedCRS = tileMatrixSet['SupportedCRS'];
+          var proj1 = Object(_proj_js__WEBPACK_IMPORTED_MODULE_4__["get"])(supportedCRS.replace(/urn:ogc:def:crs:(\w+):(.*:)?(\w+)$/, '$1:$3')) ||
+                Object(_proj_js__WEBPACK_IMPORTED_MODULE_4__["get"])(supportedCRS);
+          var proj2 = Object(_proj_js__WEBPACK_IMPORTED_MODULE_4__["get"])(config['projection']);
+          if (proj1 && proj2) {
+            return Object(_proj_js__WEBPACK_IMPORTED_MODULE_4__["equivalent"])(proj1, proj2);
+          } else {
+            return supportedCRS == config['projection'];
+          }
+        });
+    } else {
+      idx = Object(_array_js__WEBPACK_IMPORTED_MODULE_1__["findIndex"])(l['TileMatrixSetLink'],
+        function(elt, index, array) {
+          return elt['TileMatrixSet'] == config['matrixSet'];
+        });
+    }
+  } else {
+    idx = 0;
+  }
+  if (idx < 0) {
+    idx = 0;
+  }
+  var matrixSet = /** @type {string} */
+    (l['TileMatrixSetLink'][idx]['TileMatrixSet']);
+  var matrixLimits = /** @type {Array<Object>} */
+    (l['TileMatrixSetLink'][idx]['TileMatrixSetLimits']);
+
+  var format = /** @type {string} */ (l['Format'][0]);
+  if ('format' in config) {
+    format = config['format'];
+  }
+  idx = Object(_array_js__WEBPACK_IMPORTED_MODULE_1__["findIndex"])(l['Style'], function(elt, index, array) {
+    if ('style' in config) {
+      return elt['Title'] == config['style'];
+    } else {
+      return elt['isDefault'];
+    }
+  });
+  if (idx < 0) {
+    idx = 0;
+  }
+  var style = /** @type {string} */ (l['Style'][idx]['Identifier']);
+
+  var dimensions = {};
+  if ('Dimension' in l) {
+    l['Dimension'].forEach(function(elt, index, array) {
+      var key = elt['Identifier'];
+      var value = elt['Default'];
+      if (value === undefined) {
+        value = elt['Value'][0];
+      }
+      dimensions[key] = value;
+    });
+  }
+
+  var matrixSets = wmtsCap['Contents']['TileMatrixSet'];
+  var matrixSetObj = Object(_array_js__WEBPACK_IMPORTED_MODULE_1__["find"])(matrixSets, function(elt, index, array) {
+    return elt['Identifier'] == matrixSet;
+  });
+
+  var projection;
+  var code = matrixSetObj['SupportedCRS'];
+  if (code) {
+    projection = Object(_proj_js__WEBPACK_IMPORTED_MODULE_4__["get"])(code.replace(/urn:ogc:def:crs:(\w+):(.*:)?(\w+)$/, '$1:$3')) ||
+        Object(_proj_js__WEBPACK_IMPORTED_MODULE_4__["get"])(code);
+  }
+  if ('projection' in config) {
+    var projConfig = Object(_proj_js__WEBPACK_IMPORTED_MODULE_4__["get"])(config['projection']);
+    if (projConfig) {
+      if (!projection || Object(_proj_js__WEBPACK_IMPORTED_MODULE_4__["equivalent"])(projConfig, projection)) {
+        projection = projConfig;
+      }
+    }
+  }
+
+  var wgs84BoundingBox = l['WGS84BoundingBox'];
+  var extent, wrapX;
+  if (wgs84BoundingBox !== undefined) {
+    var wgs84ProjectionExtent = Object(_proj_js__WEBPACK_IMPORTED_MODULE_4__["get"])('EPSG:4326').getExtent();
+    wrapX = (wgs84BoundingBox[0] == wgs84ProjectionExtent[0] &&
+        wgs84BoundingBox[2] == wgs84ProjectionExtent[2]);
+    extent = Object(_proj_js__WEBPACK_IMPORTED_MODULE_4__["transformExtent"])(
+      wgs84BoundingBox, 'EPSG:4326', projection);
+    var projectionExtent = projection.getExtent();
+    if (projectionExtent) {
+      // If possible, do a sanity check on the extent - it should never be
+      // bigger than the validity extent of the projection of a matrix set.
+      if (!Object(_extent_js__WEBPACK_IMPORTED_MODULE_2__["containsExtent"])(projectionExtent, extent)) {
+        extent = undefined;
+      }
+    }
+  }
+
+  var tileGrid = Object(_tilegrid_WMTS_js__WEBPACK_IMPORTED_MODULE_7__["createFromCapabilitiesMatrixSet"])(matrixSetObj, extent, matrixLimits);
+
+  /** @type {!Array<string>} */
+  var urls = [];
+  var requestEncoding = config['requestEncoding'];
+  requestEncoding = requestEncoding !== undefined ? requestEncoding : '';
+
+  if ('OperationsMetadata' in wmtsCap && 'GetTile' in wmtsCap['OperationsMetadata']) {
+    var gets = wmtsCap['OperationsMetadata']['GetTile']['DCP']['HTTP']['Get'];
+
+    for (var i = 0, ii = gets.length; i < ii; ++i) {
+      if (gets[i]['Constraint']) {
+        var constraint = Object(_array_js__WEBPACK_IMPORTED_MODULE_1__["find"])(gets[i]['Constraint'], function(element) {
+          return element['name'] == 'GetEncoding';
+        });
+        var encodings = constraint['AllowedValues']['Value'];
+
+        if (requestEncoding === '') {
+          // requestEncoding not provided, use the first encoding from the list
+          requestEncoding = encodings[0];
+        }
+        if (requestEncoding === _WMTSRequestEncoding_js__WEBPACK_IMPORTED_MODULE_6__["default"].KVP) {
+          if (Object(_array_js__WEBPACK_IMPORTED_MODULE_1__["includes"])(encodings, _WMTSRequestEncoding_js__WEBPACK_IMPORTED_MODULE_6__["default"].KVP)) {
+            urls.push(/** @type {string} */ (gets[i]['href']));
+          }
+        } else {
+          break;
+        }
+      } else if (gets[i]['href']) {
+        requestEncoding = _WMTSRequestEncoding_js__WEBPACK_IMPORTED_MODULE_6__["default"].KVP;
+        urls.push(/** @type {string} */ (gets[i]['href']));
+      }
+    }
+  }
+  if (urls.length === 0) {
+    requestEncoding = _WMTSRequestEncoding_js__WEBPACK_IMPORTED_MODULE_6__["default"].REST;
+    l['ResourceURL'].forEach(function(element) {
+      if (element['resourceType'] === 'tile') {
+        format = element['format'];
+        urls.push(/** @type {string} */ (element['template']));
+      }
+    });
+  }
+
+  return {
+    urls: urls,
+    layer: config['layer'],
+    matrixSet: matrixSet,
+    format: format,
+    projection: projection,
+    requestEncoding: requestEncoding,
+    tileGrid: tileGrid,
+    style: style,
+    dimensions: dimensions,
+    wrapX: wrapX,
+    crossOrigin: config['crossOrigin']
+  };
+}
+
+/**
+ * @param {string} template Template.
+ * @return {import("../Tile.js").UrlFunction} Tile URL function.
+ * @this {WMTS}
+ */
+function createFromWMTSTemplate(template) {
+  var requestEncoding = this.requestEncoding_;
+
+  // context property names are lower case to allow for a case insensitive
+  // replacement as some services use different naming conventions
+  var context = {
+    'layer': this.layer_,
+    'style': this.style_,
+    'tilematrixset': this.matrixSet_
+  };
+
+  if (requestEncoding == _WMTSRequestEncoding_js__WEBPACK_IMPORTED_MODULE_6__["default"].KVP) {
+    Object(_obj_js__WEBPACK_IMPORTED_MODULE_3__["assign"])(context, {
+      'Service': 'WMTS',
+      'Request': 'GetTile',
+      'Version': this.version_,
+      'Format': this.format_
+    });
+  }
+
+  // TODO: we may want to create our own appendParams function so that params
+  // order conforms to wmts spec guidance, and so that we can avoid to escape
+  // special template params
+
+  template = (requestEncoding == _WMTSRequestEncoding_js__WEBPACK_IMPORTED_MODULE_6__["default"].KVP) ?
+    Object(_uri_js__WEBPACK_IMPORTED_MODULE_8__["appendParams"])(template, context) :
+    template.replace(/\{(\w+?)\}/g, function(m, p) {
+      return (p.toLowerCase() in context) ? context[p.toLowerCase()] : m;
+    });
+
+  var tileGrid = /** @type {import("../tilegrid/WMTS.js").default} */ (
+    this.tileGrid);
+  var dimensions = this.dimensions_;
+
+  return (
+    /**
+     * @param {import("../tilecoord.js").TileCoord} tileCoord Tile coordinate.
+     * @param {number} pixelRatio Pixel ratio.
+     * @param {import("../proj/Projection.js").default} projection Projection.
+     * @return {string|undefined} Tile URL.
+     */
+    function(tileCoord, pixelRatio, projection) {
+      if (!tileCoord) {
+        return undefined;
+      } else {
+        var localContext = {
+          'TileMatrix': tileGrid.getMatrixId(tileCoord[0]),
+          'TileCol': tileCoord[1],
+          'TileRow': -tileCoord[2] - 1
+        };
+        Object(_obj_js__WEBPACK_IMPORTED_MODULE_3__["assign"])(localContext, dimensions);
+        var url = template;
+        if (requestEncoding == _WMTSRequestEncoding_js__WEBPACK_IMPORTED_MODULE_6__["default"].KVP) {
+          url = Object(_uri_js__WEBPACK_IMPORTED_MODULE_8__["appendParams"])(url, localContext);
+        } else {
+          url = url.replace(/\{(\w+?)\}/g, function(m, p) {
+            return localContext[p];
+          });
+        }
+        return url;
+      }
+    }
+  );
+}
+
+//# sourceMappingURL=WMTS.js.map
+
+/***/ }),
+
+/***/ "./node_modules/ol/source/WMTSRequestEncoding.js":
+/*!*******************************************************!*\
+  !*** ./node_modules/ol/source/WMTSRequestEncoding.js ***!
+  \*******************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/**
+ * @module ol/source/WMTSRequestEncoding
+ */
+
+/**
+ * Request encoding. One of 'KVP', 'REST'.
+ * @enum {string}
+ */
+/* harmony default export */ __webpack_exports__["default"] = ({
+  KVP: 'KVP', // see spec §8
+  REST: 'REST' // see spec §10
+});
+
+//# sourceMappingURL=WMTSRequestEncoding.js.map
+
+/***/ }),
+
 /***/ "./node_modules/ol/source/XYZ.js":
 /*!***************************************!*\
   !*** ./node_modules/ol/source/XYZ.js ***!
@@ -70628,6 +71255,217 @@ TileGrid.prototype.calculateTileRanges_ = function calculateTileRanges_ (extent)
 
 /***/ }),
 
+/***/ "./node_modules/ol/tilegrid/WMTS.js":
+/*!******************************************!*\
+  !*** ./node_modules/ol/tilegrid/WMTS.js ***!
+  \******************************************/
+/*! exports provided: default, createFromCapabilitiesMatrixSet */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createFromCapabilitiesMatrixSet", function() { return createFromCapabilitiesMatrixSet; });
+/* harmony import */ var _array_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../array.js */ "./node_modules/ol/array.js");
+/* harmony import */ var _proj_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../proj.js */ "./node_modules/ol/proj.js");
+/* harmony import */ var _TileGrid_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./TileGrid.js */ "./node_modules/ol/tilegrid/TileGrid.js");
+/**
+ * @module ol/tilegrid/WMTS
+ */
+
+
+
+
+
+
+/**
+ * @typedef {Object} Options
+ * @property {import("../extent.js").Extent} [extent] Extent for the tile grid. No tiles
+ * outside this extent will be requested by {@link module:ol/source/Tile} sources.
+ * When no `origin` or `origins` are configured, the `origin` will be set to the
+ * top-left corner of the extent.
+ * @property {import("../coordinate.js").Coordinate} [origin] The tile grid origin, i.e.
+ * where the `x` and `y` axes meet (`[z, 0, 0]`). Tile coordinates increase left
+ * to right and upwards. If not specified, `extent` or `origins` must be provided.
+ * @property {Array<import("../coordinate.js").Coordinate>} [origins] Tile grid origins,
+ * i.e. where the `x` and `y` axes meet (`[z, 0, 0]`), for each zoom level. If
+ * given, the array length should match the length of the `resolutions` array, i.e.
+ * each resolution can have a different origin. Tile coordinates increase left to
+ * right and upwards. If not specified, `extent` or `origin` must be provided.
+ * @property {!Array<number>} resolutions Resolutions. The array index of each
+ * resolution needs to match the zoom level. This means that even if a `minZoom`
+ * is configured, the resolutions array will have a length of `maxZoom + 1`
+ * @property {!Array<string>} matrixIds matrix IDs. The length of this array needs
+ * to match the length of the `resolutions` array.
+ * @property {Array<import("../size.js").Size>} [sizes] Number of tile rows and columns
+ * of the grid for each zoom level. The values here are the `TileMatrixWidth` and
+ * `TileMatrixHeight` advertised in the GetCapabilities response of the WMTS, and
+ * define the grid's extent together with the `origin`.
+ * An `extent` can be configured in addition, and will further limit the extent for
+ * which tile requests are made by sources. Note that when the top-left corner of
+ * the `extent` is used as `origin` or `origins`, then the `y` value must be
+ * negative because OpenLayers tile coordinates increase upwards.
+ * @property {number|import("../size.js").Size} [tileSize] Tile size.
+ * @property {Array<import("../size.js").Size>} [tileSizes] Tile sizes. The length of
+ * this array needs to match the length of the `resolutions` array.
+ * @property {Array<number>} [widths] Number of tile columns that cover the grid's
+ * extent for each zoom level. Only required when used with a source that has `wrapX`
+ * set to `true`, and only when the grid's origin differs from the one of the
+ * projection's extent. The array length has to match the length of the `resolutions`
+ * array, i.e. each resolution will have a matching entry here.
+ */
+
+
+/**
+ * @classdesc
+ * Set the grid pattern for sources accessing WMTS tiled-image servers.
+ * @api
+ */
+var WMTSTileGrid = /*@__PURE__*/(function (TileGrid) {
+  function WMTSTileGrid(options) {
+    TileGrid.call(this, {
+      extent: options.extent,
+      origin: options.origin,
+      origins: options.origins,
+      resolutions: options.resolutions,
+      tileSize: options.tileSize,
+      tileSizes: options.tileSizes,
+      sizes: options.sizes
+    });
+
+    /**
+     * @private
+     * @type {!Array<string>}
+     */
+    this.matrixIds_ = options.matrixIds;
+  }
+
+  if ( TileGrid ) WMTSTileGrid.__proto__ = TileGrid;
+  WMTSTileGrid.prototype = Object.create( TileGrid && TileGrid.prototype );
+  WMTSTileGrid.prototype.constructor = WMTSTileGrid;
+
+  /**
+   * @param {number} z Z.
+   * @return {string} MatrixId..
+   */
+  WMTSTileGrid.prototype.getMatrixId = function getMatrixId (z) {
+    return this.matrixIds_[z];
+  };
+
+  /**
+   * Get the list of matrix identifiers.
+   * @return {Array<string>} MatrixIds.
+   * @api
+   */
+  WMTSTileGrid.prototype.getMatrixIds = function getMatrixIds () {
+    return this.matrixIds_;
+  };
+
+  return WMTSTileGrid;
+}(_TileGrid_js__WEBPACK_IMPORTED_MODULE_2__["default"]));
+
+
+/* harmony default export */ __webpack_exports__["default"] = (WMTSTileGrid);
+
+/**
+ * Create a tile grid from a WMTS capabilities matrix set and an
+ * optional TileMatrixSetLimits.
+ * @param {Object} matrixSet An object representing a matrixSet in the
+ *     capabilities document.
+ * @param {import("../extent.js").Extent=} opt_extent An optional extent to restrict the tile
+ *     ranges the server provides.
+ * @param {Array<Object>=} opt_matrixLimits An optional object representing
+ *     the available matrices for tileGrid.
+ * @return {WMTSTileGrid} WMTS tileGrid instance.
+ * @api
+ */
+function createFromCapabilitiesMatrixSet(matrixSet, opt_extent, opt_matrixLimits) {
+
+  /** @type {!Array<number>} */
+  var resolutions = [];
+  /** @type {!Array<string>} */
+  var matrixIds = [];
+  /** @type {!Array<import("../coordinate.js").Coordinate>} */
+  var origins = [];
+  /** @type {!Array<import("../size.js").Size>} */
+  var tileSizes = [];
+  /** @type {!Array<import("../size.js").Size>} */
+  var sizes = [];
+
+  var matrixLimits = opt_matrixLimits !== undefined ? opt_matrixLimits : [];
+
+  var supportedCRSPropName = 'SupportedCRS';
+  var matrixIdsPropName = 'TileMatrix';
+  var identifierPropName = 'Identifier';
+  var scaleDenominatorPropName = 'ScaleDenominator';
+  var topLeftCornerPropName = 'TopLeftCorner';
+  var tileWidthPropName = 'TileWidth';
+  var tileHeightPropName = 'TileHeight';
+
+  var code = matrixSet[supportedCRSPropName];
+  var projection = Object(_proj_js__WEBPACK_IMPORTED_MODULE_1__["get"])(code.replace(/urn:ogc:def:crs:(\w+):(.*:)?(\w+)$/, '$1:$3')) ||
+      Object(_proj_js__WEBPACK_IMPORTED_MODULE_1__["get"])(code);
+  var metersPerUnit = projection.getMetersPerUnit();
+  // swap origin x and y coordinates if axis orientation is lat/long
+  var switchOriginXY = projection.getAxisOrientation().substr(0, 2) == 'ne';
+
+  matrixSet[matrixIdsPropName].sort(function(a, b) {
+    return b[scaleDenominatorPropName] - a[scaleDenominatorPropName];
+  });
+
+  matrixSet[matrixIdsPropName].forEach(function(elt) {
+
+    var matrixAvailable;
+    // use of matrixLimits to filter TileMatrices from GetCapabilities
+    // TileMatrixSet from unavailable matrix levels.
+    if (matrixLimits.length > 0) {
+      matrixAvailable = Object(_array_js__WEBPACK_IMPORTED_MODULE_0__["find"])(matrixLimits, function(elt_ml) {
+        if (elt[identifierPropName] == elt_ml[matrixIdsPropName]) {
+          return true;
+        }
+        // Fallback for tileMatrix identifiers that don't get prefixed
+        // by their tileMatrixSet identifiers.
+        if (elt[identifierPropName].indexOf(':') === -1) {
+          return matrixSet[identifierPropName] + ':' + elt[identifierPropName] === elt_ml[matrixIdsPropName];
+        }
+        return false;
+      });
+    } else {
+      matrixAvailable = true;
+    }
+
+    if (matrixAvailable) {
+      matrixIds.push(elt[identifierPropName]);
+      var resolution = elt[scaleDenominatorPropName] * 0.28E-3 / metersPerUnit;
+      var tileWidth = elt[tileWidthPropName];
+      var tileHeight = elt[tileHeightPropName];
+      if (switchOriginXY) {
+        origins.push([elt[topLeftCornerPropName][1],
+          elt[topLeftCornerPropName][0]]);
+      } else {
+        origins.push(elt[topLeftCornerPropName]);
+      }
+      resolutions.push(resolution);
+      tileSizes.push(tileWidth == tileHeight ?
+        tileWidth : [tileWidth, tileHeight]);
+      // top-left origin, so height is negative
+      sizes.push([elt['MatrixWidth'], -elt['MatrixHeight']]);
+    }
+  });
+
+  return new WMTSTileGrid({
+    extent: opt_extent,
+    origins: origins,
+    resolutions: resolutions,
+    matrixIds: matrixIds,
+    tileSizes: tileSizes,
+    sizes: sizes
+  });
+}
+
+//# sourceMappingURL=WMTS.js.map
+
+/***/ }),
+
 /***/ "./node_modules/ol/tilegrid/common.js":
 /*!********************************************!*\
   !*** ./node_modules/ol/tilegrid/common.js ***!
@@ -71074,6 +71912,49 @@ function determinant(mat) {
 }
 
 //# sourceMappingURL=transform.js.map
+
+/***/ }),
+
+/***/ "./node_modules/ol/uri.js":
+/*!********************************!*\
+  !*** ./node_modules/ol/uri.js ***!
+  \********************************/
+/*! exports provided: appendParams */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "appendParams", function() { return appendParams; });
+/**
+ * @module ol/uri
+ */
+
+
+/**
+ * Appends query parameters to a URI.
+ *
+ * @param {string} uri The original URI, which may already have query data.
+ * @param {!Object} params An object where keys are URI-encoded parameter keys,
+ *     and the values are arbitrary types or arrays.
+ * @return {string} The new URI.
+ */
+function appendParams(uri, params) {
+  var keyParams = [];
+  // Skip any null or undefined parameter values
+  Object.keys(params).forEach(function(k) {
+    if (params[k] !== null && params[k] !== undefined) {
+      keyParams.push(k + '=' + encodeURIComponent(params[k]));
+    }
+  });
+  var qs = keyParams.join('&');
+  // remove any trailing ? or &
+  uri = uri.replace(/[?&]$/, '');
+  // append ? or & depending on whether uri has existing parameters
+  uri = uri.indexOf('?') === -1 ? uri + '?' : uri + '&';
+  return uri + qs;
+}
+
+//# sourceMappingURL=uri.js.map
 
 /***/ }),
 

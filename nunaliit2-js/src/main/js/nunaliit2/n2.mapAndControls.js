@@ -2747,11 +2747,11 @@ var MapAndControls = $n2.Class('MapAndControls',{
 						var matrixIds = new Array(options["numZoomLevels"]);
 						var srsName = options['srsName'];
 						var numzoom = options["numZoomLevels"];
-					    for (var i=0; i< numzoom; ++i) {
-					        matrixIds[i] = srsName + ":" + i;
-					    }
-					    layerOptions.matrixIds = matrixIds;
-					    layerOptions.numZoomLevels = options[key];
+						for (var i=0; i< numzoom; ++i) {
+							matrixIds[i] = srsName + ":" + i;
+						}
+						layerOptions.matrixIds = matrixIds;
+						layerOptions.numZoomLevels = options[key];
 					} else {
 						layerOptions[key] = options[key];
 					};
