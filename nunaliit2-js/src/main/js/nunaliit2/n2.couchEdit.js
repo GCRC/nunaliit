@@ -1561,13 +1561,43 @@ var CouchDocumentEditor = $n2.Class({
 			
 			updateDocument();
 		};
+		function verifyDoc(doc){
 			
+			correctArray('doc', doc);
+			function correctArray(key, node){
+				if ( typeof(node) === 'object' ){
+					if (Array.isArray(node) && node.length > 0){
+						var notAllNull = false;
+						for (var i=0,e=node.length;i<e;i++){
+							notAllNull |= (true && node[i])
+						}
+						if (!notAllNull){
+							alert('An all null Array '+ key + ' has been detected and corrected');
+							node.length = 0;
+						}
+					} else {
+						for (var k in node){
+							var v = node[k];
+							if (v){
+								correctArray(k, v);
+							}
+						}
+					}
+				} else {
+					return;
+				}
+			}
+		};
 		function updateDocument() {
 			var isSubmissionDs = false;
 			if( _this.documentSource.isSubmissionDataSource ){
 				isSubmissionDs = true;
 			};
 
+			//Double check null in array for issue#802
+			
+			verifyDoc(_this.editedDocument);
+			
 			// Create or update document
 			if( _this.isInsert ) {
 				// This is an insert
