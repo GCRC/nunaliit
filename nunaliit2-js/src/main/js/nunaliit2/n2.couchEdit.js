@@ -1572,7 +1572,7 @@ var CouchDocumentEditor = $n2.Class({
 							notAllNull |= (true && node[i])
 						}
 						if (!notAllNull){
-							//alert('An all null Array '+ key + ' has been detected and corrected');
+							$n2.log('An all null Array '+ key + ' has been detected and corrected');
 							node.length = 0;
 						}
 					} else {
