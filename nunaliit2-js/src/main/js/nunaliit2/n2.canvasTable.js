@@ -449,7 +449,7 @@ var TableCanvas = $n2.Class({
 
 			// Add/Update number of rows text
 			$('.n2TableCanvasRowCounter')
-				.text(numRows + ' ' + _loc('rows'));
+				.text(_loc('Rows') + ': ' + numRows);
 		}
 	},
 
