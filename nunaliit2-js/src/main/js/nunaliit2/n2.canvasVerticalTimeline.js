@@ -356,12 +356,18 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 			this._calcListItemWidth();
 
 			for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
-				timelineItemOptions = {
-					element: this.sortedElements[i],
-					timelineList: this.canvasListId,
-					itemWidth: this.itemWidth
-				};
-				new TimelineItem(timelineItemOptions);
+				// Exclude link elements if produced by the generic element generator
+				if (this.elementGenerator._classname === 'GenericElementGenerator' 
+					&& this.sortedElements[i].isLink) {
+					// Do nothing
+				} else {
+					timelineItemOptions = {
+						element: this.sortedElements[i],
+						timelineList: this.canvasListId,
+						itemWidth: this.itemWidth
+					};
+					new TimelineItem(timelineItemOptions);
+				}
 			}
 
 			this._linkIndexToListItems();
