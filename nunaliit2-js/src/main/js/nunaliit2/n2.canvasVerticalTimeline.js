@@ -33,12 +33,14 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2) {
 "use strict";
 
+var $l;
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
 	DH = 'n2.canvasVerticalTimeline';
  
-// Required library: moment
-var $m = window.moment;
-if (!$m) {
+// Required library: luxon
+if (window.luxon) {
+	$l = window.luxon;
+} else {
 	return;
 }
 
@@ -392,17 +394,9 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 		}
 	},
 
-	_getTimeZoneOffset: function(){
-		var now = $m();
-		// utcOffset needs to be inverted for offsetting date formatting by local time zone
-		var utcOffset = ($m.parseZone(now).utcOffset()) * -1;
-		return utcOffset;
-	},
-
 	_sortElements: function(){
-		var elementId, element, date, moment;
-		var defaultDateFormat = "YYYY-MM-DD";
-		var utcOffsetValue = this._getTimeZoneOffset();
+		var elementId, element, date, luxonDate;
+		var defaultDateFormat = "yyyy-LL-dd";
 		this.sortedElements = [];
 
 		for (elementId in this.elementsById) {
@@ -413,12 +407,12 @@ var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 				// If element doesn't provide a label value, base it on a document date value
 				if (typeof element.label === 'undefined') {
 					if (date) {
-						moment = $m(new Date(date.min)).utcOffset(utcOffsetValue);
+						luxonDate = $l.DateTime.fromMillis(date.min);
 						if (this.labelDateFormat) {
-							element.label = _loc(moment.format(this.labelDateFormat));
+							element.label = _loc(luxonDate.toFormat(this.labelDateFormat));
 						} else {
 							// If no specified label date format is provided, use default format.
-							element.label = moment.format(defaultDateFormat);
+							element.label = luxonDate.toFormat(defaultDateFormat);
 						}
 					}
 				}
