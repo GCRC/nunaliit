@@ -15,6 +15,7 @@ import java.util.regex.Pattern;
 import ca.carleton.gcrc.couch.command.impl.FSEntryNameFilterTextFiles;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryNameFilter;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class CopyMachine {
 
@@ -81,10 +82,28 @@ public class CopyMachine {
 				copyDir(child, childDir);
 				
 			} else {
-				// Copy File
-				File targetFile = new File(targetDir, childName);
+				String effectiveChildName = childName;
 				
-				if( textFileFilter.accept(sourceDir, childName) ){
+				// Perform conversion on file name
+				Matcher variableMatcher = variablePattern.matcher(effectiveChildName);
+				while( variableMatcher.find() ){
+					String variableName = variableMatcher.group(2);
+					if( textConversionMap.containsKey(variableName) ) {
+						// Convert
+						int start = variableMatcher.start(1);
+						int end = variableMatcher.end(1);
+						String preGroup = effectiveChildName.substring(0,start);
+						String postGroup = effectiveChildName.substring(end);
+						effectiveChildName = preGroup + textConversionMap.get(variableName) + postGroup;
+						
+						variableMatcher = variablePattern.matcher(effectiveChildName);
+					}
+				}
+				
+				// Copy File
+				File targetFile = new File(targetDir, effectiveChildName);
+				
+				if( textFileFilter.accept(sourceDir, effectiveChildName) ){
 					copyTextFile(child, targetFile);
 				} else {
 					copyBinaryFile(child, targetFile);
@@ -104,12 +123,9 @@ public class CopyMachine {
 
 			is = sourceFile.getInputStream();
 			fos = new FileOutputStream(targetFile);
-			byte[] buffer = new byte[256];
-			int size = is.read(buffer);
-			while(size >= 0){
-				fos.write(buffer,0,size);
-				size = is.read(buffer);
-			}
+			
+			StreamUtils.copyStream(is, fos);
+
 			fos.flush();
 			
 		} catch(Exception e) {

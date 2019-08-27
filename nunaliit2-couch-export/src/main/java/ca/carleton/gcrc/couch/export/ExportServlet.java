@@ -1,5 +1,7 @@
 package ca.carleton.gcrc.couch.export;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -12,6 +14,10 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.fileupload.FileItemIterator;
+import org.apache.commons.fileupload.FileItemStream;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.fileupload.util.Streams;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -28,6 +34,9 @@ import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatCSV;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatGeoJson;
 import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
+import ca.carleton.gcrc.couch.export.records.ExportRecordsCSV;
+import ca.carleton.gcrc.couch.export.records.ExportRecordsGeoJson;
+import ca.carleton.gcrc.couch.export.records.JSONArrayReaderIterator;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 
 @SuppressWarnings("serial")
@@ -62,8 +71,11 @@ public class ExportServlet extends JsonServlet {
 	
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		try {
-			String paths[] = request.getRequestURI().split("/");
-			String path = paths[ paths.length - 1 ];
+			List<String> paths = computeRequestPath(request);
+			String path = null;
+			if( paths.size() > 0 ){
+				path = paths.get(0);
+			}
 			
 			if( "welcome".equalsIgnoreCase(path) ) {
 				doGetWelcome(request, response);
@@ -81,7 +93,30 @@ public class ExportServlet extends JsonServlet {
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-		// Ignore path. Allows client to set any download file name
+		try {
+			List<String> paths = computeRequestPath(request);
+			String path = null;
+			if( paths.size() > 0 ){
+				path = paths.get(0);
+			}
+			
+			if( "definition".equalsIgnoreCase(path) ) {
+				doPostDefinition(request, response);
+
+			} else if( "records".equalsIgnoreCase(path) ) {
+				doPostRecords(request, response);
+					
+			} else {
+				throw new Exception("Unknown request: "+path);
+			}
+
+		} catch (Exception e) {
+			reportError(e, response);
+		}
+	}
+
+	protected void doPostDefinition(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		// Ignore final path. Allows client to set any download file name
 		
 		try {
 			// Parse format
@@ -259,6 +294,129 @@ public class ExportServlet extends JsonServlet {
 		}
 	}
 
+	protected void doPostRecords(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		// Ignore final path. Allows client to set any download file name
+		
+		try {
+			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+			if( !isMultipart ){
+				throw new Exception("Must be multipart form data");
+			}
+
+			Format format = Format.GEOJSON;
+			Filter filter = null;
+			String contentType = null;
+			
+			// Parse the request
+			ServletFileUpload upload = new ServletFileUpload();
+			FileItemIterator iter = upload.getItemIterator(request);
+			while (iter.hasNext()) {
+			    FileItemStream item = iter.next();
+			    String name = item.getFieldName();
+			    InputStream stream = item.openStream();
+
+		    	// Parse format
+			    if( "format".equals(name) ){
+					String formatStr = Streams.asString(stream);
+					
+					boolean found = false;
+					for(Format f : Format.values()){
+						if( f.matches(formatStr) ){
+							format = f;
+							found = true;
+						}
+					}
+					
+					if( !found ) {
+						throw new Exception("Unknown format: "+formatStr);
+					}
+
+			    } else if( "filter".equals(name) ){
+			    	// Parse filter
+					String filterStr = Streams.asString(stream);
+
+					
+					boolean found = false;
+					for(Filter f : Filter.values()){
+						if( f.matches(filterStr) ){
+							filter = f;
+							found = true;
+						}
+					}
+					
+					if( !found ) {
+						throw new Exception("Unknown filter: "+filterStr);
+					}
+
+			    } else if( "contentType".equals(name) ){
+			    	// Parse contentType
+			    	contentType = Streams.asString(stream);
+
+			    } else if( "data".equals(name) ){
+			    	// Start export. Item "data" should be last item in form
+					logger.debug("Export Format: "+format.name());
+					logger.debug("Filter: "+filter);
+					logger.debug("Content-Type: "+contentType);
+					
+					String encoding = request.getCharacterEncoding();
+					if( null == encoding ){
+						encoding = "UTF-8";
+					}
+					
+					InputStreamReader isr = new InputStreamReader(stream,encoding);
+					JSONArrayReaderIterator recordsReader = new JSONArrayReaderIterator(isr);
+
+					// Create export process
+					ExportFormat exportProcess = null;
+					if( Format.GEOJSON == format ){
+						ExportRecordsGeoJson exportRecordsGeoJson = new ExportRecordsGeoJson(configuration.getCouchDb(),recordsReader);
+						if( null != filter ){
+							exportRecordsGeoJson.setFilter(filter);
+						}
+						exportProcess = exportRecordsGeoJson;
+
+					} else if( Format.CSV == format ){
+						ExportRecordsCSV exportRecordsCSV = new ExportRecordsCSV(configuration.getCouchDb(),recordsReader);
+						if( null != filter ){
+							exportRecordsCSV.setFilter(filter);
+						}
+						exportProcess = exportRecordsCSV;
+					
+					} else {
+						throw new Exception("Unsupported format: "+format.getLabel());
+					}
+					
+					// Set headers on response
+					String charEncoding = exportProcess.getCharacterEncoding();
+					if( null != charEncoding ) {
+						response.setCharacterEncoding( charEncoding );
+					}
+					if( null == contentType ) {
+						contentType = exportProcess.getMimeType();
+					}
+					if( null != contentType ) {
+						response.setContentType(contentType);
+					}
+					response.setHeader("Cache-Control", "no-cache,must-revalidate");
+					response.setDateHeader("Expires", (new Date()).getTime());
+					
+					OutputStream os = response.getOutputStream();
+					
+					try {
+						exportProcess.outputExport(os);
+					} catch (Exception e) {
+						throw new Exception("Error during export process",e);
+					}
+					
+					os.flush();
+			    }
+			}
+
+		} catch(Exception e) {
+			reportError(e,response);
+		}
+	}
+
 	private void doGetWelcome(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		try {
 			// Return JSON object to acknowledge the welcome
@@ -319,7 +477,9 @@ public class ExportServlet extends JsonServlet {
 			PrintWriter pw = new PrintWriter(osw);
 			
 			pw.println("<html><head><title>Export Test Page</title></head><body>");
-			pw.println("<form action=\"export\" method=\"POST\">");
+
+			pw.println("<h1>Export using Schema Definition</h1>");
+			pw.println("<form action=\"definition/export\" method=\"POST\">");
 			
 			pw.println("<label for=\"format\">Format: </label>");
 			pw.println("<select id=\"format\" name=\"format\">");
@@ -350,8 +510,37 @@ public class ExportServlet extends JsonServlet {
 			pw.println("<br/>");
 			
 			pw.println("<input type=\"submit\" value=\"OK\"/>");
-			
 			pw.println("</form>");
+
+			pw.println("<h1>Export using Records</h1>");
+			pw.println("<form action=\"records/export\" method=\"POST\">");
+			
+			pw.println("<label for=\"format\">Format: </label>");
+			pw.println("<select id=\"format\" name=\"format\">");
+			pw.println("<option value=\"geojson\">GEOJson</option>");
+			pw.println("<option value=\"invalid\">Invalid Format</option>");
+			pw.println("</select>");
+			pw.println("<br/>");
+			
+			pw.println("<label for=\"filter\">Filter: </label>");
+			pw.println("<select id=\"filter\" name=\"filter\">");
+			pw.println("<option value=\"all\">All Documents</option>");
+			pw.println("<option value=\"points\">Only Point Geometries</option>");
+			pw.println("<option value=\"lines\">Only Line Geometries</option>");
+			pw.println("<option value=\"polygons\">Only Polygon Geometries</option>");
+			pw.println("</select>");
+			pw.println("<br/>");
+			
+			pw.println("<label for=\"rec1\">Record: </label>");
+			pw.println("<input id=\"rec1\" type=\"text\" name=\"record\" value=\"&quot;_id&quot;,&quot;_geometry&quot;,&quot;value&quot;\"/>");
+			pw.println("<br/>");
+			pw.println("<label for=\"rec2\">Record: </label>");
+			pw.println("<input id=\"rec2\" type=\"text\" name=\"record\" value=\"&quot;123&quot;,&quot;456&quot;,&quot;abc&quot;\"/>");
+			pw.println("<br/>");
+			
+			pw.println("<input type=\"submit\" value=\"OK\"/>");
+			pw.println("</form>");
+
 			pw.println("</body></html>");
 			
 			osw.flush();

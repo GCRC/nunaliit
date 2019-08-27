@@ -185,4 +185,64 @@ public class FFmpegMediaInfoImplTest extends TestCase {
 			fail("Invalid video codec");
 		}
 	}
+	
+	public void testConvertTimestampToString() throws Exception {
+		FFmpegProcessorDefault ffmpeg = new FFmpegProcessorDefault();
+		
+		{
+			String result = ffmpeg.convertTimestampToString(0.0);
+			if( false == "00:00:00.00".equals(result) ){
+				fail("00:00:00.00 => "+result);
+			}
+		}
+
+		{
+			String result = ffmpeg.convertTimestampToString(1.0);
+			if( false == "00:00:01.00".equals(result) ){
+				fail("00:00:01.00 => "+result);
+			}
+		}
+
+		{
+			String result = ffmpeg.convertTimestampToString(1.5);
+			if( false == "00:00:01.50".equals(result) ){
+				fail("00:00:01.50 => "+result);
+			}
+		}
+
+		{
+			String result = ffmpeg.convertTimestampToString(1.4233);
+			if( false == "00:00:01.42".equals(result) ){
+				fail("00:00:01.42 => "+result);
+			}
+		}
+
+		{
+			String result = ffmpeg.convertTimestampToString(32.81);
+			if( false == "00:00:32.81".equals(result) ){
+				fail("00:00:32.81 => "+result);
+			}
+		}
+
+		{
+			String result = ffmpeg.convertTimestampToString(60.0);
+			if( false == "00:01:00.00".equals(result) ){
+				fail("00:01:00.00 => "+result);
+			}
+		}
+
+		{
+			String result = ffmpeg.convertTimestampToString(61);
+			if( false == "00:01:01.00".equals(result) ){
+				fail("00:01:01.00 => "+result);
+			}
+		}
+
+		{
+			String result = ffmpeg.convertTimestampToString(3661);
+			if( false == "01:01:01.00".equals(result) ){
+				fail("01:01:01.00 => "+result);
+			}
+		}
+	}
 }

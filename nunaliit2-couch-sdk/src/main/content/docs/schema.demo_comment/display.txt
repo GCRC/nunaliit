@@ -1,28 +1,31 @@
-<div class="n2_documentDisplay"><div class="n2_layoutFloat"><div class="demo_comment">
-
-{{#nunaliit_last_updated}}
-	{{#name}}
-		<div class="demo_comment_user">
-			<span class="n2s_localize">By</span>
-			<span class="n2s_insertUserName">{{.}}</span>
-		</div>
-	{{/name}}
-	{{#time}}
-		<div class="demo_comment_time">
-			<span class="n2s_localize">on</span>
-			<span class="n2s_insertTime">{{.}}</span>
-		</div>
-	{{/time}}
-{{/nunaliit_last_updated}}
-
-{{#demo_comment}}
-	{{#text}}
-		<div class="demo_comment_text">
-			<div class="label n2s_localize"></div>
-			<div class="value n2s_preserveSpaces">{{.}}</div>
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+<div class="demo_comment">
+{{#nunaliit_created}}
+	{{#if name}}
+		<div class="demo_comment_nunaliit_created">
+			<div class="label n2s_localize">By</div>
+			<div class="value n2s_insertUserName">{{name}}</div>
 			<div class="end"></div>
 		</div>
-	{{/text}}
+	{{/if}}
+{{/nunaliit_created}}
+{{#nunaliit_created}}
+	{{#if time}}
+		<div class="demo_comment_nunaliit_created_time">
+			<div class="label n2s_localize">on</div>
+			<div class="value n2s_insertTime">{{time}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+{{/nunaliit_created}}
+{{#demo_comment}}
+	{{#if text}}
+		<div class="demo_comment_text">
+			<div class="label n2s_localize">Comment</div>
+			<div class="value n2s_preserveSpaces">{{text}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
 {{/demo_comment}}
-
-</div></div></div>
+</div>
+</div></div>

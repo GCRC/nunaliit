@@ -33,7 +33,10 @@ $Id$
 package ca.carleton.gcrc.olkit.multimedia.file;
 
 import java.io.File;
+import java.util.Map;
+import java.util.Properties;
 
+import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.olkit.multimedia.utils.TestConfiguration;
 
 import junit.framework.TestCase;
@@ -54,6 +57,34 @@ public class SystemFileTest extends TestCase {
 		}
 	}
 	
+	public void testMultimediaConf() throws Exception {
+		if( false == TestConfiguration.isTestingConfigured() ) return;
+		
+		Properties props = new Properties();
+		props.setProperty("file.knownString.1", "text/mangled:MANGLED");
+		props.setProperty("file.knownString.2", " video/impossible : VID Impossible ");
+		
+		MultimediaConfiguration.configureFromProperties(props);
+		
+		Map<String, String> map = SystemFile.getKnownStrings();
+		
+		// Check MANGLED
+		{
+			String value = map.get("MANGLED");
+			if( false == "text/mangled".equals(value) ) {
+				fail("Unexpected mime type for MANGLED: "+value);
+			}
+		}
+		
+		// Check VID Impossible
+		{
+			String value = map.get("VID Impossible");
+			if( false == "video/impossible".equals(value) ) {
+				fail("Unexpected mime type for VID Impossible: "+value);
+			}
+		}
+	}
+	
 	public void testTxt() throws Exception {
 		if( false == TestConfiguration.isTestingConfigured() ) return;
 		
@@ -69,6 +100,12 @@ public class SystemFileTest extends TestCase {
 	public void testOgg() throws Exception {
 		if( false == TestConfiguration.isTestingConfigured() ) return;
 		
-		performFile("steps_sound.ogg", "application/ogg");
+		performFile("steps_sound.ogg", "audio/ogg");
+	}
+	
+	public void test3gp() throws Exception {
+		if( false == TestConfiguration.isTestingConfigured() ) return;
+		
+		performFile("VID_20180417_132929.3gp", "video/3gpp");
 	}
 }

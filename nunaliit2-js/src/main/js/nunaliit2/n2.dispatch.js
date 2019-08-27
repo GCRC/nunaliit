@@ -71,7 +71,13 @@ var HANDLEMARKER = {}
  */
 var Dispatcher = $n2.Class({
 	
-	options: null,
+	logging: null,
+	
+	loggingIncludesMessage: null,
+	
+	loggingHandleMap: null,
+
+	loggingTypeMap: null,
 	
 	listeners: null,
 	
@@ -81,16 +87,42 @@ var Dispatcher = $n2.Class({
 	
 	queue: null,
 
-	initialize: function(options_){
-		this.options = $n2.extend({
+	initialize: function(opts_){
+		var opts = $n2.extend({
 			logging: false
 			,loggingIncludesMessage: false
-		},options_);
+			,loggingHandles: null
+			,loggingTypes: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.logging = opts.logging;
+		this.loggingIncludesMessage = opts.loggingIncludesMessage;
+		
+		this.loggingHandleMap = {};
+		if( $n2.isArray(opts.loggingHandles) ){
+			opts.loggingHandles.forEach(function(handle){
+				if( typeof handle === 'string' ){
+					_this.loggingHandleMap[handle] = true;
+				};
+			});
+		};
+		
+		this.loggingTypeMap = {};
+		if( $n2.isArray(opts.loggingTypes) ){
+			opts.loggingTypes.forEach(function(type){
+				if( typeof type === 'string' ){
+					_this.loggingTypeMap[type] = true;
+				};
+			});
+		};
 		
 		this.listeners = {};
 		this.handles = {};
 		this.dispatching = false;
 		this.queue = [];
+
 	},
 
 	/**
@@ -145,13 +177,13 @@ var Dispatcher = $n2.Class({
 			handle = this.getHandle(handle);
 		};
 		if( !this.isHandle(handle) ){
-			throw 'DispatchService.register: invalid handle';
+			throw new Error('DispatchService.register: invalid handle');
 		};
 		if( typeof type !== 'string' ){
-			throw 'DispatchService.register: type must be a string';
+			throw new Error('DispatchService.register: type must be a string');
 		};
 		if( typeof l !== 'function' ){
-			throw 'DispatchService.register must provide a function';
+			throw new Error('DispatchService.register must provide a function');
 		};
 		
 		if( !this.listeners[type] ){
@@ -200,7 +232,7 @@ var Dispatcher = $n2.Class({
 				};
 			};
 		} else {
-			throw 'DispatchService.deregister: invalid address'
+			throw new Error('DispatchService.deregister: invalid address');
 		};
 	},
 	
@@ -250,8 +282,17 @@ var Dispatcher = $n2.Class({
 	},
 	
 	_sendImmediate: function(h, m) {
-		var logging = this.options.logging;
-		var loggingIncludesMessage = this.options.loggingIncludesMessage;
+		var _this = this;
+		
+		var logging = false;
+		if( this.logging ){
+			logging = true;
+		} else if( this.loggingHandleMap[h.name] ){
+			logging = true;
+		} else if( this.loggingTypeMap[m.type] ){
+			logging = true;
+		};
+		var loggingIncludesMessage = this.loggingIncludesMessage;
 
 		var t = m.type;
 
@@ -281,10 +322,7 @@ var Dispatcher = $n2.Class({
 				try {
 					l.fn(m, l.address, this);
 				} catch(e) {
-					$n2.log('Error while dispatching: '+e);
-					if( e.stack ) {
-						$n2.log('Stack',e.stack);
-					};
+					_this._reportError(e,m);
 				};
 			};
 		} else if( typeof listeners === 'undefined' ){
@@ -304,6 +342,13 @@ var Dispatcher = $n2.Class({
 		};
 		
 		this.dispatching = false;
+	},
+	
+	_reportError: function(e,m){
+		$n2.log('Error while dispatching '+m.type+': '+e);
+		if( e.stack ) {
+			$n2.log('Stack: '+e.stack);
+		};
 	},
 	
 	/**

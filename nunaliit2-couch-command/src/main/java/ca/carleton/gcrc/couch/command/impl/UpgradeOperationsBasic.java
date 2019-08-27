@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 
+import org.apache.log4j.lf5.util.StreamUtils;
 import org.json.JSONObject;
 
 public class UpgradeOperationsBasic implements UpgradeOperations {
@@ -179,12 +180,9 @@ public class UpgradeOperationsBasic implements UpgradeOperations {
 
 			is = new FileInputStream(sourceFile);
 			fos = new FileOutputStream(targetFile);
-			byte[] buffer = new byte[256];
-			int size = is.read(buffer);
-			while(size >= 0){
-				fos.write(buffer,0,size);
-				size = is.read(buffer);
-			}
+			
+			StreamUtils.copy(is, fos);
+
 			fos.flush();
 			
 		} catch(Exception e) {

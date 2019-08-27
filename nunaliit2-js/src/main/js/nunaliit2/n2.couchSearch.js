@@ -54,6 +54,520 @@ function SplitSearchTerms(line) {
 	return searchTerms;
 };
 
+//============ ResearchResult ========================
+// Class that convey the result of a research
+var ResearchResult = $n2.Class({
+	
+	// identifier of the document found in research
+	id: null,
+	
+	// How relevant this result is (lower number is better)
+	index: null,
+	
+	// How many terms matched by this result
+	count: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			id: null
+			,index: null
+			,count: null
+		},opts_);
+		
+		this.id = opts.id;
+		this.index = opts.index;
+		
+		if( opts.count ){
+			this.count = opts.count;
+		} else {
+			this.count = 1;
+		};
+	},
+	
+	add: function(result){
+		if( this.index > result.index ){
+			this.index = result.index;
+		};
+		
+		this.count += result.count;
+	}
+});
+
+//============ Research ========================
+// Abstract class that defines the API for researching
+// a concept in the database
+var Research = $n2.Class({
+	
+	id: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			
+		},opts_);
+		
+		this.id = $n2.getUniqueId();
+	},
+	
+	execute: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(resultMap, research){}
+			,onError: function(err, research){}
+			,onPartial: function(resultMap, research){}
+		},opts_);
+
+		throw 'Subclasses must implement method execute';
+	}
+});
+
+//============ ResearchTerm ========================
+// Specialization of Research that looks up all documents
+// associated with one search term
+var ResearchTerm = $n2.Class(Research,{
+	textTerm: null,
+
+	constraint: null,
+	
+	designDoc: null,
+	
+	searchView: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			textTerm: null
+			,constraint: null
+			,designDoc: null
+			,searchView: null
+		},opts_);
+		
+		Research.prototype.initialize.apply(this,arguments);
+
+		this.textTerm = opts.textTerm;
+		this.constraint = opts.constraint;
+		this.designDoc = opts.designDoc;
+		this.searchView = opts.searchView;
+		
+		if( typeof this.textTerm !== 'string' ){
+			throw 'In ResearchTerm constructor, the textTerm must be a string';
+		};
+		if( typeof this.designDoc !== 'object' ){
+			throw 'In ResearchTerm constructor, the designDoc must be provided';
+		};
+		if( typeof this.searchView !== 'string' ){
+			throw 'In ResearchTerm constructor, the searchView must be provided';
+		};
+	},
+	
+	execute: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(resultMap, research){}
+			,onError: function(err, research){}
+			,onPartial: function(resultMap, research){}
+		},opts_);
+		
+		var _this = this;
+
+		// Search terms are stored lower case in database
+		var term = this.textTerm.toLowerCase();
+		
+		var resultsByDocId = null;
+
+		if( this.constraint ){
+			// Convert string to an array of 1 element for performing query view
+			if( typeof(this.constraint) === 'string'){
+				var key = [];
+				key.push(this.constraint);
+				this.constraint = key;
+			};
+			
+			if( $n2.isArray(this.constraint)
+			 && this.constraint.length > 0 ){
+
+				var expectedCount = this.constraint.length;
+				
+				for(var i = 0, e = this.constraint.length; i<e; ++i){
+					if (!resultsByDocId){
+						resultsByDocId = {};
+					};
+
+					this.designDoc.queryView({
+						viewName: this.searchView
+						,startkey: [this.constraint[i],term,0]
+						,endkey: [this.constraint[i],term,{}]
+						,constraint: this.constraint
+						,onSuccess: function(rows) {
+							for(var i=0,e=rows.length; i<e; ++i) {
+								var docId = rows[i].id;
+								var index = rows[i].key[1];
+								
+								if( resultsByDocId[docId] 
+								&& resultsByDocId[docId].index <= index ){
+									// Do nothing
+								} else {
+									var result = new ResearchResult({
+										id: docId
+										,index: index
+									});
+									resultsByDocId[docId] = result;
+								};
+							};
+
+							// Only call opts.onSuccess when all the queries have returned.
+							// Otherwise call opts.onPartial
+							--expectedCount;
+							if( expectedCount <= 0 ){
+								opts.onSuccess(resultsByDocId);
+							} else {
+								opts.onPartial(resultsByDocId);
+							};
+						}
+						,onError: function(err) {
+							opts.onError(err);
+						}
+					});
+				};
+			} else {
+				opts.onError('Invalid search constraint');
+			};
+
+		} else {
+			var startKey = [term,0];
+			var endKey = [term,{}];
+
+			this.designDoc.queryView({
+				viewName: this.searchView
+				,startkey: startKey
+				,endkey: endKey
+				,onSuccess: function(rows) {
+					var resultsByDocId = {};
+					for(var i=0,e=rows.length; i<e; ++i) {
+						var docId = rows[i].id;
+						var index = rows[i].key[1];
+						
+						if( resultsByDocId[docId] 
+						 && resultsByDocId[docId].index <= index ){
+							// Do nothing
+						} else {
+							var result = new ResearchResult({
+								id: docId
+								,index: index
+							});
+							resultsByDocId[docId] = result;
+						};
+					};
+					
+					opts.onSuccess(resultsByDocId);
+				}
+				,onError: function(err) {
+					opts.onError(err);
+				}
+			});
+		};
+	}
+});
+
+//============ ResearchDate ========================
+// Specialization of Research that looks up all documents
+// associated with a date interval
+var ResearchDate = $n2.Class(Research,{
+	
+	dateInterval: null,
+
+	dateService: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			dateInterval: null
+			,dateService: null
+		},opts_);
+		
+		Research.prototype.initialize.apply(this,arguments);
+
+		this.dateInterval = opts.dateInterval;
+		this.dateService = opts.dateService;
+		
+		if( typeof this.dateInterval !== 'object' ){
+			throw 'In ResearchDate constructor, the dateInterval must be provided';
+		};
+		if( typeof this.dateService !== 'object' ){
+			throw 'In ResearchDate constructor, the dateService must be provided';
+		};
+	},
+	
+	execute: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(resultMap, research){}
+			,onError: function(err, research){}
+			,onPartial: function(resultMap, research){}
+		},opts_);
+		
+		this.dateService.getDocIdsFromInterval({
+			interval: this.dateInterval
+			,onSuccess: function(docIds){
+				var dateResults = [];
+				for(var i=0,e=docIds.length; i<e; ++i) {
+					dateResults.push({
+						docId: docIds[i]
+						,index: 0
+					});
+				};
+				var resultsByDocId = {};
+				for(var i=0,e=docIds.length; i<e; ++i) {
+					var docId = docIds[i];
+					var index = 0;
+					
+					var result = new ResearchResult({
+						id: docId
+						,index: index
+					});
+					resultsByDocId[docId] = result;
+				};
+				
+				opts.onSuccess(resultsByDocId);
+			}
+			,onError: function(err) {
+				opts.onError(err);
+			}
+		});
+	}
+});
+
+//============ ResearchUnion ========================
+// Specialization of Research that accepts a number
+// of instances of Research and provides a result which
+// is a union of all research results from children.
+var ResearchUnion = $n2.Class(Research,{
+	
+	childrenById: null,
+	
+	resultsByDocId: null,
+	
+	count: null,
+	
+	waiting: null,
+	
+	error: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			
+		},opts_);
+		
+		Research.prototype.initialize.apply(this,arguments);
+		
+		this.childrenById = {};
+		this.resultsByDocId = {};
+	},
+	
+	addResearch: function(research){
+		var id = research.id;
+		this.childrenById[id] = research;
+	},
+	
+	execute: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(resultMap, research){}
+			,onError: function(err, research){}
+			,onPartial: function(resultMap, research){}
+		},opts_);
+		
+		var _this = this;
+
+		var f = function(resultMap, research){
+			_this._receiveResult(resultMap, research, opts.onSuccess, opts.onPartial);
+		};
+		
+		// Reset error
+		this.error = undefined;
+
+		// Count children
+		this.count = 0;
+		for(var id in this.childrenById){
+			++this.count;
+		};
+		this.waiting = this.count;
+		
+		// Request results
+		this.resultsByDocId = {};
+		for(var id in this.childrenById){
+			var childResearch = this.childrenById[id];
+			childResearch.execute({
+				onSuccess: f
+				,onError: function(err){
+					--_this.waiting;
+					if( !_this.error ){
+						_this.error = err;
+						opts.onError(err);
+					};
+				}
+			});
+		};
+
+		if( this.count < 1 ){
+			this._checkIfFinished(opts.onSuccess, opts.onPartial);
+		};
+	},
+	
+	_receiveResult: function(resultMap, research, onSuccess, onPartial){
+		for(var docId in resultMap){
+			var result = resultMap[docId];
+			
+			result.count = 1;
+			
+			if( this.resultsByDocId[docId] ){
+				this.resultsByDocId[docId].add(result);
+			} else {
+				this.resultsByDocId[docId] = result;
+			};
+		};
+		
+		--this.waiting;
+		this._checkIfFinished(onSuccess, onPartial);
+	},
+	
+	_checkIfFinished: function(onSuccess, onPartial){
+		if( this.error ){
+			// Error already reported. Do nothing
+
+		} else if( this.waiting < 1 ){
+			// Complete
+			onSuccess(this.resultsByDocId, this);
+
+		} else {
+			// Partial
+			onPartial(this.resultsByDocId, this);
+		};
+	}
+});
+
+//============ ResearchIntersection ========================
+// Specialization of Research that accepts a number
+// of instances of Research and provides a result which
+// is an intersection of all research results from children.
+var ResearchIntersection = $n2.Class(Research,{
+	
+	childrenById: null,
+	
+	resultsByDocId: null,
+	
+	waiting: null,
+
+	count: null,
+	
+	error: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			
+		},opts_);
+		
+		Research.prototype.initialize.apply(this,arguments);
+		
+		this.childrenById = {};
+		this.resultsByDocId = {};
+	},
+	
+	addResearch: function(research){
+		var id = research.id;
+		this.childrenById[id] = research;
+	},
+	
+	execute: function(opts_){
+		var opts = $n2.extend({
+			onSuccess: function(resultMap, research){}
+			,onError: function(err, research){}
+			,onPartial: function(resultMap, research){}
+		},opts_);
+		
+		var _this = this;
+
+		var f = function(resultMap, research){
+			_this._receiveResult(resultMap, research, opts.onSuccess, opts.onPartial);
+		};
+		
+		// Reset error
+		this.error = undefined;
+
+		// Count children
+		this.count = 0;
+		for(var id in this.childrenById){
+			++this.count;
+		};
+		this.waiting = this.count;
+		
+		// Request results
+		this.resultsByDocId = {};
+		for(var id in this.childrenById){
+			var childResearch = this.childrenById[id];
+			childResearch.execute({
+				onSuccess: f
+				,onError: function(err){
+					--_this.waiting;
+					if( !_this.error ){
+						_this.error = err;
+						opts.onError(err);
+					};
+				}
+			});
+		};
+
+		if( this.count < 1 ){
+			this._checkIfFinished(opts.onSuccess, opts.onPartial);
+		};
+	},
+	
+	_receiveResult: function(resultMap, research, onSuccess, onPartial){
+		// The first time, accept all results
+		if( this.waiting === this.count ){
+			for(var docId in resultMap){
+				var result = resultMap[docId];
+				
+				result.count = 1;
+				
+				this.resultsByDocId[docId] = result;
+			};
+		} else {
+			// Import results that were already present
+			for(var docId in resultMap){
+				var result = resultMap[docId];
+				
+				if( this.resultsByDocId[docId] ) {
+					this.resultsByDocId[docId].add(result);
+				};
+			};
+			
+			// Remove from previous results the one not offered by this
+			// result map
+			var docIdsToRemove = [];
+			for(var docId in this.resultsByDocId){
+				if( !resultMap[docId] ){
+					docIdsToRemove.push(docId);
+				};
+			};
+			for(var i=0,e=docIdsToRemove.length; i<e; ++i){
+				var docId = docIdsToRemove[i];
+				delete this.resultsByDocId[docId];
+			};
+		};
+		
+		--this.waiting;
+		this._checkIfFinished(onSuccess, onPartial);
+	},
+	
+	_checkIfFinished: function(onSuccess, onPartial){
+		if( this.error ){
+			// Error already reported. Do nothing
+
+		} else if( this.waiting < 1 ){
+			// Complete
+			onSuccess(this.resultsByDocId, this);
+
+		} else {
+			// Partial
+			onPartial(this.resultsByDocId, this);
+		};
+	}
+});
+
 //============ SearchRequest ========================
 /*
  * Returns a search result:
@@ -91,113 +605,129 @@ var SearchRequest = $n2.Class({
 			,onSuccess: function(searchResults){}
 			,onError: function(err){ $n2.reportErrorForced(err); }
 		},opts_);
-		
-		var searchTerms = searchTermsLine;
-		if( typeof(searchTermsLine) === 'string' ) {
-			searchTerms = SplitSearchTerms(searchTerms);
-		} else if( $n2.isArray(searchTermsLine) ){
+
+		// If search terms are array, rejoin into a line
+		if( $n2.isArray(searchTermsLine) ){
 			searchTermsLine = searchTerms.join(' ');
+		};
+		
+		// Extract dates and date ranges from search term line
+		var dateTerms = [];
+		if( this.options.dateService ){
+			var dateStrings = $n2.date.findAllDateStrings(searchTermsLine);
+			for(var i=0,e=dateStrings.length; i<e; ++i){
+				dateTerms.push( dateStrings[i] );
+				
+				var dateStr = dateStrings[i].str;
+				if( searchTermsLine.indexOf(dateStr) >= 0 ){
+					searchTermsLine = searchTermsLine.replace(dateStr,'');
+				};
+			};
+		};
+		
+		// Break out into search terms
+		var searchTerms = undefined;
+		if( typeof(searchTermsLine) === 'string' ) {
+			searchTerms = SplitSearchTerms(searchTermsLine);
+			if( !searchTerms ){
+				searchTerms = [];
+			};
 		} else {
 			throw 'Search terms must be a string or an array';
 		};
 		
-		var dateIntervals = null;
-		if( this.options.dateService ){
-			var dateStrings = $n2.date.findAllDateStrings(searchTermsLine);
-			if( dateStrings && dateStrings.length ){
-				dateIntervals = [];
-				for(var i=0,e=dateStrings.length; i<e; ++i){
-					dateIntervals.push( dateStrings[i].interval );
-				};
-			};
+		// Start research
+		var research = undefined;
+		if( this.options.strict ){
+			research = new ResearchIntersection();
+		} else {
+			research = new ResearchUnion();
 		};
 
-		// Initialize results
-		this.searchResults = {
-			terms: []
-			,actionReturnedCount: 0
-			,pending: searchTerms.length
-			,map: {}
-			,sorted: []
-			,list: []
-		};
-		if( dateIntervals ){
-			this.searchResults.pending += dateIntervals.length;
-		};
-		
-		// Handle case where nothing is asked
-		if( !searchTerms.length ) {
-			this._returnSearchResults();
-			return;
-		};
-		
-		// Search terms are stored lower case in database
-		for(var i=0,e=searchTerms.length; i<e; ++i) {
-			var t = searchTerms[i].toLowerCase();
-			this.searchResults.terms.push(t);
-		};
-		
 		// Figure out view
 		var searchView = 'text-search';
 		if( this.options.constraint ){
 			searchView = 'text-search-constrained';
 		};
 
-		// Search for each term, and merge results later
-		var _this = this;
-		for(var i=0,e=this.searchResults.terms.length; i<e; ++i) {
-			var term = this.searchResults.terms[i];
-			
-			var startKey = [term,0];
-			var endKey = [term,{}];
-			if( this.options.constraint ){
-				startKey = [this.options.constraint,term,0];
-				endKey = [this.options.constraint,term,{}];
-			};
-			
-			this.options.designDoc.queryView({
-				viewName: searchView
-				,startkey: startKey
-				,endkey: endKey
-				,onSuccess: function(rows) {
-					var termResults = [];
-					for(var i=0,e=rows.length; i<e; ++i) {
-						termResults.push({
-							docId: rows[i].id
-							,index: rows[i].key[1]
-						});
-					};
-					_this._receiveSearchResults(termResults);
-				}
-				,onError: function(err) {
-					_this.searchResults = null;
-					_this.options.onError(err);
-				}
-			});
+		// Initialize results
+		this.searchResults = {
+			terms: []
+			,actionReturnedCount: 0
+			,pending: 0
+			,map: {}
+			,sorted: []
+			,list: []
 		};
 		
-		// Search each time interval
-		if(dateIntervals){
-			for(var i=0, e=dateIntervals.length; i<e; ++i){
-				this.options.dateService.getDocIdsFromInterval({
-					interval: dateIntervals[i]
-					,onSuccess: function(docIds){
-						var dateResults = [];
-						for(var i=0,e=docIds.length; i<e; ++i) {
-							dateResults.push({
-								docId: docIds[i]
-								,index: 0
-							});
-						};
-						_this._receiveSearchResults(dateResults);
-					}
-					,onError: function(err){
-						_this.searchResults = null;
-						_this.options.onError(err);
-					}
-				});
-			};
+		// Add research for each term
+		for(var i=0,e=searchTerms.length; i<e; ++i){
+			var childResearch = new ResearchTerm({
+				textTerm: searchTerms[i]
+				,constraint: this.options.constraint
+				,designDoc: this.options.designDoc
+				,searchView: searchView
+			});
+			
+			research.addResearch(childResearch);
+			++this.searchResults.pending;
 		};
+		
+		// Add research for dates. Each date research is a union between
+		// a date interval research and a research of the terms. This is because
+		// a user that enters a string that looks like a date but means to look
+		// for a particular string should be able to find either one
+		for(var i=0,e=dateTerms.length; i<e; ++i){
+			var dateTerm = dateTerms[i];
+			
+			var childResearch = new ResearchUnion();
+			
+			// Add the date research
+			var dateResearch = new ResearchDate({
+				dateInterval: dateTerm.interval
+				,dateService: this.options.dateService
+			});
+			childResearch.addResearch(dateResearch);
+			
+			// Split the terms and add them to the research, one at a time
+			var textTerms = SplitSearchTerms(dateTerm.str);
+			for(var j=0,k=textTerms.length; j<k; ++j){
+				var textTerm = textTerms[j];
+				
+				var textResearch = new ResearchTerm({
+					textTerm: textTerm
+					,constraint: this.options.constraint
+					,designDoc: this.options.designDoc
+					,searchView: searchView
+				});
+				
+				childResearch.addResearch(textResearch);
+			};
+			
+			research.addResearch(childResearch);
+			++this.searchResults.pending;
+		};
+		
+		// Handle case where nothing is asked
+		if( this.searchResults.pending < 1 ) {
+			this._returnSearchResults();
+			return;
+		};
+		
+		// Execute research
+		var _this = this;
+		research.execute({
+			onSuccess: function(resultMap, research){
+				_this._receiveSearchResults(resultMap, false);
+			}
+			,onError: function(err, research){
+				_this.searchResults = null;
+				_this.options.onError(err);
+			}
+			,onPartial: function(resultMap, research){
+				_this._receiveSearchResults(resultMap, true);
+			}
+		});
 	},
 
 	abortSearch: function() {
@@ -205,112 +735,62 @@ var SearchRequest = $n2.Class({
 	},
 	
 	/*
-	 * Receives an array of term results:
+	 * Receives a map of results by docIds. Each result is:
 	 * {
 	 *    docId: <docId>
 	 *    ,index: <integer>
+	 *    ,count: <integer>
 	 * }
 	 * 
-	 * The lower the index, the better the match
+	 * The higher the count, the better the match
+	 * The lower the index, the better the match.
 	 */
-	_receiveSearchResults: function(interimResults) {
+	_receiveSearchResults: function(interimResults, isInterim) {
 	
 		var searchResults = this.searchResults;
 		
+		// Aborted
 		if( !searchResults ) return;
 		
 		// Remember the returned response
 		--searchResults.pending;
 		++searchResults.actionReturnedCount;
 
-		// Strict
-		// In this mode, return only the results that meet
-		// all the search terms. If not in strict mode,
-		// it returns all result that meet any term.
-		if( this.options.strict && searchResults.actionReturnedCount > 1 ) {
-			// Add only the new results that match old ones
-			var docIdsReturned = {};
-			for(var i=0,e=interimResults.length; i<e; ++i) {
-				var docId = interimResults[i].docId;
-				var index = interimResults[i].index;
-				
-				docIdsReturned[docId] = true;
-				
-				if( searchResults.map[docId] ) {
-					// Document already found, increment terms
-					var m = searchResults.map[docId];
-					++m.terms;
-					if( m.index > index ) m.index = index;
-				} else {
-					// Do not add, it does not match a previous result
-				};
-			};
-
-			// Remove previous results that are doc ids we have not received,
-			// this time
-			var docIdsToDelete = [];
-			for(var docId in searchResults.map){
-				if( !docIdsReturned[docId] ) {
-					docIdsToDelete.push(docId);
-				};
-			};
-			// Remove invalid search results
-			for(var i=0,e=docIdsToDelete.length; i<e; ++i){
-				delete searchResults.map[docIdsToDelete[i]];
-			};
-			// Rebuilt sorted list
-			searchResults.sorted = [];
-			for(var docId in searchResults.map){
-				searchResults.sorted.push(searchResults.map[docId]);
-			};
-
-		} else {
-			// This happens in non-strict mode or in the first
-			// round of strict mode. Add all results to map.
-			for(var i=0,e=interimResults.length; i<e; ++i) {
-				var docId = interimResults[i].docId;
-				var index = interimResults[i].index;
-				
-				if( searchResults.map[docId] ) {
-					// Document already found, increment terms
-					var m = searchResults.map[docId];
-					++m.terms;
-					if( m.index > index ) m.index = index;
-				} else {
-					var m = {
-						id: docId
-						,index: index
-						,terms: 1
-						,contentRequested: false
-					};
-					searchResults.map[docId] = m;
-					searchResults.sorted.push(m);
-				};
-			};
-		};
+		searchResults.map = interimResults;
 		
-		this._returnSearchResults();
+		if( isInterim ) {
+			if( !this.options.onlyFinalResults ){
+				this._returnSearchResults();
+			};
+		} else {
+			this._returnSearchResults();
+		};
 	},
 	
 	_returnSearchResults: function() {
 		
 		var searchResults = this.searchResults;
-		
+
+		// Aborted?
 		if( !searchResults ) return;
 
 		var _this = this;
-		
-		if( this.options.onlyFinalResults ) {
-			if( searchResults.pending > 0 ) {
-				return;
+
+		// Created sorted results. This is a list of all results
+		// ordered in importance
+		var maxCount = 0;
+		searchResults.sorted = [];
+		for(var docId in searchResults.map){
+			var result = searchResults.map[docId];
+			searchResults.sorted.push(result);
+			if( maxCount < result.count ){
+				maxCount = result.count;
 			};
 		};
-		
-		// Sort results
 		searchResults.sorted.sort(function(a,b){
-			if( a.terms > b.terms ) {
+			if( a.count > b.count ) {
 				return -1;
-			} else if( a.terms < b.terms ) {
+			} else if( a.count < b.count ) {
 				return 1;
 			} else {
 				if( a.index < b.index ) {
@@ -323,21 +803,13 @@ var SearchRequest = $n2.Class({
 			return 0;
 		});
 		
-		// Create list that should be consumed by the client
-		if( (searchResults.terms.length - searchResults.pending) <= 1 ) {
-			// Only one term returned so far
-			searchResults.list = searchResults.sorted;
-		} else {
-			// Copy only the results that match the most terms
-			searchResults.list = [];
-			if( searchResults.sorted.length > 0 ) {
-				var termCount = searchResults.sorted[0].terms;
-				for(var i=0,e=searchResults.sorted.length; i<e; ++i){
-					var r = searchResults.sorted[i];
-					if( r.terms >= termCount ) {
-						searchResults.list.push(r);
-					};
-				};
+		// Create list that should be consumed by the client. Include only
+		// the results that match the most terms
+		searchResults.list = [];
+		for(var i=0,e=searchResults.sorted.length; i<e; ++i){
+			var r = searchResults.sorted[i];
+			if( r.count >= maxCount ) {
+				searchResults.list.push(r);
 			};
 		};
 		
@@ -608,6 +1080,27 @@ var SearchInput = $n2.Class({
 			this.options.dispatchService.register(DH,'searchInitiate',f);
 			this.options.dispatchService.register(DH,'selected',f);
 			this.options.dispatchService.register(DH,'unselected',f);
+			this.options.dispatchService.register(DH,'searchActivated',f);
+			this.options.dispatchService.register(DH,'searchDeactivated',f);            
+
+			// Activate/Deactivate Search Box
+			$('.searchIcon').click(function() {
+				if( $('.nunaliit_search_input').hasClass('search_active') ){
+					_this.options.dispatchService.send(DH,{
+						type: 'searchDeactivated'
+					});
+
+				} else if( $('.nunaliit_search_input').hasClass('search_inactive') ){
+					_this.options.dispatchService.send(DH,{
+						type: 'searchActivated'
+					});
+
+				} else {
+					_this.options.dispatchService.send(DH,{
+						type: 'searchActivated'
+					});
+				};
+			});
 		};
 		
 		// Figure out id. We should not hold onto a reference
@@ -855,21 +1348,52 @@ var SearchInput = $n2.Class({
 				cb(null);
 			};
 		});
+	}	
+
+	,_activateSearchBar: function(){	
+		$('.nunaliit_search_input')
+			.addClass('search_active')
+			.removeClass('search_inactive');
+
+		// Move focus to search input box
+		$('.nunaliit_search_input input').focus();
+	}
+
+	,_deactivateSearchBar: function(){    	
+		$('.nunaliit_search_input')
+			.addClass('search_inactive')
+			.removeClass('search_active');
 	}
 
 	,_handle: function(m){
+		
 		if( 'searchInitiate' === m.type ){
 			var $textInput = this.getTextInput();
 			$textInput.val(m.searchLine);
-			
+			this.options.dispatchService.send(DH,{
+				type: 'searchActivated'
+			});
+
 		} else if( 'selected' === m.type 
 		 || 'unselected' === m.type ){
 			var $textInput = this.getTextInput();
 			if( this.options.initialSearchText ) {
 				$textInput.val(this.options.initialSearchText);
+
+				// Hide search bar after document selection
+				this.options.dispatchService.synchronousCall(DH,{
+					type: 'searchDeactivated'
+				});
+
 			} else {
 				$textInput.val('');
 			};
+
+		} else if( 'searchActivated' === m.type ){
+			this._activateSearchBar();
+
+		} else if( 'searchDeactivated' === m.type ){ 
+			this._deactivateSearchBar();
 		};
 	}
 });
@@ -999,7 +1523,7 @@ var SearchServer = $n2.Class({
 		},opts_);
 		
 		var customService = this.customService;
-		
+
 		// Parent element
 		var $elem = $(opts.elem);
 
@@ -1013,13 +1537,19 @@ var SearchServer = $n2.Class({
 			searchWidgetLabel = _loc('search the atlas');
 		};
 
-		// Text box
 		$elem.empty();
+
+		// Search icon
+		var searchIcon = $('<div>')
+			.addClass('searchIcon')
+			.appendTo($elem);
+
+		// Text box
 		var searchInput = $('<input type="text">')
 			.addClass('search_panel_input')
 			.val( searchWidgetLabel )
 			.appendTo($elem);
-		
+
 		if( opts.doNotDisable ){
 			// OK
 		} else {

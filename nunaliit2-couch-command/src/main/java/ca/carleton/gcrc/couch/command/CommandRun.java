@@ -7,7 +7,6 @@ import java.util.EnumSet;
 
 import javax.servlet.DispatcherType;
 
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.rolling.RollingFileAppender;
@@ -19,7 +18,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.servlets.GzipFilter;
 import org.eclipse.jetty.proxy.ProxyServlet;
-import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.TransparentProxyFixedEscaped;
@@ -98,11 +96,9 @@ public class CommandRun implements Command {
 		// Load properties for atlas
 		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
 		
-		// Run command log4j configuration
+		// Send logs to file
 		{
 			Logger rootLogger = Logger.getRootLogger();
-			
-			rootLogger.setLevel(Level.INFO);
 
 			TimeBasedRollingPolicy rollingPolicy = new TimeBasedRollingPolicy();
 			File logDir = new File(gs.getAtlasDir(), "logs");
@@ -116,16 +112,6 @@ public class CommandRun implements Command {
 			fileAppender.activateOptions();
 			
 			rootLogger.addAppender(fileAppender);
-		}
-
-		// Capture java.util.Logger
-		{
-			 // Optionally remove existing handlers attached to j.u.l root logger
-			 SLF4JBridgeHandler.removeHandlersForRootLogger();  // (since SLF4J 1.6.5)
-
-			 // add SLF4JBridgeHandler to j.u.l's root logger, should be done once during
-			 // the initialization phase of your application
-			 SLF4JBridgeHandler.install();
 		}
 		
 		// Verify that connection to the database is available

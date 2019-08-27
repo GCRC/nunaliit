@@ -11,7 +11,9 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.WriterAppender;
+import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import ca.carleton.gcrc.couch.command.Options.LoggerOptions;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 
 public class Main {
@@ -35,6 +37,7 @@ public class Main {
 			allCommands.add( new CommandVersion() );
 			allCommands.add( new CommandAddSchema() );
 			allCommands.add( new CommandUpdateSchema() );
+			allCommands.add( new CommandInReachSchemaDefs() );
 		}
 		
 		return allCommands;
@@ -99,8 +102,39 @@ public class Main {
 		// Default log4j configuration
 		{
 			Logger rootLogger = Logger.getRootLogger();
-			rootLogger.setLevel(Level.ERROR);
+
+			List<LoggerOptions> loggerOptions = options.getLoggerOptions();
+			
+			boolean isRootLoggerSet = false;
+			for(LoggerOptions loggerOption : loggerOptions) {
+				if( null != loggerOption.getLevel() ) {
+					if( null == loggerOption.getLoggerName() ) {
+						// Root logger
+						rootLogger.setLevel(loggerOption.getLevel());
+						isRootLoggerSet = true;
+					} else {
+						// Obtain logger for this name
+						Logger logger = Logger.getLogger(loggerOption.getLoggerName());
+						logger.setLevel(loggerOption.getLevel());
+					}
+				}
+			}
+			
+			if( !isRootLoggerSet ) {
+				rootLogger.setLevel(Level.INFO);
+			}
+			
 			rootLogger.addAppender(new WriterAppender(new PatternLayout("%d{ISO8601}[%-5p]: %m%n"),globalSettings.getErrStream()));
+		}
+
+		// Capture java.util.Logger
+		{
+			 // Optionally remove existing handlers attached to j.u.l root logger
+			 SLF4JBridgeHandler.removeHandlersForRootLogger();  // (since SLF4J 1.6.5)
+
+			 // add SLF4JBridgeHandler to j.u.l's root logger, should be done once during
+			 // the initialization phase of your application
+			 SLF4JBridgeHandler.install();
 		}
 		
 		// Compute needed file paths

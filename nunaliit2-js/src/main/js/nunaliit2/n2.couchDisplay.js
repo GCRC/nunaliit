@@ -170,8 +170,8 @@ var Display = $n2.Class({
 
 		var dispatcher = this.dispatchService;
 		if( dispatcher ) {
-			var f = function(msg){
-				_this._handleDispatch(msg);
+			var f = function(msg, addr, dispatcher){
+				_this._handleDispatch(msg, addr, dispatcher);
 			};
 			dispatcher.register(DH, 'selected', f);
 			dispatcher.register(DH, 'searchResults', f);
@@ -499,6 +499,8 @@ var Display = $n2.Class({
 		var data = opt.doc;
 		var schema = opt.schema;
 		
+		var buttonDisplay = new ButtonDisplay();
+		
 		var dispatcher = this.dispatchService;
 		var schemaRepository = _this.schemaRepository;
 
@@ -506,46 +508,43 @@ var Display = $n2.Class({
  		if( opt.focus 
  		 && data
  		 && data._id ) {
-			var $focusButton = $('<a href="#"></a>');
-			var focusText = _loc('More Info');
-			$focusButton.text( focusText );
-			$buttons.append($focusButton);
-			$focusButton.click(function(){
-				_this._dispatch({
-					type:'userSelect'
-					,docId: data._id
-				})
-				return false;
-			});
-			addClasses($focusButton, focusText);
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'more_info'
+ 				,label: _loc('More Info')
+ 				,click: function(){
+ 					_this._dispatch({
+ 						type:'userSelect'
+ 						,docId: data._id
+ 					});
+ 				}
+ 			});
  		};
 
  		// Show 'edit' button
  		if( opt.edit 
  		 && $n2.couchMap.canEditDoc(data) ) {
-			var $editButton = $('<a href="#"></a>');
-			var editText = _loc('Edit');
-			$editButton.text( editText );
-			$buttons.append($editButton);
-			$editButton.click(function(){
-				_this._performDocumentEdit(data, opt);
-				return false;
-			});
-			addClasses($editButton, editText);
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'edit'
+ 				,label: _loc('Edit')
+ 				,click: function(){
+ 					_this._performDocumentEdit(data, opt);
+ 				}
+ 			});
  		};
 
  		// Show 'delete' button
  		if( opt['delete'] 
  		 && $n2.couchMap.canDeleteDoc(data) ) {
-			var $deleteButton = $('<a href="#"></a>');
-			var deleteText = _loc('Delete');
-			$deleteButton.text( deleteText );
-			$buttons.append($deleteButton);
-			$deleteButton.click(function(){
-				_this._performDocumentDelete(data, opt);
-				return false;
-			});
-			addClasses($deleteButton, deleteText);
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'delete'
+ 				,label: _loc('Delete')
+ 				,click: function(){
+ 					_this._performDocumentDelete(data, opt);
+ 				}
+ 			});
  		};
 		
  		// Show 'add related' button
@@ -556,6 +555,7 @@ var Display = $n2.Class({
  				,div: $buttons[0]
  				,doc: data
  				,schema: opt.schema
+ 				,buttonDisplay: buttonDisplay
  			});
  		};
 		
@@ -567,62 +567,49 @@ var Display = $n2.Class({
 		 ) {
 			var showReplyButton = true;
 			if( this.restrictReplyButtonToLoggedIn ){
-				var sessionContext = $n2.couch.getSession().getContext();
-				if( !sessionContext || !sessionContext.name ) {
+				var isLoggedInMsg = {
+					type: 'authIsLoggedIn'
+					,isLoggedIn: false
+				};
+				if( dispatcher ){
+					dispatcher.synchronousCall(DH,isLoggedInMsg);
+				};
+				if( !isLoggedInMsg.isLoggedIn ) {
 					showReplyButton = false;
 				};
 			};
 			
 			if( showReplyButton ) {
-				var $replyButton = $('<a href="#"></a>');
-				var replyText = _loc('Reply');
-				$replyButton.text( replyText );
-				$buttons.append($replyButton);
-				$replyButton.click(function(){
-					_this._replyToDocument(data, opt.schema);
-					return false;
-				});
-				addClasses($replyButton, 'reply');
+	 			buttonDisplay.drawButton({
+	 				elem: $buttons
+	 				,name: 'reply'
+	 				,label: _loc('Reply')
+	 				,click: function(){
+						_this._replyToDocument(data, opt.schema);
+	 				}
+	 			});
 			};
 		};
 		
  		// Show 'find on map' button
-		if( dispatcher 
-		 && opt.geom
-		 && data 
-		 && dispatcher.isEventTypeRegistered('findIsAvailable')
-		 && dispatcher.isEventTypeRegistered('find')
-		 ) {
-			// Check if document can be displayed on a map
-			var showFindOnMapButton = false;
-			var m = {
-				type:'findIsAvailable'
+		if( data ) {
+			var $findGeomButton = buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'find_on_map'
+ 				,label: _loc('Find on Map')
+ 				,click: function(){
+ 					_this._dispatch({
+ 						type: 'find'
+ 						,docId: data._id
+ 						,doc: data
+ 					});
+ 				}
+ 			});
+			
+			this.showService.showFindAvailable({
+				elem: $findGeomButton
 				,doc: data
-				,isAvailable:false
-			};
-			dispatcher.synchronousCall(DH,m);
-			if( m.isAvailable ){
-				showFindOnMapButton = true;
-			};
-
-			if( showFindOnMapButton ) {
-				var $findGeomButton = $('<a href="#"></a>');
-				var findGeomText = _loc('Find on Map');
-				$findGeomButton.text( findGeomText );
-				$buttons.append($findGeomButton);
-	
-				$findGeomButton.click(function(){
-					// Move map and display feature 
-					_this._dispatch({
-						type: 'find'
-						,docId: data._id
-						,doc: data
-					});
-					
-					return false;
-				});
-				addClasses($findGeomButton, findGeomText);
-			};
+			});
 		};
 
 		// Show 'Add Layer' button
@@ -632,55 +619,51 @@ var Display = $n2.Class({
 		 && dispatcher
 		 && dispatcher.isEventTypeRegistered('addLayerToMap')
 		 ) {
-			var $addLayerButton = $('<a href="#"></a>');
-			var btnText = _loc('Add Layer');
-			$addLayerButton.text( btnText );
-			$buttons.append($addLayerButton);
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'add_layer'
+ 				,label: _loc('Add Layer')
+ 				,click: function(){
+ 					var layerDefinition = data.nunaliit_layer_definition;
+ 					var layerId = layerDefinition.id;
+ 					if( !layerId ){
+ 						layerId = data._id;
+ 					};
+ 					var layerDef = {
+ 						name: layerDefinition.name
+ 						,type: 'couchdb'
+ 						,options: {
+ 							layerName: layerId
+ 							,documentSource: _this.documentSource
+ 						}
+ 					};
 
-			var layerDefinition = data.nunaliit_layer_definition;
-			var layerId = layerDefinition.id;
-			if( !layerId ){
-				layerId = data._id;
-			};
-			var layerDef = {
-				name: layerDefinition.name
-				,type: 'couchdb'
-				,options: {
-					layerName: layerId
-					,documentSource: this.documentSource
-				}
-			};
-			
-			$addLayerButton.click(function(){
-				_this._dispatch({
-					type: 'addLayerToMap'
-					,layer: layerDef
-					,options: {
-						setExtent: {
-							bounds: layerDefinition.bbox
-							,crs: 'EPSG:4326'
-						}
-					}
-				});
-				return false;
-			});
-			addClasses($addLayerButton, btnText);
+ 					_this._dispatch({
+ 						type: 'addLayerToMap'
+ 						,layer: layerDef
+ 						,options: {
+ 							setExtent: {
+ 								bounds: layerDefinition.bbox
+ 								,crs: 'EPSG:4326'
+ 							}
+ 						}
+ 					});
+ 				}
+ 			});
 		};
 
 		// Show 'Tree View' button
 		if( opt.treeView
 		 && data
 		 ) {
-			var $treeViewButton = $('<a>')
-				.attr('href','#')
-				.text( _loc('Tree View') )
-				.appendTo($buttons)
-				.click(function(){
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'tree_view'
+ 				,label: _loc('Tree View')
+ 				,click: function(){
 					_this._performDocumentTreeView(data);
-					return false;
-				});
-
-			addClasses($treeViewButton, 'tree_view');
+ 				}
+ 			});
 		};
 
 		// Show 'Simplified Geoms' button
@@ -688,36 +671,15 @@ var Display = $n2.Class({
 		 && data
 		 && data.nunaliit_geom
 		 ) {
-			var $simplifiedGeomsButton = $('<a>')
-				.attr('href','#')
-				.text( _loc('Geometries') )
-				.appendTo($buttons)
-				.click(function(){
+ 			buttonDisplay.drawButton({
+ 				elem: $buttons
+ 				,name: 'simplified_geoms'
+ 				,label: _loc('Geometries')
+ 				,click: function(){
 					_this._performSimplifiedGeometries(data);
-					return false;
-				});
-
-			addClasses($simplifiedGeomsButton, 'simplified_geoms');
+ 				}
+ 			});
 		};
-
-		/**
-		 * Generate and insert css classes for the generated element, based on the given tag.
-		 * @param elem the jQuery element to be modified
-		 * @param tag the string tag to be used in generating classes for elem
-		 */
-		function addClasses(elem, tag) {
-			elem.addClass('nunaliit_form_link');
-			
-			var compactTag = tag;
-			var spaceIndex = compactTag.indexOf(' ');
-			while (-1 !== spaceIndex) {
-				compactTag = compactTag.slice(0,spaceIndex) + '_' +
-					compactTag.slice(spaceIndex + 1);
-				spaceIndex = compactTag.indexOf(' ');
-			};
-			elem.addClass('nunaliit_form_link_' + compactTag.toLowerCase());
-		};
-		
 	}
 	
 	,_addAttachmentProgress: function($elem, data){
@@ -734,6 +696,46 @@ var Display = $n2.Class({
 		var status = null;
 		
 		$progress.empty();
+
+		// Display a preview of local Cordova attachments
+		if (window.cordova && data.nunaliit_mobile_attachments) {
+			var lastSlashIndex = data.nunaliit_mobile_attachments.lastIndexOf('/');
+			var filename = data.nunaliit_mobile_attachments.substring(lastSlashIndex + 1);
+			$('<p>1 mobile attachment: ' + filename + '</p>')
+				.appendTo($progress);
+
+			window.resolveLocalFileSystemURL('file:' + data.nunaliit_mobile_attachments, 
+				function(fileEntry) {
+					fileEntry.file(function(file) {
+						if (file && file.type) {
+							if (file.type.startsWith('image')) {
+								// If the file is an image, display it
+								$('<img>', {src: data.nunaliit_mobile_attachments})
+									.addClass('n2Display_cordovaImgAttachmentPreview')
+									.on('error', function() { 
+										$(this).hide();
+									})
+									.appendTo($progress);
+							} else {
+								var $previewButtton = $('<label>')
+									.addClass('cordova-btn cordova-preview-button icon-preview width-100')
+									.appendTo($progress)
+									.text(_loc('Preview'))
+									.click(function(event) {
+										event.preventDefault();
+										// Try to open it using a plugin
+										window.cordova.plugins.fileOpener2.open(
+											data.nunaliit_mobile_attachments,
+											file.type, {
+												error : function(error) { console.error('Error opening file', file); }, 
+												success : function() { console.log('Opening file', file); } 
+											});
+									});
+							}
+						} 
+					});
+				});
+		}
 		
 		// Find an attachment which is in progress
 		if( data.nunaliit_attachments 
@@ -847,22 +849,26 @@ var Display = $n2.Class({
 				requestDocIds.push(requestDocId);
 			};
 
-			_this.documentSource.getDocumentInfoFromIds({
-				docIds: requestDocIds
-				,onSuccess: function(infos){
-					for(var i=0,e=infos.length;i<e;++i){
-						var requestDocId = infos[i].id;
-						
-						refInfo[requestDocId].exists = true;
-						if( infos[i].schema ) {
-							refInfo[requestDocId].schema = infos[i].schema;
+			if( requestDocIds.length > 0 ){
+				_this.documentSource.getDocumentInfoFromIds({
+					docIds: requestDocIds
+					,onSuccess: function(infos){
+						for(var i=0,e=infos.length;i<e;++i){
+							var requestDocId = infos[i].id;
+							
+							refInfo[requestDocId].exists = true;
+							if( infos[i].schema ) {
+								refInfo[requestDocId].schema = infos[i].schema;
+							};
 						};
-					};
-					
-					opts.onSuccess(refInfo);
-				}
-				,onError: opts.onError
-			});
+						
+						opts.onSuccess(refInfo);
+					}
+					,onError: opts.onError
+				});
+			} else {
+				opts.onSuccess(refInfo);
+			};
 		};
 	}
 
@@ -1186,7 +1192,7 @@ var Display = $n2.Class({
 		});
 	}
 	
-	,_handleDispatch: function(msg){
+	,_handleDispatch: function(msg, addr, dispatcher){
 		var _this = this;
 		
 		var $div = this._getDisplayDiv();
@@ -1713,11 +1719,7 @@ var CommentRelatedInfo = $n2.Class({
 	
 	dispatchService: null,
 	
-	lastDoc: null,
-	
-	lastDivId: null,
-	
-	lastDisplay: null,
+	commentService: null,
 	
 	initialize: function(opts_){
 		
@@ -1732,10 +1734,14 @@ var CommentRelatedInfo = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		
 		if( this.dispatchService ){
-			var f = function(msg, addr, dispatcher){
-				_this._handleDispatch(msg, addr, dispatcher);
+			var m = {
+				type: 'configurationGetCurrentSettings'
 			};
-			this.dispatchService.register(DH, 'documentContent', f);
+			this.dispatchService.synchronousCall(DH, m);
+			
+			if( m.configuration && m.configuration.directory ){
+				this.commentService = m.configuration.directory.commentService;
+			};
 		};
 	},
 	
@@ -1743,114 +1749,24 @@ var CommentRelatedInfo = $n2.Class({
 		var opts = $n2.extend({
 			divId: null
 			,div: null
-			,display: null
 			,doc: null
-			,schema: null
 		},opts_);
 		
 		var _this = this;
-		
-		var display = opts.display;
-		var doc = opts.doc;
-		var docId = doc._id;
-		var documentSource = display.documentSource;
-		var showService = display.showService;
-		
-		var $elem = opts.div;
-		if( ! $elem ) {
-			$elem = $('#'+opts.divId);
-		};
-		if( ! $elem.length) {
-			return;
-		};
-		if( !showService ) {
-			$n2.log('Show service not available for comment process');
+
+		if( !this.commentService ){
+			$n2.log('Comment service not available for comment process');
 			return;
 		};
 		
-		this.lastDoc = doc;
-		this.lastDivId = $n2.utils.getElementIdentifier($elem);
-		this.lastDisplay = display;
-
-		// Get references
-		documentSource.getReferencesFromOrigin({
-			docId: docId
-			,onSuccess: loadedDocIds
-		});
-		
-		function loadedDocIds(refDocIds){
-			// Get documents that include comments
-			documentSource.getDocumentInfoFromIds({
-				docIds: refDocIds
-				,onSuccess: loadedDocInfos
-			});
+		// Set schema for comments
+		if( this.commentSchema ){
+			this.commentService.setCommentSchema(this.commentSchema);
 		};
 		
-		function loadedDocInfos(docInfos){
-			// Sort comments by last updated time
-			docInfos.sort(function(a,b){
-				var aTime = a.updatedTime;
-				if( !aTime ){
-					aTime = a.createdTime;
-				};
-
-				var bTime = b.updatedTime;
-				if( !bTime ){
-					bTime = b.createdTime;
-				};
-				
-				if( aTime && bTime ){
-					return bTime - aTime;
-				};
-				if( aTime ) return -1;
-				if( bTime ) return 1;
-				
-				if( a.id > b.id ) {
-					return 1;
-				}
-				return -1;
-			});
-
-			// Display comments
-			$elem.empty();
-			for(var i=0,e=docInfos.length; i<e; ++i){
-				var docInfo = docInfos[i];
-				var docId = docInfo.id;
-				var $commentDiv = $('<div>')
-					.addClass('n2DisplayComment_doc n2DisplayComment_doc_'+$n2.utils.stringToHtmlId(docId))
-					.attr('n2DocId',docId)
-					.appendTo($elem);
-				var $content = $('<div>')
-					.addClass('n2DisplayComment_content')
-					.appendTo($commentDiv);
-				showService.printDocument($content, docId);
-
-				var $buttons = $('<div>')
-					.addClass('n2DisplayComment_buttons')
-					.appendTo($commentDiv);
-				
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Reply') )
-					.addClass('n2DisplayComment_button_reply')
-					.appendTo($buttons)
-					.click(function(){
-						var docId = $(this).parents('.n2DisplayComment_doc').attr('n2DocId');
-						_this._addReply(docId, display);
-						return false;
-					});
-				
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('More Details') )
-					.addClass('n2DisplayComment_button_focus')
-					.appendTo($buttons)
-					.click(function(){
-						var docId = $(this).parents('.n2DisplayComment_doc').attr('n2DocId');
-						_this._changeFocus(docId, display);
-						return false;
-					});
-			};
+		var commentStreamDisplay = this.commentService.getCommentStreamDisplay();
+		if( commentStreamDisplay ){
+			commentStreamDisplay.display(opts_);
 		};
 	},
 	
@@ -1860,86 +1776,103 @@ var CommentRelatedInfo = $n2.Class({
 			,div: null
 			,doc: null
 			,schema: null
+			,buttonDisplay: null
 		},opts_);
 		
-		var _this = this;
-		
-		var display = opts.display;
-		var doc = opts.doc;
-		var $buttons = $(opts.div);
-		
- 		// Show 'add comment' button
-		var $button = $('<a href="#"></a>')
-			.text( _loc('Add Comment') )
-			.appendTo($buttons)
-			.click(function(){
-				_this._addComment(doc, display);
-				return false;
-			});
-
-		$button.addClass('nunaliit_form_link');
-		$button.addClass('nunaliit_form_link_add_related_item');
-	},
-	
-	_addComment: function(doc, display){
-		var createRelatedDocProcess = display.createRelatedDocProcess;
-		createRelatedDocProcess.replyToDocument({
-			doc: doc
-			,schema: this.commentSchema
-			,origin: doc._id
-		});
-	},
-	
-	_addReply: function(docId, display){
-		var _this = this;
-		var documentSource = display.documentSource;
-		var createRelatedDocProcess = display.createRelatedDocProcess;
-		
-		documentSource.getDocument({
-			docId: docId
-			,onSuccess: function(doc){
-				createRelatedDocProcess.replyToDocument({
-					doc: doc
-					,schema: _this.commentSchema
-				});
-			}
-		});
-	},
-	
-	_changeFocus: function(docId, display){
-		var _this = this;
-
-		display._dispatch({
-			type: 'userSelect'
-			,docId: docId
-		});
-	},
-	
-	_handleDispatch: function(m, address, dispatcher){
-		if( 'documentContent' === m.type ){
-			var doc = m.doc;
-			this._handleDocumentContent(doc);
+		if( !this.commentService ){
+			$n2.log('Comment service not available for comment process');
+			return;
 		};
+		
+		this.commentService.insertAddCommentButton({
+			div: opts.div
+			,doc: opts.doc
+			,buttonDisplay: opts.buttonDisplay
+		});
+	}
+});
+
+//===================================================================================
+// An instance of this class is used to draw a HTML button in the DOM structure.
+var ButtonDisplay = $n2.Class({
+
+	initialize: function(opts_){
+		
 	},
 	
-	_handleDocumentContent: function(doc){
-		if( doc.nunaliit_origin ){
-			// Check if we should add an entry for this document
-			if( doc.nunaliit_origin.doc === this.lastDoc._id ){
-				// Related. Check if we are still displaying comments
-				var $section = $('#'+this.lastDivId);
-				if( $section.length > 0 ){
-					var $entry = $section.find('.n2DisplayComment_doc_'+$n2.utils.stringToHtmlId(doc._id));
-					if( $entry.length < 1 ){
-						// OK, need to add a comment entry. Refresh.
-						this.display({
-							divId: this.lastDivId
-							,display: this.lastDisplay
-							,doc: this.lastDoc
-							,schema: null
-						});
-					};
+	drawButton: function(opts_){
+		var opts = $n2.extend({
+			// Location where button is to be drawn
+			elem: null,
+			
+			// Name of button
+			name: null,
+			
+			// Label is shown on the button
+			label: null,
+			
+			// Function to be called when button is clicked
+			click: null,
+			
+			// String. Class name to be added to button
+			className: null,
+			
+			// Array of string. Class names to be added to button
+			classNames: null
+		},opts_);
+		
+		if( !opts.elem ){
+			throw new Error('In ButtonDisplay.drawButton(), parameter "elem" must be provided');
+		};
+		
+		var $elem = $(opts.elem);
+		var name = opts.name;
+		var label = opts.label;
+		if( !label ){
+			label = name;
+		};
+		
+		var $linkButton = $('<a>')
+			.attr('href','#')
+			.appendTo($elem)
+			.addClass('nunaliit_form_link')
+			.click(wrapAndReturnFalse(opts.click));
+		
+		if( label ){
+			$linkButton.text(label);
+		};
+
+		if( name ){
+			var compactTag = name;
+			var spaceIndex = compactTag.indexOf(' ');
+			while (-1 !== spaceIndex) {
+				compactTag = compactTag.slice(0,spaceIndex) + '_' +
+					compactTag.slice(spaceIndex + 1);
+				spaceIndex = compactTag.indexOf(' ');
+			};
+			$linkButton.addClass('nunaliit_form_link_' + compactTag.toLowerCase());
+		};
+		
+		if( typeof opts.className === 'string' ){
+			$linkButton.addClass(opts.className);
+		};
+		
+		if( $n2.isArray(opts.classNames) ){
+			opts.classNames.forEach(function(className){
+				if( typeof className === 'string' ){
+					$linkButton.addClass(className);
 				};
+			});
+		};
+		
+		return $linkButton;
+
+		function wrapAndReturnFalse(callback){
+			return function(){
+				if( typeof callback === 'function' ){
+					callback.apply(this,arguments);
+				};
+				return false;
 			};
 		};
 	}
@@ -2055,6 +1988,7 @@ $n2.couchDisplay = {
 	TreeDocumentViewer: TreeDocumentViewer
 	,HandleDisplayAvailableRequest: HandleDisplayAvailableRequest
 	,HandleDisplayRenderRequest: HandleDisplayRenderRequest
+	,ButtonDisplay: ButtonDisplay
 //	DisplayRelatedInfo: DisplayRelatedInfo,
 //	DisplayLinkedInfo: DisplayLinkedInfo
 	

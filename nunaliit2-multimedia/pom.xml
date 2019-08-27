@@ -3,11 +3,9 @@
   <parent>
     <artifactId>nunaliit2</artifactId>
     <groupId>ca.carleton.gcrc</groupId>
-    <version>2.2.8-SNAPSHOT</version>
+    <version>2.2.9-SNAPSHOT</version>
   </parent>
-  <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-multimedia</artifactId>
-  <version>2.2.8-SNAPSHOT</version>
   <name>nunaliit2-multimedia</name>
   <description>Library that converts multimedia files using command
   line tools such as avconv and ImageMagick</description>
@@ -35,12 +33,23 @@
 	<dependency>
 		<groupId>com.adobe.xmp</groupId>
 		<artifactId>xmpcore</artifactId>
-		<version>5.1.2</version>
+		<version>5.1.3</version>
 	</dependency>
 	<dependency>
 		<groupId>com.drewnoakes</groupId>
 		<artifactId>metadata-extractor</artifactId>
 		<version>2.6.2</version>
+	</dependency>
+	<dependency>
+		<groupId>ca.carleton.gcrc</groupId>
+		<artifactId>nunaliit2-utils</artifactId>
+		<version>${project.version}</version>
+	</dependency>
+	<!-- https://mvnrepository.com/artifact/org.apache.pdfbox/pdfbox -->
+	<dependency>
+		<groupId>org.apache.pdfbox</groupId>
+		<artifactId>pdfbox</artifactId>
+		<version>2.0.15</version>
 	</dependency>
   </dependencies>
 </project>

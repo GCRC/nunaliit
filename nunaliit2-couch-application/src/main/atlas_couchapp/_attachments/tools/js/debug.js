@@ -59,6 +59,7 @@
 			var $confContent = $outer.find('.n2debug_configuration_content');
 			$confContent.empty();
 
+			// Bad Proxy
 			var $div = $('<div>')
 				.addClass('n2debug_configuration_content_badProxy')
 				.appendTo($confContent);
@@ -84,9 +85,10 @@
 				$cb.attr('checked','checked');
 			};
 
+			// Logging
 			var $div = $('<div>')
-			.addClass('n2debug_configuration_content_logging')
-			.appendTo($confContent);
+				.addClass('n2debug_configuration_content_logging')
+				.appendTo($confContent);
 			var loggingId = $n2.getUniqueId();
 			$('<label>')
 				.attr('for',loggingId)
@@ -106,6 +108,105 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isEventLoggingEnabled() ){
+				$cb.attr('checked','checked');
+			};
+
+			// CouchDb Caching
+			var $div = $('<div>')
+				.addClass('n2debug_configuration_content_couchDbCaching')
+				.appendTo($confContent);
+			var couchDbCachingId = $n2.getUniqueId();
+			$('<label>')
+				.attr('for',couchDbCachingId)
+				.text( _loc('CouchDb Caching') )
+				.appendTo($div);
+			var $cb = $('<input>')
+				.attr('type','checkbox')
+				.attr('name',couchDbCachingId)
+				.appendTo($div)
+				.change(function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setCouchDbCachingEnabled(true);
+					} else {
+						_this.debugConfiguration.setCouchDbCachingEnabled(false);
+					};
+					_this._refresh();
+				});
+			if( this.debugConfiguration.isCouchDbCachingEnabled() ){
+				$cb.attr('checked','checked');
+			};
+			var $cb = $('<button>')
+				.text( _loc('Clear Cache') )
+				.appendTo($div)
+				.click(function(){
+					$n2.indexedDb.openIndexedDb({
+						onSuccess: function(indexedDbConnection){
+							var documentCache = indexedDbConnection.getDocumentCache({});
+							documentCache.clearCache({
+								onSuccess: function(){
+									alert('Cache was cleared');
+								}
+								,onError: function(err){
+									alert('Error while clearing cache: '+err);
+								}
+							});
+						}
+						,onError: function(err){
+							alert('Error while obtaining cache: '+err);
+						}
+					});
+				});
+
+			// Disable CouchDb Caching
+			var $div = $('<div>')
+				.addClass('n2debug_configuration_content_disableCouchDbCaching')
+				.appendTo($confContent);
+			var disableCouchDbCachingId = $n2.getUniqueId();
+			$('<label>')
+				.attr('for',disableCouchDbCachingId)
+				.text( _loc('Disable CouchDb Caching') )
+				.appendTo($div);
+			var $cb = $('<input>')
+				.attr('type','checkbox')
+				.attr('name',disableCouchDbCachingId)
+				.appendTo($div)
+				.change(function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setCouchDbCachingDisabled(true);
+					} else {
+						_this.debugConfiguration.setCouchDbCachingDisabled(false);
+					};
+					_this._refresh();
+				});
+			if( this.debugConfiguration.isCouchDbCachingDisabled() ){
+				$cb.attr('checked','checked');
+			};
+
+			// Force slow connection handling
+			var $div = $('<div>')
+				.addClass('n2debug_configuration_content_slowConnectionHandling')
+				.appendTo($confContent);
+			var slowConnectionHandlingId = $n2.getUniqueId();
+			$('<label>')
+				.attr('for',slowConnectionHandlingId)
+				.text( _loc('Force slow connection handling') )
+				.appendTo($div);
+			var $cb = $('<input>')
+				.attr('type','checkbox')
+				.attr('name',slowConnectionHandlingId)
+				.appendTo($div)
+				.change(function(){
+					var $cb = $(this);
+					if( $cb.attr('checked') ) {
+						_this.debugConfiguration.setForceSlowConnectionHandling(true);
+					} else {
+						_this.debugConfiguration.setForceSlowConnectionHandling(false);
+					};
+					_this._refresh();
+				});
+			if( this.debugConfiguration.forceSlowConnectionHandling() ){
 				$cb.attr('checked','checked');
 			};
 		}

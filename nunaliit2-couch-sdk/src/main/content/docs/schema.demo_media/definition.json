@@ -1,0 +1,33 @@
+{
+    "group": "demo",
+    "id": "media",
+    "label": "Demo Media",
+    "relatedSchemas": [],
+    "attributes": [
+       {
+          "type": "title",
+          "label": "Demo Media"
+       },
+       {
+          "type": "string",
+          "label": "Caption",
+          "id": "caption",
+          "textarea": true,
+          "includedInBrief": true,
+          "placeholder": "Caption"
+       },
+       {
+          "type": "string",
+          "label": "Credit",
+          "id": "credit",
+          "includedInBrief": true,
+          "placeholder": "Credit"
+       },
+       {
+          "type": "file",
+          "label": "File",
+          "uploadOptional": false
+       }
+    ]
+ }
+ 

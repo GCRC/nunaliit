@@ -15,16 +15,21 @@ import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
-import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionRequest;
-import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConverter;
-import ca.carleton.gcrc.olkit.multimedia.converter.impl.MultimediaConverterImpl;
+import ca.carleton.gcrc.olkit.multimedia.apachePDFBox.ApachePDFBoxFactory;
+import ca.carleton.gcrc.olkit.multimedia.apachePDFBox.ApachePDFBoxProcessor;
+import ca.carleton.gcrc.olkit.multimedia.apachePDFBox.ApachePDFBoxProcessorDefault;
+import ca.carleton.gcrc.olkit.multimedia.apachePDFBox.PdfInfo;
 import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
+import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageInfo;
+import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagick;
+import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickInfo;
+import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
+import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 
 public class PdfFileConverter implements FileConversionPlugin {
 
 	protected Logger logger = LoggerFactory.getLogger( this.getClass() );
 
-	private MultimediaConverter mmConverter = new MultimediaConverterImpl();
 	private String atlasName = null;
 
 	public PdfFileConverter(){
@@ -126,37 +131,84 @@ public class PdfFileConverter implements FileConversionPlugin {
 		// Figure out media file located on disk
 		File originalFile = originalObj.getMediaFile();
 
-		// Perform conversion(s)
-		MultimediaConversionRequest request = new MultimediaConversionRequest();
-		request.setInFile( originalFile );
-		request.setThumbnailRequested(true);
-		request.setSkipConversion(true);
-		mmConverter.convertImage(request);
+		File inFile = originalFile;
+		if( null == inFile ) {
+			throw new Exception("Must provide a file for image conversion");
+		}
+
+		// Get information about PDF
+		ApachePDFBoxProcessor pdfbox = ApachePDFBoxFactory.getProcessor();
+		PdfInfo pdfInfo = pdfbox.getPdfInfo( inFile );
+		if (null == pdfInfo) {
+			throw new Exception ("Error in producing the pdfinfo object");
+		}
+
+		// Create thumbnail
+		File thumbnailFile = null;
+		int thumbnailHeight = 0;
+		int thumbnailWidth = 0;
+		String thumbnailExtension = null;
+		{
+			File parentDir = inFile.getParentFile();
+
+			String name = inFile.getName();
+			int index = name.lastIndexOf('.');
+			if( index > 0 ) {
+				name = name.substring(0, index);
+			}
+			name = name+"_thumb."+ ApachePDFBoxProcessorDefault.IMAGEFORMAT;
+			thumbnailExtension = ApachePDFBoxProcessorDefault.IMAGEFORMAT;
+
+			thumbnailFile = new File(parentDir, name);
+
+			pdfbox.createPdfThumbnail(
+					pdfInfo, 
+					thumbnailFile, 
+					MultimediaConfiguration.IMAGE_THUMB_WIDTH, 
+					MultimediaConfiguration.IMAGE_THUMB_HEIGHT
+				);
+
+			// Get information about thumbnail
+			ImageMagickInfo imInfo = ImageMagick.getInfo();
+			ImageInfo imageInfo = null;
+			if( imInfo.isAvailable ){
+				ImageMagickProcessor imageMagick = imInfo.getProcessor();
+				imageInfo = imageMagick.getImageInfo( thumbnailFile );
+			}
+			if( null != imageInfo ) {
+				thumbnailHeight = imageInfo.height;
+				thumbnailWidth = imageInfo.width;
+			}
+		}
 		
 		// Report original size
-		if( request.getInHeight() != 0 && request.getInWidth() != 0 ) {
-			originalObj.setHeight( request.getInHeight() );
-			originalObj.setWidth( request.getInWidth() );
+		if( pdfInfo.height != 0 && pdfInfo.width != 0 ) {
+			originalObj.setHeight( pdfInfo.height );
+			originalObj.setWidth( pdfInfo.width );
 		}
 
 		// Original object is the main object
 		{
+			attDescription.setOriginalUpload(true);
 			attDescription.setMediaFileName(originalObj.getMediaFileName());
 			attDescription.setContentType(originalObj.getContentType());
 			attDescription.setEncodingType(originalObj.getEncodingType());
 			attDescription.setSize(originalObj.getSize());
-			if( request.getInHeight() != 0 && request.getInWidth() != 0 ) {
-				attDescription.setHeight(request.getInHeight());
-				attDescription.setWidth(request.getInWidth());
+			if( pdfInfo.height != 0 && pdfInfo.width != 0 ) {
+				attDescription.setHeight(pdfInfo.height);
+				attDescription.setWidth(pdfInfo.width);
 			}
 		}
 
 		// Report thumbnail object
-		if( request.isThumbnailCreated() ) {
-			File thumbFile = request.getThumbnailFile();
+		{
+			File thumbFile = thumbnailFile;
 			SystemFile thumbSf = SystemFile.getSystemFile(thumbFile);
 			
-			String thumbnailAttachmentName = computeThumbnailName(attDescription.getAttachmentName(),"jpeg");
+			String thumbnailAttachmentName = computeThumbnailName(
+					attDescription.getAttachmentName(),
+					thumbnailExtension
+				);
 			AttachmentDescriptor thumbnailObj = docDescriptor.getAttachmentDescription(thumbnailAttachmentName);
 
 			if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
@@ -173,9 +225,9 @@ public class PdfFileConverter implements FileConversionPlugin {
 			thumbnailObj.setContentType(thumbSf.getMimeType());
 			thumbnailObj.setEncodingType(thumbSf.getMimeEncoding());
 
-			if( request.getThumbnailHeight() != 0 && request.getThumbnailWidth() != 0 ) {
-				thumbnailObj.setHeight(request.getThumbnailHeight());
-				thumbnailObj.setWidth(request.getThumbnailWidth());
+			if( thumbnailHeight != 0 && thumbnailWidth != 0 ) {
+				thumbnailObj.setHeight(thumbnailHeight);
+				thumbnailObj.setWidth(thumbnailWidth);
 			}
 
 			attDescription.setThumbnailReference(thumbnailAttachmentName);

@@ -1,5 +1,6 @@
 package ca.carleton.gcrc.olkit.multimedia.utils;
 
+import java.util.Enumeration;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -12,9 +13,18 @@ import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdLogicalAnd
 import ca.carleton.gcrc.olkit.multimedia.converter.threshold.ThresholdVideo;
 import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpeg;
 import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpegProcessorDefault;
+import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessorDefault;
 
 public class MultimediaConfiguration {
+
+	static public int IMAGE_MAX_WIDTH = 1000;
+	static public int IMAGE_MAX_HEIGHT = 1000;
+	static public int IMAGE_THUMB_HEIGHT = 350;
+	static public int IMAGE_THUMB_WIDTH = 350;
+	static public int VIDEO_THUMB_HEIGHT = 240;
+	static public int VIDEO_THUMB_WIDTH = 320;
+	
 
 	static final Logger logger = LoggerFactory.getLogger(MultimediaConfiguration.class);
 	
@@ -48,6 +58,22 @@ public class MultimediaConfiguration {
 			String command = props.getProperty("ffmpegCreateThumbnailCommand", null);
 			if( null != command ) {
 				FFmpegProcessorDefault.ffmpegCreateThumbnailCommand = command;
+			}
+		}
+		{
+			String secondsStr = props.getProperty("ffmpegCreateThumbnailFrameInSec", null);
+			if( null != secondsStr ) {
+				try {
+				double seconds = Double.parseDouble(secondsStr.trim());
+				if( seconds < 0 ){
+					throw new Exception("Negative value: "+seconds);
+				}
+				
+				FFmpegProcessorDefault.ffmpegCreateThumbnailFrameInSec = seconds;
+
+				} catch(Exception e) {
+					logger.error("Property 'ffmpegCreateThumbnailFrameInSec' should contain a positive number",e);
+				}
 			}
 		}
 
@@ -111,42 +137,42 @@ public class MultimediaConfiguration {
 			String sizeString = props.getProperty("imageMaxHeight", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.IMAGE_MAX_HEIGHT = size;
+				IMAGE_MAX_HEIGHT = size;
 			}
 		}
 		{
 			String sizeString = props.getProperty("imageMaxWidth", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.IMAGE_MAX_WIDTH = size;
+				IMAGE_MAX_WIDTH = size;
 			}
 		}
 		{
 			String sizeString = props.getProperty("thumbnailImageHeight", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.IMAGE_THUMB_HEIGHT = size;
+				IMAGE_THUMB_HEIGHT = size;
 			}
 		}
 		{
 			String sizeString = props.getProperty("thumbnailImageWidth", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.IMAGE_THUMB_WIDTH = size;
+				IMAGE_THUMB_WIDTH = size;
 			}
 		}
 		{
 			String sizeString = props.getProperty("thumbnailVideoHeight", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.VIDEO_THUMB_HEIGHT = size;
+				VIDEO_THUMB_HEIGHT = size;
 			}
 		}
 		{
 			String sizeString = props.getProperty("thumbnailVideoWidth", null);
 			if( null != sizeString ) {
 				int size = Integer.parseInt(sizeString);
-				MultimediaConverterImpl.VIDEO_THUMB_WIDTH = size;
+				VIDEO_THUMB_WIDTH = size;
 			}
 		}
 		
@@ -197,6 +223,27 @@ public class MultimediaConfiguration {
 				MultimediaConverterImpl.videoConversionThreshold = and;
 				
 				logger.info("Video Conversion Threshold: "+MultimediaConverterImpl.videoConversionThreshold);
+			}
+		}
+		
+		// File known strings
+		{
+			Enumeration<?> it = props.propertyNames();
+			while( it.hasMoreElements() ) {
+				Object propertyNameObj = it.nextElement();
+				if( propertyNameObj instanceof String ) {
+					String propertyName = (String)propertyNameObj;
+					if( propertyName.startsWith("file.knownString") ) {
+						String value = props.getProperty(propertyName);
+						// The value should be in the form of <mime-type> : <known string>
+						String[] parts = value.split(":");
+						if( 2 == parts.length ) {
+							SystemFile.addKnownString(parts[0],parts[1]);
+						} else {
+							logger.error("Can not interpret property: "+propertyName+"="+value);
+						}
+					}
+				}
 			}
 		}
 	}

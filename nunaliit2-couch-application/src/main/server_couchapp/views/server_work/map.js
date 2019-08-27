@@ -87,4 +87,19 @@ function(doc) {
 			emit(['simplifyGeometry'], null);
 		};
 	};
+
+	// InReach records
+	if( doc 
+	 && typeof doc.Action === 'string'
+	 && typeof doc.ItemType === 'string'
+	 && doc.Item
+	 && typeof doc.Item.TenantCode === 'string'
+	 && typeof doc.Item.DeviceId === 'string'
+	 && typeof doc.Item.MessageId === 'string' ){
+		if( typeof doc.nunaliit_schema === 'string' ) {
+			// Nothing to do
+		} else {
+			emit(['inReachSubmit'], null);
+		};
+	};
 };

@@ -9,10 +9,14 @@ import java.util.Vector;
 
 import javax.servlet.ServletException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentUpdateListener;
 import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
+import ca.carleton.gcrc.couch.app.impl.UpdateSpecifier;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
@@ -24,8 +28,11 @@ import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryBuffer;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.couch.fsentry.FSEntryMerged;
+import ca.carleton.gcrc.utils.VersionUtils;
 
 public class CommandUpdate implements Command {
+
+	static final private Logger logger = LoggerFactory.getLogger(UpdateSpecifier.class);
 	
 	private enum DatabaseType {
 		DOCUMENT_DATABASE("isDocumentDb"),
@@ -306,6 +313,9 @@ public class CommandUpdate implements Command {
 			
 			// Create atlas designator
 			{
+				String version = VersionUtils.getVersion();
+				String buildStr = VersionUtils.getBuildString();
+				
 				StringWriter sw = new StringWriter();
 				PrintWriter pw = new PrintWriter(sw);
 				
@@ -314,6 +324,12 @@ public class CommandUpdate implements Command {
 				pw.println("\t,\"restricted\":"+atlasProperties.isRestricted());
 				pw.println("\t,\"submissionDbEnabled\":"+atlasProperties.isCouchDbSubmissionDbEnabled());
 				pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
+				if( null != version ){
+					pw.println("\t,\"version\":\""+version+"\"");
+				}
+				if( null != buildStr ){
+					pw.println("\t,\"build\":\""+buildStr+"\"");
+				}
 				pw.println("}");
 				
 				FSEntry f = FSEntryBuffer.getPositionedBuffer("a/nunaliit.json", sw.toString());
@@ -571,6 +587,14 @@ public class CommandUpdate implements Command {
 					try {
 						FSEntryFile entry = new FSEntryFile(subDir);
 						doc = DocumentFile.createDocument(entry);
+						
+						if( null != doc && null != doc.getJSONObject() ){
+							if( logger.isTraceEnabled() ){
+								logger.trace(subDirName);
+								logger.trace(doc.getJSONObject().toString());
+							}
+						}
+
 					} catch(Exception e){
 						throw new Exception("Unable to read document at: "+subDir.getName(), e);
 					}
@@ -587,11 +611,21 @@ public class CommandUpdate implements Command {
 	}
 	
 	private void printAtlasVendorFile(PrintWriter pw, AtlasProperties atlasProperties, DatabaseType type){
+		String version = VersionUtils.getVersion();
+		String buildStr = VersionUtils.getBuildString();
+
 		pw.println("var n2atlas = {");
 		pw.println("\tname: \""+atlasProperties.getAtlasName()+"\"");
 		pw.println("\t,restricted: "+atlasProperties.isRestricted());
 		pw.println("\t,\"submissionDbEnabled\":"+atlasProperties.isCouchDbSubmissionDbEnabled());
 		pw.println("\t,\"submissionDbName\":\""+atlasProperties.getCouchDbSubmissionDbName()+"\"");
+		pw.println("\t,\"googleMapApiKey\":\""+atlasProperties.getGoogleMapApiKey()+"\"");
+		if( null != version ){
+			pw.println("\t,\"version\":\""+version+"\"");
+		}
+		if( null != buildStr ){
+			pw.println("\t,\"build\":\""+buildStr+"\"");
+		}
 		pw.println("\t,\""+type.getPropName()+"\":true");
 		pw.println("};");
 		pw.println("if( typeof(exports) === 'object' ) {");
@@ -599,6 +633,13 @@ public class CommandUpdate implements Command {
 		pw.println("\texports.restricted = n2atlas.restricted;");
 		pw.println("\texports.submissionDbEnabled = n2atlas.submissionDbEnabled;");
 		pw.println("\texports.submissionDbName = n2atlas.submissionDbName;");
+		pw.println("\texports.googleMapApiKey = n2atlas.googleMapApiKey;");
+		if( null != version ){
+			pw.println("\texports.version = n2atlas.version;");
+		}
+		if( null != buildStr ){
+			pw.println("\texports.build = n2atlas.build;");
+		}
 		pw.println("\texports."+type.getPropName()+" = true;");
 		pw.println("};");
 		

@@ -94,8 +94,11 @@ data, a document is created with the following structure:
 ;(function($,$n2) {
 "use strict";
 
+var GEOM_PROP_NAME = '__geometry__';
+
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); },
+DH = 'n2.couchImportProfile';
 
 //=========================================================================
 var operationPatterns = [];
@@ -123,8 +126,391 @@ function createOperation(opts_){
 		};
 	};
 	
+	// At this point, we are looking for an operation which is supported by the
+	// JISON parser
+	try {
+		var program = $n2.importProfileOperation.parse(opts.operationString);
+		var op = new ImportProfileOperationParsed({
+			operationString: opts.operationString
+			,program: program
+			,atlasDb: opts.atlasDb
+			,atlasDesign: opts.atlasDesign
+		});
+		
+		$n2.log('ImportProfileOperationParsed',op);
+		
+		return op;
+
+	} catch(err) {
+		$n2.logError("Error while parsing operation string: "+opts.operationString, err);
+	};
+	
 	return null;
 };
+
+//=========================================================================
+// Copy operation
+/*
+{
+  	// Array of strings: names of properties involved in copy
+	propertyNames: [],
+	
+	// Value that would replace current one
+	computedValue: importValue,
+	
+	// Selector for place where in document value would be installed
+	targetSelector: targetSelector,
+	
+	// Current value found in document
+	targetValue: targetValue,
+	
+	// Boolean. True if current value and computed value are the same
+	isEqual: <boolean>,
+	
+	// True if the target has changed since the last time it was imported
+	changedSinceLastImport: <boolean>
+}
+ */
+
+
+//=========================================================================
+// Instances of this class are used by the class Change to track which
+// copy operations require resolution before updating the document. It also
+// keeps the result of the resolution
+var CollisionOperation = $n2.Class({
+	
+	collisionId: null,
+	
+	copyOperation: null,
+	
+	resolution: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			copyOperation: undefined
+		},opts_);
+		
+		this.collisionId = $n2.getUniqueId();
+		
+		this.resolution = undefined;
+		
+		this.copyOperation = opts.copyOperation;
+	},
+	
+	getCollisionId: function(){
+		return this.collisionId;
+	},
+	
+	getCopyOperation: function(){
+		return this.copyOperation;
+	},
+	
+	isResolved: function(){
+		if( this.resolution ){
+			return true;
+		};
+		return false;
+	},
+	
+	isKeepCurrentValue: function(){
+		return 'currentValue' === this.resolution;
+	},
+	
+	setKeepCurrentValue: function(){
+		this.resolution = 'currentValue';
+	},
+	
+	isUpdateValue: function(){
+		return 'updateValue' === this.resolution;
+	},
+	
+	setUpdateValue: function(){
+		this.resolution = 'updateValue';
+	},
+	
+	shouldPerformCopyOperation: function(){
+		if( 'updateValue' === this.resolution ) {
+			return true;
+		};
+		return false;
+	}
+});
+
+//=========================================================================
+// Instances of this class are used to track which properties have changed
+// since the last import.
+var ModifiedImportValue = $n2.Class({
+	
+	propertyName: null,
+
+	lastImportedValue: null,
+
+	currentImportedValue: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			propertyName: undefined,
+			lastImportedValue: undefined,
+			currentImportedValue: undefined
+		},opts_);
+		
+		this.propertyName = opts.propertyName;
+		this.lastImportedValue = opts.lastImportedValue;
+		this.currentImportedValue = opts.currentImportedValue;
+	},
+	
+	getPropertyName: function(){
+		return this.propertyName;
+	}
+});
+
+//=========================================================================
+// Instances of this class carry information about a document change (modification)
+// given the changes found in the import entries. At a high level, it informs
+// if a document should be added, deleted or removed given an entry.
+//
+// A user generally approves a change. At this point the change is carried out. It
+// might include multiple modifications to the document.
+var Change = $n2.Class({
+	
+	/**
+	 * Unique to this change. Useful when displaying.
+	 */
+	changeId: null,
+
+	/**
+	 * Identifier for import entry
+	 */
+	importId: null,
+
+	isAddition: null,
+	
+	isModification: null,
+	
+	isDeletion: null,
+	
+	type: null,
+	
+	/**
+	 * True if this change can be applied without user intervention
+	 */
+	auto: null,
+	
+	/**
+		array of objects with the following structure:
+		{
+			property: <name of the import property>
+			,lastImportValue: <value during last import>
+			,externalValue: <value from this import>
+			,collisions: []
+		}
+		The collisions array contains collisions pertinent to
+		this property. It is an array of objects with the following
+		structure:
+		{
+			source: <name of the import property>
+			,sourceValue: <value during last import>
+			,target: <string that represent the selector for where the data should go>
+			,targetValue: <value currently found by selector>
+		}
+	 */
+	modifiedProperties: null,
+	
+	modifiedImportValueByName: null,
+	
+	copyOperations: null,
+
+	collisionOperationsById: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			importId: undefined,
+			isAddition: false,
+			isModification: false,
+			isDeletion: false,
+			isAuto: undefined,
+			modifiedProperties: undefined
+		},opts_);
+		
+		var _this = this;
+	
+		this.changeId = $n2.getUniqueId();
+		this.modifiedProperties = [];
+		this.modifiedImportValueByName = {};
+		this.copyOperations = [];
+		this.collisionOperationsById = {};
+		
+		this.importId = opts.importId;
+		this.isAddition = opts.isAddition;
+		this.isModification = opts.isModification;
+		this.isDeletion = opts.isDeletion;
+		this.auto = opts.isAuto;
+		
+		if( this.isAddition ){
+			this.type = 'addition';
+		};
+		if( this.isModification ){
+			if( this.type ){
+				throw new Error('Only one of isAddition, isModification or isDeletion can be set');
+			};
+			this.type = 'modification';
+		};
+		if( this.isDeletion ){
+			if( this.type ){
+				throw new Error('Only one of isAddition, isModification or isDeletion can be set');
+			};
+			this.type = 'deletion';
+		};
+		
+		if( typeof this.importId !== 'string' 
+		 && typeof this.importId !== 'number' ){
+			throw new Error('importId must be set as a string');
+		};
+		
+		if( opts.modifiedProperties === undefined ){
+			// OK, no specified
+		} else if( $n2.isArray(opts.modifiedProperties) ){
+			opts.modifiedProperties.forEach(function(name){
+				_this.modifiedProperties.push(name);
+			});
+		} else {
+			throw new Error('Unexpected value for modifiedProperties');
+		};
+	},
+	
+	getId: function(){
+		return this.changeId;
+	},
+	
+	isAuto: function(){
+		if( undefined !== this.auto ){
+			return this.auto;
+		};
+
+		if( this.isAddition ){
+			return true;
+		} else if( this.isDeletion ) {
+			return false;
+		};
+		
+		for(var collisionId in this.collisionOperationsById){
+			return false;
+		};
+		
+		return true;
+	},
+	
+	addModifiedImportValue: function(modifiedImportValue){
+		var name = modifiedImportValue.getPropertyName();
+		this.modifiedImportValueByName[name] = modifiedImportValue;
+	},
+
+	getModifiedImportValueNames: function(){
+		var names = [];
+		for(var name in this.modifiedImportValueByName){
+			names.push(name);
+		};
+		names.sort();
+		return names;
+	},
+
+	getModifiedImportValueFromName: function(name){
+		return this.modifiedImportValueByName[name];
+	},
+	
+	hasAnyValueChangedSinceLastImport: function(propertyNames){
+		for(var i=0,e=propertyNames.length; i<e; ++i){
+			var propertyName = propertyNames[i];
+			if( this.modifiedImportValueByName[propertyName] ){
+				return true;
+			};
+		}
+		
+		return false;
+	},
+	
+	addCopyOperation: function(copyOperation){
+		this.copyOperations.push(copyOperation);
+	},
+	
+	addCollisionOperation: function(copyOperation){
+		var collision = new CollisionOperation({
+			copyOperation: copyOperation
+		});
+		
+		this.auto = false;
+		
+		this.collisionOperationsById[collision.getCollisionId()] = collision;
+	},
+	
+	getCopyOperations: function(){
+		var _this = this;
+
+		var ops = [];
+		
+		this.copyOperations.forEach(function(op){
+			var propNames = op.propertyNames;
+			if( propNames.length < 1 ){
+				// Copy operation independent of the import
+				// data
+				ops.push(op);
+			} else if( _this.hasAnyValueChangedSinceLastImport(propNames) ){
+				ops.push(op);
+			};
+		});
+		
+		return ops;
+	},
+	
+	getEffectiveCopyOperations: function(){
+		var _this = this;
+
+		var ops = [];
+		
+		this.copyOperations.forEach(function(op){
+			var propNames = op.propertyNames;
+			if( propNames.length < 1 ){
+				// Copy operation independent of the import
+				// data
+				ops.push(op);
+			} else if( _this.hasAnyValueChangedSinceLastImport(propNames) ){
+				ops.push(op);
+			};
+		});
+
+		for(var collisionId in this.collisionOperationsById){
+			var collision = this.collisionOperationsById[collisionId];
+			if( collision.shouldPerformCopyOperation() ){
+				ops.push( collision.getCopyOperation() );
+			};
+		};
+		
+		return ops;
+	},
+	
+	getCollisionOperations: function(){
+		var collisions = [];
+		for(var collisionId in this.collisionOperationsById){
+			var collision = this.collisionOperationsById[collisionId];
+			collisions.push(collision);
+		};
+		return collisions;
+	},
+	
+	getCollisionFromId: function(collisionId){
+		return this.collisionOperationsById[collisionId];
+	},
+	
+	isResolved: function(){
+		for(var collisionId in this.collisionOperationsById){
+			var collision = this.collisionOperationsById[collisionId];
+			if( !collision.isResolved() ){
+				return false;
+			};
+		};
+		return true;
+	}
+});
 
 //=========================================================================
 // An instance of this class is used to report all changes that would occur
@@ -135,6 +521,8 @@ var ImportAnalysis = $n2.Class({
 	profile: null,
 	
 	changesById: null,
+
+	dbDocIdByImportId: null,
 	
 	dbDocsByImportId: null,
 	
@@ -149,6 +537,7 @@ var ImportAnalysis = $n2.Class({
 		
 		this.changesById = {};
 		this.dbDocsByImportId = {};
+		this.dbDocIdByImportId = {};
 		this.entriesByImportId = {};
 		
 		this.modificationCount = 0;
@@ -174,6 +563,19 @@ var ImportAnalysis = $n2.Class({
 	
 	removeChange: function(changeId){
 		delete this.changesById[changeId];
+	},
+	
+	addDbDocIdForImportId: function(docId, importId){
+		this.dbDocIdByImportId[importId] = docId;
+	},
+	
+	getDbDocIds: function(){
+		var docIds = [];
+		for(var importId in this.dbDocIdByImportId){
+			var docId = this.dbDocIdByImportId[importId];
+			docIds.push(docId);
+		};
+		return docIds;
 	},
 	
 	getDbDoc: function(importId){
@@ -202,106 +604,37 @@ var ImportAnalysis = $n2.Class({
 		return entries;
 	},
 	
-	addAddition: function(opts_){
+	addChange: function(opts_){
 		var opts = $n2.extend({
-			importId: null
-			,importEntry: null
+			change: undefined,
+			importEntry: undefined,
+			dbDoc: undefined
 		},opts_);
 		
-		this.entriesByImportId[opts.importId] = opts.importEntry;
+		var change = opts.change;
+		var importId = change.importId;
 		
-		var changeId = $n2.getUniqueId();
-		var change = {
-			changeId: changeId
-			,type: 'addition'
-			,isAddition: true
-			,auto: true
-			,importId: opts.importId
+		var importEntry = opts.importEntry;
+		if( importEntry ){
+			this.entriesByImportId[importId] = importEntry;
 		};
-		++this.additionCount;
-		this.changesById[changeId] = change;
-		return change;
-	},
-	
-	addModification: function(opts_){
-		var opts = $n2.extend({
-			// String that uniquely identifies an import record
-			importId: null,
-			
-			// Entry that is being imported
-			importEntry: null,
-
-			// array of objects with the following structure:
-			// {
-			//    property: <name of the import property>
-			//    ,lastImportValue: <value during last import>
-			//    ,externalValue: <value from this import>
-			//    ,collisions: []
-			// }
-			// The collisions array contains collisions pertinent to
-			// this property. It is an array of objects with the following
-			// structure:
-			// {
-			//    source: <name of the import property>
-			//    ,sourceValue: <value during last import>
-			//    ,target: <string that represent the selector for where the data should go>
-			//    ,targetValue: <value currently found by selector>
-			// }
-			modifiedProperties: null, 
-			
-			// Boolean. Set if the geometry was modified
-			modifiedGeometry: null,
-
-			// Boolean. Set if the geometry was modified and a collision 
-			// is detected
-			collisionGeometry: null,
-			
-			// Document from database which is associated with importId
-			dbDoc: null,
-			
-			// Some modification are automatic. Modifications that
-			// have a collision should not be performed automatically
-			auto: false
-		},opts_);
 		
-		this.entriesByImportId[opts.importId] = opts.importEntry;
-		this.dbDocsByImportId[opts.importId] = opts.dbDoc;
-
-		var changeId = $n2.getUniqueId();
-		var change = {
-			changeId: changeId
-			,type: 'modification'
-			,isModification: true
-			,auto: opts.auto
-			,importId: opts.importId
-			,modifiedProperties: opts.modifiedProperties
-			,modifiedGeometry: opts.modifiedGeometry
-			,collisionGeometry: opts.collisionGeometry
+		var dbDoc = opts.dbDoc;
+		if( dbDoc ){
+			this.dbDocsByImportId[importId] = dbDoc;
 		};
-		++this.modificationCount;
-		this.changesById[changeId] = change;
-		return change;
-	},
-	
-	addDeletion: function(opts_){
-		var opts = $n2.extend({
-			importId: null
-			,dbDoc: null
-		},opts_);
 
-		this.dbDocsByImportId[opts.importId] = opts.dbDoc;
-		
-		var changeId = $n2.getUniqueId();
-		var change = {
-			changeId: changeId
-			,type: 'deletion'
-			,isDeletion: true
-			,auto: false
-			,importId: opts.importId
+		if( change.isAddition ){
+			++this.additionCount;
 		};
-		++this.deletionCount;
-		this.changesById[changeId] = change;
-		return change;
+		if( change.isModification ){
+			++this.modificationCount;
+		};
+		if( change.isDeletion){
+			++this.deletionCount;
+		};
+
+		this.changesById[change.getId()] = change;
 	}
 });
 
@@ -313,14 +646,18 @@ var ImportAnalyzer = $n2.Class({
 	
 	atlasDesign: null,
 	
+	dispatchService: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			profile: null
 			,atlasDesign: null
+			,dispatchService: null
 		},opts_);
 		
 		this.profile = opts.profile;
 		this.atlasDesign = opts.atlasDesign;
+		this.dispatchService = opts.dispatchService;
 	},
 
 	analyzeEntries: function(opts_){
@@ -341,26 +678,48 @@ var ImportAnalyzer = $n2.Class({
 		// Verify import entries and store them in a dictionary
 		// for easy access by import id
 		var importEntriesById = {};
+		var collidingIdMap = {};
+		var noIdCount = 0;
 		if( opts.entries ){
 			for(var i=0,e=opts.entries.length; i<e; ++i){
 				var entry = opts.entries[i];
 				var id = entry.getId();
 				
-				if( id ){
-					if( importEntriesById[id] ){
-						opts.onError( _loc('More than one import entries report identifier: {id}',{
-							id: id
-						}) );
-						return;
+				if( typeof id === 'undefined' || null === id){
+					noIdCount++;
+					entriesLeft.push( entry );
+
+				} else if( importEntriesById[id] ){
+					if( !collidingIdMap[id] ){
+						collidingIdMap[id] = 2;
+					} else {
+						collidingIdMap[id] = collidingIdMap[id] + 1;
 					};
-					
+
+				} else {
 					importEntriesById[id] = entry;
 					entriesLeft.push( entry );
-					
+				};
+			};
+			
+			if( noIdCount > 0 ){
+				if( this.profile.ignoreId ){
+					// Ok
 				} else {
-					opts.onError( _loc('Imported entry does not contains an id attribute') );
+					opts.onError( _loc('Number of imported entries without an id attribute: {count}',{count:noIdCount}) );
 					return;
 				};
+			};
+			
+			var collidingIds = [];
+			for(var collidingId in collidingIdMap){
+				collidingIds.push(collidingId);
+			};
+			if( collidingIds.length > 0 ){
+				opts.onError( _loc('Colliding id attributes: {ids}',{
+					ids: collidingIds.join(',')
+				}) );
+				return;
 			};
 		};
 		
@@ -377,9 +736,11 @@ var ImportAnalyzer = $n2.Class({
 					var doc = rows[i].doc;
 					if( doc 
 					 && doc.nunaliit_import 
-					 && doc.nunaliit_import.id ) {
+					 && typeof doc.nunaliit_import.id !== 'undefined'
+					 && null !== doc.nunaliit_import.id ) {
 						++count;
 						dbDocsByImportId[doc.nunaliit_import.id] = doc;
+						analysis.addDbDocIdForImportId(doc._id, doc.nunaliit_import.id);
 					};
 				};
 				
@@ -396,8 +757,13 @@ var ImportAnalyzer = $n2.Class({
 				if( importEntriesById[id] ) {
 					// OK
 				} else {
-					analysis.addDeletion({
-						importId: id
+					var change = new Change({
+						isDeletion: true
+						,importId: id
+					});
+					
+					analysis.addChange({
+						change: change
 						,dbDoc: dbDocsByImportId[id]
 					});
 				};
@@ -421,14 +787,10 @@ var ImportAnalyzer = $n2.Class({
 				_this._compare({
 					importEntry: entry
 					,doc: dbDocsByImportId[id]
-					,onSuccess: function(c){
-						if( c ){
-							analysis.addModification({
-								importId: c.importId
-								,auto: c.auto
-								,modifiedProperties: c.modifiedProperties
-								,modifiedGeometry: c.modifiedGeometry
-								,collisionGeometry: c.collisionGeometry
+					,onSuccess: function(change){
+						if( change ){
+							analysis.addChange({
+								change: change
 								,dbDoc: dbDocsByImportId[id]
 								,importEntry: entry
 							});
@@ -436,20 +798,73 @@ var ImportAnalyzer = $n2.Class({
 						
 						// Next entry
 						window.setTimeout(processEntries,0); // Do not blow stack on large files
-						//processEntries(); 
+					}
+					,onError: function(err){
+						opts.onError( _loc('Unable to analyze change: {err}',{err:''+err}) );
 					}
 				});
 				
 			} else {
 				// New to database
-				analysis.addAddition({
-					importId: id
+
+				// If no import id, associate one so that we can refer to it
+				if( !id ){
+					id = $n2.getUniqueId();
+				};
+				
+				var change = new Change({
+					isAddition: true
+					,importId: id
+				});
+
+				var allPropertyNames = [];
+				var props = entry.getProperties();
+				for(var propName in props){
+					allPropertyNames.push(propName);
+					
+					var externalValue = props[propName];
+
+					var modImportValue = new ModifiedImportValue({
+						propertyName: propName,
+						lastImportedValue: undefined,
+						currentImportedValue: externalValue
+					});
+					change.addModifiedImportValue(modImportValue);
+				};
+				
+				var geomWkt = entry.getGeometry();
+				if( geomWkt ){
+					var modImportValue = new ModifiedImportValue({
+						propertyName: GEOM_PROP_NAME,
+						lastImportedValue: undefined,
+						currentImportedValue: geomWkt
+					});
+					change.addModifiedImportValue(modImportValue);
+				};
+
+				// Use null last import entry for creating document
+				var lastImportEntry = new ImportEntryFromDoc({doc:undefined});
+
+				_this.profile.reportCopyOperations({
+					doc: opts.doc
 					,importEntry: entry
+					,lastImportEntry: lastImportEntry
+					,allPropertyNames: allPropertyNames
+					,onSuccess: function(copyOperations){
+						copyOperations.forEach(function(copyOperation){
+							change.addCopyOperation(copyOperation);
+						});
+						
+						analysis.addChange({
+							change: change
+							,importEntry: entry
+						});
+						
+						// Next entry
+						window.setTimeout(processEntries,0); // Do not blow stack on large files
+					}
 				});
 				
-				// Next entry
-				window.setTimeout(processEntries,0); // Do not blow stack on large files
-				//processEntries();
 			};
 		};
 	},
@@ -459,146 +874,224 @@ var ImportAnalyzer = $n2.Class({
 			importEntry: null
 			,doc: null
 			,onSuccess: function(change){}
+			,onError: function(err){}
 		},opts_);
 		
+		var _this = this;
+		
 		var importEntry = opts.importEntry;
-		var props = importEntry.getProperties();
-		var dbImportObj = opts.doc.nunaliit_import;
-		var dbData = dbImportObj.data;
-		var importId = opts.doc.nunaliit_import.id;
-		
-		var change = null;
-		
-		// Create a map of all property names
-		var allPropNamesMap = {};
-		for(var propName in props){
-			allPropNamesMap[propName] = true;
-		};
-		for(var propName in dbData){
-			allPropNamesMap[propName] = true;
-		};
-		
-		// Geometry
-		var isGeometryModified = false;
-		var externalGeom = importEntry.getGeometry();
-		if( externalGeom ){
-			if( dbImportObj.geometry ){
-				if( externalGeom !== dbImportObj.geometry.wkt ){
-					// Geometry modified
-					isGeometryModified = true;
-				};
-			} else {
-				// Geometry added
-				isGeometryModified = true;
-			};
-		} else if( dbImportObj.geometry 
-		 && dbImportObj.geometry.wkt ){
-			// Deleted
-			isGeometryModified = true;
-		};
-		if( isGeometryModified ){
-			change = {
-				importId:importId
-				,auto: true
-				,modifiedProperties: []
-				,modifiedGeometry: true
-				,collisionGeometry: false
-			};
-			
-			// Check if geometry was modified since last import
-			var lastImportGeometry = undefined;
-			var currentGeometry = undefined;
-			if( dbImportObj.geometry ){
-				lastImportGeometry = dbImportObj.geometry.wkt;
-			};
-			if( opts.doc.nunaliit_geom ){
-				currentGeometry = opts.doc.nunaliit_geom.wkt;
-			};
-			
-			if( lastImportGeometry !== currentGeometry ){
-				// Collision on geometry only if not equal to
-				// new external value
-				if( currentGeometry !== externalGeom ){
-					change.collisionGeometry = true;
-					change.auto = false;
-				};
-			};
-		};
-		
-		// Look at values that have changed since the last import
-		var modificationsByPropName = {};
-		var allPropertyNames = [];
-		for(var propName in allPropNamesMap){
-			var lastImportValue = dbData[propName];
-			var externalValue = props[propName];
-			
-			allPropertyNames.push(propName);
-			
-			if( externalValue !== lastImportValue ){
-				if( !change ) change = {
-					importId:importId
-					,auto: true
-					,modifiedProperties: []
-					,modifiedGeometry: false
-					,collisionGeometry: false
-				};
+		var importData = importEntry.getProperties();
 
-				var mod = {
-					property: propName
-					,lastImportValue: lastImportValue
-					,externalValue: externalValue
-					,collisions: []
-					,copyOperations: []
-				};
-				
-				modificationsByPropName[propName] = mod;
-				
-				change.modifiedProperties.push(mod);
-			};
-		};
-		
-		// Get all copy operations that are to be executed on import
-		this.profile.reportCopyOperations({
+		// Testing new code
+		this._retrieveLastEntryFromDoc({
 			doc: opts.doc
-			,allPropertyNames: allPropertyNames
-			,onSuccess: function(copyOperations){
-				// Sort the copy operations with the appropriate property modification
-				for(var copyIndex=0,copyIndexEnd=copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
-					var copyOperation = copyOperations[copyIndex];
-					
-					var propertyNames = copyOperation.propertyNames;
-					if( propertyNames ){
-						for(var propIndex=0,propIndexEnd=propertyNames.length; propIndex<propIndexEnd; ++propIndex){
-							var propName = propertyNames[propIndex];
-							
-							var mod = modificationsByPropName[propName];
-							if( mod ){
-								if( copyOperation.isInconsistent ){
-									// It is a collision only if target value is not the same as
-									// the external data. If the external data and the modified
-									// data agree, then this is not a collision
-									if( mod.externalValue !== copyOperation.targetValue ){
-										// This is a collision
-										mod.collisions.push(copyOperation);
-										
-										// Can not perform this change automatically
-										change.auto = false;
-										
-									} else {
-										mod.copyOperations.push(copyOperation);
-									};
-									
-								} else {
-									mod.copyOperations.push(copyOperation);
-								};
-							};
-						};
-					};
-				};
-				
-				opts.onSuccess(change);
+			,onSuccess: retrievedLastImportEntry
+			,onError: function(err){
+				opts.onError( new Error('Error while retrieving last import entry: ' + err) );
 			}
 		});
+
+		function retrievedLastImportEntry(lastImportEntry){
+			var lastImportData = lastImportEntry.getProperties();
+			var lastImportGeometry = lastImportEntry.getGeometry();
+			var importId = lastImportEntry.getId();
+			
+			var change = new Change({
+				importId:importId
+				,isModification: true
+			});
+			
+			// Create a map of all property names
+			var allPropNamesMap = {};
+			for(var propName in importData){
+				allPropNamesMap[propName] = true;
+			};
+			for(var propName in lastImportData){
+				allPropNamesMap[propName] = true;
+			};
+			
+			// Geometry
+			var isGeometryModified = false;
+			var externalGeom = importEntry.getGeometry();
+			if( externalGeom ){
+				if( lastImportGeometry ){
+					if( externalGeom !== lastImportGeometry ){
+						// Geometry modified
+						isGeometryModified = true;
+					};
+				} else {
+					// Geometry added
+					isGeometryModified = true;
+				};
+			} else if( lastImportGeometry ){
+				// Deleted
+				isGeometryModified = true;
+			};
+			if( isGeometryModified ){
+				var modImportValue = new ModifiedImportValue({
+					propertyName: GEOM_PROP_NAME,
+					lastImportedValue: lastImportGeometry,
+					currentImportedValue: externalGeom
+				});
+				change.addModifiedImportValue(modImportValue);
+			};
+			
+			// Look at values that have changed since the last import
+			var modificationsByPropName = {};
+			var allPropertyNames = [];
+			for(var propName in allPropNamesMap){
+				var lastImportValue = lastImportData[propName];
+				var externalValue = importData[propName];
+				
+				allPropertyNames.push(propName);
+				
+				if( externalValue !== lastImportValue ){
+					var mod = {
+						property: propName
+						,lastImportValue: lastImportValue
+						,externalValue: externalValue
+						,collisions: []
+						,copyOperations: []
+					};
+					
+					modificationsByPropName[propName] = mod;
+					
+					change.modifiedProperties.push(mod);
+					
+					var modImportValue = new ModifiedImportValue({
+						propertyName: propName,
+						lastImportedValue: lastImportValue,
+						currentImportedValue: externalValue
+					});
+					change.addModifiedImportValue(modImportValue);
+				};
+			};
+			
+			// Get all copy operations that are to be executed on import
+			_this.profile.reportCopyOperations({
+				doc: opts.doc
+				,importEntry: importEntry
+				,lastImportEntry: lastImportEntry
+				,allPropertyNames: allPropertyNames
+				,onSuccess: function(copyOperations){
+					var atLeastOneCopyOperation = false;
+
+					// Look at each copy operation and retain the ones that are relevant.
+					// In other words, keep the operations that are affected by the change
+					// in property values
+					copyOperations.forEach(function(copyOperation){
+						var propertyNames = copyOperation.propertyNames;
+						if( change.hasAnyValueChangedSinceLastImport(propertyNames) ){
+							// The copy operation is marked equal if the current target
+							// value and the updated computed value are the same
+							if( copyOperation.isEqual ){
+								// Nothing to do
+							} else {
+								atLeastOneCopyOperation = true;
+								if( copyOperation.changedSinceLastImport ){
+									// Changed by external entity and changed on
+									// the database. Collision
+									change.addCollisionOperation(copyOperation);
+								} else {
+									// Changed by external entity but it has not
+									// changed since last import. Automatic copy
+									change.addCopyOperation(copyOperation);
+								};
+							};
+						} else if( propertyNames.length < 1 ) {
+							if( copyOperation.isEqual ){
+								// Nothing to do
+							} else {
+								// This is a change that is not dependent on import data.
+								// If not equal, add
+								atLeastOneCopyOperation = true;
+								change.addCopyOperation(copyOperation);
+							};
+						};
+					});
+					
+					if( !atLeastOneCopyOperation ){
+						change = undefined;
+					};
+					
+					opts.onSuccess(change);
+				}
+			});
+		};
+	},
+	
+	_retrieveLastEntryFromDoc: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,onSuccess: function(lastEntry){}
+			,onError: function(err){}
+		},opts_);
+		
+		var doc = opts.doc;
+	
+		if( !doc ){
+			var lastImportEntry = new ImportEntryFromDoc({ doc: undefined });
+			opts.onSuccess(lastImportEntry);
+			return;
+		};
+
+		if( doc.nunaliit_import.dataAttachmentName ){
+			var attName = doc.nunaliit_import.dataAttachmentName;
+
+			if( doc._attachments
+			 && doc._attachments[attName] ){
+				// Compute URL
+				var documentSource;
+				// Document source is not specified. Look for it.
+				var m = {
+					type: 'documentSourceFromDocument'
+					,doc: doc
+					,documentSource: null
+				};
+				this.dispatchService.synchronousCall(DH,m);
+				if( m.documentSource ){
+					documentSource = m.documentSource;
+				};
+				
+				var attUrl = documentSource.getDocumentAttachmentUrl(doc, attName);
+				$.ajax({
+					url: attUrl
+					,type: 'GET'
+					,dataType: 'json'
+					,success: function(importAtt, textStatus, jqXHR){
+						//$n2.log('Import Attachment', nunaliit_import);
+						var lastImportEntry = new ImportEntryFromDoc({
+							doc: doc
+							,data: importAtt.data
+							,geometryWkt: importAtt.wkt
+						});
+						opts.onSuccess(lastImportEntry);
+					}
+					,error: function(jqXHR, textStatus, errorThrown){
+						var err = $n2.utils.parseHttpJsonError(jqXHR, textStatus);
+						opts.onError(err);
+					}
+				});
+
+			} else {
+				var err = new Error('Attachment for import data can not be found');
+				opts.onError(err);
+			};
+
+		} else {
+			// Legacy import data
+			var data = doc.nunaliit_import.data;
+			var geometryWkt = undefined;
+			if( doc.nunaliit_import.geometry ){
+				geometryWkt = doc.nunaliit_import.geometry.wkt;
+			};
+			var lastImportEntry = new ImportEntryFromDoc({
+				doc: doc
+				,data: data
+				,geometryWkt: geometryWkt
+			});
+			opts.onSuccess(lastImportEntry);
+		};
 	}
 });
 
@@ -661,22 +1154,6 @@ var AnalysisReport = $n2.Class({
 		var $changes = this._getElem().find('.changes')
 			.empty();
 		
-		var proceedClickFn = function(){
-			var $btn = $(this);
-			_this._proceed($btn);
-			return false;
-		};
-		var discardClickFn = function(){
-			var $btn = $(this);
-			_this._discard($btn);
-			return false;
-		};
-		var radioButtonClickFn = function(){
-			var $btn = $(this);
-			_this._radioButtonClicked($btn);
-			return true;
-		};
-		
 		var analysis = this.analysis;
 		var changes = analysis.getChanges();
 		
@@ -685,7 +1162,7 @@ var AnalysisReport = $n2.Class({
 			return;
 		};
 		
-		if(analysis.getDbDocs().length < 1){
+		if( analysis.getDbDocIds().length < 1 ){
 			var proceedDivId = $n2.getUniqueId();
 			var $div = $('<div>')
 				.attr('id',proceedDivId)
@@ -713,7 +1190,7 @@ var AnalysisReport = $n2.Class({
 			var autoChanges = [];
 			for(var changeIndex=0;changeIndex<changes.length;++changeIndex){
 				var change = changes[changeIndex];
-				if( change.auto ){
+				if( change.isAuto() ){
 					autoChanges.push(change);
 				};
 			};
@@ -744,395 +1221,298 @@ var AnalysisReport = $n2.Class({
 					});
 			};
 		};
-		
-		// Report new
-		for(var i=0,e=changes.length; i<e; ++i){
-			var change = changes[i];
-			if( change.isAddition ) {
-				var importId = change.importId;
-				var importEntry = analysis.getImportEntry(importId);
-				var importProperties = importEntry.getProperties();
-				var $div = $('<div>')
-					.attr('id',change.changeId)
-					.addClass('addition operation')
-					.appendTo($changes);
-				
-				if( change.auto ){
-					$div.addClass('autoOperation');
-				};
-				
-				$('<button>')
-					.addClass('discard')
-					.text( _loc('Discard') )
-					.appendTo($div)
-					.click(discardClickFn);
-				$('<button>')
-					.addClass('proceed')
-					.text( _loc('Create new document') )
-					.appendTo($div)
-					.click(proceedClickFn);
 
-				var explanation = _loc('Create new document');
-				if( change.auto ){
-					explanation += ' ' +_loc('AUTO');
+		changes.sort(function(a,b){
+			if( a.isAddition && !b.isAddition ){
+				return -1;
+			};
+			if( !a.isAddition && b.isAddition ){
+				return 1;
+			};
+			if( a.isDeletion && !b.isDeletion ){
+				return 1;
+			};
+			if( !a.isDeletion && b.isDeletion ){
+				return -1;
+			};
+			if( a.importId && b.importId ){
+				if( a.importId < b.importId ){
+					return -1;
 				};
-				$('<div>')
-					.addClass('explanation')
-					.text( explanation )
-					.appendTo($div);
-				$('<div>')
-					.addClass('geoJsonId')
-					.text( 'Import ID: '+importId )
-					.appendTo($div);
-				var $properties = $('<div>')
-					.addClass('properties')
-					.appendTo($div);
-				if( importEntry ){
-					for(var propName in importProperties){
-						var propValue = importProperties[propName];
-						var propValueStr = this._printValue(propValue);
-						var $prop = $('<div>')
-							.addClass('property')
-							.appendTo($properties);
-						$('<div>')
-							.addClass('propertyName')
-							.text(propName)
-							.appendTo($prop);
-						$('<div>')
-							.addClass('newValue')
-							.text(propValueStr)
-							.appendTo($prop);
-					};
-				};
-				
-				// Geometry
-				var externalGeom = importEntry.getGeometry();
-				if( externalGeom ){
-					var $prop = $('<div>')
-						.addClass('property')
-						.appendTo($properties);
-					$('<div>')
-						.addClass('propertyName')
-						.text( _loc('Geometry') )
-						.appendTo($prop);
-					$('<div>')
-						.addClass('newValue')
-						.text( this._printValue(externalGeom) )
-						.appendTo($prop);
+				if( a.importId > b.importId ){
+					return 1;
 				};
 			};
-		};
+			return 0;
+		});
 		
-		// Report modifications
+		// Loop over changes
 		for(var i=0,e=changes.length; i<e; ++i){
 			var change = changes[i];
-			if( change.isModification ) {
-				var importId = change.importId;
-				var doc = analysis.getDbDoc(importId);
-				var importEntry = analysis.getImportEntry(importId);
 
-				// Go through all the properties that need to be modified
-				var sortedPropNames = [];
-				var modificationsByPropNames = {};
-				var collisionDetected = false;
-				for(var j=0,k=change.modifiedProperties.length; j<k; ++j){
-					var mod = change.modifiedProperties[j];
-					var propName = mod.property;
-					sortedPropNames.push(propName);
-					modificationsByPropNames[propName] = mod;
-					if( mod.collisions && mod.collisions.length > 0 ){
-						collisionDetected = true;
-					};
-				};
-				if( change.modifiedGeometry && change.collisionGeometry ){
-					collisionDetected = true;
-				};
-				sortedPropNames.sort();
-				
-				var $div = $('<div>')
-					.attr('id',change.changeId)
-					.addClass('modify operation')
-					.appendTo($changes);
-				if( collisionDetected ){
-					$div.addClass('collision');
-				};
-				if( change.auto ){
-					$div.addClass('autoOperation');
-				};
-				
-				
-				$('<button>')
-					.addClass('discard')
-					.text( _loc('Discard') )
-					.appendTo($div)
-					.click(discardClickFn);
-				
-				var $proceedButton = $('<button>')
-					.attr('id',change.changeId + '_proceed')
-					.addClass('proceed')
-					.text( _loc('Modify Document') )
-					.appendTo($div)
-					.click(proceedClickFn);
-				if( collisionDetected ) {
-					$proceedButton.attr('disabled','disabled');
-				};
-				
-				var explanation = _loc('Modify existing document');
-				if( change.auto ){
-					explanation += ' ' +_loc('AUTO');
-				};
-				if( change.collisions && change.collisions.length > 0 ){
-					explanation += ' ' + _loc('COLLISION');
-				};
-				$('<div>')
-					.addClass('explanation')
-					.text( explanation )
-					.appendTo($div);
-				$('<div>')
-					.addClass('geoJsonId')
-					.text( 'Import ID: '+importId )
-					.appendTo($div);
+			// Create div to report this change
+			var $div = $('<div>')
+				.attr('id',change.changeId)
+				.addClass('operation')
+				.appendTo($changes);
+
+			this._refreshChangeDiv(change, $div);
+		};
+	},
+	
+	_refreshChangeDiv: function(change, $div){
+		var _this = this;
+
+		var proceedClickFn = function(){
+			var $btn = $(this);
+			_this._proceed($btn);
+			return false;
+		};
+		var discardClickFn = function(){
+			var $btn = $(this);
+			_this._discard($btn);
+			return false;
+		};
+		var collisionRadioButtonClickFn = function(){
+			var $btn = $(this);
+			_this._collisionSelectionClicked($btn);
+			return true;
+		};
+
+		var analysis = this.analysis;
+
+		$div.empty();
+		
+		if( change.isModification 
+		 || change.isAddition ) {
+			// Report modifications
+			var importId = change.importId;
+			var doc = analysis.getDbDoc(importId);
+			var importEntry = analysis.getImportEntry(importId);
+
+			// Detect collisions
+			var collisionDetected = false;
+			var collisionOperations = change.getCollisionOperations();
+			if( collisionOperations.length > 0 ){
+				collisionDetected = true;
+			};
+
+			// Go through all the properties that need to be modified
+			var modifiedPropertyNames = change.getModifiedImportValueNames();
+
+			if( change.isModification ){
+				$div.addClass('modify');
+			} else if( change.isAddition ){
+				$div.addClass('addition');
+			};
+
+			if( collisionDetected ){
+				$div.addClass('collision');
+			};
+			if( change.isAuto() ){
+				$div.addClass('autoOperation');
+			};
+			
+			// Buttons
+			$('<button>')
+				.addClass('discard')
+				.text( _loc('Discard') )
+				.appendTo($div)
+				.click(discardClickFn);
+			
+			var $proceedButton = $('<button>')
+				.attr('id',change.changeId + '_proceed')
+				.addClass('proceed')
+				.text( _loc('Modify Document') )
+				.appendTo($div)
+				.click(proceedClickFn);
+			if( change.isAddition ){
+				$proceedButton.text( _loc('Create new document') );
+			};
+			if( !change.isResolved() ) {
+				$proceedButton.attr('disabled','disabled');
+			};
+			
+			// Explanation
+			var explanation = _loc('Modify existing document');
+			if( change.isAddition ){
+				explanation = _loc('Create new document');
+			};
+			if( change.isAuto() ){
+				explanation += ' ' +_loc('AUTO');
+			};
+			if( collisionDetected ){
+				explanation += ' ' + _loc('COLLISION');
+			};
+			$('<div>')
+				.addClass('explanation')
+				.text( explanation )
+				.appendTo($div);
+			$('<div>')
+				.addClass('geoJsonId')
+				.text( 'Import ID: '+importId )
+				.appendTo($div);
+			if( doc && doc._id ){
 				$('<div>')
 					.addClass('docId')
 					.text( 'Database ID: '+doc._id )
 					.appendTo($div);
-				var $properties = $('<div>')
-					.addClass('properties')
+			};
+			var $properties = $('<div>')
+				.addClass('properties')
+				.appendTo($div);
+			
+			// Modified properties
+			for(var propNameIndex=0,propNameEnd=modifiedPropertyNames.length; propNameIndex<propNameEnd; ++propNameIndex){
+				var propName = modifiedPropertyNames[propNameIndex];
+				var mod = change.getModifiedImportValueFromName(propName);
+				var $prop = $('<div>')
+					.addClass('property')
+					.appendTo($properties);
+				$('<div>')
+					.addClass('propertyName')
+					.text(propName)
+					.appendTo($prop);
+				$('<div>')
+					.addClass('previousValue')
+					.text( this._printValue(mod.lastImportedValue) )
+					.appendTo($prop);
+				$('<div>')
+					.addClass('newValue')
+					.text( this._printValue(mod.currentImportedValue) )
+					.appendTo($prop);
+			};
+			
+			// Report collisions
+			if( collisionOperations.length > 0 ){
+				var $collisions = $('<div>')
+					.addClass('collisions')
 					.appendTo($div);
-				
-				for(var propNameIndex=0,propNameEnd=sortedPropNames.length; propNameIndex<propNameEnd; ++propNameIndex){
-					var propName = sortedPropNames[propNameIndex];
-					var mod = modificationsByPropNames[propName];
-
-					var $prop = $('<div>')
-						.addClass('property')
-						.appendTo($properties);
-					$('<div>')
-						.addClass('propertyName')
-						.text(propName)
-						.appendTo($prop);
-					$('<div>')
-						.addClass('previousValue')
-						.text( this._printValue(mod.lastImportValue) )
-						.appendTo($prop);
-					$('<div>')
-						.addClass('newValue')
-						.text( this._printValue(mod.externalValue) )
-						.appendTo($prop);
+				collisionOperations.forEach(function(collisionOperation){
+					var copyOperation = collisionOperation.getCopyOperation();
 					
-					// Report collisions
-					if( mod.collisions && mod.collisions.length > 0 ){
-						for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
-							// collision is a copyOperation
-							var collision = mod.collisions[colIndex];
-							
-							var $prop = $('<div>')
-								.addClass('property')
-								.appendTo($properties);
-							$('<div>')
-								.addClass('propertyName')
-								.text( _loc('Collision on property {property}',{
-									property:propName
-								}) )
-								.appendTo($prop);
-							$('<div>')
-								.addClass('targetSelector')
-								.text(collision.targetSelector.getSelectorString())
-								.appendTo($prop);
-							var targetValue = collision.targetValue;
-							$('<div>')
-								.addClass('targetValue')
-								.text( this._printValue(targetValue) )
-								.appendTo($prop);
-							
-							var $collision = $('<div>')
-								.addClass('collision')
-								.appendTo($properties);
-							
-							var collisionName = propName + '_' + colIndex;
-							
-							var externalId = $n2.getUniqueId();
-							var $externalValueDiv = $('<div>')
-								.appendTo($collision);
-							$('<input>')
-								.attr('type','radio')
-								.attr('id',externalId)
-								.attr('name',collisionName)
-								.attr('value','external')
-								.click(radioButtonClickFn)
-								.appendTo($externalValueDiv);
-							$('<label>')
-								.attr('for',externalId)
-								.text( this._printValue(mod.externalValue) )
-								.appendTo($externalValueDiv);
-							
-							var currentId = $n2.getUniqueId();
-							var $currentValueDiv = $('<div>')
-								.appendTo($collision);
-							$('<input>')
-								.attr('type','radio')
-								.attr('id',currentId)
-								.attr('name',collisionName)
-								.attr('value','current')
-								.click(radioButtonClickFn)
-								.appendTo($currentValueDiv);
-							$('<label>')
-								.attr('for',currentId)
-								.text( this._printValue(targetValue) )
-								.appendTo($currentValueDiv);
-						};
-					};
-				};
+					var $collision = $('<div>')
+						.addClass('collision')
+						.appendTo($collisions);
+					$('<div>')
+						.addClass('selector')
+						.text( _loc('Collision on selector {selector}',{
+							selector: copyOperation.targetSelector.getSelectorString()
+						}) )
+						.appendTo($collision);
 
-				if( change.modifiedGeometry ){
-					var lastImportGeometry = undefined;
-					var externalGeometry = importEntry.getGeometry();
-					if( doc.nunaliit_import 
-					 && doc.nunaliit_import.geometry ){
-						lastImportGeometry = doc.nunaliit_import.geometry.wkt;
+					var collisionId = collisionOperation.getCollisionId();
+					
+					var updatedId = $n2.getUniqueId();
+					var $updatedValueDiv = $('<div>')
+						.appendTo($collision);
+					var $updateBtn = $('<input>')
+						.attr('type','radio')
+						.attr('id',updatedId)
+						.attr('name',collisionId)
+						.attr('value','updateValue')
+						.attr('data-changeId',change.getId())
+						.click(collisionRadioButtonClickFn)
+						.appendTo($updatedValueDiv);
+					$('<label>')
+						.attr('for',updatedId)
+						.text( _this._printValue(copyOperation.computedValue) )
+						.appendTo($updatedValueDiv);
+					if( collisionOperation.isUpdateValue() ){
+						$updateBtn.prop("checked", true);
 					};
 					
-					var $prop = $('<div>')
-						.addClass('property')
-						.appendTo($properties);
-					$('<div>')
-						.addClass('propertyName')
-						.text( _loc('Geometry') )
-						.appendTo($prop);
-					$('<div>')
-						.addClass('previousValue')
-						.text( this._printValue(lastImportGeometry) )
-						.appendTo($prop);
-					$('<div>')
-						.addClass('newValue')
-						.text( this._printValue(externalGeometry) )
-						.appendTo($prop);
-
-					if( change.collisionGeometry ){
-						var $prop = $('<div>')
-							.addClass('property')
-							.appendTo($properties);
-						$('<div>')
-							.addClass('propertyName')
-							.text( _loc('Collision on Geometry') )
-							.appendTo($prop);
-						$('<div>')
-							.addClass('targetSelector')
-							.text('nunaliit_geom.wkt')
-							.appendTo($prop);
-						var targetValue = undefined;
-						if( doc.nunaliit_geom ){
-							targetValue = doc.nunaliit_geom.wkt;
-						};
-						$('<div>')
-							.addClass('targetValue')
-							.text( this._printValue(targetValue) )
-							.appendTo($prop);
-
-						// Select value to resolve collision
-						var $collision = $('<div>')
-							.addClass('collision')
-							.appendTo($properties);
-						
-						var collisionName = '__geometry__';
-						
-						var externalId = $n2.getUniqueId();
-						var $externalValueDiv = $('<div>')
-							.appendTo($collision);
-						$('<input>')
-							.attr('type','radio')
-							.attr('id',externalId)
-							.attr('name',collisionName)
-							.attr('value','external')
-							.click(radioButtonClickFn)
-							.appendTo($externalValueDiv);
-						$('<label>')
-							.attr('for',externalId)
-							.text( this._printValue(externalGeometry) )
-							.appendTo($externalValueDiv);
-						
-						var currentId = $n2.getUniqueId();
-						var $currentValueDiv = $('<div>')
-							.appendTo($collision);
-						$('<input>')
-							.attr('type','radio')
-							.attr('id',currentId)
-							.attr('name',collisionName)
-							.attr('value','current')
-							.click(radioButtonClickFn)
-							.appendTo($currentValueDiv);
-						$('<label>')
-							.attr('for',currentId)
-							.text( this._printValue(targetValue) )
-							.appendTo($currentValueDiv);
+					var currentId = $n2.getUniqueId();
+					var $currentValueDiv = $('<div>')
+						.appendTo($collision);
+					var $currentBtn = $('<input>')
+						.attr('type','radio')
+						.attr('id',currentId)
+						.attr('name',collisionId)
+						.attr('value','current')
+						.attr('data-changeId',change.getId())
+						.click(collisionRadioButtonClickFn)
+						.appendTo($currentValueDiv);
+					$('<label>')
+						.attr('for',currentId)
+						.text( _this._printValue(copyOperation.targetValue) )
+						.appendTo($currentValueDiv);
+					if( collisionOperation.isKeepCurrentValue() ){
+						$currentBtn.prop("checked", true);
 					};
-				};
+				});
 			};
-		};
-		
-		// Report deletions
-		for(var i=0,e=changes.length; i<e; ++i){
-			var change = changes[i];
-			if( change.isDeletion ) {
-				var importId = change.importId;
-				var doc = analysis.getDbDoc(importId);
-				var $div = $('<div>')
-					.attr('id',change.changeId)
-					.addClass('delete operation')
-					.appendTo($changes);
-				if( change.auto ){
-					$div.addClass('autoOperation');
-				};
-				
-				$('<button>')
-					.addClass('discard')
-					.text( _loc('Discard') )
-					.appendTo($div)
-					.click(discardClickFn);
-				$('<button>')
-					.addClass('proceed')
-					.text( _loc('Delete Database Document') )
-					.appendTo($div)
-					.click(proceedClickFn);
+			
+			// Report copy operations
+			var copyOperations = change.getCopyOperations();
+			if( copyOperations.length > 0 ){
+				var $copyOperations = $('<div>')
+					.addClass('copyOperations')
+					.appendTo($div);
+				copyOperations.forEach(function(copyOperation){
+					var $copy = $('<div>')
+						.addClass('copyOperation')
+						.appendTo($copyOperations);
 
-				var explanation = _loc('Delete existing document');
-				if( change.auto ){
-					explanation += ' ' +_loc('AUTO');
-				};
-				$('<div>')
-					.addClass('explanation')
-					.text( explanation )
-					.appendTo($div);
-				$('<div>')
-					.addClass('geoJsonId')
-					.text( 'Import ID: '+importId )
-					.appendTo($div);
-				$('<div>')
-					.addClass('docId')
-					.text( 'Database ID: '+doc._id )
-					.appendTo($div);
-				var $properties = $('<div>')
-					.addClass('properties')
-					.appendTo($div);
-				if( doc 
-				 && doc.nunaliit_import 
-				 && doc.nunaliit_import.data ){
-					for(var propName in doc.nunaliit_import.data){
-						var propValue = doc.nunaliit_import.data[propName];
-						var $prop = $('<div>')
-							.addClass('property')
-							.appendTo($properties);
-						$('<div>')
-							.addClass('propertyName')
-							.text(propName)
-							.appendTo($prop);
-						$('<div>')
-							.addClass('previousValue')
-							.text(propValue)
-							.appendTo($prop);
-					};
-				};
+					$('<div>')
+						.addClass('selector')
+						.text( copyOperation.targetSelector.getSelectorString() )
+						.appendTo($copy);
+
+					$('<div>')
+						.addClass('currentValue')
+						.text( _this._printValue(copyOperation.targetValue) )
+						.appendTo($copy);
+
+					$('<div>')
+						.addClass('updatedValue')
+						.text( _this._printValue(copyOperation.computedValue) )
+						.appendTo($copy);
+				});
 			};
+
+		} else if( change.isDeletion ) {
+			// Report deletions
+			var importId = change.importId;
+			var doc = analysis.getDbDoc(importId);
+			var $del = $('<div>')
+				.attr('id',change.changeId)
+				.addClass('delete operation')
+				.appendTo($div);
+			if( change.isAuto() ){
+				$del.addClass('autoOperation');
+			};
+			
+			$('<button>')
+				.addClass('discard')
+				.text( _loc('Discard') )
+				.appendTo($del)
+				.click(discardClickFn);
+			$('<button>')
+				.addClass('proceed')
+				.text( _loc('Delete Database Document') )
+				.appendTo($del)
+				.click(proceedClickFn);
+
+			var explanation = _loc('Delete existing document');
+			if( change.isAuto() ){
+				explanation += ' ' +_loc('AUTO');
+			};
+			$('<div>')
+				.addClass('explanation')
+				.text( explanation )
+				.appendTo($del);
+			$('<div>')
+				.addClass('geoJsonId')
+				.text( 'Import ID: '+importId )
+				.appendTo($del);
+			$('<div>')
+				.addClass('docId')
+				.text( 'Database ID: '+doc._id )
+				.appendTo($del);
+			var $properties = $('<div>')
+				.addClass('properties')
+				.appendTo($del);
 		};
 	},
 	
@@ -1151,6 +1531,12 @@ var AnalysisReport = $n2.Class({
 
 		} else if( typeof value === 'boolean' ){
 			return ''+value;
+
+		} else if( typeof value === 'object' ){
+			if( typeof value.wkt === 'string' ){
+				// Geometry
+				return value.wkt;
+			};
 		};
 		
 		return '<?>';
@@ -1298,51 +1684,27 @@ var AnalysisReport = $n2.Class({
 		this._completed(elemId);
 	},
 	
-	_radioButtonClicked: function(){
+	_collisionSelectionClicked: function($btn){
 		var analysis = this.analysis;
 		var changes = analysis.getChanges();
+		var collisionId = $btn.attr('name');
+		var changeId = $btn.attr('data-changeId');
 		
-		for(var i=0,e=changes.length; i<e; ++i){
-			var change = changes[i];
-			var changeId = change.changeId;
-
-			if( change.isModification ) {
-				var allCollisionsResolved = true;
-				
-				for(var j=0,k=change.modifiedProperties.length; j<k; ++j){
-					var mod = change.modifiedProperties[j];
-					var propName = mod.property;
-					if( mod.collisions && mod.collisions.length > 0 ){
-						for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
-							var collision = mod.collisions[colIndex];
-							var collisionName = propName + '_' + colIndex;
-							var value = $('input[name="'+collisionName+'"]:checked').val();
-							collision.selectedValue = value;
-							if( typeof value !== 'string' ){
-								allCollisionsResolved = false;
-							};
-						};
-					};
-				};
-				
-				if( change.modifiedGeometry && change.collisionGeometry ){
-					var collisionName = '__geometry__';
-					var value = $('input[name="'+collisionName+'"]:checked').val();
-					change.selectedGeometry = value;
-					if( typeof value !== 'string' ){
-						allCollisionsResolved = false;
-					};
-				};
-				
-				var proceedBtnId = changeId + '_proceed';
-				if( allCollisionsResolved ) {
-					$('#'+proceedBtnId).removeAttr('disabled');
-
-				} else {
-					$('#'+proceedBtnId).attr('disabled','disabled');
-				};
-			};
+		var change = analysis.getChange(changeId);
+		var collision = change.getCollisionFromId(collisionId);
+		
+		var value = $btn.val();
+		if( 'current' === value ){
+			collision.setKeepCurrentValue();
+		} else if( 'updateValue' === value ) {
+			collision.setUpdateValue();
+		} else {
+			throw Error('Unexpected value: '+value);
 		};
+		
+		// Refresh display
+		var $div = $('#'+change.getId());
+		this._refreshChangeDiv(change, $div);
 	},
 
 	_completed: function(elemId){
@@ -1361,16 +1723,24 @@ var AnalysisReport = $n2.Class({
 		
 		var change = opts.change;
 		
-		var importId = change.importId;
-		var importEntry = this.analysis.getImportEntry(importId);
-		var importProperties = importEntry.getProperties();
+		var changeId = change.importId;
+		var importEntry = this.analysis.getImportEntry(changeId);
 		var importProfile = this.analysis.getImportProfile();
 		var schema = importProfile.getSchema();
 		var layerName = importProfile.getLayerName();
 		
+		// Use null last import entry for creating document
+		var lastImportEntry = new ImportEntryFromDoc({doc:undefined});
+		
 		var doc = null;
 		if( schema ){
 			doc = schema.createObject();
+			
+			// Remove attachment instructions
+			if( doc.nunaliit_attachments ){
+				delete doc.nunaliit_attachments;
+			};
+
 		} else {
 			doc = {};
 		};
@@ -1391,77 +1761,34 @@ var AnalysisReport = $n2.Class({
 			};
 		};
 		
-		// nunaliit_import
-		if( !doc.nunaliit_import ) {
-			doc.nunaliit_import = {
-				data:{}
-			};
-		};
-		doc.nunaliit_import.id = importId;
-		doc.nunaliit_import.profile = importProfile.getId();
+		// Install import entry data to attachment
+		this._updateImportAttachment(doc, importProfile, importEntry);
 		
-		// Geometry
-		var geom = importEntry.getGeometry();
-		if( geom ){
-			doc.nunaliit_import.geometry = {
-				wkt: geom
-			};
-			doc.nunaliit_geom = {
-				nunaliit_type: 'geometry'
-			};
-			doc.nunaliit_geom.wkt = geom;
-
-			var olWkt = new OpenLayers.Format.WKT();
-			var vectorFeature = olWkt.read(geom);
-			var bounds = vectorFeature.geometry.getBounds();
-			doc.nunaliit_geom.bbox = [ 
-				bounds.left
-				,bounds.bottom
-				,bounds.right
-				,bounds.top
-			];
+		// Perform copy operations
+		var copyOperations = change.getEffectiveCopyOperations();
+		importProfile.performCopyOperations(doc, copyOperations, importEntry);
+			
+		// Adjust document with created, last updated
+		if( $n2.couchMap
+		 && $n2.couchMap.adjustDocument ) {
+			$n2.couchMap.adjustDocument(doc);
 		};
 		
-		// Copy properties
-		var propNames = [];
-		for(var propName in importProperties){
-			var propValue = importProperties[propName];
-			doc.nunaliit_import.data[propName] = propValue;
-			propNames.push(propName);
-		};
-		
-		// Copy data to user's location
-		importProfile.reportCopyOperations({
-			doc: doc
-			,allPropertyNames: propNames
-			,onSuccess: onCopyOperations
+		// Save
+		var atlasDb = importProfile.getAtlasDb();
+		atlasDb.createDocument({
+			data: doc
+			,onSuccess: function(docInfo){
+				_this._log( _loc('Created document with id: {id}',{id:docInfo.id}) );
+				_this._completed(change.changeId);
+				opts.onSuccess();
+			}
+			,onError: function(errorMsg){ 
+				//reportError(errorMsg);
+				alert( _loc('Unable to create document. Are you logged in?') );
+				opts.onError(errorMsg);
+			}
 		});
-		
-		function onCopyOperations(copyOperations){
-			importProfile.performCopyOperations(doc, copyOperations);
-			
-			// Adjust document with created, last updated
-			if( $n2.couchMap
-			 && $n2.couchMap.adjustDocument ) {
-				$n2.couchMap.adjustDocument(doc);
-			};
-			
-			// Save
-			var atlasDb = importProfile.getAtlasDb();
-			atlasDb.createDocument({
-				data: doc
-				,onSuccess: function(docInfo){
-					_this._log( _loc('Created document with id: {id}',{id:docInfo.id}) );
-					_this._completed(change.changeId);
-					opts.onSuccess();
-				}
-				,onError: function(errorMsg){ 
-					//reportError(errorMsg);
-					alert( _loc('Unable to create document. Are you logged in?') );
-					opts.onError(errorMsg);
-				}
-			});
-		};
 	},
 	
 	_modifyDocument: function(opts_){
@@ -1481,15 +1808,8 @@ var AnalysisReport = $n2.Class({
 		var importProfile = this.analysis.getImportProfile();
 		var schema = importProfile.getSchema();
 
-		if( !doc.nunaliit_import ){
-			doc.nunaliit_import = {
-				id: importId
-				,profile: importProfile.getId()
-			};
-		};
-		if( !doc.nunaliit_import.data ){
-			doc.nunaliit_import.data = {};
-		};
+		// Install import entry data to attachment
+		this._updateImportAttachment(doc, importProfile, importEntry);
 		
 		// Schema name
 		if( !doc.nunaliit_schema
@@ -1497,100 +1817,14 @@ var AnalysisReport = $n2.Class({
 			doc.nunaliit_schema = schema.name;
 		};
 		
-		// Geometry (change only if it was modified)
-		if( change.modifiedGeometry ){
-			var externalGeom = importEntry.getGeometry();
-			var changeCurrentGeometry = true;
-			if( change.collisionGeometry ){
-				if( 'external' == change.selectedGeometry ) {
-					// OK
-				} else if( 'current' == change.selectedGeometry ) {
-					changeCurrentGeometry = false;
-				} else {
-					throw 'Invalid state for change since geometry collision is not resolved';
-				};
-			};
-			if( externalGeom ){
-				if( !doc.nunaliit_import.geometry ){
-					doc.nunaliit_import.geometry = {};
-				};
-				doc.nunaliit_import.geometry.wkt = externalGeom;
-				
-				if( changeCurrentGeometry ){
-					if( !doc.nunaliit_geom ){
-						doc.nunaliit_geom = {};
-					};
-					doc.nunaliit_geom.nunaliit_type = 'geometry';
-					doc.nunaliit_geom.wkt = externalGeom;
-
-					var olWkt = new OpenLayers.Format.WKT();
-					var vectorFeature = olWkt.read(externalGeom);
-					var bounds = vectorFeature.geometry.getBounds();
-					doc.nunaliit_geom.bbox = [ 
-						bounds.left
-						,bounds.bottom
-						,bounds.right
-						,bounds.top
-					];
-				};
-				
-			} else {
-				if( doc.nunaliit_import.geometry ) {
-					delete doc.nunaliit_import.geometry;
-				};
-
-				if( changeCurrentGeometry ){
-					if( doc.nunaliit_geom ) {
-						delete doc.nunaliit_geom;
-					};
-				};
-			};
+		// Check that all collisions are resolved
+		if( !change.isResolved() ){
+			throw 'Invalid state for change since some collision is not resolved';
 		};
-		
-		// Copy only properties that have changed
-		var copyOperations = [];
-		for(var i=0,e=change.modifiedProperties.length; i<e; ++i){
-			var mod = change.modifiedProperties[i];
-			var propName = mod.property;
-			var propValue = mod.externalValue;
-			
-			// Update import data
-			if( typeof propValue === 'undefined' ){
-				if( typeof doc.nunaliit_import.data[propName] !== 'undefined' ){
-					delete doc.nunaliit_import.data[propName];
-				};
-			} else {
-				doc.nunaliit_import.data[propName] = propValue;
-			};
-			
-			// Check that all collisions are resolved
-			var allCollisionsResolved = true;
-			if( mod.collisions && mod.collisions.length > 0 ){
-				for(var colIndex=0,colEnd=mod.collisions.length; colIndex<colEnd; ++colIndex){
-					var collision = mod.collisions[colIndex];
-					if( !collision.selectedValue ){
-						allCollisionsResolved = false;
-					} else if( 'external' === collision.selectedValue ) {
-						copyOperations.push(collision);
-					};
-				};
-			};
-			
-			if( !allCollisionsResolved ){
-				throw 'Invalid state for change since some collision is not resolved';
-			};
-			
-			// Remember operations to be performed
-			if( mod.copyOperations && mod.copyOperations.length > 0 ){
-				for(var copyIndex=0,copyIndexEnd=mod.copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
-					var copy = mod.copyOperations[copyIndex];
-					copyOperations.push(copy);
-				};
-			};
-		};
-		
-		// Copy data to user's location according to operations
-		importProfile.performCopyOperations(doc, copyOperations);
+
+		// Perform copy operations
+		var copyOperations = change.getEffectiveCopyOperations();
+		importProfile.performCopyOperations(doc, copyOperations, importEntry);
 		
 		// Adjust document with created, last updated
 		if( $n2.couchMap
@@ -1645,6 +1879,52 @@ var AnalysisReport = $n2.Class({
 				opts.onError(errorMsg);
 			}
 		});
+	},
+	
+	_updateImportAttachment: function(doc, importProfile, importEntry){
+		if( !doc.nunaliit_import ){
+			doc.nunaliit_import = {
+				id: importEntry.getId()
+				,profile: importProfile.getId()
+				,dataAttachmentName: 'nunaliit_import'
+			};
+		};
+
+		// For legacy documents
+		if( doc.nunaliit_import.data ){
+			delete doc.nunaliit_import.data;
+		};
+		if( doc.nunaliit_import.wkt ){
+			delete doc.nunaliit_import.wkt;
+		};
+
+		// Make up attachment
+		var att = {
+			data: {},
+			wkt: undefined
+		};
+		att.id = importEntry.getId();
+		att.profile = importProfile.getId();
+		var geom = importEntry.getGeometry();
+		if( geom ){
+			att.wkt = geom;
+		};
+		var importProperties = importEntry.getProperties();
+		for(var propName in importProperties){
+			var propValue = importProperties[propName];
+			att.data[propName] = propValue;
+		};
+		
+		// Inline attachments are Base64 encoded
+		var jsonAtt = JSON.stringify(att);
+		var b64JsonAtt = $n2.Base64.encode(jsonAtt);
+		if( !doc._attachments ){
+			doc._attachments = {};
+		};
+		doc._attachments['nunaliit_import'] = {
+			content_type: 'text/json'
+			,data: b64JsonAtt
+		};
 	}
 });
 
@@ -1694,7 +1974,8 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 	reportCopyOperations: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
+			,lastImportEntry: null
 			,allPropertyNames: null
 			,onSuccess: function(copyOperations){}
 		},opts_);
@@ -1702,17 +1983,26 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 		
 		var copyOperations = [];
 		
+		var importData = opts.importEntry.getProperties();
+		var lastImportData = opts.lastImportEntry.getProperties();
+		
 		for(var i=0,e=opts.allPropertyNames.length; i<e; ++i){
 			var key = opts.allPropertyNames[i];
 			
 			var targetSelector = this.targetSelector.getChildSelector(key);
 			var targetValue = targetSelector.getValue(opts.doc);
 			
-			var importValue = opts.importData[key];
+			var importValue = importData[key];
+			var lastImportValue = lastImportData[key];
 			
-			var isInconsistent = false;
-			if( importValue !== targetValue ){
-				isInconsistent = true;
+			var changedSinceLastImport = true;
+			if( lastImportValue === targetValue ){
+				changedSinceLastImport = false;
+			};
+
+			var isEqual = false;
+			if( importValue === targetValue ){
+				isEqual = true;
 			};
 			
 			copyOperations.push({
@@ -1720,7 +2010,8 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 				,computedValue: importValue
 				,targetSelector: targetSelector
 				,targetValue: targetValue
-				,isInconsistent: isInconsistent
+				,isEqual: isEqual
+				,changedSinceLastImport: changedSinceLastImport
 			});
 		};
 		
@@ -1730,13 +2021,14 @@ var ImportProfileOperationCopyAll = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
 		var key = opts.copyOperation.propertyNames[0];
 		var targetSelector = opts.copyOperation.targetSelector;
-		var importValue = opts.importData[key];
+		var importData = opts.importEntry.getProperties();
+		var importValue = importData[key];
 		
 		if( typeof importValue === 'undefined' ){
 			targetSelector.removeValue(opts.doc);
@@ -1779,13 +2071,17 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 	reportCopyOperations: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
+			,lastImportEntry: null
 			,allPropertyNames: null
 			,onSuccess: function(copyOperations){}
 		},opts_);
 
 		
 		var copyOperations = [];
+		
+		var importData = opts.importEntry.getProperties();
+		var lastImportData = opts.lastImportEntry.getProperties();
 		
 		for(var i=0,e=opts.allPropertyNames.length; i<e; ++i){
 			var key = opts.allPropertyNames[i];
@@ -1795,11 +2091,17 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 			var targetSelector = this.targetSelector.getChildSelector(fixedKey);
 			var targetValue = targetSelector.getValue(opts.doc);
 			
-			var importValue = opts.importData[key];
+			var importValue = importData[key];
+			var lastImportValue = lastImportData[key];
 			
-			var isInconsistent = false;
-			if( importValue !== targetValue ){
-				isInconsistent = true;
+			var changedSinceLastImport = true;
+			if( lastImportValue === targetValue ){
+				changedSinceLastImport = false;
+			};
+
+			var isEqual = false;
+			if( importValue === targetValue ){
+				isEqual = true;
 			};
 			
 			copyOperations.push({
@@ -1807,7 +2109,8 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 				,computedValue: importValue
 				,targetSelector: targetSelector
 				,targetValue: targetValue
-				,isInconsistent: isInconsistent
+				,isEqual: isEqual
+				,changedSinceLastImport: changedSinceLastImport
 			});
 		};
 		
@@ -1817,13 +2120,14 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
 		var key = opts.copyOperation.propertyNames[0];
 		var targetSelector = opts.copyOperation.targetSelector;
-		var importValue = opts.importData[key];
+		var importData = opts.importEntry.getProperties();
+		var importValue = importData[key];
 		
 		if( typeof importValue === 'undefined' ){
 			targetSelector.removeValue(opts.doc);
@@ -1858,6 +2162,7 @@ var ImportProfileOperationCopyAllAndFixNames = $n2.Class(ImportProfileOperation,
 addOperationPattern(OPERATION_COPY_ALL_AND_FIX_NAMES, ImportProfileOperationCopyAllAndFixNames);
 
 //=========================================================================
+// assign(demo_doc.title,'title')
 var OPERATION_ASSIGN = /^\s*assign\((.*),\s*'([^']*)'\s*\)\s*$/;
 
 var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
@@ -1891,21 +2196,31 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 	reportCopyOperations: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
+			,lastImportEntry: null
 			,allPropertyNames: null
 			,onSuccess: function(copyOperations){}
 		},opts_);
 		
 		var copyOperations = [];
 
+		var importData = opts.importEntry.getProperties();
+		var lastImportData = opts.lastImportEntry.getProperties();
+
 		if( opts.allPropertyNames.indexOf(this.sourceName) >= 0 ){
-			var importValue = opts.importData[this.sourceName];
+			var importValue = importData[this.sourceName];
+			var lastImportValue = lastImportData[this.sourceName];
 
 			var targetValue = this.targetSelector.getValue(opts.doc);
 			
-			var isInconsistent = false;
-			if( importValue !== targetValue ){
-				isInconsistent = true;
+			var changedSinceLastImport = true;
+			if( lastImportValue === targetValue ){
+				changedSinceLastImport = false;
+			};
+
+			var isEqual = false;
+			if( importValue === targetValue ){
+				isEqual = true;
 			};
 			
 			copyOperations.push({
@@ -1913,7 +2228,8 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 				,computedValue: importValue
 				,targetSelector: this.targetSelector
 				,targetValue: targetValue
-				,isInconsistent: isInconsistent
+				,isEqual: isEqual
+				,changedSinceLastImport: changedSinceLastImport
 			});
 		};
 		
@@ -1923,11 +2239,12 @@ var ImportProfileOperationAssign = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
-		var importValue = opts.importData[this.sourceName];
+		var importData = opts.importEntry.getProperties();
+		var importValue = importData[this.sourceName];
 		if( typeof importValue === 'undefined' ){
 			// Must delete
 			this.targetSelector.removeValue(opts.doc);
@@ -1952,8 +2269,6 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 	
 	targetSelector: null,
 	
-	isLegacyLongLat: null,
-	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			operationString: null
@@ -1963,8 +2278,6 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 		
 		ImportProfileOperation.prototype.initialize.call(this);
 	
-		this.isLegacyLongLat = true;
-		
 		this.operationString = opts.operationString;
 		
 		var matcher = OPERATION_LONGLAT.exec(this.operationString);
@@ -1975,45 +2288,61 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 		this.longName = matcher[1];
 		this.latName = matcher[2];
 		
-		this.targetSelector = $n2.objectSelector.parseSelector('nunaliit_geom.wkt');
+		this.targetSelector = $n2.objectSelector.parseSelector('nunaliit_geom');
 	},
 	
 	reportCopyOperations: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
+			,lastImportEntry: null
 			,allPropertyNames: null
 			,onSuccess: function(copyOperations){}
 		},opts_);
 		
 		var copyOperations = [];
 
+		var importData = opts.importEntry.getProperties();
+		var lastImportData = opts.lastImportEntry.getProperties();
+
 		if( opts.allPropertyNames.indexOf(this.longName) >= 0 
 		 && opts.allPropertyNames.indexOf(this.latName) >= 0 ){
-			var longValue = opts.importData[this.longName];
-			var latValue = opts.importData[this.latName];
+
+			// Compute new value
+			var longValue = importData[this.longName];
+			var latValue = importData[this.latName];
+			var importWkt = this._computeWKT(longValue, latValue);
+			var importGeom = this._computeGeometry(importWkt);
+
+			// Compute last imported value
+			var lastLongValue = lastImportData[this.longName];
+			var lastLatValue = lastImportData[this.latName];
+			var lastImportWkt = this._computeWKT(lastLongValue, lastLatValue);
+			var lastImportGeom = this._computeGeometry(lastImportWkt);
+
+			var targetGeom = this.targetSelector.getValue(opts.doc);
+			var targetWkt = undefined;
+			if( targetGeom ){
+				targetWkt = targetGeom.wkt;
+			};
 			
-			var importValue = undefined;
-			if( typeof longValue !== 'undefined' 
-			 && typeof latValue !== 'undefined' ){
-				longValue = 1 * longValue;
-				latValue = 1 * latValue;
-				importValue = 'MULTIPOINT(('+longValue+' '+latValue+'))';
+			var changedSinceLastImport = true;
+			if( lastImportWkt === targetWkt ){
+				changedSinceLastImport = false;
 			};
 
-			var targetValue = this.targetSelector.getValue(opts.doc);
-			
-			var isInconsistent = false;
-			if( importValue !== targetValue ){
-				isInconsistent = true;
+			var isEqual = false;
+			if( importWkt === targetWkt ){
+				isEqual = true;
 			};
 			
 			copyOperations.push({
 				propertyNames: [this.longName, this.latName]
-				,computedValue: importValue
+				,computedValue: importGeom
 				,targetSelector: this.targetSelector
-				,targetValue: targetValue
-				,isInconsistent: isInconsistent
+				,targetValue: targetGeom
+				,isEqual: isEqual
+				,changedSinceLastImport: changedSinceLastImport
 			});
 		};
 		
@@ -2023,39 +2352,21 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
 		var doc = opts.doc;
 		
-		var longValue = opts.importData[this.longName];
-		var latValue = opts.importData[this.latName];
+		var computedValue = opts.copyOperation.computedValue;
 		
-		var importValue = undefined;
-		if( typeof longValue !== 'undefined' 
-		 && typeof latValue !== 'undefined' ){
-			longValue = 1 * longValue;
-			latValue = 1 * latValue;
-			importValue = 'MULTIPOINT(('+longValue+' '+latValue+'))';
-		};
-
-		if( typeof importValue === 'undefined' ){
+		if( typeof computedValue === 'undefined' ){
 			// Must delete
 			if( doc.nunaliit_geom ){
 				delete doc.nunaliit_geom;
 			};
 		} else {
-			doc.nunaliit_geom = {
-				nunaliit_type: 'geometry'
-				,wkt: importValue
-				,bbox: [
-					longValue
-					,latValue
-					,longValue
-					,latValue
-				]
-			};
+			doc.nunaliit_geom = computedValue;
 		};
 	},
 	
@@ -2063,15 +2374,46 @@ var ImportProfileOperationLongLat = $n2.Class(ImportProfileOperation, {
 		var longValue = importData[this.longName];
 		var latValue = importData[this.latName];
 		
-		var importValue = undefined;
+		var importValue = this._computeWKT(longValue, latValue);
+		
+		return importValue;
+	},
+
+	_computeGeometry: function(wkt){
+
+		var nunaliit_geom = undefined;
+		
+		// Geometry
+		if( wkt ){
+			nunaliit_geom = {
+				nunaliit_type: 'geometry'
+			};
+			nunaliit_geom.wkt = wkt;
+
+			var olWkt = new OpenLayers.Format.WKT();
+			var vectorFeature = olWkt.read(wkt);
+			var bounds = vectorFeature.geometry.getBounds();
+			nunaliit_geom.bbox = [ 
+				bounds.left
+				,bounds.bottom
+				,bounds.right
+				,bounds.top
+			];
+		};
+		
+		return nunaliit_geom;
+	},
+	
+	_computeWKT: function(longValue, latValue){
+		var wkt = undefined;
 		if( typeof longValue !== 'undefined' 
 		 && typeof latValue !== 'undefined' ){
 			longValue = 1 * longValue;
 			latValue = 1 * latValue;
-			importValue = 'MULTIPOINT(('+longValue+' '+latValue+'))';
+			wkt = 'MULTIPOINT(('+longValue+' '+latValue+'))';
 		};
 		
-		return importValue;
+		return wkt;
 	}
 });
 
@@ -2111,15 +2453,20 @@ var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
 	reportCopyOperations: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
+			,lastImportEntry: null
 			,allPropertyNames: null
 			,onSuccess: function(copyOperations){}
 		},opts_);
 		
 		var copyOperations = [];
 
+		var importData = opts.importEntry.getProperties();
+		var lastImportData = opts.lastImportEntry.getProperties();
+
 		if( opts.allPropertyNames.indexOf(this.refKey) >= 0 ){
-			var refId = opts.importData[this.refKey];
+			var refId = importData[this.refKey];
+			var lastRefId = lastImportData[this.refKey];
 			
 			var importValue = undefined;
 			if( refId ){
@@ -2130,16 +2477,21 @@ var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
 			};
 			
 			var targetValue = this.targetSelector.getValue(opts.doc);
-			
-			var isInconsistent = false;
-			if( importValue === targetValue ){
-				// takes care of both undefined
-			} else if( importValue 
-			 && targetValue 
-			 && importValue.doc === targetValue.doc ){
-				// Consistent
-			} else {
-				isInconsistent = true;
+
+			var targetRefId = undefined;
+			if( typeof targetValue === 'object' 
+			 && 'reference' === targetValue.nunaliit_type ){
+				targetRefId = targetValue.doc;
+			};
+
+			var changedSinceLastImport = true;
+			if( lastRefId === targetRefId ){
+				changedSinceLastImport = false;
+			};
+
+			var isEqual = false;
+			if( refId === targetRefId ){
+				isEqual = true;
 			};
 			
 			copyOperations.push({
@@ -2147,7 +2499,8 @@ var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
 				,computedValue: importValue
 				,targetSelector: this.targetSelector
 				,targetValue: targetValue
-				,isInconsistent: isInconsistent
+				,isEqual: isEqual
+				,changedSinceLastImport: changedSinceLastImport
 			});
 		};
 		
@@ -2157,13 +2510,14 @@ var ImportProfileOperationReference = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
 		var doc = opts.doc;
 		
-		var refId = opts.importData[this.refKey];
+		var importData = opts.importEntry.getProperties();
+		var refId = importData[this.refKey];
 		
 		var importValue = undefined;
 		if( refId ){
@@ -2224,61 +2578,83 @@ var ImportProfileOperationImportReference = $n2.Class(ImportProfileOperation, {
 	reportCopyOperations: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
+			,lastImportEntry: null
 			,allPropertyNames: null
 			,onSuccess: function(copyOperations){}
 		},opts_);
 		
 		var _this = this;
 
+		var importData = opts.importEntry.getProperties();
+		var lastImportData = opts.lastImportEntry.getProperties();
+		
+		var computedRefId = undefined;
+
 		if( opts.allPropertyNames.indexOf(this.importId) >= 0 ){
-			var importId = opts.importData[this.importId];
-			
-			this.atlasDesign.queryView({
-				viewName: 'nunaliit-import'
-				,startkey: [this.profileId, importId]
-				,endkey: [this.profileId, importId]
-				,onSuccess: function(rows){
-					var refId = null;
-					for(var i=0,e=rows.length; i<e; ++i){
-						var row = rows[i];
-						refId = row.id;
-					};
-					setReference(refId);
-				}
-				,onError: function(){
-					// there are no document with profileId/importId combination
-					setReference(null);
+			var importId = importData[this.importId];
+	
+			this._getDocIdFromImportId({
+				importId: importId
+				,onSuccess: setComputedReference
+				,onError: function(err){
+					setComputedReference(undefined);
 				}
 			});
 			
 		} else {
 			// entry does not have data for import id
-			setReference(null);
+			setComputedReference(undefined);
 		};
 		
-		function setReference(refId){
+		function setComputedReference(refId){
+			computedRefId = refId;
+
+			if( opts.allPropertyNames.indexOf(_this.importId) >= 0 ){
+				var lastImportId = lastImportData[_this.importId];
+		
+				this._getDocIdFromImportId({
+					importId: lastImportId
+					,onSuccess: setLastReference
+					,onError: function(err){
+						setLastReference(undefined);
+					}
+				});
+				
+			} else {
+				// entry does not have data for import id
+				setLastReference(undefined);
+			};
+		};
+		
+		function setLastReference(lastRefId){
+
 			var copyOperations = [];
 			
 			var importValue = undefined;
-			if( refId ){
+			if( computedRefId ){
 				importValue = {
 					nunaliit_type: 'reference'
-					,doc: refId
+					,doc: computedRefId
 				};
 			};
 			
 			var targetValue = _this.targetSelector.getValue(opts.doc);
 			
-			var isInconsistent = false;
-			if( importValue === targetValue ){
-				// takes care of both undefined
-			} else if( importValue 
-			 && targetValue 
-			 && importValue.doc === targetValue.doc ){
-				// Consistent
-			} else {
-				isInconsistent = true;
+			var targetRefId = undefined;
+			if( typeof targetValue === 'object' 
+			 && 'reference' === targetValue.nunaliit_type ){
+				targetRefId = targetValue.doc;
+			};
+
+			var changedSinceLastImport = true;
+			if( lastRefId === targetRefId ){
+				changedSinceLastImport = false;
+			};
+
+			var isEqual = false;
+			if( computedRefId === targetRefId ){
+				isEqual = true;
 			};
 			
 			copyOperations.push({
@@ -2286,7 +2662,8 @@ var ImportProfileOperationImportReference = $n2.Class(ImportProfileOperation, {
 				,computedValue: importValue
 				,targetSelector: _this.targetSelector
 				,targetValue: targetValue
-				,isInconsistent: isInconsistent
+				,isEqual: isEqual
+				,changedSinceLastImport: changedSinceLastImport
 			});
 			
 			opts.onSuccess(copyOperations);
@@ -2296,13 +2673,14 @@ var ImportProfileOperationImportReference = $n2.Class(ImportProfileOperation, {
 	performCopyOperation: function(opts_){
 		var opts = $n2.extend({
 			doc: null
-			,importData: null
+			,importEntry: null
 			,copyOperation: null
 		},opts_);
 		
 		var doc = opts.doc;
 		
-		var refId = opts.importData[this.refKey];
+		var importData = opts.importEntry.getProperties();
+		var refId = importData[this.refKey];
 		
 		var importValue = undefined;
 		if( opts.copyOperation 
@@ -2316,10 +2694,495 @@ var ImportProfileOperationImportReference = $n2.Class(ImportProfileOperation, {
 		} else {
 			this.targetSelector.setValue(doc, importValue, true);
 		};
+	},
+	
+	_getDocIdFromImportId: function(opts_){
+		var opts = $n2.extend({
+			importId: undefined
+			,onSuccess: function(docId){}
+			,onError: function(err){}
+		},opts_);
+
+		var importId = opts.importId;
+		if( undefined === importId ){
+			opts.onSuccess(undefined);
+		} else {
+			this.atlasDesign.queryView({
+				viewName: 'nunaliit-import'
+				,startkey: [this.profileId, importId]
+				,endkey: [this.profileId, importId]
+				,onSuccess: function(rows){
+					var refId = undefined;
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						refId = row.id;
+					};
+					opts.onSuccess(refId);
+				}
+				,onError: function(err){
+					opts.onError(err);
+				}
+			});
+		};
 	}
 });
 
 addOperationPattern(OPERATION_IMPORT_REF, ImportProfileOperationImportReference);
+
+//=========================================================================
+var OPERATION_SET_VALUE = /^\s*setValue\((.*),\s*(.*)\s*\)\s*$/;
+
+var ImportProfileOperationSetValue = $n2.Class(ImportProfileOperation, {
+	
+	operationString: null,
+	
+	value: null,
+	
+	targetSelector: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: null
+			,atlasDb: null
+			,atlasDesign: null
+		},opts_);
+		
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.operationString = opts.operationString;
+		
+		var matcher = OPERATION_SET_VALUE.exec(this.operationString);
+		if( !matcher ) {
+			throw 'Invalid operation string for ImportProfileOperationSetValue: '+operationString;
+		};
+		
+		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
+		var value = matcher[2];
+		if( value.length > 2 
+		 && value[0] === '\'' 
+		 && value[value.length-1] === '\'' ){
+			this.value = value.substr(1,value.length-2);
+		} else if( 'null' === value ){
+			this.value = null;
+		} else if( 'true' === value ){
+			this.value = true;
+		} else if( 'false' === value ){
+			this.value = false;
+		} else {
+			this.value = 1 * value;
+		};
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importEntry: null
+			,lastImportEntry: null
+			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
+		},opts_);
+		
+		var copyOperations = [];
+
+		var targetValue = this.targetSelector.getValue(opts.doc);
+
+		var changedSinceLastImport = true;
+		if( this.value === targetValue ){
+			changedSinceLastImport = false;
+		};
+
+		var isEqual = false;
+		if( this.value === targetValue ){
+			isEqual = true;
+		};
+		
+		copyOperations.push({
+			propertyNames: []
+			,computedValue: this.value
+			,targetSelector: this.targetSelector
+			,targetValue: targetValue
+			,isEqual: isEqual
+			,changedSinceLastImport: changedSinceLastImport
+		});
+		
+		opts.onSuccess(copyOperations);
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importEntry: null
+			,copyOperation: null
+		},opts_);
+		
+		if( this.value === undefined ){
+			// Must delete
+			this.targetSelector.removeValue(opts.doc);
+		} else {
+			this.targetSelector.setValue(opts.doc, this.value, true);
+		};
+	}
+});
+
+addOperationPattern(OPERATION_SET_VALUE, ImportProfileOperationSetValue);
+
+//=========================================================================
+// findReference(<target-selector>,<key-selection>,<reference-selection>)
+var OPERATION_FIND_REF = /^\s*findReference\(([^,]*),\s*'([^']*)'\s*,\s*'([^']*)'\s*\)\s*$/;
+
+var ImportProfileOperationFindReference = $n2.Class(ImportProfileOperation, {
+	
+	operationString: null,
+	
+	atlasDesign: null,
+	
+	profileId: null,
+	
+	importId: null,
+	
+	targetSelector: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: null
+			,atlasDb: null
+			,atlasDesign: null
+		},opts_);
+		
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.operationString = opts.operationString;
+		this.atlasDesign = opts.atlasDesign;
+		
+		var matcher = OPERATION_IMPORT_REF.exec(this.operationString);
+		if( !matcher ) {
+			throw 'Invalid operation string for ImportProfileOperationImportReference: '+operationString;
+		};
+		
+		this.targetSelector = $n2.objectSelector.parseSelector(matcher[1]);
+		this.profileId = matcher[2];
+		this.importId = matcher[3];
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importEntry: null
+			,lastImportEntry: null
+			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
+		},opts_);
+		
+		var _this = this;
+
+		var importData = opts.importEntry.getProperties();
+		var lastImportData = opts.lastImportEntry.getProperties();
+
+		var computedRefId = undefined;
+
+		if( opts.allPropertyNames.indexOf(this.importId) >= 0 ){
+			var importId = importData[this.importId];
+			
+			this._getDocIdFromImportId({
+				importId: importId
+				,onSuccess: setComputedReference
+				,onError: function(err){
+					setComputedReference(undefined);
+				}
+			});
+			
+		} else {
+			// entry does not have data for import id
+			setComputedReference(undefined);
+		};
+		
+		function setComputedReference(refId){
+			computedRefId = refId;
+
+			if( opts.allPropertyNames.indexOf(_this.importId) >= 0 ){
+				var lastImportId = lastImportData[_this.importId];
+				
+				_this._getDocIdFromImportId({
+					importId: lastImportId
+					,onSuccess: setLastReference
+					,onError: function(err){
+						setLastReference(undefined);
+					}
+				});
+				
+			} else {
+				// entry does not have data for import id
+				setLastReference(undefined);
+			};
+		};
+		
+		function setLastReference(lastRefId){
+			var copyOperations = [];
+			
+			var importValue = undefined;
+			if( refId ){
+				importValue = {
+					nunaliit_type: 'reference'
+					,doc: refId
+				};
+			};
+			
+			var targetValue = _this.targetSelector.getValue(opts.doc);
+			
+			var targetRefId = undefined;
+			if( typeof targetValue === 'object' 
+			 && 'reference' === targetValue.nunaliit_type ){
+				targetRefId = targetValue.doc;
+			};
+
+			var changedSinceLastImport = true;
+			if( lastRefId === targetRefId ){
+				changedSinceLastImport = false;
+			};
+
+			var isEqual = false;
+			if( computedRefId === targetRefId ){
+				isEqual = true;
+			};
+
+			copyOperations.push({
+				propertyNames: [_this.importId]
+				,computedValue: importValue
+				,targetSelector: _this.targetSelector
+				,targetValue: targetValue
+				,isEqual: isEqual
+				,changedSinceLastImport: changedSinceLastImport
+			});
+			
+			opts.onSuccess(copyOperations);
+		};
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importEntry: null
+			,copyOperation: null
+		},opts_);
+		
+		var doc = opts.doc;
+		
+		var importData = opts.importEntry.getProperties();
+		var refId = importData[this.refKey];
+		
+		var importValue = undefined;
+		if( opts.copyOperation 
+		 && opts.copyOperation.computedValue ){
+			importValue = opts.copyOperation.computedValue;
+		};
+
+		if( typeof importValue === 'undefined' ){
+			// Must delete
+			this.targetSelector.removeValue(doc);
+		} else {
+			this.targetSelector.setValue(doc, importValue, true);
+		};
+	},
+	
+	_getDocIdFromImportId: function(opts_){
+		var opts = $n2.extend({
+			importId: undefined
+			,onSuccess: function(docId){}
+			,onError: function(err){}
+		},opts_);
+
+		var importId = opts.importId;
+		if( undefined === importId ){
+			opts.onSuccess(undefined);
+		} else {
+			this.atlasDesign.queryView({
+				viewName: 'nunaliit-import'
+				,startkey: [this.profileId, importId]
+				,endkey: [this.profileId, importId]
+				,onSuccess: function(rows){
+					var refId = undefined;
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						refId = row.id;
+					};
+					opts.onSuccess(refId);
+				}
+				,onError: function(err){
+					opts.onError(err);
+				}
+			});
+		};
+	}
+});
+
+addOperationPattern(OPERATION_FIND_REF, ImportProfileOperationFindReference);
+
+//=========================================================================
+
+var ImportProfileOperationParsed = $n2.Class('ImportProfileOperationParsed', ImportProfileOperation, {
+
+	operationString: null,
+
+	program: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			operationString: undefined
+			,program: undefined
+			,atlasDb: undefined
+			,atlasDesign: undefined
+		},opts_);
+		
+		ImportProfileOperation.prototype.initialize.call(this);
+
+		this.operationString = opts.operationString;
+		this.program = opts.program;
+		
+		this.program.configure(opts);
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importEntry: null
+			,lastImportEntry: null
+			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
+		},opts_);
+		
+		this.program.reportCopyOperations(opts);
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importEntry: null
+			,copyOperation: null
+		},opts_);
+		
+		this.program.performCopyOperation(opts);
+	}
+});
+
+//=========================================================================
+// This operation is used by the GeoJSON import profile for handling the
+// geometry
+var ImportProfileOperationGeoJSON = $n2.Class('ImportProfileOperationGeoJSON', ImportProfileOperation, {
+	
+	targetSelector: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+		},opts_);
+		
+		ImportProfileOperation.prototype.initialize.call(this);
+		
+		this.targetSelector = new $n2.objectSelector.ObjectSelector(['nunaliit_geom']);
+	},
+	
+	reportCopyOperations: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importEntry: null
+			,lastImportEntry: null
+			,allPropertyNames: null
+			,onSuccess: function(copyOperations){}
+		},opts_);
+		
+		var _this = this;
+
+		var importWkt = opts.importEntry.getGeometry();
+		var lastImportWkt = opts.lastImportEntry.getGeometry();
+
+		var importValue = undefined;
+		if( importWkt ){
+			importValue = this._computeGeometry(importWkt);
+		};
+
+		var lastImportValue = undefined;
+		if( lastImportWkt ){
+			lastImportValue = this._computeGeometry(lastImportWkt);
+		};
+		
+		var targetValue = this.targetSelector.getValue(opts.doc);
+		
+		var targetWkt = undefined;
+		if( typeof targetValue === 'object' 
+		 && 'geometry' === targetValue.nunaliit_type ){
+			targetWkt = targetValue.wkt;
+		};
+
+		var changedSinceLastImport = true;
+		if( lastImportWkt === targetWkt ){
+			changedSinceLastImport = false;
+		};
+
+		var isEqual = false;
+		if( importWkt === targetWkt ){
+			isEqual = true;
+		};
+
+		var copyOperations = [];
+		copyOperations.push({
+			propertyNames: [GEOM_PROP_NAME]
+			,computedValue: importValue
+			,targetSelector: this.targetSelector
+			,targetValue: targetValue
+			,isEqual: isEqual
+			,changedSinceLastImport: changedSinceLastImport
+		});
+		
+		opts.onSuccess(copyOperations);
+	},
+	
+	performCopyOperation: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,importEntry: null
+			,copyOperation: null
+		},opts_);
+		
+		var doc = opts.doc;
+		
+		var importValue = undefined;
+		if( opts.copyOperation 
+		 && opts.copyOperation.computedValue ){
+			importValue = opts.copyOperation.computedValue;
+		};
+
+		if( typeof importValue === 'undefined' ){
+			// Must delete
+			this.targetSelector.removeValue(doc);
+		} else {
+			this.targetSelector.setValue(doc, importValue, true);
+		};
+	},
+	
+	_computeGeometry: function(importWkt){
+
+		var nunaliit_geom = undefined;
+		
+		// Geometry
+		if( importWkt ){
+			nunaliit_geom = {
+				nunaliit_type: 'geometry'
+			};
+			nunaliit_geom.wkt = importWkt;
+
+			var olWkt = new OpenLayers.Format.WKT();
+			var vectorFeature = olWkt.read(importWkt);
+			var bounds = vectorFeature.geometry.getBounds();
+			nunaliit_geom.bbox = [ 
+				bounds.left
+				,bounds.bottom
+				,bounds.right
+				,bounds.top
+			];
+		};
+		
+		return nunaliit_geom;
+	}
+});
 
 //=========================================================================
 var ImportEntry = $n2.Class({
@@ -2335,6 +3198,9 @@ var ImportEntry = $n2.Class({
 		throw 'Subclasses to ImportEntry must implement getProperties()';
 	},
 	
+	/**
+	 * Returns WKT of geometry
+	 */
 	getGeometry: function(){
 		throw 'Subclasses to ImportEntry must implement getGeometry()';
 	}
@@ -2344,7 +3210,11 @@ var ImportEntry = $n2.Class({
 var ImportProfile = $n2.Class({
 	id: null,
 	
+	sessionId: null,
+	
 	label: null,
+	
+	unrelated: null,
 	
 	layerName: null,
 	
@@ -2357,36 +3227,41 @@ var ImportProfile = $n2.Class({
 	atlasDb: null,
 
 	atlasDesign: null,
+
+	dispatchService: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			id: null
-			,label: null
-			,layerName: null
-			,schema: null
-			,operations: null
-			,atlasDb: null
-			,atlasDesign: null
+			id: undefined
+			,label: undefined
+			,unrelated: false
+			,layerName: undefined
+			,schema: undefined
+			,operations: undefined
+			,atlasDb: undefined
+			,atlasDesign: undefined
+			,dispatchService: undefined
 		},opts_);
 		
 		this.id = opts.id;
 		this.label = opts.label;
+		this.unrelated = opts.unrelated;
 		this.layerName = opts.layerName;
 		this.schema = opts.schema;
-		this.operations = opts.operations;
 		this.atlasDb = opts.atlasDb;
 		this.atlasDesign = opts.atlasDesign;
-		
+		this.dispatchService = opts.dispatchService;
+
+		this.operations = [];
 		this.operationsById = {};
-		for(var i=0,e=this.operations.length; i<e; ++i){
-			var operation = this.operations[i];
-			var opId = operation._n2OpId;
-			if( !opId ){
-				opId = $n2.getUniqueId();
-				operation._n2OpId = opId;
+		if( $n2.isArray(opts.operations) ) {
+			for(var i=0,e=opts.operations.length; i<e; ++i){
+				var operation = opts.operations[i];
+				this._addOperation(operation);
 			};
-			this.operationsById[opId] = operation;
 		};
+		
+		this.sessionId = this.id + '_' +  (new Date()).toISOString();
 	},
 	
 	getType: function(){
@@ -2398,6 +3273,15 @@ var ImportProfile = $n2.Class({
 	},
 	
 	getId: function(){
+		// unrelated means that this import does not relate
+		// to any other import. Therefore, assign a session id
+		// instead of a profile id. This way, next time this profile
+		// is used, it will not relate to anything that was imported
+		// previously
+		if( this.unrelated ){
+			return this.sessionId;
+		};
+
 		return this.id;
 	},
 	
@@ -2427,6 +3311,7 @@ var ImportProfile = $n2.Class({
 		var analyzer = new ImportAnalyzer({
 			profile: this
 			,atlasDesign: this.atlasDesign
+			,dispatchService: this.dispatchService
 		});
 		analyzer.analyzeEntries({
 			entries: opts.entries
@@ -2438,13 +3323,13 @@ var ImportProfile = $n2.Class({
 	reportCopyOperations: function(opts_){
 		var opts = $n2.extend({
 			doc: null
+			,importEntry: null
+			,lastImportEntry: null
 			,allPropertyNames: null
 			,onSuccess: function(copyOperations){}
 		},opts_);
 		
 		var copyOperations = [];
-		
-		var importData = opts.doc.nunaliit_import.data;
 		
 		var operations = this.operations.slice(0); // clone
 		
@@ -2460,42 +3345,96 @@ var ImportProfile = $n2.Class({
 
 			op.reportCopyOperations({
 				doc: opts.doc
-				,importData: importData
+				,importEntry: opts.importEntry
+				,lastImportEntry: opts.lastImportEntry
 				,allPropertyNames: opts.allPropertyNames
 				,onSuccess: function(copies){
 					if( copies && copies.length ){
-						for(var copyIndex=0,copyIndexEnd=copies.length; copyIndex<copyIndexEnd; ++copyIndex){
-							var copy = copies[copyIndex];
-							
+						copies.forEach(function(copy){
 							copy._n2OpId = op._n2OpId;
 							
 							copyOperations.push(copy);
-						};
+						});
 					};
 					
 					// Perform next one
-					report();
+					window.setTimeout(report,0); // Do not blow stack on large operations
 				}
 			});
 		};
 	},
 	
-	performCopyOperations: function(doc, copyOperations){
-		var importData = doc.nunaliit_import.data;
-			
-		for(var copyIndex=0,copyIndexEnd=copyOperations.length; copyIndex<copyIndexEnd; ++copyIndex){
-			var copy = copyOperations[copyIndex];
+	performCopyOperations: function(doc, copyOperations, importEntry){
+		var _this = this;
+
+		copyOperations.forEach(function(copy){
 			var opId = copy._n2OpId;
-			var op = this.operationsById[opId];
+			var op = _this.operationsById[opId];
 			
 			if( op ){
 				op.performCopyOperation({
 					doc: doc
-					,importData: importData
+					,importEntry: importEntry
 					,copyOperation: copy
 				});
 			};
+		});
+	},
+	
+	_addOperation: function(operation){
+		var opId = operation._n2OpId;
+		if( !opId ){
+			opId = $n2.getUniqueId();
+			operation._n2OpId = opId;
 		};
+		this.operations.push(operation);
+		this.operationsById[opId] = operation;
+	}
+});
+
+//=========================================================================
+var ImportEntryFromDoc = $n2.Class('ImportEntryFromDoc', ImportEntry, {
+
+	id: null,
+	
+	data: null,
+	
+	geometryWkt: null,
+	
+	initialize: function(opts_){
+		
+		ImportEntry.prototype.initialize.call(this,opts_);
+		
+		var opts = $n2.extend({
+			doc: undefined
+			,data: undefined
+			,geometryWkt: undefined
+		},opts_);
+		
+		this.id = undefined;
+		this.data = opts.data ? opts.data : {};
+		this.geometryWkt = opts.geometryWkt;
+		
+		var doc = opts.doc;
+		if( doc 
+		 && doc.nunaliit_import ){
+			this.id = doc.nunaliit_import.id;
+		};
+	},
+
+	getId: function(){
+		return this.id;
+	},
+	
+	getProperties: function(){
+		return this.data;
+	},
+	
+	/**
+	 * Returns WKT of geometry
+	 */
+	getGeometry: function(){
+		return this.geometryWkt;
 	}
 });
 
@@ -2520,6 +3459,10 @@ var ImportEntryJson = $n2.Class(ImportEntry, {
 	},
 	
 	getId: function(){
+		if( this.profile.ignoreId ){
+			return undefined;
+		};
+
 		var idAttribute = this.profile.idAttribute;
 		return this.data[idAttribute];
 	},
@@ -2529,10 +3472,6 @@ var ImportEntryJson = $n2.Class(ImportEntry, {
 	},
 	
 	getGeometry: function(){
-		if( this.profile.legacyLongLat ){
-			return this.profile.legacyLongLat.getGeometry(this.data);
-		};
-		
 		return undefined;
 	}
 });
@@ -2541,23 +3480,28 @@ var ImportEntryJson = $n2.Class(ImportEntry, {
 var ImportProfileJson = $n2.Class(ImportProfile, {
 	
 	idAttribute: null,
-	
-	legacyLongLat: null,
+
+	ignoreId: null,
 	
 	initialize: function(opts_){
+		var opts = $n2.extend({
+			idAttribute: undefined
+			,ignoreId: false
+		},opts_);
+		
+		if( opts.ignoreId ){
+			opts_.unrelated = true;
+		};
 		
 		ImportProfile.prototype.initialize.call(this, opts_);
 
-		if( opts_ ){
-			this.legacyLongLat = opts_.legacyLongLat;
-
-			if( opts_.options ){
-				this.idAttribute = opts_.options.idAttribute;
-			};
-		};
+		this.idAttribute = opts.idAttribute;
+		this.ignoreId = opts.ignoreId;
 		
-		if( !this.idAttribute ){
-			throw 'Option "idAttribute" must be specified for ImportProfileJson';
+		if( this.ignoreId ){
+			// Ignoring ids. Import all data
+		} else if( !this.idAttribute ){
+			throw 'Option "ignoreId" is set or "idAttribute" must be specified for ImportProfileJson';
 		};
 	},
 	
@@ -2655,6 +3599,9 @@ var ImportEntryGeoJson = $n2.Class(ImportEntry, {
 		return this.data;
 	},
 	
+	/**
+	 * Returns WKT of geometry
+	 */
 	getGeometry: function(){
 		return this.geom;
 	}
@@ -2670,19 +3617,20 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 	olWktFormat: null,
 	
 	initialize: function(opts_){
+		var opts = $n2.extend({
+			idAttribute: undefined
+		},opts_);
 		
 		ImportProfile.prototype.initialize.call(this, opts_);
 
-		if( opts_ ){
-			if( opts_.options ){
-				this.idAttribute = opts_.options.idAttribute;
-			};
-		};
+		this.idAttribute = opts.idAttribute;
 		
 		if(OpenLayers 
 		 && OpenLayers.Format 
 		 && OpenLayers.Format.GeoJSON ){
-			this.olGeoJsonFormat = new OpenLayers.Format.GeoJSON();
+			this.olGeoJsonFormat = new OpenLayers.Format.GeoJSON({
+				ignoreExtraDims: true
+			});
 		};
 		if(OpenLayers 
 		 && OpenLayers.Format 
@@ -2692,7 +3640,9 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 		if( !this.olGeoJsonFormat || !this.olWktFormat ){
 			throw 'OpenLayers is required for ImportProfileGeoJson';
 		};
-
+		
+		var geoJsonGeometry = new ImportProfileOperationGeoJSON();
+		this._addOperation(geoJsonGeometry);
 	},
 	
 	getType: function(){
@@ -2710,6 +3660,14 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 		if( !importData ){
 			opts.onError( _loc('Import data must be provided') );
 			return;
+		};
+		
+		// Deal with computed idAttribute values
+		var idAttributeFn = undefined;
+		if( typeof this.idAttribute === 'string'
+		 && this.idAttribute.length > 0 
+		 && this.idAttribute[0] === '=' ){
+			idAttributeFn = $n2.styleRuleParser.parse(this.idAttribute.substr(1));
 		};
 		
 		// Parse GeoJSON input
@@ -2755,6 +3713,13 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 					};
 				};
 			};
+			
+			// Compute id from formula?
+			if( typeof id === 'undefined'
+			 && idAttributeFn
+			 && typeof idAttributeFn.getValue === 'function' ){
+				id = idAttributeFn.getValue(feature);
+			};
 
 			var geom = null;
 			if( feature.geometry 
@@ -2777,6 +3742,125 @@ var ImportProfileGeoJson = $n2.Class(ImportProfile, {
 });
 
 //=========================================================================
+var ImportProfileCsv = $n2.Class(ImportProfile, {
+	
+	idAttribute: null,
+	
+	ignoreId: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			idAttribute: undefined
+			,ignoreId: false
+		},opts_);
+		
+		if( opts.ignoreId ){
+			opts_.unrelated = true;
+		};
+		
+		ImportProfile.prototype.initialize.call(this, opts_);
+
+		this.idAttribute = opts.idAttribute;
+		this.ignoreId = opts.ignoreId;
+
+		if( this.ignoreId ){
+			// Ignoring ids. Import all data
+		} else if( !this.idAttribute ){
+			throw 'Option "ignoreId" is set or "idAttribute" must be specified for ImportProfileCsv';
+		};
+	},
+	
+	getType: function(){
+		return 'csv';
+	},
+	
+	parseEntries: function(opts_){
+		var opts = $n2.extend({
+			importData: null
+			,onSuccess: function(entries){}
+			,onError: function(err){}
+		},opts_);
+
+		var importData = opts.importData;
+		if( !importData ){
+			opts.onError( _loc('Import data must be provided') );
+			return;
+		};
+		
+		// Parse CSV input
+		var jsonObj = null;
+		try {
+			jsonObj = $n2.csv.Parse({csv:importData});
+		} catch(e) {
+			opts.onError( _loc('Unable to parse import data: {err}',{err:e}) );
+			return;
+		};
+		
+		
+		if( !$n2.isArray(jsonObj) ){
+			opts.onError( _loc('CSV definition should yield an array') );
+			return;
+		}
+		
+		var entries = [];
+		for(var i=0,e=jsonObj.length; i<e; ++i){
+			var jsonEntry = jsonObj[i];
+			
+			var props = {};
+			for(var key in jsonEntry){
+				if( !key ){
+					// skip
+				} else if( $n2.trim(key) === '' ) {
+					// skip
+				} else {
+					props[key] = jsonEntry[key];
+				};
+			};
+			
+			var entry = new ImportEntryJson({
+				data: props
+				,profile: this
+			});
+			entries.push(entry);
+		};
+		
+		opts.onSuccess(entries);
+	}
+});
+
+//=========================================================================
+var ReferencesFromSchema = $n2.Class('ReferencesFromSchema',{
+
+	atlasDesign: null,
+
+	docsbySchemaName: null,
+	
+	initialize: function(opts_){
+		var opts= $n2.extend({
+			atlasDesign: undefined
+			,globalContext: undefined
+		},opts_);
+
+		var _this = this;
+
+		this.atlasDesign = opts.atlasDesign;
+		
+		this.docsbySchemaName = {};
+		
+		if( opts.globalContext ){
+			opts.globalContext.referencesFromSchema = function(){
+				var ctxt = this;
+				_this._getReferences(ctxt, schemaName, expression);
+			};
+		};
+	},
+
+	_getReferences: function(ctxt, cb, schemaName, expression){
+		
+	}
+});
+
+//=========================================================================
 var ImportProfileService = $n2.Class({
 	
 	schemaRepository: null,
@@ -2787,21 +3871,35 @@ var ImportProfileService = $n2.Class({
 	
 	profileClasses: null,
 	
+	dispatchService: null,
+	
 	initialize: function(opts_){
 		var opts= $n2.extend({
 			atlasDb: null
 			,atlasDesign: null
 			,schemaRepository: null
+			,dispatchService: null
 		},opts_);
 		
 		this.atlasDb = opts.atlasDb;
 		this.atlasDesign = opts.atlasDesign;
 		this.schemaRepository = opts.schemaRepository;
+		this.dispatchService = opts.dispatchService;
 		
 		this.profileClasses = {};
 		
 		this.addImportProfileClass('json',ImportProfileJson);
 		this.addImportProfileClass('geojson',ImportProfileGeoJson);
+		this.addImportProfileClass('csv',ImportProfileCsv);
+		
+		if( $n2.importProfileOperation 
+		 && typeof $n2.importProfileOperation.getGlobalContext === 'function' ){
+			var globalContext = $n2.importProfileOperation.getGlobalContext();
+
+			globalContext.test = function(success, error, x){
+				success(2 * x);
+			};
+		};
 	},
 	
 	addImportProfileClass: function(type, aClass){
@@ -2887,14 +3985,22 @@ var ImportProfileService = $n2.Class({
 				opts.onError( _loc('Unknown import profile type: {type}',{type:type}) );
 				return;
 			} else {
-				var classOpts = {
-					id: importProfile.id
-					,label: importProfile.label
-					,options: importProfile.options
-					,layerName: importProfile.layerName
-					,atlasDb: this.atlasDb
-					,atlasDesign: this.atlasDesign
+				var classOpts = {};
+				
+				if( typeof importProfile.options === 'object' ){
+					for(var key in importProfile.options){
+						var value = importProfile.options[key];
+						classOpts[key] = value;
+					};
 				};
+				
+				classOpts.id = importProfile.id;
+				classOpts.label = importProfile.label;
+				classOpts.layerName = importProfile.layerName;
+				classOpts.atlasDb = this.atlasDb;
+				classOpts.atlasDesign = this.atlasDesign;
+				classOpts.dispatchService = this.dispatchService;
+				classOpts.schema = undefined;
 				
 				if( importProfile.schemaName ){
 					this.schemaRepository.getSchema({
@@ -2929,11 +4035,7 @@ var ImportProfileService = $n2.Class({
 						opts.onError( _loc('Error creating import profile. Unknown operation string: {string}',{string:opString}) );
 						return;
 					};
-					if( op.isLegacyLongLat ){
-						classOpts.legacyLongLat = op;
-					} else {
-						operations.push(op);
-					};
+					operations.push(op);
 				};
 			};
 			

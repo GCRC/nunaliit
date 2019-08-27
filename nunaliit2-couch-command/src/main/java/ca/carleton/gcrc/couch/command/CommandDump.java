@@ -2,14 +2,21 @@ package ca.carleton.gcrc.couch.command;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import org.json.JSONObject;
 
 import ca.carleton.gcrc.couch.app.DbDumpProcess;
 import ca.carleton.gcrc.couch.app.impl.DocumentStoreProcessImpl;
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchQuery;
+import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.DumpListener;
 import ca.carleton.gcrc.couch.command.impl.FileUtils;
@@ -41,6 +48,8 @@ public class CommandDump implements Command {
 				Options.OPTION_ATLAS_DIR
 				,Options.OPTION_DUMP_DIR
 				,Options.OPTION_DOC_ID
+				,Options.OPTION_SCHEMA
+				,Options.OPTION_LAYER
 				,Options.OPTION_SKELETON
 				,Options.OPTION_OVERWRITE_DOCS
 			};
@@ -75,6 +84,14 @@ public class CommandDump implements Command {
 		ps.println("    Specifies which document(s) should be dumped by selecting the ");
 		ps.println("    document identifier. This option can be used multiple times");
 		ps.println("    to include multiple documents in the dump.");
+		ps.println();
+		ps.println("  "+Options.OPTION_SCHEMA);
+		ps.println("    Specifies which document(s) should be dumped by selecting a");
+		ps.println("    schema type.");
+		ps.println();
+		ps.println("  "+Options.OPTION_LAYER);
+		ps.println("    Specifies which document(s) should be dumped by selecting a");
+		ps.println("    layer identifier.");
 		ps.println();
 		ps.println("  "+Options.OPTION_SKELETON);
 		ps.println("    Select skeleton documents for the dump process.");
@@ -115,11 +132,18 @@ public class CommandDump implements Command {
 			dumpDir = new File(atlasDir, "dump/"+name);
 		}
 		
+
+		// Assume all docs
+		boolean allDocs = true;
+
 		// Pick up options
-		List<String> docIds = options.getDocIds();
+		Set<String> docIds = options.getDocIds();
+		Set<String> schemaNames = options.getSchemaNames();
+		Set<String> layerNames = options.getLayerNames();
 		boolean selectSkeletonDocuments = false;
 		if( null != options.getSkeleton() ){
 			selectSkeletonDocuments = options.getSkeleton().booleanValue();
+			allDocs = false;
 		}
 		boolean overwriteDocs = false;
 		if( null != options.getOverwriteDocs() ){
@@ -129,6 +153,9 @@ public class CommandDump implements Command {
 			String dumpDirStr = options.getDumpDir();
 			dumpDir = new File( dumpDirStr );
 		}
+		if( docIds.size() > 0 ){
+			allDocs = false;
+		};
 		
 		// Load properties for atlas
 		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
@@ -139,6 +166,7 @@ public class CommandDump implements Command {
 		// is provided
 		if( overwriteDocs && docIds.size() < 1 ){
 			selectSkeletonDocuments = true;
+			allDocs = false;
 		}
 		
 		if( selectSkeletonDocuments ){
@@ -152,6 +180,40 @@ public class CommandDump implements Command {
 			}
 		}
 		
+		// If the user has provided schema names, we need to find the doc identifiers for
+		// those documents
+		if( schemaNames.size() > 0 ){
+			allDocs = false;
+			CouchDesignDocument designDoc = couchDb.getDesignDocument("atlas");
+			CouchQuery query = new CouchQuery();
+			query.setViewName("nunaliit-schema");
+			query.setKeys( new ArrayList<String>(schemaNames) );
+			CouchQueryResults results = designDoc.performQuery(query);
+			List<JSONObject> rows = results.getRows();
+			for(JSONObject row : rows){
+				String docId = row.getString("id");
+				docIds.add(docId);
+			}
+		};
+		
+		// If the user has provided layer names, we need to find the doc identifiers for
+		// those documents
+		if( layerNames.size() > 0 ){
+			allDocs = false;
+			CouchDesignDocument designDoc = couchDb.getDesignDocument("atlas");
+			CouchQuery query = new CouchQuery();
+			query.setViewName("layers");
+			query.setKeys( new ArrayList<String>(layerNames) );
+			CouchQueryResults results = designDoc.performQuery(query);
+			List<JSONObject> rows = results.getRows();
+			for(JSONObject row : rows){
+				String docId = row.getString("id");
+				docIds.add(docId);
+			}
+		};
+		
+		// Create a map of all documents on disk, so that we can predict where to 
+		// save specific docIds
 		Map<String,File> docIdToFile = new HashMap<String,File>();
 		if( overwriteDocs ){
 			dumpDir = new File(atlasDir, "docs");
@@ -163,11 +225,13 @@ public class CommandDump implements Command {
 		DumpListener listener = new DumpListener( gs.getOutStream() );
 		
 		DbDumpProcess dumpProcess = new DbDumpProcess(couchDb, dumpDir);
-		if( docIds.size() < 1 && false == selectSkeletonDocuments ) {
+		if( allDocs ) {
 			dumpProcess.setAllDocs(true);
 		} else {
 			for(String docId : docIds) {
+				// Do we know where to store this docId?
 				if( docIdToFile.containsKey(docId) ){
+					// Yes!
 					dumpProcess.addDocId(docId, docIdToFile.get(docId));
 				} else {
 					dumpProcess.addDocId(docId);

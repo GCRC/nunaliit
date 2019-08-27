@@ -8,7 +8,6 @@
 /**
  * Correct `block` display not defined in IE 8/9.
  */
-
 article,
 aside,
 details,
@@ -27,7 +26,6 @@ summary {
 /**
  * Correct `inline-block` display not defined in IE 8/9.
  */
-
 audio,
 canvas,
 video {
@@ -38,7 +36,6 @@ video {
  * Prevent modern browsers from displaying `audio` without controls.
  * Remove excess height in iOS 5 devices.
  */
-
 audio:not([controls]) {
     display: none;
     height: 0;
@@ -47,7 +44,6 @@ audio:not([controls]) {
 /**
  * Address styling not present in IE 8/9.
  */
-
 [hidden] {
     display: none;
 }
@@ -61,7 +57,6 @@ audio:not([controls]) {
  * 2. Prevent iOS text size adjust after orientation change, without disabling
  *    user zoom.
  */
-
 html {
     font-family: sans-serif; /* 1 */
     -webkit-text-size-adjust: 100%; /* 2 */
@@ -71,7 +66,6 @@ html {
 /**
  * Remove default margin.
  */
-
 body {
     margin: 0;
 }
@@ -83,7 +77,6 @@ body {
 /**
  * Address `outline` inconsistency between Chrome and other browsers.
  */
-
 a:focus {
     outline: thin dotted;
 }
@@ -91,7 +84,6 @@ a:focus {
 /**
  * Improve readability when focused and also mouse hovered in all browsers.
  */
-
 a:active,
 a:hover {
     outline: 0;
@@ -105,7 +97,6 @@ a:hover {
  * Address variable `h1` font-size and margin within `section` and `article`
  * contexts in Firefox 4+, Safari 5, and Chrome.
  */
-
 h1 {
     font-size: 2em;
     margin: 0.67em 0;
@@ -114,7 +105,6 @@ h1 {
 /**
  * Address styling not present in IE 8/9, Safari 5, and Chrome.
  */
-
 abbr[title] {
     border-bottom: 1px dotted;
 }
@@ -122,7 +112,6 @@ abbr[title] {
 /**
  * Address style set to `bolder` in Firefox 4+, Safari 5, and Chrome.
  */
-
 b,
 strong {
     font-weight: bold;
@@ -131,7 +120,6 @@ strong {
 /**
  * Address styling not present in Safari 5 and Chrome.
  */
-
 dfn {
     font-style: italic;
 }
@@ -139,7 +127,6 @@ dfn {
 /**
  * Address differences between Firefox and other browsers.
  */
-
 hr {
     -moz-box-sizing: content-box;
     box-sizing: content-box;
@@ -149,7 +136,6 @@ hr {
 /**
  * Address styling not present in IE 8/9.
  */
-
 mark {
     background: #ff0;
     color: #000;
@@ -158,7 +144,6 @@ mark {
 /**
  * Correct font family set oddly in Safari 5 and Chrome.
  */
-
 code,
 kbd,
 pre,
@@ -170,7 +155,6 @@ samp {
 /**
  * Improve readability of pre-formatted text in all browsers.
  */
-
 pre {
     white-space: pre-wrap;
 }
@@ -178,7 +162,6 @@ pre {
 /**
  * Set consistent quote types.
  */
-
 q {
     quotes: "\201C" "\201D" "\2018" "\2019";
 }
@@ -186,7 +169,6 @@ q {
 /**
  * Address inconsistent and variable font size in all browsers.
  */
-
 small {
     font-size: 80%;
 }
@@ -218,7 +200,6 @@ sub {
 /**
  * Remove border when inside `a` element in IE 8/9.
  */
-
 img {
     border: 0;
 }
@@ -226,7 +207,6 @@ img {
 /**
  * Correct overflow displayed oddly in IE 9.
  */
-
 svg:not(:root) {
     overflow: hidden;
 }
@@ -238,7 +218,6 @@ svg:not(:root) {
 /**
  * Address margin not present in IE 8/9 and Safari 5.
  */
-
 figure {
     margin: 0;
 }
@@ -250,7 +229,6 @@ figure {
 /**
  * Define consistent border, margin, and padding.
  */
-
 fieldset {
     border: 1px solid #c0c0c0;
     margin: 0 2px;
@@ -261,7 +239,6 @@ fieldset {
  * 1. Correct `color` not being inherited in IE 8/9.
  * 2. Remove padding so people aren't caught out if they zero out fieldsets.
  */
-
 legend {
     border: 0; /* 1 */
     padding: 0; /* 2 */
@@ -272,7 +249,6 @@ legend {
  * 2. Correct font size not being inherited in all browsers.
  * 3. Address margins set differently in Firefox 4+, Safari 5, and Chrome.
  */
-
 button,
 input,
 select,
@@ -286,7 +262,6 @@ textarea {
  * Address Firefox 4+ setting `line-height` on `input` using `!important` in
  * the UA stylesheet.
  */
-
 button,
 input {
     line-height: normal;
@@ -298,7 +273,6 @@ input {
  * Correct `button` style inheritance in Chrome, Safari 5+, and IE 8+.
  * Correct `select` style inheritance in Firefox 4+ and Opera.
  */
-
 button,
 select {
     text-transform: none;
@@ -311,7 +285,6 @@ select {
  * 3. Improve usability and consistency of cursor style between image-type
  *    `input` and others.
  */
-
 button,
 html input[type="button"], /* 1 */
 input[type="reset"],
@@ -323,7 +296,6 @@ input[type="submit"] {
 /**
  * Re-set default cursor for disabled elements.
  */
-
 button[disabled],
 html input[disabled] {
     cursor: default;
@@ -333,7 +305,6 @@ html input[disabled] {
  * 1. Address box sizing set to `content-box` in IE 8/9.
  * 2. Remove excess padding in IE 8/9.
  */
-
 input[type="checkbox"],
 input[type="radio"] {
     box-sizing: border-box; /* 1 */
@@ -345,7 +316,6 @@ input[type="radio"] {
  * 2. Address `box-sizing` set to `border-box` in Safari 5 and Chrome
  *    (include `-moz` to future-proof).
  */
-
 input[type="search"] {
     -webkit-appearance: textfield; /* 1 */
     -moz-box-sizing: content-box;
@@ -357,7 +327,6 @@ input[type="search"] {
  * Remove inner padding and search cancel button in Safari 5 and Chrome
  * on OS X.
  */
-
 input[type="search"]::-webkit-search-cancel-button,
 input[type="search"]::-webkit-search-decoration {
     -webkit-appearance: none;
@@ -366,7 +335,6 @@ input[type="search"]::-webkit-search-decoration {
 /**
  * Remove inner padding and border in Firefox 4+.
  */
-
 button::-moz-focus-inner,
 input::-moz-focus-inner {
     border: 0;
@@ -377,7 +345,6 @@ input::-moz-focus-inner {
  * 1. Remove default vertical scrollbar in IE 8/9.
  * 2. Improve readability and alignment in all browsers.
  */
-
 textarea {
     overflow: auto; /* 1 */
     vertical-align: top; /* 2 */
@@ -390,37 +357,32 @@ textarea {
 /**
  * Remove most spacing between table cells.
  */
-
 table {
     border-collapse: collapse;
     border-spacing: 0;
 }
 
 html, body { 
-	height: 100%; 
-	overflow: auto;
-	color:#000; 
-	font-family: helvetica, sans-serif; 
-	font-weight: 400; 
-	font-size:0.9em;
+    height: 100%; 
+    overflow: auto;
+    color: #000; 
+    font: 400 0.9em helvetica, sans-serif;
 }
 
 /*START - Font Styles*/
-h1 { font-size: 2.2em; letter-spacing:0;}
+h1 { font-size: 2.2em; letter-spacing: 0;}
 h2 { font-size: 1.55em; line-height: 1.2em; }
-h3 { font-size: 20px; line-height:20px; }
-h4 { font-size: 18px; margin-bottom:10px; }
-h5 { font-size: 16px; }
-h6 { font-size: 15px; }
+h3 { font-size: 1.17em; line-height: 20px; }
+h4 { font-size: 1em; margin-bottom: 10px; }
+h5 { font-size: 0.83em; }
+h6 { font-size: 0.67em; }
 a { text-decoration:none; }
 a:hover { text-decoration:underline; }
-p { margin:0 0 10px 0; line-height:1.4em}
-i {font-style:italic}
-ul { list-style:none; margin-bottom:10px; }
-ul li { margin-bottom:5px; }
-ul.bullets { list-style:disc; padding-left:40px; }
-ul.bullets li { margin-bottom:0; }
+p { margin :0 0 10px 0; line-height: 1.4em}
+i {font-style: italic}
+ul { list-style: none; margin-bottom: 10px; }
+ul li { margin-bottom: 5px; }
+ul.bullets { list-style: disc; padding-left: 40px; }
+ul.bullets li { margin-bottom: 0; }
 html.ie7 h1, html.ie8 h1 { font-weight: bold; }
 /*END - Font Styles*/
-
-

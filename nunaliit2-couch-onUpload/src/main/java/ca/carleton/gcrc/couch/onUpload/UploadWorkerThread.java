@@ -2,10 +2,8 @@ package ca.carleton.gcrc.couch.onUpload;
 
 import java.io.File;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Vector;
 
 import org.json.JSONArray;
@@ -19,6 +17,7 @@ import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
+import ca.carleton.gcrc.couch.client.impl.CouchDbException;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
@@ -26,6 +25,8 @@ import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContextImpl;
 import ca.carleton.gcrc.couch.onUpload.conversion.OriginalFileDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.ServerWorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.WorkDescriptor;
+import ca.carleton.gcrc.couch.onUpload.inReach.InReachProcessor;
+import ca.carleton.gcrc.couch.onUpload.inReach.InReachProcessorImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
@@ -41,6 +42,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	static final public int DELAY_NO_WORK_POLLING = 5 * 1000; // 5 seconds
 	static final public int DELAY_NO_WORK_MONITOR = 60 * 1000; // 1 minute
 	static final public int DELAY_ERROR = 60 * 1000; // 1 minute
+	static final public int DELAY_CLEAR_OLD_ERRORS = 5 * 60 * 1000; // 5 minutes
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
@@ -50,10 +52,11 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	private CouchDesignDocument submissionDbDesign;
 	private File mediaDir;
 	private MailNotification mailNotification;
-	private Set<String> docIdsToSkip = new HashSet<String>();
+	private DocumentsInError docsInError = new DocumentsInError();
 	private List<FileConversionPlugin> fileConverters;
 	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
 	private GeometrySimplifier simplifier = null;
+	private InReachProcessor inReachProcessor = null;
 	
 	protected UploadWorkerThread(
 		UploadWorkerSettings settings
@@ -97,6 +100,8 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			GeometrySimplificationProcessImpl simplifierProcess = new GeometrySimplificationProcessImpl(resolutions);
 			simplifier = new GeometrySimplifierImpl(simplifierProcess);
 		}
+		
+		inReachProcessor = new InReachProcessorImpl();
 	}
 	
 	public void shutdown() {
@@ -138,19 +143,41 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 		
 		if( null == work ) {
-			// Nothing to do, wait
-			waitMillis(noWorkDelayInMs);
-			return;
+			// Nothing to do, remove old errors
+			List<String> docIdsRecovered = docsInError.removeErrorsOlderThanMs(DELAY_CLEAR_OLD_ERRORS);
+
+			if( docIdsRecovered.size() <= 0 ) {
+				// No errors to get rid of and no work, wait
+				waitMillis(noWorkDelayInMs);
+				return;
+			}
 		} else {
 			try {
 				// Handle this work
 				performWork(work);
 				
 			} catch(Exception e) {
-				synchronized(this) {
-					docIdsToSkip.add( work.getDocId() );
+				boolean shouldErrorBeTakenIntoAccount = true;
+				for(Throwable t : errorAndCausesAsList(e)){
+					if( t instanceof CouchDbException ){
+						CouchDbException couchDbException = (CouchDbException)t;
+						if( 409 == couchDbException.getReturnCode() ){
+							// This is a conflict error in CouchDb. Somebody is updating the document
+							// at the same time. Just retry the worl
+							shouldErrorBeTakenIntoAccount = false;
+						}
+					}
 				}
+				
 				logger.error("Error processing document "+work.getDocId()+" ("+work.getState()+")",e);
+
+				if( shouldErrorBeTakenIntoAccount ){
+					synchronized(this) {
+						docsInError.addDocumentInError( work.getDocId() );
+					}
+				} else {
+					logger.info("Previous error for "+work.getDocId()+" will be ignored. Should retry shortly.");
+				}
 			}
 		}
 	}
@@ -232,6 +259,9 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		} else if( UploadConstants.UPLOAD_WORK_SIMPLIFY_GEOMETRY.equals(state) ) {
 			performSimplifyGeometryWork(work);
 			
+		} else if( UploadConstants.UPLOAD_WORK_INREACH_SUBMIT.equals(state) ) {
+			performInReachSubmit(work);
+			
 		} else {
 			throw new Exception("Unrecognized state: "+state);
 		}
@@ -266,22 +296,15 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			JSONObject original = file.getJSONObject("original");
 			JSONObject data = file.getJSONObject("data");
 			
-			String effectiveAttachmentName = attachmentName;
-			if( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
-				// Select a different file name
-				String prefix = "";
-				String suffix = "";
-				int pos = attachmentName.indexOf('.', 1);
-				if( pos < 0 ) {
-					prefix = attachmentName;
-				} else {
-					prefix = attachmentName.substring(0, pos-1);
-					suffix = attachmentName.substring(pos);
-				}
-				int counter = 0;
-				while( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
-					attachmentName = prefix + counter + suffix;
-					++counter;
+			String effectiveAttachmentName = computeEffectiveAttachmentName(attachmentName, null);
+
+			int counter = 0;
+			while( docDescriptor.isAttachmentDescriptionAvailable(effectiveAttachmentName) ) {
+				effectiveAttachmentName = computeEffectiveAttachmentName(attachmentName, counter);
+				++counter;
+
+				if( counter > 100 ){
+					throw new Exception("Unable to compute a new attachment name from: "+attachmentName);
 				}
 			}
 			
@@ -337,8 +360,42 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				throw new Exception("No media file reported");
 			}
 			if( false == file.exists() || false == file.isFile() ){
-				logger.error(""+file.getAbsolutePath()+" is not a file.");
-				throw new Exception(""+file.getAbsolutePath()+" is not a file.");
+				logger.info("Uploaded media file does not exist: "+file.getAbsolutePath());
+				
+				// Look for original attachment name
+				String uploadedAttachmentName = null;
+				if( attDescription.isOriginalUpload() ) {
+					// The main attachment is associated with the original uploaded file
+					if( attDescription.isFilePresent() ) {
+						// The attachment is present
+						uploadedAttachmentName = attDescription.getAttachmentName();
+						logger.info("Found original attachment for missing uploaded media: "+uploadedAttachmentName);
+					}
+				}
+				if( null == uploadedAttachmentName ) {
+					String originalAttachmentName = attDescription.getOriginalAttachment();
+					if( null != originalAttachmentName ) {
+						if( docDescriptor.isAttachmentDescriptionAvailable(originalAttachmentName) ){
+							AttachmentDescriptor originalAttachmentDescription = docDescriptor.getAttachmentDescription(originalAttachmentName);
+							if( originalAttachmentDescription.isFilePresent() ) {
+								// Attachment is available
+								uploadedAttachmentName = originalAttachmentDescription.getAttachmentName();
+								logger.info("Found original attachment for missing uploaded media: "+uploadedAttachmentName);
+							}
+						}
+					}
+				}
+				
+				// Download file that was originally uploaded
+				if( null != uploadedAttachmentName ) {
+					conversionContext.downloadFile(uploadedAttachmentName, file);
+					logger.info("Recovered original file from database: "+uploadedAttachmentName+" to "+file.getName());
+				}
+
+				// Check if state was resolved
+				if( false == file.exists() || false == file.isFile() ){
+					throw new Exception("Uploaded media file does not exist: "+file.getAbsolutePath());
+				}
 			};
 
 			// Set file size
@@ -482,6 +539,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				logger.info("No plugin found to analyze file class: "+fileClass);
 				
 				// By default, original file is used
+				attDescription.setOriginalUpload(true);
 				attDescription.setMediaFileName(originalObj.getMediaFileName());
 				attDescription.setContentType(originalObj.getContentType());
 				attDescription.setEncodingType(originalObj.getEncodingType());
@@ -755,6 +813,13 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		simplifier.simplifyGeometry(conversionContext);
 	}
 	
+	private void performInReachSubmit(Work work) throws Exception {
+		FileConversionContext conversionContext = 
+			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
+		
+		inReachProcessor.performSubmission(conversionContext);
+	}
+	
 	private void sendVettingNotification(String docId, JSONObject doc, String attachmentName) {
 		// Notify that upload is available
 		try {
@@ -797,7 +862,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				
 				// Discount documents in error state
 				synchronized(this) {
-					if( docIdsToSkip.contains(id) ) {
+					if( docsInError.isDocumentInError(id) ) {
 						continue;
 					}
 				}
@@ -856,7 +921,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				
 				// Discount documents in error state
 				synchronized(this) {
-					if( docIdsToSkip.contains(id) ) {
+					if( docsInError.isDocumentInError(id) ) {
 						continue;
 					}
 				}
@@ -913,6 +978,34 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		return rowsByUploadId;
 	}
 	
+	private String computeEffectiveAttachmentName(String attachmentName, Integer counter){
+		String prefix = "";
+		String suffix = "";
+		int pos = attachmentName.indexOf('.', 1);
+		if( pos < 0 ) {
+			prefix = attachmentName;
+		} else {
+			prefix = attachmentName.substring(0, pos);
+			suffix = attachmentName.substring(pos);
+		}
+		
+		// Remove leading '_' from prefix
+		while( prefix.length() > 0 && prefix.charAt(0) == '_' ){
+			prefix = prefix.substring(1);
+		}
+		if( prefix.length() < 1 ){
+			prefix = "a";
+		}
+		String effectiveAttachmentName = null;
+		if( null != counter ){
+			effectiveAttachmentName = prefix + "." + counter + suffix;
+		} else {
+			effectiveAttachmentName = prefix + suffix;
+		}
+		
+		return effectiveAttachmentName;
+	}
+	
 	private boolean waitMillis(int millis) {
 		synchronized(this) {
 			if( true == isShuttingDown ) {
@@ -939,8 +1032,23 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			,JSONObject doc) {
 
 		synchronized(this) {
-			docIdsToSkip.remove(docId);
+			docsInError.removeErrorsWithDocId(docId);
 			this.notifyAll();
 		}
 	}
+	
+	private List<Throwable> errorAndCausesAsList(Throwable e){
+		List<Throwable> errors = new Vector<Throwable>();
+		
+		errors.add(e);
+		
+		// Add causes
+		Throwable cause = e.getCause();
+		while( null != cause && errors.indexOf(cause) < 0 ){
+			errors.add(cause);
+			cause = e.getCause();
+		}
+		
+		return errors;
+	};
 }

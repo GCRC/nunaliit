@@ -37,14 +37,23 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
 ,DH = 'n2.couchDocument'
 ;
 
+var g_dispatcher;
+
 //*******************************************************
 function adjustDocument(doc) {
 
 	// Get user name
 	var userName = null;
-	var sessionContext = $n2.couch.getSession().getContext();
-	if( sessionContext ) {
-		userName = sessionContext.name;
+	if( g_dispatcher ){
+		var isLoggedInMsg = {
+			type: 'authIsLoggedIn'
+		};
+		g_dispatcher.synchronousCall(DH,isLoggedInMsg);
+		
+		var sessionContext = isLoggedInMsg.context;
+		if( sessionContext ) {
+			userName = sessionContext.name;
+		};
 	};
 	
 	// Get now
@@ -126,7 +135,6 @@ var Notifier = $n2.Class({
 		var _this = this;
 		
 		$n2.log('update',changes);
-		var lastSeq = changes.last_seq;
 		var results = changes.results;
 		
 		if( this.dispatchService ){
@@ -207,13 +215,15 @@ var Notifier = $n2.Class({
 });
 
 // *******************************************************
-var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
+var CouchDocumentSource = $n2.Class('CouchDocumentSource',$n2.document.DocumentSource, {
 	
 	db: null,
 	
 	designDoc: null,
 	
 	dispatchService: null,
+	
+	attachmentService: null,
 	
 	geometryRepository: null,
 	
@@ -226,6 +236,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 				id: null
 				,db: null
 				,dispatchService: null
+				,attachmentService: null
 				,isDefaultDocumentSource: false
 			}
 			,opts_
@@ -236,7 +247,12 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		$n2.document.DocumentSource.prototype.initialize.call(this,opts);
 
 		this.db = opts.db;
+		this.attachmentService = opts.attachmentService;
 		this.dispatchService = opts.dispatchService;
+		if( this.dispatchService ){
+			// to make adjustDocument() work
+			g_dispatcher = this.dispatchService;
+		};
 		this.isDefaultDocumentSource = opts.isDefaultDocumentSource;
 		
 		this.designDoc = this.db.getDesignDoc({ddName:'atlas'});
@@ -262,6 +278,10 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		});
 	},
 
+	adoptDocument: function(doc){
+		doc.__n2Source = this.getId();
+	},
+
 	createDocument: function(opts_){
 		var opts = $n2.extend({
 				doc: {}
@@ -282,7 +302,8 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,onSuccess: function(docInfo){
 				doc._id = docInfo.id;
 				doc._rev = docInfo.rev;
-				doc.__n2Source = _this;
+				
+				_this.adoptDocument(doc);
 				
 				_this._dispatch({
 					type: 'documentVersion'
@@ -329,7 +350,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,conflicts: opts.conflicts
 			,deleted_conflicts: opts.deleted_conflicts
 			,onSuccess: function(doc){
-				doc.__n2Source = _this;
+				_this.adoptDocument(doc);
 				opts.onSuccess(doc);
 			}
 			,onError: opts.onError
@@ -352,12 +373,20 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,onSuccess: function(docs){
 				for(var i=0,e=docs.length; i<e; ++i){
 					var doc = docs[i];
-					doc.__n2Source = _this;
+					_this.adoptDocument(doc);
 				};
 				opts.onSuccess(docs);
 			}
 			,onError: opts.onError
 		});
+	},
+
+	getDocumentAttachments: function(doc){
+		return this.attachmentService.getAttachments(doc, this);
+	},
+
+	getDocumentAttachment: function(doc, attachmentName){
+		return this.attachmentService.getAttachment(doc, attachmentName, this);
 	},
 
 	getDocumentAttachmentUrl: function(doc, attachmentName){
@@ -434,6 +463,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		function loadConflictingDocument(retryAllowed){
 			_this.db.getDocument({
 				docId: doc._id
+				,skipCache: true
 				,onSuccess: function(conflictingDoc) {
 					patchConflictingDocument(conflictingDoc, retryAllowed);
 				}
@@ -490,7 +520,8 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		function updateSuccess(docInfo){
 			doc._id = docInfo.id;
 			doc._rev = docInfo.rev;
-			doc.__n2Source = _this;
+			
+			_this.adoptDocument(doc);
 
 			_this._dispatch({
 				type: 'documentVersion'
@@ -612,20 +643,33 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 
 	getLayerDefinitions: function(opts_){
 		var opts = $n2.extend({
-				onSuccess: function(layerDefinitions){}
+				layerIds: null
+				,fullDocuments: false
+				,onSuccess: function(layerDefinitions){}
 				,onError: function(errorMsg){}
 			}
 			,opts_
 		);
 		
+		var keys = undefined;
+		if( opts.layerIds ){
+			keys = [];
+			opts.layerIds.forEach(function(layerId){
+				keys.push(layerId);
+			});
+		};
+		
 		this.designDoc.queryView({
 			viewName: 'layer-definitions'
 			,include_docs: true
+			,keys: keys
 			,onSuccess: function(rows){
 				var layerIdentifiers = [];
 				for(var i=0,e=rows.length;i<e;++i){
 					var doc = rows[i].doc;
-					if( doc.nunaliit_layer_definition ){
+					if( opts.fullDocuments ){
+						layerIdentifiers.push(doc);
+					} else if( doc.nunaliit_layer_definition ){
 						var d = doc.nunaliit_layer_definition;
 						if( !d.id ){
 							d.id = doc._id;
@@ -736,7 +780,8 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 		var callerSuccess = opts.onSuccess;
 		opts.onSuccess = function(docs){
 			for(var i=0,e=docs.length; i<e; ++i){
-				docs[i].__n2Source = _this;
+				var doc = docs[i];
+				_this.adoptDocument(doc);
 			};
 			callerSuccess(docs);
 		};
@@ -788,7 +833,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 			,onError: function(errorMsg){}
 		},opts_);
 		
-		var server = this.db.server;
+		var server = this.db.getServer();
 		
 		server.getUniqueId(opts);
 	},
@@ -802,7 +847,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 	_handle: function(m, addr, dispatcher){
 		if( 'documentSourceFromDocument' === m.type ){
 			var doc = m.doc;
-			if( doc && doc.__n2Source === this ){
+			if( doc && doc.__n2Source === this.getId() ){
 				m.documentSource = this;
 			} else if( doc 
 			 && !doc.__n2Source 
@@ -815,7 +860,7 @@ var CouchDocumentSource = $n2.Class($n2.document.DocumentSource, {
 
 //*******************************************************
 
-var GeometryRepository = $n2.Class({
+var GeometryRepository = $n2.Class('GeometryRepository',{
 	
 	db: null,
 	
@@ -1073,7 +1118,7 @@ var GeometryRepository = $n2.Class({
 });
 
 //*******************************************************
-var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
+var CouchDocumentSourceWithSubmissionDb = $n2.Class('CouchDocumentSourceWithSubmissionDb', CouchDocumentSource, {
 	
 	submissionDb: null,
 	
@@ -1083,10 +1128,13 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 	
 	isSubmissionDataSource: null,
 	
+	deviceId: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			submissionDb: null
 			,submissionServletUrl: null
+			,deviceId: undefined
 		},opts_);
 		
 		CouchDocumentSource.prototype.initialize.call(this,opts);
@@ -1097,6 +1145,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 		
 		this.submissionDb = opts.submissionDb;
 		this.submissionServerUrl = opts.submissionServerUrl;
+		this.deviceId = opts.deviceId;
 		
 		var submissionServer = $n2.couch.getServer({
 			pathToServer: this.submissionServerUrl
@@ -1137,12 +1186,14 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 		if( opts.doc._id ){
 			onUuidComputed(opts.doc._id);
 		} else {
-			var server = this.db.server;
+			var server = this.db.getServer();
 			if( server ){
 				server.getUniqueId({
 					onSuccess: onUuidComputed
 					,onError: opts.onError
 				});
+			} else {
+				opts.onError('No server associated with database');
 			};
 		};
 		
@@ -1155,9 +1206,10 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 
 			_this.submissionServerDb.createDocument({
 				data: doc
+				,deviceId: _this.deviceId
 				,onSuccess: function(docInfo){
 					_this._warnUser();
-					doc.__n2Source = _this;
+					_this.adoptDocument(doc);
 					opts.onSuccess(doc);
 				}
 				,onError: opts.onError
@@ -1194,6 +1246,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 		
 		this.submissionServerDb.updateDocument({
 			data: copy
+			,deviceId: _this.deviceId
 			,onSuccess: function(docInfo){
 				_this._warnUser();
 				opts.onSuccess(doc);
@@ -1220,6 +1273,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class(CouchDocumentSource, {
 		
 		this.submissionServerDb.deleteDocument({
 			data: doc
+			,deviceId: _this.deviceId
 			,onSuccess: function(docInfo){
 				_this._warnUser();
 				opts.onSuccess(doc);

@@ -105,6 +105,7 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 	public void analyzeFile(AttachmentDescriptor attDescription) throws Exception {
 		// No conversion required.
 		OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
+		attDescription.setOriginalUpload(true);
 		attDescription.setSize(originalObj.getSize());
 		attDescription.setContentType(originalObj.getContentType());
 		attDescription.setEncodingType(originalObj.getEncodingType());

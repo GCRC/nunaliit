@@ -2,10 +2,22 @@
 /* description: Parses style rules */
 
 %{
+// Utilities
+function classNamesFromElement(elem){
+	var names = undefined;
+	
+	var classAttr = elem.getAttribute('class');
+	if( classAttr ){
+		names = classAttr.split(' ').filter(function(name){
+			return (name.length > 0);
+		});
+	};
+	
+	return names;
+};
 
 // Functions in the global space receives the context object
-// as 'this' and the arguments in the form of an instance of
-// class Argument
+// as 'this'.
 var global = {
 	isSelected: function(){
 		return this.n2_selected;
@@ -19,34 +31,42 @@ var global = {
 	,isPoint: function(){
 		return 'point' === this.n2_geometry;
 	}
-	,isLine: function(args){
+	,isLine: function(){
 		return 'line' === this.n2_geometry;
 	}
-	,isPolygon: function(args){
+	,isPolygon: function(){
 		return 'polygon' === this.n2_geometry;
 	}
-	,isSchema: function(args){
-		if( args ){
-			var schemaName = args.getArgument(this, 0);
-			if( schemaName && this.n2_doc ){
-				return (schemaName === this.n2_doc.nunaliit_schema);
-			};
+	,isSchema: function(schemaName){
+		if( schemaName && this.n2_doc ){
+			return (schemaName === this.n2_doc.nunaliit_schema);
 		};
 		return false;
 	}
-	,onLayer: function(args){
-		if( args ){
-			var layerId = args.getArgument(this, 0);
-			if( layerId
-			 && this.n2_doc 
-			 && this.n2_doc.nunaliit_layers ){
-			 	var index = this.n2_doc.nunaliit_layers.indexOf(layerId);
-				return (index >= 0);
-			};
+	,onLayer: function(layerId){
+		if( layerId
+		 && this.n2_doc 
+		 && this.n2_doc.nunaliit_layers ){
+		 	var index = this.n2_doc.nunaliit_layers.indexOf(layerId);
+			return (index >= 0);
 		};
 		return false;
 	}
+	,hasClass: function(className){
+		if( className
+		 && this.n2_elem ){
+			var classNames = classNamesFromElement(this.n2_elem);
+		 	var index = -1;
+		 	if( classNames ){
+			 	index = classNames.indexOf(className);
+		 	};
+			return (index >= 0);
+		};
+		return false;
+	}
+	,Math: Math
 };
+parser.global = global;
 
 // -----------------------------------------------------------
 var FunctionCall = function(value, args){
@@ -56,7 +76,11 @@ var FunctionCall = function(value, args){
 FunctionCall.prototype.getValue = function(ctxt){
 	var value = this.value.getValue(ctxt);
 	if( typeof value === 'function' ){
-		return value.call(ctxt, this.args);
+		var args = [];
+		if( this.args ){
+			this.args.pushOnArray(ctxt, args);
+		};
+		return value.apply(ctxt, args);
 	};
 	return false;
 };
@@ -88,6 +112,14 @@ Argument.prototype.getArgument = function(ctxt, position){
 	};
 	
 	return undefined;
+};
+Argument.prototype.pushOnArray = function(ctxt, array){
+	var value = this.valueNode.getValue(ctxt);
+	array.push(value);
+	
+	if( this.nextArgument ){
+		this.nextArgument.pushOnArray(ctxt, array);
+	};
 };
 
 // -----------------------------------------------------------
@@ -372,7 +404,7 @@ value
     ;
 
 arguments
-    : arguments ',' arguments
+    : value ',' arguments
         {
         	$$ = new Argument($1,$3);
         }

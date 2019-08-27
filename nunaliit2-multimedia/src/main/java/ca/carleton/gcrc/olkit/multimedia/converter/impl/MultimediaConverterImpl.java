@@ -19,18 +19,12 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagick;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
+import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.olkit.multimedia.xmp.XmpExtractor;
 import ca.carleton.gcrc.olkit.multimedia.xmp.XmpInfo;
 
 public class MultimediaConverterImpl implements MultimediaConverter {
 
-	static public int IMAGE_MAX_WIDTH = 1000;
-	static public int IMAGE_MAX_HEIGHT = 1000;
-	static public int IMAGE_THUMB_HEIGHT = 350;
-	static public int IMAGE_THUMB_WIDTH = 350;
-	static public int VIDEO_THUMB_HEIGHT = 240;
-	static public int VIDEO_THUMB_WIDTH = 320;
-	
 	static public MultimediaConversionThreshold imageConversionThreshold = new DefaultThresholdImage();
 	static public MultimediaConversionThreshold audioConversionThreshold = new DefaultThresholdAudio();
 	static public MultimediaConversionThreshold videoConversionThreshold = new DefaultThresholdVideo();
@@ -39,6 +33,9 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 
 	@Override
 	public void convertVideo(MultimediaConversionRequest request) throws Exception {
+		
+		logger.trace("MultimediaConverterImpl.convertVideo()");
+
 		request.setConversionPerformed(false);
 		request.setThumbnailCreated(false);
 
@@ -70,14 +67,21 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				);
 		
 		// Report length and dimensions
-		request.setInDurationInSec( videoInfo.getDurationInSec() );
+		if( null == videoInfo.getDurationInSec() ) {
+			request.setInDurationInSec( (float)0.0 );
+		} else {
+			request.setInDurationInSec(videoInfo.getDurationInSec());
+		}
 		request.setInHeight(videoInfo.getHeight().intValue());
 		request.setInWidth(videoInfo.getWidth().intValue());
 		
+		FFmpegMediaInfo outVideoInfo = null;
 		if( false == conversionRequired ) {
 			// Conversion not required, converted file is the uploaded file
 			request.setOutFile(inFile);
 			progress.updateProgress(100);
+			outVideoInfo = videoInfo;
+
 		} else {
 			File outFile = request.getOutFile();
 			if( null == outFile ) {
@@ -91,7 +95,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			request.setOutFile(outFile);
 			request.setConversionPerformed(true);
 
-			FFmpegMediaInfo outVideoInfo = ffmpeg.getMediaInfo( outFile );
+			outVideoInfo = ffmpeg.getMediaInfo( outFile );
 			if( null == outVideoInfo.getDurationInSec() ) {
 				request.setOutDurationInSec( (float)0.0 );
 			} else {
@@ -118,7 +122,12 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			}
 			
 			FFmpegProcessor ffmpeg = FFmpeg.getProcessor(null);
-			ffmpeg.createThumbnail(videoInfo, thumbnailFile, VIDEO_THUMB_WIDTH, VIDEO_THUMB_HEIGHT);
+			ffmpeg.createThumbnail(
+					outVideoInfo, 
+					thumbnailFile, 
+					MultimediaConfiguration.VIDEO_THUMB_WIDTH, 
+					MultimediaConfiguration.VIDEO_THUMB_HEIGHT
+				);
 			
 			request.setThumbnailFile(thumbnailFile);
 			request.setThumbnailCreated(true);
@@ -134,6 +143,9 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 	
 	@Override
 	public void convertAudio(MultimediaConversionRequest request) throws Exception {
+		
+		logger.trace("MultimediaConverterImpl.convertAudio()");
+
 		request.setConversionPerformed(false);
 		request.setThumbnailCreated(false);
 
@@ -193,6 +205,9 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 	
 	@Override
 	public void convertImage(MultimediaConversionRequest request) throws Exception {
+
+		logger.trace("MultimediaConverterImpl.convertImage()");
+		
 		request.setConversionPerformed(false);
 		request.setThumbnailCreated(false);
 
@@ -294,7 +309,12 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			
 			ImageMagickProcessor im = imInfo.getProcessor(progress);
 			if( resizeRequired ) {
-				im.resizeImage(imageInfo, outFile, IMAGE_MAX_WIDTH, IMAGE_MAX_HEIGHT);
+				im.resizeImage(
+						imageInfo, 
+						outFile, 
+						MultimediaConfiguration.IMAGE_MAX_WIDTH, 
+						MultimediaConfiguration.IMAGE_MAX_HEIGHT
+					);
 			} else if(conversionRequired) {
 				im.convertImage(imageInfo, outFile);
 			} else {
@@ -326,7 +346,12 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			}
 
 			ImageMagickProcessor im = imInfo.getProcessor(progress);
-			im.resizeImage(imageInfo, thumbnailFile, IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT);
+			im.resizeImage(
+					imageInfo,
+					thumbnailFile,
+					MultimediaConfiguration.IMAGE_THUMB_WIDTH,
+					MultimediaConfiguration.IMAGE_THUMB_HEIGHT
+				);
 			
 			request.setThumbnailFile(thumbnailFile);
 			request.setThumbnailCreated(true);
@@ -339,6 +364,9 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 
 	@Override
 	public void createImageThumbnail(MultimediaConversionRequest request) throws Exception {
+
+		logger.trace("MultimediaConverterImpl.createImageThumbnail()");
+		
 		request.setConversionPerformed(false);
 		request.setThumbnailCreated(false);
 
@@ -389,7 +417,12 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			}
 
 			ImageMagickProcessor im = imInfo.getProcessor(progress);
-			im.resizeImage(imageInfo, thumbnailFile, IMAGE_THUMB_WIDTH, IMAGE_THUMB_HEIGHT);
+			im.resizeImage(
+					imageInfo, 
+					thumbnailFile, 
+					MultimediaConfiguration.IMAGE_THUMB_WIDTH, 
+					MultimediaConfiguration.IMAGE_THUMB_HEIGHT
+				);
 			
 			request.setThumbnailFile(thumbnailFile);
 			request.setThumbnailCreated(true);

@@ -394,7 +394,7 @@ var IntentView = $n2.Class({
 		};
 	},
 
-	_handleFocusOn: function(docId){
+	_handleFocusOn: function(docIds){
 		var changed = [];
 
 		// New selection, unselect previous
@@ -402,18 +402,26 @@ var IntentView = $n2.Class({
 
 		// Create new focus
 		this.hoverInfo = {
-			docId: docId
+			originMap: {}
 			,docIds: {}
 		};
-		this.hoverInfo.docIds[docId] = true;
-		
-		// Adjust selected nodes
-		var nodesArray = this.nodesArrayById[docId];
-		if( nodesArray ){
-			for(var j=0,k=nodesArray.length; j<k; ++j){
-				var n = nodesArray[j];
-				if( this._adjustIntentOnNode(n) ){
-					changed.push(n);
+
+		if( docIds ){
+			for(var i=0,e=docIds.length; i<e; ++i){
+				var docId = docIds[i];
+
+				this.hoverInfo.originMap[docId] = true;
+				this.hoverInfo.docIds[docId] = true;
+				
+				// Adjust associated nodes
+				var nodesArray = this.nodesArrayById[docId];
+				if( nodesArray ){
+					for(var j=0,k=nodesArray.length; j<k; ++j){
+						var n = nodesArray[j];
+						if( this._adjustIntentOnNode(n) ){
+							changed.push(n);
+						};
+					};
 				};
 			};
 		};
@@ -494,13 +502,29 @@ var IntentView = $n2.Class({
 			this._handleUnselect();
 			
 		} else if( 'focusOn' === m.type ){
-			var docId = m.docId;
-			this._handleFocusOn(docId);
+			if( m.docId ){
+				this._handleFocusOn([m.docId]);
+			} else if( m.docIds ){
+				this._handleFocusOn(m.docIds);
+			};
 
 		} else if( 'focusOnSupplement' === m.type ) {
 			var docId = m.docId;
 			var intent = m.intent;
-			this._handleFocusOnSupplement(docId, intent);
+			
+			var valid = true;
+			if( m.origin ){
+				valid = false;
+				if( this.hoverInfo 
+				 && this.hoverInfo.originMap 
+				 && this.hoverInfo.originMap[m.origin] ){
+					valid = true;
+				};
+			};
+			
+			if( docId && valid ){
+				this._handleFocusOnSupplement(docId, intent);
+			};
 			
 		} else if( 'focusOff' === m.type ){
 			this._handleFocusOff();
@@ -829,7 +853,7 @@ var IntentService = $n2.Class({
 		};
 	},
 
-	_handleFocusOn: function(docId){
+	_handleFocusOn: function(docIds){
 		var changed = [];
 
 		// New selection, unselect previous
@@ -837,15 +861,22 @@ var IntentService = $n2.Class({
 
 		// Create new focus
 		this.hoverInfo = {
-			docId: docId
+			originMap: {}
 			,docIds: {}
 		};
-		this.hoverInfo.docIds[docId] = true;
-		
-		// Adjust current node
-		var n = this._getNode(docId);
-		if( this._adjustIntentOnNode(n) ){
-			changed.push(n);
+		if( docIds ){
+			for(var i=0,e=docIds.length; i<e; ++i){
+				var docId = docIds[i];
+
+				this.hoverInfo.originMap[docId] = true;
+				this.hoverInfo.docIds[docId] = true;
+				
+				// Adjust current node
+				var n = this._getNode(docId);
+				if( this._adjustIntentOnNode(n) ){
+					changed.push(n);
+				};
+			};
 		};
 		
 		// Report to listener the nodes that were changed
@@ -919,13 +950,29 @@ var IntentService = $n2.Class({
 			this._handleUnselect();
 			
 		} else if( 'focusOn' === m.type ){
-			var docId = m.docId;
-			this._handleFocusOn(docId);
+			if( m.docId ){
+				this._handleFocusOn([m.docId]);
+			} else if( m.docIds ){
+				this._handleFocusOn(m.docIds);
+			};
 
 		} else if( 'focusOnSupplement' === m.type ) {
 			var docId = m.docId;
 			var intent = m.intent;
-			this._handleFocusOnSupplement(docId, intent);
+			
+			var valid = true;
+			if( m.origin ){
+				valid = false;
+				if( this.hoverInfo 
+				 && this.hoverInfo.originMap 
+				 && this.hoverInfo.originMap[m.origin] ){
+					valid = true;
+				};
+			};
+
+			if( docId && valid ){
+				this._handleFocusOnSupplement(docId, intent);
+			};
 			
 		} else if( 'focusOff' === m.type ){
 			this._handleFocusOff();

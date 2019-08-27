@@ -1,0 +1,17 @@
+[
+   {
+      "label": "nunaliit_created_name",
+      "select": "nunaliit_created.name",
+      "type": "text"
+   },
+   {
+      "label": "nunaliit_created_time",
+      "select": "nunaliit_created.time",
+      "type": "text"
+   },
+   {
+      "label": "text",
+      "select": "demo_comment.text",
+      "type": "text"
+   }
+]

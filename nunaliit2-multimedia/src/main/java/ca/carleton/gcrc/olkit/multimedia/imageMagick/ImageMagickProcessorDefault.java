@@ -2,10 +2,9 @@ package ca.carleton.gcrc.olkit.multimedia.imageMagick;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.util.List;
+import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
+import ca.carleton.gcrc.utils.CommandUtils;
 
 public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 	
@@ -31,25 +31,6 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 	static private Pattern patternProgressRotate = Pattern.compile("^\\s*rotate image.* (\\d+)%");
 	static private Pattern patternProgressSave = Pattern.compile("^\\s*save image.* (\\d+)%");
 	
-	static String[] breakUpCommand(String command){
-		String[] commandTokens = command.split(" ");
-		int count = 0;
-		for(String token : commandTokens){
-			if( token.length() > 0 ) ++count;
-		}
-		
-		String[] tokens = new String[count];
-		int index = 0;
-		for(String token : commandTokens){
-			if( token.length() > 0 ) {
-				tokens[index] = token;
-				++index;
-			}
-		}
-		
-		return tokens;
-	}
-	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private MultimediaConversionProgress progressTracker = null;
@@ -67,21 +48,25 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 		ImageInfo info = new ImageInfo();
 		info.file = imageFile;
 		
-		Runtime rt = Runtime.getRuntime();
 		StringWriter sw = new StringWriter();
 		try {
-			String[] tokens = breakUpCommand(imageInfoCommand);
-			for(int i=0; i<tokens.length; ++i){
-				tokens[i] = String.format(tokens[i], imageFile.getAbsolutePath());
-				if( 0 != i ) sw.write(" ");
-				sw.write(tokens[i]);
+			List<String> originalTokens = CommandUtils.breakUpCommand(imageInfoCommand);
+			List<String> tokens = new Vector<String>();
+			boolean first = true;
+			for(String originalToken : originalTokens){
+				String token = String.format(originalToken, imageFile.getAbsolutePath());
+				tokens.add(token);
+
+				if( first ) {
+					first = false;
+				} else {
+					sw.write(" ");
+				}
+				sw.write(token);
 			}
 			logger.debug(sw.toString());
 
-			Process p = rt.exec(tokens, null, null);
-			InputStream is = p.getInputStream();
-			InputStreamReader isr = new InputStreamReader(is);
-			BufferedReader bufReader = new BufferedReader(isr);
+			BufferedReader bufReader = CommandUtils.executeCommand(tokens);
 			String line = bufReader.readLine();
 			while( null != line ) {
 
@@ -121,8 +106,8 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 				
 				line = bufReader.readLine();
 			}
-		} catch (IOException e) {
-			throw new Exception("Unabel to determine image info: "+sw.toString(),e);
+		} catch (Exception e) {
+			throw new Exception("Unable to determine image info: "+sw.toString(),e);
 		}
 		
 		return info;
@@ -137,21 +122,25 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 	@Override
 	public void convertImage(ImageInfo imageInfo, File outputFile) throws Exception {
 		
-		Runtime rt = Runtime.getRuntime();
 		StringWriter sw = new StringWriter();
 		try {
-			String[] tokens = breakUpCommand(imageConvertCommand);
-			for(int i=0; i<tokens.length; ++i){
-				tokens[i] = String.format(tokens[i], imageInfo.file.getAbsolutePath(), outputFile.getAbsolutePath());
-				if( 0 != i ) sw.write(" ");
-				sw.write(tokens[i]);
+			List<String> originalTokens = CommandUtils.breakUpCommand(imageConvertCommand);
+			List<String> tokens = new Vector<String>();
+			boolean first = true;
+			for(String originalToken : originalTokens){
+				String token = String.format(originalToken, imageInfo.file.getAbsolutePath(), outputFile.getAbsolutePath());
+				tokens.add(token);
+
+				if( first ) {
+					first = false;
+				} else {
+					sw.write(" ");
+				}
+				sw.write(token);
 			}
 			logger.debug(sw.toString());
 
-			Process p = rt.exec(tokens, null, null);
-			InputStream is = p.getErrorStream();
-			InputStreamReader isr = new InputStreamReader(is);
-			BufferedReader bufReader = new BufferedReader(isr);
+			BufferedReader bufReader = CommandUtils.executeCommand(tokens);
 			String line = bufReader.readLine();
 			while( null != line ) {
 				line = line.trim();
@@ -183,7 +172,7 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 				
 				line = bufReader.readLine();
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			throw new Exception("Error while converting image: "+sw.toString(),e);
 		}
 	}
@@ -197,27 +186,30 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 	@Override
 	public void resizeImage(ImageInfo imageInfo, File outputFile, int maxWidth, int maxHeight) throws Exception {
 		
-		Runtime rt = Runtime.getRuntime();
 		StringWriter sw = new StringWriter();
 		try {
-			String[] tokens = breakUpCommand(imageResizeCommand);
-			for(int i=0; i<tokens.length; ++i){
-				tokens[i] = String.format(
-						tokens[i]
+			List<String> originalTokens = CommandUtils.breakUpCommand(imageResizeCommand);
+			List<String> tokens = new Vector<String>();
+			boolean first = true;
+			for(String originalToken : originalTokens){
+				String token = String.format(
+						originalToken
 						,imageInfo.file.getAbsolutePath()
 						,outputFile.getAbsolutePath()
 						,maxWidth
-						,maxHeight
-					);
-				if( 0 != i ) sw.write(" ");
-				sw.write(tokens[i]);
+						,maxHeight);
+				tokens.add(token);
+
+				if( first ) {
+					first = false;
+				} else {
+					sw.write(" ");
+				}
+				sw.write(token);
 			}
 			logger.debug(sw.toString());
 
-			Process p = rt.exec(tokens, null, null);
-			InputStream is = p.getErrorStream();
-			InputStreamReader isr = new InputStreamReader(is);
-			BufferedReader bufReader = new BufferedReader(isr);
+			BufferedReader bufReader = CommandUtils.executeCommand(tokens);
 			String line = bufReader.readLine();
 			while( null != line ) {
 				line = line.trim();
@@ -249,7 +241,7 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 				
 				line = bufReader.readLine();
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			logger.error("Error while resizing image: "+sw.toString(),e);
 			throw new Exception("Error while resizing image: "+sw.toString(),e);
 		}
@@ -267,25 +259,29 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 		,File outputFile
 		) throws Exception {
 		
-		Runtime rt = Runtime.getRuntime();
 		StringWriter sw = new StringWriter();
 		try {
-			String[] tokens = breakUpCommand(imageReorientCommand);
-			for(int i=0; i<tokens.length; ++i){
-				tokens[i] = String.format(
-						tokens[i]
+			List<String> originalTokens = CommandUtils.breakUpCommand(imageReorientCommand);
+			List<String> tokens = new Vector<String>();
+			boolean first = true;
+			for(String originalToken : originalTokens){
+				String token = String.format(
+						originalToken
 						,imageInfo.file.getAbsolutePath()
 						,outputFile.getAbsolutePath()
 					);
-				if( 0 != i ) sw.write(" ");
-				sw.write(tokens[i]);
+				tokens.add(token);
+
+				if( first ) {
+					first = false;
+				} else {
+					sw.write(" ");
+				}
+				sw.write(token);
 			}
 			logger.debug(sw.toString());
 
-			Process p = rt.exec(tokens, null, null);
-			InputStream is = p.getErrorStream();
-			InputStreamReader isr = new InputStreamReader(is);
-			BufferedReader bufReader = new BufferedReader(isr);
+			BufferedReader bufReader = CommandUtils.executeCommand(tokens);
 			String line = bufReader.readLine();
 			while( null != line ) {
 				line = line.trim();
@@ -317,7 +313,7 @@ public class ImageMagickProcessorDefault implements ImageMagickProcessor {
 				
 				line = bufReader.readLine();
 			}
-		} catch (IOException e) {
+		} catch (Exception e) {
 			logger.error("Error while re-orienting image: "+sw.toString(),e);
 			throw new Exception("Error while re-orienting image: "+sw.toString(),e);
 		}

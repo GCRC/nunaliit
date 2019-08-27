@@ -44,12 +44,9 @@ public class Files {
 			try {
 				fis = new FileInputStream(source);
 				fos = new FileOutputStream(target);
-				byte[] buffer = new byte[256];
-				int count = fis.read(buffer);
-				while( count >= 0 ){
-					fos.write(buffer, 0, count);
-					count = fis.read(buffer);
-				}
+				
+				StreamUtils.copyStream(fis, fos);
+
 				fos.flush();
 				
 			} catch(Exception e) {

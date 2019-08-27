@@ -161,6 +161,30 @@ public class SchemaAttribute {
 			String placeholder = jsonAttr.optString("placeholder",null);
 			attribute.setPlaceholder(placeholder);
 		}
+
+		// maxAudioRecordingLengthSeconds
+		{
+			int maxAudioRecordingLengthSeconds = jsonAttr.optInt("maxAudioRecordingLengthSeconds",-1);
+			if( maxAudioRecordingLengthSeconds > 0 ) {
+				attribute.setMaxAudioRecordingLengthSeconds(maxAudioRecordingLengthSeconds);
+			}
+		}
+
+		// maxVideoRecordingLengthSeconds
+		{
+			int maxVideoRecordingLengthSeconds = jsonAttr.optInt("maxVideoRecordingLengthSeconds",-1);
+			if( maxVideoRecordingLengthSeconds > 0 ) {
+				attribute.setMaxVideoRecordingLengthSeconds(maxVideoRecordingLengthSeconds);
+			}
+		}
+
+		// recordVideoSize
+		{
+			String recordVideoSize = jsonAttr.optString("recordVideoSize");
+			if(null != recordVideoSize && recordVideoSize.matches("\\d+x\\d+")) {
+				attribute.setRecordVideoSize(recordVideoSize);
+			}
+		}
 		
 		return attribute;
 	}
@@ -183,6 +207,9 @@ public class SchemaAttribute {
 	private boolean wikiTransform;
 	private Integer maxHeight = null;
 	private boolean uploadOptional = false;
+	private Integer maxAudioRecordingLengthSeconds = null;
+	private Integer maxVideoRecordingLengthSeconds = null;
+	private String recordVideoSize = null;
 	private String placeholder = null;
 
 	public SchemaAttribute(String type){
@@ -346,6 +373,24 @@ public class SchemaAttribute {
 		this.placeholder = placeholder;
 	}
 
+	public Integer getMaxAudioRecordingLengthSeconds() {
+		return maxAudioRecordingLengthSeconds;
+	}
+
+	public void setMaxAudioRecordingLengthSeconds(Integer maxAudioRecordingLengthSeconds) {
+		this.maxAudioRecordingLengthSeconds = maxAudioRecordingLengthSeconds;
+	}
+
+	public Integer getMaxVideoRecordingLengthSeconds() { return maxVideoRecordingLengthSeconds; }
+
+	public void setMaxVideoRecordingLengthSeconds(Integer maxVideoRecordingLengthSeconds) {
+		this.maxVideoRecordingLengthSeconds = maxVideoRecordingLengthSeconds;
+	}
+
+	public String getRecordVideoSize() { return recordVideoSize; }
+
+	public void setRecordVideoSize(String recordVideoSize) { this.recordVideoSize = recordVideoSize; }
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -366,6 +411,9 @@ public class SchemaAttribute {
 		if( null != maxHeight ) jsonAttr.put("maxHeight", maxHeight.intValue());
 		if( uploadOptional ) jsonAttr.put("uploadOptional", true);
 		if( null != placeholder ) jsonAttr.put("placeholder", placeholder);
+		if( null != maxAudioRecordingLengthSeconds ) jsonAttr.put("maxAudioRecordingLengthSeconds", maxAudioRecordingLengthSeconds.intValue());
+		if( null != maxVideoRecordingLengthSeconds ) jsonAttr.put("maxVideoRecordingLengthSeconds", maxVideoRecordingLengthSeconds.intValue());
+		if( null != recordVideoSize ) jsonAttr.put("recordVideoSize", recordVideoSize);
 
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
@@ -402,9 +450,7 @@ public class SchemaAttribute {
 			}
 			
 		} else if( "localized".equals(type) ){
-			if( null != id ){
-				schemaDoc.put(id, JSONObject.NULL);
-			}
+			// leave localized attributes as undefined
 			
 		} else if( "date".equals(type) ){
 			// leave date attributes as undefined
@@ -450,6 +496,16 @@ public class SchemaAttribute {
 				attachments.put("files", new JSONObject());
 				doc.put("nunaliit_attachments", attachments);
 			}
+            if( null != maxAudioRecordingLengthSeconds && maxAudioRecordingLengthSeconds.intValue() > 0 ){
+                doc.put("nunaliit_maxAudioRecordingLengthSeconds", maxAudioRecordingLengthSeconds);
+            }
+			if( null != maxVideoRecordingLengthSeconds && maxVideoRecordingLengthSeconds.intValue() > 0 ){
+				doc.put("nunaliit_maxVideoRecordingLengthSeconds", maxVideoRecordingLengthSeconds);
+			}
+			if( null != recordVideoSize ){
+				doc.put("nunaliit_recordVideoSize", recordVideoSize);
+			}
+
 			JSONObject files = attachments.getJSONObject("files");
 			JSONObject media = files.optJSONObject("media");
 			if( null == media ){
@@ -460,7 +516,7 @@ public class SchemaAttribute {
 				if( isUploadOptional() ){
 					media.put("_compulsory", false);
 				}
-				
+
 				files.put("media", media);
 			}
 
@@ -471,12 +527,27 @@ public class SchemaAttribute {
 
 			//doc.put("nunaliit_geom", null);
 
+		} else if( "hover_sound".equals(type) ){
+			if( null != id ){
+				throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
+			}
+
+		} else if( "createdBy".equals(type) ){
+			if( null != id ){
+				throw new Exception("'id' should not be specified for attributes of type 'createdBy'");
+			}
+
+		} else if( "createdTime".equals(type) ){
+			if( null != id ){
+				throw new Exception("'id' should not be specified for attributes of type 'createdTime'");
+			}
+
 		} else {
 			throw new Exception("Unable to include type "+type+" in create");
 		}
 	}
 
-	public boolean printBrief(PrintWriter pw, String schemaName, boolean isFirst) throws Exception {
+	public boolean printBrief(PrintWriter pw, String schemaStructure, String schemaClass, boolean isFirst) throws Exception {
 		boolean printed = false;
 		
 		if( includedInBrief ){
@@ -484,29 +555,38 @@ public class SchemaAttribute {
 				
 			} else if( "string".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.println("\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t{{#if "+id+"}}");
+					pw.print("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.println("</span>");
+					pw.println("\t\t{{/if}}");
+					pw.println("\t{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "localized".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.println("\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t{{#if "+id+"}}");
+					pw.print("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{#:localize}}"+id+"{{/:localize}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.println("</span>");
+					pw.println("\t\t{{/if}}");
+					pw.println("\t{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.println("\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t{{#if "+id+"}}");
+					pw.println("\t\t\t<span class=\"n2s_select "+schemaClass+"_"+id+"\" n2-choice=\"{{"+id+"}}\">");
 					if( !isFirst ) pw.print(" ");
-					pw.print("<span class=\"n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					for(SelectionOption option : options){
-						pw.print("<span class=\"n2s_choice n2s_localize\" n2-choice=\""+option.getValue()+"\">");
+						pw.print("\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+option.getValue()+"\">");
 						String label = option.getLabel();
 						if( null == label ){
 							label = option.getValue();
@@ -514,52 +594,65 @@ public class SchemaAttribute {
 						pw.print(label);
 						pw.print("</span>");
 					}
-					pw.print("</span>");
-					pw.print("{{/"+schemaName+"}}");
+					pw.println("\t\t\t</span>");
+					pw.println("\t\t{{/if}}");
+					pw.println("\t{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "date".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
+					pw.println("\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t{{#if "+id+"}}");
+					pw.print("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
 					pw.print("{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					pw.print("{{date}}");
 					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.println("</span>");
+					pw.println("\t\t{{/if}}");
+					pw.println("\t{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "reference".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
-					pw.print("{{#"+id+"}}");
-					pw.print("{{#doc}}");
+					pw.println("\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t{{#if "+id+"}}");
+					pw.println("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t{{#"+id+"}}");
+					pw.println("\t\t\t\t\t{{#doc}}");
 					if( !isFirst ) pw.print(" ");
-					pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
-					pw.print("{{/doc}}");
-					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.println("\t\t\t\t\t\t<span class=\"n2s_briefDisplay\">{{.}}</span>");
+					pw.println("\t\t\t\t\t{{/doc}}");
+					pw.println("\t\t\t\t{{/"+id+"}}");
+					pw.println("\t\t\t</span>");
+					pw.println("\t\t{{/if}}");
+					pw.println("\t{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
-					pw.print("{{#"+schemaName+"}}");
-					pw.print("{{#"+id+"}}");
-					if( !isFirst ) pw.print(" ");
-					pw.print("<span class=\"n2s_custom\""
+					pw.println("\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t{{#if "+id+"}}");
+					pw.println("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					if( !isFirst ) pw.println(" ");
+					pw.println("\t\t\t\t<span class=\"n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
-							+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
-					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+							+ " nunaliit-selector=\"{{#:selector}}"+id+"{{/:selector}}\"></span>");
+					pw.println("\t\t\t</span>");
+					pw.println("\t\t{{/if}}");
+					pw.println("\t{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 				
 			} else if( "array".equals(type) ){
 				if( null != id ){
-					pw.print("{{#"+schemaName+"}}");
-					pw.print("{{#"+id+"}}");
+					pw.println("\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t{{#if "+id+"}}");
+					pw.println("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
+					pw.print("\t\t\t\t{{#"+id+"}}");
 					if( !isFirst ) pw.print(" ");
 					
 					if( "string".equals(elementType) ){
@@ -577,8 +670,10 @@ public class SchemaAttribute {
 						pw.print("{{/doc}}");
 					}
 					
-					pw.print("{{/"+id+"}}");
-					pw.print("{{/"+schemaName+"}}");
+					pw.println("{{/"+id+"}}");
+					pw.println("\t\t\t</span>");
+					pw.println("\t\t{{/if}}");
+					pw.println("\t{{/"+schemaStructure+"}}");
 					printed = true;
 				}
 
@@ -587,9 +682,37 @@ public class SchemaAttribute {
 					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
 				}
 
-				pw.print("{{#nunaliit_geom}}");
-				pw.print("{{wkt}}");
-				pw.print("{{/nunaliit_geom}}");
+				pw.println("\t{{#nunaliit_geom}}");
+				pw.println("\t\t{{#if wkt}}");
+				pw.println("\t\t\t<span class=\"nunaliit_geom_wkt "+schemaClass+"_geom\">{{wkt}}</span>");
+				pw.println("\t\t{{/if}}");
+				pw.println("\t{{/nunaliit_geom}}");
+
+			} else if( "hover_sound".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
+				}
+
+				pw.println("\t{{#nunaliit_hoverSound}}");
+				pw.println("\t\t{{#if doc}}");
+				pw.println("\t\t\t<span class=\"nunaliit_hoversound "+schemaClass+"_hoversound\">");
+				pw.print("\t\t\t\t{{#doc}}");
+				if( !isFirst ) pw.print(" ");
+				pw.println("\t\t\t\t\t<span class=\"n2s_briefDisplay\">{{.}}</span>");
+				pw.println("\t\t\t\t{{/doc}}");
+				pw.println("\t\t\t</span>");
+				pw.println("\t\t{{/if}}");
+				pw.println("\t{{/nunaliit_hoverSound}}");
+
+			} else if( "createdBy".equals(type) ){
+				pw.println("\t{{#nunaliit_created}}");
+				pw.println("\t\t<span class=\"n2s_insertUserName "+schemaClass+"_createdBy\">{{name}}</span>");
+				pw.println("\t{{/nunaliit_created}}");
+
+			} else if( "createdTime".equals(type) ){
+				pw.println("\t{{#nunaliit_created}}");
+				pw.println("\t\t<span class=\"n2s_insertTime "+schemaClass+"_createdTime\">{{time}}</span>");
+				pw.println("\t{{/nunaliit_created}}");
 					
 			} else {
 				throw new Exception("Unable to include type "+type+" in brief");
@@ -599,7 +722,7 @@ public class SchemaAttribute {
 		return printed;
 	}
 
-	public void printDisplay(PrintWriter pw, String schemaName) throws Exception {
+	public void printDisplay(PrintWriter pw, String schemaStructure, String schemaClass) throws Exception {
 		if( false == excludedFromDisplay ){
 			String label = this.label;
 			String labelLocalizeClass = " n2s_localize";
@@ -619,10 +742,10 @@ public class SchemaAttribute {
 			} else if( "string".equals(type)
 			 || "localized".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#if "+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 
@@ -654,15 +777,15 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "date".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">{{date}}</div>");
@@ -672,15 +795,15 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "reference".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					
@@ -696,21 +819,21 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
-					pw.println("{{#"+schemaName+"}}");
-					pw.println("\t{{#"+id+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t{{#if "+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					
 					pw.println("\t\t\t<div class=\"value n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
-							+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\">"
+							+ " nunaliit-selector=\"{{#:selector}}"+id+"{{/:selector}}\">"
 							+ "</div>");
 
 					pw.println("\t\t\t<div class=\"end\"></div>");
@@ -718,15 +841,17 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					
-					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("\t{{/if}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "array".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t{{#if "+id+"}}");
+
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
@@ -766,16 +891,16 @@ public class SchemaAttribute {
 					
 					pw.println("\t</div>");
 					
-					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("\t{{/if}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 					pw.println("\t{{#if "+id+"}}");
 	
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 	
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
@@ -790,7 +915,7 @@ public class SchemaAttribute {
 						pw.println("\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
 					}
 
-					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{.}}</span>");
+					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+id+"}}</span>");
 					
 					pw.println("\t\t\t</div>");
 					pw.println("\t\t\t<div class=\"end\"></div>");
@@ -799,14 +924,14 @@ public class SchemaAttribute {
 					
 					
 					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "checkbox".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">");
@@ -821,14 +946,14 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "checkbox_group".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t\t<div class=\"value\">");
@@ -849,7 +974,7 @@ public class SchemaAttribute {
 					pw.println("\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "file".equals(type) ){
@@ -863,7 +988,6 @@ public class SchemaAttribute {
 				pw.println("\t\t\t\t\t<div class=\"n2_mediaView\">");
 				pw.println("\t\t\t\t\t\t<div class=\"n2s_insertMediaView\" nunaliit-attachment=\"{{.}}\"> </div>");
 				pw.println("\t\t\t\t\t</div>");
-				pw.println("\t\t\t\t\t<div class=\"n2s_insertExternalMediaLink\" nunaliit-attachment=\"{{.}}\"> </div>");
 				pw.println("\t\t\t\t{{/attachmentName}}");
 
 				pw.println("\t\t\t{{/source}}");
@@ -884,6 +1008,63 @@ public class SchemaAttribute {
 				pw.println("\t\t\t<div class=\"end\"></div>");
 				pw.println("\t\t</div>");
 				pw.println("{{/nunaliit_geom}}");
+
+			} else if( "hover_sound".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
+				}
+
+				pw.println("{{#nunaliit_hoverSound}}");
+				pw.println("\t\t<div class=\"nunaliit_hoverSound\">");
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+				pw.println("\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t</div>");
+				pw.println("{{/nunaliit_hoverSound}}");
+
+			} else if( "createdBy".equals(type) ){
+				if( null == label ){
+					label = "Created By";
+					labelLocalizeClass = " n2s_localize";
+				}
+
+				pw.println("{{#nunaliit_created}}");
+				pw.println("\t{{#if name}}");
+
+				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created\">");
+
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+
+				pw.println("\t\t\t<div class=\"value n2s_insertUserName\">{{name}}</div>");
+				
+				pw.println("\t\t\t<div class=\"end\"></div>");
+				
+				pw.println("\t\t</div>");
+				
+				pw.println("\t{{/if}}");
+				pw.println("{{/nunaliit_created}}");
+
+			} else if( "createdTime".equals(type) ){
+				if( null == label ){
+					label = "Created Time";
+					labelLocalizeClass = " n2s_localize";
+				}
+
+				pw.println("{{#nunaliit_created}}");
+				pw.println("\t{{#if time}}");
+
+				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created_time\">");
+
+				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+
+				pw.println("\t\t\t<div class=\"value n2s_insertTime\">{{time}}</div>");
+				
+				pw.println("\t\t\t<div class=\"end\"></div>");
+				
+				pw.println("\t\t</div>");
+				
+				pw.println("\t{{/if}}");
+				pw.println("{{/nunaliit_created}}");
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
@@ -891,7 +1072,7 @@ public class SchemaAttribute {
 		}
 	}
 
-	public void printForm(PrintWriter pw, String schemaName) throws Exception {
+	public void printForm(PrintWriter pw, String schemaStructure, String schemaClass) throws Exception {
 		if( false == excludedFromForm ){
 			String label = this.label;
 			String labelLocalizeClass = " n2s_localize";
@@ -927,11 +1108,15 @@ public class SchemaAttribute {
 					} else if( "checkbox".equals(type) ){
 						fieldType = ",checkbox";
 					}
-					
+
 					if( isTextarea() ){
 						fieldType += ",textarea";
 					}
-					
+
+					if( isWikiTransform() ){
+						fieldType += ",wikiTransform";
+					}
+
 					if( null != placeholder ){
 						fieldType += ",placeholder="+encodeFieldParameter(placeholder);
 					}
@@ -940,9 +1125,9 @@ public class SchemaAttribute {
 						fieldType += ",search="+encodeFieldParameter(searchFunction);
 					}
 					
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
@@ -951,14 +1136,14 @@ public class SchemaAttribute {
 					pw.println("\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
@@ -981,7 +1166,7 @@ public class SchemaAttribute {
 					pw.println("\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "array".equals(type) ){
@@ -1015,9 +1200,9 @@ public class SchemaAttribute {
 					}
 					
 					if( null != fieldType ){
-						pw.println("{{#"+schemaName+"}}");
+						pw.println("{{#"+schemaStructure+"}}");
 
-						pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+						pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 						pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 						pw.println("\t\t<div class=\"value\">");
@@ -1030,15 +1215,15 @@ public class SchemaAttribute {
 						pw.println("\t</div>");
 						
 						
-						pw.println("{{/"+schemaName+"}}");
+						pw.println("{{/"+schemaStructure+"}}");
 					}
 				}
 
 			} else if( "checkbox_group".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaName+"}}");
+					pw.println("{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaName+"_"+id+"\">");
+					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					pw.println("\t\t<div class=\"value\">");
@@ -1064,7 +1249,7 @@ public class SchemaAttribute {
 					pw.println("\t</div>");
 					
 					
-					pw.println("{{/"+schemaName+"}}");
+					pw.println("{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "file".equals(type) ){
@@ -1082,6 +1267,30 @@ public class SchemaAttribute {
 				pw.println("\t<div class=\"end\"></div>");
 				
 				pw.println("</div>");
+
+			} else if( "hover_sound".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
+				}
+
+				String searchFunctionString = ",search=getHoverSound"; 
+				if( null != searchFunction ){
+					searchFunctionString = ",search="+encodeFieldParameter(searchFunction);
+				}
+
+				pw.println("<div class=\"nunaliit_hoverSound\">");
+
+				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_hoverSound,reference"+searchFunctionString+"{{/:field}}</div>");
+				pw.println("\t<div class=\"end\"></div>");
+				
+				pw.println("</div>");
+
+			} else if( "createdBy".equals(type) ){
+				// nothing to do
+
+			} else if( "createdTime".equals(type) ){
+				// nothing to do
 				
 			} else {
 				throw new Exception("Unable to include type "+type+" in form");
@@ -1130,6 +1339,27 @@ public class SchemaAttribute {
 			attrExport.put("label", "nunaliit_geom");
 			attrExport.put("type", "text");
 			exportArr.put(attrExport);
+			
+		} else if( "hover_sound".equals(type) ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", "nunaliit_hoverSound.doc");
+			attrExport.put("label", "nunaliit_hoverSound");
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+			
+		} else if( "createdBy".equals(type) ){
+			JSONObject attrExportName = new JSONObject();
+			attrExportName.put("select", "nunaliit_created.name");
+			attrExportName.put("label", "nunaliit_created_name");
+			attrExportName.put("type", "text");
+			exportArr.put(attrExportName);
+			
+		} else if( "createdTime".equals(type) ){
+			JSONObject attrExportTime = new JSONObject();
+			attrExportTime.put("select", "nunaliit_created.time");
+			attrExportTime.put("label", "nunaliit_created_time");
+			attrExportTime.put("type", "text");
+			exportArr.put(attrExportTime);
 			
 		} else {
 			JSONObject attrExport = new JSONObject();

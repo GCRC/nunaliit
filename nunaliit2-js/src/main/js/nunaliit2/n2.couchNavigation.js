@@ -38,10 +38,18 @@ var
 	,DH = 'n2.couchNavigation'
 	;
 
+//=========================================================================
+function setNavElementAsCurrentModule($elem){
+	$elem.addClass('n2_nav_currentModule');
+	$elem.parents('.n2nav_setChildModuleCurrent').addClass('n2_nav_childModuleCurrent');
+};
+	
 //=========================================================================	
 var NavigationDisplay = $n2.Class({
 	
 	dispatchService: null,
+	
+	showService: null,
 	
 	navigationDoc: null,
 	
@@ -50,11 +58,13 @@ var NavigationDisplay = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			,showService: null
 			,navigationDoc: null
 			,elem: null
 		},opts_);
 		
 		this.dispatchService = opts.dispatchService;
+		this.showService = opts.showService;
 		this.navigationDoc = opts.navigationDoc;
 		
 		var $elem = $(opts.elem);
@@ -82,10 +92,15 @@ var NavigationDisplay = $n2.Class({
 			
 			if( doc.nunaliit_navigation.items 
 			 && doc.nunaliit_navigation.items.length > 0 ) {
-				var $ul = $('<ul></ul>');
-				$nav.append($ul);
+				var $ul = $('<ul>')
+					.addClass('n2nav_setChildModuleCurrent')
+					.appendTo($nav);
 				
 				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId);
+			};
+			
+			if( this.showService ){
+				this.showService.fixElementAndChildren($nav);
 			};
 		};
 		
@@ -93,7 +108,8 @@ var NavigationDisplay = $n2.Class({
 			for(var i=0,e=items.length; i<e; ++i){
 				var item = items[i];
 				
-				var $li = $('<li></li>')
+				var $li = $('<li>')
+					.addClass('n2nav_setChildModuleCurrent')
 					.appendTo($ul);
 				
 				if( item.key ){
@@ -115,16 +131,16 @@ var NavigationDisplay = $n2.Class({
 					};
 					
 					if( moduleId && moduleId === currentModuleId ){
-						$li.addClass('n2_nav_currentModule');
+						setNavElementAsCurrentModule($li);
 					};
 					
-					var $a = $('<a></a>');
-					$a.attr('href',item.href);
 					var title = _loc(item.title);
-					$a.text(title);
-					$li.append($a);
+					$('<a>')
+						.attr('href',item.href)
+						.text(title)
+						.appendTo($li);
 					
-				} else if( item.title && item.module ) {
+				} else if( item.module ) {
 						// Compute URL based on current one
 					var currentUrl = $n2.url.getCurrentLocation();
 					var moduleUrl = currentUrl
@@ -137,14 +153,22 @@ var NavigationDisplay = $n2.Class({
 					$li.addClass('n2nav_setModuleCurrent');
 					
 					if( item.module === currentModuleId ){
-						$li.addClass('n2_nav_currentModule');
+						setNavElementAsCurrentModule($li);
 					};
 					
-					var $a = $('<a></a>');
-					$a.attr('href',moduleUrl.getUrl());
-					var title = _loc(item.title);
-					$a.text(title);
-					$li.append($a);
+					var $a = $('<a>')
+						.attr('href',moduleUrl.getUrl())
+						.appendTo($li);
+
+					if( item.title ){
+						var title = _loc(item.title);
+						$a.text(title);
+					} else {
+						// Obtain title from show service
+						$a.attr('nunaliit-document',item.module);
+						$a.addClass('n2s_insertModuleName');
+						$a.text(item.module);
+					};
 						
 				} else if( item.title ) {
 					var $span = $('<span></span>');
@@ -154,8 +178,9 @@ var NavigationDisplay = $n2.Class({
 				};
 				
 				if( item.items && item.items.length > 0 ){
-					var $innerUl = $('<ul></ul>');
-					$li.append($innerUl);
+					var $innerUl = $('<ul>')
+						.addClass('n2nav_setChildModuleCurrent')
+						.appendTo($li);
 					insertItems($innerUl, item.items, currentModuleId);
 				};
 			};
@@ -168,6 +193,8 @@ var NavigationService = $n2.Class({
 	
 	dispatchService: null,
 	
+	showService: null,
+	
 	documentSource: null,
 	
 	currentNavigationDoc: null,
@@ -175,12 +202,14 @@ var NavigationService = $n2.Class({
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
+			,showService: null
 			,documentSource: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
+		this.showService = opts.showService;
 		this.documentSource = opts.documentSource;
 
 		// dispatcher
@@ -262,41 +291,101 @@ var NavigationService = $n2.Class({
 		// Title
 		$set.filter('.n2nav_insertTitle').each(function(){
 			var $elem = $(this);
-
-			var title = navigationDoc.nunaliit_navigation.title;
-			if( title ){
-				$elem.text( _loc(title) );
-			} else {
-				$elem.empty();
-			};
-
 			$elem.removeClass('n2nav_insertTitle').addClass('n2nav_insertedTitle');
+			_this._insertTitle($elem, navigationDoc);
 		});
 		
 		// Menu
 		$set.filter('.n2nav_insertMenu').each(function(){
 			var $elem = $(this);
+			$elem.removeClass('n2nav_insertMenu').addClass('n2nav_insertedMenu');
+			_this._insertMenu($elem, navigationDoc);
+		});
+	},
+	
+	_insertTitle: function($elem, doc){
 
+		var docId = this._associateDocumentToElement(doc, $elem);
+		
+		if( doc && docId === doc._id ){
+			var title = undefined;
+			if( doc.nunaliit_navigation ) {
+				title = doc.nunaliit_navigation.title;
+			};
+			if( title ){
+				$elem.text( _loc(title) );
+			} else {
+				$elem.empty();
+			};
+		};
+	},
+	
+	_insertMenu: function($elem, doc){
+
+		var docId = this._associateDocumentToElement(doc, $elem);
+		
+		if( doc && docId === doc._id ){
 			new NavigationDisplay({
-				dispatchService: _this.dispatchService
-				,navigationDoc: navigationDoc
+				dispatchService: this.dispatchService
+				,showService: this.showService
+				,navigationDoc: doc
 				,elem: $elem
 			});
+		};
+	},
 
-			$elem.removeClass('n2nav_insertMenu').addClass('n2nav_insertedMenu');
-		});
+	_associateDocumentToElement: function(doc, $elem){
+		var docId = $elem.attr('nunaliit-document');
+
+		if( !docId 
+		 && doc ) {
+			if( doc.nunaliit_navigation ){
+				docId = doc._id;
+			} else {
+				docId = this.navigationDoc._id;
+			};
+		} else if( !docId && !doc ) {
+			 docId = this.navigationDoc._id;
+		};
+
+		var associated = $elem.hasClass('n2show_documentAssociated');
+		
+		if( docId && !associated ){
+			$elem.attr('nunaliit-document', docId);
+			$elem.addClass('n2show_documentAssociated');
+
+			// Ready to receive updates
+			var updateClass = 'n2show_documentUpdate_' + $n2.utils.stringToHtmlId(docId);
+			$elem.addClass(updateClass);
+			
+			if( doc && doc._id === docId ){
+				// Already have document
+			} else {
+				// Ready to receive content
+				var contentClass = 'n2show_documentContent_' + $n2.utils.stringToHtmlId(docId);
+				$elem.addClass(contentClass);
+
+				// Request this document
+				this.dispatchService.send(DH,{
+					type: 'requestDocument'
+					,docId: docId
+				});
+			};
+		};
+		
+		return docId;
 	},
 	
 	_handle: function(m, addr, d){
 		if( 'reportModuleDocument' === m.type ){
 			var currentModuleId = m.moduleId;
+			$('.n2nav_setModuleCurrent').removeClass('n2_nav_currentModule');
+			$('.n2nav_setChildModuleCurrent').removeClass('n2_nav_childModuleCurrent');
 			$('.n2nav_setModuleCurrent').each(function(){
 				var $elem = $(this);
 				var moduleId = $elem.attr('n2nav-module');
 				if( moduleId && moduleId === currentModuleId ){
-					$elem.addClass('n2_nav_currentModule');
-				} else {
-					$elem.removeClass('n2_nav_currentModule');
+					setNavElementAsCurrentModule($elem);
 				};
 			});
 
@@ -309,9 +398,8 @@ var NavigationService = $n2.Class({
 
 		} else if( 'showPreprocessElement' === m.type ){
 			var $elem = m.elem;
-			if( this.navigationDoc ){
-				this._fixElements($elem, this.navigationDoc);
-			};
+			var doc = m.doc;
+			this._fixElements($elem, doc);
 		};
 	}
 });

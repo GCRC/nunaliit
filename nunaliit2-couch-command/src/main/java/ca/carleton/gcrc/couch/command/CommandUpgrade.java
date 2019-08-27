@@ -18,6 +18,7 @@ import ca.carleton.gcrc.couch.command.impl.UpgradeOperationsNull;
 import ca.carleton.gcrc.couch.command.impl.UpgradeOperationsReporting;
 import ca.carleton.gcrc.couch.command.impl.UpgradeProcess;
 import ca.carleton.gcrc.couch.command.impl.UpgradeReport;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class CommandUpgrade implements Command {
 
@@ -168,16 +169,11 @@ public class CommandUpgrade implements Command {
 				StringWriter sw = new StringWriter();
 				FileInputStream is = null;
 				InputStreamReader isr = null;
-				char[] buffer = new char[100];
 				try {
 					is = new FileInputStream(manifestFile);
 					isr = new InputStreamReader(is, "UTF-8");
 					
-					int size = isr.read(buffer);
-					while( size >= 0 ) {
-						sw.write(buffer, 0, size);
-						size = isr.read(buffer);
-					}
+					StreamUtils.copyStream(isr, sw);
 					
 					sw.flush();
 					

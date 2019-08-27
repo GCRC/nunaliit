@@ -382,6 +382,85 @@ var ReferenceRelatedDocumentDiscovery = $n2.Class({
 });
 
 //===================================================================================
+// This is a class used to display and manage the information displayed when a
+// selected document is clicked again on the ribbon
+
+var RibbonInfoDisplay = $n2.Class({
+	
+	showService: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			showService: undefined
+		},opts_);
+		
+		this.showService = opts.showService;
+	},
+	
+	showInfo: function(opts_){
+		var opts = $n2.extend({
+			doc: undefined
+			,locationElem: undefined
+			,onClose: function(){}
+		},opts_);
+
+		var $elem = $(opts.locationElem);
+		var doc = opts.doc;
+		var docId = doc._id;
+		
+		var $outerLayout = $('<div>')
+			.addClass('n2DisplayRibbon_popup_outer_layout n2DisplayRibbon_popup_'+$n2.utils.stringToHtmlId(docId))
+			.appendTo($elem);
+		var $layout = $('<div>')
+			.addClass('n2DisplayRibbon_popup_layout')
+			.appendTo($outerLayout);
+		var $container = $('<div>')
+			.addClass('n2DisplayRibbon_popup_container')
+			.appendTo($layout);
+		
+		var $content = $('<div>')
+			.addClass('n2DisplayRibbon_popup_content')
+			.appendTo($container);
+
+		if( this.showService ) {
+			this.showService.printDocument($content, docId);
+		} else {
+			$content.text( docId );
+		};
+
+		var $buttons = $('<div>')
+			.addClass('n2DisplayRibbon_popup_buttons')
+			.appendTo($container);
+		
+		$('<a>')
+			.attr('href','#')
+			.addClass('n2DisplayRibbon_popup_button n2DisplayRibbon_popup_button_close')
+			.text( _loc('Close') )
+			.click(function(){
+				var $a = $(this);
+				$a.parents('.n2DisplayRibbon_popup_outer_layout').first().remove();
+				opts.onClose();
+				return false;
+			})
+			.appendTo($buttons);
+	},
+	
+	removeInfo: function(opts_){
+		var opts = $n2.extend({
+			docId: undefined
+			,locationElem: undefined
+		},opts_);
+
+		var $elem = $(opts.locationElem);
+		var docId = opts.docId;
+		
+		var outerClass = 'n2DisplayRibbon_popup_'+$n2.utils.stringToHtmlId(docId);
+		var $outer = $elem.find('.'+outerClass);
+		$outer.remove();
+	}
+});
+
+//===================================================================================
 // Copied and adapted from http://thinkpixellab.com/tilesjs
 
 var Tile = $n2.Class({
@@ -405,6 +484,7 @@ var Tile = $n2.Class({
 
 	    // cache the tile container element
 	    this.$el = $(element || document.createElement('div'));
+	    this.$el.addClass('n2DisplayRibbon_tile_invisible');
 	},
 	
 	appendTo: function($parent, fadeIn, delay, duration) {
@@ -507,6 +587,23 @@ var Tile = $n2.Class({
 
 	        setTimeout(validateChangesAndComplete, duration);
 	    }
+	},
+	
+	isVisible: function(){
+		var vis = this.$el.hasClass('n2DisplayRibbon_tile_visible');
+		return vis;
+	},
+	
+	setVisible: function(vis){
+		if( vis ){
+			this.$el
+				.removeClass('n2DisplayRibbon_tile_invisible')
+				.addClass('n2DisplayRibbon_tile_visible');
+		} else {
+			this.$el
+				.removeClass('n2DisplayRibbon_tile_visible')
+				.addClass('n2DisplayRibbon_tile_invisible');
+		};
 	}
 });
 
@@ -552,6 +649,8 @@ var RibbonGrid = $n2.Class({
 	relatedOffsetMin: null,
 	
 	intervalId: null,
+	
+	tileVisibilityChangedFn: null,
 	
 	initialize: function(element){
         var _this = this;
@@ -680,6 +779,7 @@ var RibbonGrid = $n2.Class({
 			
 			if( !tile ){
 				tile = this.createTile(id);
+				tile.id = id;
 			};
 
 			if( tile ){
@@ -695,6 +795,7 @@ var RibbonGrid = $n2.Class({
 			
 			if( !tile ){
 				tile = this.createTile(id);
+				tile.id = id;
 			};
 			
 			if( tile ){
@@ -824,15 +925,27 @@ var RibbonGrid = $n2.Class({
 	    	currentLeft += (this.cellSize + this.cellPadding);
 	    };
 	    
+	    // width - currentDivWidth is equal to the width of the div where related
+	    //                            tiles are shown
+	    // currentLeft is the total width of the related tiles, including padding
+	    // this.relatedOffsetMin is the lowest offset allowable so that user does not scroll
+	    //                          passed the last displayed related tile
 	    this.relatedOffsetMin = width - currentDivWidth - currentLeft;
 	    if( this.relatedOffsetMin > 0 ){
+	    	// If not enough tiles to fill related div, then fix offset to 0
 	    	this.relatedOffsetMin = 0;
 	    };
 	    this._updateRelatedOffset(this.relatedOffset);
+	    
+	    this._updateVisibleTiles();
         
 	    if( typeof onComplete === 'function' ) {
 	        setTimeout(function() { onComplete(true); }, duration + 10);
 	    };
+	},
+	
+	setTileVisibilityChangeFunction: function(tileVisibilityChangedFn){
+		this.tileVisibilityChangedFn = tileVisibilityChangedFn;
 	},
 	
 	_shouldRedraw: function(){
@@ -864,6 +977,7 @@ var RibbonGrid = $n2.Class({
 				newOffset += this.rateOfChange;
 				
 				this._updateRelatedOffset(newOffset);
+			    this._updateVisibleTiles();
 				
 				if( this.rateOfChangeEnd ){
 					this.rateOfChange = 0;
@@ -904,6 +1018,64 @@ var RibbonGrid = $n2.Class({
 		} else {
 			$elem.removeClass('n2DisplayRibbon_grid_related_min');
 		};
+	},
+	
+	_updateVisibleTiles: function(){
+		var $elem = this._getElem();
+        var width = $elem.width();
+		
+		// Report tiles that are visible and tiles that are no longer visible
+    	var currentDivWidth = 0;
+        if( this.currentTile ){
+        	currentDivWidth = this.cellSize + (2 * this.cellPadding);
+    		if( !this.currentTile.isVisible() ){
+    			// Is visible, but was not.
+    			this.currentTile.setVisible(true);
+    		};
+        };
+		var minOffsetVisible = 0 - this.relatedOffset;
+		var maxOffsetVisible = minOffsetVisible + (width - currentDivWidth);
+		var minPosition = this.cellPadding; // position of first tile
+		var maxPosition = minPosition + this.cellSize;
+	    for(var i=0,e=this.relatedTiles.length; i<e; ++i){
+	    	var tile = this.relatedTiles[i];
+	    	
+	    	var tileIsVisible = true;
+	    	if( minPosition > maxOffsetVisible ){
+	    		tileIsVisible = false;
+	    	} else if( maxPosition < minOffsetVisible ) {
+	    		tileIsVisible = false;
+	    	};
+	    	
+	    	var callCallback = false;
+	    	if( tileIsVisible ){
+	    		if( !tile.isVisible() ){
+	    			// Is visible, but was not.
+	    			tile.setVisible(true);
+	    			callCallback = true;
+	    		};
+	    	} else {
+	    		if( tile.isVisible() ){
+	    			// Is not visible, but it was.
+	    			tile.setVisible(false);
+	    			callCallback = true;
+	    		};
+	    	};
+	    	
+	    	if( callCallback ){
+	    		if( typeof this.tileVisibilityChangedFn === 'function' ){
+	    			this.tileVisibilityChangedFn({
+	    				visible: tileIsVisible
+	    				,docId: tile.id
+	    				,tile: tile
+	    			});
+	    		};
+	    	};
+	    	
+	    	// Move to next tile
+			minPosition = minPosition + this.cellSize + this.cellPadding;
+			maxPosition = minPosition + this.cellSize;
+	    };
 	},
 	
 	_getElem: function(){
@@ -963,6 +1135,8 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	
 	hoverDocId: null,
 	
+	infoDisplay: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			documentSource: null
@@ -993,6 +1167,9 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 			
 			// Factory to create filters
 			,filterFactory: null
+			
+			// Name of display for document info
+			,infoDisplay: null
 		},opts_);
 
 		var _this = this;
@@ -1065,6 +1242,7 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 			dispatcher.register(DH, 'documentContent', f);
 			dispatcher.register(DH, 'documentContentCreated', f);
 			dispatcher.register(DH, 'documentContentUpdated', f);
+			dispatcher.register(DH, 'windowResized', f);
 		};
 		
 		if( !opts.displayRelatedInfoFunction ) {
@@ -1181,9 +1359,19 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 		};
 		
 		// Click function
-		this.clickFn = function(){
+		this.clickFn = function(e){
+			if( e && e.target ){
+				var $target = $(e.target);
+				var $popupParents = $target.parents('.n2DisplayRibbon_popup');
+				if( $popupParents.length > 0 ){
+					// This click originated from inside a popup
+					return true;
+				};
+			};
+
 			var $tile = $(this);
 			_this._clickedTile($tile);
+
 			return false;
 		};
 		
@@ -1196,6 +1384,27 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 				_this._performIntervalTask();
 			};
 		}, 500);
+		
+		// Info display logic
+		if( opts.infoDisplay ){
+			if( typeof opts.infoDisplay === 'string' ){
+				// Obtain from dispatcher
+				if( this.dispatchService ){
+					var m = {
+						type: 'ribbonGetInfoDisplay'
+						,name: opts.infoDisplay
+						,infoDisplay: null
+					};
+					this.dispatchService.synchronousCall(DH,m);
+					this.infoDisplay = m.infoDisplay;
+				};
+			};
+		}
+		if( !this.infoDisplay ){
+			this.infoDisplay = new RibbonInfoDisplay({
+				showService: this.showService
+			});
+		};
 
 		$('body').addClass('n2_display_format_ribbon');
 		
@@ -1269,6 +1478,11 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 			
 		} else if( msg.type === 'documentContentUpdated' ) {
 			this._receiveDocumentContent(msg.doc);
+			
+		} else if( msg.type === 'windowResized' ) {
+			if( this.grid ){
+		        this.grid.redraw(true);
+			};
 		};
 	},
 	
@@ -1635,10 +1849,6 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	        if( currentDocId ){
 	        	_this._requestDocumentWithId(currentDocId);
 	        };
-			for(var i=0,e=sortedDocIds.length; i<e; ++i){
-				var docId = sortedDocIds[i];
-				_this._requestDocumentWithId(docId);
-			};
 		};
 	},
 	
@@ -2060,6 +2270,9 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 			this.grid.createTile = function(docId) {
 				return _this._createTile(docId);
 		    };
+		    this.grid.setTileVisibilityChangeFunction(function(opts_){
+		    	_this._tileVisibilityChanged(opts_);
+		    });
 		    
 			// Create document filter
 		    this.filter = this.filterFactory.get($filters,function(){
@@ -2104,24 +2317,21 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	    return tile;
 	},
 	
+	_tileVisibilityChanged: function(opts_){
+		if( opts_ 
+		 && opts_.visible 
+		 && opts_.docId 
+		 && opts_.tile ){
+			var docId = opts_.docId;
+			this._requestDocumentWithId(docId);
+		};
+	},
+	
 	_clickedTile: function($tile){
 		var docId = $tile.attr('n2DocId');
 		
 		if( this.currentDetails
 		 && this.currentDetails.docId === docId ){
-//			var $menu = $tile.find('.n2DisplayRibbon_tile_menu');
-//			if( $menu.length < 1 ){
-//				$menu = $('<div>')
-//					.addClass('n2DisplayRibbon_tile_menu n2DisplayRibbon_current_buttons')
-//					.appendTo($tile);
-//				
-//				if( this.currentDetails 
-//				 && this.currentDetails.doc 
-//				 && this.currentDetails.schema ){
-//					this._displayDocumentButtons(this.currentDetails.doc, this.currentDetails.schema);
-//				};
-//			};
-			
 			this._showCurrentPopUp();
 			
 		} else {
@@ -2161,6 +2371,7 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 		if( this.currentDetails
 		 && this.currentDetails.docId ){
 			var docId = this.currentDetails.docId;
+			var doc = this.currentDetails.doc;
 	    	var tileClass = '.n2DisplayRibbon_tile_' + $n2.utils.stringToHtmlId(docId);
 
 	    	var $display = this._getDisplayDiv();
@@ -2174,54 +2385,25 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	    				.addClass('n2DisplayRibbon_popup')
 	    				.appendTo($tile);
 	    			
-	    			this._populateCurrentPopUp(docId, $popup);
+	    			this.infoDisplay.showInfo({
+    					doc: doc
+    					,locationElem: $popup
+    					,onClose: function(){
+    						$popup.remove();
+    					}
+	    			});
+
 	    		} else {
 	    			// Toggle off
+	    			this.infoDisplay.removeInfo({
+    					docId: docId
+    					,locationElem: $popup
+	    			});
+
 	    			$popup.remove();
 	    		};
 	    	};
 		};
-	},
-	
-	_hideCurrentPopUp: function(){
-    	var $display = this._getDisplayDiv();
-		$display.find('.n2DisplayRibbon_popup').remove();
-	},
-	
-	_populateCurrentPopUp: function(docId, $popup){
-		var _this = this;
-		
-		var $layout = $('<div>')
-			.addClass('n2DisplayRibbon_popup_layout')
-			.appendTo($popup);
-		var $container = $('<div>')
-			.addClass('n2DisplayRibbon_popup_container')
-			.appendTo($layout);
-		
-		var $content = $('<div>')
-			.addClass('n2DisplayRibbon_popup_content')
-			.appendTo($container);
-
-		if( this.showService ) {
-			this.showService.printDocument($content, docId);
-		} else {
-			$content.text( docId );
-		};
-
-		var $buttons = $('<div>')
-			.addClass('n2DisplayRibbon_popup_buttons')
-			.appendTo($container);
-		
-		$('<a>')
-			.attr('href','#')
-			.addClass('n2DisplayRibbon_popup_button n2DisplayRibbon_popup_button_close')
-			.text( _loc('Close') )
-			.click(function(){
-				var $a = $(this);
-				$a.parents('.n2DisplayRibbon_popup').first().remove();
-				return false;
-			})
-			.appendTo($buttons);
 	},
 	
 	/*

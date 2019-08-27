@@ -1,17 +1,21 @@
+/*
+	This portion of the CSS deals with the schema display
+*/
+
 .n2_localize_fallback {
-	font-style:italic;	
+	font-style: italic;	
 }
 
 .n2_localize_fallback_lang {
-	color:#ff7777;	
+	color: #ff7777;	
 }
 
 .n2schema_array_item {
 	position: relative;
+	min-height: 58px;
 }
 
-.n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down {
-	display: inline-block;
+.n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down, .n2schema_array_item_up {
 	width: 16px;
 	height: 16px;
 	margin: 0px;	
@@ -19,7 +23,13 @@
 	border: none;
 }
 
+.n2schema_array_item:nth-child(1) .n2schema_array_item_up,
+.n2schema_array_item:nth-last-child(2) .n2schema_array_item_down {
+	display: none;
+}
+
 .n2schema_array_add {
+	display: inline-block;
 	background: url(tree/icons.png) no-repeat;
 	background-position: 0px 0px;
 	float: right;
@@ -29,13 +39,17 @@
 	background-position: -16px 0px;
 }
 
-.n2schema_array_item_delete {
+.n2schema_array_item_buttons {
 	position: absolute;
 	right: 0px;
 	top: 0px;
+	width: 16px;
+	z-index: 1;
+}
+
+.n2schema_array_item_delete {
 	background: url(tree/icons.png) no-repeat;
 	background-position: -160px 0px;
-	float: right;
 }
 
 .n2schema_array_item_delete:hover {
@@ -43,25 +57,25 @@
 }
 
 .n2schema_array_item_down {
-	position: absolute;
-	right: 0px;
-	top: 16px;
 	background: url(tree/icons.png) no-repeat;
-	background-position: -64px 0px;
-	float: right;
+	background-position: -96px 0px;
 }
 
 .n2schema_array_item_down:hover {
+	background-position: -112px 0px;
+}
+
+.n2schema_array_item_up {
+	background: url(tree/icons.png) no-repeat;
+	background-position: -64px 0px;
+}
+
+.n2schema_array_item_up:hover {
 	background-position: -80px 0px;
 }
 
 .n2schema_array_item_wrapper {
-	position: absolute:
-	left: 0px;
-	right: 16px;
-	top: 0px;
-	bottom: 0px;
-	min-height: 40px;
+	margin-right: 16px;
 }
 
 .n2schema_referenceDelete {
@@ -72,7 +86,9 @@
 	background: url(images/x_icon_naked_15.png) no-repeat;
 }
 
-.n2schema_referenceDelete:hover {
+.n2schema_referenceDelete:hover,
+.n2schema_help_date:hover,
+.n2schema_help_wiki:hover {
 	background-position: -15px 0px;
 }
 
@@ -84,8 +100,20 @@
 	background: url(images/question_icon_naked_15.png) no-repeat;
 }
 
-.n2schema_help_date:hover {
-	background-position: -15px 0px;
+.n2schema_field_container {
+	position: relative;
+}
+
+.n2schema_help_wiki {
+	position:absolute;
+	top: 17px;
+	right: 7px;
+	width: 0;
+	height: 0;
+	margin: 0;
+	border: 0;
+	padding: 15px 15px 0px 0px;
+	background: url(images/question_icon_naked_15.png) no-repeat;
 }
 
 .n2help_content {

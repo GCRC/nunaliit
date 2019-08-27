@@ -1,0 +1,1 @@
+This CSS content moved to a fixed CSS file.

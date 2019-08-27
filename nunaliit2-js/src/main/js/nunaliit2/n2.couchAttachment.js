@@ -33,12 +33,15 @@ POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); },
+DH = 'n2.couchAttachment';
 
 //========================================================================
 
 var Attachment = $n2.Class({
 	doc: null,
+	
+	documentSource: null,
 	
 	attName: null,
 	
@@ -49,11 +52,13 @@ var Attachment = $n2.Class({
 			doc: null
 			,attName: null
 			,mediaRelativePath: null
+			,documentSource: null
 		},opts_);
 		
-		this.doc = opts_.doc;
-		this.attName = opts_.attName;
-		this.mediaRelativePath = opts_.mediaRelativePath;
+		this.doc = opts.doc;
+		this.attName = opts.attName;
+		this.mediaRelativePath = opts.mediaRelativePath;
+		this.documentSource = opts.documentSource;
 	},
 	
 	getName: function(){
@@ -117,6 +122,7 @@ var Attachment = $n2.Class({
 						doc: this.doc
 						,attName: thumbName
 						,mediaRelativePath: this.mediaRelativePath
+						,documentSource: this.documentSource
 					});
 				};
 			};
@@ -138,6 +144,7 @@ var Attachment = $n2.Class({
 						doc: this.doc
 						,attName: originalName
 						,mediaRelativePath: this.mediaRelativePath
+						,documentSource: this.documentSource
 					});
 				};
 			};
@@ -159,6 +166,7 @@ var Attachment = $n2.Class({
 						doc: this.doc
 						,attName: sourceName
 						,mediaRelativePath: this.mediaRelativePath
+						,documentSource: this.documentSource
 					});
 				};
 			};
@@ -191,6 +199,21 @@ var Attachment = $n2.Class({
 		};
 	},
 	
+	computeUrl: function(){
+		var url = undefined;
+
+		var att = this._getAtt();
+		if( att ){
+			if( !this.documentSource ){
+				throw new Error('Can not compute URL since document source is not set');
+			};
+			
+			url = this.documentSource.getDocumentAttachmentUrl(this.doc, this.attName);
+		};
+		
+		return url;
+	},
+	
 	_getAtt: function(name){
 		name = name ? name : this.attName;
 		if( this.doc
@@ -211,7 +234,7 @@ var Attachment = $n2.Class({
  * Returns the attachment structure associated with the attachment name.
  * Returns null if nothing is found.
  */
-function getAttachmentFromName(doc, attachmentName, mediaRelativePath){
+function getAttachmentFromName(doc, attachmentName, mediaRelativePath, documentSource){
 	var att = null;
 	
 	if( doc
@@ -223,6 +246,7 @@ function getAttachmentFromName(doc, attachmentName, mediaRelativePath){
 			doc: doc
 			,attName: attachmentName
 			,mediaRelativePath: mediaRelativePath
+			,documentSource: documentSource
 		});
 	};
 	
@@ -233,7 +257,7 @@ function getAttachmentFromName(doc, attachmentName, mediaRelativePath){
 /*
  * Returns a list of attachment structures associated with the document.
  */
-function getAttachments(doc, mediaRelativePath){
+function getAttachments(doc, mediaRelativePath, documentSource){
 	var result = [];
 	
 	if( doc
@@ -245,6 +269,7 @@ function getAttachments(doc, mediaRelativePath){
 				doc: doc
 				,attName: attName
 				,mediaRelativePath: mediaRelativePath
+				,documentSource: documentSource
 			});
 			
 			if( att ){
@@ -261,22 +286,72 @@ function getAttachments(doc, mediaRelativePath){
 var AttachmentService = $n2.Class({
 	
 	mediaRelativePath: null,
+
+	dispatchService: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			mediaRelativePath: null
+			,dispatchService: null
 		},opts_);
 		
 		this.mediaRelativePath = opts.mediaRelativePath;
-	}
+		this.dispatchService = opts.dispatchService;
+	},
 
-	,getAttachments: function(doc){
-		return getAttachments(doc, this.mediaRelativePath);
-	}
+	getAttachments: function(doc, documentSource){
+		if( !documentSource ){
+			// Document source is not specified. Look for it.
+			var m = {
+				type: 'documentSourceFromDocument'
+				,doc: doc
+				,documentSource: null
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			if( m.documentSource ){
+				documentSource = m.documentSource;
+			};
+		};
 
-	,getAttachment: function(doc, attachmentName){
-		return getAttachmentFromName(doc, attachmentName, this.mediaRelativePath);
-	}
+		if( !documentSource ){
+			// At this point, we are not able to find an appropriate document
+			// source. Create a fake one. It might work, but most likely, it will not.
+			documentSource = new $n2.document.DocumentSource({
+				doc: doc
+				,dispatchService: this.dispatchService
+				,dispatchHandle: DH
+			});
+		};
+		
+		return getAttachments(doc, this.mediaRelativePath, documentSource);
+	},
+
+	getAttachment: function(doc, attachmentName, documentSource){
+		if( !documentSource ){
+			// Document source is not specified. Look for it.
+			var m = {
+				type: 'documentSourceFromDocument'
+				,doc: doc
+				,documentSource: null
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			if( m.documentSource ){
+				documentSource = m.documentSource;
+			};
+		};
+
+		if( !documentSource ){
+			// At this point, we are not able to find an appropriate document
+			// source. Create a fake one. It might work, but most likely, it will not.
+			documentSource = new $n2.document.DocumentSource({
+				doc: doc
+				,dispatchService: this.dispatchService
+				,dispatchHandle: DH
+			});
+		};
+		
+		return getAttachmentFromName(doc, attachmentName, this.mediaRelativePath, documentSource);
+	} 
 });
 
 //========================================================================

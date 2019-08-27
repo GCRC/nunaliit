@@ -47,8 +47,6 @@ var MapBridge = $n2.Class({
     
     mapControl: null,
     
-    registeredLayersByName: null,
-    
     initialize: function (opts_) {
         var opts = $n2.extend({
             dispatchService: null
@@ -58,8 +56,6 @@ var MapBridge = $n2.Class({
         }, opts_);
 
         var _this = this;
-        
-        this.registeredLayersByName = {};
         
         this.sourceModelId = opts.sourceModelId;
         this.dispatchService = opts.dispatchService;
@@ -123,145 +119,34 @@ var MapBridge = $n2.Class({
     },
     
     /**
-     * Returns true if the document should be visible
+     * Returns array of document ids that are currently visible
      */
-    _isDocumentVisible: function(doc){
-    	throw 'Subclasses must implement _isDocumentVisible()'
+    _getVisibleDocumentIds: function(){
+    	throw new Error('Subclasses must implement _getVisibleDocumentIds()');
     },
     
     _updateMap: function() {
         var mapControl = this._getMapControl();
         if( mapControl 
-         && mapControl.map 
-         && mapControl.map.layers ){
-            // Iterate over all layers
-            for(var i = 0, e = mapControl.map.layers.length; i < e; ++i) {
-                var layer = mapControl.map.layers[i];
+         && mapControl.infoLayers ){
+        	var visibleDocIds = this._getVisibleDocumentIds();
+        	
+        	// Iterate over all layers
+    		for(var loop=0; loop<mapControl.infoLayers.length; ++loop) {
+    			var layerInfo = mapControl.infoLayers[loop];
                 
                 // Interested only in vector layers
-                if( layer.features ) {
-                    // Iterate over feature
-                    for(var j = 0, l = layer.features.length; j < l; ++j){
-                        var feature = layer.features[j];
-
-                        var modified = this._adjustStyleOnFeature(feature);
-                        if( modified ){
-                            layer.drawFeature(feature);
-                        };
-                    };
+                if( layerInfo 
+                 && layerInfo.featureStrategy ) {
+                	layerInfo.featureStrategy.setWhiteListDocumentIds(visibleDocIds);
                 };
             };
         };
     },
     
-    /**
-     * Change the style on the feature according to the document reported
-     * by the source model. If a document is present, the style is deleted.
-     * If a document is not present, then the style is set to "display: none".
-     * This hides from the map a feature that is not reported by the source model.
-     * 
-     * Returns true if the style on the feature was modified
-     */
-    _adjustStyleOnFeature: function(feature){
-    	var styleModified = false;
-
-    	if( feature.cluster ){
-			var visibleCount = 0;
-			
-			for(var cfIndex=0,cfEnd=feature.cluster.length; 
-				cfIndex<cfEnd; 
-				++cfIndex){
-				var cf = feature.cluster[cfIndex];
-				if( cf.data ){
-                	var visible = this._isDocumentVisible(cf.data);
-                    
-                    if( visible ) {
-                    	if( cf.style ){
-                    		delete cf.style;
-                    	};
-                    	
-                    } else {
-                    	if( ! cf.style ){
-                    		cf.style = {
-                            	display: 'none'
-                            };
-                    	};
-                    };
-				};
-			};
-			
-			if( feature.attributes ){
-				feature.attributes.count = visibleCount;
-			};
-			
-			if( visibleCount > 0 ){
-            	if( feature.style ){
-                    delete feature.style;
-            		styleModified = true;
-            	};
-			} else {
-            	if( ! feature.style ){
-                    feature.style = {
-                    	display: 'none'
-                    };
-            		styleModified = true;
-            	};
-			};
-
-		} else if( feature.data ){
-        	var visible = this._isDocumentVisible(feature.data);
-            
-            if( visible ) {
-            	if( feature.style ){
-                    delete feature.style;
-            		styleModified = true;
-            	};
-            	
-            } else {
-            	if( ! feature.style ){
-                    feature.style = {
-                    	display: 'none'
-                    };
-            		styleModified = true;
-            	};
-            };
-		};
-		
-		return styleModified;
-    },
-    
-    _handleFeaturesAdded: function(features){
-    	for(var i=0,e=features.length; i<e; ++i) {
-    		var feature = features[i];
-    		this._adjustStyleOnFeature(feature);
-    	};
-    },
-    
     _getMapControl: function(){
     	var _this = this;
     	
-    	// Register for update events on map. Do this only once per layer
-    	if( this.mapControl
-    	 && this.mapControl.layers ){
-    		for(var layerName in this.mapControl.layers){
-    			if( this.registeredLayersByName[layerName] ){
-    				// Already registered
-    			} else {
-    				this.registeredLayersByName[layerName] = true;
-        			var layer = this.mapControl.layers[layerName];
-        			if( layer && layer.events ){
-        				layer.events.register('beforefeaturesadded',null,function(evt){
-        					if( evt 
-							 && evt.features 
-							 && evt.features.length ) {
-            					_this._handleFeaturesAdded(evt.features);
-							};
-        				});
-        			};
-    			};
-    		};
-    	};
-    		
     	return this.mapControl;
     }
 });
@@ -337,15 +222,14 @@ var TimeTransformMapBridge = $n2.Class(MapBridge, {
     	};
     },
     
-    _isDocumentVisible: function(doc){
-    	if( doc ){
-        	var docId = doc._id;
-        	if( this.docStateById[docId] ){
-        		return this.docStateById[docId].visible;
-        	};
+    _getVisibleDocumentIds: function(){
+    	var docIds = [];
+    	for(var docId in this.docStateById){
+    		if( this.docStateById[docId].visible ){
+    			docIds.push(docId);
+    		};
     	};
-    	
-    	return true;
+    	return docIds;
     }
 });
 
@@ -401,14 +285,12 @@ var ModelMapBridge = $n2.Class(MapBridge, {
     	};
     },
     
-    _isDocumentVisible: function(doc){
-    	var visible = false;
-
-    	if( doc && this.docStateById[doc._id] ){
-        	visible = true;
-        };
-
-        return visible;
+    _getVisibleDocumentIds: function(){
+    	var docIds = [];
+    	for(var docId in this.docStateById){
+   			docIds.push(docId);
+    	};
+    	return docIds;
     }
 });
 
@@ -460,13 +342,15 @@ function HandleWidgetDisplayRequests(m){
 //**************************************************
 var GazetteerProcess = $n2.Class({
 	
-	geoNamesService: null
+	geoNamesService: null,
 	
-	,initialize: function(geoNamesService_){
+	inputId: null,
+	
+	initialize: function(geoNamesService_){
 		this.geoNamesService = geoNamesService_;
-	}
+	},
 
-	,initiateCapture: function(mapControl){
+	initiateCapture: function(mapControl){
 		var _this = this;
 		
 		var dialogId = $n2.getUniqueId();
@@ -474,8 +358,8 @@ var GazetteerProcess = $n2.Class({
 			.attr('id',dialogId)
 			.addClass('n2MapAndControls_gazette_dialog');
 		
-		var inputId = $n2.getUniqueId();
-		$('<div><input id="'+inputId+'" type="text"/></div>')
+		this.inputId = $n2.getUniqueId();
+		$('<div><input id="'+this.inputId+'" type="text"/></div>')
 			.appendTo($dialog);
 
 		$('<div class="n2MapAndControls_gazette_results"></div>')
@@ -494,7 +378,7 @@ var GazetteerProcess = $n2.Class({
 		};
 		$dialog.dialog(dialogOptions);
 		
-		var $input = $('#'+inputId);
+		var $input = $('#'+this.inputId);
 		
 		this.geoNamesService.installAutoComplete({
 			input: $input
@@ -512,17 +396,22 @@ var GazetteerProcess = $n2.Class({
 			
 			// $n2.log('key',key);
 			
+			var $input = $('#'+_this.inputId);
 			if( key === 13 ) {
-				var $input = $('#'+inputId);
 				var val = $input.val();
 				
 				if( $input.autocomplete ){
 					$input.autocomplete('close');
+					$input.autocomplete('option','disabled',true);
 				};
 
 				request.name = val;
 				
 				_this._searchForName(request);
+			} else {
+				if( $input.autocomplete ){
+					$input.autocomplete('option','disabled',false);
+				};
 			};
 			
 			return true;
@@ -530,9 +419,9 @@ var GazetteerProcess = $n2.Class({
 		
 		// Get centre of map to find biased country
 		this._findCurrentLocation(request);
-	}
+	},
 	
-	,_searchForName: function(request){
+	_searchForName: function(request){
 		var _this = this;
 		
 		var countryBias = null;
@@ -585,17 +474,17 @@ var GazetteerProcess = $n2.Class({
 				};
 			}
 		});
-	}
+	},
 	
-	,_installOnClick: function(request, $entry, entry){
+	_installOnClick: function(request, $entry, entry){
 		var _this = this;
 		
 		$entry.click(function(){
 			_this._selectEntry(request, entry);
 		});
-	}
+	},
 	
-	,_selectEntry: function(request, entry){
+	_selectEntry: function(request, entry){
 		var $dialog = $('#'+request.dialogId);
 		$dialog.dialog('close');
 		
@@ -625,9 +514,9 @@ var GazetteerProcess = $n2.Class({
 		};
 		
 		editLayer.addFeatures([feature]);
-	}
+	},
 	
-	,_findCurrentLocation: function(request){
+	_findCurrentLocation: function(request){
 		var map = request.mapControl.map;
 		var ll = map.getCenter();
 		if( ll ) {
@@ -710,6 +599,277 @@ function suppressPopupHtmlFunction(opts_){
 	opts.onSuccess(null);
 };
 
+//**************************************************
+//**************************************************
+
+function ComputeFeatureOriginalBboxForMapProjection(f, mapProj){
+	// Each feature has a projection stored at f.n2GeomProj
+	// that represents the original projection for a feature
+	//
+	// Each feature has a property named 'n2ConvertedBbox' that contains
+	// the full geometry bbox converted for the map projection, if 
+	// already computed.
+
+	if( f && f.n2ConvertedBbox ){
+		return f.n2ConvertedBbox;
+	};
+
+	var geomBounds = undefined;
+	if( f.data 
+	 && f.data.nunaliit_geom
+	 && f.data.nunaliit_geom.bbox 
+	 && f.n2GeomProj
+	 && mapProj ){
+		
+		var bbox = f.data.nunaliit_geom.bbox;
+		if( $n2.isArray(bbox) 
+		 && bbox.length >= 4 ){
+			geomBounds = new OpenLayers.Bounds(bbox[0], bbox[1], bbox[2], bbox[3]);
+
+			if( mapProj.getCode() !== f.n2GeomProj.getCode ){
+				geomBounds.transform(f.n2GeomProj, mapProj);
+			};
+
+			f.n2ConvertedBbox = geomBounds;
+		};
+	};
+	
+	return geomBounds;
+};
+
+//**************************************************
+//**************************************************
+var LayerInfo = $n2.Class({
+
+	customService: null,
+	
+	id: null,
+	
+	type: null,
+	
+	options: null,
+
+	sourceSrsName: null,
+	
+	sourceProjection: null,
+		
+	featurePrefix: null,
+
+	featureType: null,
+	
+	featureNS: null,
+	
+	name: null,
+	
+	filter: null,
+	
+	featurePopupHtmlFn: null,
+
+	featurePopupDelay: null,
+
+	visibility: null,
+	
+	styleMapFn: null,
+
+	styleMap: null,
+
+	selectListener: null,
+	
+	clusterClickCallback: null,
+	
+	// Options relating to clustering process
+	clustering: null,
+
+	// Boolean
+	useHoverSound: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			customService: null,
+			
+			// Type of layer: 'couchdb', 'wfs', ...
+			type: null,
+
+			// Options related ot type
+			options: null,
+			
+			// String to identify this layer among others
+			id: null,
+			
+			 /*
+			  * sourceSrsName: default source projection of WFS feature data - Geoserver can reproject but cannot
+			  * handle a bbox param on a GetFeature in reprojected coordinates.  This is used to tell the atlas 
+			  * what coordinates to use when request the vector layer features.
+			  */
+			sourceSrsName: 'EPSG:4326',
+			
+			// featurePrefix and featureType jointly form the WFS typename for this layer but because we now
+			// use filtering on layers, this typename (featurePrefix:featureType) is not unique.
+			featurePrefix: null,
+			featureType: null,
+			
+			// Full name space associated with prefix
+			featureNS: null,
+			
+			// name should be unique - doesn't have to be but this is used in the layer switcher so
+			// the map designer should be selecting something to differentiate ... this is used for
+			// regenerating a specific layers style map.
+			name: null,
+			
+			// filter for selection of features from the WFS layer
+			filter: null,
+			
+			featurePopupHtmlFn: null,
+			featurePopupDelay: 0,
+			visibility: true,
+			
+			// Style Map fn - returns an OpenLayers style map to be installed
+			// on the layer.  
+			//
+			// If not specified, a style map based on a defaults and extended
+			// using the property 'styleMap' is created.
+			styleMapFn: null,
+
+			// To update the default style associated with a layer, insert an object containing the
+			// named styles e.g.
+			// layerInfo.styleMap: {
+			//   normal: {
+			//     strokeColor: "#f4f4f4"		
+			//   }
+			//   ,clicked: {
+			//     strokeColor: "#ff0000"
+			//   }
+			// }
+			// The style names in use are:
+			// - normal -> default style for features
+			// - hovered -> style when a feature is moused over
+			// - clicked -> style when a feature is currently selected (clicked on)
+			// - hoveredClicked -> style when a feature is currently selected (clicked on) and moused over
+			// - filteredOut -> style when a feature does not fall within a filter
+			// 
+			// If the property 'styleMapFn' is provided, then this property is most
+			// likely going to be ignored. 
+			styleMap: null,
+
+			selectListener: function(isSelected, layerInfo){},
+			
+			// This is the function called back when a cluster with
+			// more than one feature is clicked
+			clusterClickCallback: null,
+			
+			clustering: null,
+			
+			useHoverSound: false,
+			
+			refreshCallback: null
+			
+		},opts_);
+		
+		var _this = this;
+
+		this.id = opts.id;
+		this.type = opts.type;
+		this.options = opts.options;
+		this.customService = opts.customService;
+		this.sourceSrsName = opts.sourceSrsName;
+		this.featurePrefix = opts.featurePrefix;
+		this.featureType = opts.featureType;
+		this.featureNS = opts.featureNS;
+		this.name = opts.name;
+		this.filter = opts.filter;
+		this.featurePopupHtmlFn = opts.featurePopupHtmlFn;
+		this.featurePopupDelay = opts.featurePopupDelay;
+		this.visibility = opts.visibility;
+		this.styleMapFn = opts.styleMapFn;
+		this.styleMap = opts.styleMap;
+		this.selectListener = opts.selectListener;
+		this.clusterClickCallback = opts.clusterClickCallback;
+		this.clustering = opts.clustering;
+		this.useHoverSound = opts.useHoverSound;
+		
+		// Derive database projection from name
+		if( this.sourceSrsName ){
+			this.sourceProjection = new OpenLayers.Projection(this.sourceSrsName);
+		};
+
+		// Localize name
+		if( this.name ){
+			this.name = _loc(this.name);
+		};
+
+		// Popup function
+		if( !this.featurePopupHtmlFn ){
+			if( this.customService ){
+				var cb = this.customService.getOption('mapFeaturePopupCallback');
+				if( typeof cb === 'function' ) {
+					this.featurePopupHtmlFn = cb;
+				};
+			};
+		};
+		if( !this.featurePopupHtmlFn ){
+			this.featurePopupHtmlFn = $n2.mapAndControls.DefaultPopupHtmlFunction;
+		};
+		
+		// Cluster click callback
+		if( !this.clusterClickCallback ){
+			if( this.customService ){
+				var cb = this.customService.getOption('mapClusterClickCallback');
+				if( typeof cb === 'function' ) {
+					this.clusterClickCallback = cb;
+				};
+			};
+		};
+		if( !this.clusterClickCallback ){
+			this.clusterClickCallback = $n2.mapAndControls.ZoomInClusterClickCallback;
+		};
+	},
+	
+	forEachFeature: function(callback){
+		if( typeof callback === 'function'
+		 && this.olLayer 
+		 && this.olLayer.features ){
+			for(var i=0,e=this.olLayer.features.length; i<e; ++i){
+				var feature = this.olLayer.features[i];
+				if( feature.cluster ){
+					for(var j=0,k=feature.cluster; j<k; ++j){
+						var cf = feature.cluster[j];
+						callback.call(this,cf,feature);
+					};
+				} else {
+					callback.call(this,feature);
+				};
+			};
+		};
+	},
+	
+	accumulateMapStylesInUse: function(stylesInUse){
+		// Loop over drawn features (do not iterate in clusters)
+		if( this.olLayer 
+		 && this.olLayer.features ){
+			for(var i=0,e=this.olLayer.features.length; i<e; ++i){
+				var feature = this.olLayer.features[i];
+				if( feature._n2Style 
+				 && typeof feature._n2Style.id === 'string'){
+					var style = feature._n2Style;
+					
+					var styleInfo = stylesInUse[style.id];
+					if( !styleInfo ){
+						styleInfo = {
+							style: style
+						};
+						stylesInUse[style.id] = styleInfo;
+					};
+					
+					var geometryType = feature.n2_geometry;
+					if( geometryType && !styleInfo[geometryType] ){
+						styleInfo[geometryType] = feature;
+					};
+				};
+			};
+		};
+	}
+});
+
 
 //**************************************************
 //**************************************************
@@ -739,6 +899,15 @@ function suppressPopupHtmlFunction(opts_){
     
 		{Boolean} addPointsOnly=false
     	If true, editing the map can only add points.
+	
+		{Boolean} showSRSAttribution
+		If true, the SRS Code will be added to the map attribution
+		
+		{Object} scaleLine
+    	Defines properties for the scale line control
+
+		{Boolean} enableWheelZoom=false
+    	If true, mouse wheel zooms in and out.
     
     	{Object} placeDisplay
     	Options for the display handler.
@@ -893,7 +1062,6 @@ var MapAndControls = $n2.Class({
 	styleFilters: null,
 
 	// map layers
-	defaultLayerInfo: null,
 	mapLayers: null,
 	vectorLayers: null,
 	infoLayers: null,
@@ -944,6 +1112,11 @@ var MapAndControls = $n2.Class({
 				,units: 'm' // map units
 			}
 			,addPointsOnly: false
+			,showSRSAttribution: false
+			,scaleLine: {
+				visible: false
+			}
+			,enableWheelZoom: false
 			,placeDisplay: { // place info panel display options.
 				attribDisplayType: 'attributes' // default - just list the attributes in a table	
 				,attribTableHeading: "Place Data:" // display heading for place attributes table format.
@@ -971,6 +1144,7 @@ var MapAndControls = $n2.Class({
 				}
 			}
 			,saveFeature: {} // save feature details
+			,canvasName: null
 			,sidePanelName: 'side'
 			,filterPanelName: null
 			,toggleClick: true
@@ -981,7 +1155,9 @@ var MapAndControls = $n2.Class({
 			}
 			,directory: null // service directory
 			,mapIdentifier: 'map'
-			,mapInteractionDivName: 'map_interaction_div' 
+			,mapInteractionDivName: 'map_interaction_div'
+			,keepPopUpsOpen: false
+			,keepPopUpsStatic: false
 		};
 		this.options = $.extend(true, {}, defaultOptions, options_);
 
@@ -1023,8 +1199,12 @@ var MapAndControls = $n2.Class({
 			,features: []
 		};
 		
+		
+		
 		var addOrEditLabel = _loc('Add or Edit a Map Feature');
 		var cancelLabel = _loc('Cancel Feature Editing');
+		
+		this.refreshCallback = null;
 		var customService = this._getCustomService();
 		if( customService ){
 			var customAdd = customService.getOption('mapLabelEditFeature',null);
@@ -1036,6 +1216,14 @@ var MapAndControls = $n2.Class({
 			if( customCancel ){
 				cancelLabel = customCancel;
 			};
+			
+			//Refresh call back;
+			if ( !this.refreshCallback ){
+					var cb = customService.getOption('mapRefreshCallback' );
+					if ( typeof cb === 'function' ){
+						this.refreshCallback = cb;
+					}
+			}
 		};
 
 		// MODES
@@ -1158,72 +1346,10 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('setMapLayerVisibility');
 	    this._registerDispatch('mapSwitchToEditMode');
 	    this._registerDispatch('simplifiedGeometryReport');
-		
+	    this._registerDispatch('canvasGetStylesInUse');
+	    this._registerDispatch('mapRefreshCallbackRequest');
+	    
 		// Layers
-		this.defaultLayerInfo = { // feature layer access details.
-			 /*
-			  * sourceSrsName: default source projection of WFS feature data - Geoserver can reproject but cannot
-			  * handle a bbox param on a GetFeature in reprojected coordinates.  This is used to tell the atlas 
-			  * what coordinates to use when request the vector layer features.
-			  */
-			sourceSrsName: 'EPSG:4326'
-			
-			// featurePrefix and featureType jointly form the WFS typename for this layer but because we now
-			// use filtering on layers, this typename (featurePrefix:featureType) is not unique.
-			,featurePrefix: null
-			,featureType: null
-			
-			// Full name space associated with prefix
-			,featureNS: null
-			
-			// name should be unique - doesn't have to be but this is used in the layer switcher so
-			// the map designer should be selecting something to differentiate ... this is used for
-			// regenerating a specific layers style map.
-			,name: null
-			
-			// filter for selection of features from the WFS layer
-			,filter: null
-			
-			,featurePopupHtmlFn: null
-			,featurePopupDelay: 0
-			,visibility: true
-			
-			// Style Map fn - returns an OpenLayers style map to be installed
-			// on the layer.  
-			//
-			// If not specified, a style map based on a defaults and extended
-			// using the property 'styleMap' is created.
-			,styleMapFn: function(layerInfo){ 
-				return _this._createStyleMapFromLayerInfo(layerInfo); 
-			}
-
-			// To update the default style associated with a layer, insert an object containing the
-			// named styles e.g.
-			// layerInfo.styleMap: {
-			//   normal: {
-			//     strokeColor: "#f4f4f4"		
-			//   }
-			//   ,clicked: {
-			//     strokeColor: "#ff0000"
-			//   }
-			// }
-			// The style names in use are:
-			// - normal -> default style for features
-			// - hovered -> style when a feature is moused over
-			// - clicked -> style when a feature is currently selected (clicked on)
-			// - hoveredClicked -> style when a feature is currently selected (clicked on) and moused over
-			// - filteredOut -> style when a feature does not fall within a filter
-			// 
-			// If the property 'styleMapFn' is provided, then this property is most
-			// likely going to be ignored. 
-			,styleMap: null
-
-			,selectListener: function(isSelected, layerInfo){}
-			
-			// This is the function called back when a cluster with
-			// more than one feature is clicked
-			,clusterClickCallback: null
-		};
 		this.infoLayers = [];
 		
 		if( typeof(this.options.layerInfo) === 'object' && !$n2.isArray(this.options.layerInfo) ) {
@@ -1383,12 +1509,40 @@ var MapAndControls = $n2.Class({
 			,theme: null // Let host page control loading of appropriate CSS style sheet
 			,zoomMethod: null  // Zoom with features does not look good
 		});
-		
-		// Disable zoom on mouse wheel
-		var navControls = this.map.getControlsByClass('OpenLayers.Control.Navigation');
-		for(var i=0,e=navControls.length; i<e; ++i) {
-			navControls[i].disableZoomWheel();
+
+		// Create Scale line 
+		if( this.options.scaleLine && this.options.scaleLine.visible ){
+			// Default OpenLayers Scale Line Properties:
+			// ------------------------------------
+			// bottomOutUnits: mi
+			// bottomInUnits: ft
+			// topOutUnits: km
+			// topInUnits: m
+			// maxWidth: 100 (in pixels)
+			// geodesic: false
+
+			var scaleLine = new OpenLayers.Control.ScaleLine({
+				bottomOutUnits: this.options.scaleLine.bottomOutUnits
+				,bottomInUnits: this.options.scaleLine.bottomInUnits
+				,topOutUnits: this.options.scaleLine.topOutUnits
+				,topInUnits: this.options.scaleLine.topInUnits
+				,maxWidth: this.options.scaleLine.maxWidth
+				,geodesic: this.options.scaleLine.geodesic
+			});
+			this.map.addControl(scaleLine);
 		};
+
+		// Disable zoom on mouse wheel
+		if( this.options.enableWheelZoom ) {
+			// Do nothing. Enabled by default
+		} else {
+			// Turn off wheel
+			var navControls = this.map.getControlsByClass('OpenLayers.Control.Navigation');
+			for(var i=0,e=navControls.length; i<e; ++i) {
+				navControls[i].disableZoomWheel();
+			};
+		};
+
 		if( this.map.div ){
 			var $map = $(this.map.div);
 			$map.find('.olControlZoomIn').attr('title', _loc('Zoom In'));
@@ -1413,6 +1567,12 @@ var MapAndControls = $n2.Class({
         	// var baseLayer = evt.layer;
         	var lastProjectionObj = evt.oldProjection;
         	var currentProjectionObj = _this.map.getProjectionObject();
+			
+			// If showSRSAttribution option is true 
+			// update the SRS layer attribution
+			if( _this.options.showSRSAttribution ) {
+				_this._updateSRSAttribution();
+			};
 
         	// Makes sense only when projection is changed
         	if( currentProjectionObj 
@@ -1501,9 +1661,25 @@ var MapAndControls = $n2.Class({
 		
 		this.map.addLayers(this.mapLayers);
 
+		// Install mouse position widget
+		var precisionLevel = 5;
+		var mousePositionProjection = this.options.mapCoordinateSpecifications.useForMapControls ? 
+				userCoordProjection : mapProjection;
+
+		if( this.options.mapCoordinateSpecifications.mousePositionSrsName ){
+			mousePositionProjection = new OpenLayers.Projection(
+				this.options.mapCoordinateSpecifications.mousePositionSrsName
+			);
+		};
+
+		// Reduce level of precision for mouse position to 0 decimal places if the units are in metres
+		if( mousePositionProjection.proj.units === 'm'){
+			precisionLevel = 0;
+		};
+
 		this.map.addControl(new OpenLayers.Control.MousePosition({
-			displayProjection: (this.options.mapCoordinateSpecifications.useForMapControls ? 
-					userCoordProjection : mapProjection)
+			displayProjection: mousePositionProjection,
+			numDigits: precisionLevel
 		}));
 		
 		// Layer switcher control
@@ -1583,6 +1759,7 @@ var MapAndControls = $n2.Class({
     	// When changing zoom, check if new simpilified geometries should be loaded
     	this.map.events.register( 'zoomend', null, function(evt){
     		_this._refreshSimplifiedGeometries();
+    		_this._updatedStylesInUse();
 		});
 		
     	// When changing zoom, check if new simpilified geometries should be loaded
@@ -1599,6 +1776,13 @@ var MapAndControls = $n2.Class({
 				,mapControl: this
 			});
 		};
+	},
+	
+	getCanvasName: function(){
+		if( this.options ){
+			return this.options.canvasName;
+		};
+		return undefined;
 	},
 
 	getNamedLayerInfo: function(name) {
@@ -1641,12 +1825,66 @@ var MapAndControls = $n2.Class({
 		};
 	},
 	
+	forEachVectorLayer: function(callback){
+		if( this.infoLayers && typeof callback === 'function' ){
+			for(var i=0,e=this.infoLayers.length; i<e; ++i){
+				var layerInfo = this.infoLayers[i];
+				var layer = layerInfo.olLayer;
+				callback.call(this,layerInfo,layer);
+			};
+		};
+	},
+
+	_updateSRSAttribution: function(){
+		var _this = this;
+		var currentProjection = this.map.getProjectionObject();
+		var srsCode = currentProjection.projCode;
+		var projDef = currentProjection.proj.defData.replace(/ /g, ",");
+
+		// Create a new hidden OpenLayers.Layer object with SRS attribution
+		var srsAttribution = new OpenLayers.Layer("SRS",{
+			attribution:'SRS: <span title='+ projDef +'>' + srsCode +'</span>',
+			visibility: true,
+			displayInLayerSwitcher: false
+		});
+
+		// Remove old SRS attribution layers
+		var oldSRSLayer = this.map.getLayersByName("SRS");
+		if( oldSRSLayer.length > 0 ){
+			oldSRSLayer.forEach(function(srsLayer){
+				_this.map.removeLayer(srsLayer);
+			});
+		};
+
+		// Add SRS attribution layer
+		this.map.addLayers([srsAttribution]);
+	},
+
 	_getMapFeaturesIncludingFid: function(fid){
+		var fidMap = {};
+		fidMap[fid] = true;
+		
+		var features = this._getMapFeaturesIncludingFidMap(fidMap);
+		return features;
+	},
+	
+	_getMapFeaturesIncludingFids: function(fids){
+		var fidMap = {};
+		for(var i=0,e=fids.length; i<e; ++i){
+			var fid = fids[i];
+			fidMap[fid] = true;
+		};
+		
+		var features = this._getMapFeaturesIncludingFidMap(fidMap);
+		return features;
+	},
+	
+	_getMapFeaturesIncludingFidMap: function(fidMap){
 		var features = [];
 		
 		for(var loop=0; loop<this.infoLayers.length; ++loop) {
 			var layerInfo = this.infoLayers[loop];
-			var feature = this._getLayerFeatureIncludingFid(layerInfo.olLayer,fid);
+			var feature = this._getLayerFeatureIncludingFidMap(layerInfo.olLayer,fidMap);
 			if( feature ) {
 				features.push(feature);
 			};
@@ -1655,19 +1893,25 @@ var MapAndControls = $n2.Class({
 		return features;
 	},
 	
-	_getLayerFeatureIncludingFid: function(layer,fid) {
+	_getLayerFeatureIncludingFid: function(layer, fid){
+		var map = {};
+		map[fid] = true;
+		return this._getLayerFeatureIncludingFidMap(layer, map);
+	},
+	
+	_getLayerFeatureIncludingFidMap: function(layer,fidMap) {
 		
 		if( layer && layer.features ) {
 			var loop;
 			var features = layer.features;
 			for(loop=0;loop<features.length;++loop) {
 				var feature = features[loop];
-				if( feature.fid && feature.fid === fid ) {
+				if( feature.fid && fidMap[feature.fid] ) {
 					return feature;
 				} else if( feature.cluster ) {
 					for(var j=0,k=feature.cluster.length; j<k; ++j){
 						var f = feature.cluster[j];
-						if( f.fid && f.fid === fid ){
+						if( f.fid && fidMap[f.fid] ){
 							return feature;
 						};
 					};
@@ -1829,6 +2073,9 @@ var MapAndControls = $n2.Class({
 					var loadedFeature = features[featureLoop];
 					reloadOptions.onReloaded(loadedFeature);
 				};
+				
+				// Refresh styles
+				_this._updatedStylesInUse();
 			};
 			
 			return cb;
@@ -1990,45 +2237,22 @@ var MapAndControls = $n2.Class({
 	            layers[loop].redraw();
 	        };
 		};
+		
+		this._updatedStylesInUse();
 	},
 
 	_createOverlayFromDefinition: function(layerDefinition, isBaseLayer) {
 		var _this = this;
-
 		var cs = this._getCustomService();
-		
-		var layerInfo = $.extend({}, this.defaultLayerInfo, layerDefinition);
-		
-		// Derive database projection from name
-		layerInfo.sourceProjection = new OpenLayers.Projection(layerInfo.sourceSrsName);
 
-		layerInfo.name = _loc(layerInfo.name);
-		
-		// Popup function
-		if( !layerInfo.featurePopupHtmlFn ){
-			if( cs ){
-				var cb = cs.getOption('mapFeaturePopupCallback');
-				if( typeof cb === 'function' ) {
-					layerInfo.featurePopupHtmlFn = cb;
-				};
-			};
-		};
-		if( !layerInfo.featurePopupHtmlFn ){
-			layerInfo.featurePopupHtmlFn = $n2.mapAndControls.DefaultPopupHtmlFunction;
-		};
-		
-		// Cluster click callback
-		if( !layerInfo.clusterClickCallback ){
-			if( cs ){
-				var cb = cs.getOption('mapClusterClickCallback');
-				if( typeof cb === 'function' ) {
-					layerInfo.clusterClickCallback = cb;
-				};
-			};
-		};
-		if( !layerInfo.clusterClickCallback ){
-			layerInfo.clusterClickCallback = $n2.mapAndControls.ZoomInClusterClickCallback;
-		};
+		// Create LayerInfo
+		var layerInfoOptions = $.extend({
+			styleMapFn: function(layerInfo){ 
+				return _this._createStyleMapFromLayerInfo(layerInfo); 
+			}
+		}, layerDefinition);
+		layerInfoOptions.customService = cs; 
+		var layerInfo = new LayerInfo(layerInfoOptions);
 		
 		var layerOptions = {
 			name: layerInfo.name
@@ -2039,7 +2263,7 @@ var MapAndControls = $n2.Class({
 
 		if( 'couchdb' === layerDefinition.type ) {
 			// This is a couch layer
-			var couchProtocolOpt = $n2.extend({},layerInfo.options,{
+			var couchProtocolOpt = $n2.extend({},layerDefinition.options,{
 				notifications: {
 					readStart: function(){
 						_this._mapBusyStatus(1);
@@ -2051,7 +2275,26 @@ var MapAndControls = $n2.Class({
 			});
 			layerInfo.protocol = new OpenLayers.Protocol.Couch(couchProtocolOpt);
 			layerOptions.protocol = layerInfo.protocol;
+			layerInfo.cachingAllowed = true;
 			
+		} else if( 'model' === layerDefinition.type ) {
+			var modelProtocolOptions = $n2.extend({},layerDefinition.options);
+			modelProtocolOptions.dispatchService = this._getDispatchService();
+			modelProtocolOptions.onUpdateCallback = function(state){
+				_this._modelLayerUpdated(layerOptions, state);
+			};
+			modelProtocolOptions.notifications = {
+				readStart: function(){
+					_this._mapBusyStatus(1);
+				}
+				,readEnd: function(){
+					_this._mapBusyStatus(-1);
+				}
+			};
+			
+			layerInfo.protocol = new OpenLayers.Protocol.Model(modelProtocolOptions);
+			layerOptions.protocol = layerInfo.protocol;
+
 		} else if( 'wfs' === layerDefinition.type ) {
 			// This is a WFS layer
 			
@@ -2160,6 +2403,9 @@ var MapAndControls = $n2.Class({
 			if( layerOptions.protocol ) {
 				if( 'couchdb' === layerDefinition.type ) {
 					layerOptions.strategies = [ new OpenLayers.Strategy.N2BBOX() ];
+				} else if( 'model' === layerDefinition.type ){
+					// no bounding box strategies for model layers
+					layerOptions.strategies = [ new OpenLayers.Strategy.Fixed() ];
 				} else {
 					layerOptions.strategies = [ new OpenLayers.Strategy.BBOX() ];
 				};
@@ -2168,9 +2414,30 @@ var MapAndControls = $n2.Class({
 		
 		if( !layerOptions.strategies ){
 			layerOptions.strategies = [];
-		}
+		};
+		layerInfo.featureStrategy = new OpenLayers.Strategy.NunaliitFeatureStrategy();
+		layerOptions.strategies.push( layerInfo.featureStrategy );
+		if( typeof layerDefinition.minimumLinePixelSize === 'number' 
+		 || typeof layerDefinition.minimumPolygonPixelSize === 'number' ){
+			var minimumSizeOptions = {};
+			if( typeof layerDefinition.minimumLinePixelSize === 'number' ){
+				minimumSizeOptions.minimumLinePixelSize = layerDefinition.minimumLinePixelSize;
+			};
+			if( typeof layerDefinition.minimumPolygonPixelSize === 'number' ){
+				minimumSizeOptions.minimumPolygonPixelSize = layerDefinition.minimumPolygonPixelSize;
+			};
+			layerInfo.featureStrategy.setMinimumSize(minimumSizeOptions);
+		};
 		if( layerInfo.clustering ) {
 			var clusterOptions = {};
+			
+			if( typeof layerDefinition.minimumLinePixelSize === 'number' ){
+				clusterOptions.minimumLinePixelSize = layerDefinition.minimumLinePixelSize;
+			};
+			if( typeof layerDefinition.minimumPolygonPixelSize === 'number' ){
+				clusterOptions.minimumPolygonPixelSize = layerDefinition.minimumPolygonPixelSize;
+			};
+			
 			for(var cProp in layerInfo.clustering){
 				var cValue = layerInfo.clustering[cProp];
 				if( 'distance' === cProp
@@ -2182,12 +2449,9 @@ var MapAndControls = $n2.Class({
 					clusterOptions[cProp] = cValue;
 				};
 			};
-			layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitCluster(clusterOptions) );
+			layerInfo.featureStrategy.setClustering(clusterOptions);
 		};
 		
-		// Sort features on a layer so that polygons do not hide points  
-		layerOptions.strategies.push( new OpenLayers.Strategy.NunaliitLayerSorting() );
-
 		//layerOptions.renderers = ['Canvas','SVG','VML'];
 		layerOptions.renderers = ['SVG','VML'];
 
@@ -2232,6 +2496,8 @@ var MapAndControls = $n2.Class({
 			};
 			
 		} else if( 'Google Maps' == layerDefinition.type ){
+			//this._checkGoogleMapAPI();
+			
 			var options = layerDefinition.options;
 			
 			if( options && 'string' === typeof(options.type) ){
@@ -2244,7 +2510,8 @@ var MapAndControls = $n2.Class({
 				if( mapTypeId ) {
 					options.type = mapTypeId;
 				} else {
-					$n2.reportError('Can not find Google map type id: '+options.type);
+					$n2.reportError('Attempting to load a Google Map background. A map API key must be configured');
+					$n2.logError('Unable to load Google Map type: '+options.type);
 					return null;
 				};
 			};
@@ -2260,6 +2527,7 @@ var MapAndControls = $n2.Class({
 			};
 			
 		} else if( 'couchdb' === layerDefinition.type
+		 || 'model' === layerDefinition.type
 		 || 'wfs' === layerDefinition.type ){
 			if( isBaseLayer ) {
 				$n2.reportError('Layer type not suitable for background: '+layerDefinition.type);
@@ -2289,12 +2557,20 @@ var MapAndControls = $n2.Class({
 					if( 'url' === key ) {
 						wmsUrl = options[key];
 
-					} else if( 'opacity' === key ) {
-						layerOptions.opacity = options[key];
-
 					} else if( 'srsName' === key ) {
 						var proj = new OpenLayers.Projection( options[key] );
 						layerOptions.projection = proj;
+
+					} else if( 'opacity' === key
+							|| 'scales' === key 
+							|| 'resolutions' === key 
+							|| 'maxScale' === key
+							|| 'minScale' === key
+							|| 'maxResolution' === key
+							|| 'minResolution' === key
+							|| 'numZoomLevels' === key
+							|| 'maxZoomLevel' === key ) {
+						layerOptions[key] = options[key];
 						
 					} else {
 						wmsOptions[key] = options[key];
@@ -2431,6 +2707,66 @@ var MapAndControls = $n2.Class({
 				$n2.log('Image layer can not be added since OpenLayers does not support this type of background');
 			};
 			
+		} else if( 'wmts' === layerDefinition.type ){
+			var options = layerDefinition.options;
+			
+			if( options ) {
+				var wmtsUrl = null;
+				var wmtsOptions = {};
+				var layerOptions = {
+					isBaseLayer: isBaseLayer
+					,name: "Default WMTS Layer"
+					,url : null
+					,layer: "default:wmts_layer"
+					,style: "_null"
+					,matrixSet : "EPSG:900913"
+				};
+				if( typeof(layerDefinition.visibility) === 'boolean' ){
+					layerOptions.visibility = layerDefinition.visibility;
+				};
+				if ($n2.isDefined(layerDefinition.gutter)) {
+					layerOptions.gutter = layerDefinition.gutter;
+				};
+				if ($n2.isDefined(layerDefinition.displayInLayerSwitcher)) {
+					layerOptions.displayInLayerSwitcher = layerDefinition.displayInLayerSwitcher;
+				};
+				for(var key in options){
+					if( 'url' === key ) {
+						//wmsUrl = options[key];
+						layerOptions.url = options[key];
+
+					} else if( 'srsName' === key ) {
+						var proj = new OpenLayers.Projection( options[key] );
+						layerOptions.projection = proj;
+
+					} else if( 'opacity' === key
+							|| 'scales' === key 
+							|| 'resolutions' === key  ) {
+						layerOptions[key] = options[key];
+						
+					} else if( 'numZoomLevels' === key){
+						var matrixIds = new Array(options["numZoomLevels"]);
+						var srsName = options['srsName'];
+						var numzoom = options["numZoomLevels"];
+					    for (var i=0; i< numzoom; ++i) {
+					        matrixIds[i] = srsName + ":" + i;
+					    }
+					    layerOptions.matrixIds = matrixIds;
+					    layerOptions.numZoomLevels = options[key];
+					} else {
+						layerOptions[key] = options[key];
+					};
+				};
+				var l = new OpenLayers.Layer.WMTS( layerOptions );
+				
+				return l;
+				
+			} else {
+				$n2.reportError('Bad configuration for layer: '+name);
+				return null;
+			};
+			
+			
 		} else {
 			$n2.reportError('Unknown layer type: '+layerDefinition.type);
 		};
@@ -2499,6 +2835,8 @@ var MapAndControls = $n2.Class({
 					};
 				};
 			};
+			
+			return true;
 		});
 		
 		layerInfo.olLayer.events.register('featuresadded', null, function(evt_){
@@ -2520,61 +2858,10 @@ var MapAndControls = $n2.Class({
 				_this._clearValueCache(infoLayer);
 			};
 
-			// In case a feature is loaded while the EDIT_FEATURE mode is entered,
-			// do not add features for the feature currently being modified.
-			// This happens when edit is initiated from outside the map. The map
-			// is then moved over to the location of the geometry. In that case,
-			// the geometry might load up after the mode was switched.
-			if( _this.currentMode === _this.modes.EDIT_FEATURE
-			 && _this.editFeatureInfo
-			 && _this.editFeatureInfo.fid
-			 && evt_
-			 && evt_.features 
-			 && evt_.features.length ){
-				var editFeatureFid = _this.editFeatureInfo.fid;
-				
-				var featuresToRemove = [];
-				for(var i=0,e=evt_.features.length; i<e; ++i){
-					var f = evt_.features[i];
-					if( f.fid === editFeatureFid ){
-						featuresToRemove.push(f);
-						
-					} else if( f.cluster ){
-						for(var j=0,k=f.cluster.length; j<k; ++j){
-							var cf = f.cluster[j];
-							if( cf.fid === editFeatureFid ){
-								if( featuresToRemove.indexOf(f) < 0 ) {
-									featuresToRemove.push(f);
-								};
-							};
-						};
-					};
-				};
-				
-				if( featuresToRemove.length ){
-		    		layer.removeFeatures(featuresToRemove,{silent:true});
-		    		
-		    		var featuresAddBack = [];
-					for(var i=0,e=featuresToRemove.length; i<e; ++i){
-						var f = featuresToRemove[i];
-						if( f.cluster ){
-							for(var j=0,k=f.cluster.length; j<k; ++j){
-								var cf = f.cluster[j];
-								if( cf.fid !== editFeatureFid ){
-									featuresAddBack.push(cf);
-								};
-							};
-						};
-					};
-					
-					if( featuresAddBack.length ){
-						layer.removeFeatures(featuresAddBack);
-					};
-				};
-			};
-			
 			// When features are added, check the map for new simplified geometries
 			_this._refreshSimplifiedGeometries();
+			
+			_this._updatedStylesInUse();
 		});
 		
 		// When features are removed, clear the cache associated with the layer.
@@ -2595,9 +2882,9 @@ var MapAndControls = $n2.Class({
 			if( infoLayer ) {
 				_this._clearValueCache(infoLayer);
 			};
+
+			_this._updatedStylesInUse();
 		});
-		
-		this._createFeatureModifiedHandler(layerInfo.olLayer);
 	},
     
     _createFeatureModifiedHandler: function(olLayer){
@@ -2618,6 +2905,7 @@ var MapAndControls = $n2.Class({
     },
 
 	_genBackgroundMapLayers: function(options) {
+		var _this = this;
 		var bg = null;
 		
 		if( options
@@ -2676,6 +2964,8 @@ var MapAndControls = $n2.Class({
 					 && OpenLayers.Layer
 					 && OpenLayers.Layer.Google
 					 ) {
+						this._checkGoogleMapAPI();
+						
 						if( background.layers
 						 && $n2.isArray(background.layers) 
 						 ) {
@@ -2739,6 +3029,18 @@ var MapAndControls = $n2.Class({
 				bg.push( new OpenLayers.Layer.Google("Google Hybrid",{type:google.maps.MapTypeId.HYBRID,numZoomLevels: 20}) );
 			};
 			return bg;
+		};
+	},
+	
+	_checkGoogleMapAPI: function(){
+		var googleMapApiLoaded = false;
+		if( typeof window === 'object' 
+		 && window.google 
+		 && window.google.maps ){
+			googleMapApiLoaded = true;
+		};
+		if( !googleMapApiLoaded ){
+			$n2.logError('Google Map API is not loaded. Please, configure a Google Map API key');
 		};
 	},
 
@@ -2993,28 +3295,37 @@ var MapAndControls = $n2.Class({
 		this.hoverInfo.endFn.push(fn);
 	},
 
-	_startFocus: function(features, fid){
+	_startFocus: function(fids){
 		this._endFocus();
 		
-		this.focusInfo.origin = fid;
+		this.focusInfo.origin = {};
+		for(var i=0,e=fids.length; i<e; ++i){
+			var fid = fids[i];
+			this.focusInfo.origin[fid] = true;
+		};
 		
 		this._addFocus({
-			features: features
-			,fid: fid
-			,origin: fid
+			fids: fids
 		});
 	},
 
-	_addFocus: function(opts){
-		if( opts.origin && opts.origin !== this.focusInfo.origin ){
-			// Ignore. Arrived too late.
-			return;
+	_addFocus: function(opts_){
+		var opts = $n2.extend({
+			fids: null
+			,intent: null
+		},opts_);
+
+		if( opts.fids ){
+			for(var i=0,e=opts.fids.length; i<e; ++i){
+				var fid = opts.fids[i];
+				this.focusInfo.fids[fid] = true;
+			};
 		};
 		
-		this.focusInfo.fids[opts.fid] = true;
+		var features = this._getMapFeaturesIncludingFidMap(this.focusInfo.fids);
 		
-		for(var i=0,e=opts.features.length; i<e; ++i){
-			var f = opts.features[i];
+		for(var i=0,e=features.length; i<e; ++i){
+			var f = features[i];
 			if( f && !f.isHovered ) {
 				f.isHovered = true;
 				if( opts.intent ){
@@ -3088,35 +3399,58 @@ var MapAndControls = $n2.Class({
 	},
 
 	_hoverFeature: function(feature, layer) {
-		if( null == feature ) {
+		if( !feature ) {
 			return;
 		};
-		if( null == layer ) {
+		if( !layer ) {
 			return;
 		};
 		
 		var layerInfo = layer._layerInfo;
-		if( null == layerInfo ) {
+		if( !layerInfo ) {
 			return;
 		};
 
 		var dispatchService = this._getDispatchService();
+		
+		var docIds = [];
+		var docs = [];
+		if( feature.cluster ){
+			for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
+				var f = feature.cluster[ci];
+				docIds.push( f.fid );
+				docs.push( f.data );
+			};
+			
+		} else {
+			docIds.push( feature.fid );
+			docs.push( feature.data );
+		};
 
 		this._registerEndHoverFn(function(){
 			dispatchService.send(DH, {
 				type: 'userFocusOff'
-				,docId: feature.fid
-				,doc: feature.data
+				,docIds: docIds
+				,docs: docs
 				,feature: feature
 	 		});
 		});
 
-		dispatchService.send(DH, {
-			type: 'userFocusOn'
-			,docId: feature.fid
-			,doc: feature.data
-			,feature: feature
- 		});
+		if( docIds.length > 1 ){
+			dispatchService.send(DH, {
+				type: 'userFocusOn'
+				,docIds: docIds
+				,docs: docs
+				,feature: feature
+	 		});
+		} else if( docIds.length > 0 ){
+			dispatchService.send(DH, {
+				type: 'userFocusOn'
+				,docId: docIds[0]
+				,doc: docs[0]
+				,feature: feature
+	 		});
+		};
 	},
 	
 	_hoverFeaturePopup: function(feature, layer) {
@@ -3256,24 +3590,41 @@ var MapAndControls = $n2.Class({
 	    	popup.autoSize = true;
 	    	popup.panMapIfOutOfView = true;
 			popup.setOpacity("80");
+
+			// Set maximum pop-up size
+			var mapSize = _this.map.getSize();
+			if( mapSize ){
+				popup.maxSize = new OpenLayers.Size(
+					Math.floor(mapSize.w/3),
+					Math.floor(mapSize.h/3)
+				);
+			};
 			
 			// Install new pop-up
 			_this.currentPopup = popup;
 			_this.map.addPopup(popup);
 
 			// Add clean up routine
-			_this._registerEndHoverFn(destroyCurrentPopup);
+			if( _this.options && _this.options.keepPopUpsOpen ){
+				// Leave opened (debugging)
+			} else {
+				_this._registerEndHoverFn(destroyCurrentPopup);
+			};
 			
 			// Add routine to adjust popup position, once
-			_this.addMapMousePositionListener(function(evt){
-				if( _this.currentPopup === popup && _this.lastMapXy ) {
-					_this.currentPopup.lonlat = _this.map.getLonLatFromPixel(_this.lastMapXy);
-					_this.currentPopup.updatePosition();
-					return true; // keep listener
-				};
-				
-				return false; // remove listener
-			});
+			if( _this.options && _this.options.keepPopUpsStatic ){
+				// Leave opened (debugging)
+			} else {
+				_this.addMapMousePositionListener(function(evt){
+					if( _this.currentPopup === popup && _this.lastMapXy ) {
+						_this.currentPopup.lonlat = _this.map.getLonLatFromPixel(_this.lastMapXy);
+						_this.currentPopup.updatePosition();
+						return true; // keep listener
+					};
+					
+					return false; // remove listener
+				});
+			};
 		};
 		
 		
@@ -4099,28 +4450,20 @@ var MapAndControls = $n2.Class({
 		
 		var cs = this._getCustomService();
 		
-		var layerInfo = $.extend({}, this.defaultLayerInfo, opt_);
+		// Create LayerInfo
+		var layerInfoOptions = $.extend({
+			styleMapFn: function(layerInfo){ 
+				return _this._createStyleMapFromLayerInfo(layerInfo); 
+			}
+		}, opt_);
+		layerInfoOptions.customService = cs; 
+		var layerInfo = new LayerInfo(layerInfoOptions);
 		
-		// Popup function
-		if( !layerInfo.featurePopupHtmlFn ){
-			if( cs ){
-				var cb = cs.getOption('mapFeaturePopupCallback');
-				if( typeof cb === 'function' ) {
-					layerInfo.featurePopupHtmlFn = cb;
-				};
-			};
-		};
-		if( !layerInfo.featurePopupHtmlFn ){
-			layerInfo.featurePopupHtmlFn = $n2.mapAndControls.DefaultPopupHtmlFunction;
-		};
-
 		layerInfo.typename = layerInfo.featurePrefix + ':' + layerInfo.featureType;
 		layerInfo.schema = layerInfo.wfsUrl 
 			+ '?service=WFS&version=' + layerInfo.wfsVersion 
 			+ '&request=DescribeFeatureType&typeName=' + layerInfo.typename;
 		
-		layerInfo.sourceProjection = new OpenLayers.Projection(layerInfo.sourceSrsName);
-
 		var layerOptions = {
 			projection: layerInfo.sourceProjection
 			,visibility: layerInfo.visibility
@@ -4129,7 +4472,7 @@ var MapAndControls = $n2.Class({
 
 		if( layerInfo.couchDb ) {
 			// This is a couch layer
-			var couchProtocolOpt = $n2.extend({},layerInfo.couchDb,{
+			var couchProtocolOpt = $n2.extend({},opt_.couchDb,{
 				notifications: {
 					readStart: function(){
 						_this._mapBusyStatus(1);
@@ -4281,18 +4624,6 @@ var MapAndControls = $n2.Class({
 		var navHighlightOptions = {
 			hover: true
 			,callbacks: {
-//	            click: function(feature) {
-//					_this._startClicked(feature, false);
-//				}
-//	            ,clickout: function(){
-//					_this._unselectFeature();
-//				}
-//	            ,over: function(feature){ 
-//					_this._startHover(feature); 
-//				}
-//	            ,out: function(){ 
-//					_this._endHover(); 
-//				}
 			}
 		};
 		this.selectFeatureControl = new OpenLayers.Control.SelectFeature(
@@ -4349,12 +4680,18 @@ var MapAndControls = $n2.Class({
 	// === START -- SIMPLIFIED GEOMETRIES =================================================
 	
 	_refreshSimplifiedGeometries: function(){
-		var proj = new OpenLayers.Projection('EPSG:4326');
-		var epsg4326Resolution = this._getResolutionInProjection(proj);
+		var _this = this;
+
+		var epsg4326Proj = new OpenLayers.Projection('EPSG:4326');
+		var epsg4326Resolution = this._getResolutionInProjection(epsg4326Proj);
 		//$n2.log('epsg4326Resolution',epsg4326Resolution);
+		var mapProjection = this.map.getProjectionObject();
 		
 		// Accumulate all geometries that are required
 		var geomsNeeded = {};
+		
+		// Figure out extent of the map
+		var mapExtent = this.map.getExtent();
 		
 		// Iterate over layers
 		var layers = this.map.layers;
@@ -4366,14 +4703,12 @@ var MapAndControls = $n2.Class({
 				for(var fi=0,fe=layer.features.length; fi<fe; ++fi){
 					var feature = layer.features[fi];
 					
-					// If feature is a cluster, iterate over its components
+					// If feature is a cluster, skip it. No need to fetch the
+					// components as they are hidden in a cluster
 					if( feature.cluster ){
-						for(var ci=0,ce=feature.cluster.length; ci<ce; ++ci){
-							var f = feature.cluster[ci];
-							checkFeature(f,epsg4326Resolution,geomsNeeded);
-						};
+
 					} else {
-						checkFeature(feature,epsg4326Resolution,geomsNeeded);
+						checkFeature(feature,epsg4326Resolution,geomsNeeded,mapExtent,mapProjection);
 					};
 				};
 			};
@@ -4403,20 +4738,26 @@ var MapAndControls = $n2.Class({
 				simplificationsReported[simplificationsReported.length] = simplification;
 			
 			} else {
-				geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
+				if( geomsNeeded[id].feature && geomsNeeded[id].feature.n2FilteredOut ){
+					// Do not fetch simplifications for features not currently shown
+				} else {
+					geometriesRequested[geometriesRequested.length] = geomsNeeded[id];
+				};
 			};
 		};
 		if( simplificationsReported.length ){
+			// These are all the geometries already in memory
 			//$n2.log('simplificationsReported',simplificationsReported);
-			this._updateSimplifiedGeometries(simplificationsReported);
+			window.setTimeout(function(){
+				_this._updateSimplifiedGeometries(simplificationsReported);
+			},0);
 		};
 		if( geometriesRequested.length ){
 			var mapCenter = this.map.getCenter();
 			if( mapCenter ){
-				var mapProjection = this.map.getProjectionObject();
 				if( mapProjection 
-				 && mapProjection.getCode() !== proj.getCode ){
-					mapCenter.transform(mapProjection, proj);
+				 && mapProjection.getCode() !== epsg4326Proj.getCode ){
+					mapCenter.transform(mapProjection, epsg4326Proj);
 				};
 				
 				// Sort the requested geometries so that the ones closest to the
@@ -4433,8 +4774,22 @@ var MapAndControls = $n2.Class({
 				};
 				
 				geometriesRequested.sort(function(a,b){
+					var aSeen = true;
+					var bSeen = true;
+					
+					if( a.feature && a.feature.n2FilteredOut ){
+						aSeen = false;
+					};
+					if( b.feature && b.feature.n2FilteredOut ){
+						bSeen = false;
+					};
+					
+					if( aSeen && !bSeen ) return -1;
+					if( bSeen && !aSeen ) return 1;
+					
 					if( a.d < b.d ) return -1;
 					if( a.d > b.d ) return 1;
+
 					return 0;
 				});
 			};
@@ -4455,7 +4810,27 @@ var MapAndControls = $n2.Class({
 			,count: geometriesRequested.length
 		});
 		
-		function checkFeature(f, res, geomsNeeded){
+		function checkFeature(f, res, geomsNeeded, mapExtent, mapProjection){
+			// Check if feature falls within viewable boundaries of
+			// map
+			if( !mapExtent ) {
+				// Can not continue
+				return;
+			};
+			var geomBound = ComputeFeatureOriginalBboxForMapProjection(f, mapProjection);
+			if( !geomBound ){
+				// Can not process this feature
+				return;
+			};
+			if( geomBound.intersectsBounds(mapExtent) ){
+				// We should continue and get a simplified geometry
+				// for this feature. Its BBOX intersects with the visible
+				// portion of the map.
+			} else {
+				// Not on screen. Do not bother
+				return;
+			};
+			
 			// Operate only on features that have simplification information
 			if( f.data 
 			 && f.data.nunaliit_geom
@@ -4535,6 +4910,7 @@ var MapAndControls = $n2.Class({
 	 */
 	_updateSimplifiedGeometries: function(simplifiedGeometries){
 		var _this = this;
+		//$n2.log('_updateSimplifiedGeometries '+simplifiedGeometries.length+' at '+Date.now());
 		
 		// Often used
 		var wktFormat = new OpenLayers.Format.WKT();
@@ -4571,6 +4947,7 @@ var MapAndControls = $n2.Class({
 		};
 		
 		// Reload layers that need it
+		var layerReloaded = false;
 		for(var layerId in layersToReload){
 			var layer = layersToReload[layerId];
 			
@@ -4590,7 +4967,7 @@ var MapAndControls = $n2.Class({
 			};
 			
 			// Remove all features
-			layer.removeAllFeatures();
+			layer.removeAllFeatures({silent:true});
 			
 			// Add them again so that clustering and drawing is based on the
 			// new geometry
@@ -4601,6 +4978,17 @@ var MapAndControls = $n2.Class({
 //				$n2.log(''+g);
 //			};
 			layer.addFeatures(features);
+			
+			layerReloaded = true;
+		};
+		
+		if( !layerReloaded ){
+			// No work this time around.
+			this._refreshSimplifiedGeometries();
+		};
+		
+		if( layerReloaded ){
+			this._updatedStylesInUse();
 		};
 		
 		function updateFeature(layer, f, simplifiedGeometryById, layersToReload){
@@ -4690,13 +5078,39 @@ var MapAndControls = $n2.Class({
 	
 	// === END -- SIMPLIFIED GEOMETRIES ===================================================
 
+    // === START -- MAP STYLES IN USE ===================================================
+
+    _getMapStylesInUse: function(){
+    	var mapStylesInUse = {};
+
+    	for(var i in this.infoLayers){
+    		var layerInfo = this.infoLayers[i];
+    		layerInfo.accumulateMapStylesInUse(mapStylesInUse);
+    	};
+		
+		return mapStylesInUse;
+    },
+    
+    // Called when the map detects that features have been redrawn
+    _updatedStylesInUse: function(){
+    	var mapStylesInUse = this._getMapStylesInUse();
+    	
+    	this._dispatch({
+    		type: 'canvasReportStylesInUse'
+    		,canvasName: this.getCanvasName()
+    		,stylesInUse: mapStylesInUse
+    	});
+    },
+    
+    // === END -- MAP STYLES IN USE ===================================================
+
 	redefineFeatureLayerStylesAndRules : function(layerName) {
 		var layerInfo = this.getNamedLayerInfo(layerName);
 		if (null == layerInfo) {
 			alert('redefineFeatureLayerStylesAndRules: unknown layer name: ' + layerName);
 		} else {
     		//this._endClicked();
-    		layerInfo.olLayer.redraw();    			
+    		layerInfo.olLayer.redraw();
 		};
 	},
 	
@@ -4705,11 +5119,24 @@ var MapAndControls = $n2.Class({
 		this.map.setCenter(ll, z, false, false);
 	},
 	
+	getResolution: function(){
+		return this.map.getResolution();
+	},
+	
 	/**
 	 * This is called when the map has moved. 
 	 */
 	_mapMoved: function(){
+		var _this = this;
+
+		if( this.mapWasMoved ) return;
 		
+		this.mapWasMoved = true;
+		setTimeout(function(){
+			_this.mapWasMoved = false;
+			_this._refreshSimplifiedGeometries();
+			_this._updatedStylesInUse();
+		},200);
 	},
 	
 	/*
@@ -4807,6 +5234,8 @@ var MapAndControls = $n2.Class({
 
 	},
 	
+	// === START -- DOCUMENT CACHE ===================================================
+	
 	_retrieveCachedValue: function(id) {
 		// Look through the layers
 		for(var i=0,e=this.infoLayers.length; i<e; ++i){
@@ -4825,24 +5254,28 @@ var MapAndControls = $n2.Class({
 	},
 	
 	_getCachedValueMap: function(layerInfo) {
-		if( layerInfo.cachedValues ) {
-			var valueMap = layerInfo.cachedValues;
-		} else {
-			valueMap = {};
-			layerInfo.cachedValues = valueMap;
-			
-			var olLayer = layerInfo.olLayer;
-			var features = olLayer.features;
-			for(var i=0,e=features.length; i<e; ++i){
-				var feature = features[i];
-				if( feature.fid ) {
-					valueMap[feature.fid] = feature.data;
-				};
-				if( feature.cluster ){
-					for(var j=0,k=feature.cluster.length;j<k;++j){
-						var cf = feature.cluster[j];
-						if( cf.fid ){
-							valueMap[cf.fid] = cf.data;
+		var valueMap = undefined;
+
+		if( layerInfo.cachingAllowed ) {
+			if( layerInfo.cachedValues ) {
+				valueMap = layerInfo.cachedValues;
+			} else {
+				valueMap = {};
+				layerInfo.cachedValues = valueMap;
+				
+				var olLayer = layerInfo.olLayer;
+				var features = olLayer.features;
+				for(var i=0,e=features.length; i<e; ++i){
+					var feature = features[i];
+					if( feature.fid ) {
+						valueMap[feature.fid] = feature.data;
+					};
+					if( feature.cluster ){
+						for(var j=0,k=feature.cluster.length;j<k;++j){
+							var cf = feature.cluster[j];
+							if( cf.fid ){
+								valueMap[cf.fid] = cf.data;
+							};
 						};
 					};
 				};
@@ -4881,6 +5314,8 @@ var MapAndControls = $n2.Class({
 			};
 		};
 	},
+
+	// === END -- DOCUMENT CACHE ===================================================
 
 	_handleMapMousePosition: function(evt){
 		if( null == evt ) {
@@ -4959,6 +5394,8 @@ var MapAndControls = $n2.Class({
 	},
 	
 	_handleDispatch: function(m){
+		var _this = this;
+
 		var type = m.type;
 		if( 'documentVersion' === type ) {
 			this._cacheUpdateDocumentVersion(m.docId,m.rev);
@@ -5009,6 +5446,7 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'documentContentUpdated' === type ) {
 			var doc = m.doc;
+			var reloaded = false;
 
 			// Compute map of layer ids
 			var layerIdMap = {};
@@ -5046,6 +5484,8 @@ var MapAndControls = $n2.Class({
 						if( featuresToAdd ){
 							infoLayer.olLayer.addFeatures(featuresToAdd);
 						};
+						
+						reloaded = true;
 					};
 				};
 			};
@@ -5089,6 +5529,10 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
+			if( reloaded ){
+				this._updatedStylesInUse();
+			};
+			
 		} else if( 'addLayerToMap' === type ) {
 			this._handleAddLayerToMap(m);
 			
@@ -5098,16 +5542,7 @@ var MapAndControls = $n2.Class({
 				this._selectedFeatures(features, [m.docId]);
 				
 			} else if( m.docIds ) {
-				var features = [];
-				for(var i=0,e=m.docIds.length; i<e; ++i){
-					var feats = this._getMapFeaturesIncludingFid(m.docIds[i]);
-					for(var j=0,k=feats.length; j<k; ++j){
-						var f = feats[j];
-						if( features.indexOf(f) < 0 ){
-							features.push(f);
-						};
-					};
-				};
+				var features = this._getMapFeaturesIncludingFids(m.docIds);
 				this._selectedFeatures(features, m.docIds);
 			};
 			
@@ -5126,23 +5561,33 @@ var MapAndControls = $n2.Class({
 			this._endClicked();
 			
 		} else if( 'focusOn' === type ) {
-			var fid = m.docId;
-
-			var features = this._getMapFeaturesIncludingFid(fid);
-			this._startFocus(features,fid);
+			if( m.docId ){
+				this._startFocus([m.docId]);
+			} else if( m.docIds ){
+				this._startFocus(m.docIds);
+			};
 			
 		} else if( 'focusOff' === type ) {
 			this._endFocus();
 			
 		} else if( 'focusOnSupplement' === type ) {
 			var fid = m.docId;
-			if( fid ) {
-				var features = this._getMapFeaturesIncludingFid(fid);
+			
+			// Check if this is still valid
+			var valid = true;
+			if( m.origin ){
+				valid = false;
+				if( this.focusInfo 
+				 && this.focusInfo.origin
+				 && this.focusInfo.origin[m.origin] ){
+					valid = true;
+				};
+			};
+			
+			if( fid && valid ) {
 				this._addFocus({
-					fid: fid
-					,features: features
+					fids: [fid]
 					,intent: m.intent
-					,origin: m.origin
 				});
 			};
 			
@@ -5240,6 +5685,13 @@ var MapAndControls = $n2.Class({
 				};
 			};
 			
+			// Remove feature from map
+			this.infoLayers.forEach(function(layerInfo){
+				if( layerInfo.featureStrategy ){
+					layerInfo.featureStrategy.setEditedFeatureIds([fid]);
+				};
+			});
+			
 			this.editFeatureInfo = {};
     		this.editFeatureInfo.fid = fid;
 			this.editFeatureInfo.original = {
@@ -5249,12 +5701,8 @@ var MapAndControls = $n2.Class({
 			if( feature ){
 		    	// Remove feature from current layer
 		    	var featureLayer = feature.layer;
-		    	if( featureLayer ) {
-		    		featureLayer.removeFeatures([feature],{silent:true});
-		    	};
 
 		    	// Compute the actual underlying feature
-		    	var featuresToAddBack = [];
 		    	if( fid === feature.fid ){
 		        	effectiveFeature = feature;
 		        	
@@ -5262,21 +5710,12 @@ var MapAndControls = $n2.Class({
 		    		for(var i=0,e=feature.cluster.length; i<e; ++i){
 		    			if( fid === feature.cluster[i].fid ){
 		    	    		effectiveFeature = feature.cluster[i];
-		    			} else {
-		    				featuresToAddBack.push(feature.cluster[i]);
 		    			};
 		    		};
 		    	};
 		    	
-		    	// In cluster, add back the features that are not the one currently
-		    	// in edit mode
-		    	if( featureLayer && featuresToAddBack.length > 0 ){
-		    		featureLayer.addFeatures(featuresToAddBack);
-		    	};
-		    	
 		    	this.editFeatureInfo.original.layer = featureLayer;
 		    	this.editFeatureInfo.original.feature = effectiveFeature;
-		    	this.editFeatureInfo.original.style = feature.style;
 			};
 			
 			if( addGeometryMode ){
@@ -5292,70 +5731,55 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'editClosed' === type ) {
 
-			var restoreFeature = true;
-			var restoreOriginalData = false;
-			var reloadRequired = false;
-			if( m.deleted ){
-				restoreFeature = false;
+			var fid = this.editFeatureInfo.fid;
+			if( !fid ){
+				fid = m.docId;
 			};
+			var reloadRequired = true;
 			if( m.cancelled ){
-				restoreOriginalData = true;
+				reloadRequired = false;
 			};
 			
 			// By switching to the navigate mode, the feature on the
 			// edit layer will be removed.
 			var editFeature = this._removeGeometryEditor();
 			this._switchMapMode(this.modes.NAVIGATE);
-			
-			// Restore original geometry
-			if( restoreFeature && this.editFeatureInfo.original ){
-				var originalLayer = this.editFeatureInfo.original.layer;
-				var originalFeature = this.editFeatureInfo.original.feature;
-				var originalData = this.editFeatureInfo.original.data;
-				var originalStyle = this.editFeatureInfo.original.style;
-				
-				// Compute effective feature
-				var effectiveFeature = null;
-				if( originalFeature 
-				 && this.editFeatureInfo.fid === m.docId ){
-					effectiveFeature = originalFeature;
-				} else {
-					reloadRequired = true;
-				};
 
-				// Clone geometry if feature was sucessfully updated
-				if( effectiveFeature ){
-					if( restoreOriginalData ){
-						effectiveFeature.data = originalData;
-					} else {
-						// Use current geometry
-						if( editFeature && editFeature.geometry ){
-							effectiveFeature.geometry = editFeature.geometry.clone();
-						};
-					};
-					effectiveFeature.style = originalStyle;
-					
-					// Add feature back to original layer
-					if( originalLayer ){
-						originalLayer.addFeatures([effectiveFeature]);
-					};
+			// Add back feature to map
+			this.infoLayers.forEach(function(layerInfo){
+				if( layerInfo.featureStrategy ){
+					layerInfo.featureStrategy.setEditedFeatureIds(null);
 				};
+			});
+			
+			// If feature was deleted, then remove it from map
+			if( m.deleted && fid ){
+				reloadRequired = false;
+
+				this.forEachVectorLayer(function(layerInfo, layer){
+					var reloadLayer = false;
+					var featuresToAdd = [];
+					layerInfo.forEachFeature(function(f){
+						if( f.fid === fid ){
+							reloadLayer = true;
+						} else {
+							featuresToAdd.push(f);
+						};
+					});
+					
+					if( reloadLayer ){
+						layer.removeAllFeatures({silent:true});
+						layer.addFeatures(featuresToAdd);
+					};
+				});
 			};
 			
 			this.editFeatureInfo = {};
 			this.editFeatureInfo.original = {};
 			
-			if( !m.deleted ) {
-				var docId = m.docId;
-				if( docId ) {
-					var features = this._getMapFeaturesIncludingFid(docId);
-					this._selectedFeatures(features, [docId]);
-				};
-			};
-
 			// Reload feature
 			if( reloadRequired ){
-				var filter = $n2.olFilter.fromFid(docId);
+				var filter = $n2.olFilter.fromFid(fid);
 				this._reloadFeature(filter);
 			};
 			
@@ -5464,6 +5888,129 @@ var MapAndControls = $n2.Class({
 			
 		} else if( 'simplifiedGeometryReport' === type ) {
 			this._updateSimplifiedGeometries(m.simplifiedGeometries);
+
+		} else if( 'canvasGetStylesInUse' === type ) {
+			if( this.getCanvasName() === m.canvasName ){
+				m.stylesInUse = this._getMapStylesInUse();
+			};
+		} else if ( 'mapRefreshCallbackRequest' === type ){
+			if ( m.cnt + 1 === this.refreshCnt) {
+				var cb = this.refreshCallback;
+				cb(null, this);
+			}
+
+		};
+	},
+	
+	_modelLayerUpdated: function(layerOptions, state){
+		//$n2.log('_modelLayerUpdated',layerOptions, state);
+		
+		var _this = this;
+		var layerInfo = layerOptions._layerInfo;
+		var mapLayer = layerInfo.olLayer;
+
+		var dispatchService = this._getDispatchService();
+		
+		var mustReproject = false;
+		var remoteProjection = mapLayer.projection;
+		var localProjection = layerInfo.olLayer.map.getProjectionObject();
+		if( localProjection 
+		 && false == localProjection.equals(remoteProjection) ) {
+			mustReproject = true;
+		};
+		
+		// Remove features. Remove features that are to be updated
+		var featureIdsToRemoveMap = {};
+		state.removed.forEach(function(f){
+			featureIdsToRemoveMap[f.fid] = true;
+		});
+		state.updated.forEach(function(f){
+			featureIdsToRemoveMap[f.fid] = true;
+		});
+		state.added.forEach(function(f){
+			featureIdsToRemoveMap[f.fid] = true;
+		});
+		var featuresToRemove = [];
+		var featuresToAdd = [];
+		if( mapLayer && mapLayer.features ) {
+			var loop;
+			var features = mapLayer.features;
+			for(loop=0;loop<features.length;++loop) {
+				var feature = features[loop];
+				if( feature.fid && featureIdsToRemoveMap[feature.fid] ) {
+					featuresToRemove.push(feature);
+				} else if( feature.cluster ) {
+					var removeCluster = false;
+					for(var j=0,k=feature.cluster.length; j<k; ++j){
+						var f = feature.cluster[j];
+						if( f.fid && featureIdsToRemoveMap[f.fid] ){
+							removeCluster = true;
+						};
+					};
+					if( removeCluster ){
+						featuresToRemove.push(feature);
+						for(var j=0,k=feature.cluster.length; j<k; ++j){
+							var f = feature.cluster[j];
+							if( f.fid && !featureIdsToRemoveMap[f.fid] ){
+								featuresToAdd.push(f);
+							};
+						};
+					};
+				};
+			};
+		};
+			
+		// Prepare features to be added to layer
+        state.added.forEach(function(f){
+			if( mustReproject ){
+	            var geom = f.geometry;
+			    if( geom ) {
+	        		geom.transform(remoteProjection, localProjection);
+	            };
+			};
+        	featuresToAdd.push(f);
+        });
+        state.updated.forEach(function(f){
+			if( mustReproject ){
+	            var geom = f.geometry;
+			    if( geom ) {
+	        		geom.transform(remoteProjection, localProjection);
+	            };
+			};
+        	featuresToAdd.push(f);
+        });
+
+        // Remove features
+        if( featuresToRemove.length ){
+			mapLayer.destroyFeatures(featuresToRemove);
+		};
+
+		// Add features
+		if( featuresToAdd.length > 0 ){
+			// If in edit mode, first disable editAttribute widget
+			this.editModeAddFeatureEnabled = false;
+
+			mapLayer.addFeatures(featuresToAdd);
+			
+			this.editModeAddFeatureEnabled = true;
+		};
+		
+		// Update styles
+		this._updatedStylesInUse();
+    	
+		if( this.refreshCallback ){
+			if (!this.refreshCnt){
+				this.refreshCnt = 1;
+			}
+			
+			var curCnt = this.refreshCnt ;
+			dispatchService.send(DH, {
+				type: 'mapRefreshCallbackRequest',
+				cnt : curCnt
+	 		});
+			this.refreshCnt++;
+//			var cb = this.refreshCallback;
+//			cb(null, this);
 		};
 	},
 	
@@ -5498,6 +6045,9 @@ $n2.mapAndControls = function(opts_){
 	return new MapAndControls(opts_);
 };
 $n2.mapAndControls.MapAndControls = MapAndControls;
+
+// Utilities
+$n2.mapAndControls.ComputeFeatureOriginalBboxForMapProjection = ComputeFeatureOriginalBboxForMapProjection;
 
 // Pop-up management
 $n2.mapAndControls.DefaultPopupHtmlFunction = null;

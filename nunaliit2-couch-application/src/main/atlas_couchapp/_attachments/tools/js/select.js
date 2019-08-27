@@ -21,136 +21,14 @@
 	var selectedList = null;
 
 	// **********************************************************************
-	var Logger = $n2.Class({
-		divId: null,
-		
-		initialize: function(opts_){
-			var opts = $n2.extend({
-				elem: null
-			},opts_);
-			
-			var $div = $(opts.elem);
-			this.divId = $n2.utils.getElementIdentifier($div);
-		},
-
-		reportError: function(err){
-			var $e = this._getLogsDiv();
-	
-			var $d = $('<div class="error"></div>');
-			$d.text(err);
-			$e.append($d);
-		},
-		
-		log: function(msg){
-			var $e = this._getLogsDiv();
-	
-			var $d = $('<div class="log"></div>');
-			$d.text(msg);
-			$e.append($d);
-		},
-		
-		_getLogsDiv: function(){
-			return $('#'+this.divId);
-		}
-	});
-	
-	// **********************************************************************
-	var ProgressDialog = $n2.Class({
-		
-		dialogId: null
-		
-		,onCancelFn: null
-		
-		,cancellingLabel: null
-		
-		,initialize: function(opts_){
-			var opts = $n2.extend({
-				title: _loc('Progress')
-				,onCancelFn: null
-				,cancelButtonLabel: _loc('Cancel') 
-				,cancellingLabel: _loc('Cancelling Operation...')
-			},opts_);
-			
-			var _this = this;
-			
-			this.dialogId = $n2.getUniqueId();
-			this.onCancelFn = opts.onCancelFn;
-			this.cancellingLabel = opts.cancellingLabel;
-
-			var $dialog = $('<div id="'+this.dialogId+'">'
-				+'<div class="selectAppProgressDialogMessage">'
-				+'<span class="selectAppLabel"></span>: <span class="selectAppProgress"></span>'
-				+'</div></div>');
-			$dialog.find('span.selectAppLabel').text( _loc('Progress') );
-			
-			var dialogOptions = {
-				autoOpen: true
-				,title: opts.title
-				,modal: true
-				,closeOnEscape: false
-				,close: function(event, ui){
-					var diag = $(event.target);
-					diag.dialog('destroy');
-					diag.remove();
-				}
-			};
-			$dialog.dialog(dialogOptions);
-			
-			// Remove close button
-			$dialog.parents('.ui-dialog').first().find('.ui-dialog-titlebar-close').hide();
-
-			// Add cancel button, if needed
-			if( typeof(opts.onCancelFn) === 'function'  ) {
-				var cancelLine = $('<div><button class="n2ProgressModalCancel"></button></div>');
-				$dialog.append(cancelLine);
-				cancelLine.find('button')
-					.text(opts.cancelButtonLabel)
-					.click(function(){
-						_this.cancel();
-						return false;
-					})
-					;
-			};
-			
-			this.updatePercent(0);
-		}
-	
-		,cancel: function(){
-			if( typeof(this.onCancelFn) === 'function' ) {
-				var $dialog = $('#'+this.dialogId);
-				var $cb = $dialog.find('.n2ProgressModalCancel');
-				var $m = $('<span></span>').text(this.cancellingLabel);
-				$cb.before($m).remove();
-				
-				this.onCancelFn();
-			};
-		}
-	
-		,close: function(){
-			var $dialog = $('#'+this.dialogId);
-			$dialog.dialog('close');
-		}
-	
-		,updatePercent: function(percent){
-			var $dialog = $('#'+this.dialogId);
-			var $p = $dialog.find('.selectAppProgress');
-			$p.text( ''+Math.floor(percent)+'%' );
-		}
-		
-		,updateHtmlMessage: function(html){
-			var $dialog = $('#'+this.dialogId);
-			var $div = $dialog.find('.selectAppProgressDialogMessage');
-			$div.html( html );
-		}
-	});
-	
-	// **********************************************************************
 	var DocumentList = $n2.Class({
 		docIds: null,
 		
 		name: null,
 		
 		fromList: null,
+		
+		listId: null,
 		
 		initialize: function(opts_){
 			var opts = $n2.extend({
@@ -162,6 +40,8 @@
 			this.docIds = opts.docIds;
 			this.fromList = opts.fromList;
 
+			this.listId = $n2.getUniqueId();
+			
 			if( !this.docIds ){
 				this.docIds = [];
 			};
@@ -346,7 +226,7 @@
 				return;
 			};
 
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Fetching All Document Ids')
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -409,7 +289,7 @@
 			};
 
 			var opCancelled = false;
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: opts.progressTitle
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -452,6 +332,7 @@
 				if( fetchDocIds.length ) {
 					atlasDb.getDocuments({
 						docIds: fetchDocIds
+						,skipCache: true
 						,onSuccess: receiveDocs
 						,onError: function(err){
 							progressDialog.close();
@@ -484,12 +365,42 @@
 					return;
 				};
 
-				for(var i=0, e=docs.length; i<e; ++i){
-					if( opts.filterFn(docs[i], my_scriptConfig) ){
-						filteredDocIds.push(docs[i]._id);
-					};
+				if( docs.length > 0 ){
+					var doc = docs.shift();
+					nextDoc(doc, docs);
+				} else {
+					nextFetch();
 				};
-				nextFetch();
+			};
+			
+			function nextDoc(doc, docs){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				// Adjust config
+				var callbackExecuted = false;
+				my_scriptConfig.continueOnExit = true;
+				my_scriptConfig.includeDocument = function(shouldBeIncluded){
+					if( callbackExecuted ) return; // ignore second call
+					if( my_scriptConfig.continueOnExit ) return; // error
+					
+					resultOnDocument(doc, shouldBeIncluded, docs);
+				};
+
+				// Perform filter function
+				var shouldBeIncluded = opts.filterFn(doc, my_scriptConfig);
+				if( my_scriptConfig.continueOnExit ){
+					resultOnDocument(doc, shouldBeIncluded, docs)
+				};
+			};
+			
+			function resultOnDocument(doc, shouldBeIncluded, docs){
+				if( shouldBeIncluded ){
+					filteredDocIds.push(doc._id);
+				};
+				receiveDocs(docs);
 			};
 			
 			function cancel(){
@@ -865,11 +776,12 @@
 
 			// Create a copy of the configuration so that user
 			// can save temporary objects to it
-			var my_scriptConfig = $n2.extend({},g_scriptConfig);
+//			var my_scriptConfig = $n2.extend({},g_scriptConfig);
+//			my_scriptConfig.includeDocument = function(shouldBeIncluded){};
 			
 			try {
 				eval('scriptFn = '+script);
-				scriptFn({_id:'test',_revision:'1-abcde'},my_scriptConfig);
+//				scriptFn({_id:'test',_revision:'1-abcde'},my_scriptConfig);
 			} catch(e) {
 				alert(_loc('Error')+': '+e);
 				return;
@@ -1130,39 +1042,92 @@
 		}
 	
 		,printOptions: function($parent){
-			var $options = $('<div>'
-				+_loc('Import Profile')+': <br/><select class="importProfileList"></select>'
-				+'</div>');
+			var optionId = $n2.getUniqueId();
+			var $options = $('<div>')
+				.attr('id',optionId)
+				.appendTo($parent);
+
+			$('<span>')
+				.text( _loc('Import Profile: ') )
+				.appendTo($options);
+
+			$('<br>')
+				.appendTo($options);
 			
-			$parent.append( $options );
-			
+			// Obtain all profile ids from entries
 			atlasDesign.queryView({
-				viewName: 'nunaliit-import-profile'
-				,include_docs: true
+				viewName: 'nunaliit-import'
+				,include_docs: false
+				,reduce: true
+				,group: true
+				,group_level: 1
 				,onSuccess: function(rows){
-					var $sel = $options.find('select.importProfileList');
-					for(var i=0,e=rows.length; i<e; ++i){
-						var profileId = rows[i].key;
-						var importProfileDoc = rows[i].doc;
-						
-						var profileName = profileId;
-						if( importProfileDoc 
-						 && importProfileDoc.nunaliit_import_profile
-						 && importProfileDoc.nunaliit_import_profile.label ){
-							profileName = _loc(importProfileDoc.nunaliit_import_profile.label);
+					var profileLabelById = {};
+					
+					rows.forEach(function(row){
+						var profileId = undefined;
+						if( row 
+						 && row.key 
+						 && typeof row.key[0] === 'string' ){
+							profileId = row.key[0];
 						};
-						
-						$('<option></option>')
-							.val(profileId)
-							.text(profileName)
-							.appendTo($sel);
-					};
+						if( profileId ){
+							profileLabelById[profileId] = profileId;
+						};
+					});
+
+					getProfiles(profileLabelById);
 				}
 				,onError: function(err){
-					alert(_loc('Unable to obtain list of import profiles')+': '+err);
-					reportError(_loc('Unable to obtain list of import profiles')+': '+err);
+					alert(_loc('Unable to obtain list of import entries')+': '+err);
+					reportError(_loc('Unable to obtain list of import entries')+': '+err);
 				}
 			});
+			
+			function getProfiles(profileLabelById){
+				atlasDesign.queryView({
+					viewName: 'nunaliit-import-profile'
+					,include_docs: true
+					,onSuccess: function(rows){
+						for(var i=0,e=rows.length; i<e; ++i){
+							var profileId = rows[i].key;
+							var importProfileDoc = rows[i].doc;
+							
+							var profileName = profileId;
+							if( importProfileDoc 
+							 && importProfileDoc.nunaliit_import_profile
+							 && importProfileDoc.nunaliit_import_profile.label ){
+								profileName = _loc(importProfileDoc.nunaliit_import_profile.label);
+							};
+
+							profileLabelById[profileId] = profileName;
+						};
+						
+						displayOptions(profileLabelById);
+					}
+					,onError: function(err){
+						alert(_loc('Unable to obtain list of import profiles')+': '+err);
+						reportError(_loc('Unable to obtain list of import profiles')+': '+err);
+					}
+				});
+			};
+			
+			function displayOptions(profileLabelById){
+				var $options = $('#'+optionId);
+
+				var $sel = $('<select>')
+					.addClass('importProfileList')
+					.appendTo($options);
+				
+				for(var profileId in profileLabelById){
+					var profileLabel = profileLabelById[profileId];
+
+					$('<option></option>')
+						.val(profileId)
+						.text(profileLabel)
+						.appendTo($sel);
+				};
+			};
 		}
 
 		,_retrieveDocIds: function(opts_){
@@ -1204,6 +1169,104 @@
 	});
 
 	SearchFilter.availableSearchFilters.push(new SearchFilterByImportProfile());
+
+	// **********************************************************************
+	var SearchFilterByView = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents reported in a view');
+		}
+	
+		,printOptions: function($parent){
+			var $options = $('<div>'
+				+_loc('View')+': <br/><select class="viewList"></select>'
+				+'</div>');
+			
+			$parent.append( $options );
+			
+			atlasDb.getAllDocuments({
+				startkey: '_design'
+				,endkey: '_design~'
+				,onSuccess: function(docs){
+					var sortedViewLabels = [];
+					docs.forEach(function(designDoc){
+						var docId = designDoc._id;
+						var names = docId.split('/');
+						if( names.length > 1 ){
+							var designName = names[1];
+							if( designDoc && designDoc.views ){
+								for(var viewName in designDoc.views){
+									var label = designName + '/' + viewName;
+									sortedViewLabels.push(label);
+								};
+							};
+						};
+					});
+					
+					sortedViewLabels.sort();
+					
+					var $sel = $options.find('select.viewList');
+					sortedViewLabels.forEach(function(viewLabel){
+						$('<option></option>')
+							.val(viewLabel)
+							.text(viewLabel)
+							.appendTo($sel);
+					});
+				}
+				,onError: function(err){
+					alert(_loc('Unable to obtain list of views')+': '+err);
+					reportError(_loc('Unable to obtain list of views')+': '+err);
+				}
+			});
+		}
+
+		,_retrieveDocIds: function(opts_){
+			var opts = $n2.extend({
+				options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(docIds,name){}
+				,onError: reportError
+			},opts_);
+			
+			var $i = opts.options.find('select.viewList');
+			var label = $i.val();
+			if( !label ) {
+				alert(_loc('Must select a view'));
+			} else {
+				var names = label.split('/');
+				var designName = names[0];
+				var viewName = names[1];
+				var design = atlasDb.getDesignDoc({ddName:designName});
+				design.queryView({
+					viewName: viewName
+					,onSuccess: function(rows){
+						var docIds = [];
+						var docIdMap = {};
+						for(var i=0,e=rows.length; i<e; ++i){
+							var row = rows[i];
+							var docId = row.id;
+							if( !docIdMap[docId] ){
+								docIds.push(docId);
+								docIdMap[docId] = true;
+							};
+						};
+						var locStr = _loc('Documents from view {label}',{
+							label: label
+						});
+
+						opts.onSuccess(docIds,locStr);
+					}
+					,onError: function(err){
+						alert(_loc('Problem obtaining documents from view')+': '+err);
+						opts.onError(err);
+					}
+				});
+			};
+		}
+	});
+
+	SearchFilter.availableSearchFilters.push(new SearchFilterByView());
 
 	// **********************************************************************
 	var SearchFilterByDocumentReference = $n2.Class(SearchFilter, {
@@ -1388,6 +1451,7 @@
 
 				atlasDb.getDocuments({
 					docIds: docIds
+					,skipCache: true
 					,onSuccess: function(docs){
 						var invalidSourceIds = [];
 						
@@ -1804,7 +1868,7 @@
 		,transformList: function(opts_){
 			var opts = $n2.extend({
 				list: null
-				,onCompleted: function(totalCount, skippedCount, okCount, failCount){}
+				,onCompleted: function(totalCount, skippedCount, okCount, failCount, transformedCount, deletedCount){}
 				,onError: reportError
 			},opts_);
 			
@@ -1832,7 +1896,7 @@
 			var opts = $n2.extend({
 				list: null
 				,transformFn: null
-				,onCompleted: function(totalCount, skippedCount, okCount, failCount){}
+				,onCompleted: function(totalCount, skippedCount, okCount, failCount, transformedCount, deletedCount){}
 				,onError: reportError
 			},opts_);
 			
@@ -1846,7 +1910,7 @@
 			};
 
 			var opCancelled = false;
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Transform Progress')
 				,onCancelFn: function(){
 					opCancelled = true;
@@ -1861,6 +1925,8 @@
 			var totalCount = docIdsLeft.length;
 			var skippedCount = 0;
 			var okCount = 0;
+			var deletedCount = 0;
+			var transformedCount = 0;
 			var failCount = 0;
 
 			// Create a copy of the configuration so that user
@@ -1877,7 +1943,7 @@
 
 				if(docIdsLeft.length < 1){
 					progressDialog.updateHtmlMessage('<span>100%</span>');
-					opts.onCompleted(totalCount, skippedCount, okCount, failCount);
+					opts.onCompleted(totalCount, skippedCount, okCount, failCount, transformedCount, deletedCount);
 					progressDialog.close();
 				} else {
 					if( totalCount ) {
@@ -1896,6 +1962,7 @@
 					var docId = docIdsLeft.pop();
 					atlasDb.getDocument({
 						docId: docId
+						,skipCache: true
 						,onSuccess: retrievedDocument
 						,onError: function(err){
 							var locStr = _loc('Failure to fetch {docId}',{
@@ -1917,8 +1984,16 @@
 
 				opts.transformFn(
 					doc
-					,function(){ // onTransformedFn
-						saveDocument(doc);
+					,function(opts_){ // onTransformedFn
+						var opts = $n2.extend({
+							deleteDocument: false
+						},opts_);
+						
+						if( opts.deleteDocument ){
+							deleteDocument(doc);
+						} else {
+							saveDocument(doc);
+						};
 					}
 					,function(){ // onSkippedFn
 						skippedCount += 1;
@@ -1942,10 +2017,39 @@
 						});
 						log(locStr);
 						okCount += 1;
+						transformedCount += 1;
 						processNext();
 					}
 					,onError: function(errorMsg){ 
 						var locStr = _loc('Failure to save {docId}',{
+							docId: doc._id
+						});
+						reportError(locStr+': '+errorMsg);
+						failCount += 1;
+						processNext();
+					}
+				});
+			};
+			
+			function deleteDocument(doc){
+				if( opCancelled ) {
+					cancel();
+					return;
+				};
+
+				atlasDb.deleteDocument({
+					data: doc
+					,onSuccess: function(docInfo){
+						var locStr = _loc('{docId} deleted',{
+							docId: doc._id
+						});
+						log(locStr);
+						okCount += 1;
+						deletedCount += 1;
+						processNext();
+					}
+					,onError: function(errorMsg){ 
+						var locStr = _loc('Failure to delete {docId}',{
 							docId: doc._id
 						});
 						reportError(locStr+': '+errorMsg);
@@ -2196,60 +2300,93 @@
 		var $lists = getListsDiv();
 		$lists.empty();
 		
-		var $h = $('<h1><span></span> <button></button></h1>');
-		$h.find('span').text( _loc('Queries') );
-		$h.find('button').text( _loc('Add') );
-		$lists.append($h);
-		
-		$h.find('button').click(function(){
-			SearchFilter.createNewList({
-				onSuccess: function(list){
-					addList(list);
-				}
-			});
-			return false;
-		});
+		var $h = $('<h1>')
+			.appendTo($lists);
+		$('<span>')
+			.text( _loc('Queries') )
+			.appendTo($h);
+		$('<button>')
+			.text( _loc('Add') )
+			.click(function(){
+				SearchFilter.createNewList({
+					onSuccess: function(list){
+						addList(list);
+					}
+				});
+				return false;
+			})
+			.appendTo($h);
 		
 		for(var i=0,e=allLists.length; i<e; ++i){
 			var list = allLists[i];
+			var listId = list.listId;
 			
-			var $d = $('<div></div>');
-			$lists.append($d);
-			installView(list, $d);
+			var $d = $('<div>')
+				.attr('n2-list-id', listId)
+				.click(onListClick)
+				.appendTo($lists);
 			
 			if( list === selectedList ) {
 				$d.addClass('selectAppListSelected');
 			};
 			
-			var $s = $('<span></span>');
-			$s.text( list.print() );
-			$d.append($s);
+			$('<span>')
+				.text( list.print() )
+				.appendTo($d);
 			
-			var $a = $('<a href="#"></a>');
-			$a.text( _loc('View') );
-			$d.append($a);
-			installView(list, $a);
+			$('<a>')
+				.addClass('selectApp_list_button')
+				.attr('href','#')
+				.attr('n2-list-id', listId)
+				.text( _loc('View') )
+				.click(onListClick)
+				.appendTo($d);
 			
-			var $a = $('<a href="#"></a>');
-			$a.text( _loc('Text') );
-			$d.append($a);
-			installText(list, $a);
+			$('<a>')
+				.addClass('selectApp_list_button')
+				.attr('href','#')
+				.attr('n2-list-id', listId)
+				.text( _loc('Text') )
+				.click(onTextClick)
+				.appendTo($d);
+
+			$('<a>')
+				.addClass('selectApp_list_button')
+				.attr('href','#')
+				.attr('n2-list-id', listId)
+				.text( _loc('Remove') )
+				.click(onRemoveClick)
+				.appendTo($d);
 		};
 		
-		function installView(list, $a){
-			$a.click(function(e){
-				e.stopPropagation();
-				selectList(list);
-				return false;
-			});
+		function onListClick(e){
+			e.stopPropagation();
+
+			var $a = $(this);
+			var listId = $a.attr('n2-list-id');
+			var list = findListById(listId);
+			selectList(list);
+			return false;
 		};
-		
-		function installText(list, $a){
-			$a.click(function(e){
-				e.stopPropagation();
-				selectText(list);
-				return false;
-			});
+
+		function onTextClick(e){
+			e.stopPropagation();
+
+			var $a = $(this);
+			var listId = $a.attr('n2-list-id');
+			var list = findListById(listId);
+			selectText(list);
+			return false;
+		};
+
+		function onRemoveClick(e){
+			e.stopPropagation();
+
+			var $a = $(this);
+			var listId = $a.attr('n2-list-id');
+			var list = findListById(listId);
+			removeList(list);
+			return false;
 		};
 	};
 	
@@ -2265,6 +2402,33 @@
 		refreshAllLists();
 		
 		viewList(list);
+	};
+	
+	// -----------------------------------------------------------------
+	function removeList(list){
+		if( selectedList === list ){
+			selectedList = undefined;
+			clearList();
+		};
+
+		var index = allLists.indexOf(list);
+		if( index >= 0 ){
+			allLists.splice(index,1);
+		};
+		
+		refreshAllLists();
+	};
+
+	// -----------------------------------------------------------------
+	function findListById(listId){
+		var list = undefined;
+		allLists.forEach(function(l){
+			if( listId === l.listId ){
+				list = l;
+			};
+		});
+
+		return list;
 	};
 	
 	// -----------------------------------------------------------------
@@ -2345,23 +2509,30 @@
 			});
 		
 		$('<button>')
-			.text( _loc('Re-Submit Geometries') )
+			.text( _loc('Export by Script') )
 			.appendTo($h)
 			.click(function(){
-				resubmitGeometriesInList(list);
+				exportListByScript(list);
 				return false;
 			});
 
 		for(var i=0,e=list.docIds.length; i<e; ++i){
 			var docId = list.docIds[i];
-			var $d = $('<div></div>');
-			$div.append($d);
+			var $d = $('<div>')
+				.appendTo($div);
 			
-			var $a = $('<a href="#"></a>');
-			$d.append($a);
+			var $a = $('<a>')
+				.attr('href','#')
+				.appendTo($d);
 			
 			if( showService && list.docIds.length < 100 ) {
 				showService.printBriefDescription($a, docId);
+			} else if( showService ) {
+				$a
+					.addClass('n2SelectApp_waitForMouseOver')
+					.attr('nunaliit-document',docId)
+					.text(docId)
+					.mouseover(mouseOverDisplay);
 			} else {
 				$a.text(docId);
 			};
@@ -2373,6 +2544,15 @@
 				viewDocument(docId);
 				return false;
 			});
+		};
+
+		function mouseOverDisplay(){
+			var $a = $(this);
+			if( $a.hasClass('n2SelectApp_waitForMouseOver') ){
+				$a.removeClass('n2SelectApp_waitForMouseOver');
+				var docId = $a.attr('nunaliit-document');
+				showService.printBriefDescription($a, docId);
+			};
 		};
 	};
 	
@@ -2483,7 +2663,7 @@
 				$dialog.dialog('close');
 
 				var opCancelled = false;
-				var progressDialog = new ProgressDialog({
+				var progressDialog = new $n2.couchDialogs.ProgressDialog({
 					title: _loc('Deletion Progress')
 					,onCancelFn: function(){
 						opCancelled = true;
@@ -2521,6 +2701,7 @@
 						var docId = docIdsLeft.pop();
 						atlasDb.getDocument({
 							docId: docId
+							,skipCache: true
 							,onSuccess: retrievedDocument
 							,onError: function(err){
 								var locStr = _loc('Failure to fetch {docId}',{
@@ -2600,7 +2781,7 @@
 		
 		$('<textarea>')
 			.addClass('n2select_report_script')
-			.val( 'function(opts_){\n\tvar opts = nunaliit2.extend({\n\t\t\tconfig: null\n\t\t\tdoc: null\n\t\t},opts_\n\t);\n}' )
+			.val( 'function(opts_){\n\tvar opts = nunaliit2.extend({\n\t\tconfig: null\n\t\t,doc: null\n\t\t,logger: null\n\t},opts_);\n\n\tif( opts.doc ){\n\n\t} else {\n\t\topts.logger.log("Finished");\n\t}\n}' )
 			.appendTo($dialog);
 
 		$('<div>')
@@ -2623,7 +2804,7 @@
 			autoOpen: true
 			,title: _loc('Enter Report Script')
 			,modal: true
-			,width: 400
+			,width: 550
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -2656,14 +2837,14 @@
 			var failCount = 0;
 			var opCancelled = false;
 			
-			var progressDialog = new ProgressDialog({
+			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Preparing Report')
 				,onCancelFn: function(){
 					opCancelled = true;
 				}
 			});
 			
-			var logger = new Logger({
+			var logger = new $n2.logger.HtmlLogger({
 				elem: $('#'+dialogId).find('.n2select_report_result')
 			});
 
@@ -2681,13 +2862,17 @@
 
 				if(docIdsLeft.length < 1){
 					progressDialog.updateHtmlMessage('<span>100%</span>');
-					progressDialog.close();
 
 					// Call one last time, without a document
+					my_scriptConfig.continueOnExit = true;
+					my_scriptConfig.onContinue = onFinish;
 					func({
 						config: my_scriptConfig
 						,logger: logger
 					});
+					if( my_scriptConfig.continueOnExit ){
+						onFinish();
+					};
 					
 					
 				} else {
@@ -2725,12 +2910,25 @@
 					return;
 				};
 
+				my_scriptConfig.continueOnExit = true;
+				my_scriptConfig.onContinue = onContinue;
 				func({
 					doc: doc
 					,config: my_scriptConfig
 					,logger: logger
 				});
 				
+				if( my_scriptConfig.continueOnExit ){
+					onContinue();
+				};
+				
+			};
+
+			function onFinish(){
+				progressDialog.close();
+			};
+
+			function onContinue(){
 				processedCount += 1;
 
 				processNext();
@@ -2907,7 +3105,45 @@
 	};
 	
 	// -----------------------------------------------------------------
+	function exportListByScript(list){
+
+		// Check if service is available
+		if( !exportService ) {
+			alert( _loc('Export service is not configured') );
+		} else {
+			var docIds = [];
+			for(var i=0,e=list.docIds.length; i<e; ++i){
+				docIds.push( list.docIds[i] );
+			};
+			
+			exportService.createExportApplication({
+				docIds: docIds
+				,logger: new $n2.logger.CustomLogger({
+					logFn: log
+					,reportErrorFn: reportError
+				})
+			});
+		};
+	};
+	
+	// -----------------------------------------------------------------
 	function resubmitMediaInList(doc, onTransformed, onSkipped, scriptConfig){
+		// Figure out original attachments so as to not mess with them
+		var originalKeyMap = {};
+		if( doc.nunaliit_attachments 
+		 && doc.nunaliit_attachments.files ) {
+			for(var attName in doc.nunaliit_attachments.files){
+				var att = doc.nunaliit_attachments.files[attName];
+
+				if( att.originalAttachment ) {
+					originalKeyMap[att.originalAttachment] = true;
+				};
+				if( att.isOriginalUpload ){
+					originalKeyMap[attName] = true;
+				};
+			};
+		};
+		
 		// Mark all attachments as submitted
 		var updateRequired = false;
 		var keysToRemove = [];
@@ -2916,20 +3152,23 @@
 		 && doc.nunaliit_attachments.files ) {
 			for(var attName in doc.nunaliit_attachments.files){
 				var att = doc.nunaliit_attachments.files[attName];
-				att.status = 'submitted';
-				updateRequired = true;
 				
-				if( att.thumbnail ) {
-					keysToRemove.push(att.thumbnail);
-				};
-				
-				if( att.originalAttachment ) {
-					keysToRemove.push(att.originalAttachment);
+				if( att.source ) {
+					// Remove all derived attachments except for original files
+					if( originalKeyMap[attName] ) {
+						// Do not remove
+					} else {
+						// remove
+						keysToRemove.push(attName);
+					};
+				} else {
+					att.status = 'submitted';
+					updateRequired = true;
 				};
 			};
 		};
 		
-		// Remove thumbnails and original attachments
+		// Remove excess attachment descriptors
 		for(var i=0,e=keysToRemove.length; i<e; ++i){
 			var keyToRemove = keysToRemove[i];
 			
@@ -3036,25 +3275,48 @@
 		};
 		return $e;
 	};
-	
+
+	// -----------------------------------------------------------------
+	function getDocumentRevisionsDiv(){
+		var $e = $selectAppDiv.find('.selectAppRevisions');
+		if( $e.length < 1 ) {
+			var $docDiv = getDocumentDiv();
+			$e = $('<div>')
+				.addClass('selectAppRevisions')
+				.insertAfter($docDiv);
+		};
+		return $e;
+	};
+
 	// -----------------------------------------------------------------
 	function clearDocument(){
 		var $div = getDocumentDiv();
 		
 		$div.html('<h1></h1><div class="selectAppMinHeight"></div>');
 		$div.find('h1').text( _loc('No Document') );
+
+		var $revs = getDocumentRevisionsDiv();
+		$revs.empty();
 	};
 	
 	// -----------------------------------------------------------------
 	function viewDocument(docId){
 		var $div = getDocumentDiv();
+		var $revs = getDocumentRevisionsDiv();
 		
 		$div.html('<h1>'+docId+'</h1><div class="olkit_wait"></div>');
+		$revs.empty();
 		
 		atlasDb.getDocument({
 			docId: docId
+			,skipCache: true
+			,revs_info: true
 			,onSuccess: function(doc){
 				$div.empty();
+				
+				// Do not show revs to user
+				var revsInfo = doc._revs_info;
+				delete doc._revs_info;
 				
 				var $h = $('<h1></h1>');
 				$div.append($h);
@@ -3079,11 +3341,73 @@
 					editDocument(doc);
 					return false;
 				});
+				
+				if( revsInfo ){
+					loadRevs(revsInfo);
+				};
 			}
 			,onError: function(err){
 				reportError(err);
 			}
 		});
+		
+		function loadRevs(revsInfo){
+			$revs.empty();
+			
+			var $selectorDiv = $('<div>')
+				.addClass('selectAppRevisionSelector')
+				.appendTo($revs);
+			var $selector = $('<select>')
+				.change(revisionSelected)
+				.appendTo($selectorDiv);
+			var $o = $('<option>')
+				.text('Select Revision')
+				.val('')
+				.appendTo($selector);
+			
+			if( $n2.isArray(revsInfo) ){
+				revsInfo.forEach(function(revInfo){
+					if( typeof revInfo.rev === 'string' ){
+						$('<option>')
+							.text(revInfo.rev)
+							.val(revInfo.rev)
+							.appendTo($selector);
+					};
+				});
+			};
+			
+			var $displayDiv = $('<div>')
+				.addClass('selectAppRevisionDisplay')
+				.appendTo($revs);
+		};
+		
+		function revisionSelected() {
+			var $selector = $(this);
+			
+			var $displayDiv = $revs.find('.selectAppRevisionDisplay');
+			$displayDiv.empty();
+			
+			var revSelected = $selector.val();
+			$displayDiv.text(revSelected);
+
+			if( revSelected ){
+				atlasDb.getDocument({
+					docId: docId
+					,rev: revSelected
+					,onSuccess: function(doc){
+						$displayDiv.empty();
+						
+						var $tree = $('<div>')
+							.appendTo($displayDiv);
+						
+						new $n2.tree.ObjectTree($tree, doc);
+					}
+					,onError: function(err){
+						// ignore
+					}
+				});
+			};
+		};
 	};
 	
 	// -----------------------------------------------------------------

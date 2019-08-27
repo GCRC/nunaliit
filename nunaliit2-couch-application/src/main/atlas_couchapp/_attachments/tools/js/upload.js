@@ -104,6 +104,21 @@ function _approveDenySelection(selected,status){
 			};
 		};
 		
+		// Clean up documents
+		docs.forEach(function(doc){
+			var keysToDelete = [];
+			for(var key in doc){
+				if( key.length >= 2 
+				 && key[0] === '_' 
+				 && key[1] === '_' ){
+					keysToDelete.push(key);
+				};
+			};
+			keysToDelete.forEach(function(key){
+				delete doc[key];
+			});
+		});
+		
 		atlasDb.bulkDocuments(docs, {
 			onSuccess: function(docInfos){
 				// done

@@ -1,10 +1,9 @@
 /*
 	This portion of the CSS deals with the display of SlideEditor
 */
-
 .n2se_root, .n2se_history, .n2se_main, .n2se_back, .n2se_display {
-	margin: 0 0 0 0;
-	padding: 0 0 0 0;
+	margin: 0;
+	padding: 0;
 }
 
 /* Top div of editor */
@@ -35,7 +34,7 @@
 	font-family: Helvetica,Arial,sans-serif;
 	font-weight: bold;
 	text-decoration: none;*/
-	margin-bottom:10px;
+	margin-bottom: 10px;
 }
 
 /* Span that holds back button in history bar */
@@ -46,7 +45,7 @@
 	text-decoration: none;
 	margin-right: 3px;
 	border: 1px solid #c3c1c1;
-	background-color:#eee;
+	background-color: #eee;
 	/*
 	border-radius: 4px 4px 4px 4px;
 	border: 1px solid #155678;
@@ -62,33 +61,27 @@
 }
 .n2se_history_back > .n2se_btn {
 	float: left;
-	background-image: url("slideEditor/icons-18-white.png");
-	background-repeat: no-repeat;
-	background-attachment: scroll;
-	background-position: -144px 50%;
-	background-color: #444444; /* IE */
-    border-radius: 9px 9px 9px 9px;
+	background: #444444 url("slideEditor/icons-18-white.png") no-repeat scroll -144px 50%;
+    border-radius: 9px;
     padding: 18px 18px 0px 0px;
-    margin: 1px 3px 0px 3px;
+    margin: 1px 3px 0px;
 }
 .n2se_history_back > .n2se_btn {
 	background-color: rgba(0, 0, 0, 0.4); /* non-IE */
 }
 .n2se_history_back > .n2se_label {
-    padding: 0px 5px 0px 5px;
+    padding: 0px 5px;
 }
 
 /* Span that holds one level of history */
 .n2se_history_level {
 	display: inline-block;
 	cursor: pointer;
-	display: inline-block;
-	cursor: pointer;
 	padding: 10px 10px 10px 15px;
 	text-decoration: none;
 	margin-right: 3px;
 	border: 1px solid #c3c1c1;
-	background-color:#eee;
+	background-color: #eee;
 }
 .n2se_history_level:hover {
 	background-color: #e9e6e6;
@@ -169,8 +162,8 @@
 	background-color: #eee;
 	border: 1px solid #ddd;
 	/*border-radius: 4px 4px 4px 4px;*/
-	padding:5px;
-	margin-bottom:5px;
+	padding: 5px;
+	margin-bottom: 5px;
 }
 .n2se_entry:hover {
 /*	background-image: url("slideEditor/ui-bg_glass_65_ffffff_1x400.png");
@@ -187,13 +180,9 @@
 /* Span used as a delete button */
 .n2se_entry_delete {
 	float: left;
-	background-image: url("slideEditor/icons-18-white.png");
-	background-repeat: no-repeat;
-	background-attachment: scroll;
-	background-position: -72px 50%;
-	background-color: #444444; /* IE */
-	border-radius: 9px 9px 9px 9px;
-    padding: 18px 18px 0px 0px;
+	background: #444444 url("slideEditor/icons-18-white.png") no-repeat scroll -72px 50%;
+	border-radius: 9px;
+	padding: 18px 18px 0px 0px;
 	margin: 8px 10px 0px 4px;
 }
 .n2se_entry_delete {
@@ -240,13 +229,9 @@ input.n2se_entry_text {
 /* Span used as button to move forward */
 .n2se_entry_forward {
 	float: right;
-	background-image: url("slideEditor/icons-18-white.png");
-	background-repeat: no-repeat;
-	background-attachment: scroll;
-	background-position: -108px 50%;
-	background-color: #444444; /* IE */
-	border-radius: 9px 9px 9px 9px;
-    padding: 18px 18px 0px 0px;
+	background: #444444 url("slideEditor/icons-18-white.png") no-repeat scroll -108px 50%;
+	border-radius: 9px;
+	padding: 18px 18px 0px 0px;
 	margin-top: 8px;
 	margin-right: 10px;
 }
@@ -287,13 +272,11 @@ input.n2se_entry_text {
 .n2se_addbar_addButton {
 	display: inline-block;
 	cursor: pointer;
-	display: inline-block;
-	cursor: pointer;
 	padding: 10px 10px 10px 15px;
 	text-decoration: none;
 	margin-right: 3px;
 	border: 1px solid #c3c1c1;
-	background-color:#eee;
+	background-color: #eee;
 }
 .n2se_addbar_addButton:hover {
 	background-color: #e9e6e6;
@@ -305,18 +288,14 @@ input.n2se_entry_text {
 }
 .n2se_addbar_addButton > .n2se_btn {
 	float: left;
-	background-image: url("slideEditor/icons-18-white.png");
-	background-repeat: no-repeat;
-	background-attachment: scroll;
-	background-position: 0px 50%;
-	background-color: #444444; /* IE */
-	border-radius: 9px 9px 9px 9px;
-    padding: 18px 18px 0px 0px;
-    margin: 1px 3px 0px 3px;
+	background: #444444 url("slideEditor/icons-18-white.png") no-repeat scroll 0px 50%;
+	border-radius: 9px;
+	padding: 18px 18px 0px 0px;
+	margin: 1px 3px 0px 3px;
 }
 .n2se_addbar_addButton > .n2se_btn {
 	background-color: rgba(0, 0, 0, 0.4); /* non-IE */
 }
 .n2se_addbar_addButton > .n2se_label {
-    padding: 0px 5px 0px 5px;
+	padding: 0px 5px;
 }

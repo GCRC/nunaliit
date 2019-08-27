@@ -233,6 +233,7 @@ function _formSingleField(r,completeSelectors,options){
 		
 	} else if( options.localized ){
 		r.push(' ' + typeClassStringPrefix + 'localized');
+	
 	};
 
 	if( options.textarea ){
@@ -245,6 +246,10 @@ function _formSingleField(r,completeSelectors,options){
 
 	if( options.date ){
 		r.push('<div class="n2schema_help_date"></div>');
+	};
+	
+	if( options.wikiTransform ){
+		r.push('<div class="n2schema_help_wiki"></div>');
 	};
 };
 
@@ -342,7 +347,11 @@ function _formField() {
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized');
+			if( opts.textarea ){
+				r.push(' n2schema_field_container_textarea');
+			};
+			r.push('">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
 			_formSingleField(r,langSel,opts);
 			r.push('</div>');
@@ -360,7 +369,11 @@ function _formField() {
 			
 			var langSel = completeSelectors.getChildSelector(lang);
 			
-			r.push('<div class="n2schema_field_container n2schema_field_container_localized">');
+			r.push('<div class="n2schema_field_container n2schema_field_container_localized');
+			if( opts.textarea ){
+				r.push(' n2schema_field_container_textarea');
+			};
+			r.push('">');
 			r.push('<span class="n2_localize_lang">('+lang+')</span>');
 			_formSingleField(r,langSel,opts);
 			r.push('</div>');
@@ -381,7 +394,11 @@ function _formField() {
 		r.push('></textarea>');
 		
 	} else {
-		r.push('<div class="n2schema_field_container">');
+		r.push('<div class="n2schema_field_container');
+		if( opts.textarea ){
+			r.push(' n2schema_field_container_textarea');
+		};
+		r.push('">');
 		_formSingleField(r,completeSelectors,opts);
 		r.push('</div>');
 	};
@@ -500,9 +517,16 @@ function _arrayField() {
 			var cl = createClassStringFromSelector(completeSelectors);
 			
 			r.push('<div class="n2schema_array_item">');
+
+			r.push('<div class="n2schema_array_item_buttons">');
 	
 			r.push('<div class="n2schema_array_item_delete '+cl+'"></div>');
+			
+			r.push('<div class="n2schema_array_item_up '+cl+'"></div>');
+			
 			r.push('<div class="n2schema_array_item_down '+cl+'"></div>');
+
+			r.push('</div>'); // close buttons
 	
 			r.push('<div class="n2schema_array_item_wrapper">');
 	
@@ -512,8 +536,17 @@ function _arrayField() {
 		};
 	};
 
+	// Add a new item
+	var arraySelector = undefined;
 	if( obj ){
-		var arraySelector = obj[SELECT];
+		arraySelector = obj[SELECT];
+	} else if( options && options.ids && options.ids.length ){
+		var selectors = [];
+		pathFromData(options.data, selectors);
+		selectors.push(options.ids[0]);
+		arraySelector = new $n2.objectSelector.ObjectSelector(selectors);
+	};
+	if( arraySelector ){
 		var arrayClass = createClassStringFromSelector(arraySelector);
 		r.push('<div class="n2schema_array_add '+arrayClass+'"');
 		if( newType ) {
@@ -525,6 +558,15 @@ function _arrayField() {
 	r.push('</div>');
 	
 	return r.join('');
+	
+	function pathFromData(data, path){
+		if( data._parent ){
+			pathFromData(data._parent, path);
+		};
+		if( data.contextPath ){
+			path.push(data.contextPath);
+		};
+	};
 };
 
 function _selectorField(){
@@ -1161,7 +1203,11 @@ var Schema = $n2.Class({
 	
 	,label: null
 
+	,definition: null
+
 	,options: null
+	
+	,jsonDefinition: null
 	
 	,_error: null
 	
@@ -1178,7 +1224,9 @@ var Schema = $n2.Class({
 		this.csvExport = jsonDefinition.csvExport;
 		this.exportInfo = jsonDefinition['export'];
 		this.label = jsonDefinition.label;
+		this.definition = jsonDefinition.definition;
 		this.options = jsonDefinition.options;
+		this.jsonDefinition = jsonDefinition;
 		
 		if( jsonDefinition.isRootSchema ) {
 			this.isRootSchema = true;
@@ -1399,7 +1447,7 @@ var Display = $n2.Class({
 		if( !compiledTemplate ) {
 			var displayTemplate = this.schema[this.templateName];
 			if( displayTemplate ) {
-				compiledTemplate = Handlebars.compile(displayTemplate);
+				compiledTemplate = Handlebars.compile(displayTemplate, {trackIds:true});
 				this.schema[this.templateName + '__compiled'] = compiledTemplate;
 			};
 		};
@@ -1597,6 +1645,26 @@ var Form = $n2.Class({
 			var view = computeViewObj(this.obj,this.context);
 			this._setHtml(view);
 			
+			// We are about to empty the $elem and redraw it. If this is
+			// a large form, emptying it to a size of 0 would mangle all
+			// offsets associated with various scroll bars that parent elements
+			// might have. Since the form will most likely be the same
+			// approximate size after the redraw, take the current size,
+			// apply it as minimum to retain the dimensions during the redraw,
+			// and remove changes after enough time was given for everything to
+			// redraw itself.
+			var currentHeight = $elem.height();
+			var currentWidth = $elem.width();
+			if( currentHeight > 0 ){
+				$elem.css('min-height',currentHeight+'px');
+			};
+			if( currentWidth > 0 ){
+				$elem.css('min-width',currentWidth+'px');
+			};
+			window.setTimeout(function(){
+				$elem.removeAttr('style');
+			},500);
+			
 			$elem.empty();
 			var $divEvent = $('<div>')
 				.addClass('n2schema_editorEvent')
@@ -1641,19 +1709,25 @@ var Form = $n2.Class({
 					if( $clicked.hasClass('n2schema_array_add') ){
 						var newType = $clicked.attr('n2_array_new_type');
 						var ary = classInfo.selector.getValue(_this.obj);
+						if( !ary ){
+							// Array does not yet exist. Try to create
+							var parentSelector = classInfo.selector.getParentSelector();
+							var parentObj = undefined;
+							if( parentSelector ){
+								parentObj = parentSelector.getValue(_this.obj);
+							};
+							if( parentObj && typeof parentObj === 'object' ){
+								classInfo.selector.setValue(_this.obj,[]);
+								ary = classInfo.selector.getValue(_this.obj);
+							};
+						};
 						if( ary && $n2.isArray(ary) ){
 							var newItem = '';
 							if( 'reference' === newType ){
-								newItem = {
-									nunaliit_type: 'reference'
-									,doc: null
-								};
+								newItem = null;
 								
 							} else if( 'date' === newType ){
-								newItem = {
-									nunaliit_type: 'date'
-									,date: null
-								};
+								newItem = null;
 								
 							} else if( 'string' === newType ){
 								newItem = '';
@@ -1686,17 +1760,44 @@ var Form = $n2.Class({
 						var parentSelector = classInfo.selector.getParentSelector();
 						var ary = parentSelector.getValue(_this.obj);
 						ary.splice(itemIndex,1);
-						_this.refresh($elem);
+						
+						var $item = $clicked.parents('.n2schema_array_item').first();
+						$item.remove();
+						//_this.refresh($elem);
+
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
-					} else if( $clicked.hasClass('n2schema_array_item_down') ){
+					} else if( $clicked.hasClass('n2schema_array_item_up') ){
+						// Push item earlier in array
 						var itemIndex = 1 * classInfo.selector.getKey();
 						if( itemIndex > 0 ) {
 							var parentSelector = classInfo.selector.getParentSelector();
 							var ary = parentSelector.getValue(_this.obj);
 							var removedItems = ary.splice(itemIndex,1);
 							ary.splice(itemIndex-1,0,removedItems[0]);
-							_this.refresh($elem);
+							
+							var $item = $clicked.parents('.n2schema_array_item').first();
+							var $prevItem = $item.prev();
+							$item.insertBefore($prevItem);
+							//_this.refresh($elem);
+
+							_this.callback(_this.obj,classInfo.selector.selectors,ary);
+						};
+						
+					} else if( $clicked.hasClass('n2schema_array_item_down') ){
+						// Push item later in array
+						var itemIndex = 1 * classInfo.selector.getKey();
+						var parentSelector = classInfo.selector.getParentSelector();
+						var ary = parentSelector.getValue(_this.obj);
+						if( itemIndex < (ary.length - 1) ) {
+							var removedItems = ary.splice(itemIndex,1);
+							ary.splice(itemIndex+1,0,removedItems[0]);
+							
+							var $item = $clicked.parents('.n2schema_array_item').first();
+							var $nextItem = $item.next();
+							$item.insertAfter($nextItem);
+							//_this.refresh($elem);
+
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
 						
@@ -1712,13 +1813,16 @@ var Form = $n2.Class({
 						
 					} else if( $clicked.hasClass('n2schema_help_date') ){
 						$n2.help.ToggleHelp('dates', $clicked);
+						
+					} else if( $clicked.hasClass('n2schema_help_wiki') ){
+						$n2.help.ToggleHelp('wiki', $clicked);
 					};
 				});
 			};
 		};
-	}
-	
-	,_setHtml: function(obj) {
+	},
+
+	_setHtml: function(obj) {
 		if( !obj ) return;
 		
 		for(var i=0,e=this.extensions.length; i<e; ++i) {
@@ -1730,7 +1834,7 @@ var Form = $n2.Class({
 		if( !compiledTemplate ) {
 			var formTemplate = this.schema.formTemplate;
 			if( formTemplate ) {
-				compiledTemplate = Handlebars.compile(formTemplate);
+				compiledTemplate = Handlebars.compile(formTemplate,{trackIds:true});
 				this.schema.formTemplate__compiled = compiledTemplate;
 			};
 		};
@@ -1744,6 +1848,10 @@ var Form = $n2.Class({
 		
 		var classNames = $input.attr('class').split(' ');
 		var classInfo = parseClassNames(classNames);
+		var inputNodeName = $input.prop('nodeName');
+		if( typeof inputNodeName === 'string' ){
+			inputNodeName = inputNodeName.toLowerCase();
+		};
 		
 		// Special case for references. Convert input into field
 		if( 'reference' === classInfo.type 
@@ -1761,7 +1869,7 @@ var Form = $n2.Class({
 		if( selector ) {
 			var parentSelector = selector.getParentSelector();
 			var key = selector.getKey();
-			var handler = this._createChangeHandler(
+			var changeHandler = this._createChangeHandler(
 				obj
 				,selector
 				,parentSelector
@@ -1773,14 +1881,18 @@ var Form = $n2.Class({
 					callback(obj, selector.selectors, value);
 				}
 			);
-			$input.change(handler);
+			var keyupHandler = this._createChangeHandler(
+					obj
+					,selector
+					,parentSelector
+					,classInfo.type
+					,function(obj, selector, value){
+					}
+				);
+			$input.change(changeHandler);
 			//$input.blur(handler);
-			if( $n2.schema.GlobalAttributes.disableKeyUpEvents ){
-				// skip
-			} else {
-				if( 'date' !== classInfo.type ){ // no key up event for date text boxes
-					$input.keyup(handler);
-				};
+			if( 'date' !== classInfo.type ){ // no key up event for date text boxes
+				$input.keyup(keyupHandler);
 			};
 			
 			// Set value
@@ -1808,7 +1920,7 @@ var Form = $n2.Class({
 						,constrainInput: false
 						,onSelect: function(){
 							var $input = $(this);
-							handler.call($input);
+							changeHandler.call($input);
 						}
 					});
 				};
@@ -1907,7 +2019,7 @@ var Form = $n2.Class({
 								};
 								if( layers ) {
 									$input.val( layers.join(',') );
-									handler.call($input);
+									changeHandler.call($input);
 								};
 								$input.trigger('focus',{inhibitCallback:true});
 							}
@@ -1922,6 +2034,44 @@ var Form = $n2.Class({
 				
 			} else {
 				$input.val(value);
+			};
+			
+			// After setting the value to a <select>, it is possible that no option
+			// is representing the current value. In this case, insert an option to
+			// represent the current state
+			if( 'select' === inputNodeName ){
+				var effectiveValue = value;
+				if( null === effectiveValue || undefined === effectiveValue ){
+					// This is a text field. Null does not have a meaning
+					effectiveValue = '';
+				};
+
+				var selectedOptions = $input[0].selectedOptions;
+				if( selectedOptions ){
+					var foundCurrentValue = false;
+					for(var i=0,e=selectedOptions.length; i<e; ++i){
+						var selectedOption = selectedOptions.item(i);
+						var $selectedOptions = $(selectedOption);
+						var selectedValue = $selectedOptions.attr('value');
+						if( selectedValue === effectiveValue ){
+							foundCurrentValue = true;
+						};
+					};
+					
+					if( !foundCurrentValue ){
+						// At this point, the value carried by the document is not
+						// properly represented by the <select> form element. Correct
+						// the situation by prepending an <option> element with the
+						// correct value. Make this option 'disabled' so that user can
+						// not choose it.
+						$('<option>')
+							.attr('value',effectiveValue)
+							.attr('disabled','disabled')
+							.text( effectiveValue )
+							.prependTo($input);
+						$input.val(value);
+					};
+				};
 			};
 		};
 	},
@@ -2014,12 +2164,33 @@ var Form = $n2.Class({
 			$input.change(changeHandler);
 			
 			// Handle focus
-			var getDocumentIdFn = this.functionMap['getDocumentId'];
-			if( funcIdentifier 
-			 && this.functionMap[funcIdentifier] ){
-				getDocumentIdFn = this.functionMap[funcIdentifier];
+			var focusHandler = {
+				fn: this.functionMap['getDocumentId']
+				,args: []
 			};
-			if( getDocumentIdFn ) {
+//			if( funcIdentifier 
+//			 && this.functionMap[funcIdentifier] ){
+//				getDocumentIdFn = this.functionMap[funcIdentifier];
+//			};
+			if( funcIdentifier ){
+				if( $n2.docFnCall ){
+					try {
+						var program = $n2.docFnCall.parse(funcIdentifier);
+						if( program ){
+							var r = program.getValue({
+								doc: _this.obj
+								,funcMap: this.functionMap
+							});
+							if( r ){
+								focusHandler = r;
+							};
+						};
+					} catch(err) {
+						$n2.logError('Error while processing focus handler '+funcIdentifier, err);
+					};
+				};
+			};
+			if( focusHandler ) {
 				$input.focus(function(e, eventParam){
 					var $input = $(this);
 
@@ -2028,8 +2199,10 @@ var Form = $n2.Class({
 					};
 					
 					window.setTimeout(function(){
-						getDocumentIdFn({
-							onSelected: function(docId){ // callback with docId
+						focusHandler.fn({
+							contextDoc: _this.obj
+							,args: focusHandler.args
+							,onSelected: function(docId){ // callback with docId
 								var parentObj = parentSelector.getValue(_this.obj);
 								if( parentObj ){
 									if( !parentObj[key] ){
@@ -2120,19 +2293,41 @@ var Form = $n2.Class({
 	_installCustomType: function($container, $elem, doc , callbackFn){
 		var _this = this;
 		
+		var customType = $elem.attr('n2-custom-type');
+		
 		var selectorStr = $elem.attr('nunaliit-selector');
 		var selector = null;
 		if( selectorStr ){
 			selector = $n2.objectSelector.decodeFromDomAttribute(selectorStr);
 		};
 		
-		function cb(value){
-			_this.refresh($container);
+		function cb(value, suppressFullRefresh){
+			if( suppressFullRefresh ){
+				$elem.empty();
+
+				var handler = customFieldHandlers[customType];
+				if( handler ){
+					var obj = undefined;
+					if( selector && doc ){
+						obj = selector.getValue(doc);
+					};
+					
+					handler({
+						elem: $elem
+						,doc: doc
+						,obj: obj
+						,selector: selector
+						,customType: customType
+						,callbackFn: cb
+						,functionMap: _this.functionMap
+					});
+				};
+			} else {
+				_this.refresh($container);
+			};
 			
 			_this.callback(doc,selector,value);
 		};
-		
-		var customType = $elem.attr('n2-custom-type');
 		
 		if( typeof customType === 'string' ){
 			var handler = customFieldHandlers[customType];
@@ -2149,6 +2344,7 @@ var Form = $n2.Class({
 					,selector: selector
 					,customType: customType
 					,callbackFn: cb
+					,functionMap: _this.functionMap
 				});
 			} else {
 				$elem.attr('nunaliit-error','No handler found for custom type: "'+customType+'"');
@@ -2230,13 +2426,13 @@ var Form = $n2.Class({
 					
 					if( !dateStr ){
 						if( parentObj[effectiveKey] ) {
-							delete parentObj[effectiveKey];
+							parentObj[effectiveKey] = null;
 						};
 					} else {
 						var trimmedDateStr = $n2.trim(dateStr);
 						if( '' === trimmedDateStr ){
 							if( parentObj[effectiveKey] ) {
-								delete parentObj[effectiveKey];
+								parentObj[effectiveKey] = null;
 							};
 						} else {
 
@@ -2303,12 +2499,8 @@ var Form = $n2.Class({
 $n2.schema = {
 	Schema: Schema
 	,SchemaRepository: SchemaRepository
-//	,DefaultRepository: new SchemaRepository()
 	,Display: Display
 	,Form: Form
-	,GlobalAttributes: {
-		disableKeyUpEvents: false
-	}
 	,registerCustomFieldHandler: registerCustomFieldHandler
 };
 

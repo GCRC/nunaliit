@@ -12,17 +12,20 @@
 				,"en":"Default Module"
 				,"fr":"Module de Base"
 			}
-			,"href": "./index.html?module=module.demo"
+			,"module": "module.demo"
 			,"items":[
 				{
-					"title": {
-						"nunaliit_type":"localized"
-						,"en":"Default Module"
-						,"fr":"Module de Base"
-					}
-					,"href": "./index.html?module=module.demo"
+					"module": "module.demo"
 				}
 			]
+		}
+		,{
+			"title": {
+				"nunaliit_type":"localized"
+				,"en":"Tools"
+				,"fr":"Outils"
+			}
+			,"href": "./tools/index.html"
 		}
 	]
 }

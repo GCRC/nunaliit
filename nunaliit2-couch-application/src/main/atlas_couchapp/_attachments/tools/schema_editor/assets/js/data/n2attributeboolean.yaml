@@ -1,0 +1,33 @@
+-
+ title : n2 attribute boolean
+ fields:
+   textarea:
+     label : textarea
+     type  : checkbox
+     value : false
+     priority : optional
+   includedInBrief:
+     label : includedInBrief
+     type  : checkbox
+     value : false
+     priority : optional
+   excludedFromDisplay:
+     label : excludedFromDisplay
+     type  : checkbox
+     value : false
+     priority : optional
+   excludedFromForm:
+     label : excludedFromForm
+     type  : checkbox
+     value : false
+     priority : optional
+   urlsToLinks:
+     label : urlsToLinks
+     type  : checkbox
+     value : false
+     priority : optional
+   wikiTransform:
+     label : wikiTransform
+     type  : checkbox
+     value : false
+     priority : optional

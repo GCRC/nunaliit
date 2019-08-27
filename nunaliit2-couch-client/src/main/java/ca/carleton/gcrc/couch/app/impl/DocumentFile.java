@@ -3,6 +3,7 @@ package ca.carleton.gcrc.couch.app.impl;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -26,6 +27,7 @@ import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryNameFilter;
 import ca.carleton.gcrc.couch.fsentry.FSEntryNull;
 import ca.carleton.gcrc.couch.fsentry.FSEntrySupport;
+import ca.carleton.gcrc.utils.StreamUtils;
 
 public class DocumentFile implements Document {
 
@@ -76,6 +78,68 @@ public class DocumentFile implements Document {
 		DocumentFile doc = new DocumentFile(directory, filter, includeDir);
 		
 		return doc;
+	}
+
+	static public Object readJson(Reader reader) throws Exception {
+		
+		Object result = null;
+		
+		try {
+			JSONTokener tokener = new JSONTokener(reader);
+			result = tokener.nextValue();
+			
+			// There should be nothing left in the stream but white spaces
+			char c = tokener.nextClean();
+			if( 0 != c ) {
+				throw new Exception("Unexpected character found at end of JSON stream: "+c+ " ("+tokener+")");
+			}
+
+		} catch (Exception e) {
+			throw new Exception("Error while reading JSON stream", e);
+		}
+		
+		return result;
+	}
+
+	static public Object readJson(FSEntry file) throws Exception {
+		
+		Object result = null;
+		
+		InputStream is = null;
+		InputStreamReader isr = null;
+		try {
+			is = file.getInputStream();
+			isr = new InputStreamReader(is, "UTF-8");
+
+			result = readJson(isr);
+			
+			isr.close();
+			isr = null;
+			
+			is.close();
+			is = null;
+			
+		} catch (Exception e) {
+			throw new Exception("Error while reading file: "+file.getName(), e);
+			
+		} finally {
+			if( null != isr ) {
+				try {
+					isr.close();
+				} catch (Exception e) {
+					// Ignore
+				}
+			}
+			if( null != is ) {
+				try {
+					is.close();
+				} catch (Exception e) {
+					// Ignore
+				}
+			}
+		}
+		
+		return result;
 	}
 	
 	private FSEntry top;
@@ -176,7 +240,7 @@ public class DocumentFile implements Document {
 					}
 				} else if( child.isFile() ) {
 					if( isChildJson ) {
-						Object value = readJsonFile(child);
+						Object value = readJson(child);
 						this.jsonObj.put(key, value);
 					} else {
 						String value = readStringFile(child);
@@ -231,17 +295,12 @@ public class DocumentFile implements Document {
 			 && infoFile.isFile() ) {
 				// Load and interpret info file
 				InputStream fis = null;
-				char[] buffer = new char[100];
 				try {
 					fis = infoFile.getInputStream();
 					InputStreamReader isr = new InputStreamReader(fis,"UTF-8");
 					StringWriter sw = new StringWriter();
 
-					int size = isr.read(buffer);
-					while( size >= 0 ) {
-						sw.write(buffer, 0, size);
-						size = isr.read(buffer);
-					}
+					StreamUtils.copyStream(isr, sw);
 					
 					sw.flush();
 					
@@ -368,7 +427,7 @@ public class DocumentFile implements Document {
 				}
 			} else if( child.isFile() ) {
 				if( isChildJson ) {
-					Object value = readJsonFile(child);
+					Object value = readJson(child);
 					arr.put(value);
 				} else {
 					String value = readStringFile(child);
@@ -422,7 +481,7 @@ public class DocumentFile implements Document {
 				}
 			} else if( child.isFile() ) {
 				if( isChildJson ) {
-					Object value = readJsonFile(child);
+					Object value = readJson(child);
 					obj.put(key, value);
 				} else {
 					String value = readStringFile(child);
@@ -439,16 +498,11 @@ public class DocumentFile implements Document {
 	private String readStringFile(FSEntry file) throws Exception {
 		StringWriter sw = new StringWriter();
 		InputStream is = null;
-		char[] buffer = new char[100];
 		try {
 			is = file.getInputStream();
 			InputStreamReader isr = new InputStreamReader(is, "UTF-8");
-			
-			int size = isr.read(buffer);
-			while( size >= 0 ) {
-				sw.write(buffer, 0, size);
-				size = isr.read(buffer);
-			}
+
+			StreamUtils.copyStream(isr, sw);
 			
 			sw.flush();
 			
@@ -481,44 +535,6 @@ public class DocumentFile implements Document {
 		}
 		
 		return expandedValue;
-	}
-
-	private Object readJsonFile(FSEntry file) throws Exception {
-		
-		Object result = null;
-		
-		StringWriter sw = new StringWriter();
-		InputStream is = null;
-		char[] buffer = new char[100];
-		try {
-			is = file.getInputStream();
-			InputStreamReader isr = new InputStreamReader(is, "UTF-8");
-			
-			int size = isr.read(buffer);
-			while( size >= 0 ) {
-				sw.write(buffer, 0, size);
-				size = isr.read(buffer);
-			}
-			
-			sw.flush();
-			
-			JSONTokener tokener = new JSONTokener(sw.toString());
-			result = tokener.nextValue();
-			
-		} catch (Exception e) {
-			throw new Exception("Error while reading file: "+file.getName(), e);
-			
-		} finally {
-			if( null != is ) {
-				try {
-					is.close();
-				} catch (Exception e) {
-					// Ignore
-				}
-			}
-		}
-		
-		return result;
 	}
 	
 	/**
@@ -569,16 +585,11 @@ public class DocumentFile implements Document {
 
 	private void insertFile(Writer writer, FSEntry includedEntry) throws Exception {
 		InputStream is = null;
-		char[] buffer = new char[100];
 		try {
 			is = includedEntry.getInputStream();
 			InputStreamReader isr = new InputStreamReader(is, "UTF-8");
 			
-			int size = isr.read(buffer);
-			while( size >= 0 ) {
-				writer.write(buffer, 0, size);
-				size = isr.read(buffer);
-			}
+			StreamUtils.copyStream(isr, writer);
 			
 			writer.flush();
 			

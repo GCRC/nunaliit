@@ -33,15 +33,76 @@ POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 
 // Localization
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
-
-var DH = 'n2.couchShow';
-	
-var couchUserPrefix = 'org.couchdb.user:';
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); },
+ DH = 'n2.couchShow',
+ couchUserPrefix = 'org.couchdb.user:',
+ suppressLeaveConfirmation = false;
 
 function noop(){};
 
 var reUrl = /(^|\s)(https?:\/\/[^\s]*)(\s|$)/;
+
+//*******************************************************
+
+/**
+ * This function iterates over all the descendants of a
+ * DOM node, calling the specified function for each
+ * element.
+ * @param element Node where search should start from
+ * @param fn Function to be called for each descendant element
+ */
+function iterateOverChildElements(element, fn){
+	var childElements = [];
+	var nodeList = element.childNodes;
+	for(var i=0;i<nodeList.length;++i){
+		var childNode = nodeList.item(i);
+		if( childNode 
+		 && childNode.nodeType === 1 ){ // element
+			childElements.push(childNode);
+		};
+	};
+	
+	childElements.forEach(function(childElement){
+		fn(childElement);
+		iterateOverChildElements(childElement, fn)
+	});
+};
+
+function getChildElements(element){
+	var childElements = [];
+	addDescendants(element, childElements);
+	return childElements;
+	
+	function addDescendants(node, arr){
+		var nodeList = node.childNodes;
+		for(var i=0;i<nodeList.length;++i){
+			var childNode = nodeList.item(i);
+			if( childNode 
+			 && childNode.nodeType === 1 ){ // element
+				arr.push(childNode);
+				addDescendants(childNode, arr);
+			};
+		};
+	};
+};
+
+function replaceClassName(element, sourceClassName, targetClassName){
+	var classes = element.className;
+	if( classes ){
+		var classNames = classes.split(' ');
+		var newClassNames = [];
+		classNames.forEach(function(className){
+			if( className === sourceClassName ){
+				newClassNames.push(targetClassName);
+			} else {
+				newClassNames.push(className);
+			};
+		});
+		var newClasses = newClassNames.join(' ');
+		element.className = newClasses;
+	};
+};
+
 
 // *******************************************************
 var DomStyler = $n2.Class({
@@ -59,6 +120,14 @@ var DomStyler = $n2.Class({
 	deleteFunction: null,
 	
 	viewLayerFunction: null,
+	
+	changes: null,
+
+	changesWithContext: null,
+
+	observerChangeMap: null,
+
+	mutationObserver: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -78,9 +147,432 @@ var DomStyler = $n2.Class({
 		this.editFunction = opts.editFunction;
 		this.deleteFunction = opts.deleteFunction;
 		this.viewLayerFunction = opts.viewLayerFunction;
+		
+		var _this = this;
+		
+		// This is a list of all DOM changes performed by
+		// the show service:
+		// - source : String. Class name to find element to change
+		// - target : String. Class name to switch element to after change
+		// - fn : Function. Function to call to perform change
+		// - acceptsContextDocument : Boolean. If true, specify the context
+		//                            document
+		this.changes = [
+			{
+				source: 'n2s_localize'
+				,target: 'n2s_localized'
+				,fn: this._localize
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2_localize'
+				,target: 'n2_localized'
+				,fn: this._localize
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_briefDisplay'
+				,target: 'n2s_briefDisplayed'
+				,fn: this._briefDisplay
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2_briefDisplay'
+				,target: 'n2_briefDisplayed'
+				,fn: this._briefDisplay
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_fullDisplay'
+				,target: 'n2s_fullDisplayed'
+				,fn: this._fullDisplay
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_referenceLink'
+				,target: 'n2s_insertedReferenceLink'
+				,fn: this._insertReferenceLink
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_insertTime'
+				,target: 'n2s_insertedTime'
+				,fn: this._insertTime
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_insertUserName'
+				,target: 'n2s_insertedUserName'
+				,fn: this._insertUserName
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_insertLayerName'
+				,target: 'n2s_insertedLayerName'
+				,fn: this._insertLayerName
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_insertMediaView'
+				,target: 'n2s_insertedMediaView'
+				,fn: this._insertMediaView
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_insertMediaPlayer'
+				,target: 'n2s_insertedMediaPlayer'
+				,fn: this._insertMediaPlayer
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_insertModuleName'
+				,target: 'n2s_insertedModuleName'
+				,fn: this._insertModuleName
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_insertFirstThumbnail'
+				,target: 'n2s_insertedFirstThumbnail'
+				,fn: this._insertFirstThumbnail
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_insertHoverSoundIcon'
+				,target: 'n2s_insertedHoverSoundIcon'
+				,fn: this._insertHoverSoundIcon
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_externalMediaLink'
+				,target: 'n2s_adjustedExternalMediaLink'
+				,fn: this._adjustExternalMediaLink
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_insertExternalMediaLink'
+				,target: 'n2s_insertedExternalMediaLink'
+				,fn: this._insertExternalMediaLink
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_convertTextUrlToLink'
+				,target: 'n2s_convertedTextUrlToLink'
+				,fn: this._convertTextUrlToLink
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_clickFindGeometryOnMap'
+				,target: 'n2s_findGeometryOnMap'
+				,fn: this._clickFindGeometryOnMap
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_clickAddLayerFromDefinition'
+				,target: 'n2s_addLayerFromDefinition'
+				,fn: this._clickAddLayerFromDefinition
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_clickEdit'
+				,target: 'n2s_edit'
+				,fn: this._clickEdit
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_clickDelete'
+				,target: 'n2s_delete'
+				,fn: this._clickDelete
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_handleHover'
+				,target: 'n2s_handledHover'
+				,fn: this._handleHover
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_installMaxHeight'
+				,target: 'n2s_installedMaxHeight'
+				,fn: this._installMaxHeight
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_clickLogin'
+				,target: 'n2s_login'
+				,fn: this._clickLogin
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_clickMapEdit'
+				,target: 'n2s_mapEdit'
+				,fn: this._clickMapEdit
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_preserveSpaces'
+				,target: 'n2s_preservedSpaces'
+				,fn: this._preserveSpaces
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_insertDocumentList'
+				,target: 'n2s_insertedDocumentList'
+				,fn: this._insertDocumentList
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_select'
+				,target: 'n2s_selected'
+				,fn: this._select
+				,acceptsContextDocument: false
+			},
+			{
+				source: 'n2s_installTiledImageClick'
+				,target: 'n2s_installedTiledImageClick'
+				,fn: this._installTiledImageClick
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_custom'
+				,target: 'n2s_customed'
+				,fn: this._custom
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_userEvents'
+				,target: 'n2s_userEvents_installed'
+				,fn: this._userEvents
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_wikiTransform'
+				,target: 'n2s_wikiTransformed'
+				,fn: this._wikiTransform
+				,acceptsContextDocument: true
+			},
+			{
+				source: 'n2s_showFindAvailable'
+				,target: 'n2s_showedFindAvailable'
+				,fn: this._showFindAvailable
+				,acceptsContextDocument: true
+			}
+		];
+	
+		// Make an array of changes that accepts a context document
+		this.changesWithContext = [];
+		this.changes.forEach(function(change){
+			if( change.acceptsContextDocument ){
+				_this.changesWithContext.push(change);
+			};
+		});
+		
+		// Make a maps of changes for V3 processing
+		this.changesMap = {};
+		this.changes.forEach(function(change){
+			_this.changesMap[change.source] = change;
+		});
+		
+		// The mutation observer can make changes that do not require a context.
+		// The mutation observer observes all changes on a document.
+		this.mutationObserver = null;
+//		if( typeof MutationObserver == 'function' ){
+//			// Create a dictionary of changes to support observer
+//			this.observerChangeMap = {};
+//			this.changes.forEach(function(change){
+//				if( !change.acceptsContextDocument ){
+//					_this.observerChangeMap[change.source] = change;
+//				};
+//			});
+//
+//			this.mutationObserver = new MutationObserver(function(mutations, observer){
+//				_this._observeMutations(mutations);
+//			});
+//			
+//			this.mutationObserver.observe($('body')[0], {
+//				childList: true
+//				,subtree: true
+//				,attributes: true
+//				,attributeFilter: ['class']
+//			});
+//		};
 	},
 
 	fixElementAndChildren: function($elem, opt, contextDoc){
+//		if( typeof performance !== 'undefined' ){
+//			var _this = this;
+//			var start = performance.now();
+//		};
+		
+		this._fixElementAndChildrenV3($elem, opt, contextDoc);
+
+//		if( typeof performance !== 'undefined' ){
+//			var end = performance.now();
+//			var elapsed = end-start;
+//			if( this.maxElapsed === undefined ){
+//				this.maxElapsed = elapsed;
+//			} else if( elapsed > this.maxElapsed ){
+//				this.maxElapsed = elapsed;
+//			};
+//			if( this.totalElapsed === undefined ){
+//				this.totalElapsed = elapsed;
+//			} else {
+//				this.totalElapsed += elapsed;
+//			};
+//			if( !this.performanceInstalled ){
+//				this.performanceInstalled = true;
+//				$('<a>')
+//					.attr('href','#')
+//					.text( _loc('Log Perf') )
+//					.css({
+//						'text-decoration': 'none',
+//				    	'color': '#fff'
+//					})
+//					.appendTo( $('.nunaliit_footer') )
+//					.click(function(){
+//						$n2.log('total: '+_this.totalElapsed+' max: '+_this.maxElapsed);
+//						return false;
+//					});
+//				$('<a>')
+//					.attr('href','#')
+//					.text( _loc('Reset Perf') )
+//					.css({
+//						'text-decoration': 'none',
+//				    	'color': '#fff'
+//					})
+//					.appendTo( $('.nunaliit_footer') )
+//					.click(function(){
+//						_this.totalElapsed = 0;
+//						_this.maxElapsed = 0;
+//						return false;
+//					});
+//			};
+//		};
+	},
+
+	// V3 is 24% faster than V2 and 31% faster than V1
+	_fixElementAndChildrenV3: function($elem, opt, contextDoc){
+		var _this = this;
+		
+		// Call custom code to modify element
+		var dispatchService = this.showService.dispatchService;
+		if( dispatchService ) {
+			dispatchService.synchronousCall(DH, {
+				type:'showPreprocessElement'
+				,elem: $elem
+				,doc: contextDoc
+				,showService: this.showService
+			});
+		};
+		
+		$elem.each(function(){
+			modifyElement(this);
+//				var childElems = getChildElements(this);
+//				childElems.forEach(function(node){
+//					modifyElement(node);
+//				});
+			iterateOverChildElements(this, modifyElement);
+		});
+		
+		function modifyContextedElement(element){
+			var classes = element.className;
+			if( typeof classes === 'string' ){
+				var classNames = classes.split(' ');
+				classNames.forEach(function(className){
+					var changes = _this.changesWithContext[className];
+					if( changes 
+					 && typeof changes.target === 'string' 
+					 && typeof changes.fn === 'function' ){
+						try {
+							replaceClassName(element, className, changes.target);
+							changes.fn.call(_this, $(element), contextDoc, opt);
+						} catch(e) {
+							console.log('Error applying change: '+className,e);
+						};
+					};
+				});
+			};
+		};
+		
+		function modifyElement(element){
+			var classes = element.className;
+			if( typeof classes === 'string' ){
+				var classNames = classes.split(' ');
+				classNames.forEach(function(className){
+					var changes = _this.changesMap[className];
+					if( changes 
+					 && typeof changes.target === 'string' 
+					 && typeof changes.fn === 'function' ){
+						try {
+							replaceClassName(element, className, changes.target);
+							changes.fn.call(_this, $(element), contextDoc, opt);
+						} catch(e) {
+							console.log('Error applying change: '+className,e);
+						};
+					};
+				});
+			};
+		};
+	},
+
+	// V2 is 9% faster than V1
+	_fixElementAndChildrenV2: function($elem, opt, contextDoc){
+		var _this = this;
+		
+		// Call custom code to modify element
+		var dispatchService = this.showService.dispatchService;
+		if( dispatchService ) {
+			dispatchService.synchronousCall(DH, {
+				type:'showPreprocessElement'
+				,elem: $elem
+				,doc: contextDoc
+				,showService: this.showService
+			});
+		};
+		
+		
+		var $set = $elem;
+		
+		if( this.mutationObserver ){
+			// Perform all changes based on context, leaving the changes that
+			// do not require a context to the mutation observer
+			this.changesWithContext.forEach(function(change){
+				var sourceClassName = change.source;
+				var targetClassName = change.target;
+				var fn = change.fn;
+				
+				findAndExecute($set, sourceClassName, targetClassName, fn);
+			});
+
+		} else {
+			// There is no mutation observer. Perform all changes
+			this.changes.forEach(function(change){
+				var sourceClassName = change.source;
+				var targetClassName = change.target;
+				var fn = change.fn;
+				
+				findAndExecute($set, sourceClassName, targetClassName, fn);
+			});
+		};
+		
+		
+		function findAndExecute($set, sourceClass, targetClass, fn){
+			if( $set.hasClass(sourceClass) ){
+				execute($set, sourceClass, targetClass, fn);
+			};
+			$set.find('.'+sourceClass).each(function(){
+				execute($(this), sourceClass, targetClass, fn);
+			});
+		};
+		
+		function execute($set, sourceClass, targetClass, fn){
+			$set
+				.removeClass(sourceClass)
+				.addClass(targetClass);
+			fn.call(_this, $set, contextDoc, opt);
+		};
+	},
+	
+	_fixElementAndChildrenV1: function($elem, opt, contextDoc){
 		var _this = this;
 		
 		// Call custom code to modify element
@@ -96,213 +588,66 @@ var DomStyler = $n2.Class({
 		
 		
 		var $set = $elem.find('*').addBack();
-		
-		// Localization
-		$set.filter('.n2_localize').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2_localize').addClass('n2_localized');
-			_this._localize($jq, opt);
-		});
-		$set.filter('.n2s_localize').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_localize').addClass('n2s_localized');
-			_this._localize($jq, opt);
-		});
-		
-		// Brief display
-		$set.filter('.n2s_briefDisplay').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_briefDisplay').addClass('n2s_briefDisplayed');
-			_this._briefDisplay($jq, contextDoc, opt);
-		});
-		$set.filter('.n2_briefDisplay').each(function(){
-			// Legacy
-			var $jq = $(this);
-			$jq.removeClass('n2_briefDisplay').addClass('n2_briefDisplayed');
-			_this._briefDisplay($jq, contextDoc, opt);
-		});
-		
-		// Full display
-		$set.filter('.n2s_fullDisplay').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_fullDisplay').addClass('n2s_fullDisplayed');
-			_this._fullDisplay($jq, contextDoc, opt);
-		});
 
-		// Reference Link
-		$set.filter('.n2s_referenceLink').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_referenceLink').addClass('n2s_insertedReferenceLink');
-			_this._insertReferenceLink($jq, opt);
+		// Perform all changes
+		this.changes.forEach(function(change){
+			var sourceClassName = change.source;
+			var targetClassName = change.target;
+			var fn = change.fn;
+			
+			$set.filter('.'+sourceClassName).each(function(){
+				var $jq = $(this);
+				$jq.removeClass(sourceClassName).addClass(targetClassName);
+				fn.call(_this, $jq, contextDoc, opt);
+			});
 		});
-		
-		// Time
-		$set.filter('.n2s_insertTime').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_insertTime').addClass('n2s_insertedTime');
-			_this._insertTime($jq, opt);
-		});
-		
-		// User
-		$set.filter('.n2s_insertUserName').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_insertUserName').addClass('n2s_insertedUserName');
-			_this._insertUserName($jq, opt);
-		});
-		
-		// Layer name
-		$set.filter('.n2s_insertLayerName').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_insertLayerName').addClass('n2s_insertedLayerName');
-			_this._insertLayerName($jq, contextDoc, opt);
-		});
-		
-		// Media View
-		$set.filter('.n2s_insertMediaView').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_insertMediaView').addClass('n2s_insertedMediaView');
-			_this._insertMediaView(contextDoc, $jq);
-		});
-		
-		// Insert first thumbnail
-		$set.filter('.n2s_insertFirstThumbnail').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_insertFirstThumbnail').addClass('n2s_insertedFirstThumbnail');
-			_this._insertFirstThumbnail(contextDoc, $jq, opt);
-		});
-		
-		// Insert Hover Sound
-		$set.filter('.n2s_insertHoverSoundIcon').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_insertHoverSoundIcon').addClass('n2s_insertedHoverSoundIcon');
-			_this._insertHoverSoundIcon(contextDoc, $jq, opt);
-		});
-		
-		// External links to media file
-		$set.filter('.n2s_externalMediaLink').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_externalMediaLink').addClass('n2s_adjustedExternalMediaLink');
-			_this._adjustExternalMediaLink(contextDoc, $jq, opt);
-		});
-		
-		// External links to media file
-		$set.filter('.n2s_insertExternalMediaLink').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_insertExternalMediaLink').addClass('n2s_insertedExternalMediaLink');
-			_this._insertExternalMediaLink(contextDoc, $jq, opt);
-		});
-		
-		// Convert text URLs to Links
-		$set.filter('.n2s_convertTextUrlToLink').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_convertTextUrlToLink').addClass('n2s_convertedTextUrlToLink');
-			_this._convertTextUrlToLink(contextDoc, $jq, opt);
-		});
+	},
+	
+	_observeMutations: function(mutations){
+		var _this = this;
 
-		// Follow geometry
-		$set.filter('.n2s_clickFindGeometryOnMap').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_clickFindGeometryOnMap').addClass('n2s_findGeometryOnMap');
-			_this._clickFindGeometryOnMap(contextDoc, $jq, opt);
-		});
+		mutations.forEach(function(mutation) {
+			if( mutation.type === 'attributes' ){
+				if( mutation.target 
+				 && mutation.target.nodeType === 1 /* element */ ){
+					fixElement(mutation.target);
+				};
 
-		// Turn on layer
-		$set.filter('.n2s_clickAddLayerFromDefinition').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_clickAddLayerFromDefinition').addClass('n2s_addLayerFromDefinition');
-			_this._clickAddLayerFromDefinition(contextDoc, $jq, opt);
-		});
+			} else if( mutation.type === 'childList' ){
+				if( mutation.addedNodes 
+				 && mutation.addedNodes.length ){
+					for(var i=0; i<mutation.addedNodes.length; ++i){
+						var node = mutation.addedNodes.item(i);
+						if( node && node.nodeType === 1 /*element*/ ){
+							fixElement(node);
+						};
+					};
+				};
 
-		// Document editing
-		$set.filter('.n2s_clickEdit').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_clickEdit').addClass('n2s_edit');
-			_this._clickEdit(contextDoc, $jq, opt);
-		});
-
-		// Document deleting
-		$set.filter('.n2s_clickDelete').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_clickDelete').addClass('n2s_delete');
-			_this._clickDelete(contextDoc, $jq, opt);
+			} else {
+				console.log('mutation: '+mutation.type,mutation);
+			};
 		});
 		
-		// Mouse Hover
-		$set.filter('.n2s_handleHover').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_handleHover').addClass('n2s_handledHover');
-			_this._handleHover(contextDoc, $jq, opt);
-		});
-
-		// Install maximum height
-		$set.filter('.n2s_installMaxHeight').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_installMaxHeight').addClass('n2s_installedMaxHeight');
-			_this._installMaxHeight(contextDoc, $jq, opt);
-		});
-		
-		// Login
-		$set.filter('.n2s_clickLogin').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_clickLogin').addClass('n2s_login');
-			_this._clickLogin($jq, opt);
-		});
-		
-		// Map Edit
-		$set.filter('.n2s_clickMapEdit').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_clickMapEdit').addClass('n2s_mapEdit');
-			_this._clickMapEdit($jq, opt);
-		});
-		
-		// Preserve Space
-		$set.filter('.n2s_preserveSpaces').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_preserveSpaces').addClass('n2s_preservedSpaces');
-			_this._preserveSpaces($jq, opt);
-		});
-
-		// Document List
-		$set.filter('.n2s_insertDocumentList').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_insertDocumentList').addClass('n2s_insertedDocumentList');
-			_this._insertDocumentList($jq, opt);
-		});
-
-		// Select
-		$set.filter('.n2s_select').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_select').addClass('n2s_selected');
-			_this._select($jq, opt);
-		});
-
-		// Install Tiled Image Click
-		$set.filter('.n2s_installTiledImageClick').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_installTiledImageClick').addClass('n2s_installedTiledImageClick');
-			_this._installTiledImageClick(contextDoc, $jq);
-		});
-
-		// Custom
-		$set.filter('.n2s_custom').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_custom').addClass('n2s_customed');
-			_this._custom($jq, contextDoc);
-		});
-
-		// User Events
-		$set.filter('.n2s_userEvents').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_userEvents').addClass('n2s_userEvents_installed');
-			_this._userEvents($jq, contextDoc);
-		});
-
-		// Wiki
-		$set.filter('.n2s_wikiTransform').each(function(){
-			var $jq = $(this);
-			$jq.removeClass('n2s_wikiTransform').addClass('n2s_wikiTransformed');
-			_this._wikiTransform($jq, contextDoc);
-		});
+		function fixElement(element){
+			var classes = element.className;
+			if( typeof classes === 'string' ){
+				var classNames = classes.split(' ');
+				classNames.forEach(function(className){
+					var changes = _this.observerChangeMap[className];
+					if( changes 
+					 && typeof changes.target === 'string' 
+					 && typeof changes.fn === 'function' ){
+						try {
+							replaceClassName(element, className, changes.target);
+							changes.fn.call(_this, $(element));
+						} catch(e) {
+							console.log('Error applying change: '+className,e);
+						};
+					};
+				});
+			};
+		};
 	},
 	
 	_receivedDocumentContent: function(doc){
@@ -323,10 +668,38 @@ var DomStyler = $n2.Class({
 				var $jq = $(this);
 
 				_this._refreshElementWithDocument($jq, doc);
+
+				var isContinuous = $jq.attr('data-content-continuous');
 				
 				// Content was received. No longer waiting for it.
-				$jq.removeClass(contentClass);
+				if( !isContinuous ){
+					$jq.removeClass(contentClass);
+				};
 			});
+		};
+		
+		// Handle layer definitions
+		if( doc 
+		 && doc.nunaliit_layer_definition ){
+			var layerId = doc.nunaliit_layer_definition.id;
+			if( !layerId ){
+				layerId = doc._id;
+			};
+
+			if( layerId ){
+				contentClass = 'n2show_layerContent_' + $n2.utils.stringToHtmlId(layerId);
+
+				$('.'+contentClass).each(function(){
+					var $jq = $(this);
+					
+					// No longer waiting for layer. Update with
+					// document
+					$jq.removeClass(contentClass);
+					_this._associateDocumentToElement(doc, $jq);
+
+					_this._refreshElementWithDocument($jq, doc);
+				});
+			};
 		};
 	},
 
@@ -350,15 +723,36 @@ var DomStyler = $n2.Class({
 				_this._refreshElementWithDocument($jq, doc);
 			});
 		};
+		
+		// On update, it is possible that a list is affected.
+		$('.n2show_documentList').each(function(){
+			var $jq = $(this);
+
+			_this._insertDocumentList($jq);
+		});
 	},
 
 	_refreshElementWithDocument: function($jq, doc){
+		var dispatchService = this.showService.dispatchService;
+		if( dispatchService ) {
+			dispatchService.synchronousCall(DH, {
+				type:'showPreprocessElement'
+				,elem: $jq
+				,doc: doc
+				,showService: this.showService
+			});
+		};
+
 		if( $jq.hasClass('n2s_insertedMediaView') ){
-			this._insertMediaView(doc, $jq);
+			this._insertMediaView($jq, doc);
+		};
+
+		if( $jq.hasClass('n2s_insertedMediaPlayer') ){
+			this._insertMediaPlayer($jq, doc);
 		};
 		
 		if( $jq.hasClass('n2s_insertedFirstThumbnail') ){
-			this._insertFirstThumbnail(doc, $jq);
+			this._insertFirstThumbnail($jq, doc);
 		};
 		
 		if( $jq.hasClass('n2s_customed') ){
@@ -380,9 +774,17 @@ var DomStyler = $n2.Class({
 		if( $jq.hasClass('n2s_insertedLayerName') ){
 			this._insertLayerName($jq, doc);
 		};
+
+		if( $jq.hasClass('n2s_insertedModuleName') ){
+			this._insertModuleName($jq, doc);
+		};
+
+		if( $jq.hasClass('n2s_showedFindAvailable') ){
+			this._showFindAvailable($jq, doc);
+		};
 	},
 
-	_localize: function($jq, opt_) {
+	_localize: function($jq) {
 		var text = $jq.text();
 		var locText = undefined;
 		if( $n2.l10n 
@@ -396,7 +798,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_preserveSpaces: function($jq, opt_) {
+	_preserveSpaces: function($jq) {
 		$jq.each(function(){
 			performPreserveSpace(this);
 		});
@@ -415,12 +817,24 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_insertDocumentList: function($jq, opt_){
-		var listType = $jq.attr('n2-list-type');
-		var listName = $jq.attr('n2-list-name');
+	_insertDocumentList: function($jq){
+		var listType = $jq.attr('nunaliit-list-type');
+		if( typeof listType === 'undefined' ){
+			listType = $jq.attr('n2-list-type');
+			if( listType ){
+				$jq.attr('nunaliit-list-type',listType);
+			};
+		};
+		var listName = $jq.attr('nunaliit-list-name');
+		if( typeof listName === 'undefined' ){
+			listName = $jq.attr('n2-list-name');
+			if( listName ){
+				$jq.attr('nunaliit-list-name',listName);
+			};
+		};
 		
 		$jq
-			.addClass('n2show_documentList_wait')
+			.addClass('n2show_documentList n2show_documentList_wait')
 			.empty();
 		
 		var dispatchService = this.showService.dispatchService;
@@ -433,7 +847,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 
-	_select: function($jq, opt_){
+	_select: function($jq){
 		var choiceName = $jq.attr('n2-choice');
 		
 		var found = false;
@@ -452,7 +866,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_briefDisplay: function($jq, data, opt_) {
+	_briefDisplay: function($jq, data) {
 		var docId = $jq.attr('nunaliit-document');
 		if( !docId ){
 			docId = $jq.text();
@@ -474,7 +888,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_insertReferenceLink: function($jq, opt_) {
+	_insertReferenceLink: function($jq) {
 		var _this = this;
 
 		var docId = $jq.attr('nunaliit-document');
@@ -498,42 +912,99 @@ var DomStyler = $n2.Class({
 		});
 	},
 	
-	_insertTime: function($jq, opt_) {
+	_insertTime: function($jq) {
 		var time = 1 * $jq.text();
 		var timeStr = (new Date(time)).toString();
 		$jq.text(timeStr);
 	},
 	
-	_insertUserName: function($jq, opt_) {
-		var userName = $jq.text();
+	_insertUserName: function($elem) {
+		var userName = $elem.attr('nunaliit-user');
+		if( !userName ){
+			userName = $elem.text();
+		};
 		
 		this.showService.printUserName(
-			$jq
+			$elem
 			,userName
 			,{showHandle:true}
 			);
 	},
 	
-	_insertLayerName: function($jq, data, opt_) {
-		var layerIdentifier = $jq.attr('nunaliit-document');
-		if( !layerIdentifier ){
-			layerIdentifier = $jq.text();
-			$jq.attr('nunaliit-document',layerIdentifier);
+	_insertLayerName: function($elem, data) {
+		var layerIdentifier = $elem.attr('nunaliit-layer');
+		var docId = $elem.attr('nunaliit-document');
+		
+		// Legacy: layer id used to be specified as text
+		if( !layerIdentifier && !docId ){
+			layerIdentifier = $elem.text();
+			$elem.attr('nunaliit-layer',layerIdentifier);
+		};
+		
+		// Compute inline layer definition
+		var inlineDefinition = undefined;
+		if( data 
+		 && data.nunaliit_layer_definition ){
+			inlineDefinition = data.nunaliit_layer_definition;
+			if( !inlineDefinition.id ){
+				// Legacy: layer definition uses doc id
+				inlineDefinition.id = data._id;
+			};
 		};
 
-		var layerIdentifier = this._associateDocumentToElement(data, $jq);
+		// Associated by layer id?
+		var doc = undefined;
+		if( layerIdentifier ){
+			if( inlineDefinition 
+			 && inlineDefinition.id === layerIdentifier ){
+				// No need to make a request. We already have the document.
+				doc = data;
+			} else {
+				var associated = $elem.hasClass('n2show_layerAssociated');
+				if( !associated ){
+					// Must request this layer definition
+					$elem.addClass('n2show_layerAssociated');
+					var contentClass = 'n2show_layerContent_' + $n2.utils.stringToHtmlId(layerIdentifier);
+					$elem.addClass(contentClass);
+
+					// Request this document
+					this.showService._requestLayerDefinition(layerIdentifier);
+				};
+			};
+			
+		} else if( docId ) {
+			// Associated by docId?
+			if( data && data._id === docId ){
+				// No need to make a request. We already have the document
+				doc = data;
+			};
+			this._associateDocumentToElement(data, $elem);
+			
+		} else if( inlineDefinition ){
+			// Associated with inline-document?
+			doc = data;
+			this._associateDocumentToElement(data, $elem);
+		};
+
 		
-		if( data && data._id === layerIdentifier ){
-			if( data.nunaliit_layer_definition
-			 && data.nunaliit_layer_definition.name ){
-				var name = _loc(data.nunaliit_layer_definition.name);
-				
-				$jq.text(name);
+		if( doc 
+		 && doc.nunaliit_layer_definition ){
+			var layerId = doc.nunaliit_layer_definition.id;
+			if( !layerId ){
+				layerId = doc._id;
+			};
+			
+			if( layerId === layerIdentifier ){
+				if( doc.nunaliit_layer_definition.name ){
+					var name = _loc(doc.nunaliit_layer_definition.name);
+					
+					$elem.text(name);
+				};
 			};
 		};
 	},
 
-	_insertMediaView: function(data, $insertView) {
+	_insertMediaView: function($insertView, data) {
 		var _this = this;
 		
 		var docId = this._associateDocumentToElement(data, $insertView);
@@ -617,6 +1088,7 @@ var DomStyler = $n2.Class({
 			return function(evt) {
 				var mediaOptions = {
 					url: attachmentUrl
+					,suppressLeaveConfirmation: suppressLeaveConfirmation
 				};
 				
 				// Mime type
@@ -664,7 +1136,9 @@ var DomStyler = $n2.Class({
 								,startIndex: startIndex
 							});
 						}
-						,onError: function(err){}
+						,onError: function(err){
+							$n2.log('Error while creating image source factory', err);
+						}
 					});
 					
 				} else {
@@ -686,8 +1160,134 @@ var DomStyler = $n2.Class({
 			};
 		};
 	},
+
+
+	_insertMediaPlayer: function($insertView, data) {
+		var _this = this;
+
+		var docId = this._associateDocumentToElement(data, $insertView);
+
+		var attachmentName = $insertView.attr('nunaliit-attachment');
+		if( !attachmentName ){
+			attachmentName = $insertView.text();
+			$insertView.attr('nunaliit-attachment', attachmentName);
+		};
+
+		$insertView.empty();
+
+		if( data && data._id === docId ){
+			var attachment = null;
+			if( data._attachments 
+				&& data._attachments[attachmentName] ){
+				attachment = data._attachments[attachmentName];
+			};
+
+			var attDesc = null;
+			if( data 
+				&& data.nunaliit_attachments 
+				&& data.nunaliit_attachments.files ) {
+				attDesc = data.nunaliit_attachments.files[attachmentName];
+			};
+
+			var thumbnailURL = null;
+			if( attDesc && attDesc.thumbnail ){
+				thumbnailURL = this.db.getAttachmentUrl(data,attDesc.thumbnail);
+			};
+
+			if( attDesc
+				&& attDesc.status === 'attached'
+				&& attachment ) {
+
+				var attUrl = this.db.getAttachmentUrl(data,attachmentName);
+				var mediaDivId = $n2.getUniqueId();
+				var mediaId = $n2.getUniqueId();
+				var audioWidth = 300;
+
+				if( attDesc.fileClass === 'audio' && attUrl ){
+
+					var $mediaDiv = $('<div>')
+						.attr('id', mediaDivId)
+						.appendTo($insertView);
+
+					var $audio = $('<audio>')
+						.attr('id', mediaId)
+						.attr('controls', 'controls')
+						.attr('width', audioWidth)
+						.appendTo($mediaDiv);
+
+					var $audioSource = $('<source>')
+						.attr('src', attUrl)
+						.appendTo($audio);
+
+					if( attDesc.mimeType ){
+						$audioSource.attr('type', attDesc.mimeType);
+					};
+
+					$('#'+mediaId).mediaelementplayer({
+						features: ['playpause','progress','volume','sourcechooser']
+					});
+
+				} else if( attDesc.fileClass === 'video' && attUrl ){
+
+					var $mediaDiv = $('<div>')
+						.attr('id', mediaDivId)
+						.appendTo($insertView);
+
+					var $video = $('<video>')
+						.attr('id', mediaId)
+						.attr('controls', 'controls')
+						.attr('width', attDesc.width)
+						.attr('height', attDesc.height)
+						.appendTo($mediaDiv);
+
+					var $videoSource = $('<source>')
+						.attr('src', attUrl)
+						.appendTo($video);
+
+					if( attDesc.mimeType ){
+						$videoSource.attr('type', attDesc.mimeType);
+					};
+
+					$('#'+mediaId).mediaelementplayer({
+						poster: thumbnailURL
+						,features: ['playpause','progress','volume','sourcechooser','fullscreen']
+					});
+				};
+
+				var $docBrief = $('<span>')
+					.addClass('n2s_briefDisplay')
+					.attr('nunaliit-document',data._id)
+					.appendTo($insertView);
+		
+				_this.fixElementAndChildren($docBrief, {}, null);
+			};
+
+		} else {
+			// Do not have playable media document
+			var label = _loc('Media({docId},{attName})',{
+				docId: docId
+				,attName: attachmentName
+			});
+			$('<span>')
+				.addClass('n2s_insertMediaPlayer_wait')
+				.text(label)
+				.appendTo($insertView);
+		};
+	},
+
+	_insertModuleName: function($jq, data) {
+		var docId = this._associateDocumentToElement(data, $jq);
+		
+		if( data 
+		 && data._id === docId 
+		 && data.nunaliit_module
+		 && data.nunaliit_module.title ){
+			var title = _loc(data.nunaliit_module.title);
+			$jq.text(title);
+		};
+	},
 	
-	_insertFirstThumbnail: function(doc, $insertElem, opt_){
+	_insertFirstThumbnail: function($insertElem, doc){
 
 		var docId = this._associateDocumentToElement(doc, $insertElem);
 
@@ -718,13 +1318,13 @@ var DomStyler = $n2.Class({
 			
 			if( attachment ){
 				$('<img>')
-					.attr('src',attachment.getMediaFileUrl())
+					.attr('src',attachment.computeUrl())
 					.appendTo($insertElem);
 			};
 		};
 	},
 	
-	_insertHoverSoundIcon: function(data, $insertHoverSoundIcon, opt_){
+	_insertHoverSoundIcon: function($insertHoverSoundIcon, data){
 		var _this = this;
 		var playSound = false;
 
@@ -757,7 +1357,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_adjustExternalMediaLink: function(data, $externalLink, opt_) {
+	_adjustExternalMediaLink: function($externalLink, data) {
 		var attachmentName = $externalLink.attr('href');
 		
 		var attachment = null;
@@ -781,6 +1381,10 @@ var DomStyler = $n2.Class({
 
 			$externalLink.attr('href',attUrl);
 			$externalLink.click(function(e){
+				if( suppressLeaveConfirmation ){
+					return true;
+				};
+
 				if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
 					return true;
 				};
@@ -797,13 +1401,14 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_insertExternalMediaLink: function(data, $div, opt_) {
+	_insertExternalMediaLink: function($div, data) {
 		var attachmentName = $div.attr('nunaliit-attachment');
 		
 		$div.empty();
 		
 		var attachment = null;
-		if( data._attachments 
+		if( data 
+		 && data._attachments 
 		 && data._attachments[attachmentName] ) {
 			attachment = data._attachments[attachmentName];
 		};
@@ -835,6 +1440,10 @@ var DomStyler = $n2.Class({
 				.addClass('n2s_adjustedExternalMediaLink')
 				.attr('href',attUrl)
 				.click(function(e){
+					if( suppressLeaveConfirmation ){
+						return true;
+					};
+
 					if( confirm( _loc('You are about to leave this page. Do you wish to continue?') ) ) {
 						return true;
 					};
@@ -854,7 +1463,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_convertTextUrlToLink: function(data, $jq, opt_) {
+	_convertTextUrlToLink: function($jq) {
 		$jq.each(function(){
 			performTextUrlToLink(this);
 		});
@@ -914,7 +1523,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_clickFindGeometryOnMap: function(data, $jq, opt){
+	_clickFindGeometryOnMap: function($jq, data){
 		var dispatcher = this.showService.dispatchService;
 
 		if( data 
@@ -939,7 +1548,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_clickAddLayerFromDefinition: function(contextDoc, $jq, opt){
+	_clickAddLayerFromDefinition: function($jq, contextDoc){
 		var _this = this;
 
 		var viewLayerFunction = this.viewLayerFunction;
@@ -994,7 +1603,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_clickEdit: function(contextDoc, $jq, opt){
+	_clickEdit: function($jq, contextDoc, opt){
 		var _this = this;
 
 		if( this.editFunction ) {
@@ -1007,7 +1616,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_clickDelete: function(contextDoc, $jq, opt){
+	_clickDelete: function($jq, contextDoc, opt){
 		var _this = this;
 
 		if( this.deleteFunction ) {
@@ -1020,7 +1629,7 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_clickLogin: function($jq, opt){
+	_clickLogin: function($jq){
 		var _this = this;
 
 		$jq.click(function(){
@@ -1034,7 +1643,7 @@ var DomStyler = $n2.Class({
 		});
 	},
 	
-	_clickMapEdit: function($jq, opt){
+	_clickMapEdit: function($jq){
 		var _this = this;
 
 		$jq.click(function(){
@@ -1048,7 +1657,7 @@ var DomStyler = $n2.Class({
 		});
 	},
 	
-	_installMaxHeight: function(contextDoc, $jq, opt){
+	_installMaxHeight: function($jq){
 		var maxHeight = $jq.attr('_maxheight');
 		
 		if( !maxHeight ) {
@@ -1104,31 +1713,30 @@ var DomStyler = $n2.Class({
 		};
 	},
 	
-	_handleHover : function(contextDoc, $jq, opt){
+	_handleHover: function($jq, contextDoc){
 
-		var dispatchService = this.showService.dispatchService;
+        var dispatchService = this.showService.dispatchService;
+        var docId = this._getDocumentIdentifier(contextDoc, $jq);
 
-		if( dispatchService ) {
-			$jq.hover(
-				function(){ // in
-					dispatchService.send(DH, {
-						type:'userFocusOn'
-						,docId:contextDoc._id
-						,doc:contextDoc
-					});
-				}
-				,function(){ // out
-					dispatchService.send(DH, {
-						type:'userFocusOff'
-						,docId:contextDoc._id
-						,doc:contextDoc
-					});
-				}
-			);
-		};
-	},
+        if( dispatchService ) {
+            $jq.hover(
+                function(){ // in
+                    dispatchService.send(DH, {
+                        type:'userFocusOn'
+                        ,docId:docId
+                    });
+                }
+                ,function(){ // out
+                    dispatchService.send(DH, {
+                        type:'userFocusOff'
+                        ,docId:docId
+                    });
+                }
+            );
+        };
+    },
 
-	_installTiledImageClick: function(doc, $elem){
+	_installTiledImageClick: function($elem, doc){
 		var _this = this;
 		
 		var docId = this._getDocumentIdentifier(doc, $elem);
@@ -1308,8 +1916,54 @@ var DomStyler = $n2.Class({
 			});
 			
 			$elem.children().each(function(){
-				_this.fixElementAndChildren($(this), {});
+				_this.fixElementAndChildren($(this), {}, contextDoc);
 			});
+		};
+	},
+	
+	/*
+	 * Keep track of a document's availability for the 'find' event. Adjust
+	 * classes on the element depending on status: 'n2show_findAvailable' or 
+	 * 'n2show_findNotAvailable'
+	 */
+	_showFindAvailable: function($elem, doc){
+		var _this = this;
+		
+		var docId = this._associateDocumentToElement(doc, $elem);
+		
+		// "find is available" is special. It should be recomputed for every
+		// received document content.
+		var contentClass = 'n2show_documentContent_' + $n2.utils.stringToHtmlId(docId);
+		$elem
+			.addClass(contentClass)
+			.attr('data-content-continuous','true');
+
+		if( doc && doc._id === docId ){
+			var findAvailable = false;
+			
+			var dispatchService = this.showService.dispatchService;
+			if( dispatchService ) {
+				var msg = {
+					type: 'findIsAvailable'
+					,docId: docId
+					,doc: doc
+					,isAvailable: false
+				};
+				dispatchService.synchronousCall(DH,msg);
+				if( msg.isAvailable ){
+					findAvailable = true;
+				};
+			};
+			
+			if( findAvailable ){
+				$elem
+					.removeClass('n2show_findNotAvailable')
+					.addClass('n2show_findAvailable');
+			} else {
+				$elem
+					.removeClass('n2show_findAvailable')
+					.addClass('n2show_findNotAvailable');
+			};
 		};
 	},
 	
@@ -1465,6 +2119,7 @@ var Show = $n2.Class({
 			dispatchService.register(DH, 'documentContentCreated', f);
 			dispatchService.register(DH, 'documentContentUpdated', f);
 			dispatchService.register(DH, 'userIntentChanged', f);
+			dispatchService.register(DH, 'findAvailabilityChanged', f);
 		};
 	},
 
@@ -1517,7 +2172,8 @@ var Show = $n2.Class({
 		} else {
 			$elem.addClass('n2ShowUserDisplay');
 		};
-		$elem.text('('+userName+')');
+
+		this._adjustUserNameNode($elem, userName, undefined);
 
 		this._requestUser(userName); // fetch document
 	},
@@ -1540,7 +2196,7 @@ var Show = $n2.Class({
 	
 	printLayerName: function($elem, layerIdentifier){
 		$elem.addClass('n2s_insertedLayerName');
-		$elem.attr('nunaliit-document',layerIdentifier);
+		$elem.attr('nunaliit-layer',layerIdentifier);
 
 		$elem.text(layerIdentifier);
 		
@@ -1567,7 +2223,36 @@ var Show = $n2.Class({
 		this.domStyler._userEvents($elem, opts.doc);
 	},
 	
+	showFindAvailable: function(opts_){
+		var opts = $n2.extend({
+			doc: null
+			,docId: null
+			,elem: null
+		},opts_);
+		
+		var doc = opts.doc;
+		var docId = opts.docId;
+
+		if( !docId && doc ){
+			docId = doc._id;
+		};
+
+		var $elem = null;
+		if( opts.elem ){
+			$elem = $(opts.elem);
+		};
+
+		if( docId && $elem && $elem.length > 0 ){
+			$elem.addClass('n2s_showedFindAvailable');
+			$elem.attr('nunaliit-document',docId);
+			
+			this.domStyler._showFindAvailable($elem, doc);
+		};
+	},
+
 	_displayUserDocument: function(userDoc){
+		var _this = this;
+
 		var id = userDoc._id;
 		
 		// Get display name
@@ -1580,25 +2265,41 @@ var Show = $n2.Class({
 		};
 
 		if( userName ) {
-			$('.n2ShowUser_'+$n2.utils.stringToHtmlId(userName)).each(function(i,elem){
-				var $elem = $(elem);
+			$('.n2ShowUser_'+$n2.utils.stringToHtmlId(userName)).each(function(){
+				var $elem = $(this);
 				
-				if( $elem.hasClass('n2ShowUserDisplay') ) {
-					if( displayName ) {
-						$elem.text(displayName);
-					};
-				} else if( $elem.hasClass('n2ShowUserDisplayAndHandle') ){
-					if( displayName && userName ) {
-						$elem.text(displayName+' ('+userName+')');
-					};
-				} else {
-					// Defaults to display name
-					if( displayName ) {
-						$elem.text(displayName);
-					};
-				};
+				_this._adjustUserNameNode($elem, userName, displayName);
 			});
 		};
+	},
+	
+	_adjustUserNameNode: function($elem, userName, displayName){
+		var showHandle = true;
+		if( $elem.hasClass('n2ShowUserDisplay') ) {
+			showHandle = false;
+		} else if( $elem.hasClass('n2ShowUserDisplayAndHandle') ){
+			showHandle = true; // redundant
+		};
+
+		$elem
+			.empty()
+			.removeClass('n2ShowInsertedUserDisplayName');
+
+		// Defaults to display name
+		if( displayName ) {
+			$('<span>')
+				.addClass('n2Show_userDisplayName')
+				.text(displayName)
+				.appendTo($elem);
+			$elem.addClass('n2ShowInsertedUserDisplayName');
+		};
+
+		if( showHandle ){
+			$('<span>')
+				.addClass('n2Show_userName')
+				.text(userName)
+				.appendTo($elem);
+		}
 	},
 	
 	_displayDocumentBrief: function($elem, doc, opt_){
@@ -1610,7 +2311,7 @@ var Show = $n2.Class({
 
 		var _this = this;
 
-		// Peform pre-processing, allowing client to
+		// Perform pre-processing, allowing client to
 		// augment document prior to display
 		doc = this._preprocessDocument(doc);
 
@@ -1746,11 +2447,18 @@ var Show = $n2.Class({
 			requestService.requestUser(userName); // fetch document
 		};
 	},
-	
+
 	_requestDocument: function(docId,cbFn){
 		var requestService = this.requestService;
 		if( requestService ){
 			requestService.requestDocument(docId,cbFn); // fetch document
+		};
+	},
+
+	_requestLayerDefinition: function(layerId){
+		var requestService = this.requestService;
+		if( requestService ){
+			requestService.requestLayerDefinition(layerId); // fetch document
 		};
 	},
 	
@@ -1759,14 +2467,30 @@ var Show = $n2.Class({
 		
 		$('.n2show_documentList_wait').each(function(){
 			var $elem = $(this);
-			var listType = $elem.attr('n2-list-type');
-			var listName = $elem.attr('n2-list-name');
+			
+			var listType = $elem.attr('nunaliit-list-type');
+			if( typeof listType === 'undefined'){
+				listType = $elem.attr('n2-list-type');
+			};
+			var listName = $elem.attr('nunaliit-list-name');
+			if( typeof listName === 'undefined'){
+				listName = $elem.attr('n2-list-name');
+			};
+			var listLive = $elem.attr('nunaliit-list-live');
+			if( listLive === 'false'){
+				listLive = undefined;
+			};
 			
 			if( listType === m.listType 
 			 && listName === m.listName ){
-				$elem
-					.removeClass('n2show_documentList_wait')
-					.empty();
+				$elem.removeClass('n2show_documentList_empty');
+
+				if( !listLive ) {
+					// If not live, do not wait for any more updates
+					$elem.removeClass('n2show_documentList_wait');
+				};
+				
+				$elem.empty();
 
 				// Are documents provided?
 				if( m.docs && m.docs.length > 0 ){
@@ -1776,16 +2500,18 @@ var Show = $n2.Class({
 						
 						var $doc = $('<div>')
 							.addClass('n2show_documentList_item')
+							.addClass('n2s_userEvents')
+							.attr('nunaliit-document',docId)
 							.appendTo($elem);
 						
 						var $a = $('<a>')
 							.attr('href','#')
 							.appendTo($doc);
-						
+	
 						_this._displayDocumentBrief($a, doc);
-
-						installClick($a, docId);
 					};
+
+					_this.fixElementAndChildren($elem, {}, null);
 					
 				// If documents are not provided, docIds are compulsory
 				} else if( m.docIds && m.docIds.length > 0 ){
@@ -1794,11 +2520,14 @@ var Show = $n2.Class({
 						
 						var $doc = $('<div>')
 							.addClass('n2show_documentList_item')
+							.addClass('n2s_userEvents')
+							.attr('nunaliit-document',docId)
 							.appendTo($elem);
 						
 						var $a = $('<a>')
-							.addClass('n2s_referenceLink')
 							.attr('href','#')
+							.addClass('n2s_briefDisplay')
+							.attr('nunaliit-document',docId)
 							.text(docId)
 							.appendTo($doc);
 					};
@@ -1811,18 +2540,6 @@ var Show = $n2.Class({
 				};
 			};
 		});
-		
-		function installClick($a, docId){
-			$a.click(function(){
-				if( _this.dispatchService ) {
-					_this.dispatchService.send(DH, {
-						type:'userSelect'
-						,docId:docId
-					});
-				};
-				return false;
-			});
-		};
 	},
 	
 	_handleDocumentContent: function(doc){
@@ -1881,6 +2598,9 @@ var Show = $n2.Class({
 						this.addPostProcessDisplayFunction(fn);
 					};
 				};
+				
+				suppressLeaveConfirmation = 
+					customService.getOption('displaySuppressLeaveConfirmation',false);
 			};
 			
 		} else if( 'documentListResults' === m.type ) {
@@ -1912,6 +2632,26 @@ var Show = $n2.Class({
 		} else if( 'userIntentChanged' === m.type ) {
 			if( m.changes ){
 				this._handleUserIntentChanged(m.changes);
+			};
+			
+		} else if( 'findAvailabilityChanged' === m.type ) {
+			// A canvas is reporting a different set of documents
+			// available for 'find'. Compile all docIds related to
+			// 'find'
+			var docIdMap = {};
+			$('.n2s_showedFindAvailable').each(function(){
+				var $elem = $(this);
+				var docId = $elem.attr('nunaliit-document');
+				if( docId ){
+					docIdMap[docId] = true;
+				};
+			});
+			
+			// Get the content of the documents, since 'findIsAvailable' synchronous
+			// call requires the document content. When receiving document content,
+			// all elements with class 'n2s_showedFindAvailable' are updated accordingly
+			for(var docId in docIdMap){
+				this._requestDocument(docId);
 			};
 		};
 	},

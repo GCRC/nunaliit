@@ -12,7 +12,7 @@ import org.json.JSONObject;
 
 public class SchemaDefinition {
 	
-	static public SchemaDefinition fronJson(JSONObject jsonDef) throws Exception {
+	static public SchemaDefinition fromJson(JSONObject jsonDef) throws Exception {
 		String groupName = jsonDef.getString("group");
 		String schemaId = jsonDef.getString("id");
 		
@@ -20,9 +20,25 @@ public class SchemaDefinition {
 
 		// label
 		{
-			String label = jsonDef.optString("label");
+			String label = jsonDef.optString("label",null);
 			if( null != label ){
 				def.setLabel(label);
+			}
+		}
+		
+		// schemaName
+		{
+			String name = jsonDef.optString("schemaName",null);
+			if( null != name ){
+				def.setSchemaName(name);
+			}
+		}
+		
+		// attributesPath
+		{
+			String name = jsonDef.optString("attributesPath",null);
+			if( null != name ){
+				def.setAttributesPath(name);
 			}
 		}
 		
@@ -65,7 +81,9 @@ public class SchemaDefinition {
 	
 	private String groupName;
 	private String schemaId;
+	private String schemaName;
 	private String label;
+	private String attributesPath;
 	private List<SchemaAttribute> attributes = new Vector<SchemaAttribute>();
 	private List<String> initialLayers = new Vector<String>();
 	private List<String> relatedSchemas = new Vector<String>();
@@ -83,6 +101,14 @@ public class SchemaDefinition {
 		this.label = label;
 	}
 	
+	public String getAttributesPath() {
+		return attributesPath;
+	}
+
+	public void setAttributesPath(String attributesPath) {
+		this.attributesPath = attributesPath;
+	}
+
 	public List<SchemaAttribute> getAttributes(){
 		return attributes;
 	}
@@ -108,11 +134,25 @@ public class SchemaDefinition {
 	}
 	
 	public String getDocumentIdentifier(){
-		return "schema."+groupName+"_"+schemaId;
+		if( "nunaliit".equals(groupName) ){
+			return "org.nunaliit.schema:" + schemaId;
+		} else {
+			return "schema."+groupName+"_"+schemaId;
+		}
 	}
 	
 	public String getSchemaName(){
-		return groupName+"_"+schemaId;
+		if( null != schemaName ){
+			return schemaName;
+		} else if( "nunaliit".equals(groupName) ){
+			return schemaId;
+		} else {
+			return groupName+"_"+schemaId;
+		}
+	}
+	
+	public void setSchemaName(String schemaName){
+		this.schemaName = schemaName;
 	}
 	
 	public String getSchemaLabel(){
@@ -122,6 +162,23 @@ public class SchemaDefinition {
 		
 		return label;
 	}
+
+	public String getSchemaStructure(){
+		if( null != attributesPath ){
+			return attributesPath;
+		}
+
+		return groupName+"_"+schemaId;
+	}
+
+	public String getSchemaClass(){
+		if( "nunaliit".equals(groupName) ){
+			return "nunaliit_" + schemaId + "_schema";
+		} else {
+			return groupName+"_"+schemaId;
+		}
+	}
+	
 	
 	public void saveToDocsDir(File parentDir) throws Exception {
 		
@@ -223,29 +280,83 @@ public class SchemaDefinition {
 		
 		// relatedSchemas.json
 		{
+			boolean eraseFile = false;
 			File file = new File(schemaDir, "relatedSchemas.json");
-			FileOutputStream fos = new FileOutputStream(file);
-			OutputStreamWriter osw = new OutputStreamWriter(fos);
-			JSONArray arr = new JSONArray();
-			for(String schemaName : relatedSchemas){
-				arr.put(schemaName);
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(file);
+				OutputStreamWriter osw = new OutputStreamWriter(fos);
+				JSONArray arr = new JSONArray();
+				for(String schemaName : relatedSchemas){
+					arr.put(schemaName);
+				}
+				osw.write( arr.toString(3) );
+				osw.flush();
+				fos.flush();
+				fos.close();
+				fos = null;
+				
+			} catch(Exception e) {
+				eraseFile = true;
+				throw new Exception("Error while creating file "+file,e);
+				
+			} finally {
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e) {
+						// Ignore
+					}
+				}
+				
+				// Do not leave file in invalid state
+				try {
+					if( eraseFile ){
+						file.delete();
+					}
+				} catch(Exception e) {
+					// ignore
+				}
 			}
-			osw.write( arr.toString(3) );
-			osw.flush();
-			fos.flush();
-			fos.close();
 		}
 		
 		// create.json
 		{
+			boolean eraseFile = false;
 			File file = new File(schemaDir, "create.json");
-			FileOutputStream fos = new FileOutputStream(file);
-			OutputStreamWriter osw = new OutputStreamWriter(fos);
-			JSONObject jsonCreate = computeCreateField();
-			osw.write( jsonCreate.toString(3) );
-			osw.flush();
-			fos.flush();
-			fos.close();
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(file);
+				OutputStreamWriter osw = new OutputStreamWriter(fos);
+				JSONObject jsonCreate = computeCreateField();
+				osw.write( jsonCreate.toString(3) );
+				osw.flush();
+				fos.flush();
+				fos.close();
+				fos = null;
+				
+			} catch(Exception e) {
+				eraseFile = true;
+				throw new Exception("Error while creating file "+file,e);
+				
+			} finally {
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e) {
+						// Ignore
+					}
+				}
+				
+				// Do not leave file in invalid state
+				try {
+					if( eraseFile ){
+						file.delete();
+					}
+				} catch(Exception e) {
+					// ignore
+				}
+			}
 		}
 		
 		// brief.txt
@@ -289,26 +400,80 @@ public class SchemaDefinition {
 		
 		// export.json
 		{
+			boolean eraseFile = false;
 			File file = new File(schemaDir, "export.json");
-			FileOutputStream fos = new FileOutputStream(file);
-			OutputStreamWriter osw = new OutputStreamWriter(fos);
-			JSONArray jsonExport = computeExportField();
-			osw.write( jsonExport.toString(3) );
-			osw.flush();
-			fos.flush();
-			fos.close();
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(file);
+				OutputStreamWriter osw = new OutputStreamWriter(fos);
+				JSONArray jsonExport = computeExportField();
+				osw.write( jsonExport.toString(3) );
+				osw.flush();
+				fos.flush();
+				fos.close();
+				fos = null;
+				
+			} catch(Exception e) {
+				eraseFile = true;
+				throw new Exception("Error while creating file "+file,e);
+				
+			} finally {
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e) {
+						// Ignore
+					}
+				}
+				
+				// Do not leave file in invalid state
+				try {
+					if( eraseFile ){
+						file.delete();
+					}
+				} catch(Exception e) {
+					// ignore
+				}
+			}
 		}
 		
 		// csvExport.json
 		{
+			boolean eraseFile = false;
 			File file = new File(schemaDir, "csvExport.json");
-			FileOutputStream fos = new FileOutputStream(file);
-			OutputStreamWriter osw = new OutputStreamWriter(fos);
-			JSONArray jsonExport = computeExportField();
-			osw.write( jsonExport.toString(3) );
-			osw.flush();
-			fos.flush();
-			fos.close();
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(file);
+				OutputStreamWriter osw = new OutputStreamWriter(fos);
+				JSONArray jsonExport = computeExportField();
+				osw.write( jsonExport.toString(3) );
+				osw.flush();
+				fos.flush();
+				fos.close();
+				fos = null;
+				
+			} catch(Exception e) {
+				eraseFile = true;
+				throw new Exception("Error while creating file "+file,e);
+				
+			} finally {
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e) {
+						// Ignore
+					}
+				}
+				
+				// Do not leave file in invalid state
+				try {
+					if( eraseFile ){
+						file.delete();
+					}
+				} catch(Exception e) {
+					// ignore
+				}
+			}
 		}
 	}
 
@@ -409,41 +574,43 @@ public class SchemaDefinition {
 	}
 	
 	public void printBrief(PrintWriter pw) throws Exception {
-		String schemaName = getSchemaName();
+		String schemaClass = getSchemaClass();
+		String schemaStructure = getSchemaStructure();
 
-		pw.print("<span class=\""+schemaName+"_brief\">");
+		pw.println("<span class=\""+schemaClass+"_brief\">");
 
 		if( null != label ){
-			pw.print("<span class=\"n2s_localize "+schemaName+"_brief_decoration\">");
-			pw.print(label);
+			pw.println("\t<span class=\"n2s_localize "+schemaClass+"_brief_decoration\">");
+			pw.println("\t"+label);
 		} else {
-			pw.print("<span class=\""+schemaName+"_brief_decoration\">");
-			pw.print(schemaName);
+			pw.println("\t<span class=\""+schemaClass+"_brief_decoration\">");
+			pw.println( getSchemaName() );
 		}
 
-		pw.print("(</span>");
+		pw.println("\t(</span>");
 		
 		boolean first = true;
 		for(SchemaAttribute attribute : attributes){
-			boolean printed = attribute.printBrief(pw,schemaName,first);
+			boolean printed = attribute.printBrief(pw,schemaStructure,schemaClass,first);
 			if( printed ){
 				first = false;
 			}
 		}
 		
-		pw.print("<span class=\""+schemaName+"_brief_decoration\">)</span>");
+		pw.println("\t<span class=\""+schemaClass+"_brief_decoration\">)</span>");
 
-		pw.print("</span>");
+		pw.println("</span>");
 	}
 	
 	public void printDisplay(PrintWriter pw) throws Exception {
-		String schemaName = getSchemaName();
+		String schemaClass = getSchemaClass();
+		String schemaStructure = getSchemaStructure();
 		
 		pw.println("<div class=\"n2_documentDisplay\"><div class=\"n2_layoutFloat\">");
-		pw.println("<div class=\""+schemaName+"\">");
+		pw.println("<div class=\""+schemaClass+"\">");
 
 		for(SchemaAttribute attribute : attributes){
-			attribute.printDisplay(pw,schemaName);
+			attribute.printDisplay(pw,schemaStructure,schemaClass);
 		}
 		
 		pw.println("</div>");
@@ -451,13 +618,14 @@ public class SchemaDefinition {
 	}
 	
 	public void printForm(PrintWriter pw) throws Exception {
-		String schemaName = getSchemaName();
+		String schemaClass = getSchemaClass();
+		String schemaStructure = getSchemaStructure();
 		
 		pw.println("<div class=\"n2_documentForm\"><div class=\"n2_layoutFloat\">");
-		pw.println("<div class=\""+schemaName+"\">");
+		pw.println("<div class=\""+schemaClass+"\">");
 
 		for(SchemaAttribute attribute : attributes){
-			attribute.printForm(pw,schemaName);
+			attribute.printForm(pw,schemaStructure,schemaClass);
 		}
 		
 		pw.println("</div>");

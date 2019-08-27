@@ -8,65 +8,66 @@
 		<format>zip</format>
 		<format>tar.gz</format>
 	</formats>
+	<!--  tarLongFileMode>gnu</tarLongFileMode -->
 	<fileSets>
 		<!-- Command line application -->
 		<fileSet>
 			<directory>target/appassembler/bin</directory>
-			<outputDirectory>/bin/</outputDirectory>
+			<outputDirectory>${file.separator}bin${file.separator}</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>target/appassembler/repo</directory>
-			<outputDirectory>/repo/</outputDirectory>
+			<outputDirectory>${file.separator}repo${file.separator}/</outputDirectory>
 		</fileSet>
 
 		<!-- Internal directories -->
 		<fileSet>
 			<directory>src/main/install</directory>
-			<outputDirectory>/install/</outputDirectory>
+			<outputDirectory>${file.separator}install${file.separator}</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>src/main/content</directory>
-			<outputDirectory>/content/</outputDirectory>
+			<outputDirectory>${file.separator}content${file.separator}</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>src/main/templates</directory>
-			<outputDirectory>/templates/</outputDirectory>
+			<outputDirectory>${file.separator}templates${file.separator}</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>src/main/internal</directory>
-			<outputDirectory>/internal/</outputDirectory>
+			<outputDirectory>${file.separator}internal${file.separator}</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>target/couchApps/couch-apps/atlas_couchapp</directory>
-			<outputDirectory>/internal/atlasDesign</outputDirectory>
+			<outputDirectory>${file.separator}internal${file.separator}atlasDesign</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>target/couchApps/couch-apps/submission_couchapp</directory>
-			<outputDirectory>/internal/submissionDesign</outputDirectory>
+			<outputDirectory>${file.separator}internal${file.separator}submissionDesign</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>target/couchMobile/WEB-INF/mobile_couchapp/app</directory>
-			<outputDirectory>/internal/mobileDesign</outputDirectory>
+			<outputDirectory>${file.separator}internal${file.separator}mobileDesign</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>target/nunaliit2-js/nunaliit2</directory>
-			<outputDirectory>/internal/nunaliit2</outputDirectory>
+			<outputDirectory>${file.separator}internal${file.separator}nunaliit2</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>target/js-external/js-external</directory>
-			<outputDirectory>/internal/js-external</outputDirectory>
+			<outputDirectory>${file.separator}internal${file.separator}js-external</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>target/couchApps/couch-apps/initializeDocs</directory>
-			<outputDirectory>/internal/initializeDocs</outputDirectory>
+			<outputDirectory>${file.separator}internal${file.separator}initializeDocs</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>target/couchApps/couch-apps/updateDocs</directory>
-			<outputDirectory>/internal/updateDocs</outputDirectory>
+			<outputDirectory>${file.separator}internal${file.separator}updateDocs</outputDirectory>
 		</fileSet>
 		<fileSet>
 			<directory>target/couchApps/couch-apps/server_couchapp</directory>
-			<outputDirectory>/internal/serverDesign</outputDirectory>
+			<outputDirectory>${file.separator}internal${file.separator}serverDesign</outputDirectory>
 		</fileSet>
 	</fileSets>
 </assembly>

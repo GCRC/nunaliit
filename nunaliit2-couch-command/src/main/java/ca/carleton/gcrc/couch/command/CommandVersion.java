@@ -1,9 +1,8 @@
 package ca.carleton.gcrc.couch.command;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.util.Properties;
+
+import ca.carleton.gcrc.utils.VersionUtils;
 
 public class CommandVersion implements Command {
 
@@ -60,38 +59,31 @@ public class CommandVersion implements Command {
 			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
 		}
 
-		InputStream is = null;
-		InputStreamReader isr = null;
-		String version = "<unknown>";
-		try {
-			ClassLoader cl = CommandVersion.class.getClassLoader();
-			is = cl.getResourceAsStream("version.properties");
-			isr = new InputStreamReader(is,"UTF-8");
-			Properties props = new Properties();
-			props.load(isr);
-			if( props.containsKey("version") ){
-				version = props.getProperty("version");
-			}
-		} catch(Exception e) {
-			throw new Exception("Error while extracting version resource",e);
-		} finally {
-			if( null != isr ){
-				try {
-					isr.close();
-				} catch(Exception e) {
-					// Ignore
-				}
-			}
-			if( null != is ){
-				try {
-					is.close();
-				} catch(Exception e) {
-					// Ignore
-				}
-			}
-		}
 		
 		PrintStream ps = gs.getOutStream();
-		ps.println("Version: "+version);
+
+		{
+			String version = VersionUtils.getVersion();
+			if( null == version ){
+				version = "<unknown>";
+			}
+			ps.println("Version: "+version);
+		}
+
+		{
+			String dateStr = VersionUtils.getDateString();
+			if( null == dateStr ){
+				dateStr = "<unknown>";
+			}
+			ps.println("Date: "+dateStr);
+		}
+
+		{
+			String buildStr = VersionUtils.getBuildString();
+			if( null == buildStr ){
+				buildStr = "<unknown>";
+			}
+			ps.println("Build: "+buildStr);
+		}
 	}
 }

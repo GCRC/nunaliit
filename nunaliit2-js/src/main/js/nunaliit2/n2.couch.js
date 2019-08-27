@@ -76,6 +76,9 @@ function fixUserName(userName) {
 /*
  * This should be set if the client is run behind a bad proxy
  */
+function isBadProxy(){
+	return badProxy;
+};
 function setBadProxy(flag){
 	if( flag ){
 		badProxy = true;
@@ -139,7 +142,7 @@ function compareSessionContexts(s1, s2){
 	return true;
 };
 
-var Session = $n2.Class({
+var Session = $n2.Class('couch.Session',{
 	
 	server: null
 	
@@ -207,9 +210,11 @@ var Session = $n2.Class({
 		
 		var data = {};
 		
-		if( badProxy ){
+		// Always assume bad proxy on getting context. Force
+		// obtaining a context that is up-to-date
+		// if( badProxy ){
 			data.r = Date.now();
-		};
+		// };
 		
 		$.ajax({
 			url: sessionUrl
@@ -245,6 +250,15 @@ var Session = $n2.Class({
 
 		var _this = this;
 		var sessionUrl = this.getUrl();
+
+		if( badProxy ){
+			sessionUrl += '?r='+Date.now();
+		};
+		
+		// Login does not happen often. Always assume bad proxy.
+		//if( badProxy ){
+			sessionUrl += '?r='+Date.now();
+		//};
 		
 		// Fix name: no spaces, all lowercase
 		if( opts.name ) {
@@ -319,12 +333,14 @@ var Session = $n2.Class({
 // Design Document
 // =============================================
 
-var designDoc = $n2.Class({
-	ddUrl: null
+var designDoc = $n2.Class('couch.designDoc',{
+	ddUrl: null,
 	
-	,ddName: null
+	ddName: null,
 	
-	,initialize: function(opts_) {
+	db: null,
+	
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			ddUrl: null
 			,ddName: null
@@ -334,9 +350,13 @@ var designDoc = $n2.Class({
 		this.ddUrl = opts.ddUrl;
 		this.ddName = opts.ddName;
 		this.db = opts.db;
-	}
+	},
 	
-	,getQueryUrl: function(opts_){
+	getDatabase: function(){
+		return this.db;
+	},
+	
+	getQueryUrl: function(opts_){
 		var opts = $.extend(true, {
 				viewName: null
 				,listName: null
@@ -349,19 +369,20 @@ var designDoc = $n2.Class({
 		} else {
 			return this.ddUrl + '_view/' + opts.viewName;
 		};
-	}
+	},
 
-	,queryView: function(options_) {
+	queryView: function(options_) {
 		var opts = $.extend(true, {
-				viewName: null
-				,listName: null
-				,viewUrl: null
-				,startkey: null
-				,endkey: null
-				,keys: null
-				,group: null
-				,include_docs: null
-				,limit: null
+				viewName: undefined
+				,listName: undefined
+				,viewUrl: undefined
+				,startkey: undefined
+				,endkey: undefined
+				,keys: undefined
+				,group: undefined
+				,group_level: undefined
+				,include_docs: undefined
+				,limit: undefined
 				,onlyRows: true
 				,rawResponse: false
 				,reduce: false
@@ -478,26 +499,40 @@ var designDoc = $n2.Class({
 // Change Notifier
 // =============================================
 
-var ChangeNotifier = $n2.Class({
+var ChangeNotifier = $n2.Class('couch.ChangeNotifier',{
 
-	options: null
+	changeUrl: null,
 	
-	,db: null
+	include_docs: null,
 	
-	,listeners: null
+	pollInterval: null,
 	
-	,lastSequence: null
+	longPoll: null,
+	
+	timeout: null,
+	
+	style: null,
+	
+	db: null,
+	
+	listeners: null,
+	
+	lastSequence: null,
 
-	,currentRequest: null
+	currentRequest: null,
 	
-	,currentWait: null
+	currentWait: null,
 	
-	,onError: function(err) { $n2.log(err); }
+	onError: function(err) { $n2.log(err); },
 
-	,initialize: function(db, opts_) {
-		this.options = $n2.extend({
-			changeUrl: null
-			,doNotReset: false
+	initialized: null,
+	
+	initializationListeners: null,
+
+	initialize: function(opts_) {
+		var opts = $n2.extend({
+			db: null
+			,changeUrl: null
 			,include_docs: false
 			,pollInterval: 5000
 			,longPoll: false
@@ -507,26 +542,41 @@ var ChangeNotifier = $n2.Class({
 			,onSuccess: function(notifier){}
 		},opts_);
 
-		this.db = db;
+		var _this = this;
+		
+		this.initialized = false;
+		this.initializationListeners = [];
 		this.listeners = [];
-		if( this.options.listeners ) {
-			for(var i=0,e=this.options.listeners.length; i<e; ++i){
-				this.listeners.push( this.options.listeners[i] );
-			};
-			delete this.options.listeners;
+
+		this.db = opts.db;
+		this.changeUrl = opts.changeUrl;
+		this.include_docs = opts.include_docs;
+		this.pollInterval = opts.pollInterval;
+		this.longPoll = opts.longPoll;
+		this.timeout = opts.timeout;
+		this.style = opts.style;
+
+		if( $n2.isArray(opts.listeners) ) {
+			opts.listeners.forEach(function(listener){
+				if( typeof listener === 'function' ){
+					_this.listeners.push( listener );
+				};
+			});
+		};
+
+		if( typeof opts.onSuccess === 'function' ){
+			this.initializationListeners.push(opts.onSuccess);
 		};
 		
-		var onSuccessFn = this.options.onSuccess;
-		delete this.options.onSuccess;
-		
-		var _this = this;
-
-		if( this.options.doNotReset ) {
+		if( opts.doNotReset ) {
 			finishInitialization();
 		} else {
 			this.resetLastSequence({
 				onSuccess: finishInitialization
-				,onError: finishInitialization
+				,onError: function(err){
+					$n2.logError('Error while obtaining database update sequence: '+err);
+					finishInitialization();
+				}
 			});
 		};
 		
@@ -534,17 +584,31 @@ var ChangeNotifier = $n2.Class({
 			_this.reschedule();
 			_this.requestChanges();
 			
-			onSuccessFn(_this);
+			_this.initialized = true;
+			_this.initializationListeners.forEach(function(listener){
+				listener(_this);
+			});
+			_this.initializationListeners = null;
 		};
-	}
+	},
 
-	,addListener: function(listener) {
+	addListener: function(listener) {
 		if( typeof(listener) === 'function' ) {
 			this.listeners.push(listener);
 			
 			this.requestChanges();
 		};
-	}
+	},
+
+	addInitializationListener: function(listener) {
+		if( typeof listener === 'function' ) {
+			if( this.initialized ){
+				listener(this);
+			} else {
+				this.initializationListeners.push(listener);
+			};
+		};
+	},
 	
 	/*
 	 * This function does not report any changes. Instead, it
@@ -552,7 +616,7 @@ var ChangeNotifier = $n2.Class({
 	 * means that the next request for changes will report only
 	 * changes that have happened since 'now'.
 	 */
-	,resetLastSequence: function(opt_) {
+	resetLastSequence: function(opt_) {
 		
 		var opt = $n2.extend({
 			onSuccess: function(){}
@@ -561,26 +625,71 @@ var ChangeNotifier = $n2.Class({
 
 		var _this = this;
 		
-		this.db.getInfo({
-	    	onSuccess: function(dbInfo) {
-				_this.lastSequence = dbInfo.update_seq;
-				opt.onSuccess();
-	    	}
-	    	,onError: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-				opt.onError('Error during a query of current update sequence: '+errStr);
-	    	}
+		this.db.getChanges({
+			limit: 1
+			,descending: true
+			,onSuccess: function(changes){
+				if( changes
+				 && changes.last_seq ){
+					// In CouchDB 1.x, changes.last_seq is a number
+					// In CouchDB 2.x, changes.last_seq is a string
+					if( typeof changes.last_seq === 'string' ){
+						_this.lastSequence = changes.last_seq;
+						//$n2.log('changes.last_seq = '+changes.last_seq);
+						//printDbUpdateSeq();
+						opt.onSuccess();
+
+					} else if( typeof changes.last_seq === 'number' ){
+						_this.lastSequence = ''+changes.last_seq;
+						//$n2.log('changes.last_seq = '+changes.last_seq);
+						//printDbUpdateSeq();
+						opt.onSuccess();
+
+					} else {
+						var err = new Error('Error with database change feed. Can not interpret last_seq: '+changes.last_seq);
+						opt.onError(err);
+					};
+				} else {
+					
+				};
+			}
+			,onError: function(err){ 
+				opt.onError('Error during a query of last update sequence: '+err);
+			}
 		});
-	}
-	
-	,getLastSequence: function(){
-		return this.lastSequence;
-	}
-	
-	,_reportChanges: function(changes) {
 		
-		if( changes.last_seq ) {
+//		function printDbUpdateSeq(){
+//			_this.db.getInfo({
+//		    	onSuccess: function(dbInfo) {
+//					// In CouchDB 1.x, update_seq is a number
+//					// In CouchDB 2.x, update_seq is a string
+//					if( typeof dbInfo.update_seq === 'string' ){
+//						$n2.log('dbInfo.update_seq = '+dbInfo.update_seq);
+//
+//					} else if( typeof dbInfo.update_seq === 'number' ){
+//						$n2.log('dbInfo.update_seq = '+dbInfo.update_seq);
+//
+//					} else {
+//						$n2.logError('Error with database information. Can not interpret update_seq: '+dbInfo.update_seq);
+//					};
+//		    	}
+//		    	,onError: function(err) {
+//					$n2.logError('Error during a query of current update sequence: '+err);
+//		    	}
+//			});
+//		};
+	},
+	
+	getLastSequence: function(){
+		return this.lastSequence;
+	},
+	
+	_reportChanges: function(changes) {
+		
+		if( typeof changes.last_seq === 'string' ) {
 			this.lastSequence = changes.last_seq;
+		} else if( typeof changes.last_seq === 'number' ) {
+			this.lastSequence = ''+changes.last_seq;
 		};
 		
 		if( changes.results && changes.results.length > 0 ) {
@@ -588,12 +697,12 @@ var ChangeNotifier = $n2.Class({
 				this.listeners[i](changes);
 			};
 		};
-	}
+	},
 	
 	/**
 		Request the server for changes.
 	 */
-	,requestChanges: function() {
+	requestChanges: function() {
 		
 		if( !this.listeners 
 		 || this.listeners.length < 1 ) {
@@ -611,20 +720,20 @@ var ChangeNotifier = $n2.Class({
 	
 		var req = {
 			feed: 'normal'
-			,style: this.options.style
+			,style: this.style
 		};
 	
-		if( typeof(this.lastSequence) === 'number' ) {
+		if( this.lastSequence ) {
 			req.since = this.lastSequence;
 		};
 		
-		if( this.options.include_docs ) {
-			req.include_docs = this.options.include_docs;
+		if( this.include_docs ) {
+			req.include_docs = this.include_docs;
 		};
 		
-		if( this.options.longPoll ) {
+		if( this.longPoll ) {
 			req.feed = 'longpoll';
-			req.timeout = this.options.timeout;
+			req.timeout = this.timeout;
 		};
 		
 		if( badProxy ){
@@ -636,7 +745,7 @@ var ChangeNotifier = $n2.Class({
 		var _this = this;
 		
 		$.ajax({
-	    	url: this.options.changeUrl
+	    	url: this.changeUrl
 	    	,type: 'GET'
 	    	,async: true
 	    	,data: req
@@ -654,15 +763,15 @@ var ChangeNotifier = $n2.Class({
 	    		_this.reschedule();
 	    	}
 		});
-	}
+	},
 	
 	/**
 		Reschedule the next request for changes
 	 */
-	,reschedule: function() {
+	reschedule: function() {
 
 		var now = $n2.utils.getCurrentTime();
-		var expected = now + this.options.pollInterval;
+		var expected = now + this.pollInterval;
 		
 		if( this.currentWait ) {
 			// Already waiting
@@ -681,7 +790,7 @@ var ChangeNotifier = $n2.Class({
 
 		// Start a new timeout	
 		this.currentWait = {
-			delayInMs: this.options.pollInterval
+			delayInMs: this.pollInterval
 			,expected: expected
 		};
 		
@@ -700,7 +809,7 @@ var ChangeNotifier = $n2.Class({
 // Database Callbacks
 //=============================================
 
-var DatabaseCallbacks = $n2.Class({
+var DatabaseCallbacks = $n2.Class('couch.DatabaseCallbacks',{
 	
 	onCreatedCallbacks: null
 	
@@ -758,7 +867,7 @@ var DatabaseCallbacks = $n2.Class({
 // Database
 // =============================================
 
-var Database = $n2.Class({
+var Database = $n2.Class('couch.Database',{
 	
 	dbUrl: null
 	
@@ -768,16 +877,22 @@ var Database = $n2.Class({
 	
 	,callbacks: null
 	
+	,changeNotifier: null
+	
+	,changeNotifierRefreshIntervalInMs: null
+	
 	,initialize: function(opts_, server_) {
 		var opts = $n2.extend({
 			dbUrl: null
 			,dbName: null
+			,changeNotifierRefreshIntervalInMs: 5000
 		},opts_);
 	
 		this.server = server_;
 		
 		this.dbUrl = opts.dbUrl;
 		this.dbName = opts.dbName;
+		this.changeNotifierRefreshIntervalInMs = opts.changeNotifierRefreshIntervalInMs;
 		
 		if( !this.dbUrl ) {
 			var pathToServer = server_.getPathToServer();
@@ -791,6 +906,10 @@ var Database = $n2.Class({
 		return this.dbUrl;
 	}
 	
+	,getServer: function(){
+		return this.server;
+	}
+	
 	,getDesignDoc: function(opts_) {
 		var ddOpts = $.extend({
 				ddUrl: null
@@ -799,7 +918,10 @@ var Database = $n2.Class({
 			,opts_
 		);
 		
-		if( !ddOpts.ddUrl ) {
+		if( typeof ddOpts.ddUrl !== 'string' ) {
+			if( typeof ddOpts.ddName !== 'string' ){
+				throw new Error('Database.getDesignDoc() must specify ddName as a string if ddUrl is not');
+			};
 			ddOpts.ddUrl = this.dbUrl + '_design/' + ddOpts.ddName + '/';
 		};
 		
@@ -808,26 +930,61 @@ var Database = $n2.Class({
 		return new designDoc(ddOpts);
 	}
 	
-	,getChangeNotifier: function(opt_) {
-		var opt = $n2.extend({
+	,getChangeNotifier: function(opts_) {
+		var opts = $n2.extend({
 			onSuccess: function(notifier){}
-		},opt_);
+		},opts_);
 		
-		var changeNotifier = new ChangeNotifier(
-			this
-			,{
-				changeUrl: this.dbUrl + '_changes'
-				,onSuccess: opt.onSuccess
-			}
-		);
+		if( !this.changeNotifier ){
+			this.changeNotifier = new ChangeNotifier({
+				db: this
+				,changeUrl: this.dbUrl + '_changes'
+				,pollInterval: this.changeNotifierRefreshIntervalInMs
+				,onSuccess: opts.onSuccess
+			});
+		} else {
+			this.changeNotifier.addInitializationListener(opts.onSuccess);
+		};
 			
-		return changeNotifier;
-	}
+		return this.changeNotifier;
+	},
 	
-	,getChanges: function(opt_) {
+	/*
+	 	What is returned looks like:
+		{
+		   "last_seq": "104-g1AAAAJjeJyd0ksKwjAQANBgBX8oFA-gJ5Am6ces7E10JmkpperKtd5Eb6I30ZvUfLpwUYSWwARmmAfDTEUIGReeIr48X2ShMKUs2QT60UqXBkBwVdd1WXiwPOrEKICcRlnY1vCHwbWOuGukhZVCJkQeYFcpNdK-kWZOyjAHuu0qHYx0baSplRjnDKXoKJ2GOpKb_jR2N9rEaoJzEUM_7eG0p9F8q9EwgwS6Tum0l9PeRpu7SZWkHKJe2sdpPxuImUKRtF5F-QUbHp8f",
+		   "pending": 0,
+		   "results": [
+		      {
+		         "seq": "1-g1AAAAF1eJzLYWBg4MhgTmEQTM4vTc5ISXIwNDLXMwBCwxygFFMiQ5L8____szKYExlzgQLsBolphqapJtg04DEmSQFIJtmDTEpkwKfOAaQunrC6BJC6eoLq8liAJEMDkAIqnU-M2gUQtfuJUXsAovY-MWofQNSC3JsFAMjHZqY",
+		         "id": "module.map.label",
+		         "changes": [
+		            {
+		               "rev": "1-6a63a7493382323b2db86a85ae4b518d"
+		            }
+		         ]
+		      },
+		      ...
+		      {
+		         "seq": "104-g1AAAAJjeJyd0ksKwjAQANBgBX8oFA-gJ5Am6ces7E10JmkpperKtd5Eb6I30ZvUfLpwUYSWwARmmAfDTEUIGReeIr48X2ShMKUs2QT60UqXBkBwVdd1WXiwPOrEKICcRlnY1vCHwbWOuGukhZVCJkQeYFcpNdK-kWZOyjAHuu0qHYx0baSplRjnDKXoKJ2GOpKb_jR2N9rEaoJzEUM_7eG0p9F8q9EwgwS6Tum0l9PeRpu7SZWkHKJe2sdpPxuImUKRtF5F-QUbHp8f",
+		         "id": "org.nunaliit.css.body",
+		         "deleted": true
+		         "changes": [
+		            {
+		               "rev": "1-c6d43bc49dbc259ecc8a9f75d82119df"
+		            }
+		         ]
+		      }
+		   ]
+		}
+		
+		In CouchDB 1.x, last_seq is a number
+		In CouchDB 2.x, last_seq is a string
+	 */
+	getChanges: function(opt_) {
 		var opt = $n2.extend({
-			since: null
-			,limit: null
+			since: undefined
+			,limit: undefined
 			,descending: false
 			,include_docs: false
 			,onSuccess: function(changes){}
@@ -869,7 +1026,7 @@ var Database = $n2.Class({
 	    	,success: opt.onSuccess
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
 				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-				opts.onError('Error obtaining database changes: '+errStr);
+				opt.onError('Error obtaining database changes: '+errStr);
 	    	}
 		});
 	}
@@ -1076,6 +1233,7 @@ var Database = $n2.Class({
 	,createDocument: function(options_) {
 		var opts = $.extend(true, {
 				data: {}
+				,deviceId: undefined // custom for submissionDb
 				,onSuccess: function(docInfo){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1090,6 +1248,12 @@ var Database = $n2.Class({
 		
 		var _s = this;
 		
+		// Device id for submission DB
+		var deviceIdStr = '';
+		if( opts.deviceId ){
+			deviceIdStr = '?deviceId='+opts.deviceId;
+		};
+		
 		var docId = opts.data._id;
 		if( docId ) {
 			// If _id was specified
@@ -1103,7 +1267,7 @@ var Database = $n2.Class({
 		
 		function onUuid(docId){
 			$.ajax({
-		    	url: _s.dbUrl + docId
+		    	url: _s.dbUrl + docId + deviceIdStr
 		    	,type: 'put'
 		    	,async: true
 		    	,data: JSON.stringify(opts.data)
@@ -1125,6 +1289,7 @@ var Database = $n2.Class({
 	,updateDocument: function(options_) {
 		var opts = $.extend(true, {
 				data: null
+				,deviceId: undefined // custom for submissionDb
 				,onSuccess: function(docInfo){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1141,10 +1306,16 @@ var Database = $n2.Class({
 			return;
 		};
 		
+		// Device id for submission DB
+		var deviceIdStr = '';
+		if( opts.deviceId ){
+			deviceIdStr = '?deviceId='+opts.deviceId;
+		};
+		
 		var _s = this;
 		
 		$.ajax({
-	    	url: _s.dbUrl + opts.data._id
+	    	url: _s.dbUrl + opts.data._id + deviceIdStr
 	    	,type: 'PUT'
 	    	,async: true
 	    	,data: JSON.stringify(opts.data)
@@ -1165,6 +1336,7 @@ var Database = $n2.Class({
 	,deleteDocument: function(options_) {
 		var opts = $.extend(true, {
 				data: null
+				,deviceId: undefined // custom for submissionDb
 				,onSuccess: function(docInfo){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
@@ -1181,10 +1353,16 @@ var Database = $n2.Class({
 			return;
 		};
 		
+		// Device id for submission DB
+		var deviceIdStr = '';
+		if( opts.deviceId ){
+			deviceIdStr = '&deviceId='+opts.deviceId;
+		};
+		
 		var _s = this;
 		
 		$.ajax({
-	    	url: _s.dbUrl + opts.data._id + '?rev=' + opts.data._rev
+	    	url: _s.dbUrl + opts.data._id + '?rev=' + opts.data._rev + deviceIdStr
 	    	,type: 'DELETE'
 	    	,async: true
 	    	,dataType: 'json'
@@ -1404,22 +1582,44 @@ var Database = $n2.Class({
 
 	,getAllDocuments: function(opts_) {
 		var opts = $.extend(true, {
-				onSuccess: function(docs){}
+				startkey: null
+				,endkey: null
+				,onSuccess: function(docs){}
 				,onError: function(errorMsg){ $n2.reportErrorForced(errorMsg); }
 			}
 			,opts_
 		);
+
+		if( JSON && JSON.stringify ) {
+			// OK
+		} else {
+			opts.onError('json.js is required to query a view');
+		};
 		
-		var viewUrl = this.dbUrl + '_all_docs?include_docs=true';
+		var data = {
+			include_docs: true
+		};
+		for(var k in opts) {
+			if( null === opts[k] ){
+				// Ignore
+
+			} else if( k === 'startkey' 
+					|| k === 'endkey' ) { 
+				data[k] = JSON.stringify( opts[k] );
+			};
+		};
+		
+		var viewUrl = this.dbUrl + '_all_docs';
 		
 		if( badProxy ){
-			viewUrl += '&r=' + Date.now();
+			data.r = Date.now();
 		};
 		
 		$.ajax({
 	    	url: viewUrl
 	    	,type: 'GET'
 	    	,async: true
+	    	,data: data
 	    	,dataType: 'json'
 	    	,success: function(queryResult) {
 	    		if( queryResult.rows ) {
@@ -1428,7 +1628,7 @@ var Database = $n2.Class({
 	    				var row = queryResult.rows[i];
 	    				if( row && row.doc ) {
 	    					docs.push(row.doc);
-	    				}
+	    				};
 	    			};
 	    			opts.onSuccess(docs);
 	    		} else {
@@ -1524,7 +1724,7 @@ var Database = $n2.Class({
 // User DB
 //=============================================
 
-var UserDb = $n2.Class(Database,{
+var UserDb = $n2.Class('couch.UserDb',Database,{
 	
 	initialize: function(server_,dbName_){
 		if( !dbName_ ){
@@ -1545,12 +1745,6 @@ var UserDb = $n2.Class(Database,{
 
 		var userDbUrl = this.getUrl();
 
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
 		// Check that JSON is installed
 		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
 			opts.onError('json.js is required to create database documents');
@@ -1564,7 +1758,7 @@ var UserDb = $n2.Class(Database,{
 	    function onUuid(uuid) {
 			var id = 'org.couchdb.user:'+fixUserName(opts.name);
 			var salt = uuid;
-			var password_sha = hex_sha1(opts.password + salt);
+			var password_sha = $n2.crypto.hex_sha1(opts.password + salt);
 		
 			// Create user document
 			var doc = {};
@@ -1651,12 +1845,6 @@ var UserDb = $n2.Class(Database,{
 
 		var userDbUrl = this.getUrl();
 
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
 		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
 			opts.onError('json.js is required to set user password');
 			return;
@@ -1706,12 +1894,6 @@ var UserDb = $n2.Class(Database,{
 			,options_
 		);
 
-		// Check that sha1 is installed
-		if( typeof(hex_sha1) !== 'function' ) {
-			opts.onError('SHA-1 must be installed');
-			return;
-		};
-
 		if( !JSON || typeof(JSON.stringify) !== 'function' ) {
 			opts.onError('json.js is required to set user password');
 			return;
@@ -1733,7 +1915,7 @@ var UserDb = $n2.Class(Database,{
 	    
 	    function onUuid(uuid) {
 			var salt = uuid;
-			var password_sha = hex_sha1(opts.password + salt);
+			var password_sha = $n2.crypto.hex_sha1(opts.password + salt);
 			
 			// Remove unwanted fields
 			if( opts.userDoc.password ) delete opts.userDoc.password;
@@ -2043,7 +2225,7 @@ var UserDb = $n2.Class(Database,{
 // Server
 // =============================================
 
-var Server = $n2.Class({
+var Server = $n2.Class('couch.Server',{
 	
 	options: null
 	
@@ -2520,7 +2702,9 @@ function addAttachmentToDocument(opts_){
 
 $n2.couch = $.extend({},{
 	
-	setBadProxy: setBadProxy
+	isBadProxy: isBadProxy
+
+	,setBadProxy: setBadProxy
 	
 	,getServer: function(opt_) {
 		return new Server(opt_);

@@ -39,6 +39,121 @@ var
 	;
 
 //*******************************************************
+var modelTrackersByModelId = {};
+
+//*******************************************************
+/**
+ * An instance of this class is used to keep track of the state of a model
+ * and translate the state into a list of documents acceptable for the
+ * show service document list.
+ */
+var ModelTracker = $n2.Class({
+	sourceModelId: null,
+
+	dispatchService: null,
+	
+	docsById: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			sourceModelId: null
+			,dispatchService: null
+		},opts_);
+		
+		this.sourceModelId = opts.sourceModelId;
+		this.dispatchService = opts.dispatchService;
+		
+		this.docsById = {};
+
+		var _this = this;
+		
+		// Register to events
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH, 'modelStateUpdated', f);
+		};
+		
+		this.refresh();
+	},
+	
+	refresh: function(){
+		if( this.sourceModelId ){
+			// Get current state
+			var state = $n2.model.getModelState({
+				dispatchService: this.dispatchService
+				,modelId: this.sourceModelId
+			});
+			if( state ){
+				this._sourceModelUpdated(state);
+			};
+		};
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'modelStateUpdated' === m.type ){
+			// Does it come from our source?
+			if( this.sourceModelId === m.modelId ){
+				this._sourceModelUpdated(m.state);
+			};
+		};
+	},
+	
+	_sourceModelUpdated: function(sourceState){
+		// Loop through all added documents
+		if( sourceState.added ){
+			for(var i=0,e=sourceState.added.length; i<e; ++i){
+				var doc = sourceState.added[i];
+				var docId = doc._id;
+				
+				this.docsById[docId] = doc;
+			};
+		};
+		
+		// Loop through all updated documents
+		if( sourceState.updated ){
+			for(var i=0,e=sourceState.updated.length; i<e; ++i){
+				var doc = sourceState.updated[i];
+				var docId = doc._id;
+				
+				this.docsById[docId] = doc;
+			};
+		};
+		
+		// Loop through all removed documents
+		if( sourceState.removed ){
+			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+				var doc = sourceState.removed[i];
+				var docId = doc._id;
+				
+				if( this.docsById[docId] ){
+					delete this.docsById[docId];
+				};
+			};
+		};
+
+		// Prepare an event to report document list result
+		var m = {
+			type: 'documentListResults'
+			,listType: 'model'
+			,listName: this.sourceModelId
+			,docIds: []
+			,docs: []
+		};
+		
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			m.docIds.push(docId);
+			m.docs.push(doc);
+		};
+		
+		// Send event
+		this.dispatchService.send(DH,m);
+	}
+});
+
+//*******************************************************
 var DocumentListService = $n2.Class({
 	
 	atlasDesign: null,
@@ -70,6 +185,8 @@ var DocumentListService = $n2.Class({
 				this._handleLayerQuery(m);
 			} else if( 'schema' === m.listType ){
 				this._handleSchemaQuery(m);
+			} else if( 'model' === m.listType ){
+				this._handleModelQuery(m);
 			};
 		};
 	},
@@ -151,6 +268,23 @@ var DocumentListService = $n2.Class({
 					$n2.log('Unable to retrieve document list ('+m.listType+'/'+m.listName+')',err);
 				}
 			});
+		};
+	},
+	
+	_handleModelQuery: function(m){
+		var _this = this;
+		
+		var modelId = m.listName;
+		
+		var modelTracker = modelTrackersByModelId[modelId];
+		if( modelTracker ){
+			modelTracker.refresh();
+		} else {
+			modelTracker = new ModelTracker({
+				sourceModelId: modelId
+				,dispatchService: this.dispatchService
+			});
+			modelTrackersByModelId[modelId] = modelTracker;
 		};
 	}
 });

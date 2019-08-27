@@ -2,11 +2,12 @@ package ca.carleton.gcrc.geom;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
-public class MultiPoint extends GeometryAbstract implements Geometry {
+public class MultiPoint extends GeometryAbstract implements Geometry,GeometryAssembly {
 
 	private List<Point> points;
 	
@@ -16,6 +17,17 @@ public class MultiPoint extends GeometryAbstract implements Geometry {
 	
 	public MultiPoint(List<Point> points){
 		this.points = points;
+	}
+
+	@Override
+	public int size() {
+		return points.size();
+	}
+
+	@Override
+	public List<Geometry> getGeometries() {
+		ArrayList<Geometry> geometries = new ArrayList<Geometry>(points);
+		return geometries;
 	}
 	
 	public List<Point> getPoints(){

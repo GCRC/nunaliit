@@ -127,7 +127,9 @@ var Editor = $n2.Class({
 	onError: null,
 	
 	onCancel: null,
-	
+
+	moduleEditInfo: null,
+
 	diagId: null,
 	
 	attachmentUploadHandler: null,
@@ -142,9 +144,11 @@ var Editor = $n2.Class({
 				,obj: null
 				,schema: null
 				,prompt: null
+				,elem: null // location where editor should be opened
 				,onSuccess: function(docId){}
 				,onError: $n2.reportErrorForced
 				,onCancel: function(){}
+				,moduleEditInfo: undefined
 			}
 			,opts_
 		);
@@ -158,6 +162,7 @@ var Editor = $n2.Class({
 		this.onSuccess = opts.onSuccess;
 		this.onError = opts.onError;
 		this.onCancel = opts.onCancel;
+		this.moduleEditInfo = opts.moduleEditInfo;
 
 		this.obj = {};
 		for(var key in opts.obj){
@@ -174,8 +179,16 @@ var Editor = $n2.Class({
 		this.diagId = diagId;
 		var $dialog = $('<div>')
 			.attr('id',diagId)
-			.addClass('n2RelatedDoc_dialog')
-			.appendTo( $('body') );
+			.addClass('n2RelatedDoc_dialog');
+		
+		if( opts.elem ){
+			var $elem = $(opts.elem);
+			$dialog
+				.addClass('n2RelatedDoc_located')
+				.appendTo($elem);
+		} else {
+			$dialog.appendTo( $('body') );
+		};
 		
 		var obj = this.obj;
 		var schema = this.schema;
@@ -216,6 +229,7 @@ var Editor = $n2.Class({
 			,uploadService: this.uploadService
 			,disableAddFile: true
 			,disableRemoveFile: true
+			,moduleEditInfo: this.moduleEditInfo
 		});
 		
 		// OK
@@ -238,17 +252,19 @@ var Editor = $n2.Class({
 				return false;
 			});
 		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Fill Out Related Document')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $('#'+diagId);
-				diag.remove();
-			}
+		if( !opts.elem ){
+			var dialogOptions = {
+				autoOpen: true
+				,title: _loc('Fill Out Related Document')
+				,modal: !window.cordova
+				,width: window.cordova ? '100%' : 740
+				,close: function(event, ui){
+					var diag = $('#'+diagId);
+					diag.remove();
+				}
+			};
+			$dialog.dialog(dialogOptions);
 		};
-		$dialog.dialog(dialogOptions);
 	},
 
 	_clickOK: function(){
@@ -256,21 +272,38 @@ var Editor = $n2.Class({
 		var _this = this;
 		var obj = this.obj;
 
-		// Check that a file was provided
-		this.attachmentUploadHandler.performPreSavingActions({
-			doc: obj
-			,documentSource: this.documentSource
-			,onSuccess: function(){
+		if (window.cordova) {
+			// Check that a file was provided
+			if (_this.attachmentUploadHandler.cordovaAttachment) {
 				_this._saveObj();
+			} else {
+				alert(_loc('A file must be selected or recorded'));
+				return;
 			}
-			,onError: function(err){
-				alert(err);
-			}
-		});
+		} else {
+			// Check that a file was provided
+			this.attachmentUploadHandler.performPreSavingActions({
+				doc: obj
+				,documentSource: this.documentSource
+				,onSuccess: function(){
+					_this._saveObj();
+				}
+				,onError: function(err){
+					alert(err);
+				}
+			});
+		}
 	},
 
 	_clickCancel: function(){
-		$('#'+this.diagId).dialog('close');
+		var $diag = $('#'+this.diagId);
+		
+		if( $diag.hasClass('n2RelatedDoc_located') ){
+			$diag.remove();
+		} else {
+			$diag.dialog('close');
+		};
+
 		this.onCancel();
 	},
 	
@@ -280,10 +313,19 @@ var Editor = $n2.Class({
 
 		$n2.couchDocument.adjustDocument(obj);
 
+		if (window.cordova) {
+			obj.nunaliit_attachments = null;
+			obj.nunaliit_mobile_attachments = _this.attachmentUploadHandler.cordovaAttachment;
+		}
+
 		this.documentSource.createDocument({
 			doc: obj
 			,onSuccess: function(updatedDoc) {
-				_this._uploadFile(updatedDoc);
+				if (window.cordova) {
+					_this._success(updatedDoc._id);
+				} else {
+					_this._uploadFile(updatedDoc);
+				}
 			}
 			,onError: function(err){
 				_this._error( _loc('Unable to reach database to submit document: {err}',{err:err}) );
@@ -309,7 +351,13 @@ var Editor = $n2.Class({
 	
 	_success: function(docId){
 		// Close upload dialog
-		$('#'+this.diagId).dialog('close');
+		var $diag = $('#'+this.diagId);
+		
+		if( $diag.hasClass('n2RelatedDoc_located') ){
+			$diag.remove();
+		} else {
+			$diag.dialog('close');
+		};
 		
 		// Call back client
 		this.onSuccess(docId);
@@ -354,7 +402,9 @@ var CreateRelatedDocProcess = $n2.Class({
 	authService: null,
 
 	dialogService: null,
-	
+
+	moduleEditInfo: null,
+
 	initialize: function(opts_) {
 		var opts = $n2.extend(
 			{
@@ -377,7 +427,11 @@ var CreateRelatedDocProcess = $n2.Class({
 		this.dialogService = opts.dialogService;
 		this.dispatchService = opts.dispatchService;
 	},
-	
+
+	configureOptions: function(editInfo){
+		this.moduleEditInfo = editInfo;
+	},
+
 	getCreateWidget: function(opts_){
 		var opts = $n2.extend({
 			elem: null
@@ -414,6 +468,7 @@ var CreateRelatedDocProcess = $n2.Class({
 	
 		var opt = $n2.extend({
 			schema: null
+			,elem: null
 			,relatedDoc: null
 			,originDocId: null
 			,prompt: null
@@ -429,13 +484,17 @@ var CreateRelatedDocProcess = $n2.Class({
 			return;
 		};
 		
-		// Check that upload service is available
-		this.uploadService.checkWelcome({
-			onSuccess: uploadServiceAvailable
-			,onError: function(err){
-				alert( _loc('Upload service can not be reached. Unable to submit a related document.') );
-			}
-		});
+		if (window.cordova) {
+			uploadServiceAvailable();
+		} else {
+			// Check that upload service is available
+			this.uploadService.checkWelcome({
+				onSuccess: uploadServiceAvailable
+				,onError: function(err){
+					alert( _loc('Upload service can not be reached. Unable to submit a related document.') );
+				}
+			});
+		}
 	
 		function uploadServiceAvailable(){
 			var obj = opt.schema.createObject();
@@ -485,9 +544,11 @@ var CreateRelatedDocProcess = $n2.Class({
 				,obj: obj
 				,schema: opt.schema
 				,prompt: prompt
+				,elem: opt.elem
 				,onSuccess: opt.onSuccess
 				,onError: opt.onError
 				,onCancel: opt.onCancel
+				,moduleEditInfo: _this.moduleEditInfo
 			});
 		};
 	},
@@ -563,6 +624,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		
 		var opt = $n2.extend({
 			doc: null
+			,elem: null
 			,schema: null
 			,originDocId: null
 			,onSuccess: function(docId){}
@@ -588,6 +650,7 @@ var CreateRelatedDocProcess = $n2.Class({
 		
 		this.createDocumentFromSchema({
 			schema: opt.schema
+			,elem: opt.elem
 			,relatedDoc: opt.doc
 			,originDocId: originDocId
 			,onSuccess: opt.onSuccess

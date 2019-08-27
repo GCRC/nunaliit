@@ -642,8 +642,10 @@ var RadialCanvas = $n2.Class({
  	_adjustElementStyles: function(selectedElements){
  		var _this = this;
  		selectedElements.each(function(n,i){
+ 			n.n2_elem = this;
  			var symbolizer = _this.styleRules.getSymbolizer(n);
  			symbolizer.adjustSvgElement(this,n);
+ 			delete n.n2_elem;
  		});
  	},
  	

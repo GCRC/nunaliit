@@ -35,8 +35,68 @@ POSSIBILITY OF SUCH DAMAGE.
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
-var DH = 'n2.couchRequests';
+var DH = 'n2.couchRequests',
+	MAX_REQUEST_SIZE = 25;
 
+//======================================================
+function DocumentRequest(cbFn, multipleDocs){
+	this.pending = {};
+	this.docsbyId = {};
+	this.cbFn = cbFn;
+	this.multipleDocs = multipleDocs;
+};
+DocumentRequest.prototype.waitForDocId = function(docId){
+	this.pending[docId] = true;
+};
+DocumentRequest.prototype.continueDocId = function(docId){
+	delete this.pending[docId];
+};
+DocumentRequest.prototype.isPending = function(){
+	for(var docId in this.pending){
+		return true;
+	};
+	return false;
+};
+DocumentRequest.prototype.receiveDocument = function(doc){
+	var docId = doc._id;
+	if( this.docsbyId[docId] ){
+		this.docsbyId[docId] = doc;
+	};
+	if( this.pending[docId] ){
+		delete this.pending[docId];
+		this.docsbyId[docId] = doc;
+	};
+};
+DocumentRequest.prototype.callListener = function(){
+	if( typeof this.cbFn === 'function' ){
+		if( this.multipleDocs ){
+			var docs = [];
+			for(var docId in this.docsbyId){
+				var doc = this.docsbyId[docId];
+				docs.push(doc);
+			};
+			this.cbFn(docs);
+		} else {
+			for(var docId in this.docsbyId){
+				var doc = this.docsbyId[docId];
+				this.cbFn(doc);
+			};
+		};
+		
+		// Do not call again
+		this.cbFn = null;
+	};
+};
+
+//======================================================
+var DOCUMENT_REQUEST_NO_CALLBACK = new DocumentRequest();
+DOCUMENT_REQUEST_NO_CALLBACK.waitForDocId = function(){};
+DOCUMENT_REQUEST_NO_CALLBACK.continueDocId = function(){};
+DOCUMENT_REQUEST_NO_CALLBACK.isPending = function(){ return false; };
+DOCUMENT_REQUEST_NO_CALLBACK.receiveDocument = function(){};
+DOCUMENT_REQUEST_NO_CALLBACK.callListener = function(){};
+
+//======================================================
 $n2.couchRequests = $n2.Class({
 	options: null
 	
@@ -71,8 +131,11 @@ $n2.couchRequests = $n2.Class({
 				_this._handleMessage(m);
 			};
 			this.options.dispatchService.register(DH, 'requestDocument', f);
+			this.options.dispatchService.register(DH, 'requestDocuments', f);
 			this.options.dispatchService.register(DH, 'requestUserDocument', f);
 			this.options.dispatchService.register(DH, 'requestUserDocumentComplete', f);
+			this.options.dispatchService.register(DH, 'requestLayerDefinition', f);
+			this.options.dispatchService.register(DH, 'requestLayerDefinitions', f);
 		};
 	}
 
@@ -107,7 +170,7 @@ $n2.couchRequests = $n2.Class({
 		
 		this._schedule();
 	}
-	
+
 	,requestDocument: function(docId, cbFn){
 		// Remember request
 		if( !this.currentRequests.docs ) {
@@ -118,11 +181,69 @@ $n2.couchRequests = $n2.Class({
 			this.currentRequests.docs[docId] = [];
 		};
 		
-		if( cbFn ) {
-			this.currentRequests.docs[docId].push(cbFn);
+		var request = undefined;
+		if( cbFn ){
+			request = new DocumentRequest(cbFn);
+		} else {
+			request = DOCUMENT_REQUEST_NO_CALLBACK;
 		};
+
+		request.waitForDocId(docId);
+
+		this.currentRequests.docs[docId].push(request);
 		
 		this._schedule();
+	}
+
+	,requestDocuments: function(docIds, cbFn){
+		var _this = this;
+
+		// Remember request
+		if( !this.currentRequests.docs ) {
+			this.currentRequests.docs = {};
+		};
+		
+		var request = undefined;
+		if( cbFn ){
+			request = new DocumentRequest(cbFn, true);
+		} else {
+			request = DOCUMENT_REQUEST_NO_CALLBACK;
+		};
+		
+		docIds.forEach(function(docId){
+			request.waitForDocId(docId);
+
+			if( !_this.currentRequests.docs[docId] ) {
+				_this.currentRequests.docs[docId] = [];
+			};
+			
+			_this.currentRequests.docs[docId].push(request);
+		});
+		
+		this._schedule();
+	}
+	
+	,requestLayerDefinition: function(layerId){
+		// Remember request
+		if( !this.currentRequests.layerIds ) {
+			this.currentRequests.layerIds = {};
+		};
+		
+		this.currentRequests.layerIds[layerId] = true;
+		
+		this._schedule();
+	}
+	
+	,requestLayerDefinitions: function(layerIds){
+		var _this = this;
+
+		if( $n2.isArray(layerIds) ){
+			layerIds.forEach(function(layerId){
+				if( typeof layerId === 'string' ){
+					_this.requestLayerDefinition(layerId);
+				};
+			});
+		};
 	}
 
 	,_schedule: function() {
@@ -238,10 +359,26 @@ $n2.couchRequests = $n2.Class({
 
 			// Request the required documents from db
 			if( docIds.length ) {
+				var effectiveDocIds = docIds;
+				if( effectiveDocIds.length > MAX_REQUEST_SIZE ){
+					var extraDocIds = effectiveDocIds.splice(MAX_REQUEST_SIZE);
+					
+					var extraRequests = this.currentRequests.docs;
+					if( !extraRequests ){
+						extraRequests = {};
+						this.currentRequests.docs = extraRequests;
+					};
+					extraDocIds.forEach(function(docId){
+						extraRequests[docId] = requests.docs[docId];
+					});
+					
+					this._schedule();
+				};
+				
 				this.options.documentSource.getDocuments({
-					docIds: docIds
+					docIds: effectiveDocIds
 					,onSuccess: function(docs) {
-						_this._callDocumentListeners(docs, requests, true);
+						_this._callDocumentListeners(docs, requests, true, effectiveDocIds);
 					}
 				});
 			};
@@ -250,6 +387,26 @@ $n2.couchRequests = $n2.Class({
 		// Report cached documents, if any
 		if( null !== cachedDocs ) {
 			this._callDocumentListeners(cachedDocs, requests, false);
+		};
+		
+		// Layer definitions
+		if( requests.layerIds 
+		 && this.options.documentSource ) {
+
+			var layerIds = [];
+			for(var layerId in requests.layerIds){
+				layerIds[layerIds.length] = layerId;
+			};
+			
+			if( layerIds.length > 0 ){
+				this.options.documentSource.getLayerDefinitions({
+					layerIds: layerIds
+					,fullDocuments: true
+					,onSuccess: function(docs) {
+						_this._callDocumentListeners(docs, requests, true);
+					}
+				});
+			};
 		};
 	}
 	
@@ -281,7 +438,7 @@ $n2.couchRequests = $n2.Class({
 		});
 	}
 	
-	,_callDocumentListeners: function(docs, requests, sendVersionEvent){
+	,_callDocumentListeners: function(docs, requests, sendVersionEvent, requestedDocIds){
 		//$n2.log('Requested docs: ',docs);		
 		for(var i=0,e=docs.length; i<e; ++i){
 			var doc = docs[i];
@@ -311,13 +468,37 @@ $n2.couchRequests = $n2.Class({
 				//}
 			};
 			
-			// Call listeners specific to this document
+			// Associate document with a request
 			var docId = doc._id;
 			if( requests.docs && requests.docs[docId] ) {
-				for(var j=0,f=requests.docs[docId].length; j<f; ++j){
-					var listener = requests.docs[docId][j];
-					listener(doc);
+				var documentRequests = requests.docs[docId];
+				documentRequests.forEach(function(documentRequest){
+					documentRequest.receiveDocument(doc);
+				});
+			};
+		};
+		
+		// Stop waiting for documents if they do not exist
+		if( requestedDocIds ) {
+			requestedDocIds.forEach(function(requestedId){
+				if( requests.docs && requests.docs[requestedId] ){
+					var documentRequests = requests.docs[requestedId];
+					documentRequests.forEach(function(documentRequest){
+						documentRequest.continueDocId(requestedId);
+					});
 				};
+			});
+		};
+
+		// Call listeners specific to requests
+		if( requests.docs ){
+			for(var docId in requests.docs){
+				var documentRequests = requests.docs[docId];
+				documentRequests.forEach(function(documentRequest){
+					if( !documentRequest.isPending() ){
+						documentRequest.callListener();
+					};
+				});
 			};
 		};
 	}
@@ -340,15 +521,27 @@ $n2.couchRequests = $n2.Class({
 	,_handleMessage: function(m){
 		if( 'requestDocument' === m.type ) {
 			var docId = m.docId;
-			this.requestDocument(docId);
+			this.requestDocument(docId, m.callback);
 			
+		} else if( 'requestDocuments' === m.type ) {
+			var docIds = m.docIds;
+			this.requestDocuments(docIds, m.callback);
+
 		} else if( 'requestUserDocument' === m.type ) {
 			var userId = m.userId;
 			this.requestUser(userId);
-			
+
 		} else if( 'requestUserDocumentComplete' === m.type ) {
 			var userId = m.userId;
 			this.requestCompleteUserDocument(userId);
+
+		} else if( 'requestLayerDefinition' === m.type ) {
+			var layerId = m.layerId;
+			this.requestLayerDefinition(layerId);
+
+		} else if( 'requestLayerDefinitions' === m.type ) {
+			var layerIds = m.layerIds;
+			this.requestLayerDefinitions(layerIds);
 		};
 	}
 	

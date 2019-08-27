@@ -1,70 +1,294 @@
-/* Login form */
+/* Login dialog window */
 .n2Auth_login .n2Auth_login_label {
 	float: left;
 	width: 100px;
 }
 
 .n2Auth_login .n2Auth_login_input {
-	float: left;
+	width: 100%;
+	min-width: 250px;
+	padding-top: 10px;
 }
 
-.n2Auth_login_end {
-	clear: both;
+.n2Auth_login .n2Auth_login_input input {
+	width: 100%;
+	padding: 8px 0px;
+	border: none;
+	border-bottom: 1px solid #aaaaaa;
+	box-shadow: none;
+	outline: none;
+	font-size: 1.4em;
+}
+
+.n2Auth_login .n2Auth_login_input input:focus {
+	border-bottom: 1px solid #0379CF;
 }
 
 .n2Auth_login_button_line,
 .n2Auth_login_create_line,
 .n2Auth_login_recover_line {
-	padding-left: 100px;
+	padding: 5px 0px;
+	text-align: center;
+	display: block;
+	clear: both;
 }
 
-.n2Auth_login_button_line button {
-	float:left;
+.n2Auth_button_login {
+	border-radius: 2px;
+	border: none;
+	padding: 5px 16px;
+	height: 32px;
+	color: white;
+	font-weight: bold;
+	background-color: #0185e6;
+	box-shadow: 0px 1px 3px #999999;
+	transition: all 0.3s ease;
 }
 
-/* Create User form */
+.n2Auth_button_login:focus {
+	background-color: #0379CF;
+	box-shadow: 0px 3px 5px #999999;
+	transition: all 0.3s ease;
+}
+
+/* User login dialog - input field label styling */
+.n2Auth_login_user_line .n2Auth_input_field + .n2Auth_login_label,
+.n2Auth_login_pw_line .n2Auth_input_field + .n2Auth_login_label,
+.n2_input_change_detector .n2Auth_login_user_line .n2Auth_input_field + .n2Auth_login_label,
+.n2_input_change_detector .n2Auth_login_pw_line .n2Auth_input_field + .n2Auth_login_label {
+	position: absolute;
+	padding-left: 2px;
+	font-size: 1.4em;
+	width: auto;
+	transition: all 0.3s ease;
+	color: #aaaaaa;
+	pointer-events: none;
+}
+
+.n2_input_change_detector .n2Auth_login_user_line .n2Auth_input_field + .n2Auth_login_label {
+	top: 29px;
+}
+
+.n2_input_change_detector .n2Auth_login_pw_line .n2Auth_input_field + .n2Auth_login_label {
+	top: 85px;
+}
+
+.n2Auth_login_user_line .n2Auth_input_field + .n2Auth_login_label,
+.n2_input_change_detector .n2Auth_login_user_line .n2Auth_input_field:focus + .n2Auth_login_label,
+.n2_input_change_detector .n2Auth_login_user_line .n2Auth_input_field.n2_input_detected + .n2Auth_login_label {
+	top: 0px;
+	font-size: 0.9em;
+	transition: all 0.3s ease;    
+	color: #0379CF;
+}
+
+.n2Auth_login_pw_line .n2Auth_input_field + .n2Auth_login_label,
+.n2_input_change_detector .n2Auth_login_pw_line .n2Auth_input_field:focus + .n2Auth_login_label,
+.n2_input_change_detector .n2Auth_login_pw_line .n2Auth_input_field.n2_input_detected + .n2Auth_login_label {
+	top: 58px;
+	font-size: 0.9em;
+	transition: all 0.3s ease;
+	color: #0379CF;
+}
+
+/* Create user dialog window */
 .n2Auth_create .n2Auth_create_label {
 	float: left;
 	width: 120px;
 }
 
 .n2Auth_create .n2Auth_create_input {
-	float: left;
+	width: 100%;
+	min-width: 250px;
+	padding-top: 10px;
 }
 
-.n2Auth_create_end {
-	clear: both;
+.n2Auth_create .n2Auth_create_input input {
+	width: 100%;
+	padding: 8px 0px;
+	border: none;
+	border-bottom: 1px solid #aaaaaa;
+	box-shadow: none;
+	outline: none;
+	font-size: 1.4em;
+}
+
+.n2Auth_create .n2Auth_create_input input:focus {
+	border-bottom: 1px solid #0379CF;
 }
 
 .n2Auth_create_button_line {
-	padding-left: 55px;
+	padding: 5px 0px;
+	text-align: center;
+	display: block;
+	clear: both;
 }
 
-.n2Auth_create_button_line button {
-	float:left;
+.n2Auth_button_create {
+	border-radius: 2px;
+	border: none;
+	padding: 5px 16px;
+	height: 32px;
+	color: white;
+	font-weight: bold;
+	background-color: #0185e6;
+	box-shadow: 0px 1px 3px #999999;
+	transition: all 0.3s ease;
 }
 
+.n2Auth_button_create:focus {
+	background-color: #0379CF;
+	box-shadow: 0px 3px 5px #999999;
+	transition: all 0.3s ease;
+}
 
-/* Recover password form */
+/* Create user dialog - input field label styling */
+.n2Auth_create_email_line .n2Auth_input_field + .n2Auth_create_label,
+.n2Auth_create_user_line .n2Auth_input_field + .n2Auth_create_label,
+.n2Auth_create_display_line .n2Auth_input_field + .n2Auth_create_label,
+.n2Auth_create_pw1_line .n2Auth_input_field + .n2Auth_create_label,
+.n2Auth_create_pw2_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_email_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_user_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_display_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_pw1_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_pw2_line .n2Auth_input_field + .n2Auth_create_label {
+	position: absolute;
+	padding-left: 2px;
+	font-size: 1.4em;
+	width: auto;
+	transition: all 0.3s ease;
+	color: #aaaaaa;
+	pointer-events: none;
+}
+
+.n2_input_change_detector .n2Auth_create_email_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_user_line .n2Auth_input_field + .n2Auth_create_label {
+	top: 29px;
+}
+
+.n2_input_change_detector .n2Auth_create_display_line .n2Auth_input_field + .n2Auth_create_label {
+	top: 82px;
+}
+
+.n2_input_change_detector .n2Auth_create_pw1_line .n2Auth_input_field + .n2Auth_create_label {
+	top: 136px;
+}
+
+.n2_input_change_detector .n2Auth_create_pw2_line .n2Auth_input_field + .n2Auth_create_label {
+	top: 190px;
+}
+
+.n2Auth_create_email_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_email_line .n2Auth_input_field:focus + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_email_line .n2Auth_input_field.n2_input_detected + .n2Auth_create_label,
+.n2Auth_create_user_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_user_line .n2Auth_input_field:focus + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_user_line .n2Auth_input_field.n2_input_detected + .n2Auth_create_label {
+	top: 0px;
+	font-size: 0.9em;
+	transition: all 0.3s ease;
+	color: #0379CF;
+}
+
+.n2Auth_create_display_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_display_line .n2Auth_input_field:focus + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_display_line .n2Auth_input_field.n2_input_detected + .n2Auth_create_label {
+	top: 59px;
+	font-size: 0.9em;
+	transition: all 0.3s ease;
+	color: #0379CF;
+}
+
+.n2Auth_create_pw1_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_pw1_line .n2Auth_input_field:focus + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_pw1_line .n2Auth_input_field.n2_input_detected + .n2Auth_create_label {
+	top: 113px;
+	font-size: 0.9em;
+	transition: all 0.3s ease;
+	color: #0379CF;
+}
+
+.n2Auth_create_pw2_line .n2Auth_input_field + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_pw2_line .n2Auth_input_field:focus + .n2Auth_create_label,
+.n2_input_change_detector .n2Auth_create_pw2_line .n2Auth_input_field.n2_input_detected + .n2Auth_create_label {
+	top: 170px;
+	font-size: 0.9em;
+	transition: all 0.3s ease;
+	color: #0379CF;
+}
+
+/* Recover password dialog window */
 .n2Auth_recoverPassword .n2Auth_recoverPassword_label {
 	float: left;
 	width: 120px;
 }
 
 .n2Auth_recoverPassword .n2Auth_recoverPassword_input {
-	float: left;
+	width: 100%;
+	min-width: 250px;
+	padding-top: 10px;
 }
 
-.n2Auth_recoverPassword_end {
-	clear: both;
+.n2Auth_recoverPassword .n2Auth_recoverPassword_input input {
+	width: 100%;
+	padding: 8px 0px;
+	border: none;
+	border-bottom: 1px solid #aaaaaa;
+	box-shadow: none;
+	outline: none;
+	font-size: 1.4em;
+}
+
+.n2Auth_recoverPassword .n2Auth_recoverPassword_input input:focus {
+	border-bottom: 1px solid #0379CF;
 }
 
 .n2Auth_recoverPassword_button_line {
-	padding-left: 55px;
+	padding: 5px 0px;
+	text-align: center;
+	display: block;
+	clear: both;
 }
 
-.n2Auth_recoverPassword_button_line button {
-	float:left;
+.n2Auth_button_recover {
+	border-radius: 2px;
+	border: none;
+	padding: 5px 16px;
+	height: 32px;
+	color: white;
+	font-weight: bold;
+	background-color: #0185e6;
+	box-shadow: 0px 1px 3px #999999;
+	transition: all 0.3s ease;
+}
+
+.n2Auth_button_recover:focus {
+	background-color: #0379CF;
+	box-shadow: 0px 3px 5px #999999;
+	transition: all 0.3s ease;
+}
+
+/* Recovery password dialog - input field label styling */
+.n2Auth_input_field + .n2Auth_recoverPassword_label,
+.n2_input_change_detector .n2Auth_recoverPassword_email_line .n2Auth_input_field + .n2Auth_recoverPassword_label {
+	position: absolute;
+	top: 29px;
+	padding-left: 2px;
+	font-size: 1.4em;
+	width: auto;
+	transition: all 0.3s ease;
+	color: #aaaaaa;
+	pointer-events: none;
+}
+
+.n2Auth_input_field + .n2Auth_recoverPassword_label,
+.n2_input_change_detector .n2Auth_recoverPassword_email_line .n2Auth_input_field:focus + .n2Auth_recoverPassword_label,
+.n2_input_change_detector .n2Auth_recoverPassword_email_line .n2Auth_input_field.n2_input_detected + .n2Auth_recoverPassword_label {
+	top: 0px;
+	font-size: 0.9em;
+	transition: all 0.3s ease;
+	color: #0379CF;
 }
 
 .n2Auth_userEdit .n2UserEdit_deleteButton {
@@ -76,7 +300,8 @@
 }
 
 /* User Agreement */
-.n2Auth_user_agreement_label {
+.n2Auth_user_agreement_label,
+.n2Auth_user_agreement_buttons {
 	margin-top: 10px;
 	margin-bottom: 10px;
 }
@@ -84,9 +309,4 @@
 textarea.n2Auth_user_agreement_content {
 	width: 600px;
 	height: 400px;
-}
-
-.n2Auth_user_agreement_buttons {
-	margin-top: 10px;
-	margin-bottom: 10px;
 }

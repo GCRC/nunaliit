@@ -169,9 +169,21 @@ var LocalizationService = $n2.Class({
 		function _uploadRequest(request) {
 			// Get user name
 			var userName = null;
-			var sessionContext = $n2.couch.getSession().getContext();
-			if( sessionContext ) {
-				userName = sessionContext.name;
+			{
+				var sessionContext = null;
+				
+				if( _this.dispatchService ){
+					var isLoggedInMsg = {
+						type: 'authIsLoggedIn'
+					};
+					_this.dispatchService.synchronousCall(DH,isLoggedInMsg);
+					
+					sessionContext = isLoggedInMsg.context;
+				};
+
+				if( sessionContext ) {
+					userName = sessionContext.name;
+				};
 			};
 			
 			// Get now
@@ -230,17 +242,22 @@ var LocalizationService = $n2.Class({
 			var lang = $n2.l10n.getLocale().lang;
 			
 			// Load already translated strings
-			var url = this.designDoc.ddUrl 
-				+ '_list/' + this.scriptList
-				+ '/' + this.translatedViewName
-				+ '?startkey="' + lang
+			var url = this.designDoc.getQueryUrl({
+				viewName: this.translatedViewName
+				,listName: this.scriptList
+			});
+
+			url += '?startkey="' + lang
 				+ '"&endkey="' + lang
 				+ '"'
 				+ '&include_docs=true&reduce=false'
 				;
 
 			var coreLocation = $n2.scripts.getCoreScriptLocation();
-			$n2.scripts.loadScript(url, coreLocation);
+			$n2.scripts.loadScript({
+				url: url
+				,scriptLocation: coreLocation
+			});
 		};
 	}
 });

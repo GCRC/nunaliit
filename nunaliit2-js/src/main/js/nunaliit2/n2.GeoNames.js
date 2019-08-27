@@ -50,13 +50,13 @@ var FeatureClass = {
 
 //===================================
 var AutoComplete = $n2.Class({
-	service: null
+	service: null,
 	
-	,inputId: null
+	inputId: null,
 	
-	,options: null
+	options: null,
 	
-	,initialize: function(opts_){
+	initialize: function(opts_){
 		var opts = $n2.extend({
 			service: null
 			,input: null
@@ -96,29 +96,33 @@ var AutoComplete = $n2.Class({
 		};
 
 		// Install autocomplete
-		var autocompleteOptions = $n2.extend({
-			minLength: 3
-			,open: function() {
-				$(this).removeClass("ui-corner-all").addClass("ui-corner-top");
+		var autocompleteOptions = $n2.extend(
+			{
+				minLength: 3
 			}
-			,close: function() {
-				$(this).removeClass("ui-corner-top").addClass("ui-corner-all");
+			,opts.autocomplete
+			,{
+				open: function() {
+					$(this).removeClass("ui-corner-all").addClass("ui-corner-top");
+				}
+				,close: function() {
+					$(this).removeClass("ui-corner-top").addClass("ui-corner-all");
+				}
+				,source: function(request, response) {
+					_this._autocompleteSource(request, response);
+				}
 			}
-		},opts.autocomplete);
-		
-		autocompleteOptions.source = function(request, response) {
-			_this._autocompleteSource(request, response);
-		};
+		);
 		
 		$input = this.getInput();
 		$input.autocomplete(autocompleteOptions);
-	}
+	},
 
-	,getInput: function(){
+	getInput: function(){
 		return $('#'+this.inputId);
-	}
+	},
 	
-	,_autocompleteSource: function(request, response) {
+	_autocompleteSource: function(request, response) {
 		if( request && request.term && request.term.length > 2 ) {
 			var opts = $n2.extend({},this.options);
 			
@@ -138,9 +142,11 @@ var AutoComplete = $n2.Class({
 						names[name] = true;
 					};
 				};
-				if( suggestions.length > 0 ){
-					response(suggestions);
-				};
+				response(suggestions);
+			};
+			opts.onError = function(err){
+				$n2.log('Error encountered during GeoService lookup: '+err,err);
+				response([]);
 			};
 			
 			this.service.getNameStartsWith(opts);
@@ -150,16 +156,16 @@ var AutoComplete = $n2.Class({
 	
 // ===================================
 var GeoNameService = $n2.Class({
-	options: null
+	options: null,
 	
-	,initialize: function(opts_){
+	initialize: function(opts_){
 		this.options = $n2.extend({
 			geoNamesUrl: 'http://api.geonames.org/'
 			,username: 'nunaliit'
 		},opts_);
-	}
+	},
 
-	,getName: function(opts_){
+	getName: function(opts_){
 		var opts = $n2.extend({
 			name: null // must be provided
 			,featureClass: null
@@ -181,18 +187,18 @@ var GeoNameService = $n2.Class({
 			'searchJSON'
 			,data
 			,function(r){
-				$n2.log('r',r);
 				if( r.geonames ) {
 					opts.onSuccess(r.geonames);
 				} else {
+					$n2.log('Invalid result returned by GeoNames',r);
 					opts.onError( _loc('Invalid result returned by GeoNames') );
 				};
 			}
 			,opts.onError
 		);
-	}
+	},
 
-	,getNameStartsWith: function(opts_){
+	getNameStartsWith: function(opts_){
 		var opts = $n2.extend({
 			name: null // must be provided
 			,featureClass: null
@@ -214,18 +220,18 @@ var GeoNameService = $n2.Class({
 			'searchJSON'
 			,data
 			,function(r){
-				$n2.log('r',r);
 				if( r.geonames ) {
 					opts.onSuccess(r.geonames);
 				} else {
+					$n2.log('Invalid result returned by GeoNames',r);
 					opts.onError( _loc('Invalid result returned by GeoNames') );
 				};
 			}
 			,opts.onError
 		);
-	}
+	},
 	
-	,findNearby: function(opts_){
+	findNearby: function(opts_){
 		var opts = $n2.extend({
 			lng: null // must be provided
 			,lat: null // must be provided
@@ -254,18 +260,18 @@ var GeoNameService = $n2.Class({
 			'findNearbyJSON'
 			,data
 			,function(r){
-				$n2.log('r',r);
 				if( r.geonames ) {
 					opts.onSuccess(r.geonames);
 				} else {
+					$n2.log('Invalid result returned by GeoNames',r);
 					opts.onError( _loc('Invalid result returned by GeoNames') );
 				};
 			}
 			,opts.onError
 		);
-	}
+	},
 	
-	,installAutoComplete: function(opts_){
+	installAutoComplete: function(opts_){
 		var opts = $n2.extend({
 			input: null // jquery element of input
 		},opts_);
@@ -273,9 +279,9 @@ var GeoNameService = $n2.Class({
 		opts.service = this;
 		
 		return new AutoComplete(opts);
-	}
+	},
 	
-	,_processGeoNamesSearchOptions: function(data, opts){
+	_processGeoNamesSearchOptions: function(data, opts){
 		if( opts.featureClass ){
 			data.featureClass = opts.featureClass;
 		};
@@ -295,9 +301,9 @@ var GeoNameService = $n2.Class({
 		if( opts.style ){
 			data.style = opts.style;
 		};
-	}
+	},
 	
-	,_getGeoNames: function(method, data, success, error) {
+	_getGeoNames: function(method, data, success, error) {
 		var nonNullData = {};
 		for (var key in data) {
 			if (key && data[key]) {

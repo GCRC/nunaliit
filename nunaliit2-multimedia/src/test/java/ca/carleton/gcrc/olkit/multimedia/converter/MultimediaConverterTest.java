@@ -115,6 +115,34 @@ public class MultimediaConverterTest extends TestCase {
 			fail("Unexpected mime type: "+sf.getMimeType());
 		}
 	}
+	
+	public void testConvertVideoSamsung() throws Exception {
+		if( false == TestConfiguration.isTestingConfigured() ) return;
+	
+		MultimediaConverterImpl converter = new MultimediaConverterImpl();
+
+		File inFile = TestConfiguration.getTestFile("samsung_note_8.mp4");
+		
+		MultimediaConversionRequest request = new MultimediaConversionRequest();
+		request.setInFile(inFile);
+		request.setThumbnailRequested(true);
+		request.setProgress( new MultimediaTestingProgress() );
+		
+		converter.convertVideo(request);
+		
+		// Verify input sizes
+		if( 320 != request.getOutWidth() ) {
+			fail("Unexpected width: "+request.getOutWidth());
+		}
+		if( 568 != request.getOutHeight() ) {
+			fail("Unexpected height: "+request.getOutHeight());
+		}
+		
+		SystemFile sf = SystemFile.getSystemFile(request.getOutFile());
+		if( false == "video/mp4".equals( sf.getMimeType() ) ) {
+			fail("Unexpected mime type: "+sf.getMimeType());
+		}
+	}
 
 	public void testConvertAudio() throws Exception {
 		if( false == TestConfiguration.isTestingConfigured() ) return;
@@ -122,6 +150,48 @@ public class MultimediaConverterTest extends TestCase {
 		MultimediaConverterImpl converter = new MultimediaConverterImpl();
 	
 		File inFile = TestConfiguration.getTestFile("steps_sound.ogg");
+		
+		MultimediaConversionRequest request = new MultimediaConversionRequest();
+		request.setInFile(inFile);
+		request.setProgress( new MultimediaTestingProgress() );
+		
+		converter.convertAudio(request);
+		
+		SystemFile sf = SystemFile.getSystemFile(request.getOutFile());
+		if( false == "audio/mp3".equals( sf.getMimeType() ) 
+		 && false == "audio/mpeg".equals( sf.getMimeType() ) ) {
+			fail("Unexpected mime type: "+sf.getMimeType());
+		}
+		
+	}
+
+	public void testConvertM4aAudio() throws Exception {
+		if( false == TestConfiguration.isTestingConfigured() ) return;
+		
+		MultimediaConverterImpl converter = new MultimediaConverterImpl();
+	
+		File inFile = TestConfiguration.getTestFile("sample.m4a");
+		
+		MultimediaConversionRequest request = new MultimediaConversionRequest();
+		request.setInFile(inFile);
+		request.setProgress( new MultimediaTestingProgress() );
+		
+		converter.convertAudio(request);
+		
+		SystemFile sf = SystemFile.getSystemFile(request.getOutFile());
+		if( false == "audio/mp3".equals( sf.getMimeType() ) 
+		 && false == "audio/mpeg".equals( sf.getMimeType() ) ) {
+			fail("Unexpected mime type: "+sf.getMimeType());
+		}
+		
+	}
+
+	public void testConvertAacAudio() throws Exception {
+		if( false == TestConfiguration.isTestingConfigured() ) return;
+		
+		MultimediaConverterImpl converter = new MultimediaConverterImpl();
+	
+		File inFile = TestConfiguration.getTestFile("sample.aac");
 		
 		MultimediaConversionRequest request = new MultimediaConversionRequest();
 		request.setInFile(inFile);

@@ -3,11 +3,9 @@
   <parent>
     <artifactId>nunaliit2</artifactId>
     <groupId>ca.carleton.gcrc</groupId>
-    <version>2.2.8-SNAPSHOT</version>
+    <version>2.2.9-SNAPSHOT</version>
   </parent>
-  <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-couch-command</artifactId>
-  <version>2.2.8-SNAPSHOT</version>
   <name>nunaliit2-couch-command</name>
   <build>
   	<plugins>
@@ -19,15 +17,15 @@
 	          <programs>
 	            <program>
 	              <mainClass>ca.carleton.gcrc.couch.command.Main</mainClass>
-	              <name>nunaliit</name>
+	              <id>nunaliit</id>
 	            </program>
 	            <program>
 	              <mainClass>ca.carleton.gcrc.couch.command.dump.DumpMain</mainClass>
-	              <name>couch-dump</name>
+	              <id>couch-dump</id>
 	            </program>
 	            <program>
 	              <mainClass>ca.carleton.gcrc.couch.command.dump.RestoreMain</mainClass>
-	              <name>couch-restore</name>
+	              <id>couch-restore</id>
 	            </program>
 	          </programs>
 	        </configuration>
@@ -70,13 +68,6 @@
   	</resources>
   </build>
   <dependencies>
-  	<dependency>
-  		<groupId>ca.carleton.gcrc</groupId>
-  		<artifactId>nunaliit2-couch-client</artifactId>
-  		<version>${project.version}</version>
-  		<type>jar</type>
-  		<scope>compile</scope>
-  	</dependency>
 	<dependency>
 		<groupId>org.eclipse.jetty</groupId>
 		<artifactId>jetty-server</artifactId>

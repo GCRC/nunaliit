@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
-public class GeometryCollection extends GeometryAbstract implements Geometry {
+public class GeometryCollection extends GeometryAbstract implements Geometry,GeometryAssembly {
 
 	private List<Geometry> geometries;
 	
@@ -18,6 +18,12 @@ public class GeometryCollection extends GeometryAbstract implements Geometry {
 		this.geometries = geometries;
 	}
 	
+	@Override
+	public int size(){
+		return geometries.size();
+	}
+	
+	@Override
 	public List<Geometry> getGeometries(){
 		return geometries;
 	}

@@ -1,0 +1,41 @@
+{
+   "group": "nunaliit",
+   "id": "script",
+   "label": "Script",
+   "relatedSchemas": [],
+   "initialLayers": [ "scripts" ],
+   "attributes": [
+      {
+         "label": "Script",
+         "type": "title"
+      },
+      {
+         "id": "name",
+         "label": "Name",
+         "type": "string",
+         "includedInBrief": true
+      },
+      {
+         "id": "label",
+         "label": "Label",
+         "type": "localized"
+      },
+      {
+         "id": "type",
+         "label": "Type",
+         "type": "selection",
+         "options": [
+         	{
+         		"label": "Export"
+         		,"value": "export"
+         		,"isDefault": true
+         	}
+         ]
+      },
+      {
+         "id": "script",
+         "label": "Script",
+         "type": "textarea"
+      }
+  ]
+}

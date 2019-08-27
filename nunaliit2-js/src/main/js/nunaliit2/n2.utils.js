@@ -41,15 +41,34 @@ $Id: n2.utils.js 8415 2012-08-07 15:39:35Z jpfiset $
  	@name log
  	@function
  	@memberOf nunaliit2
- 	@param {String} msg Log message
+ 	@param {string} msg Log message
  	@param {Object} o1  Object to be inspected in log
  */
-$n2.log = function() {
+$n2.log = function(msg,o1) {
 	if( typeof window === 'object'
 	 && window.console 
 	 && typeof window.console.log === 'function' ) {
 		try { window.console.log.apply(window.console,arguments); }
 			catch(e) {};
+	};
+};
+
+/**
+	Logs an error to the console
+	@name logError
+	@function
+	@memberOf nunaliit2
+	@param {String} msg Log message
+	@param {Object} o1  Object to be inspected in log
+*/
+$n2.logError = function() {
+	if( typeof window === 'object'
+	 && window.console 
+	 && typeof window.console.error === 'function' ) {
+		try { window.console.error.apply(window.console,arguments); }
+			catch(e) {};
+	} else {
+		$n2.log.apply(this,arguments);
 	};
 };
 
@@ -98,7 +117,7 @@ $n2.reportError = function(id,str) {
 	
 	if( arguments.length < 2 ) str = id; 
 
-	$n2.log(id,str,arguments);	
+	$n2.logError.apply(null,arguments);	
 	if( id === $n2.ERROR_NO_SUPRESS ) {
 		// Report, always
 		alert(str);
@@ -292,14 +311,14 @@ var longLatRe = /^\s*([0-9]{1,2})(°|d|\u00B0)\s*([0-9]{1,2})['m]\s*([0-9]{1,2}(
 $n2.parseLongLatText = function(text) {
 	var result = {};
 	
-	$n2.log('longLat text',text,longLatRe);
+	//$n2.log('longLat text',text,longLatRe);
 
 	var matchObj = text.match(longLatRe);
 	if( null == matchObj ) {
 		return null;
 	};
 
-	$n2.log('longLat',matchObj);
+	//$n2.log('longLat',matchObj);
 
 	var longMult = 1;
 	if( 'S' === matchObj[6] ) {
@@ -321,7 +340,7 @@ $n2.parseLongLatText = function(text) {
 		+ (1 * matchObj[10] / 3600)
 	);
 		
-	$n2.log('parseLongLatText',text,result);
+	//$n2.log('parseLongLatText',text,result);
 
 	return result;
 };
@@ -524,9 +543,10 @@ $n2.trim = function(text){
 		;
 };
 
+/** @namespace nunaliit2.utils */
 $n2.utils = {
 	
-	_callbacks: {}
+	_callbacks: {},
 		
 	/**
 	 * Converts a string to a string that can be used with a HTML id
@@ -540,7 +560,7 @@ $n2.utils = {
 	 *                   as an HTML id or HTML class name.
 	 * @returns {String} String safe for HTML id or class name.
 	 */
-	,stringToHtmlId: function(s){
+	stringToHtmlId: function(s){
 		var res = [];
 		for(var i=0,e=s.length; i<e; ++i) {
 			var c = s[i];
@@ -559,7 +579,7 @@ $n2.utils = {
 			};
 		};
 		return res.join('');
-	}
+	},
 	
 	/**
 	 * Unescapes a string previously converted using stringToHtmlId(). 
@@ -569,7 +589,7 @@ $n2.utils = {
 	 * @param {String} s String to be unescaped.
 	 * @returns {String} String initially passed to the stringToHtmlId() function.
 	 */
-	,unescapeHtmlId: function(s){
+	unescapeHtmlId: function(s){
 		var res = [];
 		for(var i=0,e=s.length; i<e; ++i) {
 			var c = s[i];
@@ -589,7 +609,7 @@ $n2.utils = {
 			};
 		};
 		return res.join('');
-	}
+	},
 
 	/**
 	 * Returns information about the browser. This is based on code found
@@ -600,7 +620,7 @@ $n2.utils = {
 	 * @returns {Object} Object containing information about the browser
 	 * where the application runs
 	 */
-	,getBrowserInfo: function(){
+	getBrowserInfo: function(){
 		
 		if( cachedBrowserInfo ){
 			return cachedBrowserInfo;
@@ -730,7 +750,7 @@ $n2.utils = {
 			return parseFloat(dataString.substring(index+versionSearchString.length+1));
 		};
 		
-	}
+	},
 
 	/**
 	 * Returns true if the input is a number, regardless if it is a number
@@ -742,9 +762,9 @@ $n2.utils = {
 	 * @param {String} String or number to be tested
 	 * @returns {Boolean} True if given parameter represents a number. False, otherwise.
 	 */
-	,isNumber: function(n){
+	isNumber: function(n){
 		return !isNaN(parseFloat(n)) && isFinite(n);
-	}
+	},
 	
 	/**
 	 * Returns a object that describes the javascript declaration included
@@ -760,7 +780,7 @@ $n2.utils = {
 	 * @returns {Object} Object that describes the jaavascript declaration. Null if
 	 * the seeked declaration is not found.
 	 */
-	,findJavascriptDeclaration: function(javascriptFileName){
+	findJavascriptDeclaration: function(javascriptFileName){
 		var scriptLocation = null;
 		var scriptElem = null;
 		var pattern = new RegExp('(^|(.*?\\/))'+javascriptFileName+'$');
@@ -788,7 +808,7 @@ $n2.utils = {
 		};
 		
 		return result;
-	}
+	},
 	
 	/**
 	 * Inserts new javascript declarations at the end of the host document. Multiple 
@@ -802,42 +822,40 @@ $n2.utils = {
 	 * obtained using nunaliit2.utils.findJavascriptDeclaration(). All new declarations
 	 * are inserted previous to this one. Also, new declarations are made relative to
 	 * the path of this declaration.
-	 * @param names {Array of String} Names of the javascript files that should be inserted
+	 * @param names string[]} Names of the javascript files that should be inserted
 	 * as new declarations. These names may contain path fragments, relative to the
 	 * declaration description given in argument. 
 	 * @param callback {Function} Function called after all declarations have been inserted.
 	 * @returns {void}
 	 */
-	,insertJavascriptDeclarations: function(declarationDescription, names, callback){
+	insertJavascriptDeclarations: function(declarationDescription, names, callback){
+		
+		if( typeof names === 'string' ){
+			names = [ names ];
+		};
 
 		var scriptLocation = declarationDescription.location;
-		
-       	var allScriptTags = new Array();
-       	for( var i=0; i<names.length; ++i ) {
-       		allScriptTags.push('<script type="text/javascript" src="');
-       		allScriptTags.push(scriptLocation);
-       		allScriptTags.push(names[i]);
-       		allScriptTags.push('"></script>');
-       	};
-       	
-       	// Add callback
-       	var cbId = $n2.getUniqueId();
-       	$n2.utils._callbacks[cbId] = function(){
-       		delete $n2.utils._callbacks[cbId];
-       		if( typeof(callback) === 'function' ){
-       			callback();
-       		};
-       	};
-   		allScriptTags.push('<script type="text/javascript">if( typeof(nunaliit2.utils._callbacks["');
-   		allScriptTags.push(cbId);
-   		allScriptTags.push('"]) === "function" ){ nunaliit2.utils._callbacks["');
-   		allScriptTags.push(cbId);
-   		allScriptTags.push('"](); };');
-   		allScriptTags.push('</script>');
-       	
-   		// Write at end of document
-       	document.write(allScriptTags.join(''));
-	}
+		var insertBeforeElem = declarationDescription.element;
+
+		// Keep track of callback
+		var loaded = false;
+
+		for( var i=0; i<names.length; ++i ) {
+			var script = document.createElement('script');
+			script.setAttribute('type', 'text/javascript');
+			script.setAttribute('src', scriptLocation + names[i]);
+			script.onreadystatechange = script.onload = function() {
+				if( !loaded ){
+					loaded = true;
+					if( typeof callback === 'function' ){
+						callback();
+					};
+				};
+			};
+
+			insertBeforeElem.parentNode.insertBefore(script,insertBeforeElem);
+		};
+	},
 	
 	/**
 	 * Accepts a formatting string and arguments. Returns the formatted
@@ -852,7 +870,7 @@ $n2.utils = {
 	 * @param args {Object} Dictionary of arguments
 	 * @returns {String}
 	 */
-	,formatString: function(format, args){
+	formatString: function(format, args){
 		return format.replace(/{([^}]+)}/g, function(match, name) {
 			name = $n2.trim(name);
 			if( '' === name ) return match;
@@ -862,7 +880,7 @@ $n2.utils = {
 				: match
 			;
 		});
-	}
+	},
 	
 	/**
 	 * Returns the number of milliseconds elapsed since 1 January 1970 00:00:00 UTC. This
@@ -872,9 +890,9 @@ $n2.utils = {
 	 * @memberOf nunaliit2.utils
 	 * @returns {Number}
 	 */
-	,getCurrentTime: Date.now || function () {
+	getCurrentTime: Date.now || function () {
 		return +new Date();
-	}
+	},
 	
 	/**
 	 * Returns a string which represents the date formatted as specified.
@@ -883,7 +901,7 @@ $n2.utils = {
 	 * @memberOf nunaliit2.utils
 	 * @returns {String}
 	 */
-	,formatDate: function(date, format){
+	formatDate: function(date, format){
 		var str = format.replace('%Y',''+date.getFullYear());
 		
 		var monthNumStr = ''+(date.getMonth()+1);
@@ -943,17 +961,19 @@ $n2.utils = {
 			};
 		};
 	},
-	
+
 	/**
 	 * Creates a version of the function where the rate of calls is limited to
 	 * one call per defined time out.
 	 * @name debounce
 	 * @function
 	 * @memberOf nunaliit2.utils
-	 * @param {Function} The function that should be limited in the rate at which
+	 * @param {Function} func The function that should be limited in the rate at which
 	 *                   it is fired.
-	 * @param {Number} Number of milliseconds between the calls to the function
-	 * @returns {Boolean} If true, the function is called immediately, and again in the
+	 * @param {Number} wait Number of milliseconds between the calls to the function
+	 * @param {boolean} immediate If set, executes the function in parameters at the start. 
+	 *                            Otherwise, first execution is after wait time.
+	 * @returns {boolean} If true, the function is called immediately, and again in the
 	 *                    future after a period defined by the timeout.
 	 */
 	debounce: function(func, wait, immediate) {
@@ -969,14 +989,70 @@ $n2.utils = {
 			timeout = setTimeout(later, wait);
 		};
 	},
-	
+
+	/**
+	 * Creates a version of the function where the rate of calls is throttled to no
+	 * more than a set rate. If, during the delay, the function is called again, then
+	 * it will result in a last call at the end of the delay.
+	 * @name throttle
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param {Function} func The function that should be limited in the rate at which
+	 *                   it is fired.
+	 * @param {Number} wait Number of milliseconds between the calls to the function
+	 * @returns {boolean} If true, the function is called immediately, and again in the
+	 *                    future after a period defined by the timeout.
+	 */
+	throttle: function(func, wait) {
+		var timeoutId = undefined;
+		var lastRan = undefined;
+		var throttledFn = function() {
+			var context = this, args = arguments;
+			var immediate = false;
+			if( !lastRan ){
+				immediate = true;
+			} else {
+				var timeSinceLastCall = Date.now() - lastRan;
+				if( timeSinceLastCall >= wait ){
+					immediate = true;
+				};
+			};
+			if( immediate ){
+				// Run it now.
+				func.apply(context, args);
+				lastRan = Date.now();
+			} else if( timeoutId ){
+				// Already waiting for a timeout. No
+				// need to schedule again
+			} else {
+				// Schedule to be called again in the future
+				var delay = wait - (Date.now() - lastRan);
+				timeoutId = setTimeout(
+					function(){
+						func.apply(context, args);
+						lastRan = Date.now();
+						timeoutId = undefined;
+					}
+					,delay
+				);
+			};
+		};
+
+		// Call this function for the next invocation to be immediate
+		throttledFn.setImmediate = function(){
+			lastRan = undefined;
+		};
+
+		return throttledFn;
+	},
+
 	/**
 	 * Returns the identifier associated with the given element. If no identifier
 	 * is currently assigned to the element, assign a unique one and then return it.
 	 * @name getElementIdentifier
 	 * @function
 	 * @memberOf nunaliit2.utils
-	 * @param {Object} DOM element where the identifier is desired.
+	 * @param {Object} elem DOM element where the identifier is desired.
 	 * @returns {String} Element identifier
 	 */
 	getElementIdentifier: function(elem){
@@ -987,6 +1063,38 @@ $n2.utils = {
 			$elem.attr('id',id);
 		};
 		return id;
+	},
+	
+	/**
+	 * Returns an array of all values found in a map or array.
+	 * @name values
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param {Object} map Javascript object or array
+	 * @returns {Object[]} Values found in the object or array
+	 */
+	values: function(map){
+		var v = [];
+		for(var i in map){
+			v[v.length] = map[i];
+		};
+		return v;
+	},
+	
+	/**
+	 * Returns an array of all keys found in a map or array.
+	 * @name keys
+	 * @function
+	 * @memberOf nunaliit2.utils
+	 * @param {Object} map Javascript object or array
+	 * @returns {Object[]} Keys found in the object or array
+	 */
+	keys: function(map){
+		var v = [];
+		for(var i in map){
+			v[v.length] = i;
+		};
+		return v;
 	}
 };
 

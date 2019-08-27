@@ -15,7 +15,7 @@ ul.tree ul {
 } 
 
 ul.tree li { 
-	margin: 0px 0px 0px 0px; 
+	margin: 0px; 
 	padding: 0px 0px 0px 8px;
 	line-height: 20px;
 	background: url(tree/node.png) repeat-y;
@@ -74,7 +74,6 @@ ul.tree li.treeHideChildren > .treeChildren {
 /* 
 	OBJECT 
 */
-
 /* When showing children, suppress short pretty print */
 ul.tree li.treeShowChildren > .treeValue {
 	display: none;
@@ -87,7 +86,6 @@ ul.tree li.treeNoChildren > .treeValue {
 /* 
 	EDITOR 
 */
-
 /* While editing a value, suppress views of the value */
 ul.tree li.treeEditingValue > .treeValue,
 ul.tree li.treeEditingValue > .treeChildren {
@@ -162,7 +160,6 @@ ul.tree .treeValueEditor textarea {
 .treeEditDown:hover {
 	background-position: -112px 0px;
 }
-
 
 .treeEditOk {
 	background: url(tree/icons.png) no-repeat;

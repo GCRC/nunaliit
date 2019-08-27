@@ -61,69 +61,69 @@ function isSrsNameSupported(srsName){
 //=========================================================================	
 var Module = $n2.Class({
 	
-	moduleDoc: null
+	moduleDoc: null,
 	
-	,atlasDb: null
+	atlasDb: null,
 	
-	,initialize: function(moduleDoc, atlasDb){
+	initialize: function(moduleDoc, atlasDb){
 		this.moduleDoc = moduleDoc;
 		this.atlasDb = atlasDb;
-	}
+	},
 
-	,getModuleInfo: function(){
+	getModuleInfo: function(){
 		var moduleInfo = null;
 		if( this.moduleDoc ){
 			moduleInfo = this.moduleDoc.nunaliit_module;
 		};
 		return moduleInfo;
-	}
+	},
 
-	,getMapInfo: function(){
+	getMapInfo: function(){
 		var mapInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			mapInfo = moduleInfo.map;
 		};
 		return mapInfo;
-	}
+	},
 
-	,getCanvasInfo: function(){
+	getCanvasInfo: function(){
 		var canvasInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			canvasInfo = moduleInfo.canvas;
 		};
 		return canvasInfo;
-	}
+	},
 
-	,getDisplayInfo: function(){
+	getDisplayInfo: function(){
 		var displayInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			displayInfo = moduleInfo.display;
 		};
 		return displayInfo;
-	}
+	},
 
-	,getEditInfo: function(){
+	getEditInfo: function(){
 		var editInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			editInfo = moduleInfo.edit;
 		};
 		return editInfo;
-	}
+	},
 
-	,getSearchInfo: function(){
+	getSearchInfo: function(){
 		var searchInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
 			searchInfo = moduleInfo.search;
 		};
 		return searchInfo;
-	}
+	},
 
-	,getModelInfos: function(){
+	getModelInfos: function(){
 		var modelInfos = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
@@ -133,9 +133,21 @@ var Module = $n2.Class({
 			modelInfos = [];
 		};
 		return modelInfos;
-	}
+	},
+	
+	getUtilityInfos: function(){
+		var utilityInfos = null;
+		var moduleInfo = this.getModuleInfo();
+		if( moduleInfo ){
+			utilityInfos = moduleInfo.utilities;
+		};
+		if( !utilityInfos ){
+			utilityInfos = [];
+		};
+		return utilityInfos;
+	},
 
-	,getWidgetInfos: function(){
+	getWidgetInfos: function(){
 		var widgetInfos = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
@@ -145,20 +157,31 @@ var Module = $n2.Class({
 			widgetInfos = [];
 		};
 		return widgetInfos;
-	}
+	},
+
+	getModuleCSS: function(){
+		var css;
+		var moduleInfo = this.getModuleInfo();
+		if( moduleInfo ){
+			css = moduleInfo.css;
+		};
+		return css;
+	},
 	
 	/*
 	 * Finds the introduction text associated with the module and inserts it
 	 * in the element provided. Once the content of the introduction is loaded
 	 * in the DOM, the "onLoaded" function is called.
 	 */
-	,displayIntro: function(opts_){
+	displayIntro: function(opts_){
 		var opts = $n2.extend({
 			elem: null
 			,showService: null
+			,dispatchService: null
 			,onLoaded: function(){}
 		},opts_);
 		
+		var _this = this;
 		var $elem = opts.elem;
 		
 		var introInfo = null;
@@ -166,12 +189,28 @@ var Module = $n2.Class({
 		if( moduleInfo ){
 			introInfo = moduleInfo.introduction;
 		};
-		
-		if( !introInfo ){
-			$elem.empty();
-			return false;
 
-		} else {
+		// Keep track if we need to empty content area
+		var introDisplayed = false;
+
+		// Via the dispatcher, see if a component can display introduction
+		if( opts.dispatchService ){
+			var msg = {
+				type: 'modulePerformIntroduction'
+				,performed: false
+				,elem: opts.elem
+				,module: this
+			};
+			opts.dispatchService.synchronousCall(DH,msg);
+			
+			// If an introduction was performed, then no need
+			// to empty the element
+			if( msg.performed ){
+				introDisplayed = true;
+			};
+		};
+		
+		if( !introDisplayed && introInfo ){
 			if( 'html' === introInfo.type && introInfo.content ) {
 				
 				$elem.empty();
@@ -184,11 +223,11 @@ var Module = $n2.Class({
 					$outer.html(content);
 					
 					if( opts.showService ) {
-						opts.showService.fixElementAndChildren($outer);
+						opts.showService.fixElementAndChildren($outer, {}, this.moduleDoc);
 					};					
 				};
 				opts.onLoaded();
-				return true;
+				introDisplayed = true;
 				
 			} else if( 'text' === introInfo.type && introInfo.content ) {
 				
@@ -207,11 +246,11 @@ var Module = $n2.Class({
 					
 					if( opts.showService ) {
 						$wrapper.addClass('n2s_preserveSpaces');
-						opts.showService.fixElementAndChildren($wrapper);
+						opts.showService.fixElementAndChildren($wrapper, {}, this.moduleDoc);
 					};
 				};
 				opts.onLoaded();
-				return true;
+				introDisplayed = true;
 				
 			} else if( 'attachment' === introInfo.type 
 			 && introInfo.attachmentName
@@ -223,6 +262,7 @@ var Module = $n2.Class({
 					.attr('id', displayId)
 					.addClass('n2ModuleIntro n2ModuleIntro_attachment')
 					.appendTo($elem);
+				introDisplayed = true;
 				
 				var localeStr = $n2.l10n.getStringForLocale(introInfo.attachmentName);
 				if( localeStr.str ) {
@@ -246,7 +286,7 @@ var Module = $n2.Class({
 					    		$('#'+displayId).html(intro);
 				    		};
 							if( opts.showService ) {
-								opts.showService.fixElementAndChildren($('#'+displayId));
+								opts.showService.fixElementAndChildren($('#'+displayId), {}, _this.moduleDoc);
 							};
 							opts.onLoaded();
 				    	}
@@ -255,14 +295,15 @@ var Module = $n2.Class({
 				    	}
 					});
 				};
-				
-				return true;
-				
-			} else {
-				$elem.empty();
-				return false;
 			};
-		}
+		};
+		
+		if( !introDisplayed ){
+			$elem.empty();
+			return false;
+		};
+		
+		return true;
 	},
 	
 	getAttachmentUrl: function(attachmentName){
@@ -509,6 +550,16 @@ var ModuleDisplay = $n2.Class({
 			var displayInfo = _this.module.getDisplayInfo();
 			var searchInfo = _this.module.getSearchInfo();
 			var modelInfos = _this.module.getModelInfos();
+			var utilityInfos = _this.module.getUtilityInfos();
+			
+			// Load up CSS, if specified
+			var css = _this.module.getModuleCSS();
+			if( typeof css === 'string' ){
+				$n2.css.setCss({
+					css: css
+					,name: 'module'
+				});
+			};
 			
 			// Create models
 			if( modelInfos ){
@@ -528,8 +579,55 @@ var ModuleDisplay = $n2.Class({
 					_this._sendSynchronousMessage(msg);
 						
 					if( ! msg.created ){
-						$n2.log('Model not created: '+modelInfo.modelType+'/'+modelInfo.modelId);
+						$n2.logError('Model not created: '+modelInfo.modelType+'/'+modelInfo.modelId);
 					};
+				};
+			};
+			
+			// Create utilities
+			var inputChangeDetectorSpecified = false;
+			if( utilityInfos ){
+				for(var i=0,e=utilityInfos.length; i<e; ++i){
+					var utilityInfo = utilityInfos[i];
+
+					if( 'inputChangeDetector' === utilityInfo.utilityType ){
+						inputChangeDetectorSpecified = true;
+					};
+					
+					var msg = {
+						type: 'utilityCreate'
+						,utilityType: utilityInfo.utilityType
+						,utilityOptions: utilityInfo
+						,created: false
+						,config: config
+						,moduleDisplay: _this
+					};
+						
+					_this._sendSynchronousMessage(msg);
+						
+					if( ! msg.created ){
+						$n2.logError('Utility not created: '+utilityInfo.utilityType);
+					};
+				};
+			};
+			
+			// Add utility 'inputChangeDetector', if not already specified
+			if( !inputChangeDetectorSpecified ){
+				var msg = {
+					type: 'utilityCreate'
+					,utilityType: 'inputChangeDetector'
+					,utilityOptions: {
+						type: 'inputChangeDetector'
+					}
+					,created: false
+					,config: config
+					,moduleDisplay: _this
+				};
+					
+				_this._sendSynchronousMessage(msg);
+					
+				if( ! msg.created ){
+					$n2.logError('Unable to add utility inputChangeDetector');
 				};
 			};
 			
@@ -550,7 +648,7 @@ var ModuleDisplay = $n2.Class({
 				};
 			};
 			if( canvasInfo && !canvasHandlerAvailable ){
-				$n2.log('Canvas handler not found for type: '+canvasInfo.canvasType);
+				$n2.logError('Canvas handler not found for type: '+canvasInfo.canvasType);
 				canvasInfo = null;
 			};
 			
@@ -607,10 +705,18 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			// Styles
-			_this.mapStyles = new $n2.mapStyles.MapFeatureStyles( (mapInfo ? mapInfo.styles : null) );
+			if( mapInfo && $n2.isArray(mapInfo.styles) ){
+				_this.mapStyles = new $n2.mapStyles.MapStylesAdaptor({
+					ruleArray: mapInfo.styles
+					,dispatchService: this.dispatchService
+				});
+
+			} else if( mapInfo && typeof mapInfo.styles === 'object' ){
+				_this.mapStyles = new $n2.mapStyles.MapFeatureStyles(mapInfo.styles);
 			
-			// Side panel
-			_this._initSidePanel();
+			} else {
+				_this.mapStyles = new $n2.mapStyles.MapFeatureStyles(null);
+			};
 			
 			// Title
 			if( moduleInfo && moduleInfo.title ) {
@@ -716,6 +822,12 @@ var ModuleDisplay = $n2.Class({
 					});
 				};
 			};
+			if( editInfo && config.directory.editService ){
+				config.directory.editService.configureOptions(editInfo);
+			};
+			if( editInfo && config.directory.createDocProcess ){
+				config.directory.createDocProcess.configureOptions(editInfo);
+			};
 
 			// Search
 			if( searchInfo && searchInfo.constraint ){
@@ -777,7 +889,7 @@ var ModuleDisplay = $n2.Class({
 						};
 					};
 					if( widgetInfo && !widgetHandlerAvailable ){
-						$n2.log('Widget handler not found for type: '+widgetInfo.widgetType);
+						$n2.logError('Widget handler not found for type: '+widgetInfo.widgetType);
 					} else {
 						availableWidgets.push(widgetInfo);
 					};
@@ -785,6 +897,7 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			// Widgets
+			var modelBrowserSpecified = false;
 			for(i=0,e=availableWidgets.length; i<e; ++i){
 				widgetInfo = availableWidgets[i];
 				var widgetDisplayMsg = {
@@ -821,12 +934,39 @@ var ModuleDisplay = $n2.Class({
 					widgetDisplayMsg.containerId = _this.contentName;
 					_this._sendDispatchMessage(widgetDisplayMsg);
 				};
+				
+				if( 'modelBrowserWidget' === widgetInfo.widgetType ){
+					modelBrowserSpecified = true;
+				};
+			};
+			
+			// Add model browser widget, if not specified
+			if( !modelBrowserSpecified ){
+				var $footer = $('.nunaliit_footer');
+				if( $footer.length > 0 ){
+					var containerId = $n2.utils.getElementIdentifier($footer);
+					var widgetDisplayMsg = {
+						type: 'widgetDisplay'
+						,widgetType: 'modelBrowserWidget'
+						,widgetOptions: {
+							widgetType: 'modelBrowserWidget'
+						}
+						,contentId: _this.contentName
+						,containerId: containerId
+						,config: config
+						,moduleDisplay: _this
+					};
+					_this._sendDispatchMessage(widgetDisplayMsg);
+				};
 			};
 
 			displayComplete();
 		};
 		
 		function displayComplete(){
+			// Side panel
+			_this._initSidePanel();
+
 			_this._sendDispatchMessage({
 				type:'reportModuleDisplay'
 				,moduleDisplay: _this
@@ -868,6 +1008,26 @@ var ModuleDisplay = $n2.Class({
 			toggleClick = mapInfo.toggleClick;
 		};
 		
+		// Add SRS attribution text
+		var showSRSAttribution = false;
+		if( mapInfo && mapInfo.showSRSAttribution ){
+			showSRSAttribution = mapInfo.showSRSAttribution;
+		};
+		
+		// ScaleLine
+		var scaleLine = {
+			visible: false
+		};
+		if( mapInfo && mapInfo.scaleLine && mapInfo.scaleLine.visible ){
+			scaleLine = mapInfo.scaleLine;
+		};
+
+		// Enable wheel zoom
+		var enableWheelZoom = false;
+		if( mapInfo && mapInfo.enableWheelZoom ){
+			enableWheelZoom = true;
+		};
+		
 		// dbSearchEngine
 		var dbSearchEngine = { 
 			relMediaPath: './'
@@ -876,8 +1036,15 @@ var ModuleDisplay = $n2.Class({
 			dbSearchEngine = mapInfo.dbSearchEngine;
 		};
 		
+		// canvasName
+		var canvasName = undefined;
+		if( mapInfo && typeof mapInfo.canvasName === 'string' ){
+			canvasName = mapInfo.canvasName;
+		};
+		
 		var mapOptions = {
 			dbSearchEngine: dbSearchEngine
+			,canvasName: canvasName
 			,mapIdentifier: _this.mapName
 			,mapInteractionDivName: _this.mapInteractionName
 			,mapCoordinateSpecifications: {
@@ -887,6 +1054,9 @@ var ModuleDisplay = $n2.Class({
 			,addPointsOnly: addPointsOnly
 			,overlays: []
 			,toggleClick: toggleClick
+			,showSRSAttribution: showSRSAttribution
+			,scaleLine: scaleLine
+			,enableWheelZoom: enableWheelZoom
 			,sidePanelName: _this.sidePanelName
 			,filterPanelName: _this.filterPanelName
 			,saveFeature: _this.config.couchEditor
@@ -929,6 +1099,12 @@ var ModuleDisplay = $n2.Class({
 				// Defaults to EPSG:4326
 				mapOptions.mapDisplay.srsName = 'EPSG:4326';
 				mapOptions.mapCoordinateSpecifications.srsName = 'EPSG:4326';
+			};
+
+			
+			if( mapInfo.coordinates.mousePositionSrsName ){
+				mapOptions.mapCoordinateSpecifications.mousePositionSrsName = 
+					mapInfo.coordinates.mousePositionSrsName;
 			};
 			
 			// Detect forced display projections based on background layer
@@ -1050,157 +1226,91 @@ var ModuleDisplay = $n2.Class({
 				if( layerInfo.clustering ){
 					layerDefinition.clustering = layerInfo.clustering;
 				};
+
+				if( typeof layerInfo.minimumLinePixelSize === 'number' ){
+					layerDefinition.minimumLinePixelSize = layerInfo.minimumLinePixelSize;
+				};
+
+				if( typeof layerInfo.minimumPolygonPixelSize === 'number' ){
+					layerDefinition.minimumPolygonPixelSize = layerInfo.minimumPolygonPixelSize;
+				};
 				
 				// Add layer to map
 				mapOptions.overlays.push( layerDefinition );
 			};
 		};
 		
-		if( !initialBounds ) {
-			opts.onError('Initial map extent not specified');
-			return;
-		};
 		if( mapInfo 
 		 && mapInfo.coordinates
 		 && mapInfo.coordinates.autoInitialBounds
 		 ){
-			computeAutoInitialBounds(
-				mapOptions
-				,initialBounds
-				,mapInfo.coordinates.autoInitialBounds
-				);
+			// Figure out projection for configuration
+			var coordinateProjection = undefined;
+			if( mapOptions.mapCoordinateSpecifications.srsName ){
+				coordinateProjection = new OpenLayers.Projection(mapOptions.mapCoordinateSpecifications.srsName);
+			} else {
+				coordinateProjection = new OpenLayers.Projection('EPSG:4326');
+			};
+			
+			var autoBounds = undefined;
+			if( typeof mapInfo.coordinates.autoInitialBounds === 'object' ){
+				// Make a copy of configuration that contains map info
+				var instanceConfiguration = $n2.extend({},mapInfo.coordinates.autoInitialBounds);
+				instanceConfiguration._mapInfo = mapInfo;
+				
+				// Initial bounds computed from a configured object
+				var m = {
+					type: 'instanceCreate'
+					,instanceConfiguration: instanceConfiguration
+				};
+				_this.dispatchService.synchronousCall(DH,m);
+				autoBounds = m.instance;
+			};
+			
+			if( !autoBounds ){
+				// Default
+				var m = {
+					type: 'instanceCreate'
+					,instanceConfiguration: {
+						type: 'mapAutoInitialBoundsCouchDbOverlays'
+					}
+				};
+				_this.dispatchService.synchronousCall(DH,m);
+				autoBounds = m.instance;
+			};
+			
+			if( autoBounds 
+			 && typeof autoBounds.computeInitialBounds === 'function' ){
+				autoBounds.computeInitialBounds({
+					mapOptions: mapOptions
+					,mapInfo: mapInfo
+					,initialBounds: initialBounds
+					,coordinateProjection: coordinateProjection
+					,onSuccess: function(bounds){
+						if( !bounds ){
+							initialBoundsComputed(mapOptions, initialBounds);
+						} else {
+							initialBoundsComputed(mapOptions, bounds);
+						};
+					}
+					,onError: function(err){
+						$n2.log('Error while computing initial bounds: '+err);
+						initialBoundsComputed(mapOptions, initialBounds);
+					}
+				});
+			} else {
+				initialBoundsComputed(mapOptions, initialBounds);
+			};
+
 		} else {
 			initialBoundsComputed(mapOptions, initialBounds);
 		};
 		
-		function computeAutoInitialBounds(mapOptions, initialBounds, autoInitialBounds){
-			
-			// Loop over all layers, computing initial bounding box for
-			// each
-			var layerBoundingBox = null;
-			var layersPending = 0;
-			for(var i=0,e=mapOptions.overlays.length; i<e; ++i){
-				var layerDef = mapOptions.overlays[i];
-				if( layerDef.type === 'couchdb' ){
-					++layersPending;
-					var documentSource = layerDef.options.documentSource;
-					var layerName = layerDef.options.layerName;
-					documentSource.getGeographicBoundingBox({
-						layerId: layerName
-						,onSuccess: function(bbox){
-							reportLayer(bbox);
-						}
-						,onError: function(errorMsg){ 
-							$n2.log('Error computing bounds for layer '+layerName+': '+errorMsg); 
-							reportLayer(null);
-						}
-					});
-				};
-			};
-			testDone();
-			
-			function reportLayer(bounds){
-				--layersPending;
-				if( null == bounds ) {
-					// ignore
-				} else if( false == _this._isValidBounds(bounds) ) {
-					// ignore
-				} else {
-					if( null == layerBoundingBox ) {
-						layerBoundingBox = bounds;
-					} else {
-						if( layerBoundingBox[0] > bounds[0] ) layerBoundingBox[0] = bounds[0];
-						if( layerBoundingBox[1] > bounds[1] ) layerBoundingBox[1] = bounds[1];
-						if( layerBoundingBox[2] < bounds[2] ) layerBoundingBox[2] = bounds[2];
-						if( layerBoundingBox[3] < bounds[3] ) layerBoundingBox[3] = bounds[3];
-					};
-				};
-				testDone();
-			};
-			
-			function testDone(){
-				if( layersPending > 0 ){
-					return;
-				};
-				
-				// If nothing specified by layers, just use what the user specified
-				if( null == layerBoundingBox ){
-					// Nothing defined by the layers, use initial bounds
-					initialBoundsComputed(mapOptions, initialBounds);
-					return;
-				};
-		
-				// If computations from layers is invalid, use the initial bounds specified
-				// by user
-				if( false == _this._isValidBounds(layerBoundingBox) ) {
-					$n2.log('Invalid bounding box reported for layer in database.',layerBoundingBox);
-					initialBoundsComputed(mapOptions, initialBounds);
-					return;
-				};
-				
-				// layerBoundingBox is in EPSG:4326
-				// initialBounds is in the user coordinate projection
-				var userInitialBounds = new OpenLayers.Bounds(
-						initialBounds[0]
-						,initialBounds[1]
-						,initialBounds[2]
-						,initialBounds[3]
-						);
-				var layerInitialBounds = new OpenLayers.Bounds(
-						layerBoundingBox[0]
-						,layerBoundingBox[1]
-						,layerBoundingBox[2]
-						,layerBoundingBox[3]
-						);
-				if( mapOptions.mapCoordinateSpecifications.srsName !== 'EPSG:4326' ){
-					var userProj = new OpenLayers.Projection(mapOptions.mapCoordinateSpecifications.srsName);
-					var dbProj = new OpenLayers.Projection('EPSG:4326');
-					layerInitialBounds.transform(dbProj,userProj);
-				};
-				
-				if( userInitialBounds.containsBounds(layerInitialBounds) ){
-					// Bounds defined by layers fit within the one specified by user.
-					// Just use initial bounds (prevent too much zooming in)
-					initialBoundsComputed(mapOptions, initialBounds);
-					
-				} else if( layerInitialBounds.getWidth() < userInitialBounds.getWidth() 
-				 || layerInitialBounds.getHeight() < userInitialBounds.getHeight() ){
-					// The bounds defined by the layers are smaller than that of the bounds
-					// specified by user. Adjust size of bounds so that zoom is not too high
-					
-					if( layerInitialBounds.getWidth() < userInitialBounds.getWidth() ){
-						var l = userInitialBounds.getWidth()/2;
-						var m = (layerInitialBounds.left+layerInitialBounds.right)/2;
-						layerInitialBounds.left = m - l;
-						layerInitialBounds.right = m + l;
-					};
-					
-					if( layerInitialBounds.getHeight() < userInitialBounds.getHeight() ){
-						var l = userInitialBounds.getHeight()/2;
-						var m = (layerInitialBounds.bottom+layerInitialBounds.top)/2;
-						layerInitialBounds.bottom = m - l;
-						layerInitialBounds.top = m + l;
-					};
-					initialBoundsComputed(mapOptions, [
-						layerInitialBounds.left
-						,layerInitialBounds.bottom
-						,layerInitialBounds.right
-						,layerInitialBounds.top
-					]);
-					
-				} else {
-					// Use bounds computed by layers
-					initialBoundsComputed(mapOptions, [
-							layerInitialBounds.left
-							,layerInitialBounds.bottom
-							,layerInitialBounds.right
-							,layerInitialBounds.top
-						]);
-				};
-			};
-		};
-		
 		function initialBoundsComputed(mapOptions, initialBounds){
+			if( !initialBounds ) {
+				opts.onError('Initial map extent not specified');
+				return;
+			};
 		
 			mapOptions.mapCoordinateSpecifications.initialBounds = initialBounds;
 			
@@ -1236,7 +1346,7 @@ var ModuleDisplay = $n2.Class({
 		};
 	}
 
-	,_initSidePanel: function() {
+	,_initSidePanel: function(){
 		var _this = this;
 
 		var customService = this._getCustomService();
@@ -1254,6 +1364,7 @@ var ModuleDisplay = $n2.Class({
 			this.module.displayIntro({
 				elem: $elem
 				,showService: this._getShowService()
+				,dispatchService: this.dispatchService
 				,onLoaded: function(){
 					_this._sendDispatchMessage({type:'loadedModuleContent'});
 				}
@@ -1291,37 +1402,38 @@ var ModuleDisplay = $n2.Class({
 		};
 	}
 	
-	,_isValidBounds: function(bounds){
-		if( !bounds.length ) return false;
-		if( bounds.length < 4 ) return false;
-		
-		if( bounds[0] < -180 || bounds[0] > 180 ) return false;
-		if( bounds[2] < -180 || bounds[2] > 180 ) return false;
-		if( bounds[1] < -90 || bounds[1] > 90 ) return false;
-		if( bounds[3] < -90 || bounds[3] > 90 ) return false;
-		
-		return true;
-	}
-	
 	,_installModuleTitle: function($elem, text){
 		var _this = this;
 		
-		var $a = $('<a class="nunaliit_module_title_link" href="#"></a>');
-		$a.text(text);
-		
-		$elem.empty().append($a);
-		
-		$a.click(function(e){
-			var d = _this.dispatchService;
-			if( d ){
-				d.send(DH,{
-					type: 'mapResetExtent'
-				});
+		$elem.empty();
+
+		var $a = $('<a class="nunaliit_module_title_link" href="#"></a>')
+			.addClass('nunaliit_module_title_link')
+			.attr('href','#')
+			.text(text)
+			.appendTo($elem)
+			.click(function(e){
+				var d = _this.dispatchService;
+				if( d ){
+					d.send(DH,{
+						type: 'mapResetExtent'
+					});
+				};
+				
+				// Follow link
+				return true;
+			});
+
+		var moduleId = this.moduleId;
+		if( moduleId ){
+			$a.addClass('n2s_insertModuleName');
+			$a.attr('nunaliit-document',moduleId);
+
+			var showService = this._getShowService();
+			if( showService ){
+				showService.fixElementAndChildren($elem);
 			};
-			
-			// Follow link
-			return true;
-		});
+		};
 	}
 	
 	,_installHelpButton: function(){

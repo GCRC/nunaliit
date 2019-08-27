@@ -197,29 +197,27 @@ function HandleWidgetAvailableRequests(m){
 function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'navigation' ){
 		var widgetOptions = m.widgetOptions;
-		var contentId = m.contentId;
 		var containerId = m.containerId;
 		var config = m.config;
 		
 		var $elem = null;
-		if( contentId ){
-			$elem = $('#'+contentId);
+		if( !containerId ){
+			throw new Error('containerId must be specified');
 		};
-		if( !$elem || $elem.length < 1 ){
-			$elem = $('<div>')
-				.appendTo( $('#'+containerId) );
-		};
+		$elem = $('#'+containerId);
 		
-		var options = {
-			elem: $elem
-		};
-		
-		if( config && config.directory ){
-			options.dispatchService = config.directory.dispatchService;
-		};
+		var options = {};
 		
 		if( widgetOptions ){
-			if( widgetOptions.sourceModelId ) options.sourceModelId = widgetOptions.sourceModelId;
+			for(var key in widgetOptions) {
+				var value = widgetOptions[key];
+				options[key] = value;
+			};
+		};
+
+		options.elem = $elem;
+		if( config && config.directory ){
+			options.dispatchService = config.directory.dispatchService;
 		};
 		
 		new NavigationWidget(options);

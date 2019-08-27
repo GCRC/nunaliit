@@ -1,0 +1,47 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+<div class="nunaliit_script_schema">
+<div class="title">
+	<div class="label n2s_localize">Script</div>
+	<div class="end"></div>
+</div>
+{{#nunaliit_script}}
+	{{#if name}}
+		<div class="nunaliit_script_schema_name">
+			<div class="label n2s_localize">Name</div>
+			<div class="value">{{name}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+{{/nunaliit_script}}
+{{#nunaliit_script}}
+	{{#if label}}
+		<div class="nunaliit_script_schema_label">
+			<div class="label n2s_localize">Label</div>
+			<div class="value">{{#:localize}}label{{/:localize}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+{{/nunaliit_script}}
+{{#nunaliit_script}}
+	{{#if type}}
+		<div class="nunaliit_script_schema_type">
+			<div class="label n2s_localize">Type</div>
+			<div class="value n2s_select" n2-choice="{{type}}">
+				<span class="n2s_choice n2s_localize" n2-choice="export">Export</span>
+				<span class="n2s_choiceDefault">{{type}}</span>
+			</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+{{/nunaliit_script}}
+{{#nunaliit_script}}
+	{{#if script}}
+		<div class="nunaliit_script_schema_script">
+			<div class="label n2s_localize">Script</div>
+			<div class="value n2s_preserveSpaces">{{script}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+{{/nunaliit_script}}
+</div>
+</div></div>

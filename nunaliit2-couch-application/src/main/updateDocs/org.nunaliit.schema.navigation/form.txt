@@ -1,0 +1,10 @@
+<div class="n2_documentForm"><div class="n2_layoutFloat">
+	{{#nunaliit_navigation}}
+		<div>
+			<div class="label n2s_localize">Title</div>
+			<div class="value">{{#:field}}title,localized{{/:field}}</div>
+			<div class="end"></div>
+		</div>
+	{{/nunaliit_navigation}}
+	
+</div></div>

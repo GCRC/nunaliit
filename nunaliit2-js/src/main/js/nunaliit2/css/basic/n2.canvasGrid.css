@@ -1,0 +1,67 @@
+.n2gridcanvas {
+	overflow-y: auto;
+	padding: 10px;
+	text-align: center;
+}
+
+.n2gridcanvas .n2gridcanvas_cell {
+	overflow: hidden;
+	width: 150px;
+    height: 150px;
+    display: inline-block;
+    margin: 2px;
+    position: relative;
+    cursor: pointer;
+    vertical-align: top; /* Required to fix alignment in safari */
+    background-color: #F9F9F9;
+}
+
+.n2gridcanvas .n2gridcanvas_cell.n2gridcanvas_cell_hovered {  	
+    background-color: #FAECC7;
+}
+
+.n2gridcanvas .n2gridcanvas_cell.n2gridcanvas_cell_selected {  	
+    background-color: #CCEFEF;
+}
+
+.n2gridcanvas .n2gridcanvas_cell .n2gridcanvas_cell_label > span > span{
+    position: absolute;
+    width: 100%;
+    height: 60%;
+    left: 0;
+    bottom: 0;
+    color: #000000;
+    text-align: center;
+    text-shadow: -1px 1px 2px #FFFFFF;
+    font-size: 1em;
+    font-weight: bold;
+    opacity: 0.9;
+    overflow-wrap: break-word;
+}
+
+/* div position and dimensions are defined on label to mask click events on the media view show service */ 
+.n2gridcanvas .n2gridcanvas_cell .n2gridcanvas_cell_label {
+    position: absolute;
+    height: 150px;
+    width: 150px;
+    top: 0;
+    left: 0;
+}
+
+.n2gridcanvas .n2gridcanvas_cell.n2gridcanvas_cell_selected .n2gridcanvas_cell_label span {
+	opacity: 1.0;
+}
+
+.n2gridcanvas .n2gridcanvas_cell .n2gridcanvas_cell_image img {
+    width: 150px;
+    height: 150px;
+    border-radius: 2px;
+    object-fit: cover;
+}
+
+.n2gridcanvas .n2gridcanvas_cell.n2gridcanvas_cell_selected .n2gridcanvas_cell_image img {
+    opacity: 0.4;
+    -moz-transform: scale(1.05);
+    -webkit-transform: scale(1.05);
+    transform: scale(1.05);
+}

@@ -204,7 +204,7 @@ var UserEditor = $n2.Class({
 	}
 	
 	,_getCouchServer: function(){
-		return this.userDb.server;
+		return this.userDb.getServer();
 	}
 
 	,_display: function(){
@@ -225,7 +225,6 @@ var UserEditor = $n2.Class({
 		
 		if( this.userSchema && this.schemaEditorService ){
 			usingAccordion = true;
-			$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
 
 			$('<h3><a href="#">'+_loc('Form View')+'</a></h3>').appendTo($editorsContainer);
 			var $schemaContainer = $('<div class="n2UserEdit_schemaEditor"></div>')

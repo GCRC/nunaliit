@@ -1,0 +1,13 @@
+[Unit]
+Description=nunaliit-@ATLAS_NAME@
+Requires=couchdb.service
+After=couchdb.service
+
+[Service]
+Type=simple
+User=nunaliit
+ExecStart=@NUNALIIT_BIN_DIR@/nunaliit --atlas-dir "@ATLAS_DIR@" run
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

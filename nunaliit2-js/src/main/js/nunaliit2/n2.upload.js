@@ -166,6 +166,7 @@ var Upload = $n2.Class({
 		
 		var opts = $.extend({
 				form: null
+				,uploadFile: null
 				,suppressInformationDialog: false
 				,onSuccess: function(res){}
 				,onError: function(errorMsg){ $n2.reportError(errorMsg); }
@@ -194,23 +195,31 @@ var Upload = $n2.Class({
 
 		if( opts.progressServer ) {
 			opts.progressServer.requestProgressKey(function(key){
-				performUpload($form, key);
+				performUpload($form, opts.uploadFile, key);
 			});
 		} else {
 			performUpload($form, null);
 		};
 		
-		function performUpload($form, progressKey) {
+		function performUpload($form, uploadFile, progressKey) {
 
 			$form.find('.n2UploadProgressId').remove();
 			if( progressKey ) {
 				$form.prepend( $('<input class="n2UploadProgressId" type="hidden" name="progressId" value="'+progressKey+'"/>') );
 			};
 
-			$form.ajaxSubmit({
-				type: 'post'
+			var formData = new FormData($form[0]);
+			if(opts.uploadFile !== null) {
+				formData.append('media', uploadFile);
+			}
+
+			$.ajax({
+				type: 'POST'
 				,url: opts.url + 'put'
+				,data: formData
 				,dataType: 'json'
+				,processData: false
+				,contentType: false
 				,success: function(res) {
 					$form.find('*').removeAttr('disabled');
 					if( res.error ) {

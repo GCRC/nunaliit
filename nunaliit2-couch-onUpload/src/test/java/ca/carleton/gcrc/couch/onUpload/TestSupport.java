@@ -78,6 +78,16 @@ public class TestSupport {
 		throw new Exception("Testing directory is full");
 	}
 	
+	static public File getTestDir(String name) throws Exception {
+		File runDir = getTestRunDir();
+		
+		File testDir = new File(runDir, name);
+		
+		testDir.mkdirs();
+		
+		return testDir;
+	}
+	
 	static public String getUserName() throws Exception {
 		String userName = null;
 		

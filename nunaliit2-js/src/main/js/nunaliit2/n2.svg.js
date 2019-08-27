@@ -50,7 +50,85 @@ var PredefinedGraphicsByName = {
      "square": [0,0, 0,1, 1,1, 1,0, 0,0],
      "triangle": [0,10, 10,10, 5,0, 0,10]
  };
- 
+
+//--------------------------------------------------------------------------
+var PredefinedMarkersByName = {
+	'endArrow': {
+		attributes: {
+			viewBox: '0 0 10 10'
+			,refX: '1'
+			,refY: '5'
+			,markerWidth: '6' 
+			,markerHeight: '6'
+			,orient: 'auto'
+		}
+		,path: 'M 0 0 L 10 5 L 0 10 z'
+	}
+};
+
+//--------------------------------------------------------------------------
+// List of SVG presentation attributes served in a map for fast access
+var presentationAttributeMap = {
+	'alignment-baseline': true
+	,'baseline-shift': true
+	,'clip': true
+	,'clip-path': true
+	,'clip-rule': true
+	,'color': true
+	,'color-interpolation': true
+	,'color-interpolation-filters': true
+	,'color-profile': true
+	,'color-rendering': true
+	,'cursor': true
+	,'direction': true
+	,'display': true
+	,'dominant-baseline': true
+	,'enable-background': true
+	,'fill': true
+	,'fill-opacity': true
+	,'fill-rule': true
+	,'filter': true
+	,'flood-color': true
+	,'flood-opacity': true
+	,'font-family': true
+	,'font-size': true
+	,'font-size-adjust': true
+	,'font-stretch': true
+	,'font-style': true
+	,'font-variant': true
+	,'font-weight': true
+	,'glyph-orientation-horizontal': true
+	,'glyph-orientation-vertical': true
+	,'image-rendering': true
+	,'kerning': true
+	,'letter-spacing': true
+	,'lighting-color': true
+	,'marker-end': true
+	,'marker-mid': true
+	,'marker-start': true
+	,'mask': true
+	,'opacity': true
+	,'overflow': true
+	,'pointer-events': true
+	,'shape-rendering': true
+	,'stop-color': true
+	,'stop-opacity': true
+	,'stroke': true
+	,'stroke-dasharray': true
+	,'stroke-dashoffset': true
+	,'stroke-linecap': true
+	,'stroke-linejoin': true
+	,'stroke-miterlimit': true
+	,'stroke-opacity': true
+	,'stroke-width': true
+	,'text-anchor': true
+	,'text-decoration': true
+	,'text-rendering': true
+	,'unicode-bidi': true
+	,'visibility': true
+	,'word-spacing': true
+	,'writing-mode': true
+};
 
 //--------------------------------------------------------------------------
 var Renderer = $n2.Class({
@@ -99,7 +177,7 @@ var Renderer = $n2.Class({
     _importGraphic: function (graphicName)  {
     	var defsElem = this._getDefsElem();
 
-        var graphicId = this.svgElemId + "-grpahic-" + graphicName;
+        var graphicId = this.svgElemId + "-graphic-" + graphicName;
         
         // Try to get by id
         var graphicNode = document.getElementById(graphicId);
@@ -156,6 +234,39 @@ var Renderer = $n2.Class({
         return graphicNode;
     },
 	
+    _importMarker: function (markerName)  {
+    	var defsElem = this._getDefsElem();
+
+        var markerId = this.svgElemId + "-marker-" + markerName;
+        
+        // Try to get by id
+        var markerNode = document.getElementById(markerId);
+        if( !markerNode ) {
+            var marker = PredefinedMarkersByName[markerName];
+            if (!marker) {
+                throw ('' + markerName + ' is not a valid marker name');
+            }
+
+            var markerNode = this._createNode('marker',markerId);
+			if( marker.attributes ){
+				for(var markerAttributeName in marker.attributes){
+					var markerAttributeValue = marker.attributes[markerAttributeName];
+					markerNode.setAttributeNS(null, markerAttributeName, markerAttributeValue);
+				};
+			};
+
+            if( marker.path ){
+                var path = this._createNode('path');
+    			path.setAttributeNS(null, 'd', marker.path);
+                markerNode.appendChild(path);
+            };
+
+            defsElem.appendChild(markerNode);
+        };
+        
+        return markerNode;
+    },
+	
 	_createNode: function(name, id){
         var node = document.createElementNS(XMLNS, name);
         if (id) {
@@ -209,6 +320,7 @@ $n2.svg = {
 	,setAttr: setAttr
 	,setAttrNS: setAttrNS
 	,addClass: addClass
+	,presentationAttributeMap: presentationAttributeMap
 };
 
 })(nunaliit2);

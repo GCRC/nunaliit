@@ -245,12 +245,13 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		this.couchProj = opts.couchProj;
 
 		this.editedDocument = {};
-		for(var key in opts.doc){
+		var clonedDoc = $n2.extend(true,{},opts.doc); // deep copy
+		for(var key in clonedDoc){
 			if( '__n2Source' === key ){
 				// Drop information about document source so it does not
 				// appear in the editor
 			} else {
-				this.editedDocument[key] = opts.doc[key];
+				this.editedDocument[key] = clonedDoc[key];
 			};
 		};
 		
@@ -319,17 +320,17 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		};
 	}
 	
-    ,_displayEditor: function(selectedSchema) {
-    	var _this = this;
-    	
-    	var data = this.editedDocument;
+	,_displayEditor: function(selectedSchema) {
+		var _this = this;
 		
-    	// Give an opportunity to adjust document before edit
-    	this._synchronousCall({
-    		type: 'editorStartDocumentEdit'
-    		,doc: data
-    	});
-    	
+		var data = this.editedDocument;
+		
+		// Give an opportunity to adjust document before edit
+		this._synchronousCall({
+			type: 'editorStartDocumentEdit'
+			,doc: data
+		});
+
 		// Update feature data with user info
 		$n2.couchDocument.adjustDocument(data);
 		
@@ -354,7 +355,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		if( editorCount > 1 ){
 			accordionNeeded = true;
 		};
-    	
+
 		var $div = this._getDiv();
 		$div.empty();
 		
@@ -368,8 +369,6 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			if( $n2.couchEdit.Constants.FORM_EDITOR === editorDesc
 			 && selectedSchema 
 			 && this.schemaEditorService ) {
-				$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
-	
 				// Accordion Header
 				if( accordionNeeded ) {
 					var $schemaHeader = $('<h3>')
@@ -655,10 +654,10 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		var $displayRelationsDiv = $div.find('.editorDisplayRelations');
 		if( $displayRelationsDiv.length < 1 ) return;
 
-    	var showService = this.showService;
-    	if( !showService ) return;
+		var showService = this.showService;
+		if( !showService ) return;
 
-    	// Compute relations
+		// Compute relations
 		var docIdMap = {};
 		if( data 
 		 && data.nunaliit_relations
@@ -772,15 +771,15 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		if( this.slideEditor ) {
 			this.slideEditor.refresh();
 		};
-    }
+	}
 	
-    ,_addGeometry: function(geom, proj) {
+	,_addGeometry: function(geom, proj) {
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
 			geom = geom.clone();
 			geom.transform(proj,this.couchProj);
 		};
-    	
+		
 		var geomData = this.editedDocument.nunaliit_geom;
 		if( !geomData ){
 			geomData = {
@@ -800,7 +799,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		if( this.slideEditor ) {
 			this.slideEditor.refresh();
 		};
-    }
+	}
 });
 
 //++++++++++++++++++++++++++++++++++++++++++++++
@@ -823,7 +822,7 @@ var CouchDocumentEditor = $n2.Class({
 	couchProj: null,
 	onCancelFn: null,
 	onCloseFn: null,
-	enableAddFile: null,
+	moduleEditInfo: null,
 	relatedDocProcess: null,
 	schemaEditor: null,
 	treeEditor: null,
@@ -839,6 +838,8 @@ var CouchDocumentEditor = $n2.Class({
 	editorSuppressSlideView: null,
 	editorSuppressTreeView: null,
 	editorSuppressFormView: null,
+	onRefreshFunctions: null,
+	enableAddFile: null,
 	
 	initialize: function(
 		opts_
@@ -854,18 +855,20 @@ var CouchDocumentEditor = $n2.Class({
 			,customService: null
 			,dispatchService: null
 			,dialogService: null
-			,initialLayers: ['public']
+			,initialLayers: []
 			,schema: null
 			,defaultEditSchema: null
 			,documentSource: null
 			,couchProj: null
 			,onCancelFn: function(doc){}
 			,onCloseFn: function(){}
-			,enableAddFile: false
+			,moduleEditInfo: null
 			,relatedDocProcess: null
 			
 			// buttonX....
 		}, opts_);
+		
+		var _this = this;
 		
 		this.panelName = opts.panelName;
 		this.uploadService = opts.uploadService;
@@ -883,7 +886,7 @@ var CouchDocumentEditor = $n2.Class({
 		this.couchProj = opts.couchProj;
 		this.onCancelFn = opts.onCancelFn;
 		this.onCloseFn = opts.onCloseFn;
-		this.enableAddFile = opts.enableAddFile;
+		this.moduleEditInfo = opts.moduleEditInfo;
 		this.relatedDocProcess = opts.relatedDocProcess;
 		
 		this.userButtons = [];
@@ -897,6 +900,8 @@ var CouchDocumentEditor = $n2.Class({
 		this.editorSuppressSlideView = false;
 		this.editorSuppressTreeView = false;
 		this.editorSuppressFormView = false;
+		this.enableAddFile = false;
+		this.onRefreshFunctions = [];
 		var cs = this.customService;
 		if( cs ){
 			this.editorSuppressSlideView = cs.getOption('editorSuppressSlideView',false);
@@ -905,6 +910,18 @@ var CouchDocumentEditor = $n2.Class({
 			
 			var flag = cs.getOption('editorEnableAddFile',false);
 			if( flag ){
+				this.enableAddFile = true;
+			};
+			
+			var onRefreshFunctions = cs.getOption('editorOnRefreshFunctions',[]);
+			onRefreshFunctions.forEach(function(onRefresh){
+				if( typeof onRefresh === 'function' ){
+					_this.onRefreshFunctions.push(onRefresh);
+				};
+			});
+		};
+		if( this.moduleEditInfo ){
+			if( this.moduleEditInfo.enableAddFile ){
 				this.enableAddFile = true;
 			};
 		};
@@ -944,17 +961,17 @@ var CouchDocumentEditor = $n2.Class({
 				geom.transform(olProj,_this.couchProj);
 				olGeom = geom;
 			};
-	    	var g = $n2.couchGeom.getCouchGeometry(olGeom);
-	    	_this.editedDocument.nunaliit_geom = g;
-	    	_this.currentGeometryWkt = g.wkt;
+			var g = $n2.couchGeom.getCouchGeometry(olGeom);
+			_this.editedDocument.nunaliit_geom = g;
+			_this.currentGeometryWkt = g.wkt;
 			
 			// Add default layers?
-	    	if( _this.initialLayers 
-	    	 && _this.initialLayers.length > 0 ) {
-	    		_this.editedDocument.nunaliit_layers = _this.initialLayers;
-	    	};
+			if( _this.initialLayers 
+			 && _this.initialLayers.length > 0 ) {
+				_this.editedDocument.nunaliit_layers = _this.initialLayers;
+			};
 
-	    	// Give a chance to external processes to modify document
+			// Give a chance to external processes to modify document
 			_this.dispatchService.synchronousCall(DH,{
 				type: 'preDocCreation'
 				,doc: _this.editedDocument
@@ -970,15 +987,16 @@ var CouchDocumentEditor = $n2.Class({
 		
 		this.editedDocument = {};
 		this.editedDocumentSchema = null;
-		for(var key in doc_){
+		var clonedDoc = $n2.extend(true,{},doc_); // deep copy
+		for(var key in clonedDoc){
 			if( '__n2Source' === key ) {
 				// Drop information about document source so it does not
 				// appear in the editor
 			} else {
-				this.editedDocument[key] = doc_[key];
+				this.editedDocument[key] = clonedDoc[key];
 			};
 		};
-		
+
 		// Obtain documentSource
 		this.editedDocumentSource = undefined;
 		if( this.dispatchService ){
@@ -1005,7 +1023,8 @@ var CouchDocumentEditor = $n2.Class({
 				// Create original object by augmenting current one with template
 				if( _this.editedDocumentSchema ) {
 					var template = _this.editedDocumentSchema.createObject({});
-					$n2.extend(true, _this.editedDocument, template);
+					$n2.extend(true, template, _this.editedDocument);
+					_this.editedDocument = template;
 				};
 				
 				// Give a chance to external processes to modify document
@@ -1045,9 +1064,9 @@ var CouchDocumentEditor = $n2.Class({
 					,dataType: 'text'
 					,success: function(wkt) {
 						$n2.couchGeom.updateDocumentWithWktGeometry({
-				    		doc: editedDoc
-				    		,wkt: wkt
-				    	});
+							doc: editedDoc
+							,wkt: wkt
+						});
 						startEditor();
 					}
 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -1145,24 +1164,24 @@ var CouchDocumentEditor = $n2.Class({
 			callbackFn(null);
 		};
 	},
-    
-    _displayEditor: function() {
-    	var _this = this;
-    	
-    	var selectedSchema = this.editedDocumentSchema;
+
+	_displayEditor: function() {
+		var _this = this;
+		
+		var selectedSchema = this.editedDocumentSchema;
 		
 		$('body').addClass('nunaliit_editing');
 		$('.n2_disable_on_edit')
 			.attr('disabled','disabled');
-    	
-    	var data = this.editedDocument;
-		
-    	// Give an opportunity to adjust document before edit
-    	this._synchronousCall({
-    		type: 'editorStartDocumentEdit'
-    		,doc: data
-    	});
-    	
+
+		var data = this.editedDocument;
+
+		// Give an opportunity to adjust document before edit
+		this._synchronousCall({
+			type: 'editorStartDocumentEdit'
+			,doc: data
+		});
+
 		// Update feature data with user info
 		$n2.couchDocument.adjustDocument(data);
 
@@ -1190,7 +1209,7 @@ var CouchDocumentEditor = $n2.Class({
 		if( viewCount > 1 ){
 			showAccordion = true;
 		};
-    	
+
 		var attributeDialog = $('#'+this.panelName);
 		attributeDialog.empty();
 		
@@ -1199,8 +1218,6 @@ var CouchDocumentEditor = $n2.Class({
 		attributeDialog.append($editorContainer);
 
 		if( showFormView ) {
-			$n2.schema.GlobalAttributes.disableKeyUpEvents = true;
-			
 			if( showAccordion ) {
 				var $schemaHeader = $('<h3>').appendTo($editorContainer);
 				$('<a>')
@@ -1326,6 +1343,7 @@ var CouchDocumentEditor = $n2.Class({
 				,uploadService: this.uploadService
 				,disableAddFile: disableAttachmentEditorButtons
 				,disableRemoveFile: disableAttachmentEditorButtons
+				,moduleEditInfo: this.moduleEditInfo
 				,onChangedFn: function(){
 					_this._adjustInternalValues(_this.editedDocument);
 					if( _this.schemaEditor ) {
@@ -1342,6 +1360,31 @@ var CouchDocumentEditor = $n2.Class({
 				}
 			});
 		};
+
+		if (window.cordova) {
+			var $currentLocationToggle = $('<label>')
+				.addClass('cordova-btn cordova-icon cordova-location-toggle width-200')
+				.appendTo($editorContainer)
+				.text(_loc('Current Location'))
+				.click(function(event) {
+					event.preventDefault();
+					_this.attachmentEditor.cordovaLocation = !_this.attachmentEditor.cordovaLocation;
+					if (!!_this.attachmentEditor.cordovaLocation) {
+						$(this).removeClass('icon-unchecked');
+						$(this).addClass('icon-checked');
+					} else {
+						$(this).removeClass('icon-checked');
+						$(this).addClass('icon-unchecked');
+					}
+				});
+			if (!!_this.attachmentEditor.cordovaLocation) {
+				$currentLocationToggle.removeClass('icon-unchecked');
+				$currentLocationToggle.addClass('icon-checked');
+			} else {
+				$currentLocationToggle.removeClass('icon-checked');
+				$currentLocationToggle.addClass('icon-unchecked');
+			}
+		}
 
 		var formButtons = $('<div class="editorButtons"></div>');
 		$editorContainer.append(formButtons);
@@ -1361,10 +1404,10 @@ var CouchDocumentEditor = $n2.Class({
 			formButtons.append(deleteBtn);
 			deleteBtn.button({icons:{primary:'ui-icon-trash'}});
 			deleteBtn.click(function(evt){
-		  		if( confirm( _loc('Do you really want to delete this feature?') ) ) {
-    				deletion(data);
-		  		};
-		  		return false;
+				if( confirm( _loc('Do you really want to delete this feature?') ) ) {
+					deletion(data);
+				};
+				return false;
 			});
 		};
 		
@@ -1413,20 +1456,25 @@ var CouchDocumentEditor = $n2.Class({
 			installUserButtonClick($uBtn, userButton);
 		};
 		
-    	
-    	function deletion(editedDocument) {
+		// First time to call refresh
+		var $editorContainer = _this._getEditorContainer();
+		_this.onRefreshFunctions.forEach(function(refreshFunction){
+			refreshFunction(_this.editedDocument, $editorContainer, _this);
+		});
+
+		function deletion(editedDocument) {
 			_this.documentSource.deleteDocument({
 				doc: _this.editedDocument
 				,onSuccess: function() {
 					_this._discardEditor({deleted:true});
 				}
 				,onError: function(err){
-		    		_this._enableControls();
+					_this._enableControls();
 					$n2.reportErrorForced('Unable to delete document: '+err);
 				}
 			});
-    	};
-    	
+		};
+
 		function installUserButtonClick($uBtn, userButton){
 			$uBtn.click(function(){
 				if( userButton.click ){
@@ -1436,29 +1484,46 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 	},
-    
-    _save: function(){
-    	
-    	var _this = this;
-    	
-		// Disable use of editor during uploading
-		this._disableControls();
+
+	_save: function(){
+		var _this = this;
 		
-		// Verify that upload server is available
-		if( this.uploadService ){
-			// Verify that server is available
-    		this.uploadService.getWelcome({
-				onSuccess: function(){ 
-					preSaveAttachmentEditor(); 
-				}
-				,onError: function(err) {
-		    		_this._enableControls();
-					$n2.reportErrorForced('Server is not available: '+err);
-				}
-			});
+		if (window.cordova) {
+			// alert if media documents are missing the attachment
+			if (!_this.attachmentEditor.cordovaAttachment &&
+					(_this.attachmentEditor.doc.nunaliit_schema === 'demo_media' || _this.attachmentEditor.doc.nunaliit_schema === 'media' )) {
+				alert(_loc('A file must be selected or recorded'));
+				return;
+			} else {
+				// add the attachments
+				_this.editedDocument.nunaliit_attachments = null;
+				_this.editedDocument.nunaliit_mobile_attachments = _this.attachmentEditor.cordovaAttachment;
+				
+				// add the location flag
+				_this.editedDocument.nunaliit_mobile_needs_new_location = _this.attachmentEditor.cordovaLocation;
+				
+				updateDocument();
+			}
 		} else {
-			preSaveAttachmentEditor();
-		};
+			// Disable use of editor during uploading
+			this._disableControls();
+			
+			// Verify that upload server is available
+			if( this.uploadService ){
+				// Verify that server is available
+					this.uploadService.getWelcome({
+					onSuccess: function(){ 
+						preSaveAttachmentEditor(); 
+					}
+					,onError: function(err) {
+							_this._enableControls();
+						$n2.reportErrorForced('Server is not available: '+err);
+					}
+				});
+			} else {
+				preSaveAttachmentEditor();
+			};
+		}
 		
 		function preSaveAttachmentEditor() {
 			if( _this.attachmentEditor ){
@@ -1496,13 +1561,43 @@ var CouchDocumentEditor = $n2.Class({
 			
 			updateDocument();
 		};
+		function verifyDoc(doc){
 			
+			correctArray('doc', doc);
+			function correctArray(key, node){
+				if ( typeof(node) === 'object' ){
+					if (Array.isArray(node) && node.length > 0){
+						var notAllNull = false;
+						for (var i=0,e=node.length;i<e;i++){
+							notAllNull |= (true && node[i])
+						}
+						if (!notAllNull){
+							$n2.log('An all null Array '+ key + ' has been detected and corrected');
+							node.length = 0;
+						}
+					} else {
+						for (var k in node){
+							var v = node[k];
+							if (v){
+								correctArray(k, v);
+							}
+						}
+					}
+				} else {
+					return;
+				}
+			}
+		};
 		function updateDocument() {
 			var isSubmissionDs = false;
 			if( _this.documentSource.isSubmissionDataSource ){
 				isSubmissionDs = true;
 			};
 
+			//Double check null in array for issue#802
+			
+			verifyDoc(_this.editedDocument);
+			
 			// Create or update document
 			if( _this.isInsert ) {
 				// This is an insert
@@ -1512,7 +1607,7 @@ var CouchDocumentEditor = $n2.Class({
 						postSaveAttachmentEditor(updatedDoc, true, isSubmissionDs);
 					}
 					,onError: function(err){
-			    		_this._enableControls();
+						_this._enableControls();
 						$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
 					}
 				});
@@ -1525,27 +1620,31 @@ var CouchDocumentEditor = $n2.Class({
 						postSaveAttachmentEditor(updatedDoc, false, isSubmissionDs);
 					}
 					,onError: function(err){
-			    		_this._enableControls();
+						_this._enableControls();
 						$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
 					}
 				});
 			};
 		};
-		
+
 		function postSaveAttachmentEditor(editedDocument, inserted, isSubmissionDs) {
-			if( _this.attachmentEditor ){
-				_this.attachmentEditor.performPostSavingActions({
-					onSuccess: function(doc){
-						completeSave(editedDocument, inserted, isSubmissionDs);
-					}
-					,onError: function(err){
-			    		_this._enableControls();
-						$n2.reportErrorForced(err);
-					}
-				});
-			} else {
+			if (window.cordova) {
 				completeSave(editedDocument, inserted, isSubmissionDs);
-			};
+			} else {
+				if( _this.attachmentEditor ){
+					_this.attachmentEditor.performPostSavingActions({
+						onSuccess: function(doc){
+							completeSave(editedDocument, inserted, isSubmissionDs);
+						}
+						,onError: function(err){
+							_this._enableControls();
+							$n2.reportErrorForced(err);
+						}
+					});
+				} else {
+					completeSave(editedDocument, inserted, isSubmissionDs);
+				};
+			}
 		};
 
 		function completeSave(editedDocument, inserted, isSubmissionDs) {
@@ -1560,8 +1659,8 @@ var CouchDocumentEditor = $n2.Class({
 				discardOpts.updated = true;
 			};
 			_this._discardEditor(discardOpts);
-    	};
-    },
+		};
+	},
 	
 	_addRelationDialog: function() {
 		var _this = this;
@@ -1574,174 +1673,174 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 	},
-    
-    _addRelation: function(relDocId){
-    	var data = this.editedDocument;
 
-    	if( data 
-    	 && data.nunaliit_source 
-    	 && data.nunaliit_source.doc === relDocId ){
-    		return;
-    	};
+	_addRelation: function(relDocId){
+		var data = this.editedDocument;
 
-    	if( data 
-    	 && data.nunaliit_relations 
-    	 && data.nunaliit_relations.length ){
-    		for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
-    			var rel = data.nunaliit_relations[i];
-    			if( rel.doc === relDocId ){
-    				return;
-    			};
-    		};
-    	};
-    	
-    	if( data ){
-    		if( !data.nunaliit_relations ){
-    			data.nunaliit_relations = [];
-    		};
-    		
-    		data.nunaliit_relations.push({
-    			nunaliit_type: 'reference'
-    			,doc: relDocId
-    		});
-    		
-    		this.refresh();
-    	};
-    },
-    
-    _removeRelation: function(relDocId){
-    	var data = this.editedDocument;
-    	var refreshRequired = false;
-    	
-    	if( data 
-    	 && data.nunaliit_source 
-    	 && data.nunaliit_source.doc === relDocId ){
-    		delete data.nunaliit_source;
-    		refreshRequired = true;
-    	};
+		if( data 
+		 && data.nunaliit_source 
+		 && data.nunaliit_source.doc === relDocId ){
+			return;
+		};
 
-    	if( data 
-    	 && data.nunaliit_relations 
-    	 && data.nunaliit_relations.length ){
-    		var relRemoved = false;
-    		var newRels = [];
-    		for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
-    			var rel = data.nunaliit_relations[i];
-    			if( rel.doc === relDocId ){
-    				relRemoved = true;
-    			} else {
-    				newRels.push(rel);
-    			};
-    		};
-    		
-    		if( newRels.length < 1 ){
-        		delete data.nunaliit_relations;
-        		refreshRequired = true;
-    		} else if( relRemoved ){
-    			data.nunaliit_relations = newRels;
-        		refreshRequired = true;
-    		};
-    	};
-    	
-    	if( refreshRequired ){
-    		this.refresh();
-    	};
-    },
-    
-    _manageLayersDialog: function(){
-    	var _this = this;
-    	var data = this.editedDocument;
-    	var layers = data.nunaliit_layers;
-    	if( !layers ){
-    		layers = [];
-    	};
-    	if( this.dialogService ){
-    		this.dialogService.selectLayersDialog({
-        		currentLayers: layers
-    			,onSelected: function(selectedLayers){
-    	    		if( selectedLayers.length < 1 ){
-    	    			if( data.nunaliit_layers ){
-    	    				delete data.nunaliit_layers;
-    	    			};
-    	    		} else {
-    	    			data.nunaliit_layers = selectedLayers;
-    	    		};
-    	    		_this.refresh();
-    			}
-    		});
-    	};
-    },
-    
-    _removeAttachment: function(attNameToRemove){
-    	var data = this.editedDocument;
-    	
-    	// Accumulate all the keys that must be removed
-    	var keys = {};
-    	if( data 
-    	 && data.nunaliit_attachments 
-    	 && data.nunaliit_attachments.files ){
-    		for(var attName in data.nunaliit_attachments.files){
-    			var att = data.nunaliit_attachments.files[attName];
-    			if( attName === attNameToRemove ){
-    				keys[attName] = true;
-    			} else if( att.source === attNameToRemove ){
-    				// Remove associated thumbnail and original
-    				keys[attName] = true;
-    			};
-    		};
-    	};
-    	
-    	// Delete necessary keys
-    	var refreshRequired = false;
-    	var attName = null;
-    	for(attName in keys){
-    		if( data._attachments && data._attachments[attName] ){
-    			delete data._attachments[attName];
-    			refreshRequired = true;
-    		};
-    		if( data.nunaliit_attachments.files[attName] ){
-    			delete data.nunaliit_attachments.files[attName];
-    			refreshRequired = true;
-    		};
-    	};
-    	
-    	// Remove _attachments if empty
-    	if( data._attachments ){
-    		var empty = true;
-    		for(attName in data._attachments){
-    			empty = false;
-    		};
-    		if( empty ){
-    			delete data._attachments;
-    			refreshRequired = true;
-    		};
-    	};
-    	
-    	// Remove nunaliit_attachments if empty
-    	if( data.nunaliit_attachments ){
-    		var empty = true;
-    		if( data.nunaliit_attachments.files ) {
-	    		for(attName in data.nunaliit_attachments.files){
-	    			empty = false;
-	    		};
-    		};
-    		if( empty ){
-    			delete data.nunaliit_attachments;
-    			refreshRequired = true;
-    		};
-    	};
-    	
-    	if( refreshRequired ){
-    		this.refresh();
-    	};
-    },
-    
-    _cancelEdit: function(){
+		if( data 
+		 && data.nunaliit_relations 
+		 && data.nunaliit_relations.length ){
+			for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
+				var rel = data.nunaliit_relations[i];
+				if( rel.doc === relDocId ){
+					return;
+				};
+			};
+		};
+		
+		if( data ){
+			if( !data.nunaliit_relations ){
+				data.nunaliit_relations = [];
+			};
+			
+			data.nunaliit_relations.push({
+				nunaliit_type: 'reference'
+				,doc: relDocId
+			});
+			
+			this.refresh();
+		};
+	},
+
+	_removeRelation: function(relDocId){
+		var data = this.editedDocument;
+		var refreshRequired = false;
+		
+		if( data 
+		 && data.nunaliit_source 
+		 && data.nunaliit_source.doc === relDocId ){
+			delete data.nunaliit_source;
+			refreshRequired = true;
+		};
+
+		if( data 
+		 && data.nunaliit_relations 
+		 && data.nunaliit_relations.length ){
+			var relRemoved = false;
+			var newRels = [];
+			for(var i=0,e=data.nunaliit_relations.length; i<e; ++i){
+				var rel = data.nunaliit_relations[i];
+				if( rel.doc === relDocId ){
+					relRemoved = true;
+				} else {
+					newRels.push(rel);
+				};
+			};
+			
+			if( newRels.length < 1 ){
+				delete data.nunaliit_relations;
+				refreshRequired = true;
+			} else if( relRemoved ){
+				data.nunaliit_relations = newRels;
+				refreshRequired = true;
+			};
+		};
+		
+		if( refreshRequired ){
+			this.refresh();
+		};
+	},
+
+	_manageLayersDialog: function(){
+		var _this = this;
+		var data = this.editedDocument;
+		var layers = data.nunaliit_layers;
+		if( !layers ){
+			layers = [];
+		};
+		if( this.dialogService ){
+			this.dialogService.selectLayersDialog({
+				currentLayers: layers
+				,onSelected: function(selectedLayers){
+					if( selectedLayers.length < 1 ){
+						if( data.nunaliit_layers ){
+							delete data.nunaliit_layers;
+						};
+					} else {
+						data.nunaliit_layers = selectedLayers;
+					};
+					_this.refresh();
+				}
+			});
+		};
+	},
+
+	_removeAttachment: function(attNameToRemove){
+		var data = this.editedDocument;
+		
+		// Accumulate all the keys that must be removed
+		var keys = {};
+		if( data 
+		 && data.nunaliit_attachments 
+		 && data.nunaliit_attachments.files ){
+			for(var attName in data.nunaliit_attachments.files){
+				var att = data.nunaliit_attachments.files[attName];
+				if( attName === attNameToRemove ){
+					keys[attName] = true;
+				} else if( att.source === attNameToRemove ){
+					// Remove associated thumbnail and original
+					keys[attName] = true;
+				};
+			};
+		};
+		
+		// Delete necessary keys
+		var refreshRequired = false;
+		var attName = null;
+		for(attName in keys){
+			if( data._attachments && data._attachments[attName] ){
+				delete data._attachments[attName];
+				refreshRequired = true;
+			};
+			if( data.nunaliit_attachments.files[attName] ){
+				delete data.nunaliit_attachments.files[attName];
+				refreshRequired = true;
+			};
+		};
+		
+		// Remove _attachments if empty
+		if( data._attachments ){
+			var empty = true;
+			for(attName in data._attachments){
+				empty = false;
+			};
+			if( empty ){
+				delete data._attachments;
+				refreshRequired = true;
+			};
+		};
+		
+		// Remove nunaliit_attachments if empty
+		if( data.nunaliit_attachments ){
+			var empty = true;
+			if( data.nunaliit_attachments.files ) {
+				for(attName in data.nunaliit_attachments.files){
+					empty = false;
+				};
+			};
+			if( empty ){
+				delete data.nunaliit_attachments;
+				refreshRequired = true;
+			};
+		};
+		
+		if( refreshRequired ){
+			this.refresh();
+		};
+	},
+
+	_cancelEdit: function(){
 		this._dispatch({
 			type: 'editCancel'
 			,doc: this.editedDocument
 		});
-    },
+	},
 
 	// Restores feature geometry before discarding the form
 	performCancellation: function(opts_) {
@@ -1785,11 +1884,15 @@ var CouchDocumentEditor = $n2.Class({
 		if( null == this.editedDocument ) {
 			return;
 		};
-
+		
+		var originalDocument = this.originalDocument;
+		var editedDocument = this.editedDocument;
+		this.editedDocument = null;
+		
 		var $editorContainer = this._getEditorContainer();
 		$editorContainer.remove();
 
-		this.onCloseFn(this.editedDocument, this, {
+		this.onCloseFn(editedDocument, this, {
 			saved: opts.saved
 			,inserted: opts.inserted
 			,updated: opts.updated
@@ -1798,12 +1901,18 @@ var CouchDocumentEditor = $n2.Class({
 		});
 		
 		if( !opts.suppressEvents ) {
-			// Send document only if it was saved or already
-			// existed.
-			var docId = undefined;
 			var doc = undefined;
-			if( this.editedDocument._id ){
-				doc = this.editedDocument;
+			var docId = undefined;
+			if( opts.cancelled ) {
+				// If cancelled, send original document
+				if( originalDocument && originalDocument._id ){
+					// Send a document only if it already existed
+					doc = originalDocument;
+					docId = doc._id;
+				};
+			} else if( opts.saved && editedDocument && editedDocument._id ) {
+				// If saved, send edited document
+				doc = editedDocument;
 				docId = doc._id;
 			};
 			
@@ -1820,7 +1929,6 @@ var CouchDocumentEditor = $n2.Class({
 			});
 		};
 		
-		this.editedDocument = null;
 		this.editorContainerId = null;
 		
 		$('body').removeClass('nunaliit_editing');
@@ -1862,9 +1970,9 @@ var CouchDocumentEditor = $n2.Class({
 		var $displayRelationsDiv = $editorContainer.find('.editorDisplayRelations');
 		if( $displayRelationsDiv.length < 1 ) return;
 
-    	var showService = this.showService;
+		var showService = this.showService;
 
-    	// Compute relations
+		// Compute relations
 		var docIdMap = {};
 		if( data 
 		 && data.nunaliit_relations
@@ -1935,7 +2043,7 @@ var CouchDocumentEditor = $n2.Class({
 	},
 	
 	onEditorObjectChanged: function(obj) {
-		if( typeof(OpenLayers) === 'undefined' ) return;
+		var _this = this;
 		
 		var wkt = undefined;
 		if( obj 
@@ -1944,7 +2052,8 @@ var CouchDocumentEditor = $n2.Class({
 		};
 			
 		// Check if editor has changed the geometry's WKT
-		if( this.currentGeometryWkt !== wkt ) {
+		if( typeof OpenLayers  !== 'undefined' 
+		 && this.currentGeometryWkt !== wkt ) {
 		
 			this.currentGeometryWkt = wkt;
 
@@ -1961,16 +2070,21 @@ var CouchDocumentEditor = $n2.Class({
 				,_origin: this
 			});
 		};
+		
+		var $editorContainer = this._getEditorContainer();
+		this.onRefreshFunctions.forEach(function(refreshFunction){
+			refreshFunction(_this.editedDocument, $editorContainer, _this);
+		});
 	},
 	
-    _geometryModified: function(docId, geom, proj) {
+	_geometryModified: function(docId, geom, proj) {
 
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
 			geom = geom.clone();
 			geom.transform(proj,this.couchProj);
 		};
-    	
+
 		var geomData = this.editedDocument.nunaliit_geom;
 		geomData.wkt = geom.toString();
 		$n2.couchGeom.updatedGeometry(geomData);
@@ -1984,9 +2098,9 @@ var CouchDocumentEditor = $n2.Class({
 		if( this.slideEditor ) {
 			this.slideEditor.refresh();
 		};
-    },
+	},
 	
-    _addGeometry: function(geom, proj) {
+	_addGeometry: function(geom, proj) {
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
 			geom = geom.clone();
@@ -2057,6 +2171,18 @@ var CouchDocumentEditor = $n2.Class({
 			
 		} else if( m.type === 'mapGeometryAdded' ){
 			this._addGeometry(m.geometry, m.projection);
+
+		} else if( 'historyIsHashChangePermitted' === m.type ) {
+			if( null != this.editedDocument ) {
+				if( confirm( _loc('Do you wish to leave document editor?') ) ) {
+					// OK, cancel editor
+					this._cancelEdit();
+					
+				} else {
+					// Do not allow change in hash
+					m.permitted = false;
+				};
+			};
 		};
 	}
 });
@@ -2095,8 +2221,6 @@ var CouchEditService = $n2.Class({
 	
 	dialogService: null,
 	
-	enableAddFile: null,
-	
 	initialLayers: null,
 	
 	userButtons: null,
@@ -2106,6 +2230,8 @@ var CouchEditService = $n2.Class({
 	isFormEditor: null,
 
 	currentEditor: null,
+
+	moduleEditInfo: null,
 
 	initialize: function(opts_) {
 		var opts = $n2.extend({
@@ -2124,8 +2250,7 @@ var CouchEditService = $n2.Class({
 			,customService: null
 			,dialogService: null
 			,createDocProcess: null
-			,enableAddFile: false
-			,initialLayers: ['public']
+			,initialLayers: []
 		},opts_);
 		
 		var _this = this;
@@ -2136,7 +2261,6 @@ var CouchEditService = $n2.Class({
 		this.couchProj = opts.couchProj;
 		this.options.schema = opts.schema;
 		this.defaultEditSchema = opts.defaultEditSchema;
-		this.enableAddFile = opts.enableAddFile;
 		this.initialLayers = opts.initialLayers;
 		this.schemaRepository = opts.schemaRepository;
 		this.uploadService = opts.uploadService;
@@ -2167,6 +2291,7 @@ var CouchEditService = $n2.Class({
 			// The following events will be routed to the current editor
 			dispatcher.register(DH, 'editGeometryModified', f);
 			dispatcher.register(DH, 'mapGeometryAdded', f);
+			dispatcher.register(DH, 'historyIsHashChangePermitted', f);
 		};
 		
 		// Service defined buttons
@@ -2179,29 +2304,33 @@ var CouchEditService = $n2.Class({
 		};
 	},
 
-    showDocumentForm: function(document_, editorOptions_) {
-    	if( null != this.currentEditor ) {
-    		this.currentEditor.performCancellation();
-    		this.currentEditor = null;
-    	};
-    	
-    	this.currentEditor = this._createEditor(editorOptions_);
-    	this.currentEditor.startDocumentEditing(
-    		document_
-    		);
+	showDocumentForm: function(document_, editorOptions_) {
+		if( null != this.currentEditor ) {
+			this.currentEditor.performCancellation();
+			this.currentEditor = null;
+		};
+		
+		this.currentEditor = this._createEditor(editorOptions_);
+		this.currentEditor.startDocumentEditing(
+			document_
+			);
 	},
-    
-    _createEditor: function(o_){
-    	
-    	o_ = o_ ? o_ : {};
-    	
-    	var opts = {
+
+	configureOptions: function(editInfo){
+		this.moduleEditInfo = editInfo;
+	},
+
+	_createEditor: function(o_){
+		
+		o_ = o_ ? o_ : {};
+		
+		var opts = {
 			panelName: o_.panelName ? o_.panelName : this.panelName
 			,initialLayers: o_.initialLayers ? o_.initialLayers : this.initialLayers
-			,enableAddFile: o_.enableAddFile ? o_.enableAddFile : this.enableAddFile
 			,schema: o_.schema ? o_.schema : this.options.schema
 			,onCancelFn: o_.onCancelFn
 			,onCloseFn: o_.onCloseFn
+			,moduleEditInfo: this.moduleEditInfo
 			,uploadService: this.uploadService
 			,searchService: this.searchService
 			,showService: this.showService
@@ -2216,38 +2345,38 @@ var CouchEditService = $n2.Class({
 			,relatedDocProcess: this.relatedDocProcess
 			
 			// buttonX....
-    	};
-    	
-    	// Add service buttons
-    	for(var key in this.userButtons){
-    		opts[key] = this.userButtons[key];
-    	};
+		};
+		
+		// Add service buttons
+		for(var key in this.userButtons){
+			opts[key] = this.userButtons[key];
+		};
 
-    	// Add caller buttons
+		// Add caller buttons
 		var label = 'button';
 		for(var key in o_) {
 			if( key.substr(0,label.length) === label ) {
 				opts[key] = o_[key];
 			};
 		};
-    	
-    	var editor = new CouchDocumentEditor(opts);
-    	
-    	return editor;
-    },
+		
+		var editor = new CouchDocumentEditor(opts);
+		
+		return editor;
+	},
 
 	cancelDocumentForm: function(opts) {
-    	if( null != this.currentEditor ) {
-    		this.currentEditor.performCancellation(opts);
-    		this.currentEditor = null;
-    	};
+		if( null != this.currentEditor ) {
+			this.currentEditor.performCancellation(opts);
+			this.currentEditor = null;
+		};
 	},
 	
 	saveDocumentForm: function(opts){
-    	if( null != this.currentEditor ) {
-    		this.currentEditor.performSave(opts);
-    		this.currentEditor = null;
-    	};
+		if( null != this.currentEditor ) {
+			this.currentEditor.performSave(opts);
+			this.currentEditor = null;
+		};
 	},
 
 	setPanelName: function(panelName) {
@@ -2297,13 +2426,13 @@ var CouchEditService = $n2.Class({
 			return;
 		};
 		
-    	if( null != this.currentEditor ) {
-    		this.currentEditor.performCancellation();
-    		this.currentEditor = null;
-    	};
-    	
-    	this.currentEditor = this._createEditor();
-    	this.currentEditor.startEditingFromGeometry(olGeom, olProj);
+		if( null != this.currentEditor ) {
+			this.currentEditor.performCancellation();
+			this.currentEditor = null;
+		};
+		
+		this.currentEditor = this._createEditor();
+		this.currentEditor.startEditingFromGeometry(olGeom, olProj);
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -2336,8 +2465,8 @@ var CouchEditService = $n2.Class({
 			
 		} else if( this.currentEditor
 		 && this.currentEditor.isEditing() ) {
-    		this.currentEditor._handle(m);
-    	};
+			this.currentEditor._handle(m);
+		};
 	}
 });
 
@@ -2528,7 +2657,33 @@ var AttachmentEditor = $n2.Class({
 	disableAddFile: null,
 	
 	disableRemoveFile: null,
-	
+
+	moduleEditInfo: null,
+
+	recordingButton: null,
+
+	recordingStatus: null,
+
+	recorder: null,
+
+	recordingStream: null,
+
+	recordingInterval: null,
+
+	currentRecordingType: null,
+
+	maxAudioRecordingLengthSeconds: null,
+
+	maxVideoRecordingLengthSeconds: null,
+
+	recordVideoSize: null,
+
+	mediaElementEl: null,
+
+	cordovaAttachment: null,
+
+	cordovaLocation: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			doc: null
@@ -2538,6 +2693,7 @@ var AttachmentEditor = $n2.Class({
 			,onChangedFn: function(){}
 			,disableAddFile: false
 			,disableRemoveFile: false
+			,moduleEditInfo: undefined
 		},opts_);
 		
 		this.doc = opts.doc;
@@ -2546,15 +2702,60 @@ var AttachmentEditor = $n2.Class({
 		this.onChangedFn = opts.onChangedFn;
 		this.disableAddFile = opts.disableAddFile;
 		this.disableRemoveFile = opts.disableRemoveFile;
-		
+		this.moduleEditInfo = opts.moduleEditInfo;
+
 		this.creationAttachmentNames = [];
 		this.compulsoryAttachmentNames = [];
+
+		this.maxAudioRecordingLengthSeconds = 300;
+		this.maxVideoRecordingLengthSeconds = 300;
+		this.recordVideoSize = {width: 640, height: 480};
+		
+		if( this.moduleEditInfo ){
+			if( typeof this.moduleEditInfo.maxAudioRecordingLengthSeconds === 'number' ){
+				if( this.moduleEditInfo.maxAudioRecordingLengthSeconds > 0 ){
+					this.maxAudioRecordingLengthSeconds = this.moduleEditInfo.maxAudioRecordingLengthSeconds;
+				};
+			};
+			if( typeof this.moduleEditInfo.maxVideoRecordingLengthSeconds === 'number' ){
+				if( this.moduleEditInfo.maxVideoRecordingLengthSeconds > 0 ){
+					this.maxVideoRecordingLengthSeconds = this.moduleEditInfo.maxVideoRecordingLengthSeconds;
+				};
+			};
+			if( typeof this.moduleEditInfo.recordVideoSize === 'object' ){
+				this.recordVideoSize = $n2.extend(
+						this.recordVideoSize, 
+						this.moduleEditInfo.recordVideoSize
+					);
+			};
+		};
 		
 		var $elem = $(opts.elem);
 		$elem.addClass('attachmentEditor');
 
 		this.elemId = $n2.utils.getElementIdentifier( $elem );
-		
+
+		//load configuration
+		if( this.doc
+			&& !this.doc._rev) {
+			if(typeof this.doc.nunaliit_maxAudioRecordingLengthSeconds !== 'undefined') {
+				this.maxAudioRecordingLengthSeconds = this.doc.nunaliit_maxAudioRecordingLengthSeconds;
+				delete this.doc.nunaliit_maxAudioRecordingLengthSeconds;
+			}
+			if(typeof this.doc.nunaliit_maxVideoRecordingLengthSeconds !== 'undefined') {
+				this.maxVideoRecordingLengthSeconds = this.doc.nunaliit_maxVideoRecordingLengthSeconds;
+				delete this.doc.nunaliit_maxVideoRecordingLengthSeconds;
+			}
+			if(typeof this.doc.nunaliit_recordVideoSize !== 'undefined') {
+				var videoSizeParts = this.doc.nunaliit_recordVideoSize.split('x');
+				this.recordVideoSize = {width: videoSizeParts[0], height: videoSizeParts[1]};
+				delete this.doc.nunaliit_recordVideoSize;
+			}
+		}
+
+		// cordovaLocation toggle is enabled for new documents and disabled for edits
+		this.cordovaLocation = !this.doc._rev;
+
 		// When a document is first created, if attachments are already present,
 		// this is because they were created from schema.
 		var compulsory = true;
@@ -2564,7 +2765,7 @@ var AttachmentEditor = $n2.Class({
 			if( typeof this.doc.nunaliit_attachments._compulsory !== 'undefined' ){
 				compulsory = this.doc.nunaliit_attachments._compulsory;
 			};
-			
+
 			if( this.doc.nunaliit_attachments.files ){
 				for(var attName in this.doc.nunaliit_attachments.files){
 					var att = this.doc.nunaliit_attachments.files[attName];
@@ -2671,6 +2872,16 @@ var AttachmentEditor = $n2.Class({
 				};
 			};
 		};
+
+		if (!attNames.length && window.cordova) {
+			if (this.doc.nunaliit_mobile_attachments) {
+				this.cordovaAttachment = this.doc.nunaliit_mobile_attachments;
+				this._addCreationAttachmentElement({
+					attName: this.cordovaAttachment
+					,label: _loc('File')
+				});
+			}
+		}
 	},
 	
 	printButtons: function(opts_){
@@ -2712,7 +2923,7 @@ var AttachmentEditor = $n2.Class({
 		var documentSource = this.documentSource;
 		
 		var $elem = this._getElem();
-		
+
 		// Verify that all compulsory files are provided
 		var missingAttachment = null;
 		for(var i=0,e=this.compulsoryAttachmentNames.length; i<e; ++i){
@@ -2720,14 +2931,25 @@ var AttachmentEditor = $n2.Class({
 			var $form = $elem.find('.attachmentEditor_att_' + $n2.utils.stringToHtmlId(attName));
 			var $file = $form.find('input[type="file"]');
 			var fileName = $file.val();
+			if(!fileName) {
+				if(hasMediaPlayerFile($form)) {
+					fileName = 'recordedFile';
+				}
+			}
+
 			if( !fileName ){
 				missingAttachment = attName;	
 			};
 		};
 		if( missingAttachment ){
-			opts.onError( _loc('A file must be selected') );
+			opts.onError( _loc('A file must be selected or recorded') );
 			return;
 		};
+
+		//Stop video capturing with close of the form
+		if(typeof _this.recordingStream !== 'undefined' && _this.recordingStream != null) {
+			_this.recordingStream.stop();
+		}
 		
 		// Remove forms that do not have a file assigned
 		for(var i=0,e=this.creationAttachmentNames.length; i<e; ++i){
@@ -2735,6 +2957,11 @@ var AttachmentEditor = $n2.Class({
 			var $form = $elem.find('.attachmentEditor_att_' + $n2.utils.stringToHtmlId(attName));
 			var $file = $form.find('input[type="file"]');
 			var fileName = $file.val();
+			if(!fileName) {
+				if(hasMediaPlayerFile($form)) {
+					fileName = 'recordedFile';
+				}
+			}
 			if( !fileName ){
 				$form.remove();
 				
@@ -2835,8 +3062,26 @@ var AttachmentEditor = $n2.Class({
 			
 			opts.onSuccess();
 		};
+
+		function hasMediaPlayerFile($form) {
+			var audioFile = $form.find('audio');
+			var videoFile = $form.find('video');
+			var mediaPlayer = null;
+			if(audioFile.length > 0) {
+				mediaPlayer = audioFile[0];
+			} else if(videoFile.length > 0) {
+				mediaPlayer = videoFile[0];
+			}
+			if(mediaPlayer &&
+				mediaPlayer.currentSrc !== null &&
+				mediaPlayer.currentSrc !== '' &&
+				mediaPlayer.srcObject === null) {
+					return true;
+			}
+			return false;
+		}
 	},
-	
+
 	performPostSavingActions: function(opts_){
 		var opts = $n2.extend({
 			onSuccess: function(doc){}
@@ -2874,16 +3119,37 @@ var AttachmentEditor = $n2.Class({
 		
 		var $fileInput = $form.find('input[type="file"]');
 		var filename = $fileInput.val();
+		var mediaFile = null;
+		//generate file data for mp3 file.
+		if(!filename) {
+			var audio = $form.find('audio');
+			if(audio.length > 0) {
+				audio = audio[0];
+				mediaFile = mediaTagToFile(audio, 'audio/mp3', '.mp3');
+				filename = 'audio.mp3';
+			}
+		}
+		if(!filename) {
+			var video = $form.find('video');
+			if(video.length > 0) {
+				video = video[0];
+				if(video.currentSrc !== null && video.currentSrc !== '' && video.srcObject === null) {
+					mediaFile = mediaTagToFile(video, 'video/webm', '.webm');
+					filename = 'video.webm';
+				}
+			}
+		}
+
 		if( !filename || !att || !uploadId ){
 			$form.remove();
 			continueUpload();
 			
 		} else {
 			// Upload file via the upload service.
-
 			// Perform actual upload
 			this.uploadService.submitForm({
 				form: $form
+				,uploadFile: mediaFile
 				,suppressInformationDialog: true
 				,onSuccess: function(){
 					$form.remove();
@@ -2894,10 +3160,57 @@ var AttachmentEditor = $n2.Class({
 				}
 			});
 		};
-		
+
 		function continueUpload(){
 			_this.performPostSavingActions(opts_);
 		};
+
+		function mediaTagToFile(element, mediaType, extension) {
+			var blob = dataURLtoBlob(element.src, mediaType);
+			//Check that File API Constructor is supported by this browser
+			if(typeof File === 'function' && File.length >= 2) {
+				filename = (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '') + extension;
+				return new File([blob], filename, { type: mediaType });
+			} else {
+				return new Blob([blob], {type: mediaType});
+			}
+		}
+
+		function dataURLtoBlob(dataURL, mediaType) {
+			//Based on https://github.com/bubkoo/dataurl-to-blob (MIT License)
+			if (!window || window.window !== window) {
+				throw new Error('This module is only available in browser');
+			}
+
+			var Blob = window.Blob || window.MozBlob || window.WebKitBlob;
+			if (!Blob) {
+				throw new Error('Blob was not supported');
+			}
+
+			var dataURLPattern = /^data:((.*?)(;charset=.*?)?)(;base64)?,/;
+
+			// parse the dataURL components as per RFC 2397
+			var matches = dataURL.match(dataURLPattern);
+			if (!matches) {
+				throw new Error('invalid dataURI');
+			}
+
+			// default to text/plain;charset=utf-8
+			var isBase64   = !!matches[4];
+			var dataString = dataURL.slice(matches[0].length);
+			var byteString = isBase64
+				// convert base64 to raw binary data held in a string
+				? atob(dataString)
+				// convert base64/URLEncoded data component to raw binary
+				: decodeURIComponent(dataString);
+
+			var array = [];
+			for (var i = 0; i < byteString.length; i++) {
+				array.push(byteString.charCodeAt(i));
+			}
+
+			return new Blob([new Uint8Array(array)], { type: mediaType });
+		}
 	},
 	
 	_getElem: function(){
@@ -3104,21 +3417,430 @@ var AttachmentEditor = $n2.Class({
 			.addClass(className)
 			.attr('n2AttName',attName)
 			.appendTo($elem);
-		
+
 		var $form = $('<form>')
 			.addClass('attachmentEditor_creationForm')
 			.attr('n2AttName',attName)
 			.appendTo($div);
-		
-		$('<span>')
-			.addClass('attachmentEditor_label')
-			.text( opts.label )
-			.appendTo($form);
-	
-		$('<input type="file">')
-			.attr('name','media')
-			.appendTo($form);
-	
+
+		var attachmentPreviewComponents = [];
+		var $recordingControls;
+		var $previewButton;
+
+		if (window.cordova) {
+			// On Cordova devices show buttons to upload media
+			var $buttonsContainer = $('<div>')
+				.addClass('attachmentEditor_cordovaCaptureButtonsContainer')
+				.appendTo($form);
+			
+			// Add the "Remove" button
+			var $removeAttachmentContainer = $('<div>')
+				.addClass('attachmentEditor_cordovaCaptureButtonsContainer')
+				.appendTo($form)
+				.hide();
+			var $removeAttachmentButton = $('<label>')
+				.addClass('cordova-btn cordova-icon icon-remove cordova-remove-button')
+				.appendTo($removeAttachmentContainer)
+				.text(_loc('Remove'))
+				.click(function(event) {
+					event.preventDefault();
+					_this.cordovaAttachment = null;
+					$buttonsContainer.show();
+					clearAttachmentPreview();
+					$removeAttachmentContainer.hide();
+					if ($previewButton) {
+						$previewButton.remove();
+						$previewButton = null;
+					}
+				});
+
+			if (_this.cordovaAttachment) {
+				var lastSlashIndex = _this.cordovaAttachment.lastIndexOf('/');
+				var filename = _this.cordovaAttachment.substring(lastSlashIndex + 1);
+				var $filenamePreview = $('<p>')
+					.text(filename)
+					.appendTo($form);
+				attachmentPreviewComponents.push($filenamePreview);
+				$buttonsContainer.hide();
+				$removeAttachmentContainer.show();
+			}
+
+			document.addEventListener("deviceready", function() {
+				// Add the "Choose File" button
+				var $fileInputDiv = $('<div>')
+					.addClass('attachmentEditor_buttonDiv')
+					.appendTo($buttonsContainer);
+				$('<input type="file" id="file-input">')
+					.addClass('attachmentEditor_hiddenFileInput')
+					.appendTo($fileInputDiv)
+					.change(function(event) {
+						if (event.target && event.target.files && event.target.files[0]) {
+							// Great! The user chose a file, but we don't have access to its path (damn file system security).
+							// So, we the store the file in our persistent app storage location.
+							var fileName = event.target.files[0].name;
+							if (!fileName) {
+								console.error('Impossible to get the file name.');
+								alert('Our apologies, there was a problem getting the file.');
+								return;
+							}
+
+							var _this = this;
+
+							// Create a file in the file system
+							window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function (fs) {
+								fs.root.getFile(fileName, { create: true, exclusive: false }, function (fileEntry) {
+									// Write in the given file
+									fileEntry.createWriter(function (fileWriter) {
+										fileWriter.onwriteend = function() {
+											addCordovaAttachment(fileEntry.nativeURL);
+											// On success, show the file
+											clearAttachmentPreview();
+											var $filePreview = $('<div>')
+												.addClass('attachmentEditor_fileName')
+												.text(event.target.files[0].name)
+												.appendTo($form);
+											showCordovaAttachmentPreview($removeAttachmentContainer); 
+											attachmentPreviewComponents.push($filePreview);
+											$buttonsContainer.hide();
+											$removeAttachmentContainer.show();
+
+											// Reset the input value so that we can re-select the same file
+											_this.value = null;
+										};
+
+										fileWriter.onerror = function (e) {
+											console.error("Failed file write: " + e.toString());
+											alert(_loc('Our apologies, there was a problem getting the file.'));
+										};
+
+										fileWriter.write(event.target.files[0]);
+									});
+								}, function(err) {
+									console.error('Error getting file', err);
+									alert(_loc('Our apologies, there was a problem getting the file.'));
+								});
+							}, function(err) {
+								console.error('Error requesting file system', err);
+								alert(_loc('Our apologies, there was a problem getting the file.'));
+							});
+						}
+					});
+				
+				$('<label for="file-input">')
+					.addClass('cordova-btn width-150 cordova-icon icon-file')
+					.text(_loc('Choose File'))
+					.appendTo($fileInputDiv);
+				
+				// Add the "Capture Photo" button
+				var $capturePhotoDiv = $('<div>')
+					.addClass('attachmentEditor_buttonDiv')
+					.appendTo($buttonsContainer)
+				if (navigator.camera) {
+					$('<label>')
+						.addClass('cordova-btn width-150 cordova-icon icon-camera')
+						.appendTo($capturePhotoDiv)
+						.text(_loc('Capture Photo'))
+						.click(function(event) {
+							event.preventDefault();
+							navigator.camera.getPicture(function(fileName) {
+								addCordovaAttachment(fileName);
+								// On success, show the file
+								clearAttachmentPreview();
+								var $imgPreview = $('<img>', {src: fileName})
+									.addClass('attachmentEditor_photoPreview')
+									.appendTo($form);
+								showCordovaAttachmentPreview($removeAttachmentContainer); 
+								attachmentPreviewComponents.push($imgPreview);
+								$buttonsContainer.hide();
+								$removeAttachmentContainer.show();
+							}, function(error) {
+								console.error('Error getting picture:', error);
+								alert(_loc('Our apologies, there was a problem getting the photo.'));
+							}, {
+								correctOrientation: true
+							});
+						});
+				}
+			
+				// Add the "Capture Video" button
+				var $captureVideoDiv = $('<div>')
+					.addClass('attachmentEditor_buttonDiv')
+					.appendTo($buttonsContainer)
+				if (navigator.device && navigator.device.capture) {
+					$('<label>')
+						.addClass('cordova-btn width-150 cordova-icon icon-video')
+						.appendTo($captureVideoDiv)
+						.text(_loc('Capture Video'))
+						.click(function(event) {
+							event.preventDefault();
+							navigator.device.capture.captureVideo(
+								function(mediaFiles) {
+									if (mediaFiles && mediaFiles[0] && mediaFiles[0].fullPath) {
+										var lastSlashIndex = mediaFiles[0].fullPath.lastIndexOf('/');
+										var filename = mediaFiles[0].fullPath.substring(lastSlashIndex + 1);
+										addCordovaAttachment(mediaFiles[0].fullPath);
+
+										// On success, show the file
+										clearAttachmentPreview();
+										var $videoPreview = $('<p>')
+											.addClass('attachmentEditor_fileName')
+											.text(filename)
+											.appendTo($form);
+										showCordovaAttachmentPreview($removeAttachmentContainer); 
+										attachmentPreviewComponents.push($videoPreview);
+										$buttonsContainer.hide();
+										$removeAttachmentContainer.show();
+									} else {
+										console.error('No video uploaded.');
+										alert(_loc('Our apologies, we cannot get your video.'));
+									}
+								}, function(error) {
+									console.error('Error getting video:', error);
+									alert(_loc('Our apologies, there was a problem getting the video.'));
+								}, {
+									quality: 0,
+									duration: 30
+								});
+						});
+				}
+							
+				// Add the "Capture Audio" button
+				var $captureAudioDiv = $('<div>')
+					.addClass('attachmentEditor_buttonDiv')
+					.appendTo($buttonsContainer)
+				if (window.Media) {
+					$('<label>')
+						.addClass('cordova-btn width-150 cordova-icon icon-audio')
+						.appendTo($captureAudioDiv)
+						.text(_loc('Capture Audio'))
+						.click(function(event) {
+							event.preventDefault();
+							var audioFilename = 'audio_' + _this.doc.nunaliit_created.time + '.aac';
+							var mediaRec = new window.Media(audioFilename,
+								function() {
+									var fileFullPath = window.file.externalRootDirectory + audioFilename;
+									addCordovaAttachment(fileFullPath);
+									// On success, show the file
+									clearAttachmentPreview();
+									var $audioPreview = $('<p>')
+										.addClass('attachmentEditor_fileName')
+										.text( _loc('Recording complete: {audioFilename}', {audioFilename:audioFilename}) )
+										.appendTo($form);
+									showCordovaAttachmentPreview($removeAttachmentContainer); 
+									attachmentPreviewComponents.push($audioPreview);
+									$removeAttachmentContainer.show();
+									$buttonsContainer.hide();
+								}, function(err) {
+									console.error("recordAudio():Audio Error: ", err);
+									alert( _loc('Our apologies, there was a problem recording audio. Error code: {code}',{code:err.code}) );
+								});
+								
+							showCordovaRecordingUI(mediaRec);
+						});
+				}
+			}, false);
+		} else {
+			//clearfix div to prevent buttons from floating
+			$('<div>')
+				.addClass('attachmentEditor_clearfix')
+				.appendTo($div);
+
+			var firstTabDisplayed = 'file';
+
+			var $tabList = $('<div>')
+				.addClass('attachmentEditor_uploadTabs')
+				.appendTo($form);
+
+			$('<button>')
+				.text(_loc('File Upload'))
+				.addClass('attachmentEditor_uploadTab_file')
+				.appendTo($tabList)
+				.click(function(event) {
+					event.preventDefault();
+					_this._clickTab(attName, 'file');
+				});
+
+			var $chooseFileDiv = $('<div>')
+				.addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_file')
+				.appendTo($form);
+
+			$('<input type="file">')
+				.attr('name','media')
+				.change(function(event) {
+					_this._attachmentFileChanged(event);
+				})
+				.appendTo($chooseFileDiv);
+
+			// only display recording if libraries required are present and https
+			var protocolSupportsRecording = false;
+			if(document.location.protocol == 'https:'
+			 || window.location.hostname == 'localhost'
+			 || window.location.hostname.startsWith('127.0.')) {
+				protocolSupportsRecording = true;
+			}
+
+			if(typeof DetectRTC !== 'undefined'
+			 && typeof RecordRTC !== 'undefined'
+			 && typeof lamejs !== 'undefined'
+			 && protocolSupportsRecording) {
+
+				DetectRTC.load(function() {
+					if(DetectRTC.hasMicrophone) {
+						$('<button>')
+							.text(_loc('Record Audio'))
+							.addClass('attachmentEditor_uploadTab_audio')
+							.click(function(event) {
+								event.preventDefault();
+								_this._clickTab(attName, 'audio');
+							})
+							.appendTo($tabList);
+
+						//firstTabDisplayed = 'audio';
+
+						var $recordDiv = $('<div>')
+							.addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_audio')
+							.appendTo($form);
+
+						var recordInputDiv = $('<div>')
+							.addClass('attachmentEditor_recordingContainer')
+							.appendTo($recordDiv);
+
+						_this.audioRecordingButton = $('<button>')
+							.addClass('attachmentEditor_micButton')
+							.appendTo(recordInputDiv)
+							.click(function(event) {
+								_this._clickRecording(event, 'audio');
+							});
+
+						_this.audioRecordStatus = $('<div>')
+							.addClass('attachmentEditor_recordStatus')
+							.appendTo(recordInputDiv);
+
+						if( DetectRTC.hasWebcam && !DetectRTC.browser.isEdge ) {
+							$form.addClass('attachmentEditor_creationFormWithVideo');
+							$('<button>')
+								.text(_loc('Record Video'))
+								.addClass('attachmentEditor_uploadTab_video')
+								.click(function(event) {
+									event.preventDefault();
+									_this._clickTab(attName, 'video');
+								})
+								.appendTo($tabList);
+
+							//firstTabDisplayed = 'video';
+
+							var $recordVideoDiv = $('<div>')
+								.addClass('attachmentEditor_uploadTabContent attachmentEditor_uploadTabContent_video')
+								.appendTo($form);
+
+							var recordInputVideoDiv = $('<div>')
+								.addClass('attachmentEditor_videoRecordingContainer')
+								.appendTo($recordVideoDiv);
+
+							_this.videoRecordingButton = $('<button>')
+								.addClass('attachmentEditor_videoButton')
+								.appendTo(recordInputVideoDiv)
+								.click(function(event) {
+									_this._clickRecording(event, 'video');
+								});
+
+							var meVideoEl = $('<div>').addClass('attachmentEditor_meVideo').appendTo(recordInputVideoDiv);
+
+							_this.videoRecordStatus = $('<div>')
+								.addClass('attachmentEditor_recordStatus')
+								.appendTo(meVideoEl);
+						} else {
+							$n2.log('no webcam present');
+						}
+					} else {
+						$n2.log('no microphone present');
+					}
+
+					allTabsDisplayed();
+				});
+			} else {
+				allTabsDisplayed();
+			}
+		}
+
+		function showCordovaAttachmentPreview(containerDiv) {
+			window.resolveLocalFileSystemURL('file:' + _this.cordovaAttachment, 
+				function(fileEntry) {
+					fileEntry.file(function(file) {
+						if (file && file.type) {
+							// Image are already displayed, no need to show a preview button
+							if (!file.type.startsWith('image')) {
+								$previewButton = $('<label>')
+									.addClass('cordova-btn cordova-icon icon-preview cordova-preview-button')
+									.appendTo(containerDiv)
+									.text(_loc('Preview'))
+									.click(function(event) {
+										event.preventDefault();
+										// Try to open it using a plugin
+										window.cordova.plugins.fileOpener2.open(
+											_this.cordovaAttachment,
+											file.type, {
+												error : function(error) { console.error('Error opening file', file); }, 
+												success : function() { console.log('Opening file', file); } 
+											});
+									});
+							}
+						} 
+					});
+				}, function(error) {
+					console.error('Problem fetching cordova attachment preview for ' + _this.cordovaAttachment, error);
+				});
+		}
+
+		function showCordovaRecordingUI(mediaRec) {
+			$removeAttachmentContainer.show();
+			$buttonsContainer.hide();
+
+			$recordingControls = $('<div>')
+				.addClass('attachmentEditor_cordovaRecordingControls')
+				.appendTo($form);
+
+			$('<div>')
+				.addClass('cordova-btn cordova-icon icon-record')
+				.text(_loc('Record'))
+				.appendTo($recordingControls)
+				.click(function(event) {
+					event.preventDefault();
+					mediaRec.startRecord();
+
+					$(this).hide();
+					$stopButton.show();
+				});
+
+			var $stopButton = $('<div>')
+				.addClass('cordova-btn cordova-icon icon-stop')
+				.text(_loc('Stop'))
+				.appendTo($recordingControls)
+				.click(function(event) {
+					event.preventDefault();
+					mediaRec.stopRecord();
+
+					$recordingControls.hide();
+				})
+				.hide();
+		}
+
+		function clearAttachmentPreview() {
+			for (var i = 0; i < attachmentPreviewComponents.length; i++) {
+				attachmentPreviewComponents[i].remove();
+			}
+			if ($recordingControls) {
+				$recordingControls.hide();
+			}
+		}
+
+		function allTabsDisplayed() {
+			_this._clickTab(attName, firstTabDisplayed);
+		}
+
+		function addCordovaAttachment(fileName) {
+			_this.cordovaAttachment = fileName.replace('file:/','/');
+		}
 	},
 	
 	_addFileElement: function(opts_){
@@ -3188,6 +3910,373 @@ var AttachmentEditor = $n2.Class({
 		if( opts.form ) {
 			opts.form.appendTo($div);
 		};
+	},
+
+  _attachmentFileChanged: function(event) {
+	  var _this = this;
+    if( typeof RecordRTC === 'undefined' && typeof lamejs === 'undefined') {
+      return;
+    }
+  },
+
+	_clickTab: function(attName, type) {
+		var _this = this;
+		
+		var $elem = this._getElem();
+		var $attachmentEditor = $elem.find('.attachmentEditor_att_' + $n2.utils.stringToHtmlId(attName));
+		var $clickedTab = $attachmentEditor.find('.attachmentEditor_uploadTab_'+type);
+
+		var contentClass = 'attachmentEditor_uploadTabContent_' + type;
+		
+		// Check if already selected
+		var currentType = $attachmentEditor.attr('n2attType');
+		if( type === currentType ){
+			// Already selected
+			return;
+		};
+		$attachmentEditor.attr('n2attType',type);
+		
+		$attachmentEditor.find('.attachmentEditor_uploadTabContent').hide();
+		$attachmentEditor.find('.attachmentEditor_uploadTabs button').removeClass('active');
+		if(_this.recordingInterval !== null) {
+			_this._cancelRecording();
+		}
+		if(typeof _this.recordStatus !== 'undefined') {
+			_this.recordStatus.text('');
+		}
+		var $recordingVideos = $attachmentEditor.find('.attachmentEditor_videoRecordingContainer video');
+		if($recordingVideos.length > 0) {
+			if(typeof _this.recordingStream !== 'undefined' && _this.recordingStream != null) {
+				_this.recordingStream.stop();
+			}
+			$recordingVideos.remove();
+			_this.mediaElementEl.remove();
+			$attachmentEditor.find('.attachmentEditor_videoRecordingContainer .mejs__container')[0].remove();
+		}
+		var $recordingAudio = $attachmentEditor.find('.attachmentEditor_recordingContainer audio');
+		if($recordingAudio.length > 0) {
+			$recordingAudio.remove();
+		}
+		
+		// Clear file upload
+		$attachmentEditor.find('.attachmentEditor_uploadTabContent_file input').val('')
+		
+		$clickedTab.addClass('active');
+		$attachmentEditor.find('.'+contentClass).show();
+		if(type === 'audio' || type === 'video') {
+			_this._setupRecording(type);
+			_this.currentRecordingType = type;
+		}
+	},
+
+	_clickRecording: function(event, recordType) {
+		event.preventDefault();
+		var _this = this;
+
+		if(_this.recordingInterval === null) {
+			_this._startRecording(recordType);
+		} else {
+			_this._stopRecording(recordType);
+		}
+	},
+
+	_setupRecording: function(recordType) {
+		var _this = this;
+		if(recordType === 'audio') {
+			_this.recordStatus = _this.audioRecordStatus;
+			_this.recordingButton = _this.audioRecordingButton;
+		} else if(recordType === 'video') {
+			_this.recordStatus = _this.videoRecordStatus;
+			_this.recordingButton = _this.videoRecordingButton;
+		}
+
+		_this._captureUserMedia(recordType, function(stream) {
+			_this.recordingStream = stream;
+			if(recordType === 'audio') {
+				_this.recorder = RecordRTC(stream, {
+					type: 'audio',
+					recorderType: StereoAudioRecorder,
+					numberOfAudioChannels: 1
+				});
+			} else {
+				_this._setupVideoPreview(stream);
+				var mimeType = 'video/webm';
+				if(_this._isMimeTypeSupported('video/webm;codecs=h264')) {
+					mimeType = 'video/webm;codecs=h264'
+				}
+				_this.recorder = RecordRTC(stream, { mimeType: mimeType });
+			}
+
+			var oldAudio = $('.attachmentEditor_recordingContainer audio');
+			if(oldAudio.length > 0) {
+				oldAudio[0].remove();
+			}
+		});
+	},
+
+	_setupVideoPreview: function(stream) {
+		var _this = this;
+		var recordingVideos = $('.attachmentEditor_videoRecordingContainer video');
+		if(recordingVideos.length > 0) {
+			_this.mediaElementEl.remove();
+			delete recordingVideos[0];
+			$('.attachmentEditor_videoRecordingContainer .mejs__container')[0].remove();
+		}
+
+		var mejsDiv = $('.attachmentEditor_meVideo');
+		var height = 320/(_this.recordVideoSize.width/_this.recordVideoSize.height);
+
+		var recordingVideo = ($('<video>')
+			.attr('controls', 'controls')
+			.attr('height', height + 'px')
+			.attr('width', '320px')
+			.prependTo(mejsDiv))[0];
+
+		if($.fn && $.fn.mediaelementplayer) {
+			_this.mediaElementEl = $(recordingVideo).mediaelementplayer({
+				features: ['fullscreen']
+			});
+
+			$('.attachmentEditor_videoRecordingContainer .mejs__container .mejs__overlay-play .mejs__overlay-button').hide();
+		}
+
+		recordingVideo.muted = true;
+		recordingVideo.controlls = false;
+		recordingVideo.src = null;
+		recordingVideo.srcObject = stream;
+		recordingVideo.play();
+	},
+
+	_isMimeTypeSupported: function(mimeType) {
+		if(DetectRTC.browser.name === 'Edge' || DetectRTC.browser.name === 'Safari' || typeof MediaRecorder === 'undefined') {
+			return false;
+		}
+
+		if(typeof MediaRecorder.isTypeSupported !== 'function') {
+			return true;
+		}
+
+		return MediaRecorder.isTypeSupported(mimeType);
+	},
+
+	_startRecording: function(recordType) {
+		var _this = this;
+		var obj = this.obj;
+		_this.recordStatus.text('');
+		_this.recorder.startRecording();
+
+		if(recordType === 'audio') {
+			_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+		} else {
+			_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
+			var recordingVideos = $('.attachmentEditor_videoRecordingContainer video');
+			if(recordingVideos[0].srcObject == null) {
+				_this._setupVideoPreview(_this.recordingStream);
+			}
+		}
+		_this._recordingTimer(recordType);
+	},
+
+	_recordingTimer: function(recordType) {
+		var _this = this;
+		var seconds_elapsed = 0;
+		var max_time = recordType === 'audio' ? _this.maxAudioRecordingLengthSeconds : _this.maxVideoRecordingLengthSeconds;
+		var max_time_str = _this._secondsToTimeString(max_time);
+
+		_this.recordingInterval = setInterval(function() {
+			seconds_elapsed++;
+
+			if(seconds_elapsed >= max_time) {
+				_this._stopRecording();
+				return;
+			}
+
+			var cur_time_str = _this._secondsToTimeString(seconds_elapsed);
+			_this.recordStatus.text(cur_time_str + '/' + max_time_str);
+		}, 1000);
+	},
+
+	_secondsToTimeString: function(seconds) {
+		var min = Math.floor(seconds/60);
+		var sec = seconds - min * 60;
+		if(sec < 10) {
+			sec = '0' + sec;
+		}
+		return min + ':' + sec
+	},
+
+	_stopRecordingTimer: function() {
+		var _this = this;
+		clearInterval(_this.recordingInterval);
+		_this.recordingInterval = null;
+	},
+
+	_captureUserMedia: function(type, success_callback) {
+		var _this = this;
+		var session = {
+			audio: true
+		};
+		if(type === 'video') {
+			var videoHints = true;
+
+			if (DetectRTC.browser.name === 'Firefox' || (DetectRTC.browser.name === 'Chrome' && DetectRTC.browser.version >= 60)) {
+				videoHints = {
+					width: _this.recordVideoSize.width,
+					height: _this.recordVideoSize.height
+				};
+			} else {
+				videoHints = {
+					optional: [],
+					mandatory: {
+						minWidth: _this.recordVideoSize.width,
+						minHeight: _this.recordVideoSize.height
+					}
+				}
+			}
+			session.video = videoHints;
+		}
+
+		navigator.getUserMedia(session, success_callback, function(error) {
+			alert(_loc('Unable to capture your microphone and/or camera.'));
+			$n2.logError(error);
+		});
+	},
+
+	_cancelRecording: function() {
+		var _this = this;
+		_this._stopRecordingTimer();
+		_this.recorder.stopRecording();
+		_this.recordingStream.stop();
+		if(_this.currentRecordingType === 'video') {
+			_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
+		} else if(_this.currentRecordingType === 'audio') {
+			_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+		}
+		_this.recordStatus.text('');
+	},
+
+	_stopRecording: function(recordType) {
+		var _this = this;
+		var obj = this.obj;
+
+		_this._stopRecordingTimer();
+		_this.recordingButton.prop('disabled', true);
+		_this.recordStatus.text(_loc('Processing...'));
+
+		_this.recorder.stopRecording(function() {
+			var blobResult = _this.recorder.getBlob();
+
+			if(recordType === 'audio') {
+				_this._processAudioRecording(blobResult);
+			} else {
+				_this.recorder.getDataURL(function(dataURL) {
+					_this._processVideoRecording(dataURL);
+				});
+			}
+		});
+	},
+
+	_processAudioRecording: function(blob) {
+		var _this = this;
+		var fileReader = new FileReader();
+		fileReader.onload = function() {
+			var samples = _this._getWavSamples(this.result);
+			var mp3Blob = _this._encodeMp3(samples);
+
+			var reader = new FileReader();
+			reader.onload = function(event) {
+				var oldAudio = $('.attachmentEditor_recordingContainer audio');
+					if(oldAudio.length > 0) {
+						oldAudio[0].src = event.target.result;
+					} else {
+						$('<audio>')
+							.attr('src', event.target.result)
+							.attr('controls', 'controls')
+							.insertAfter(_this.recordingButton);
+					}
+
+				_this.recordingButton.prop('disabled', false);
+				_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_micButton');
+
+				_this.recordStatus.text(_loc('Captured Audio'));
+			};
+			reader.readAsDataURL(mp3Blob);
+		};
+		fileReader.readAsArrayBuffer(blob);
+	},
+
+	_processVideoRecording: function(dataURL) {
+		var _this = this;
+		var oldVideo = $('.attachmentEditor_videoRecordingContainer video');
+		if(oldVideo.length > 0) {
+			_this.mediaElementEl.remove();
+			delete oldVideo[0];
+			$('.attachmentEditor_videoRecordingContainer .mejs__container')[0].remove();
+		}
+
+		var mejsDiv = $('.attachmentEditor_meVideo');
+		var height = 320/(_this.recordVideoSize.width/_this.recordVideoSize.height);
+		var video = $('<video>')
+			.attr('src', dataURL)
+			.attr('height', height + 'px')
+			.attr('width', '320px')
+			.attr('controls', 'controls')
+			.prependTo(mejsDiv);
+		_this.mediaElementEl = $(video).mediaelementplayer({
+			features: ['playpause', 'progress','volume','fullscreen']
+		});
+
+		_this.recordingButton.prop('disabled', false);
+		_this.recordingButton.toggleClass('attachmentEditor_stopRecordingButton attachmentEditor_videoButton');
+
+		_this.recordStatus.text(_loc('Captured Video'));
+	},
+
+	_getWavSamples: function(arrayBuffer) {
+		var samples = new Int16Array(arrayBuffer);
+		var wavHeader = lamejs.WavHeader.readHeader(new DataView(arrayBuffer));
+
+		if (wavHeader.channels === 2) {
+			var left = [];
+			var right = [];
+			var i = 0;
+
+			while (i < samples.length) {
+				left.push(samples[i]);
+				right.push(samples[i + 1]);
+
+				i += 2;
+			}
+
+			samples = new Int16Array(left);
+		}
+	// trim the first and last millisecond to remove click noise at start
+	return samples.slice(45, samples.length - 45);
+
+	},
+
+	_encodeMp3: function(samples) {
+		var channels = 1;
+		var sampleRate = 44100;
+		var kbps = 128;
+		var mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, kbps);
+		var mp3Data = [];
+		var sampleBlockSize = 1152; //can be anything but make it a multiple of 576 to make encoders life easier
+
+		for (var i = 0; i < samples.length; i += sampleBlockSize) {
+			var sampleChunk = samples.subarray(i, i + sampleBlockSize);
+			var mp3buf = mp3encoder.encodeBuffer(sampleChunk);
+			if (mp3buf.length > 0) {
+				mp3Data.push(mp3buf);
+			}
+		}
+		var mp3buf = mp3encoder.flush();   //finish writing mp3
+
+		if (mp3buf.length > 0) {
+			mp3Data.push(new Int8Array(mp3buf));
+		}
+
+		return new Blob(mp3Data, {type: 'audio/mp3'});
 	}
 });
 

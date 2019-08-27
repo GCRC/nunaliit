@@ -31,19 +31,16 @@ POSSIBILITY OF SUCH DAMAGE.
 
 "use strict";
 
-var nunaliit2CoreScript;
+var nunaliit2;
 
 if( typeof nunaliit2 !== 'function' ) {
-	/** @class Nunaliit2 Atlas Toolkit */
-	var nunaliit2 = function(){
-	};
-
-	if( typeof nunaliit2CoreScript === 'undefined' ){
-		nunaliit2CoreScript = 'nunaliit2.js';
-	};
-
+	nunaliit2 = function(){};
 	if( typeof window !== 'undefined' ){
 		window.nunaliit2 = nunaliit2;
-		window.nunaliit2CoreScript = nunaliit2CoreScript;
 	};
 };
+
+if( typeof nunaliit2.coreScriptName === 'undefined' ){
+	nunaliit2.coreScriptName = 'nunaliit2.js';
+};
+

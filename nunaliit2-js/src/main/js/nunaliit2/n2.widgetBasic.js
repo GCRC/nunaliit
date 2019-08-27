@@ -37,7 +37,38 @@ var
  _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
  ,DH = 'n2.widgetService'
  ;
- 
+
+//--------------------------------------------------------------------------
+function createActionFromDefinition(dispatchService, definition){
+	 	
+	if( typeof definition != 'object' ){
+		throw new Error('Unable to create an instance of Action since definition is not provided');
+	};
+	
+	// Create instance from definition
+	var m = {
+		type: 'instanceCreate'
+		,instanceConfiguration: definition
+		,instance: undefined
+	};
+	dispatchService.synchronousCall(DH,m);
+	var instance = m.instance;
+	
+	if( !instance ){
+		throw new Error('Unable to create an instance of type: '+definition.type);
+	};
+	
+	if( typeof instance != 'object' ){
+		throw new Error('Instance of type: '+definition.type+' is not an object');
+	};
+	
+	if( typeof instance.execute != 'function' ){
+		throw new Error('Instance of type: '+definition.type+' must implement execute() method');
+	};
+	 	
+	return instance;
+};
+
 //--------------------------------------------------------------------------
 var CreateDocumentWidget = $n2.Class({
 	
@@ -67,6 +98,10 @@ var CreateDocumentWidget = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.authService = opts.authService;
 		this.showAsLink = opts.showAsLink;
+
+		if( !this.containerId ){
+			throw new Error('containerId must be specified');
+		};
 		
 		this._display();
 	},
@@ -74,36 +109,57 @@ var CreateDocumentWidget = $n2.Class({
 	_display: function(){
 		var _this = this;
 		
-		this.elemId = $n2.getUniqueId();
-		
-		var containerId = this.containerId;
-		if( !containerId ){
-			containerId = this.contentId;
-		};
-		
-		var $div = $('<div>')
-			.attr('id',this.elemId)
-			.addClass('n2widget_createDocument')
-			.appendTo( $('#'+containerId) );
-		
-		if( this.showAsLink ) {
-			$('<a>')
-				.attr('href','#')
-				.text( _loc('Create Document') )
-				.appendTo($div)
-				.click(function(){
-					_this._startEdit();
-					return false;
-				});
+		if (window.cordova) {
+			// Remove the header since the Create Document is in the native nav bar on Cordova
+			var headers = document.getElementsByClassName("nunaliit_header");
+			if (headers.length) {
+				$(headers[0]).hide();
+				// Let the content start at the top since there is no header on Cordova
+				$("<style type='text/css'> .nunaliit_content { top: 0 } </style>").appendTo("head");
+			}
+
+			// Listen to the Create Document callback from native
+			document.addEventListener("deviceready", function() {
+				window.nunaliit2.cordovaPlugin.registerCallback('onCreateDocument', 
+					function() {
+						window.onCreateDocument = function() {
+							_this._startEdit();
+						};
+					}, function(error) {
+						console.error('Error on cordova callback invocation: ', error);
+					});
+			});
 		} else {
-			$('<button>')
-				.text( _loc('Create Document') )
-				.appendTo($div)
-				.click(function(){
-					_this._startEdit();
-					return false;
-				});
-		};
+			this.elemId = $n2.getUniqueId();
+			
+			var containerId = this.containerId;
+			
+			var $div = $('<div>')
+				.attr('id',this.elemId)
+				.addClass('n2widget_createDocument')
+				.appendTo( $('#'+containerId) );
+	
+			if( this.showAsLink ) {
+				$div.addClass('n2widget_createDocument_asLink');
+	
+				$('<a>')
+					.attr('href','#')
+					.text( _loc('Create Document') )
+					.appendTo($div)
+					.click(function(){
+						_this._startEdit();
+						return false;
+					});
+			} else {
+				$('<button>')
+					.text( _loc('Create Document') )
+					.appendTo($div)
+					.click(function(){
+						_this._startEdit();
+						return false;
+					});
+			};
+		}
 	},
 	
 	_startEdit: function(){
@@ -136,18 +192,21 @@ function BuildCreateDocumentWidgetFromRequest(m){
 	var config = m.config;
 	// var moduleDisplay = m.moduleDisplay;
 	
-	var options = {
-		contentId: contentId
-		,containerId: containerId
+	var options = {};
+
+	if( widgetOptions ){
+		for(var key in widgetOptions){
+			var value = widgetOptions[key];
+			options[key] = value;
+		};
 	};
-	
+
+	options.contentId = contentId;
+	options.containerId = containerId;
+
 	if( config && config.directory ){
 		options.dispatchService = config.directory.dispatchService;
 		options.authService = config.directory.authService;
-	};
-	
-	if( widgetOptions ){
-		if( widgetOptions.showAsLink ) options.showAsLink = true;
 	};
 	
 	new CreateDocumentWidget(options);
@@ -174,7 +233,7 @@ var CreateDocumentFromSchemaWidget = $n2.Class({
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			parentId: null
+			containerId: null
 			,dispatchService: null
 			,authService: null
 			,schemaRepository: null
@@ -197,7 +256,7 @@ var CreateDocumentFromSchemaWidget = $n2.Class({
 
 		this.schema = null;
 		
-		var $parent = $('#'+opts.parentId);
+		var $parent = $('#'+opts.containerId);
 		var $elem = $('<div>')
 			.addClass('n2widget_createDocumentFromSchema')
 			.appendTo($parent);
@@ -243,7 +302,7 @@ var CreateDocumentFromSchemaWidget = $n2.Class({
 			label: schemaLabel
 		});
 		if( this.label ){
-			controlLabel = this.label;
+			controlLabel = _loc(this.label);
 		};
 		
 		if( this.showAsLink ) {
@@ -294,7 +353,7 @@ var CreateDocumentFromSchemaWidget = $n2.Class({
 });
 
 //--------------------------------------------------------------------------
-function BuildCreateDocumentFromSchemaWidgetFromRequest(m){
+function BuildCreateDocumentFromSchemaWidget(m){
 	var widgetOptions = m.widgetOptions;
 	var contentId = m.contentId;
 	var containerId = m.containerId;
@@ -303,17 +362,13 @@ function BuildCreateDocumentFromSchemaWidgetFromRequest(m){
 	
 	var options = {};
 
-	var containerId = m.containerId;
-	if( !containerId ){
-		containerId = m.contentId;
-	};
-	options.parentId = containerId;
-	
 	if( widgetOptions ){
 		for(var key in widgetOptions){
 			options[key] = widgetOptions[key];
 		};
 	};
+	
+	options.containerId = containerId;
 	
 	if( config ){
 		if( config.directory ){
@@ -324,6 +379,408 @@ function BuildCreateDocumentFromSchemaWidgetFromRequest(m){
 	};
 	
 	new CreateDocumentFromSchemaWidget(options);
+};
+
+//--------------------------------------------------------------------------
+var DocumentSelectorWidget = $n2.Class({
+	
+	elemId: null,
+	
+	dispatchService: null,
+
+	showService: null,
+
+	filterModelId: null,
+	
+	filterParameterId: null,
+
+	listModelId: null,
+	
+	listLabelSelectors: null,
+	
+	selectedDocumentIdObserver: null,
+	
+	listDocumentMap: null,
+	
+	label: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			containerId: null
+			,dispatchService: null
+			,showService: null
+
+			// From configuration
+			,filterModelId: null
+			,filterParameterId: 'selectedDocumentId'
+			,listModelId: null
+			,listLabelSelectors: null
+			,label: null
+		},opts_);
+		
+		var _this = this;
+
+		this.dispatchService = opts.dispatchService;
+		this.showService = opts.showService;
+		this.filterModelId = opts.filterModelId;
+		this.filterParameterId = opts.filterParameterId;
+		this.listModelId = opts.listModelId;
+		this.label = opts.label;
+		this.listDocumentMap = {};
+		
+		this.listLabelSelectors = [];
+		if( $n2.isArray(opts.listLabelSelectors) ){
+			opts.listLabelSelectors.forEach(function(labelSelectorStr){
+				if( typeof labelSelectorStr === 'string' ){
+					var selector = $n2.objectSelector.parseSelector(labelSelectorStr);
+					_this.listLabelSelectors.push(selector);
+				};
+			});
+		};
+
+		var $parent = $('#'+opts.containerId);
+		var $elem = $('<div>')
+			.addClass('n2widget_documentSelector')
+			.appendTo($parent);
+		this.elemId = $n2.utils.getElementIdentifier($elem);
+		
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			
+			this.dispatchService.register(DH,'modelStateUpdated',f);
+
+			// Filter
+			if( this.filterModelId ){
+				var modelInfo = $n2.model.getModelInfo({
+					dispatchService: this.dispatchService
+					,modelId: this.filterModelId
+				});
+				if( modelInfo
+				 && modelInfo.parameters 
+				 && modelInfo.parameters[this.filterParameterId] ){
+					var parameterInfo = modelInfo.parameters[this.filterParameterId];
+
+					this.selectedDocumentIdObserver = new $n2.model.ModelParameterObserver({
+						parameterInfo: parameterInfo
+						,dispatchService: this.dispatchService
+						,onChangeFn: function(selectedDocId){
+							_this._selectedDocIdChanged(selectedDocId);
+						}
+					});
+				};
+			};
+			
+			// Get document list
+			if( this.listModelId ){
+				var state = $n2.model.getModelState({
+					dispatchService: this.dispatchService
+					,modelId: this.listModelId
+				});
+				if( state ){
+					this._listModelStateUpdated(state);
+				};
+			};
+		};
+		
+		$n2.log('DocumentSelectorWidget',this);
+		
+		this._refresh();
+	},
+	
+	_getElem: function(){
+		return $('#'+this.elemId);
+	},
+	
+	_listModelStateUpdated: function(state){
+		// Loop through all added documents
+		if( state.added ){
+			for(var i=0,e=state.added.length; i<e; ++i){
+				var doc = state.added[i];
+				var docId = doc._id;
+				
+				this.listDocumentMap[docId] = doc;
+			};
+		};
+		
+		// Loop through all updated documents
+		if( state.updated ){
+			for(var i=0,e=state.updated.length; i<e; ++i){
+				var doc = state.updated[i];
+				var docId = doc._id;
+	
+				this.listDocumentMap[docId] = doc;
+			};
+		};
+		
+		// Loop through all removed documents
+		if( state.removed ){
+			for(var i=0,e=state.removed.length; i<e; ++i){
+				var doc = state.removed[i];
+				var docId = doc._id;
+
+				delete this.listDocumentMap[docId];
+			};
+		};
+	},
+	
+	/**
+	 * This is called when the document filter is modified
+	 */
+	_selectedDocIdChanged: function(selectedDocId){
+		this._refresh();
+	},
+	
+	_getDisplayValueFromDoc: function(doc){
+		var value = undefined;
+		
+		this.listLabelSelectors.forEach(function(selector){
+			if( value === undefined ){
+				value = selector.getValue(doc);
+				if( value && value.nunaliit_type === 'localized' ){
+					value = _loc( value );
+				};
+			};
+		});
+		
+		if( value === undefined && this.showService ){
+			var $div = $('<div>');
+			this.showService.displayBriefDescription($div, {}, doc);
+			value = $div.text();
+		};
+		
+		if( value === undefined ){
+			value = doc._id;
+		};
+		
+		return value;
+	},
+	
+	_refresh: function(){
+		var _this = this;
+		
+		// Create array of information object
+		var selections = [];
+		for(var docId in this.listDocumentMap){
+			var doc = this.listDocumentMap[docId];
+			var sel = {
+				docId: docId
+				,doc: doc
+				,display: this._getDisplayValueFromDoc(doc)
+			};
+			selections.push(sel);
+		};
+		selections.sort(function(a,b){
+			if( a.display < b.display ) return -1;
+			if( a.display > b.display ) return 1;
+			return 0;
+		});
+		
+		var $div = this._getElem()
+			.empty();
+		
+		var $select = $('<select>')
+			.appendTo($div)
+			.change(function(){
+				var $selection = $(this);
+				_this._selectionChanged($selection);
+			});
+
+		var emptyLabel = '--';
+		if( this.label ){
+			emptyLabel = _loc(this.label);
+		};
+		var $opt = $('<option>')
+			.val('__NO_SELECTION__')
+			.text(emptyLabel)
+			.appendTo($select);
+
+		var optionFound = false;
+		var currentSelection = undefined;
+		if( this.selectedDocumentIdObserver ){
+			currentSelection = this.selectedDocumentIdObserver.getValue();
+		};
+
+		selections.forEach(function(sel){
+			var docId = sel.docId;
+			var doc = sel.doc;
+			
+			if( docId === currentSelection ){
+				optionFound = true;
+			};
+			
+			var $opt = $('<option>')
+				.val(docId)
+				.text(sel.display)
+				.appendTo($select);
+		});
+		
+		if( optionFound ){
+			$select.val(currentSelection);
+		} else {
+			$select.val('__NO_SELECTION__');
+		};
+	},
+	
+	_selectionChanged: function($select){
+		var value = $select.val();
+		if( this.selectedDocumentIdObserver ){
+			if( !value ) {
+				this.selectedDocumentIdObserver.setValue(null);
+			} else if( '__NO_SELECTION__' === value ){
+				this.selectedDocumentIdObserver.setValue(null);
+			} else {
+				this.selectedDocumentIdObserver.setValue(value);
+			};
+		};
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( m.type === 'modelStateUpdated'
+		 && m.modelId === this.listModelId
+		 && m.state ){
+			this._listModelStateUpdated(m.state);
+			this._refresh();
+		};
+	}
+});
+
+//--------------------------------------------------------------------------
+function BuildDocumentSelectorWidget(m){
+	var widgetOptions = m.widgetOptions;
+	var config = m.config;
+	
+	var options = {};
+
+	if( widgetOptions ){
+		for(var key in widgetOptions){
+			options[key] = widgetOptions[key];
+		};
+	};
+	
+	options.containerId = m.containerId;
+	
+	if( config ){
+		if( config.directory ){
+			options.dispatchService = config.directory.dispatchService;
+			options.showService = config.directory.showService;
+		};
+	};
+	
+	new DocumentSelectorWidget(options);
+};
+
+//--------------------------------------------------------------------------
+var ButtonWidget = $n2.Class('ButtonWidget',{
+	
+	dispatchService: null,
+	containerId: null,
+	elemId: null,
+	buttonLabel: null,
+	actions: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			containerId: null
+			,dispatchService: null
+			,buttonLabel: null
+			,action: undefined
+			,actions: undefined
+		},opts_);
+		
+		var _this = this;
+
+		this.containerId = opts.containerId;
+		this.dispatchService = opts.dispatchService;
+		this.buttonLabel = opts.buttonLabel;
+		
+		this.actions = [];
+
+		if( !this.containerId ){
+			throw new Error('containerId must be specified');
+		};
+
+		if ( !this.buttonLabel ){
+			this.buttonLabel = "Button";
+		};
+		
+		if( typeof opts.action === 'object' ){
+			var action = createActionFromDefinition(this.dispatchService, opts.action);
+			this.actions.push(action);
+		};
+
+		if( typeof opts.actions === 'undefined' ){
+			// OK
+		} else if( $n2.isArray(opts.actions) ) {
+			opts.actions.forEach(function(actionDef){
+				if( typeof actionDef === 'object' ){
+					var action = createActionFromDefinition(_this.dispatchService, actionDef);
+					_this.actions.push(action);
+				} else {
+					throw new Error('If parameter "actions" is specified, it must be an array of action definitions.');
+				};
+			});
+		} else {
+			throw new Error('If parameter "actions" is specified, it must be an array of action definitions.');
+		};
+
+		this._display();
+		
+		$n2.log(this._classname,this);
+	},
+	
+	_display: function(){
+		var _this = this;
+
+		this.elemId = $n2.getUniqueId();
+
+		var containerId = this.containerId;
+
+		var $button = $('<a>')
+			.attr('id',this.elemId)
+			.attr('href', '#')
+			.addClass('n2widget_button')
+			.appendTo( $('#'+containerId) )
+			.click(function(){
+				_this._buttonClicked();
+				return false;
+			});
+
+		$('<span>')
+			.text( _loc(this.buttonLabel) )
+			.appendTo($button);
+	},
+	
+	_buttonClicked: function(){
+		this.actions.forEach(function(action){
+			action.execute();
+		});
+	}
+});
+
+//--------------------------------------------------------------------------
+function BuildButtonWidget(m){
+	var widgetOptions = m.widgetOptions;
+	var containerId = m.containerId;
+	var config = m.config;
+	
+	var options = {};
+
+	if( widgetOptions ){
+		for(var key in widgetOptions){
+			var value = widgetOptions[key];
+			options[key] = value;
+		};
+	};
+
+	options.containerId = containerId;
+
+	if( config && config.directory ){
+		options.dispatchService = config.directory.dispatchService;
+	};
+	
+	new ButtonWidget(options);
 };
 
 //--------------------------------------------------------------------------
@@ -372,7 +829,7 @@ var Service = $n2.Class({
 	
 	_insertWidget: function($jq){
 		var widgetType = $jq.attr('nunaliit-widget');
-		var contentId = $n2.utils.getElementIdentifier($jq);
+		var containerId = $n2.utils.getElementIdentifier($jq);
 		
 		var widgetConfig = undefined;
 		try {
@@ -410,7 +867,7 @@ var Service = $n2.Class({
 				type: 'widgetDisplay'
 				,widgetType: widgetType
 				,widgetOptions: widgetConfig
-				,contentId: contentId
+				,containerId: containerId
 				,config: this.config
 			});
 		};
@@ -422,6 +879,12 @@ var Service = $n2.Class({
 		        m.isAvailable = true;
 
 			} else if( m.widgetType === 'createDocumentFromSchema' ){
+				m.isAvailable = true;
+
+			} else if( m.widgetType === 'documentSelector' ){
+				m.isAvailable = true;
+
+			} else if( m.widgetType === 'button' ){
 				m.isAvailable = true;
 
 			} else {
@@ -464,14 +927,65 @@ var Service = $n2.Class({
 				 && $n2.widgetSplash.HandleWidgetAvailableRequests ){
 					$n2.widgetSplash.HandleWidgetAvailableRequests(m);
 				};
-		    };
-		    
+
+				if( $n2.widgetLayer 
+				 && $n2.widgetLayer.HandleWidgetAvailableRequests ){
+					$n2.widgetLayer.HandleWidgetAvailableRequests(m);
+				};
+
+				if( $n2.widgetExport 
+				 && $n2.widgetExport.HandleWidgetAvailableRequests ){
+					$n2.widgetExport.HandleWidgetAvailableRequests(m);
+				};
+
+				if( $n2.widgetModelBrowser 
+				 && $n2.widgetModelBrowser.HandleWidgetAvailableRequests ){
+					$n2.widgetModelBrowser.HandleWidgetAvailableRequests(m);
+				};
+
+				if( $n2.widgetSelectableFilter 
+				 && $n2.widgetSelectableFilter.HandleWidgetAvailableRequests ){
+					$n2.widgetSelectableFilter.HandleWidgetAvailableRequests(m);
+				};
+
+				if( $n2.widgetLegend 
+				 && $n2.widgetLegend.HandleWidgetAvailableRequests ){
+					$n2.widgetLegend.HandleWidgetAvailableRequests(m);
+				};
+
+				if( $n2.widgetCollapsibleContainer 
+				 && $n2.widgetCollapsibleContainer.HandleWidgetAvailableRequests ){
+					$n2.widgetCollapsibleContainer.HandleWidgetAvailableRequests(m);
+				};
+				
+				if( $n2.widgetResizingContainer 
+				 && $n2.widgetResizingContainer.HandleWidgetAvailableRequests ){
+					$n2.widgetResizingContainer.HandleWidgetAvailableRequests(m);
+				};
+				
+				if( $n2.widgetDuplicate 
+				 && $n2.widgetDuplicate.HandleWidgetAvailableRequests ){
+					$n2.widgetDuplicate.HandleWidgetAvailableRequests(m);
+				};
+				
+				if( $n2.widgetTranscript 
+				 && $n2.widgetTranscript.HandleWidgetAvailableRequests ){
+					$n2.widgetTranscript.HandleWidgetAvailableRequests(m);
+				};
+			};
+
 		} else if( 'widgetDisplay' === m.type ){
 			if( m.widgetType === 'createDocument' ){
 				BuildCreateDocumentWidgetFromRequest(m);
 
 			} else if( m.widgetType === 'createDocumentFromSchema' ){
-				BuildCreateDocumentFromSchemaWidgetFromRequest(m);
+				BuildCreateDocumentFromSchemaWidget(m);
+
+			} else if( m.widgetType === 'documentSelector' ){
+				BuildDocumentSelectorWidget(m);
+
+			} else if( m.widgetType === 'button' ){
+				BuildButtonWidget(m);
 
 			} else {
 				if( $n2.couchDbPerspective 
@@ -513,7 +1027,52 @@ var Service = $n2.Class({
 				 && $n2.widgetSplash.HandleWidgetDisplayRequests ){
 					$n2.widgetSplash.HandleWidgetDisplayRequests(m);
 				};
-		    };
+
+				if( $n2.widgetLayer 
+				 && $n2.widgetLayer.HandleWidgetDisplayRequests ){
+					$n2.widgetLayer.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.widgetExport 
+				 && $n2.widgetExport.HandleWidgetDisplayRequests ){
+					$n2.widgetExport.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.widgetModelBrowser 
+				 && $n2.widgetModelBrowser.HandleWidgetDisplayRequests ){
+					$n2.widgetModelBrowser.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.widgetSelectableFilter 
+				 && $n2.widgetSelectableFilter.HandleWidgetDisplayRequests ){
+					$n2.widgetSelectableFilter.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.widgetLegend 
+				 && $n2.widgetLegend.HandleWidgetDisplayRequests ){
+					$n2.widgetLegend.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.widgetCollapsibleContainer 
+				 && $n2.widgetCollapsibleContainer.HandleWidgetDisplayRequests ){
+					$n2.widgetCollapsibleContainer.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.widgetResizingContainer 
+				 && $n2.widgetResizingContainer.HandleWidgetDisplayRequests ){
+					$n2.widgetResizingContainer.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.widgetDuplicate 
+				 && $n2.widgetDuplicate.HandleWidgetDisplayRequests ){
+					$n2.widgetDuplicate.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.widgetTranscript 
+				 && $n2.widgetTranscript.HandleWidgetDisplayRequests ){
+					$n2.widgetTranscript.HandleWidgetDisplayRequests(m);
+				};
+			};
 
 		} else if( 'showPreprocessElement' === m.type ){
 			var $elem = m.elem;
@@ -527,6 +1086,7 @@ $n2.widgetBasic = {
 	Service: Service
 	,CreateDocumentWidget: CreateDocumentWidget
 	,CreateDocumentFromSchemaWidget: CreateDocumentFromSchemaWidget
+	,ButtonWidget: ButtonWidget
 };
 
 })(jQuery,nunaliit2);

@@ -37,6 +37,172 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 var DH = 'n2.couchDialogs';
 
 //++++++++++++++++++++++++++++++++++++++++++++++
+function computeMaxDialogWidth(preferredWidth){
+	var dialogWidth = preferredWidth;
+	
+	var screenWidth = $('body').width();
+	if( typeof screenWidth === 'number' ){
+		var maxWidth = screenWidth * 0.90;
+		if( dialogWidth > maxWidth ){
+			dialogWidth = maxWidth;
+		};
+	};
+
+	return dialogWidth;
+};
+
+// **********************************************************************
+var ProgressDialog = $n2.Class({
+	
+	dialogId: null,
+	
+	progressLabel: null,
+	
+	onCancelFn: null,
+	
+	cancellingLabel: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			title: _loc('Progress')
+			,progressLabel: _loc('Progress')
+			,onCancelFn: null
+			,cancelButtonLabel: _loc('Cancel') 
+			,cancellingLabel: _loc('Cancelling Operation...')
+		},opts_);
+		
+		var _this = this;
+		
+		this.dialogId = $n2.getUniqueId();
+		this.progressLabel = opts.progressLabel;
+		this.onCancelFn = opts.onCancelFn;
+		this.cancellingLabel = opts.cancellingLabel;
+
+		var $dialog = $('<div id="'+this.dialogId+'" class="n2dialogs_progress">'
+			+'<div class="n2dialogs_progress_message">'
+			+'<span class="n2dialogs_progress_label"></span>: <span class="n2dialogs_progress_percent"></span>'
+			+'</div></div>');
+		$dialog.find('span.n2dialogs_progress_label').text( this.progressLabel );
+		
+		var dialogOptions = {
+			autoOpen: true
+			,title: opts.title
+			,modal: true
+			,closeOnEscape: false
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
+		
+		// Remove close button
+		$dialog.parents('.ui-dialog').first().find('.ui-dialog-titlebar-close').hide();
+
+		// Add cancel button, if needed
+		if( typeof(opts.onCancelFn) === 'function'  ) {
+			var cancelLine = $('<div><button class="n2dialogs_progress_cancelButton"></button></div>');
+			$dialog.append(cancelLine);
+			cancelLine.find('button')
+				.text(opts.cancelButtonLabel)
+				.click(function(){
+					_this.cancel();
+					return false;
+				})
+				;
+		};
+		
+		this.updatePercent(0);
+	},
+
+	cancel: function(){
+		if( typeof(this.onCancelFn) === 'function' ) {
+			var $dialog = $('#'+this.dialogId);
+			var $cb = $dialog.find('.n2dialogs_progress_cancelButton');
+			var $m = $('<span></span>').text(this.cancellingLabel);
+			$cb.before($m).remove();
+			
+			this.onCancelFn();
+		};
+	},
+
+	close: function(){
+		var $dialog = $('#'+this.dialogId);
+		$dialog.dialog('close');
+	},
+
+	updatePercent: function(percent){
+		var $dialog = $('#'+this.dialogId);
+		var $p = $dialog.find('.n2dialogs_progress_percent');
+		$p.text( ''+Math.floor(percent)+'%' );
+	},
+	
+	updateHtmlMessage: function(html){
+		var $dialog = $('#'+this.dialogId);
+		var $div = $dialog.find('.n2dialogs_progress_message');
+		$div.html( html );
+	}
+});
+
+
+//**********************************************************************
+var AlertDialog = $n2.Class({
+	
+	dialogId: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			title: _loc('Alert')
+			,message: null
+		},opts_);
+		
+		var _this = this;
+		
+		this.dialogId = $n2.getUniqueId();
+
+		var $dialog = $('<div>')
+			.attr('id',this.dialogId)
+			.addClass('n2dialogs_alert');
+		$('<div>')
+			.addClass('n2dialogs_alert_message')
+			.text(opts.message)
+			.appendTo($dialog);
+		
+		var $okLine = $('<div>')
+			.appendTo($dialog);
+		$('<button>')
+			.addClass('n2dialogs_alert_okButton')
+			.text( _loc('OK') )
+			.appendTo($okLine)
+			.click(function(){
+				_this.close();
+				return false;
+			});
+	
+		var dialogOptions = {
+			autoOpen: true
+			,title: opts.title
+			,modal: true
+			,closeOnEscape: false
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+			}
+		};
+		$dialog.dialog(dialogOptions);
+		
+	},
+
+	close: function(){
+		var $dialog = $('#'+this.dialogId);
+		$dialog.dialog('close');
+	}
+});
+
+
+//++++++++++++++++++++++++++++++++++++++++++++++
 function searchForDocumentId(options_){
 
 	var options = $n2.extend({
@@ -73,7 +239,6 @@ function searchForDocumentId(options_){
 		autoOpen: true
 		,title: _loc('Select Document')
 		,modal: true
-		,width: 370
 		,close: function(event, ui){
 			var diag = $(event.target);
 			diag.dialog('destroy');
@@ -83,6 +248,12 @@ function searchForDocumentId(options_){
 			};
 		}
 	};
+	
+	var width = computeMaxDialogWidth(370);
+	if( typeof width === 'number' ){
+		dialogOptions.width = width;
+	};
+
 	$dialog.dialog(dialogOptions);
 
 	options.searchServer.installSearch({
@@ -221,7 +392,6 @@ function selectLayersDialog(opts_){
 		autoOpen: true
 		,title: _loc('Select Layers')
 		,modal: true
-		,width: 370
 		,close: function(event, ui){
 			var diag = $(event.target);
 			diag.dialog('destroy');
@@ -231,6 +401,12 @@ function selectLayersDialog(opts_){
 			};
 		}
 	};
+	
+	var width = computeMaxDialogWidth(370);
+	if( typeof width === 'number' ){
+		dialogOptions.width = width;
+	};
+
 	$dialog.dialog(dialogOptions);
 	
 	// Get layers
@@ -348,14 +524,18 @@ var SearchBriefDialogFactory = $n2.Class({
 	
 	dialogPrompt: null,
 	
+	sortOnBrief: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			showService: null
+			,sortOnBrief: false
 			,dialogPrompt: _loc('Select')
 		},opts_);
 		
 		this.showService = opts.showService;
 		this.dialogPrompt = opts.dialogPrompt;
+		this.sortOnBrief = opts.sortOnBrief;
 	},
 	
 	/*
@@ -374,7 +554,8 @@ var SearchBriefDialogFactory = $n2.Class({
 	 */
 	getDocuments: function(opts_){
 		var opts = $n2.extend({
-			onSuccess: function(docs){}
+			args: []
+			,onSuccess: function(docs){}
 			,onError: function(err){}
 		},opts_);
 		
@@ -385,7 +566,8 @@ var SearchBriefDialogFactory = $n2.Class({
 	
 	showDialog: function(opts_){
 		var opts = $n2.extend({
-			onSelected: function(docId){}
+			args: []
+			,onSelected: function(docId){}
 			,onReset: function(){}
 		},opts_);
 		
@@ -455,7 +637,6 @@ var SearchBriefDialogFactory = $n2.Class({
 			autoOpen: true
 			,title: this.dialogPrompt
 			,modal: true
-			,width: 370
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -465,10 +646,17 @@ var SearchBriefDialogFactory = $n2.Class({
 				};
 			}
 		};
+		
+		var width = computeMaxDialogWidth(370);
+		if( typeof width === 'number' ){
+			dialogOptions.width = width;
+		};
+
 		$dialog.dialog(dialogOptions);
 
 		this.getDocuments({
-			onSuccess: displayDocs
+			args: opts.args
+			,onSuccess: displayDocs
 			,onError: function(errorMsg){ 
 				reportError( _loc('Unable to retrieve documents: {err}',{
 					err: errorMsg
@@ -486,32 +674,80 @@ var SearchBriefDialogFactory = $n2.Class({
 			} else {
 				var $table = $('<table></table>');
 				$('#'+displayId).empty().append($table);
+				
+				var displayedById = {};
 
 				for(var i=0,e=docs.length; i<e; ++i) {
 					var doc = docs[i];
 					var docId = doc._id;
 					
-					var $tr = $('<tr>')
-						.addClass('trResult')
-						.appendTo($table);
-
-					var $td = $('<td>')
-						.addClass('n2_search_result olkitSearchMod2_'+(i%2))
-						.appendTo($tr);
-					
-					var $a = $('<a>')
-						.attr('href','#'+docId)
-						.attr('alt',docId)
-						.appendTo($td)
-						.click( createClickHandler(docId) );
-					
-					if( _this.showService ) {
-						_this.showService.displayBriefDescription($a, {}, doc);
+					if( displayedById[docId] ){
+						// Already displayed. Skip
 					} else {
-						$a.text(docId);
+						displayedById[docId] = true;
+						
+						var $tr = $('<tr>')
+							.addClass('trResult')
+							.appendTo($table);
+
+						var $td = $('<td>')
+							.addClass('n2_search_result olkitSearchMod2_'+(i%2))
+							.appendTo($tr);
+						
+						var $a = $('<a>')
+							.attr('href','#'+docId)
+							.attr('alt',docId)
+							.appendTo($td)
+							.click( createClickHandler(docId) );
+						
+						if( _this.showService ) {
+							_this.showService.displayBriefDescription($a, {}, doc);
+						} else {
+							$a.text(docId);
+						};
 					};
 				};
+				
+				if( _this.sortOnBrief ){
+					sortTable($table);
+				};
 			};
+		};
+		
+		function sortTable($table){
+			// Get all rows
+			var $trs = $table.find('tr');
+			
+			// Assign the text value as a sort key to each row
+			$trs.each(function(){
+				var $tr = $(this);
+				$tr.attr('n2-sort-key',$tr.text());
+			});
+			
+			// Sort on the key
+			var trArray = $trs.toArray().sort(function(trA,trB){
+				var keyA = $(trA).attr('n2-sort-key');
+				var keyB = $(trB).attr('n2-sort-key');
+				if( keyA === keyB ){
+					return 0;
+				} else if( !keyA ){
+					return -1;
+				} else if( !keyB ){
+					return 1;
+				} else if( keyA < keyB ){
+					return -1;
+				} else if( keyA > keyB ){
+					return 1;
+				} else {
+					// should not get here
+					return 0;
+				};
+			});
+
+			// Re-order table
+			trArray.forEach(function(tr){
+				$table.append(tr);
+			});
 		};
 		
 		function filterList(words){
@@ -558,6 +794,660 @@ var SearchBriefDialogFactory = $n2.Class({
 		};
 	}
 
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+ * Search for documents based on schema name(s)
+ * @class
+ */
+var SearchOnSchemaDialogFactory = $n2.Class('SearchOnSchemaDialogFactory', SearchBriefDialogFactory, {
+
+	atlasDesign: null,
+	
+	showService: null,
+	
+	dialogPrompt: null,
+	
+	/**
+	 * @constructor
+	 */
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			atlasDesign: undefined
+			,showService: undefined
+			,sortOnBrief: true
+			,dialogPrompt: _loc('Select a Document')
+		},opts_);
+		
+		$n2.couchDialogs.SearchBriefDialogFactory.prototype.initialize.call(this, opts);
+		
+		this.atlasDesign = opts.atlasDesign;
+	},
+
+	getDocuments: function(opts_){
+		var opts = $n2.extend({
+			args: []
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var keys = [];
+		var errorEncountered = true;
+		if( $n2.isArray(opts.args) 
+		 && opts.args.length > 0 ){
+			errorEncountered = false;
+			
+			var keys = [];
+			opts.args.forEach(function(k){
+				if( typeof k === 'string' ){
+					keys.push(k);
+				} else {
+					errorEncountered = true;
+				};
+			});
+		};
+		
+		if( errorEncountered ){
+			$n2.logError('Can not search for documents based on schema', opts.args);
+			opts.onError( _loc('Can not search for documents based on schema') ); 
+
+		} else {
+			this.atlasDesign.queryView({
+				viewName: 'nunaliit-schema'
+				,keys: keys
+				,include_docs: true
+				,onSuccess: function(rows){
+					var docs = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var doc = rows[i].doc;
+						if( doc ){
+							docs.push(doc);
+						};
+					};
+					
+					opts.onSuccess(docs);
+				}
+				,onError: function(errorMsg){
+					$n2.logError('Unable to retrieve documents for schema '+keys+': '+errorMsg);
+					opts.onError( _loc('Unable to retrieve documents for schema {name}', {name:''+keys}) ); 
+				}
+			});
+		};
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+* Search for documents based on layer identifier
+* @class
+*/
+var SearchOnLayerDialogFactory = $n2.Class('SearchOnLayerDialogFactory', SearchBriefDialogFactory, {
+
+	atlasDesign: null,
+	
+	showService: null,
+	
+	dialogPrompt: null,
+	
+	/**
+	 * @constructor
+	 */
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			atlasDesign: undefined
+			,showService: undefined
+			,sortOnBrief: true
+			,dialogPrompt: _loc('Select a Document')
+		},opts_);
+		
+		$n2.couchDialogs.SearchBriefDialogFactory.prototype.initialize.call(this, opts);
+		
+		this.atlasDesign = opts.atlasDesign;
+	},
+
+	getDocuments: function(opts_){
+		var opts = $n2.extend({
+			args: []
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var keys = [];
+		var errorEncountered = true;
+		if( $n2.isArray(opts.args) 
+		 && opts.args.length > 0 ){
+			errorEncountered = false;
+			
+			var keys = [];
+			opts.args.forEach(function(k){
+				if( typeof k === 'string' ){
+					keys.push(k);
+				} else {
+					errorEncountered = true;
+				};
+			});
+		};
+		
+		if( errorEncountered ){
+			$n2.logError('Can not search for documents based on layer', opts.args);
+			opts.onError( _loc('Can not search for documents based on layer') ); 
+
+		} else {
+			this.atlasDesign.queryView({
+				viewName: 'layers'
+				,keys: keys
+				,include_docs: true
+				,onSuccess: function(rows){
+					var docs = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var doc = rows[i].doc;
+						if( doc ){
+							docs.push(doc);
+						};
+					};
+					
+					opts.onSuccess(docs);
+				}
+				,onError: function(errorMsg){
+					$n2.logError('Unable to retrieve documents for layer '+keys+': '+errorMsg);
+					opts.onError( _loc('Unable to retrieve documents for layer {name}', {name:''+keys}) ); 
+				}
+			});
+		};
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+ * Search for a related media file
+ * @class
+ */
+var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory',{
+
+	documentSource: null,
+	
+	searchService: null,
+	
+	showService: null,
+	
+	dialogPrompt: null,
+	
+	/**
+	 * @constructor
+	 */
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			documentSource: null
+			,searchService: null
+			,showService: null
+			,dialogPrompt: _loc('Select a Media')
+		},opts_);
+		
+		this.documentSource = opts.documentSource;
+		this.searchService = opts.searchService;
+		this.showService = opts.showService;
+		this.dialogPrompt = opts.dialogPrompt;
+	},
+	
+	/*
+	 * This method returns a function that can be used in
+	 * DialogService.addFunctionToMap
+	 */
+	getDialogFunction: function(){
+		var _this = this;
+		return function(opts){
+			_this.showDialog(opts);
+		};
+	},
+	
+	/*
+	 * Keeps only documents that have a media attachment
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var docsWithMedia = [];
+		
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				var attachments = $n2.couchAttachment.getAttachments(doc);
+				attachments.forEach(function(att){
+					if( att.isSource() 
+					 && att.isAttached() ){
+						docsWithMedia.push(doc);
+					};
+				});
+			});
+		};
+		
+		opts.onSuccess( docsWithMedia );
+	},
+	
+	showDialog: function(opts_){
+		var opts = $n2.extend({
+			contextDoc: null
+			,onSelected: function(docId){}
+			,onReset: function(){}
+		},opts_);
+		
+		var _this = this;
+
+		var shouldReset = true;
+		
+		var dialogId = $n2.getUniqueId();
+		var inputId = $n2.getUniqueId();
+		var searchButtonId = $n2.getUniqueId();
+		var suggestionId = $n2.getUniqueId();
+		var displayId = $n2.getUniqueId();
+		
+		var $dialog = $('<div>')
+			.attr('id',dialogId)
+			.addClass('editorSelectDocumentDialog editorSelectDocumentDialog_relatedMedia');
+		
+		var $suggestedHeader = $('<div>')
+			.addClass('editorSelectDocumentDialog_suggestedHeader')
+			.text( _loc('Suggestions') )
+			.appendTo($dialog);
+		
+		var $suggestedList = $('<div>')
+			.attr('id',suggestionId)
+			.addClass('editorSelectDocumentDialog_suggestedList')
+			.appendTo($dialog);
+	
+		var $searchLine = $('<div>')
+			.addClass('editorSelectDocumentDialog_searchLine')
+			.appendTo($dialog);
+
+		$('<label>')
+			.attr('for', inputId)
+			.text( _loc('Search:') )
+			.appendTo($searchLine);
+
+		$('<input>')
+			.attr('id', inputId)
+			.attr('type', 'text')
+			.appendTo($searchLine);
+
+		$('<button>')
+			.attr('id', searchButtonId)
+			.text( _loc('Search') )
+			.appendTo($searchLine);
+		
+		$('<div>')
+			.attr('id',displayId)
+			.addClass('editorSelectDocumentDialogResults')
+			.appendTo($dialog);
+		
+		var $buttons = $('<div>')
+			.appendTo($dialog);
+		
+		$('<button>')
+			.addClass('cancel')
+			.text( _loc('Cancel') )
+			.appendTo($buttons)
+			.button({icons:{primary:'ui-icon-cancel'}})
+			.click(function(){
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			});
+
+		var dialogOptions = {
+			autoOpen: true
+			,title: this.dialogPrompt
+			,modal: true
+			,close: function(event, ui){
+				var diag = $(event.target);
+				diag.dialog('destroy');
+				diag.remove();
+				if( shouldReset ) {
+					opts.onReset();
+				};
+			}
+		};
+		
+		var width = computeMaxDialogWidth(370);
+		if( typeof width === 'number' ){
+			dialogOptions.width = width;
+		};
+
+		$dialog.dialog(dialogOptions);
+
+		this.searchService.installSearch({
+			textInput: $('#'+inputId)
+			,searchButton: $('#'+searchButtonId)
+			,displayFn: receiveSearchResults
+			,onlyFinalResults: true
+		});
+		
+		var $input = $('#'+inputId);
+		$('#'+inputId).focus();
+		
+		// Get suggestions
+		if( opts.contextDoc && typeof opts.contextDoc._id === 'string' ){
+			this.documentSource.getReferencesFromId({
+				docId: opts.contextDoc._id
+				,onSuccess: receiveSuggestions
+				,onError: function(errorMsg){
+					// Ignore
+					$n2.logError('Unable to fetch related documents for ' + opts.contextDoc._id);
+				}
+			});
+		};
+		
+		function receiveSearchResults(displayData) {
+			if( !displayData ) {
+				reportError( _loc('Invalid search results returned') );
+
+			} else if( 'wait' === displayData.type ) {
+				$('#'+displayId).empty();
+
+			} else if( 'results' === displayData.type ) {
+				var docIds = [];
+			
+				for(var i=0,e=displayData.list.length; i<e; ++i) {
+					var docId = displayData.list[i].id;
+					docIds.push(docId);
+				};
+				
+				if( docIds.length < 1 ){
+					displayDocs([]);
+					
+				} else {
+					_this.documentSource.getDocuments({
+						docIds: docIds
+						,onSuccess: function(docs){
+
+							_this.filterDocuments({
+								docs: docs
+								,onSuccess: function(docs){
+									displayDocs(docs, displayId);
+								}
+								,onError: reportError
+							});
+						}
+						,onError: function(errorMsg){ 
+							reportError( _loc('Unable to retrieve documents') );
+						}
+					});
+				};
+				
+			} else {
+				reportError( _loc('Invalid search results returned') );
+			};
+		};
+
+		function receiveSuggestions(docIds) {
+			if( docIds.length < 1 ){
+				displayDocs([]);
+				
+			} else {
+				_this.documentSource.getDocuments({
+					docIds: docIds
+					,onSuccess: function(docs){
+
+						_this.filterDocuments({
+							docs: docs
+							,onSuccess: function(docs){
+								displayDocs(docs, suggestionId);
+							}
+							,onError: reportError
+						});
+					}
+					,onError: function(errorMsg){ 
+						reportError( _loc('Unable to retrieve documents') );
+					}
+				});
+			};
+		};
+
+		function displayDocs(docs, elemId) {
+
+			if( docs.length < 1 ){
+				$('#'+elemId)
+					.empty()
+					.text( _loc('No results returned by search') );
+				
+			} else {
+				var $table = $('<table></table>');
+				$('#'+elemId).empty().append($table);
+
+				for(var i=0,e=docs.length; i<e; ++i) {
+					var doc = docs[i];
+					var docId = doc._id;
+					
+					var $tr = $('<tr></tr>');
+
+					$table.append($tr);
+
+					var $td = $('<td>')
+						.addClass('n2_search_result olkitSearchMod2_'+(i%2))
+						.appendTo($tr);
+					
+					var $a = $('<a>')
+						.attr('href','#'+docId)
+						.attr('alt',docId)
+						.appendTo($td)
+						.click( createClickHandler(docId) );
+					
+					if( _this.showService ) {
+						_this.showService.displayBriefDescription($a, {}, doc);
+					} else {
+						$a.text(docId);
+					};
+				};
+			};
+		};
+		
+		function createClickHandler(docId) {
+			return function(e){
+				opts.onSelected(docId);
+				shouldReset = false;
+				var $dialog = $('#'+dialogId);
+				$dialog.dialog('close');
+				return false;
+			};
+		};
+		
+		function reportError(err){
+			$('#'+displayId)
+				.empty()
+				.text( err );
+		};
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+ * Search for a related image media file
+ * @class
+ */
+var SearchRelatedImageDialogFactory = $n2.Class('SearchRelatedImageDialogFactory', SearchRelatedMediaDialogFactory, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			documentSource: undefined
+			,searchService: undefined
+			,showService: undefined
+			,dialogPrompt: _loc('Select a Related Image')
+		},opts_);
+		
+		SearchRelatedMediaDialogFactory.prototype.initialize.call(this, opts);
+	},
+	
+	/*
+	 * Keeps only documents that have an audio attachment
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var selectedDocs = [];
+		
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				var attachments = $n2.couchAttachment.getAttachments(doc);
+				attachments.forEach(function(att){
+					if( att.isSource() 
+					 && att.isAttached() 
+					 && 'image' === att.getFileClass() ){
+						selectedDocs.push(doc);
+					};
+				});
+			});
+		};
+		
+		opts.onSuccess( selectedDocs );
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+ * Search for a related audio media file
+* @class
+*/
+var SearchRelatedAudioDialogFactory = $n2.Class('SearchRelatedAudioDialogFactory', SearchRelatedMediaDialogFactory, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			documentSource: undefined
+			,searchService: undefined
+			,showService: undefined
+			,dialogPrompt: _loc('Select a Related Audio File')
+		},opts_);
+		
+		SearchRelatedMediaDialogFactory.prototype.initialize.call(this, opts);
+	},
+	
+	/*
+	 * Keeps only documents that have an audio attachment
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var selectedDocs = [];
+		
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				var attachments = $n2.couchAttachment.getAttachments(doc);
+				attachments.forEach(function(att){
+					if( att.isSource() 
+					 && att.isAttached() 
+					 && 'audio' === att.getFileClass() ){
+						selectedDocs.push(doc);
+					};
+				});
+			});
+		};
+		
+		opts.onSuccess( selectedDocs );
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+* Search for a related video media file
+* @class
+*/
+var SearchRelatedVideoDialogFactory = $n2.Class('SearchRelatedVideoDialogFactory', SearchRelatedMediaDialogFactory, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			documentSource: undefined
+			,searchService: undefined
+			,showService: undefined
+			,dialogPrompt: _loc('Select a Related Video File')
+		},opts_);
+		
+		SearchRelatedMediaDialogFactory.prototype.initialize.call(this, opts);
+	},
+	
+	/*
+	 * Keeps only documents that have an audio attachment
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var selectedDocs = [];
+		
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				var attachments = $n2.couchAttachment.getAttachments(doc);
+				attachments.forEach(function(att){
+					if( att.isSource() 
+					 && att.isAttached() 
+					 && 'video' === att.getFileClass() ){
+						selectedDocs.push(doc);
+					};
+				});
+			});
+		};
+		
+		opts.onSuccess( selectedDocs );
+	}
+});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
+/**
+ * Search for a related hover sound file
+ * @class
+ */
+var HoverSoundSearchDialogFactory = $n2.Class('HoverSoundSearchDialogFactory', SearchRelatedMediaDialogFactory, {
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			documentSource: undefined
+			,searchService: undefined
+			,showService: undefined
+			,dialogPrompt: _loc('Select a Hover Sound')
+		},opts_);
+		
+		SearchRelatedMediaDialogFactory.prototype.initialize.call(this, opts);
+	},
+	
+	/*
+	 * Keeps only documents that have an audio attachment
+	 */
+	filterDocuments: function(opts_){
+		var opts = $n2.extend({
+			docs: null
+			,onSuccess: function(docs){}
+			,onError: function(err){}
+		},opts_);
+		
+		var docsWithHoverSound = [];
+		
+		if( $n2.isArray(opts.docs) ){
+			opts.docs.forEach(function(doc){
+				var attachments = $n2.couchAttachment.getAttachments(doc);
+				attachments.forEach(function(att){
+					if( att.isSource() 
+					 && att.isAttached() 
+					 && 'audio' === att.getFileClass() ){
+						docsWithHoverSound.push(doc);
+					};
+				});
+			});
+		};
+		
+		opts.onSuccess( docsWithHoverSound );
+	}
 });
 
 //++++++++++++++++++++++++++++++++++++++++++++++
@@ -637,7 +1527,7 @@ var FilteredSearchDialogFactory = $n2.Class({
 		var searchButtonId = $n2.getUniqueId();
 		var displayId = $n2.getUniqueId();
 		
-		var $dialog = $('<div id="'+dialogId+'" class="editorSelectDocumentDialog">')
+		var $dialog = $('<div>')
 			.attr('id',dialogId)
 			.addClass('editorSelectDocumentDialog');
 		
@@ -682,7 +1572,6 @@ var FilteredSearchDialogFactory = $n2.Class({
 			autoOpen: true
 			,title: this.dialogPrompt
 			,modal: true
-			,width: 370
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
@@ -692,6 +1581,12 @@ var FilteredSearchDialogFactory = $n2.Class({
 				};
 			}
 		};
+		
+		var width = computeMaxDialogWidth(370);
+		if( typeof width === 'number' ){
+			dialogOptions.width = width;
+		};
+
 		$dialog.dialog(dialogOptions);
 
 		this.searchService.installSearch({
@@ -815,6 +1710,8 @@ var DialogService = $n2.Class({
 	
 	funcMap: null,
 	
+	atlasDesign: null,
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			dispatchService: null
@@ -823,6 +1720,7 @@ var DialogService = $n2.Class({
 			,showService: null
 			,schemaRepository: null
 			,funcMap: null
+			,atlasDesign: null
 		},opts_);
 	
 		var _this = this;
@@ -832,6 +1730,7 @@ var DialogService = $n2.Class({
 		this.searchService = opts.searchService;
 		this.showService = opts.showService;
 		this.schemaRepository = opts.schemaRepository;
+		this.atlasDesign = opts.atlasDesign;
 		
 		this.funcMap = {};
 		for(var key in opts.funcMap){
@@ -852,6 +1751,67 @@ var DialogService = $n2.Class({
 			this.funcMap['getLayers'] = function(opts){
 				_this.selectLayersDialog(opts);
 			};			
+		};
+		
+		if( !this.funcMap['getRelatedMedia'] ){
+			var relatedMediaDialogFactory = new SearchRelatedMediaDialogFactory({
+				documentSource: this.documentSource
+				,searchService: this.searchService
+				,showService: this.showService
+			});
+			this.funcMap['getRelatedMedia'] = relatedMediaDialogFactory.getDialogFunction();
+		};
+		
+		if( !this.funcMap['getRelatedImage'] ){
+			var factory = new SearchRelatedImageDialogFactory({
+				documentSource: this.documentSource
+				,searchService: this.searchService
+				,showService: this.showService
+			});
+			this.funcMap['getRelatedImage'] = factory.getDialogFunction();
+		};
+		
+		if( !this.funcMap['getRelatedAudio'] ){
+			var factory = new SearchRelatedAudioDialogFactory({
+				documentSource: this.documentSource
+				,searchService: this.searchService
+				,showService: this.showService
+			});
+			this.funcMap['getRelatedAudio'] = factory.getDialogFunction();
+		};
+		
+		if( !this.funcMap['getRelatedVideo'] ){
+			var factory = new SearchRelatedVideoDialogFactory({
+				documentSource: this.documentSource
+				,searchService: this.searchService
+				,showService: this.showService
+			});
+			this.funcMap['getRelatedVideo'] = factory.getDialogFunction();
+		};
+		
+		if( !this.funcMap['getHoverSound'] ){
+			var hoverSoundDialogFactory = new HoverSoundSearchDialogFactory({
+				documentSource: this.documentSource
+				,searchService: this.searchService
+				,showService: this.showService
+			});
+			this.funcMap['getHoverSound'] = hoverSoundDialogFactory.getDialogFunction();
+		};
+
+		if( !this.funcMap['getDocumentFromSchema'] ){
+			var factory = new SearchOnSchemaDialogFactory({
+				atlasDesign: this.atlasDesign
+				,showService: this.showService
+			});
+			this.funcMap['getDocumentFromSchema'] = factory.getDialogFunction();
+		};
+
+		if( !this.funcMap['getDocumentFromLayer'] ){
+			var factory = new SearchOnLayerDialogFactory({
+				atlasDesign: this.atlasDesign
+				,showService: this.showService
+			});
+			this.funcMap['getDocumentFromLayer'] = factory.getDialogFunction();
 		};
 	},
 	
@@ -964,11 +1924,18 @@ var DialogService = $n2.Class({
 		var diagId = $n2.getUniqueId();
 		var $dialog = $('<div id="'+diagId+'"></div>');
 
-		var $label = $('<span></span>');
-		$label.text( _loc('Select schema') + ': ' );
-		$dialog.append($label);
+		if (!window.cordova) {
+			var $label = $('<span></span>');
+			$label.text( _loc('Select schema') + ': ' );
+			$dialog.append($label);
+		}
 		
 		var $select = $('<select></select>');
+
+		if (window.cordova) {
+			$select.addClass('cordova-select-dropdown');
+		}
+
 		$dialog.append($select);
 		for(var i=0,e=opt.schemas.length; i<e; ++i){
 			var schema = opt.schemas[i];
@@ -982,11 +1949,29 @@ var DialogService = $n2.Class({
 
 		$dialog.append( $('<br/>') );
 		
-		var $ok = $('<button></button>');
-		$ok.text( _loc('OK') );
-		$ok.button({icons:{primary:'ui-icon-check'}});
-		$dialog.append( $ok );
+		var mustReset = true;
+		
+		var $btnContainer;
+		if (window.cordova) {
+			$btnContainer = $('<div></div>')
+				.addClass('cordova-button-container');
+		}
+
+		var $ok;
+		if (window.cordova) {
+			$ok = $('<label></label>')
+				.text(_loc('Select'))
+				.addClass('cordova-dialog-btn')
+			$btnContainer.append($ok);
+		} else {
+			$ok = $('<button></button>');
+			$ok.text( _loc('OK') );
+			$ok.button({icons:{primary:'ui-icon-check'}});
+			$dialog.append( $ok );
+		} 
 		$ok.click(function(){
+			mustReset = false;
+			
 			var $diag = $('#'+diagId);
 			var schemaName = $diag.find('select').val();
 			$diag.dialog('close');
@@ -1000,27 +1985,61 @@ var DialogService = $n2.Class({
 			return false;
 		});
 		
-		var $cancel = $('<button></button>');
+		var $cancel;
+		if (window.cordova) {
+			$cancel = $('<label></label>')
+				.addClass('cordova-dialog-btn');
+			$btnContainer.append($cancel);
+		} else {
+			$cancel = $('<button></button>');
+			$cancel.button({icons:{primary:'ui-icon-cancel'}});
+			$dialog.append( $cancel );
+		}
 		$cancel.text( _loc('Cancel') );
-		$cancel.button({icons:{primary:'ui-icon-cancel'}});
-		$dialog.append( $cancel );
 		$cancel.click(function(){
 			$('#'+diagId).dialog('close');
-			opt.onReset();
 			return false;
 		});
-		
+
+		if (window.cordova) {
+			$dialog.append($btnContainer);
+		}
+
 		var dialogOptions = {
 			autoOpen: true
 			,title: _loc('Select a schema')
 			,modal: true
-			,width: 740
+			,resizable: !window.cordova
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
 				diag.remove();
+				
+				if( mustReset ){
+					opt.onReset();
+				};
 			}
+			,open: function(event, ui) {
+				if (window.cordova) {
+					$(".ui-dialog-titlebar-close", ui.dialog | ui).hide();
+				}
+    	}
 		};
+		
+		if (window.cordova) {
+			// Make the dialog title larger on Cordova
+			$("<style type='text/css'> .ui-dialog-title { font-size: large } </style>").appendTo("head");
+		}
+		
+		if (window.cordova) {
+			dialogOptions.maxWidth = '300px'
+		} else {
+			var width = computeMaxDialogWidth(740);
+			if( typeof width === 'number' ){
+				dialogOptions.width = width;
+			};
+		}
+		
 		$dialog.dialog(dialogOptions);
 	}
 });
@@ -1031,6 +2050,9 @@ $n2.couchDialogs = {
 	DialogService: DialogService
 	,SearchBriefDialogFactory: SearchBriefDialogFactory
 	,FilteredSearchDialogFactory: FilteredSearchDialogFactory
+	,ProgressDialog: ProgressDialog
+	,AlertDialog: AlertDialog
+	,SearchRelatedMediaDialogFactory: SearchRelatedMediaDialogFactory
 };
 
 })(jQuery,nunaliit2);

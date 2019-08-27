@@ -23,6 +23,7 @@
 				,"initiallyOpened": false
 			}
 			,"addPointsOnly": false
+			,"showSRSAttribution": true
 			,"toggleClick": true
 		}
 	}

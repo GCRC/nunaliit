@@ -153,7 +153,7 @@ var ObjectSelector = $n2.Class({
 	initialize: function(selectors){
 		// Verify that this is an array of string or numbers
 		if( !$n2.isArray(selectors) ){
-			throw 'Instances of ObjectSelector must be created using an array';
+			throw new Error('Instances of ObjectSelector must be created using an array');
 		};
 		
 		this.selectors = selectors;
@@ -181,7 +181,7 @@ var ObjectSelector = $n2.Class({
 			return new ObjectSelector(selectors);
 			
 		} else {
-			throw 'A string or number must be provided when creating a child selector';
+			throw new Error('A string or number must be provided when creating a child selector');
 		};
 		
 		// Copy current selector
@@ -323,6 +323,45 @@ var ObjectSelector = $n2.Class({
 			encodedPortions.push(encoded);
 		};
 		return encodedPortions.join('-');
+	},
+
+	/*
+	 * Traverses an object starting from the location of the selector and
+	 * including all children. For each attribute, call the callback function
+	 * which should have the following signature
+	 *     callbackFn(value, childSelector)
+	 * where
+	 *    value is a descendant (or self) of the value selected by the selector
+	 *    childSelector is a selector that matches the location of value
+	 */
+	traverse: function(obj, callbackFn){
+		function traverseObj(obj, callbackFn, selector){
+			for(var key in obj){
+				var value = obj[key];
+				var childSelector = selector.getChildSelector(key);
+				callbackFn(value, childSelector);
+				
+				if( typeof value === 'object' && null !== value ){
+					traverseObj(value, callbackFn, childSelector);
+				};
+			};
+		};
+
+		if( typeof obj !== 'object' ){
+			throw new Error('objectSelector.traverse() needs an object');
+		};
+		if( typeof callbackFn !== 'function' ){
+			throw new Error('objectSelector.traverse() needs a callback function');
+		};
+		
+		var value = this.getValue(obj);
+		if( typeof value !== 'undefined' ){
+			// Perform self
+			callbackFn(value, this);
+			
+			// Start traversal
+			traverseObj(value, callbackFn, this);
+		};
 	}
 });
 
@@ -366,10 +405,10 @@ function findSelectors(obj, testFn){
 	};
 
 	if( typeof obj !== 'object' ){
-		throw 'objectSelector.findSelectors() needs an object'
+		throw new Error('objectSelector.findSelectors() needs an object');
 	};
 	if( typeof testFn !== 'function' ){
-		throw 'objectSelector.findSelectors() needs a test function'
+		throw new Error('objectSelector.findSelectors() needs a test function');
 	};
 	
 	var result = [];
@@ -383,7 +422,6 @@ function findSelectors(obj, testFn){
 	
 	return result;
 };
-
 
 // =========================================================================
 

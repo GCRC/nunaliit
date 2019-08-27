@@ -1,0 +1,24 @@
+{
+   "group": "demo",
+   "id": "comment",
+   "label": "Demo Comment",
+   "relatedSchemas": [],
+   "attributes": [
+      {
+         "type": "createdBy",
+         "label": "By"
+      },
+      {
+         "type": "createdTime",
+         "label": "on"
+      },
+      {
+         "type": "string",
+         "label": "Comment",
+         "id": "text",
+         "textarea": true,
+         "includedInBrief": true,
+         "placeholder": "Comment"
+      }
+   ]
+}

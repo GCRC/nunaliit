@@ -3,53 +3,12 @@
   <parent>
     <artifactId>nunaliit2</artifactId>
     <groupId>ca.carleton.gcrc</groupId>
-    <version>2.2.8-SNAPSHOT</version>
+    <version>2.2.9-SNAPSHOT</version>
   </parent>
-  <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-couch-client</artifactId>
-  <version>2.2.8-SNAPSHOT</version>
   <name>nunaliit2-couch-client</name>
 
-  <properties>
-    <restlet.version>2.0.4</restlet.version>
-  </properties>
-
-  <repositories>
-    <repository>
-      <id>maven-restlet</id>
-      <name>Public online Restlet repository</name>
-      <url>http://maven.restlet.org</url>
-    </repository>
-  </repositories>
-
   <dependencies>
-    <dependency>
-      <groupId>org.restlet.jse</groupId>
-      <artifactId>org.restlet</artifactId>
-      <version>${restlet.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.osgi</groupId>
-          <artifactId>org.osgi.core</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.restlet.jse</groupId>
-      <artifactId>org.restlet.ext.httpclient</artifactId>
-      <version>${restlet.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>org.restlet.jse</groupId>
-      <artifactId>org.restlet.ext.json</artifactId>
-      <version>${restlet.version}</version>
-    </dependency>
-	<dependency>
-		<groupId>ca.carleton.gcrc</groupId>
-		<artifactId>nunaliit2-json</artifactId>
-		<version>${project.version}</version>
-		<type>jar</type>
-	</dependency>
     <dependency>
     	<groupId>junit</groupId>
     	<artifactId>junit</artifactId>

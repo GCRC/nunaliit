@@ -39,30 +39,38 @@ function defaultInstallSound(info) {};
 function defaultHandleDocumentSound(info_, cb_){cb_(info_);};
 
 var HoverSoundService = $n2.Class({
-	options: null
+
+	db: null,
 	
-	,dispatcher: null
+	dispatcher: null,
 	
-	,requestService: null
+	requestService: null,
 	
-	,currentFocusSoundDocId: null
+	customService: null,
 	
-	,initialize: function(options_){
+	handleDocumentSound: null,
+	
+	currentFocusDocIdMap: null,
+	
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			db: null // couchDb needed to access documents
+			,dispatchService: undefined
+			,requestService: undefined
+			,customService: undefined
+			,handleDocumentSound: defaultHandleDocumentSound
+		},opts_);
+
 		var _this = this;
 		
-		this.options = $n2.extend({
-			db: null // couchDb needed to access documents
-			,serviceDirectory: null
-			,handleDocumentSound: defaultHandleDocumentSound
-		},options_);
+		this.db = opts.db;
+		this.dispatcher = opts.dispatchService;
+		this.requestService = opts.requestService;
+		this.customService = opts.customService;
+		this.handleDocumentSound = opts.handleDocumentSound;
+		
+		this.currentFocusDocIdMap = {};
 
-		this.currentFocusSoundDocId = null;
-		
-		if( this.options.serviceDirectory ) {
-			this.dispatcher = this.options.serviceDirectory.dispatchService;
-			this.requestService = this.options.serviceDirectory.requestService;
-		};
-		
 		if( this.dispatcher ) {
 			var f = function(m){ _this._handleDispatch(m); };
 			
@@ -73,9 +81,9 @@ var HoverSoundService = $n2.Class({
 			this.dispatcher.register(DH, 'playSoundOn', f);
 			this.dispatcher.register(DH, 'playSoundOff', f);
 		};
-	}
+	},
 
-	,handleFeatureHover: function(feature, opts_) {
+	handleFeatureHover: function(feature, opts_) {
 
 		if( !feature ) return;
 		
@@ -89,13 +97,13 @@ var HoverSoundService = $n2.Class({
 		};
 
 		this.findDocumentHoverSound(data, opts_);
-	}
+	},
 
-	,findDocumentHoverSound: function(data, opts_) {
+	findDocumentHoverSound: function(data, opts_) {
 
 		var opts = $n2.extend({
 			installSoundFn: defaultInstallSound
-			,handleDocumentSound: this.options.handleDocumentSound
+			,handleDocumentSound: this.handleDocumentSound
 		},opts_);
 		
 		var _this = this;
@@ -112,9 +120,9 @@ var HoverSoundService = $n2.Class({
 		opts.handleDocumentSound(info, function(info_){
 			_this._defaultDocumentSound(info_);
 		});
-	}
+	},
 
-	,_defaultDocumentSound: function(info) {
+	_defaultDocumentSound: function(info) {
 
 		var _this = this;
 
@@ -123,8 +131,8 @@ var HoverSoundService = $n2.Class({
 			
 		} else {
 			GetHoverSoundUrlFromDocument({
-				db: this.options.db
-				,serviceDirectory: this.options.serviceDirectory
+				db: this.db
+				,requestService: this.requestService
 				,doc: info.doc
 				,onSuccess: function(soundUrl){
 					info.soundUrl = soundUrl;
@@ -132,49 +140,115 @@ var HoverSoundService = $n2.Class({
 				}
 			});
 		};
-	}
+	},
 	
-	,_handleDispatch: function(m){
+	_handleDispatch: function(m){
 		var _this = this;
 		
 		if(m.type==='focusOn'){
 			if(m.doc) {
-				if( this.currentFocusSoundDocId ) {
-					this._removeFocusSound(this.currentFocusSoundDocId);
+				for(var docId in this.currentFocusDocIdMap) {
+					this._removeFocusSound(docId);
 				};
 				
-				this.currentFocusSoundDocId = m.doc._id;
+				this.currentFocusDocIdMap = {};
+				this.currentFocusDocIdMap[m.doc._id] = true;
 				
 				this.findDocumentHoverSound(m.doc, {
 					installSoundFn: function(info){
 						_this._installFocusSound(info);
 					}
 				});
-				
-			} else if(m.docId) {
-				if( this.currentFocusSoundDocId ) {
-					this._removeFocusSound(this.currentFocusSoundDocId);
+
+			} else if(m.docs) {
+				for(var docId in this.currentFocusDocIdMap) {
+					this._removeFocusSound(docId);
 				};
 				
-				this.currentFocusSoundDocId = m.docId;
+				this.currentFocusDocIdMap = {};
 				
-				if( this.requestService ) {
-					this.requestService.requestDocument(m.docId, function(doc){
-						_this.findDocumentHoverSound(doc, {
+				var playMultiple = true;
+				if( m.docs.length > 1 ){
+					if( this.customService ){
+						playMultiple = this.customService.getOption('soundPlayMultipleOnFocus', false);
+					} else {
+						playMultiple = false;
+					};
+				};
+				
+				if( playMultiple ){
+					for(var i=0,e=m.docs.length; i<e; ++i){
+						var doc = m.docs[i];
+						
+						this.currentFocusDocIdMap[doc._id] = true;
+						
+						this.findDocumentHoverSound(doc, {
 							installSoundFn: function(info){
 								_this._installFocusSound(info);
 							}
 						});
+					};
+				};
+				
+			} else if(m.docId) {
+				for(var docId in this.currentFocusDocIdMap) {
+					this._removeFocusSound(docId);
+				};
+				
+				this.currentFocusDocIdMap = {};
+				
+				this.currentFocusDocIdMap[m.docId] = true;
+				
+				if( this.requestService ) {
+					this.requestService.requestDocument(m.docId, function(doc){
+						if( _this.currentFocusDocIdMap[m.docId] ){
+							_this.findDocumentHoverSound(doc, {
+								installSoundFn: function(info){
+									_this._installFocusSound(info);
+								}
+							});
+						};
 					});
+				};
+				
+			} else if(m.docIds) {
+				for(var docId in this.currentFocusDocIdMap) {
+					this._removeFocusSound(docId);
+				};
+				
+				this.currentFocusDocIdMap = {};
+				
+				var playMultiple = true;
+				if( m.docIds.length > 1 ){
+					if( this.customService ){
+						playMultiple = this.customService.getOption('soundPlayMultipleOnFocus', false);
+					} else {
+						playMultiple = false;
+					};
+				};
+				
+				if( playMultiple ){
+					for(var i=0,e=m.docIds.length; i<e; ++i){
+						this.currentFocusDocIdMap[m.docId] = true;
+						
+						if( this.requestService ) {
+							this.requestService.requestDocument(m.docId, function(doc){
+								if( _this.currentFocusDocIdMap[m.docId] ){
+									_this.findDocumentHoverSound(doc, {
+										installSoundFn: function(info){
+											_this._installFocusSound(info);
+										}
+									});
+								};
+							});
+						};
+					};
 				};
 			};
 			
 		} else if(m.type==='focusOff'){
-			if(m.doc) {
-				this._removeFocusSound(m.doc._id);
-				
-			} else if(m.docId) {
-				this._removeFocusSound(m.docId);
+			for(var docId in this.currentFocusDocIdMap) {
+				this._removeFocusSound(docId);
 			};
 			
 		} else if(m.type==='playHoverSoundOn'){
@@ -207,31 +281,36 @@ var HoverSoundService = $n2.Class({
 				this._removePlaySound(m.id);
 			};
 		};
-	}
+	},
 	
-	,_installFocusSound: function(info){
+	_installFocusSound: function(info){
 		var docId = info.docId;
 		var url = info.soundUrl;
 		
-		if( url && this.currentFocusSoundDocId === docId ) {
+		if( url && this.currentFocusDocIdMap[docId] ) {
 			var $div = this._getFocusSoundDiv();
-			this._insertSoundElement($div, url);
+			var className = this._computeFocusClassName(docId);
+			
+			this._insertSoundElement($div, url, className);
 		};
-	}
+	},
 	
-	,_removeFocusSound: function(docId){
-		if( this.currentFocusSoundDocId === docId ) {
-			var $div = this._getFocusSoundDiv();
-			$div.empty();
-			this.currentFocusSoundDocId = null;
-		};
-	}
+	_removeFocusSound: function(docId){
+		var className = this._computeFocusClassName(docId);
+		var $div = this._getFocusSoundDiv();
+		$div.find('.'+className).remove();
+	},
+	
+	_computeFocusClassName: function(docId){
+		var className = 'n2SoundFocus_' + $n2.utils.stringToHtmlId(docId);
+		return className;
+	},
 
 	/**
 	 * Create a div to receive the play sound. If div is removed, then
 	 * sound is no longer needed
 	 */
-	,_initiatePlaySound: function(docId){
+	_initiatePlaySound: function(docId){
 		var divId = 'n2CouchPlaySound_' + $n2.utils.stringToHtmlId(docId);
 
 		var $div = $('#'+divId);
@@ -239,50 +318,161 @@ var HoverSoundService = $n2.Class({
 			$div = $('<div id="'+divId+'"></div>');
 			this._getSoundDiv().append($div);
 		};
-	}
+	},
 	
 	/**
 	 * Takes the sound url and installs a playing element in the
 	 * appropriate div. If the div has disappeared, then the sound
 	 * is no longer needed and should be ignored.
 	 */
-	,_installPlaySound: function(info){
+	_installPlaySound: function(info){
 		var docId = info.docId;
 		var url = info.soundUrl;
 
 		var $div = $('#n2CouchPlaySound_'+$n2.utils.stringToHtmlId(docId));
 		this._insertSoundElement($div, url);
-	}
+	},
 
 	/**
 	 * Sound no longer needed. Remove associated div.
 	 */
-	,_removePlaySound: function(docId){
+	_removePlaySound: function(docId){
 		var $div = $('#n2CouchPlaySound_'+$n2.utils.stringToHtmlId(docId));
 		$div.remove();
-	}
+	},
 	
-	,_getSoundDiv: function(){
+	_getSoundDiv: function(){
 		var $div = $('#n2CouchSound');
 		if( $div.length < 1 ) {
-			$div = $('<div id="n2CouchSound"></div>');
-			$('body').append( $div );
+			$div = $('<div>')
+				.attr('id','n2CouchSound')
+				.addClass('n2CouchSound')
+				.appendTo( $('body') );
 		};
 		return $div;
-	}
+	},
 	
-	,_getFocusSoundDiv: function(){
+	_getFocusSoundDiv: function(){
 		var $div = $('#n2CouchFocusSound');
 		if( $div.length < 1 ) {
 			var $parent = this._getSoundDiv();
-			$div = $('<div id="n2CouchFocusSound"></div>');
-			$parent.append( $div );
+			$div = $('<div>')
+				.attr('id','n2CouchFocusSound')
+				.addClass('n2CouchFocusSound')
+				.appendTo( $parent );
 		};
 		return $div;
-	}
+	},
 	
-	,_insertSoundElement: function($div, url){
-		$div.html('<embed src="'+url+'" hidden="true" autostart="true" loop="false"/>');
+	_insertSoundElement: function($div, url, className){
+		var browserInfo = $n2.utils.getBrowserInfo();
+		$n2.log('browser info',browserInfo);
+		if( "Safari" === browserInfo.browser ){
+			var embedHtml = this._generateHtml5Tag({
+				url: url
+				,sourceType: 'audio'
+				,autoplay: true
+				,loop: false
+				,controller: false
+			});
+			var $embed = $(embedHtml);
+			if( className ){
+				$embed.addClass(className);
+			};
+			$div.append($embed);
+			
+		} else {
+			var $embed = $('<embed>')
+				.attr('src',url)
+				.attr('autostart',true)
+				.attr('loop',false)
+				;
+			if( className ){
+				$embed.addClass(className);
+			};
+			$embed.css('visibility','hidden');
+			$div.append($embed);
+		};
+	},
+	
+	_generateHtml5Tag: function(opts_) {
+		var opts = $n2.extend({
+			url: null
+			,sourceType: null
+			,mimeType: null
+			,width: null
+			,height: null
+			,autoplay: false
+			,loop: false
+			,controller: false
+		},opts_);
+		
+		var html = [];
+		if( 'video' === opts.sourceType ) {
+			html.push('<video');
+		} else if( 'audio' === opts.sourceType ) {
+			html.push('<audio');
+		} else {
+			return null;
+		};
+		
+		if( opts.width ) {
+			html.push(' width="'+opts.width+'"');
+		};
+		if( opts.height ) {
+			html.push(' height="'+opts.height+'"');
+		};
+		if( opts.controller ) {
+			html.push(' controls="controls"');
+		};
+		if( opts.autoplay ) {
+			html.push(' autoplay="autoplay"');
+		};
+		
+		// Source
+		html.push(' src="');
+		html.push(opts.url);
+		html.push('"');
+		
+		if( opts.mimeType ) {
+			html.push(' type="'+opts.mimeType+'"');
+		};
+		
+		html.push('>');
+		
+		// Embed tag in case HTML 5 is not supported
+		html.push('<embed');
+		if( opts.width ) {
+			html.push(' width="'+opts.width+'"');
+		};
+		if( opts.height ) {
+			html.push(' height="'+opts.height+'"');
+		};
+		if( opts.autoplay ) {
+			html.push(' autoplay="true"');
+		} else {
+			html.push(' autoplay="false"');
+		};
+		if( opts.controller ) {
+			html.push(' controller="true"');
+		};
+		if( opts.loop ) {
+			html.push(' loop="true"');
+		};
+		html.push(' src="');
+		html.push(opts.url);
+		html.push('"></embed>');
+		
+		// Close Tag
+		if( 'video' === opts.sourceType ) {
+			html.push('</video>');
+		} else if( 'audio' === opts.sourceType ) {
+			html.push('</audio>');
+		} else {
+			return null;
+		};
+		 
+		return html.join(''); 
 	}
 });	
 
@@ -290,7 +480,7 @@ var HoverSoundService = $n2.Class({
 var GetHoverSoundUrlFromDocument = function(opts_){
 	var opts = $n2.extend({
 		db: null // required
-		,serviceDirectory: null // required
+		,requestService: null // required
 		,doc: null // required
 		,onSuccess: function(soundUrl){}
 		,onError: function(err){}
@@ -299,7 +489,11 @@ var GetHoverSoundUrlFromDocument = function(opts_){
 	var data = opts.doc;
 	
 	var requestService = null;
-	if( opts && opts.serviceDirectory ){
+	if( opts ){
+		requestService = opts.requestService;
+	};
+	if( !requestService && opts.serviceDirectory ) {
+		// For legacy code
 		requestService = opts.serviceDirectory.requestService;
 	};
 	if( !requestService ) {

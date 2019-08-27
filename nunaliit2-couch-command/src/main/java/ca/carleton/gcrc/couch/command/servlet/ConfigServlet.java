@@ -3,7 +3,9 @@ package ca.carleton.gcrc.couch.command.servlet;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.nio.ByteBuffer;
+import java.security.SecureRandom;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.List;
@@ -39,6 +41,8 @@ import ca.carleton.gcrc.couch.onUpload.UploadWorker;
 import ca.carleton.gcrc.couch.onUpload.UploadWorkerSettings;
 import ca.carleton.gcrc.couch.onUpload.geojson.GeoJsonFileConverter;
 import ca.carleton.gcrc.couch.onUpload.gpx.GpxFileConverter;
+import ca.carleton.gcrc.couch.onUpload.inReach.InReachConfiguration;
+import ca.carleton.gcrc.couch.onUpload.inReach.InReachSettingsFromXmlFile;
 import ca.carleton.gcrc.couch.onUpload.mail.DailyVetterNotificationGenerator;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationImpl;
@@ -68,9 +72,11 @@ import ca.carleton.gcrc.mail.MailServletConfiguration;
 import ca.carleton.gcrc.mail.messageGenerator.FormEmailMessageGenerator;
 import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
+import ca.carleton.gcrc.security.rng.RngFactory;
 import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
 import ca.carleton.gcrc.upload.UploadUtils;
+import ca.carleton.gcrc.utils.VersionUtils;
 
 /**
  * Configures the properties of the other servlets. Accepts init
@@ -80,6 +86,17 @@ import ca.carleton.gcrc.upload.UploadUtils;
 @SuppressWarnings("serial")
 public class ConfigServlet extends JsonServlet {
 
+	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
+	static public String bytesToHex(byte[] bytes) {
+	    char[] hexChars = new char[bytes.length * 2];
+	    for ( int j = 0; j < bytes.length; j++ ) {
+	        int v = bytes[j] & 0xFF;
+	        hexChars[j * 2] = hexArray[v >>> 4];
+	        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+	    }
+	    return new String(hexChars);
+	}
+	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private File atlasDir = null;
@@ -97,6 +114,7 @@ public class ConfigServlet extends JsonServlet {
 	private SubmissionMailNotifier submissionNotifier = null;
 	private MailVetterDailyNotificationTask vetterDailyTask = null;
 	private ConfigServletActions actions = null;
+	private SecureRandom rng = null;
 	
 	public ConfigServlet() {
 		
@@ -106,6 +124,12 @@ public class ConfigServlet extends JsonServlet {
 		super.init(config);
 		
 		logger.info("Initializing Couch Configuration");
+		
+		// Build RNG
+		{
+			RngFactory rngFactory = new RngFactory();
+			rng = rngFactory.createRng();
+		}
 		
 		ServletContext servletContext = config.getServletContext();
 
@@ -615,6 +639,17 @@ public class ConfigServlet extends JsonServlet {
 				settings.setGeometrySimplificationDisabled(true);
 			}
 			
+			// InReach configuration
+			File configDir = new File(atlasDir, "config");
+			if( configDir.exists() && configDir.isDirectory() ){
+				File inReachFile = new File(configDir, "inreach_forms.xml");
+				if( inReachFile.exists() && inReachFile.isFile() ){
+					InReachSettingsFromXmlFile inReachSettings = new InReachSettingsFromXmlFile(inReachFile);
+					inReachSettings.load();
+					InReachConfiguration.setInReachSettings(inReachSettings);
+				}
+			}
+			
 			uploadWorker = new UploadWorker(settings);
 			uploadWorker.setDocumentDbDesign(couchDd);
 			uploadWorker.setMediaDir(repositoryDir);
@@ -908,6 +943,45 @@ public class ConfigServlet extends JsonServlet {
 				result.put("roles", jsonRoles);
 				
 				sendJsonResponse(resp, result);
+
+			} else if( path.size() == 1 
+			 && "testChannel".equals(path.get(0)) ) {
+				// This call should always return a different answer.
+				// It is used by clients to test if it is sitting behind
+				// a proxy that does not respect caching headings
+				
+				JSONObject result = new JSONObject();
+				result.put("ok", true);
+				
+				{
+					String version = VersionUtils.getVersion();
+					if( null != version ){
+						result.put("version", version);
+					}
+				}
+				
+				{
+					String buildStr = VersionUtils.getBuildString();
+					if( null != buildStr ){
+						result.put("build", buildStr);
+					}
+				}
+				
+				// Get 128 random bits
+				byte[] bytes = new byte[16];
+				rng.nextBytes(bytes);
+				String hexBytes = bytesToHex(bytes);
+				result.put("random", hexBytes);
+				
+				// Do not use sendJsonResponse. Instead, imitate CouchDB response headers
+				// sendJsonResponse(resp, result);
+				resp.setContentType("application/json");
+				resp.setCharacterEncoding("utf-8");
+				resp.addHeader("Cache-Control", "must-revalidate");
+				
+				OutputStreamWriter osw = new OutputStreamWriter(resp.getOutputStream(), "UTF-8");
+				result.write(osw);
+				osw.flush();
 
 			} else {
 				throw new Exception("Invalid action requested");

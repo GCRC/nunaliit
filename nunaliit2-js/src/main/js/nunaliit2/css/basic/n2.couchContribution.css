@@ -3,28 +3,22 @@ div.couchContributionSelect:hover {
 }
 
 div.couchLookaheadDivider {
-	position:relative;
-	height:0;
-	bottom:0;
+	position: relative;
+	height: 0;
+	bottom: 0;
 }
 
 div.couchLookahead {
-	position:absolute;
-	display:none;
-	top:0;
-	z-index:10;
-	background-color:#ffffff;
-	border:solid 1px #000000;
-}
-
-div.couchLookaheadLine {
+	position: absolute;
+	display: none;
+	top: 0;
+	z-index: 10;
+	background-color: #ffffff;
+	border: solid 1px #000000;
 }
 
 div.couchLookaheadLine:hover {
 	background-color:#aaaaaa;
-}
-
-div.couchLookaheadLineOdd {
 }
 
 div.couchLookaheadLineEven {
@@ -53,7 +47,7 @@ textarea.contributionDescription {
  */
 div.contribution_media_icon_wrapper {
 	font-family: Geneva, Helvetica, Arial, sans-serif; 
-	font-size:   70%;
+	font-size: 70%;
 	float: right;
 	text-align: center;
 }
@@ -63,21 +57,17 @@ div.contribution_media_icon {
 	height: 26px;
 	margin: 0 auto;
 }
+div.contribution_audio_icon:hover,
+div.contribution_video_icon:hover,
+div.contribution_image_icon:hover {
+	background-position: -26px 0;
+}
 div.contribution_audio_icon {
 	background: transparent url(images/audio_icon.png) no-repeat; 
-}
-div.contribution_audio_icon:hover {
-	background-position: -26px 0;
 }
 div.contribution_video_icon {
 	background: transparent url(images/video_icon.png) no-repeat; 
 }
-div.contribution_video_icon:hover {
-	background-position: -26px 0;
-}
 div.contribution_image_icon {
 	background: transparent url(images/image_icon.png) no-repeat; 
-}
-div.contribution_image_icon:hover {
-	background-position: -26px 0;
 }

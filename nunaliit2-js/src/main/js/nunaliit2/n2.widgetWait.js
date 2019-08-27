@@ -58,15 +58,20 @@ var WaitWidget = $n2.Class({
 	waitingByRequesterId: null,
 	
 	showNames: null,
+	
+	refreshIntervalInMs: null,
+
+	logging: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			contentId: null
-			,containerId: null
+			containerId: null
 			,dispatchService: null
 			
 			// From configuration
 			,showNames: null
+			,refreshIntervalInMs: null
+			,logging: false
 		},opts_);
 		
 		var _this = this;
@@ -76,6 +81,16 @@ var WaitWidget = $n2.Class({
 
 		if( typeof opts.showNames === 'boolean' ){
 			this.showNames = opts.showNames;
+		};
+
+		if( typeof opts.refreshIntervalInMs === 'number' ){
+			this.refreshIntervalInMs = opts.refreshIntervalInMs;
+		} else {
+			this.refreshIntervalInMs = 300;
+		};
+
+		if( typeof opts.logging === 'boolean' ){
+			this.logging = opts.logging;
 		};
 		
 		this.dispatchService = opts.dispatchService;
@@ -90,7 +105,7 @@ var WaitWidget = $n2.Class({
 		// Get container
 		var containerId = opts.containerId;
 		if( !containerId ){
-			containerId = opts.contentId;
+			throw new Error('containerId must be specified');
 		};
 		var $container = $('#'+containerId);
 		
@@ -177,27 +192,44 @@ var WaitWidget = $n2.Class({
 	},
 	
 	_display: function(){
-		var $elem = this._getElem()
-			.empty();
+		var _this = this;
 		
-		var count = this.getCount();
-		if( count > 0 ){
-			$elem.show();
-			
-			if( this.showNames ){
-				var $names = $('<div>')
-					.addClass('n2wait_names')
+		var $elem = this._getElem();
+		if( $elem.hasClass('n2wait_showing') ){
+			// Already showing
+		} else {
+			displayTask();
+		};
+		
+		function displayTask(){
+			var $elem = _this._getElem()
+				.empty();
+
+			var count = _this.getCount();
+			if( count > 0 ){
+				$elem
+					.show()
+					.addClass('n2wait_showing');
+				
+				if( _this.showNames ){
+					var $names = $('<div>')
+						.addClass('n2wait_names')
+						.appendTo($elem);
+					
+					_this._displayNames($names);
+				};
+				
+				$('<div>')
+					.addClass('olkit_wait')
 					.appendTo($elem);
 				
-				this._displayNames($names);
+				setTimeout(displayTask, _this.refreshIntervalInMs); // Reschedule
+				
+			} else {
+				$elem
+					.hide()
+					.removeClass('n2wait_showing');
 			};
-			
-			$('<div>')
-				.addClass('olkit_wait')
-				.appendTo($elem);
-			
-		} else {
-			$elem.hide();
 		};
 	},
 
@@ -226,8 +258,23 @@ var WaitWidget = $n2.Class({
 					waitObject = {
 						name: name
 						,label: label
+						,count: 0
 					};
 					waitObjects[name] = waitObject;
+				};
+
+				// Report
+				if( this.logging ){
+					if( waitObject.count < 1 && count > 0 ){
+						// Report start
+						waitObject.start = Date.now();
+						$n2.log('wait '+requesterId+'/'+name+' start '+waitObject.start)
+					} else if( waitObject.count > 0 && count < 1 ){
+						// Report end
+						var end = Date.now();
+						var elapsed = end - waitObject.start;
+						$n2.log('wait '+requesterId+'/'+name+' end '+end+' elapsed '+elapsed)
+					};
 				};
 				
 				waitObject.count = count;
@@ -252,20 +299,18 @@ function HandleWidgetAvailableRequests(m){
 function HandleWidgetDisplayRequests(m){
 	if( m.widgetType === 'wait' ){
 		var widgetOptions = m.widgetOptions;
-		var contentId = m.contentId;
 		var containerId = m.containerId;
 		var config = m.config;
 		
-		var options = {
-			contentId: contentId
-			,containerId: containerId
-		};
+		var options = {};
 		
 		if( widgetOptions ){
 			for(var opName in widgetOptions){
 				options[opName] = widgetOptions[opName];
 			};
 		};
+
+		options.containerId = containerId;
 		
 		if( config && config.directory ){
 			options.dispatchService = config.directory.dispatchService;

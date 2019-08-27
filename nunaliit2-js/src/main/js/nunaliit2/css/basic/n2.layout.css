@@ -5,67 +5,48 @@
    - Styles for major layout sections
    ========================================================================== */
 
-
-
 /* ============================== */
 /* ! Layout for desktop version   */
 /* ============================== */
 
 /* Specific layout styles for Nunaliit Atlas */
 
-.nunaliit_atlas .nunaliit_header {
-	position:absolute;
-	top:0;
-	left:0;
+.nunaliit_atlas .nunaliit_header,
+.nunaliit_atlas .nunaliit_footer {
+	position: absolute;
+	left: 0;
 	width: 100%;
-	height:102px;
-	overflow:visible;
+	overflow: visible;
 	margin: 0;
 	border: 0;	
-	padding:0;
-	z-index:9;
+	padding: 0;
+	z-index: 9;
 }
-.nunaliit_atlas .nunaliit_header_container {
-	position:absolute;
-	top:0;
-	left:0;
-	width: 100%;
-	height:71px;
-}
-.nunaliit_atlas .nunaliit_module_title {
-	position:absolute;
-	top:71px;
-	left:0;
-	width: 100%;
-	height:30px;
-}
-.nunaliit_atlas .nunaliit_content {
-	position:absolute;
-	width:100%;
+.nunaliit_atlas .nunaliit_header {
+	top: 0;
+	height: 102px;
 }
 .nunaliit_atlas .nunaliit_footer {
-	position:absolute;
-	bottom:0;
-	left:0;
-	height:17px;
-	width:100%;
-	overflow:visible;
-	margin: 0;
-	border: 0;	
-	padding:0;
-	z-index:9;
+	bottom: 0;
+	height: 17px;
 }
-
-/* Specific layout styles for Nunaliit Atlas */
-
-.nunaliit_application .nunaliit_header {
-	
+.nunaliit_atlas .nunaliit_header_container {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 71px;
 }
-.nunaliit_application .nunaliit_content {
-	
+.nunaliit_atlas .nunaliit_module_title {
+	position: absolute;
+	top: 71px;
+	left: 0;
+	width: 100%;
+	height: 30px;
 }
-.nunaliit_application .nunaliit_footer {
-	
+.nunaliit_atlas .nunaliit_content {
+	position: absolute;
+	width: 100%;
 }
 
 /* ==============================
@@ -85,7 +66,6 @@
 	bottom: 0;
 	border: 0;
 	margin: 0;
-	border: 0;
 }
 
 /* Search */
@@ -100,8 +80,8 @@
 	z-index: 8;
 }
 .nunaliit_searchInput input {
-	padding:2.5%;
-	width:95%;
+	padding: 2.5%;
+	width: 95%;
 }
 
 /* Side Bar */
@@ -124,7 +104,7 @@
 	padding: 0;
 	margin: 0;
 	border: 0;
-	z-index:8;
+	z-index: 8;
 }
 .map_interaction input { 
 	cursor: pointer;
@@ -144,7 +124,6 @@
 	bottom: 0;
 	border: 0;
 	margin: 0;
-	border: 0;
 }
 .n2_content_contains_text .n2_content_map {
 	right: 450px;
@@ -163,7 +142,7 @@
 	right: 0;
 	height: 43px;
 	width: 410px;
-	padding: 28px 20px 23px 20px;
+	padding: 28px 20px 23px;
 	overflow: visible;
 	z-index: 8;
 }
@@ -181,8 +160,8 @@
 	width: 600px;
 }
 .n2_content_searchInput input {
-	padding:2.5%;
-	width:95%;
+	padding: 2.5%;
+	width: 95%;
 }
 
 /* Side Bar */
@@ -193,7 +172,7 @@
 	bottom: 0;
 	left: 0;
 	overflow: auto;
-	padding: 15px 20px 15px 20px;
+	padding: 15px 20px;
 }
 .n2_content_contains_search .n2_content_text {
 	top: 95px;
@@ -209,9 +188,7 @@
 	right: 0;
 	width: 640px;
 	padding: 0;
-	overflow: auto;
-    overflow-x: hidden;
-    overflow-y: auto;
+	overflow: hidden auto;
 }
 .n2_display_format_tiled .n2_content_contains_search .n2_content_text {
 	top: 95px;
@@ -226,7 +203,7 @@
 	padding: 0;
 	margin: 0;
 	border: 0;
-	z-index:8;
+	z-index: 8;
 }
 .n2_content_map_interaction input { 
 	cursor: pointer;
@@ -247,23 +224,33 @@
 	right: 260px;
 }
 
-
 /* Smaller screens */
-
 @media only screen and (max-width: 1023px) {
 
-	
-	
 }
-
 
 /* Mobile */
-
 @media handheld, only screen and (max-width: 767px) {
-
 
 }
 
+/* Cordova mobile builds */
+.cordova-dialog-btn {
+	color: #2985b8;
+	text-transform: uppercase;
+	font-weight: bold;
+	padding: 10px;  
+}
 
+.cordova-button-container {
+	margin-top: 40px;
+	text-align: right;
+}
 
-
+.cordova-select-dropdown {
+	background-color: transparent;
+	border: none;
+	border-bottom: 1px solid lightgrey;
+	padding-top: 4px;
+	outline: none;
+}

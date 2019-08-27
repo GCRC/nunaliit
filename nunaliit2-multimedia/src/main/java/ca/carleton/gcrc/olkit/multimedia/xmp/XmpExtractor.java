@@ -14,9 +14,10 @@ public class XmpExtractor {
 
 	static public XmpInfo extractXmpInfo(File file) throws Exception {
 		FileInputStream fis = null;
+		BufferedInputStream bis = null;
 		try {
 			fis = new FileInputStream(file);
-			BufferedInputStream bis = new BufferedInputStream(fis);
+			bis = new BufferedInputStream(fis);
 			Metadata metadata = ImageMetadataReader.readMetadata(bis, true);
 			for (Directory directory : metadata.getDirectories()) {
 			    if( directory instanceof XmpDirectory ){
@@ -33,6 +34,14 @@ public class XmpExtractor {
 			// Ignore. Most likely, tool is not able to read the file
 			
 		} finally {
+			if( null != bis ){
+				try {
+					bis.close();
+					bis = null;
+				} catch(Exception e) {
+					// Ignore
+				}
+			}
 			if( null != fis ){
 				try {
 					fis.close();

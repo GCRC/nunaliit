@@ -3,11 +3,10 @@
 	<parent>
 		<artifactId>nunaliit2</artifactId>
 		<groupId>ca.carleton.gcrc</groupId>
-		<version>2.2.8-SNAPSHOT</version>
+		<version>2.2.9-SNAPSHOT</version>
 	</parent>
-	<groupId>ca.carleton.gcrc</groupId>
 	<artifactId>nunaliit2-js</artifactId>
-	<version>2.2.8-SNAPSHOT</version>
+	<packaging>pom</packaging>
 	<name>nunaliit2-js</name>
 	<description>Javascript files produced in-house</description>
 	<build>
@@ -93,21 +92,22 @@
 								<!-- Generate javascript libraries -->
 								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2.cfg" />
+									<arg line="--config-file ./compress/nunaliit2-couch.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
 									<arg line="--output ./src/main/js/nunaliit2/nunaliit2.js" />
 									<arg line="--compile-level closure" />
 									<arg line="--verify" />
 									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-debug.js" />
+									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-debug-il.js" />
 								</java>
 								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
-									<arg line="--config-file ./compress/nunaliit2-couch.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2" />
 									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch.js" />
 									<arg line="--compile-level closure" />
 									<arg line="--verify" />
-									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-debug.js" />
+									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-couch-debug.js" />
 								</java>
 								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg" />
@@ -116,25 +116,41 @@
 									<arg line="--compile-level closure" />
 									<arg line="--verify" />
 									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch-mobile.js" />
-									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js" />
+									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js" />
 								</java>
 
 								<!-- Generate CSS libraries -->
 								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-css.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--theme-file ./compress/theme-basic.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
 									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2.css" />
 								</java>
 								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
+									<arg line="--config-file ./compress/nunaliit2-css.cfg" />
+									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--theme-file ./compress/theme-test.txt" />
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-test.css" />
+								</java>
+								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
+									<arg line="--config-file ./compress/nunaliit2-css.cfg" />
+									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-notheme.css" />
+								</java>
+								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-css-min.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--theme-file ./compress/theme-basic.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
 									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-min.css" />
 								</java>
 								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
 									<arg line="--config-file ./compress/nunaliit2-css-mobile.cfg" />
 									<arg line="--license-file ./compress/license.txt" />
+									<arg line="--theme-file ./compress/theme-basic.txt" />
 									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
 									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-mobile.css" />
 								</java>
@@ -189,6 +205,7 @@
 					<descriptors>
 						<descriptor>src/main/assembly/src.xml</descriptor>
 					</descriptors>
+					<tarLongFileMode>posix</tarLongFileMode>
 				</configuration>
 				<executions>
 					<execution>
@@ -202,6 +219,44 @@
 			</plugin>
 		</plugins>
 	</build>
+	<!-- reporting>
+		<plugins>
+			<plugin>
+				<groupId>gr.abiss.mvn.plugins</groupId>
+				<artifactId>maven-jstools-plugin</artifactId>
+				<version>0.7</version>
+				<configuration>
+					<jsDir>src/main/js/nunaliit2</jsDir>
+					<includes>**/n2.*.js</includes>
+					<includePrivate>true</includePrivate>
+					<includeUndocumented>true</includeUndocumented>
+				</configuration>
+				<reportSets>
+					<reportSet>
+						<reports>
+							<report>jsdoc</report>
+						</reports>
+					</reportSet>
+				</reportSets>
+			</plugin>
+		</plugins>
+	</reporting -->
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>com.phasebash.jsdoc</groupId>
+				<artifactId>jsdoc3-maven-plugin</artifactId>
+				<version>1.2.0</version>
+				<configuration>
+					<configFile>src/main/jsdoc/config.json</configFile>
+					<recursive>true</recursive>
+					<directoryRoots>
+						<directoryRoot>.</directoryRoot>
+					</directoryRoots>
+				</configuration>
+			</plugin>
+		</plugins>
+	</reporting>
 	<dependencies>
 		<dependency>
 			<groupId>ca.carleton.gcrc</groupId>

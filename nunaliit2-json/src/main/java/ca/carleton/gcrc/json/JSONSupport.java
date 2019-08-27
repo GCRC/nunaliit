@@ -2,7 +2,9 @@ package ca.carleton.gcrc.json;
 
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,6 +23,19 @@ public class JSONSupport {
 			}
 		}
 		return false;
+	}
+
+	static public List<String> keysFromObject(JSONObject obj){
+		List<String> keys = new Vector<String>();
+		Iterator<?> it = obj.keys();
+		while( it.hasNext() ){
+			Object keyObj = it.next();
+			if( keyObj instanceof String ) {
+				String k = (String)keyObj;
+				keys.add(k);
+			}
+		}
+		return keys;
 	}
 
 	static public String valueToString(Object value) throws Exception {

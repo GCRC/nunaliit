@@ -109,6 +109,54 @@ var DebugConfiguration = $n2.Class({
 			delete debugConf.logging;
 		};
 		this.saveConfiguration(debugConf);
+	},
+
+	isCouchDbCachingEnabled: function(){
+		var debugConf = this.loadConfiguration();
+		if( debugConf.couchDbCaching ) return true;
+		return false;
+	},
+
+	setCouchDbCachingEnabled: function(flag){
+		var debugConf = this.loadConfiguration();
+		if( flag ){
+			debugConf.couchDbCaching = true;
+		} else if( debugConf.couchDbCaching ){
+			delete debugConf.couchDbCaching;
+		};
+		this.saveConfiguration(debugConf);
+	},
+
+	isCouchDbCachingDisabled: function(){
+		var debugConf = this.loadConfiguration();
+		if( debugConf.disableCouchDbCaching ) return true;
+		return false;
+	},
+
+	setCouchDbCachingDisabled: function(flag){
+		var debugConf = this.loadConfiguration();
+		if( flag ){
+			debugConf.disableCouchDbCaching = true;
+		} else if( debugConf.disableCouchDbCaching ){
+			delete debugConf.disableCouchDbCaching;
+		};
+		this.saveConfiguration(debugConf);
+	},
+
+	forceSlowConnectionHandling: function(){
+		var debugConf = this.loadConfiguration();
+		if( debugConf.forceSlowConnectionHandling ) return true;
+		return false;
+	},
+
+	setForceSlowConnectionHandling: function(flag){
+		var debugConf = this.loadConfiguration();
+		if( flag ){
+			debugConf.forceSlowConnectionHandling = true;
+		} else if( debugConf.forceSlowConnectionHandling ){
+			delete debugConf.forceSlowConnectionHandling;
+		};
+		this.saveConfiguration(debugConf);
 	}
 });
 

@@ -39,311 +39,6 @@ var
  ;
 
 //--------------------------------------------------------------------------
-function FilterFunctionFromModelConfiguration(modelConf){
-	if( 'filter' === modelConf.modelType ){
-		if( modelConf.condition ) {
-			var condition = $n2.styleRuleParser.parse(modelConf.condition);
-			var ctxt = {
-				n2_doc: null
-				,n2_selected: false
-				,n2_hovered: false
-				,n2_found: false
-				,n2_intent: null
-			};
-			return function(doc){
-				// Re-use same context to avoid generating
-				// temporary objects
-				ctxt.n2_doc = doc;
-				
-				var value = condition.getValue(ctxt);
-
-				ctxt.n2_doc = null;
-				
-				return value;
-			};
-			
-		} else if( 'all' === modelConf.useBuiltInFunction ){
-			return function(doc){
-				return true;
-			};
-			
-		} else if( 'none' === modelConf.useBuiltInFunction ){
-			return function(doc){
-				return false;
-			};
-			
-		} else if( 'withDates' === modelConf.useBuiltInFunction ){
-			return function(doc){
-				var dates = [];
-				$n2.couchUtils.extractSpecificType(doc,'date',dates);
-				return (dates.length > 0);
-			};
-			
-		} else if( 'withoutDates' === modelConf.useBuiltInFunction ){
-			return function(doc){
-				var dates = [];
-				$n2.couchUtils.extractSpecificType(doc,'date',dates);
-				return (dates.length < 1);
-			};
-		};
-	};
-	
-	return null;
-};
-
-//--------------------------------------------------------------------------
-var ModelFilter = $n2.Class({
-		
-	dispatchService: null,
-
-	modelId: null,
-	
-	sourceModelId: null,
-	
-	docInfosByDocId: null,
-	
-	filterFn: null,
-	
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			dispatchService: null
-			,filterName: 'FilterModel'
-			,filterFn: null
-
-			// From configuration
-			,modelId: null
-			,sourceModelId: null
-		},opts_);
-		
-		var _this = this;
-		
-		this.dispatchService = opts.dispatchService;
-		this.modelId = opts.modelId;
-		this.sourceModelId = opts.sourceModelId;
-		this.filterFn = opts.filterFn;
-		this.filterName = opts.filterName;
-		
-		this.docInfosByDocId = {};
-
-		// Register to events
-		if( this.dispatchService ){
-			var f = function(m, addr, dispatcher){
-				_this._handle(m, addr, dispatcher);
-			};
-			this.dispatchService.register(DH,'modelGetInfo',f);
-			this.dispatchService.register(DH, 'modelGetState', f);
-			this.dispatchService.register(DH, 'modelStateUpdated', f);
-			
-			if( this.sourceModelId ){
-				// Initialize state
-				var m = {
-					type:'modelGetState'
-					,modelId: this.sourceModelId
-				};
-				this.dispatchService.synchronousCall(DH, m);
-				if( m.state ){
-					this._sourceModelUpdated(m.state);
-				};
-			};
-		};
-		
-		$n2.log(this.filterName,this);
-	},
-	
-	_handle: function(m, addr, dispatcher){
-		if( 'modelGetInfo' === m.type ){
-			if( this.modelId === m.modelId ){
-				m.modelInfo = this._getModelInfo();
-				m.modelInstance = this;
-			};
-			
-		} else if( 'modelGetState' === m.type ){
-			if( this.modelId === m.modelId ){
-				var added = [];
-				for(var docId in this.docInfosByDocId){
-					var docInfo = this.docInfosByDocId[docId];
-					if( docInfo.visible ){
-						var doc = docInfo.doc;
-						added.push(doc);
-					};
-				};
-
-				m.state = {
-					added: added
-					,updated: []
-					,removed: []
-				};
-			};
-			
-		} else if( 'modelStateUpdated' === m.type ){
-			// Does it come from one of our sources?
-			if( this.sourceModelId === m.modelId ){
-				this._sourceModelUpdated(m.state);
-			};
-		};
-	},
-	
-	_getModelInfo: function(){
-		var info = {
-			modelId: this.modelId
-			,modelType: 'filter'
-			,parameters: {}
-		};
-		
-		return info;
-	},
-	
-	_sourceModelUpdated: function(sourceState){
-		
-		var added = []
-			,updated = []
-			,removed = []
-			;
-		
-		// Loop through all added documents
-		if( sourceState.added ){
-			for(var i=0,e=sourceState.added.length; i<e; ++i){
-				var doc = sourceState.added[i];
-				var docId = doc._id;
-	
-				var docInfo = this.docInfosByDocId[docId];
-				if( !docInfo ){
-					docInfo = {
-						id: docId
-						,doc: doc
-						,visible: false
-					};
-					this.docInfosByDocId[docId] = docInfo;
-				};
-				
-				var visible = this._computeVisibility(doc);
-				
-				if( visible ){
-					docInfo.visible = visible;
-					added.push(doc);
-				};
-			};
-		};
-		
-		// Loop through all updated documents
-		if( sourceState.updated ){
-			for(var i=0,e=sourceState.updated.length; i<e; ++i){
-				var doc = sourceState.updated[i];
-				var docId = doc._id;
-	
-				var docInfo = this.docInfosByDocId[docId];
-				if( !docInfo ){
-					docInfo = {
-						id: docId
-						,doc: doc
-						,visible: false
-					};
-					this.docInfosByDocId[docId] = docInfo;
-				};
-				
-				// Update document
-				docInfo.doc = doc;
-				
-				// Compute new visibility
-				var visible = this._computeVisibility(doc);
-				
-				if( visible !== docInfo.visible ){
-					if( visible ){
-						added.push(doc);
-					} else {
-						removed.push(doc);
-					};
-					
-				} else if(visible) {
-					updated.push(doc);
-				};
-			};
-		};
-		
-		// Loop through all removed documents
-		if( sourceState.removed ){
-			for(var i=0,e=sourceState.removed.length; i<e; ++i){
-				var doc = sourceState.removed[i];
-				var docId = doc._id;
-				var docInfo = this.docInfosByDocId[docId];
-				if( docInfo ){
-					delete this.docInfosByDocId[docId];
-					
-					if( docInfo.visible ){
-						removed.push(doc);
-					};
-				};
-			};
-		};
-
-		this._reportStateUpdate(added, updated, removed);
-	},
-	
-	/*
-	 * This function should be called if the conditions of the underlying filter
-	 * have changed. Recompute visibility on all documents and report a state update
-	 */
-	_filterChanged: function(){
-		
-		var added = []
-			,updated = []
-			,removed = []
-			;
-
-		// Loop through all documents
-		for(var docId in this.docInfosByDocId){
-			var docInfo = this.docInfosByDocId[docId];
-			var doc = docInfo.doc;
-			var visible = this._computeVisibility(doc);
-			
-			if( visible !== docInfo.visible ){
-				if( visible ){
-					added.push(doc);
-				} else {
-					removed.push(doc);
-				};
-				docInfo.visible = visible;
-			};
-		};
-
-		this._reportStateUpdate(added, updated, removed);
-	},
-	
-	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
-
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
-		};
-	},
-	
-	_computeVisibility: function(doc){
-		var visible = false;
-		
-		if( this.filterFn ){
-			if( this.filterFn(doc) ){
-				visible = true;
-			};
-		};
-		
-		return visible;
-	}
-});
-
-
-//--------------------------------------------------------------------------
 var ModelUnion = $n2.Class({
 	
 	dispatchService: null,
@@ -353,6 +48,8 @@ var ModelUnion = $n2.Class({
 	sourceModelIds: null,
 	
 	docInfosByDocId: null,
+	
+	loadingMap: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -378,6 +75,7 @@ var ModelUnion = $n2.Class({
 		};
 		
 		this.docInfosByDocId = {};
+		this.loadingMap = {};
 
 		// Register to events
 		if( this.dispatchService ){
@@ -390,18 +88,27 @@ var ModelUnion = $n2.Class({
 			
 			for(var sourceModelId in this.sourceModelIds){
 				// Initialize state
-				var m = {
-					type:'modelGetState'
+				var state = $n2.model.getModelState({
+					dispatchService: this.dispatchService
 					,modelId: sourceModelId
-				};
-				this.dispatchService.synchronousCall(DH, m);
-				if( m.state ){
-					this._sourceModelUpdated(m.modelId, m.state);
+				});
+				if( state ){
+					this._sourceModelUpdated(sourceModelId, state);
 				};
 			};
 		};
 		
 		$n2.log('UnionModel',this);
+	},
+	
+	isLoading: function(){
+		for(var modelId in this.loadingMap){
+			var loading = this.loadingMap[modelId];
+			if( loading ){
+				return true;
+			};
+		};
+		return false;
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -423,6 +130,7 @@ var ModelUnion = $n2.Class({
 					added: added
 					,updated: []
 					,removed: []
+					,loading: this.isLoading()
 				};
 			};
 			
@@ -455,6 +163,10 @@ var ModelUnion = $n2.Class({
 			,updated = []
 			,removed = []
 			;
+		
+		if( typeof sourceState.loading === 'boolean' ){
+			this.loadingMap[sourceModelId] = sourceState.loading;
+		};
 		
 		// Loop through all added and modified documents
 		var addedAndModifiedDocs = sourceState.added ? sourceState.added.slice(0) : [];
@@ -518,87 +230,288 @@ var ModelUnion = $n2.Class({
 	},
 	
 	_reportStateUpdate: function(added, updated, removed){
-		if( added.length > 0
-		 || updated.length > 0 
-		 || removed.length > 0 ){
-			var stateUpdate = {
-				added: added
-				,updated: updated
-				,removed: removed
-			};
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.isLoading()
+		};
 
-			if( this.dispatchService ){
-				this.dispatchService.send(DH,{
-					type: 'modelStateUpdated'
-					,modelId: this.modelId
-					,state: stateUpdate
-				});
-			};
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
 		};
 	}
 });
 
 //--------------------------------------------------------------------------
-/*
- * Filter: a Document Model that filters out certain document
- * SchemaFilter: Allows documents that are identified by schema names
- */
-var SchemaFilter = $n2.Class(ModelFilter, {
-		
-	schemaNameMap: null,
+var ModelIntersect = $n2.Class({
+	
+	dispatchService: null,
+
+	modelId: null,
+	
+	sourceModelIds: null,
+	
+	docInfosByDocId: null,
+	
+	loadingMap: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			dispatchService: null
-
+			
 			// From configuration
 			,modelId: null
-			,sourceModelId: null
-			,schemaName: null
-			,schemaNames: null
+			,sourceModelIds: null
 		},opts_);
 		
 		var _this = this;
 		
-		this.schemaNameMap = {};
-		if( typeof opts.schemaName === 'string' ){
-			this.schemaNameMap[opts.schemaName] = true;
+		this.dispatchService = opts.dispatchService;
+		this.modelId = opts.modelId;
+
+		// Source models
+		this.sourceModelIds = {};
+		if( opts.sourceModelIds ){
+			for(var i=0,e=opts.sourceModelIds.length; i<e; ++i){
+				var sourceModelId = opts.sourceModelIds[i];
+				this.sourceModelIds[sourceModelId] = {};
+			};
 		};
-		if( $n2.isArray(opts.schemaNames) ){
-			for(var i=0,e=opts.schemaNames.length; i<e; ++i){
-				var schemaName = opts.schemaNames[i];
-				if( typeof schemaName === 'string' ){
-					this.schemaNameMap[schemaName] = true;
+		
+		this.docInfosByDocId = {};
+		this.loadingMap = {};
+
+		// Register to events
+		if( this.dispatchService ){
+			var f = function(m, addr, dispatcher){
+				_this._handle(m, addr, dispatcher);
+			};
+			this.dispatchService.register(DH,'modelGetInfo',f);
+			this.dispatchService.register(DH, 'modelGetState', f);
+			this.dispatchService.register(DH, 'modelStateUpdated', f);
+			
+			for(var sourceModelId in this.sourceModelIds){
+				// Initialize state
+				var state = $n2.model.getModelState({
+					dispatchService: this.dispatchService
+					,modelId: sourceModelId
+				});
+				if( state ){
+					this._sourceModelUpdated(sourceModelId, state);
 				};
 			};
 		};
 		
-		opts.filterFn = function(doc){
-			return _this._isDocVisible(doc);
-		};
-		opts.filterName = 'SchemaFilter';
-		
-		ModelFilter.prototype.initialize.call(this,opts);
+		$n2.log('IntersectModel',this);
 	},
 	
-	_isDocVisible: function(doc){
-		if( doc && doc.nunaliit_schema ){
-			if( this.schemaNameMap[doc.nunaliit_schema] ){
+	isLoading: function(){
+		for(var modelId in this.loadingMap){
+			var loading = this.loadingMap[modelId];
+			if( loading ){
 				return true;
 			};
 		};
 		return false;
+	},
+	
+	_handle: function(m, addr, dispatcher){
+		if( 'modelGetInfo' === m.type ){
+			if( this.modelId === m.modelId ){
+				m.modelInfo = this._getModelInfo();
+			};
+			
+		} else if( 'modelGetState' === m.type ){
+			if( this.modelId === m.modelId ){
+				var added = [];
+				for(var docId in this.docInfosByDocId){
+					var docInfo = this.docInfosByDocId[docId];
+
+					if( docInfo.visible ){
+						var doc = docInfo.doc;
+						added.push(doc);
+					};
+				};
+
+				m.state = {
+					added: added
+					,updated: []
+					,removed: []
+					,loading: this.isLoading()
+				};
+			};
+			
+		} else if( 'modelStateUpdated' === m.type ){
+			// Does it come from one of our sources?
+			if( this.sourceModelIds[m.modelId] ){
+				this._sourceModelUpdated(m.modelId, m.state);
+			};
+		};
+	},
+	
+	_getModelInfo: function(){
+		var info = {
+			modelId: this.modelId
+			,modelType: 'intersect'
+			,parameters: {}
+		};
+		
+		return info;
+	},
+	
+	_sourceModelUpdated: function(sourceModelId, sourceState){
+		
+		if( !this.sourceModelIds[sourceModelId] ){
+			// Not one of our source models
+			return;
+		};
+		
+		var added = []
+			,updated = []
+			,removed = []
+			;
+		
+		if( typeof sourceState.loading === 'boolean' ){
+			this.loadingMap[sourceModelId] = sourceState.loading;
+		};
+		
+		// Loop through all added and modified documents
+		var addedAndModifiedDocs = sourceState.added ? sourceState.added.slice(0) : [];
+		if( sourceState.updated ){
+			addedAndModifiedDocs.push.apply(addedAndModifiedDocs, sourceState.updated);
+		};
+		for(var i=0,e=addedAndModifiedDocs.length; i<e; ++i){
+			var doc = addedAndModifiedDocs[i];
+			var docId = doc._id;
+			
+			
+			// Flag docs to be removed if not in they currently exist in the docsInfoByDocId exist and the model 
+			
+			
+			var docInfo = this.docInfosByDocId[docId];
+			if( !docInfo ){
+				docInfo = {
+					id: docId
+					,visible: false
+					,doc: doc
+					,rev: doc._rev
+					,sources: {}
+				};
+				this.docInfosByDocId[docId] = docInfo;
+			};
+			docInfo.sources[sourceModelId] = true;
+
+			// Check if new revision
+			var revUpdated = false;
+			if( docInfo.rev !== doc._rev ){
+				// Modified
+				docInfo.doc = doc;
+				docInfo.rev = doc._rev;
+				
+				revUpdated = true;
+			};
+
+			// Check change in visibility
+			var visible = this._isDocVisible(doc);
+			if( visible && !docInfo.visible ){
+				added.push(doc);
+			} else if( !visible && docInfo.visible ){
+				removed.push(doc);
+			} else if( visible && docInfo.visible ) {
+				if( revUpdated ){
+					updated.push(doc);
+				};
+			} else {
+				// Do not worry about it
+			};
+			docInfo.visible = visible;
+		};
+		
+		// Loop through all removed documents
+		if( sourceState.removed ){
+			for(var i=0,e=sourceState.removed.length; i<e; ++i){
+				var doc = sourceState.removed[i];
+				var docId = doc._id;
+				var docInfo = this.docInfosByDocId[docId];
+				if( docInfo ){
+					// Mark that this source no longer reports it
+					docInfo.sources[sourceModelId] = false;
+
+					// Check change in visibility
+					if( docInfo.visible ){
+						docInfo.visible = false;
+						removed.push(doc);
+					};
+					
+					// Check if we keep it
+					var removedFlag = true;
+					for(var modelId in docInfo.sources){
+						if( docInfo.sources[modelId] ){
+							removedFlag = false;
+						};
+					};
+					
+					if( removedFlag ){
+						delete this.docInfosByDocId[docId];
+					};
+				};
+			};
+		};
+
+		this._reportStateUpdate(added, updated, removed);
+	},
+	
+	_reportStateUpdate: function(added, updated, removed){
+		var stateUpdate = {
+			added: added
+			,updated: updated
+			,removed: removed
+			,loading: this.isLoading()
+		};
+
+		if( this.dispatchService ){
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated'
+				,modelId: this.modelId
+				,state: stateUpdate
+			});
+		};
+	},
+	
+	_isDocVisible: function(doc){
+		var docId = doc._id;
+		var docInfo = this.docInfosByDocId[docId];
+		
+		for(var sourceModelId in this.sourceModelIds){
+			if( !docInfo.sources[sourceModelId] ) {
+				return false;
+			};
+		};
+		
+		return true;
 	}
 });
 
+
+
 //--------------------------------------------------------------------------
 /*
-* Filter: a Document Model that filters out certain documents
-* ReferenceFilter: Allows documents that are identified by references
+* This class is a document source model. This means that it is a document model
+* (a model that makes documents available to other entities), but it does not
+* connect to a source model. Instead, being a source, it generates a stream of
+* documents for other entities.
+* 
+* This document model is static, meaning that it does not change over time. It
+* has a set of documents that it manages in memory and makes it available.
 */
-var ReferenceFilter = $n2.Class(ModelFilter, {
-		
-	referenceMap: null,
+var StaticDocumentSource = $n2.Class('StaticDocumentSource', $n2.model.DocumentModel, {
+
+	docsById: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -606,63 +519,69 @@ var ReferenceFilter = $n2.Class(ModelFilter, {
 
 			// From configuration
 			,modelId: null
-			,sourceModelId: null
-			,reference: null
-			,references: null
+			,modelType: null
+			,docs: null
 		},opts_);
 		
-		var _this = this;
-		
-		this.referenceMap = {};
-		if( typeof opts.reference === 'string' ){
-			this.referenceMap[opts.reference] = true;
-		};
-		if( $n2.isArray(opts.references) ){
-			for(var i=0,e=opts.references.length; i<e; ++i){
-				var reference = opts.references[i];
-				if( typeof reference === 'string' ){
-					this.referenceMap[reference] = true;
-				};
-			};
-		};
-		
-		opts.filterFn = function(doc){
-			return _this._isDocVisible(doc);
-		};
-		opts.filterName = 'ReferenceFilter';
-		
-		ModelFilter.prototype.initialize.call(this,opts);
-	},
+		$n2.model.DocumentModel.prototype.initialize.call(this,opts);
 
-	getReferences: function(){
-		var references = [];
-		for(var ref in this.referenceMap){
-			references.push(ref);
-		};
-		return references;
-	},
+		this.docsById = {};
+		
+		$n2.log('StaticDocumentSource', this);
 
-	setReferences: function(references){
-		this.referenceMap = {};
-		for(var i=0,e=references.length; i<e; ++i){
-			var ref = references[i];
-			this.referenceMap[ref] = true;
+		if( $n2.isArray(opts.docs) ){
+			this.setDocuments(opts.docs);
 		};
-
-		this._filterChanged();
 	},
 	
-	_isDocVisible: function(doc){
-		if( doc ){
-			var links = [];
-			$n2.couchUtils.extractLinks(doc, links);
-			for(var i=0,e=links.length; i<e; ++i){
-				var refId = links[i].doc;
-				if( this.referenceMap[refId] ){
-					return true;
+	setDocuments: function(docs){
+		var _this = this;
+		
+		var added = [];
+		var updated = [];
+		var removed = [];
+		
+		var newDocsById = {};
+		docs.forEach(function(doc){
+			if( doc && doc._id ){
+				var docId = doc._id;
+
+				newDocsById[docId] = doc;
+				
+				if( _this.docsById ){
+					updated.push(doc);
+				} else {
+					added.push(doc);
 				};
 			};
+		});
+		
+		// Figure out removed document
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			if( !newDocsById[docId] ){
+				removed.push(doc);
+			};
 		};
+		
+		// Install new document map
+		this.docsById = newDocsById;
+		
+		this._reportStateUpdate(added, updated, removed);
+	},
+	
+	_getCurrentDocuments: function(){
+		var docs = [];
+		
+		for(var docId in this.docsById){
+			var doc = this.docsById[docId];
+			docs[docs.length] = doc;
+		};
+		
+		return docs;
+	},
+
+	_isLoading: function(){
 		return false;
 	}
 });
@@ -680,6 +599,7 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 
 		options.modelId = m.modelId;
+		options.modelType = m.modelType;
 		
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -687,20 +607,22 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new ModelUnion(options);
+		m.model = new ModelUnion(options);
 		
 		m.created = true;
 
-	} else if( m.modelType === 'filter' ){
+	} else if( m.modelType === 'intersect' ){
 		var options = {};
 		
 		if( m && m.modelOptions ){
-			if( m.modelOptions.sourceModelId ){
-				options.sourceModelId = m.modelOptions.sourceModelId;
+			if( m.modelOptions.sourceModelIds 
+			 && m.modelOptions.sourceModelIds.length ){
+				options.sourceModelIds = m.modelOptions.sourceModelIds;
 			};
 		};
 
 		options.modelId = m.modelId;
+		options.modelType = m.modelType;
 		
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -708,21 +630,11 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		var filterFn = null;
-		if( $n2.modelUtils.FilterFunctionFromModelConfiguration ){
-			filterFn = $n2.modelUtils.FilterFunctionFromModelConfiguration(m.modelOptions);
-		};
-		if( filterFn ){
-			options.filterFn = filterFn;
-		} else {
-			throw 'Unable to find function for filter model';
-		};
-		
-		new ModelFilter(options);
+		m.model = new ModelIntersect(options);
 		
 		m.created = true;
 
-	} else if( m.modelType === 'schemaFilter' ){
+	} else if( m.modelType === 'staticDocumentSource' ){
 		var options = {};
 		
 		if( m && m.modelOptions ){
@@ -732,6 +644,7 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		options.modelId = m.modelId;
+		options.modelType = m.modelType;
 
 		if( m && m.config ){
 			if( m.config.directory ){
@@ -739,28 +652,7 @@ function handleModelCreate(m, addr, dispatcher){
 			};
 		};
 		
-		new SchemaFilter(options);
-		
-		m.created = true;
-
-	} else if( m.modelType === 'referenceFilter' ){
-		var options = {};
-		
-		if( m && m.modelOptions ){
-			for(var key in m.modelOptions){
-				options[key] = m.modelOptions[key];
-			};
-		};
-		
-		options.modelId = m.modelId;
-
-		if( m && m.config ){
-			if( m.config.directory ){
-				options.dispatchService = m.config.directory.dispatchService;
-			};
-		};
-		
-		new ReferenceFilter(options);
+		m.model = new StaticDocumentSource(options);
 		
 		m.created = true;
 	};
@@ -769,10 +661,8 @@ function handleModelCreate(m, addr, dispatcher){
 //--------------------------------------------------------------------------
 $n2.modelUtils = {
 	ModelUnion: ModelUnion
-	,ModelFilter: ModelFilter
-	,FilterFunctionFromModelConfiguration: FilterFunctionFromModelConfiguration
-	,SchemaFilter: SchemaFilter
-	,ReferenceFilter: ReferenceFilter
+	,ModelIntersect: ModelIntersect
+	,StaticDocumentSource: StaticDocumentSource
 	,handleModelCreate: handleModelCreate 
 };
 

@@ -29,6 +29,7 @@ public class UploadConstants {
 	static public final String HEIGHT_KEY = "height";
 	static public final String WIDTH_KEY = "width";
 	static public final String ORIGINAL_NAME_KEY = "originalName";
+	static public final String IS_ORIGINAL_UPLOAD_KEY = "isOriginalUpload";
 	static public final String SUBMITTER_KEY = "submitter";
 	static public final String CONVERSION_PERFORMED_KEY = "conversionPerformed";
 	static public final String SOURCE_KEY = "source";
@@ -53,6 +54,7 @@ public class UploadConstants {
 	static public final String UPLOAD_WORK_ROTATE_180 = "rotate180";
 	static public final String UPLOAD_WORK_UPLOADED_FILE = "uploadId";
 	static public final String UPLOAD_WORK_SIMPLIFY_GEOMETRY = "simplifyGeometry";
+	static public final String UPLOAD_WORK_INREACH_SUBMIT = "inReachSubmit";
 
 	// Top level document keys
 	static public final String KEY_DOC_ID = "_id";

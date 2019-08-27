@@ -1,0 +1,45 @@
+{
+   "group": "demo",
+   "id": "doc",
+   "label": "Demo Document",
+   "relatedSchemas": [ "demo_media" ],
+   "attributes": [
+      {
+         "type": "title",
+         "label": "Demo Document"
+      },
+      {
+         "type": "string",
+         "label": "Title",
+         "id": "title",
+         "includedInBrief": true,
+         "placeholder": "Title"
+      },
+      {
+         "type": "string",
+         "label": "Description",
+         "id": "description",
+         "textarea": true,
+         "maxHeight":100,
+         "placeholder": "Description"
+      },
+      {
+         "type": "date",
+         "label": "Date",
+         "id": "date"
+      },
+      {
+         "type": "reference",
+         "label": "Reference",
+         "id": "reference"
+      },
+      {
+         "type": "hover_sound",
+         "label": "Hover Sound"
+      },
+      {
+         "type": "geometry",
+         "label": "Geometry"
+      }
+   ]
+}

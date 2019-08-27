@@ -1,12 +1,12 @@
 
-
 .results { 
-	clear:both; padding: 10px 0px 0px 0px; 
+	clear: both;
+	padding: 10px 0px 0px; 
 }
 
-
 .newDocumentInputs { 
-	float:right; padding: 0px 10px 0px 0px; 
+	float: right;
+	padding: 0px 10px 0px 0px; 
 }
 
 .interaction_control_label {
@@ -15,7 +15,7 @@
 }
 
 .interaction_control_selector {
-	float:right;
+	float: right;
 }
 
 #searchLookAhead {
@@ -56,7 +56,6 @@
 	background-position: -48px 0px;
 }
 
-
 #side_attrib table, .n2MediaDisplayDialog table {
 	border: 0px;
 }
@@ -73,9 +72,7 @@
 }
 
 #side_attrib td.label, .n2MediaDisplayDialog td.label {
-	font-family: Georgia, serif;
-	font-size: 100%;
-	font-weight: normal;
+	font: normal 100% Georgia, serif;
 	text-align: right;
 	padding: 0px 5px 0px 0px;
 	width: 30%;
@@ -91,7 +88,7 @@
 
 #side_contrib table.contrib_header {
 	font-family: Georgia, serif;
-	margin: 10px 0px 0px 0px;
+	margin: 10px 0px 0px;
 	border-width: 0px;
 	width: 100%;
 }
@@ -125,44 +122,33 @@
 }
 
 #side_contrib td.contrib_entry_solid_top_border {
-	border-top-width: 1px;
-	border-top-style: solid;
-	border-top-color: #777777;
+	border-top: 1px solid #777777;
 }
 #side_contrib td.contrib_entry_dashed_top_border {
-	border-top-width: 1px;
-	border-top-style: dashed;
-	border-top-color: #777777;
+	border-top: 1px dashed #777777;
 }
 #side_contrib td.contrib_entry_solid_bottom_border {
-	border-bottom-width: 1px;
-	border-bottom-style: solid;
-	border-top-color: #777777;
+	border-bottom: 1px solid #777777;
 }
 #side_contrib td.contrib_entry_dashed_bottom_border {
-	border-bottom-width: 1px;
-	border-bottom-style: dashed;
-	border-top-color: #777777;
+	border-bottom: 1px dashed #777777;
 }
 #side_contrib td.contrib_entry_center_marker {
 	vertical-align: middle;
 	text-align: center;
 }
-
 #side_contrib p.contrib_entry_title {
 	font-family: Georgia, serif;
 	font-style: italic;
-	float:       left;
+	float: left;
 }
 #side_contrib p.contrib_entry_contributor {
 	font-family: Georgia, serif; 
-	font-size:   85%;
+	font-size: 85%;
 	float: left;
 	padding: 2px 0px 0px 5px;
 }
-#side_contrib .contrib_entry_contributor_unknown {
-	color: #ff0000;
-}
+#side_contrib .contrib_entry_contributor_unknown,
 #side_contrib .contrib_entry_contributor_guest {
 	color: #ff0000;
 }
@@ -182,22 +168,23 @@
 	height: 26px;
 	background: transparent url(images/place_icon.png) no-repeat; 
 }
-#side_contrib div.contrib_entry_place_icon:hover {
+#side_contrib div.contrib_entry_place_icon:hover,
+#side_contrib div.contrib_entry_info_icon:hover,
+#side_contrib div.contrib_entry_audio_icon:hover,
+#side_contrib div.contrib_entry_video_icon:hover,
+#side_contrib div.contrib_entry_image_icon:hover {
 	background-position: -26px 0;
 }
 #side_contrib div.contrib_entry_info_icon {
-	float:   right;
+	float: right;
 	display: block;
 	width: 26px;
 	height: 26px;
 	background: transparent url(images/contrib_info_icon.png) no-repeat; 
 }
-#side_contrib div.contrib_entry_info_icon:hover {
-	background-position: -26px 0;
-}
 #side_contrib div.contrib_entry_media_icon_wrapper {
 	font-family: Geneva, Helvetica, Arial, sans-serif; 
-	font-size:   70%;
+	font-size: 70%;
 	float: right;
 	text-align: center;
 }
@@ -210,20 +197,11 @@
 #side_contrib div.contrib_entry_audio_icon {
 	background: transparent url(images/audio_icon.png) no-repeat; 
 }
-#side_contrib div.contrib_entry_audio_icon:hover {
-	background-position: -26px 0;
-}
 #side_contrib div.contrib_entry_video_icon {
 	background: transparent url(images/video_icon.png) no-repeat; 
 }
-#side_contrib div.contrib_entry_video_icon:hover {
-	background-position: -26px 0;
-}
 #side_contrib div.contrib_entry_image_icon {
 	background: transparent url(images/image_icon.png) no-repeat; 
-}
-#side_contrib div.contrib_entry_image_icon:hover {
-	background-position: -26px 0;
 }
 #side_contrib div.contrib_entry_link_group {
 	clear: left;
@@ -240,20 +218,20 @@
 }
 #side_contrib p.contrib_entry_comment {
 	font-family: Geneva, Helvetica, Arial, sans-serif; 
-	font-size:   85%;
+	font-size: 85%;
 	clear: left;
 }
 
 #side_contrib p.contrib_entry_embeddedAudio {
-	padding: 5px 0px 0px 0px;
+	padding: 5px 0px 0px;
 	text-align: center;
 }
 
 #side_contrib p.contrib_entry_last_edit {
 	font-family: Geneva, Helvetica, Arial, sans-serif; 
-	font-size:   70%;
+	font-size: 70%;
 	clear: left;
-	padding: 5px 0px 0px 0px;
+	padding: 5px 0px 0px;
 }
 
 #side_contrib input, #side_contrib p {
@@ -265,51 +243,41 @@
 }
 
 #count {
-	vertical-align:60%;
-	margin-left:15px;
+	vertical-align: 60%;
+	margin-left: 15px;
 	color: white;
 }
 
-.jqmContributions_instructions, .jqmEditAttributes_instructions { /* defined according to jqmWindow */
-	margin: 0px 5px 10px 5px;
+.jqmContributions_instructions,
+.jqmEditAttributes_instructions,
+.jqmContributions_input_heading,
+.jqmContributions_input_heading_2nd_on_line,
+.jqmContributions_input { /* defined according to jqmWindow */
+	margin: 0px 5px 10px;
 	vertical-align: top;
 }
-
 .jqmContributions_input_heading {
-	margin: 0px 5px 10px 5px;
-	vertical-align: top;
 	display: inline-block;
 	width: 90px;
 }
-
 .jqmContributions_input_heading_2nd_on_line {
-	margin: 0px 5px 10px 5px;
-	vertical-align: top;
 	display: inline-block;
 	width: 75px;
-}
-
-.jqmContributions_input{
-	margin: 0px 5px 10px 5px;
-	vertical-align: top;
 }
 
 div.olkitAttrForm {
 	overflow: auto;
 }
 
-.olkitAttrFormFeatureInstructions {
-}
-
 div.olkitAttrFormFeatureAttributes {
-	margin: 0px 5px 10px 5px;
+	margin: 0px 5px 10px;
 }
 
 div.olkitAttrFormFeatureAttributes ul {
 	list-style-image: none;
 	list-style-position: outside;
 	list-style-type: none;
-	margin: 0px 5px 10px 5px;
+	margin: 0px 5px 10px;
 }
 
 div.olkitAttrFormFeatureAttributes li {
@@ -332,12 +300,6 @@ div.olkitAttrFormFeatureAttributes input.dbWebFormSelectButton {
 	width: 35px;
 }
 
-table.mediaSelection {
-}
-
-table.mediaSelection tr {
-}
-
 table.mediaSelection tr:hover {
 	background-color: #ffffff;
 }
@@ -345,7 +307,6 @@ table.mediaSelection tr:hover {
 table.mediaSelection td {
 	border: solid #000000 1px;
 }
-
 
 /*
 	Workaround problem in OpenLayers CSS (http://trac.openlayers.org/ticket/2183)
@@ -381,14 +342,10 @@ table.mediaSelection td {
 
 .olPopupContent {
 	max-width: 250px;
+	overflow: visible;
 }
 
 /* Fix spurious copyright pop-up */
 .olLayerGooglePoweredBy, .gmnoprint, .gm-style-cc {
 	visibility: hidden;
-}
-
-/* Allow hidden embed tags. This was broken by insertion of n2.base.css */
-embed[hidden] {
-	display: block;
 }

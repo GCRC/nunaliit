@@ -307,12 +307,28 @@ var DateInterval = $n2.Class({
 });
 
 //*******************************************************
-var rFindYear = /(\d\d\d\d)/;
+var rFindYear = /(^|[^a-zA-Z0-9])(\d\d\d\d)/;
 var rFindMonthDay = /^-(\d\d)-(\d\d)/;
 var rFindMonthDay2 = /^(\d\d)(\d\d)/;
 var rFindMonth = /^-?(\d\d)/;
 var rFindHMS = /^( +|T)(\d\d):(\d\d)(:(\d\d))?/;
 var rFindHMS2 = /^( +|T)(\d\d)(\d\d)(\d\d)?/;
+var rFindEod = /^([^a-zA-Z0-9]|$)/;
+/*
+year            9999
+year month      999999
+                9999-99
+year month date 99999999
+                9999-99-99
+hour minute       99:99
+                  9999
+                T99:99
+                T9999
+hour min sec     99:99:99
+                 999999
+                T99:99:99
+                T999999
+ */
 
 /**
  * Finds a date string in the form of YYYY-MM-DD hh:mm:ss
@@ -324,7 +340,7 @@ var rFindHMS2 = /^( +|T)(\d\d)(\d\d)(\d\d)?/;
  *    input: <string> original string given to routine
  *    ,index: <number> index into string where found date string begins
  *    ,str: <string> date string found in original string
- *    ,interval: <object> instance od DateInterval that is interpreted from the found date string
+ *    ,interval: <object> instance of DateInterval that is interpreted from the found date string
  *    ,year: <number> year specified in found date string
  *    ,month: <number> month specified in found date string
  *    ,day: <number> day of month specified in found date string
@@ -334,23 +350,24 @@ var rFindHMS2 = /^( +|T)(\d\d)(\d\d)(\d\d)?/;
  * }
  */
 function findSingleDateString(str,index){
-	var result = null;
+	var result = undefined;
 	
 	index = index ? index : 0;
 	var next = (index>0) ? str.substr(index) : str;
 	
 	var mFindYear = rFindYear.exec(next);
 	if( mFindYear ){
+		var parseTime = false;
+
 		result = {
 			input: str
-			,index: mFindYear.index + index
-			,year: 1 * mFindYear[1]
+			,index: mFindYear.index + index + mFindYear[1].length
+			,year: 1 * mFindYear[2]
 		};
 		
-		index = index + mFindYear.index + mFindYear[1].length;
+		index = index + mFindYear.index + mFindYear[1].length + mFindYear[2].length;
 		var next = str.substr(index);
 		
-		var parseTime = false;
 		var mFindMonthDay = rFindMonthDay.exec(next);
 		if( mFindMonthDay ) {
 			result.month = 1 * mFindMonthDay[1];
@@ -365,9 +382,9 @@ function findSingleDateString(str,index){
 			};
 			
 			index += mFindMonthDay[0].length;
+			next = str.substr(index);
 
 			parseTime = true;
-			next = str.substr(index);
 			
 		} else {
 			var mFindMonthDay2 = rFindMonthDay2.exec(next);
@@ -384,9 +401,9 @@ function findSingleDateString(str,index){
 				};
 
 				index += mFindMonthDay2[0].length;
+				next = str.substr(index);
 
 				parseTime = true;
-				next = str.substr(index);
 				
 			} else {
 				var mFindMonth = rFindMonth.exec(next);
@@ -400,62 +417,37 @@ function findSingleDateString(str,index){
 					};
 
 					index += mFindMonth[0].length;
+					next = str.substr(index);
 				};
 			};
 		};
 		
 		if( parseTime ){
-			var mFindHMS = rFindHMS.exec(next);
-			var mFindHMS2 = rFindHMS2.exec(next);
-			
-			if(mFindHMS) {
-				result.hours = 1 * mFindHMS[2];
-				result.minutes = 1 * mFindHMS[3];
-				if( typeof mFindHMS[5] !== 'undefined' ){
-					result.seconds = 1 * mFindHMS[5];
-				};
-
-				if( result.hours > 23 
-				 || result.minutes > 59 ){
-					// Error. Continue searching
-					return findDateString(str,index);
-				};
-				if( typeof result.seconds !== 'undefined' ){
-					if( result.seconds > 59 ){
-						// Error. Continue searching
-						return findDateString(str,index);
-					};
-				};
-
-				index += mFindHMS[0].length;
-				
-			} else if(mFindHMS2) {
-				result.hours = 1 * mFindHMS2[2];
-				result.minutes = 1 * mFindHMS2[3];
-				if( typeof mFindHMS2[4] !== 'undefined' ){
-					result.seconds = 1 * mFindHMS2[4];
-				};
-
-				if( result.hours > 23 
-				 || result.minutes > 59 ){
-					// Error. Continue searching
-					return findDateString(str,index);
-				};
-				if( typeof result.seconds !== 'undefined' ){
-					if( result.seconds > 59 ){
-						// Error. Continue searching
-						return findDateString(str,index);
-					};
-				};
-
-				index += mFindHMS2[0].length;
+			var timeStruct = startsWithTimeStringAt(next);
+			if( timeStruct ){
+				// Followed by time string
+				result.hours = timeStruct.hours;
+				result.minutes = timeStruct.minutes;
+				result.seconds = timeStruct.seconds;
+				index += timeStruct.index + timeStruct.str.length;
+				next = str.substr(index);
 			};
 		};
 
+		// At this point, we should have either reached the end of the string
+		// or encountered a white space
+		var mFindEod = rFindEod.exec(next);
+		if( !mFindEod ){
+			// Error. Continue searching
+			return findDateString(str,index);
+		};
+		
 		// Compute date string
 		var l = index - result.index;
 		result.str = str.substr(result.index, l);
+		next = str.substr(index);
 		
+		// OK, reached end of string
 		if( typeof result.seconds !== 'undefined' ){
 			var min = (new Date(
 					result.year,
@@ -569,6 +561,88 @@ function findSingleDateString(str,index){
 	return result;
 };
 
+/**
+ * Finds a time string in the form of T?hh:mm:ss
+ * and returns an object specifying the found string. Returns
+ * null if nothing is found.
+ * 
+ * If a time string is found, the following structure is returned:
+ * {
+ *    input: <string> original string given to routine
+ *    ,index: <number> index into string where found date string begins
+ *    ,str: <string> date string found in original string
+ *    ,hours: <number> hours specified in found time string
+ *    ,minutes: <number> minutes specified in found time string
+ *    ,seconds: <number> seconds specified in found time string
+ * }
+ */
+function startsWithTimeStringAt(str,index){
+	var result = undefined;
+	
+	index = index ? index : 0;
+	var next = (index>0) ? str.substr(index) : str;
+	
+		
+	var mFindHMS = rFindHMS.exec(next);
+	var mFindHMS2 = rFindHMS2.exec(next);
+	
+	if(mFindHMS) {
+		result = {
+			index: index
+			,hours: 1 * mFindHMS[2]
+			,minutes: 1 * mFindHMS[3]
+		};
+		if( typeof mFindHMS[5] !== 'undefined' ){
+			result.seconds = 1 * mFindHMS[5];
+		};
+
+		if( result.hours > 23 
+		 || result.minutes > 59 
+		 || (typeof result.seconds !== 'undefined' && result.seconds > 59) ){
+			return undefined;
+		};
+
+		index += mFindHMS[0].length;
+		
+	} else if(mFindHMS2) {
+		result = {
+				index: index
+				,hours: 1 * mFindHMS2[2]
+				,minutes: 1 * mFindHMS2[3]
+			};
+		if( typeof mFindHMS2[4] !== 'undefined' ){
+			result.seconds = 1 * mFindHMS2[4];
+		};
+
+		if( result.hours > 23 
+		 || result.minutes > 59 
+		 || (typeof result.seconds !== 'undefined' && result.seconds > 59) ){
+			return undefined;
+		};
+
+		index += mFindHMS2[0].length;
+	} else {
+		return result;
+	};
+
+	// Compute date string
+	var l = index - result.index;
+	result.str = str.substr(result.index, l);
+	next = str.substr(index);
+		
+	// At this point, we should have either reached the end of the string
+	// or encountered a white space
+	var mFindEod = rFindEod.exec(next);
+	if( mFindEod ){
+		// OK, reached end of date
+	} else {
+		// Not ended properly
+		result = undefined;
+	};
+
+	return result;
+};
+
 var rDurationSeparator = /^\s*\/\s*/;
 
 /**
@@ -657,7 +731,7 @@ function parseUserDate(dateStr){
 	};
 	
 	if( null == dateInterval ){
-		throw _loc('Can not parse date');
+		throw _loc('Can not parse date: {date}',{date:dateStr});
 	};
 	
 	return dateInterval;

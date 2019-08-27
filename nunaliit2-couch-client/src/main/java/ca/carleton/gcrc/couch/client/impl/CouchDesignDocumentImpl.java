@@ -52,6 +52,24 @@ public class CouchDesignDocumentImpl implements CouchDesignDocument {
 	}
 
 	@Override
+	public ConnectionStreamResult performQueryRaw(CouchQuery query) throws Exception {
+		if( null == query ) {
+			throw new Exception("Must provide a query object during a query");
+		}
+		if( null == query.getViewName() ) {
+			throw new Exception("Must specify a view name during a query");
+		}
+		
+		// Effective URL
+		URL effectiveUrl = computeUrlFromQuery(query);
+		
+		// Make request
+		ConnectionStreamResult response = ConnectionUtils.getStreamResource(getContext(), effectiveUrl);
+		
+		return response;
+	}
+
+	@Override
 	public <T> T performQuery(CouchQuery query, Class<T> expectedClass) throws Exception {
 		if( null == query ) {
 			throw new Exception("Must provide a query object during a query");
@@ -60,43 +78,8 @@ public class CouchDesignDocumentImpl implements CouchDesignDocument {
 			throw new Exception("Must specify a view name during a query");
 		}
 		
-		// Base url
-		URL selectUrl = null;
-		if( null == query.getListName() ) {
-			selectUrl = new URL(url, "_view/"+query.getViewName());
-		} else {
-			selectUrl = new URL(url, "_list/"+query.getListName()+"/"+query.getViewName());
-		}
-		
-		// Compute parameters
-		List<UrlParameter> parameters = new Vector<UrlParameter>();
-		if( null != query.getStartKey() ) {
-			parameters.add( new UrlParameter("startkey", query.getStartKey()) );
-		}
-		if( null != query.getEndKey() ) {
-			parameters.add( new UrlParameter("endkey", query.getEndKey()) );
-		}
-		if( null != query.getKeys() ) {
-			parameters.add( new UrlParameter("keys", query.getKeys()) );
-		}
-		if( null != query.getLimit() ) {
-			parameters.add( new UrlParameter("limit", query.getLimit()) );
-		}
-		if( null != query.getIncludeDocs() ) {
-			parameters.add( new UrlParameter("include_docs", query.getIncludeDocs()) );
-		}
-		if( query.isReduce() ){
-			parameters.add( new UrlParameter("reduce", "true") );
-			
-			if( query.isGrouping() ){
-				parameters.add( new UrlParameter("group", "true") );
-			}
-		} else {
-			parameters.add( new UrlParameter("reduce", "false") );
-		}
-		
 		// Effective URL
-		URL effectiveUrl = ConnectionUtils.computeUrlWithParameters(selectUrl, parameters);
+		URL effectiveUrl = computeUrlFromQuery(query);
 		
 		// Make request
 		T response = ConnectionUtils.getJsonResource(getContext(), effectiveUrl, expectedClass);
@@ -106,4 +89,50 @@ public class CouchDesignDocumentImpl implements CouchDesignDocument {
 		return response;
 	}
 
+	private URL computeUrlFromQuery(CouchQuery query) throws Exception {
+		try {
+			// Base url
+			URL selectUrl = null;
+			if( null == query.getListName() ) {
+				selectUrl = new URL(url, "_view/"+query.getViewName());
+			} else {
+				selectUrl = new URL(url, "_list/"+query.getListName()+"/"+query.getViewName());
+			}
+			
+			// Compute parameters
+			List<UrlParameter> parameters = new Vector<UrlParameter>();
+			if( null != query.getStartKey() ) {
+				parameters.add( new UrlParameter("startkey", query.getStartKey()) );
+			}
+			if( null != query.getEndKey() ) {
+				parameters.add( new UrlParameter("endkey", query.getEndKey()) );
+			}
+			if( null != query.getKeys() ) {
+				parameters.add( new UrlParameter("keys", query.getKeys()) );
+			}
+			if( null != query.getLimit() ) {
+				parameters.add( new UrlParameter("limit", query.getLimit()) );
+			}
+			if( null != query.getIncludeDocs() ) {
+				parameters.add( new UrlParameter("include_docs", query.getIncludeDocs()) );
+			}
+			if( query.isReduce() ){
+				parameters.add( new UrlParameter("reduce", "true") );
+				
+				if( query.isGrouping() ){
+					parameters.add( new UrlParameter("group", "true") );
+				}
+			} else {
+				parameters.add( new UrlParameter("reduce", "false") );
+			}
+			
+			// Effective URL
+			URL effectiveUrl = ConnectionUtils.computeUrlWithParameters(selectUrl, parameters);
+			
+			return effectiveUrl;
+
+		} catch (Exception e) {
+			throw new Exception("Error while computing URL from query", e);
+		}
+	}
 }

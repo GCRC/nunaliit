@@ -55,7 +55,7 @@ var n2validate = {
 		
 		} else if( !userInfo.atlas[n2atlas.name]
 		 || !userInfo.atlas[n2atlas.name].agreement ) {
-			throw( {forbidden: 'Database submissions are restricted to users that have accepted the user agreement'} );
+			throw( {forbidden: 'Database submissions are restricted to users that have accepted the user agreement '+userCtxt.name+' roles: '+userCtxt.roles.join(',')} );
 		
 		} else if( n2atlas.submissionDbEnabled
 		 && n2atlas.isDocumentDb
@@ -99,6 +99,11 @@ var n2validate = {
 			// Validate layer permissions
 			var layerAction = false;
 			if( n2validate.verifyLayerPermissions(newDoc, oldDoc, userInfo, n2atlas) ){
+				layerAction = true;
+			};
+			
+			// Validate script documents
+			if( n2validate.validateScriptDocuments(newDoc) ){
 				layerAction = true;
 			};
 			
@@ -503,6 +508,27 @@ var n2validate = {
 		};
 		
 		return layerAction;
+	},
+	
+	validateScriptDocuments: function(newDoc){
+		// A script document must be on the layer "scripts"
+		if( newDoc && newDoc.nunaliit_script ){
+			var onScriptLayer = false;
+			
+			if( newDoc.nunaliit_layers ){
+				for(var i=0,e=newDoc.nunaliit_layers.length; i<e; ++i){
+					var layerId = newDoc.nunaliit_layers[i];
+					
+					if( 'scripts' === layerId ){
+						onScriptLayer = true;
+					};
+				};
+			};
+			
+			if( !onScriptLayer ){
+				throw( {forbidden: 'Script documents must be associated with layer "scripts"'} );
+			};
+		};
 	},
 	
 	// Take an array of roles and accumulate information about them
