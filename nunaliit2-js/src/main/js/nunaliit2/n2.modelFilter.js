@@ -604,86 +604,6 @@ var SingleDocumentFilter = $n2.Class(ModelFilter, {
 	}
 });
 
-
-//--------------------------------------------------------------------------
-/*
-* Filter: a Document Model that filters out certain documents
-* MultiDocumentFilter: Allows only specified documents 
-*/
-var MultiDocumentFilter = $n2.Class(ModelFilter, {
-
-	selectedDocsParameter: null,
-	
-	selectedDocIds: null,
-	
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			dispatchService: null
-
-			// From configuration
-			,modelId: null
-			,sourceModelId: null
-			,selectedDocIds: null
-		},opts_);
-		
-		var _this = this;
-		
-		this.selectedDocIds = opts.selectedDocIds;
-
-		this.selectedDocsParameter = new $n2.model.ModelParameter({
-			model: this
-			,type: 'string'
-			,name: 'selectedDocumentIds'
-			,label: 'Selected Document Ids'
-			,setFn: function(docId){
-				_this._setSelectedDocIds(docId);
-			}
-			,getFn: function(){
-				return _this._getSelectedDocIds();
-			}
-			,dispatchService: opts.dispatchService
-		});
-		
-		opts.filterName = 'MultiDocumentFilter';
-		
-		opts.filterFn = function(doc){
-			return _this._isDocVisible(doc);
-		};
-
-		ModelFilter.prototype.initialize.call(this,opts);
-	},
-	
-	_getSelectedDocIds: function(){
-		return this.selectedDocIds;
-	},
-	
-	_setSelectedDocIds: function(docIds){
-		this.selectedDocIds = docIds;
-		
-		this._filterChanged();
-	},
-	
-	_addModelInfoParameters: function(info){
-		info.parameters.selectedDocumentIds = this.selectedDocsParameter.getInfo();
-	},
-	
-	_isDocVisible: function(doc){
-		
-		var i, e, docs;
-		docs = this._getSelectedDocIds();
-		
-		for(i=0, e=docs.length; i < e; i++){
-			
-			if( doc && doc._id && doc._id === docs[i] ){
-				return true;
-			};
-		};
-
-		return false;
-	}
-});
-
-
 //--------------------------------------------------------------------------
 /*
 * Filter: a Document Model that filters out certain documents
@@ -1818,6 +1738,98 @@ var SchemaFilter = $n2.Class('SchemaFilter', SelectableDocumentFilter, {
 	}
 });
 
+// --------------------------------------------------------------------------
+// Filter: a Document Model that filters out certain documents 
+// MultiDocumentFilter: Allows only specified documents 
+// Options:
+//  - selectedDocIds (array): An array of document id strings, which filter 
+//    a model to only include these documents.
+var MultiDocumentFilter = $n2.Class('MultiDocumentFilter', SelectableDocumentFilter, {
+
+	selectedDocIds: null,
+
+	selectionById: null,
+
+	currentChoices: null,
+
+	currentCallback: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			modelId: undefined
+			,sourceModelId: undefined
+			,dispatchService: undefined
+			,schemaRepository: undefined
+			,selectedDocIds: undefined
+		},opts_);
+		
+		var _this = this;
+		
+		if ($n2.isArray(opts.selectedDocIds)) {
+			this.selectedDocIds = opts.selectedDocIds;
+		} else {
+			throw new Error('MultiDocumentFilter requires a selectedDocIds property');
+		}
+		
+		$n2.modelFilter.SelectableDocumentFilter.prototype.initialize.call(this,opts);
+		
+		this.currentChoices = [];
+		this.currentCallback = null;
+	},
+
+	_computeAvailableChoicesFromDocs: function(docs, callbackFn){
+		var _this = this;
+
+		var choiceLabelById = [];
+		docs.forEach(function(doc){
+			if (doc && doc._id) {
+				if (_this.selectedDocIds.indexOf(doc._id) >= 0) {
+					choiceLabelById.push(doc._id);
+				}
+			}
+		});
+
+		var availableChoices = [];
+		choiceLabelById.forEach(function(id) {
+			var label = choiceLabelById[id];
+			availableChoices.push({
+				id: id
+				,label: id
+			});
+		});
+
+		availableChoices.sort(function(a,b){
+			if (a.label < b.label) {
+				return -1;
+			}
+
+			if (a.label > b.label) {
+				return 1;
+			}
+
+			return 0;
+		});
+		
+		this.currentChoices = availableChoices;
+		this.currentCallback = callbackFn;
+		
+		callbackFn(availableChoices);
+		
+		return null;
+	},
+
+	_isDocVisible: function(doc, selectedChoiceIdMap){
+		var i, e;
+			
+		if (doc && doc._id) {
+			if (selectedChoiceIdMap[doc._id]) {
+				return true;
+			}
+		}
+		return false;
+	}
+});
+
 //--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'filter' ){
@@ -1921,28 +1933,6 @@ function handleModelCreate(m, addr, dispatcher){
 		
 		m.created = true;
 
-	} else if( m.modelType === 'multiDocumentFilter' ){
-		var options = {};
-		
-		if( m && m.modelOptions ){
-			for(var key in m.modelOptions){
-				options[key] = m.modelOptions[key];
-			};
-		};
-		
-		options.modelId = m.modelId;
-		options.modelType = m.modelType;
-
-		if( m && m.config ){
-			if( m.config.directory ){
-				options.dispatchService = m.config.directory.dispatchService;
-			};
-		};
-		
-		m.model = new MultiDocumentFilter(options);
-		
-		m.created = true;
-
 	} else if( m.modelType === 'documentFilterByCreator' ){
 		var options = {};
 		
@@ -2007,6 +1997,28 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		m.model = new SchemaFilter(options);
+		
+		m.created = true;
+
+	} else if( m.modelType === 'multiDocumentFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		m.model = new MultiDocumentFilter(options);
 		
 		m.created = true;
 	};

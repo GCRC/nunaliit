@@ -1,5 +1,5 @@
     "group": "<%- group %>"
     ,"id": "<%- id %>"
     ,"label": "<%= label %>"
-    , "initialLayers" : <%= JSON.stringify(initialLayers) %>
-    , "relatedSchemas" : <%= JSON.stringify(relatedSchemas) %>
+    ,"initialLayers" : <%= JSON.stringify(initialLayers) %>
+    ,"relatedSchemas" : <%= JSON.stringify(relatedSchemas) %>
