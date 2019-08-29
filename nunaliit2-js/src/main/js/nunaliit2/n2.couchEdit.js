@@ -1569,7 +1569,7 @@ var CouchDocumentEditor = $n2.Class({
 					if (Array.isArray(node) && node.length > 0){
 						var notAllNull = false;
 						for (var i=0,e=node.length;i<e;i++){
-							notAllNull |= (true && node[i])
+							notAllNull |= (node[i] !== null? true: false)
 						}
 						if (!notAllNull){
 							$n2.log('An all null Array '+ key + ' has been detected and corrected');
