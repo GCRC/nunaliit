@@ -291,30 +291,56 @@ var RadialCanvas = $n2.Class({
  	createGraph: function() {
  		var _this = this; // for use in callbacks
 
- 		if( this.background 
- 		 && typeof this.background.color === 'string' ){
- 			var $canvas = $('#' + this.canvasId);
- 			$canvas.css('background-color',this.background.color);
- 		};
- 		
  		this.svgId = $n2.getUniqueId();
  		var $svg = $d.select('#' + this.canvasId)
  			.append('svg')
  			.attr('id',this.svgId);
  		
+ 		var $background = $svg.append('rect')
+ 			.attr({
+ 				x: '0'
+ 				,y:'0'
+ 			})
+ 			.classed({
+ 				'n2CanvasRadial_background': true
+ 			})
+ 			.on('click', function(){
+	 			_this._backgroundClicked();
+	 		});
+
+ 		if( this.background 
+ 			&& typeof this.background === 'object' ){
+ 			var allowedAttributes = $n2.svg.presentationAttributeMap;
+ 			for(var key in this.background){
+ 				if( typeof key === 'string' 
+ 					&& allowedAttributes[key] ){
+ 					var value = this.background[key];
+ 					if( typeof value === 'string' ){
+ 						$background.attr(key,value);
+ 					} else if( typeof value === 'number' ){
+ 						$background.attr(key,value);
+ 					};
+ 				};
+ 			};
+ 		} else {
+ 			$background.attr({
+ 				'stroke-opacity': 0
+ 				,'fill-opacity': 0
+ 			});
+ 		};
+
  		var $rootGroup = $svg.append('g')
-			.attr('class','radialRoot')
-			;
+			.attr('class','radialRoot');
 
 		$rootGroup.append('g')
- 			.attr('class','links');
+ 			.attr('class', 'links');
 
 		$rootGroup.append('g')
- 			.attr('class','nodes');
+ 			.attr('class', 'nodes');
 
 		$rootGroup.append('g')
- 			.attr('class','labels');
- 		
+ 			.attr('class', 'labels');
+ 
  		this.resizeGraph();
  	},
  	
@@ -342,6 +368,12 @@ var RadialCanvas = $n2.Class({
  		var $svg = this._getSvgElem()
  			.attr('width', size[0])
  			.attr('height', size[1]);
+ 		
+ 		var $background = $svg.select('.n2CanvasRadial_background')
+ 			.attr({
+ 				width: size[0]
+				,height: size[1]
+ 			});
  		
  		var $rootGroup = $svg.select('g.radialRoot')
 			.attr("transform", "translate(" + (size[0]/2) + "," + (size[1]/2) + ")");
@@ -773,6 +805,12 @@ var RadialCanvas = $n2.Class({
  			this.elementGenerator.focusOff(elementData);
 			this.currentMouseOver = null;
  		};
+ 	},
+ 	
+ 	_backgroundClicked: function(){
+ 		this._dispatch({
+ 			type: 'userUnselect'
+ 		});
  	},
  	
  	_handleDispatch: function(m){
