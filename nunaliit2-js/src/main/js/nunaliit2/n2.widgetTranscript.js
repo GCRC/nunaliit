@@ -287,7 +287,8 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 });
 var CineAnnotationEditorMode = {
 		TAGSELECTION: 'tagselection',
-		TAGGROUPING : 'taggrouping'
+		TAGGROUPING : 'taggrouping',
+		TAGSETTING : 'tagsetting'
 }
 var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 
@@ -323,6 +324,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		this.onCancel = opts.onCancel;
 		
 		this.editorId = $n2.getUniqueId();
+		
+		this.gloScaleFactorId = $n2.getUniqueId();
 		this.innerFormId = $n2.getUniqueId();
 		this.currentDoc = undefined;
 		this.currentStartTime = undefined;
@@ -330,6 +333,9 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		this.editorMode = undefined;
 		this.editorAggregateMode = true;
 		this.dataDepot = new AnnotationEditorDataDepot({});
+		this._default_setting = {
+				scaleFactor : 5
+		}
 	},
 	
 	getElem: function(){
@@ -436,6 +442,9 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 						case CineAnnotationEditorMode.TAGGROUPING: 
 							updateDocForTagGrouping(doc);
 							alert('Tag group info has been saved');
+							break;
+						case CineAnnotationEditorMode.TAGSETTING:
+							updateDocForTagSetting(doc);
 							break;
 						}
 				}
@@ -614,6 +623,31 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			};
 			
 		};
+		function updateDocForTagSetting (doc){
+			var $formfieldSections = $('div.n2WidgetAnnotation_tagSettings_formfieldSection');
+			$formfieldSections.each(function(){
+				var _gsfInput = $(this).find('input.n2transcript_input.input_scaleFactor');
+				if (_gsfInput){
+					var _gsfInputValue= _gsfInput.val();
+					if (_gsfInputValue){
+						if (typeof doc.atlascine2_cinemap.settings === 'undefined'){
+							doc.atlascine2_cinemap.settings = {};
+						}
+						doc.atlascine2_cinemap.settings.globalScaleFactor = _gsfInputValue;
+						documentSource.updateDocument({
+							doc: doc
+							,onSuccess: onSaved
+							,onError: function(err){
+								$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
+							}
+						});
+					}
+					
+				} else {
+					alert('scaleFactor field doesnot exist');
+				}
+			})
+		};
 		function tagGroupsIsModified(oldTagColors, 
 				oldTagGroups, newTagColors, newTagGroups){
 			
@@ -675,6 +709,41 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		if( this.onCancel ){
 			this.onCancel(this);
 		};
+	},
+	_addTagSetting: function($parent){
+		var _this = this;
+		//current cinemap doc;
+		var doc = this.currentDoc;
+		var _setting = this._default_setting;
+		
+		var $formFieldSection = $('<div>')
+		.addClass('n2WidgetAnnotation_tagSettings_formfieldSection')
+		.appendTo($parent);
+		
+		var $headdiv = $('<div>')
+		.addClass('formfieldSection_header')
+		.appendTo($formFieldSection);
+		
+		if (doc
+			&& doc.atlascine2_cinemap
+			&& doc.atlascine2_cinemap.settings){
+			_setting = $n2.extend(_setting, doc.atlascine2_cinemap.settings);
+		}
+		for (var se in _setting){
+			if (se === 'globalScaleFactor'){
+				var _sf = _setting[se];
+				$('<label>')
+				.attr('for', _this.gloScaleFactorId)
+				.html('globalScaleFactor')
+				.appendTo($formFieldSection);
+				$('<input>')
+				.attr('id', _this.gloScaleFactorId)
+				.addClass('n2transcript_input input_scaleFactor')
+				.val(_sf)
+				.appendTo($formFieldSection);
+			}
+		}
+		
 	},
 	_addTagGroupEditing: function($parent){
 		var _this = this;
@@ -1154,6 +1223,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				this.editorMode = CineAnnotationEditorMode.TAGSELECTION;
 			} else if ( opt === 'Group Tags...'){
 				this.editorMode = CineAnnotationEditorMode.TAGGROUPING;
+			} else if ( opt === 'Settings...'){
+				this.editorMode = CineAnnotationEditorMode.TAGSETTING;
 			}
 			this.dataDepot.setDoc(doc);
 			this.dataDepot.setOption(opt);
@@ -1171,6 +1242,9 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				break;
 			case CineAnnotationEditorMode.TAGGROUPING:
 				_this._addTagGroupEditing($elem);
+				break;
+			case CineAnnotationEditorMode.TAGSETTING:
+				_this._addTagSetting($elem);
 				break;
 			default:
 				break;
@@ -1795,7 +1869,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				contextMenu.remove();
 			}
 			
-			var context_menu_text = ['Tag Selection...', 'Group Tags...'];
+			var context_menu_text = ['Tag Selection...', 'Group Tags...', 'Settings...'];
 			var transcript_context_menu_list = $('<ul>');
 			$.each(context_menu_text, function(i){
 				var li = $('<li/>')

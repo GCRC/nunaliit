@@ -530,6 +530,23 @@ Polar Stereographic Projection Selector
     grid-gap: 10px;
     margin-left: 20px;
 }
+
+.n2WidgetAnnotation_tagSettings_formfieldSection {
+	max-width: 420px;
+	margin: 10px;
+    border: 1px solid #ccc!important;
+    padding: 10px;
+    display: grid;
+    grid-template-areas:
+    	"header header"
+    	"left right"
+    	"footer footer";
+    grid-template-rows: 10px 1fr 10px;
+    grid-template-columns: 2fr 1fr;
+    grid-gap: 10px;
+    margin-left: 20px;
+}
+
 .formfieldSection_header {
 	grid-area: header
 }
