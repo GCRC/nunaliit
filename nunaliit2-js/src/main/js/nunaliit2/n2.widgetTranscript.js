@@ -334,7 +334,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		this.editorAggregateMode = true;
 		this.dataDepot = new AnnotationEditorDataDepot({});
 		this._default_setting = {
-				scaleFactor : 5
+				globalScaleFactor : 5
 		}
 	},
 	
@@ -714,7 +714,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		var _this = this;
 		//current cinemap doc;
 		var doc = this.currentDoc;
-		var _setting = this._default_setting;
+		var _setting = $n2.extend({}, _this._default_setting);
 		
 		var $formFieldSection = $('<div>')
 		.addClass('n2WidgetAnnotation_tagSettings_formfieldSection')
