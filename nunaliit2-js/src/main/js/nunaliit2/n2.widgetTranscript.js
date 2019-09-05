@@ -719,6 +719,11 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		var $formFieldSection = $('<div>')
 		.addClass('n2WidgetAnnotation_tagSettings_formfieldSection')
 		.appendTo($parent);
+		
+		var $headdiv = $('<div>')
+		.addClass('formfieldSection_header')
+		.appendTo($formFieldSection);
+		
 		if (doc
 			&& doc.atlascine2_cinemap
 			&& doc.atlascine2_cinemap.settings){
