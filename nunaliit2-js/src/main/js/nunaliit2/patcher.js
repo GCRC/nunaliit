@@ -68,7 +68,7 @@ function computePatch(prev, next, update_in_place) {
     };
     
     //First, check if the element exists and types match
-    if(id in prev && typeof(prev[id]) == typeof(next[id])) {
+    if(prev && next && id in prev && typeof(prev[id]) == typeof(next[id])) {
     
       if(typeof(next[id]) == "object" && (prev[id] instanceof Array) == (next[id] instanceof Array) ) {
       

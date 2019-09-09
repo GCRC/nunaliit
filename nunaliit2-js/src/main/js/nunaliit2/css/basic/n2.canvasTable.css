@@ -5,10 +5,19 @@
 
 .n2TableCanvas td,
 .n2TableCanvas th {
-    border: 1px solid #000000;
-    white-space: pre-line;
+	border: 1px solid #000000;
+	white-space: pre-line;
 }
 
 .n2TableCanvas td.n2TableCanvas_lazyDisplay {
-    height: 10px;
+	height: 10px;
+}
+
+/* Table Row Counter */
+.n2TableCanvas .n2TableCanvasRowCounter {
+	display: inline;
+	border: 1px solid #999999;
+	border-radius: 2px;
+	margin: 9px 5px 9px 0px;
+	padding: 2px 5px;
 }

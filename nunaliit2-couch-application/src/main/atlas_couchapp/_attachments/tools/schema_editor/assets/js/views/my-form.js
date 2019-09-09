@@ -80,13 +80,13 @@ define([
 
       $("#render").val(that.renderForm({
           multipart: this.collection.containsFileType(),
-	  mandatorytext: _.map( partitedEleMandatory, function(e){
-	      return $(e).attr("json-content")}).join("\n"),
-	  attributestext: _.map( partitedEleAttribute,
-	      function(e){
-        	  return "     {\n" + $(e).attr("json-content").replace(/^/gm, '        ')+ "}"}).join()
-      }
-			));
+          mandatorytext: _.map( partitedEleMandatory, function(e){
+		  		return $(e).attr("json-content")
+	      }).join("\n"),
+	      attributestext: _.map( partitedEleAttribute, function(e){
+	    	  	return "\n    {\n" + $(e).attr("json-content").replace(/^/gm, '    ')+ "\n    }"
+	      }).join()
+      }));
       this.$el.appendTo("#build form");
       this.delegateEvents();
     }

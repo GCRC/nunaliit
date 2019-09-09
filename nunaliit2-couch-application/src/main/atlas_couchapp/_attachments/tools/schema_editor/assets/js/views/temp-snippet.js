@@ -40,7 +40,26 @@ define([
     }
     , mouseMoveHandler: function(mouseEvent) {
       mouseEvent.preventDefault();
-      this.centerOnEvent(mouseEvent);
+	this.centerOnEvent(mouseEvent);
+	if ( ! $('html, body').is(':animated')) {
+	var bottom = $(window).height() - 50,
+	    top = $(window).scrollTop() + 50;
+	if (mouseEvent.clientY > bottom
+	    && ($(window).scrollTop() + $(window).height() < $(document).height() - 100)){
+	    //Down
+	    $('html, body').animate({
+		scrollTop : $(window).scrollTop() + 300
+	    }, 600);
+	} else if (mouseEvent.clientY < top
+		   && $(window).scrollTop() > 0){
+	    //up
+	    $('html, body').animate({
+		scrollTop : $(window).scrollTop() - 300
+	    }, 600);
+	} else {
+	    $('html, body').finish();
+	}
+	}
     }
     , mouseUpHandler: function(mouseEvent){
       mouseEvent.preventDefault();
