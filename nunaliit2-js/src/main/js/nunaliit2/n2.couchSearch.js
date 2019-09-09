@@ -1783,7 +1783,4 @@ $n2.couchSearch = {
 };
 
 })(jQuery,nunaliit2);
-<<<<<<< HEAD
-=======
 
->>>>>>> master
