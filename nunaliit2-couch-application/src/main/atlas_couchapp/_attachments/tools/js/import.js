@@ -53,6 +53,7 @@
 		var importProfileSelect = new $n2.mdc.MDCSelect({
 			parentElem: $buttonLine,
 			menuLabel: 'Import Profile',
+			nativeClasses : ['import_profile'],
 			menuOpts: importProfileMenuOpts
 		});
 

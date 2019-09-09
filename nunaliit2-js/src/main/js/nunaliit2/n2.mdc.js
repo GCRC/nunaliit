@@ -1048,6 +1048,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 	menuLabel: null,
 	menuOpts: null,
 	preSelected: null,
+	nativeClasses : null,
 	select: null,
 	selectId: null,
 
@@ -1056,7 +1057,8 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			menuChgFunction: null,
 			menuLabel: null,
 			menuOpts: [],
-			preSelected: false
+			preSelected: false,
+			nativeClasses : null
 		}, opts_);
 
 		MDC.prototype.initialize.call(this,opts);
@@ -1066,6 +1068,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.menuOpts = opts.menuOpts;
 		this.preSelected = opts.preSelected;
 		this.selectId = $n2.getUniqueId();
+		this.nativeClasses = opts.nativeClasses;
 		
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Select Component');
@@ -1094,9 +1097,14 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		$('<i>').addClass('mdc-select__dropdown-icon')
 			.appendTo($menu);
 
+		var classesOnSelectTag = '';
+		if ( this.nativeClasses ){
+			classesOnSelectTag = this.nativeClasses.join(' ');
+		}
 		this.select = $('<select>')
 			.attr('id', this.selectId)
 			.addClass('mdc-select__native-control')
+			.addClass(classesOnSelectTag)
 			.appendTo($menu)
 			.change(this.menuChgFunction);
 
