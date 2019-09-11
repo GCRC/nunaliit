@@ -104,6 +104,10 @@
 	height: 100vh;
 }
 
+.drawer-frame-root.for-schema-editor {
+	display: block;
+	height: 100vh;
+}
 .mdc-drawer-app-content {
 	width: 100%;
 }
