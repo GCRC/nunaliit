@@ -289,7 +289,8 @@ var CineAnnotationEditorMode = {
 		TAGSELECTION: 'tagselection',
 		TAGGROUPING : 'taggrouping',
 		TAGSETTING : 'tagsetting'
-}
+};
+var context_menu_text = ['Tag Selection...', 'Map Tags...', 'Settings...'];
 var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 
 	dispatchService: null,
@@ -1219,11 +1220,11 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			data = opts_.data;
 			doc = opts_.doc;
 			
-			if( opt === 'Tag Selection...'){
+			if( opt === context_menu_text[0]){
 				this.editorMode = CineAnnotationEditorMode.TAGSELECTION;
-			} else if ( opt === 'Group Tags...'){
+			} else if ( opt === context_menu_text[1]){
 				this.editorMode = CineAnnotationEditorMode.TAGGROUPING;
-			} else if ( opt === 'Settings...'){
+			} else if ( opt === context_menu_text[2]){
 				this.editorMode = CineAnnotationEditorMode.TAGSETTING;
 			}
 			this.dataDepot.setDoc(doc);
@@ -1869,7 +1870,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				contextMenu.remove();
 			}
 			
-			var context_menu_text = ['Tag Selection...', 'Group Tags...', 'Settings...'];
+			
 			var transcript_context_menu_list = $('<ul>');
 			$.each(context_menu_text, function(i){
 				var li = $('<li/>')
