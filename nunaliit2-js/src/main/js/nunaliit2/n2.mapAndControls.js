@@ -2146,6 +2146,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
    				'displayClass': 'olControlMoveFeature'
    				,standalone: true
    				,clickout: false
+   				,deleteCodes : [46]
    			}
    		);
    		modifyFeatureGeometry.mode = OpenLayers.Control.ModifyFeature.RESHAPE;

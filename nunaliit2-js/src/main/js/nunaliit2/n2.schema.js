@@ -1851,9 +1851,10 @@ var Form = $n2.Class({
 			if( currentWidth > 0 ){
 				$elem.css('min-width',currentWidth+'px');
 			};
-			window.setTimeout(function(){
-				$elem.removeAttr('style');
-			},500);
+			//Seems no longer needed for material design tab style editor views
+//			window.setTimeout(function(){
+//				$elem.removeAttr('style');
+//			},500);
 			
 			$elem.empty();
 			var $divEvent = $('<div>')
@@ -2601,7 +2602,10 @@ var Form = $n2.Class({
 						};
 					};
 					if( shouldDelete ){
-						parentSelector.removeValue(obj);
+						selector.removeValue(obj);
+							// Materialize the parent of a localized string
+						selector.setValue(obj,{'nunaliit_type':'localized'});
+						
 					};
 					
 				} else if( 'date' === keyType ) {
