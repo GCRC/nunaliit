@@ -1862,8 +1862,53 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 		
 
+		function _rightClickCallback (e, $this, contextMenu, selections){
+			//var elmnt = e.target;
+			//e.preventDefault();
+
+			var isEditorAvailable = _this._isAnnotationEditorAvailable();
+			
+			if( isEditorAvailable ){
+				for(var i =0;i<_this.transcript_array.length;i++) {
+					var transcriptElem = _this.transcript_array[i];
+					var $transcriptElem = $('#'+transcriptElem.id);
+					$transcriptElem.removeClass('sentence-highlight-pending');
+				}
+				if (selections.length === 0) {
+					return;
+				}
+				var ctxdata = [];
+				selections.forEach(function($elmnt){
+				
+					var eid = $elmnt.attr('id');
+					var curStart =$elmnt.attr('data-start');
+					var curFin = $elmnt.attr('data-fin');
+					var startTimeCode = $elmnt.attr('data-startcode');
+					var finTimeCode = $elmnt.attr('data-fincode');
+					var curTxt = $elmnt.text();
+					
+					var _d = {
+							start: curStart,
+							startTimeCode: startTimeCode,
+							finTimeCode: finTimeCode,
+							end: curFin,
+							text: curTxt
+					};
+					ctxdata.push(_d);
+					
+					
+					$elmnt.addClass('sentence-highlight-pending')
+				})		
+				contextMenu.data({value: ctxdata});
+				contextMenu[0].style.left = e.pageX + 'px';
+				contextMenu[0].style.top = e.pageY + 'px';
+				contextMenu.removeClass('transcript-context-menu-hide');
+			
+			};
+		}
 		function prep_transcript($transcript, transcript_array){
 			var temp;
+			var currentSelectSentences = [];
 			
 			var contextMenu = $('div.' + _this._contextMenuClass);
 			if (contextMenu.length > 0){
@@ -1897,6 +1942,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 								.addClass("transcript-context-menu-hide")
 								.append(transcript_context_menu_list)
 								.appendTo(document.body);
+			
+
+			
 			for (var i = 0,e = transcript_array.length; i < e; i++) {
 				var transcriptElem = transcript_array[i];
 				//hack to seperate single click and double click
@@ -1913,117 +1961,77 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					.addClass('n2-transcriptWidget-sentence')
 					.html(transcriptElem.text+ " ")
 					.appendTo($transcript)
-					.contextmenu( function(e){
-						var elmnt = e.target;
+					.on('mousedown', function(e){
 						e.preventDefault();
-	
-						var isEditorAvailable = _this._isAnnotationEditorAvailable();
-						
-						if( isEditorAvailable ){
-							
-							var ctxdata = [];
-							var mulSel = _this._isMultiSelected();
-							if(mulSel && $n2.isArray(mulSel)
-								&& mulSel.length > 0){
-								mulSel.forEach(function(e){
-									var _d = {
-												start: e.start,
-												startTimeCode: e.startcode,
-												finTimeCode: e.fincode,
-												end: e.fin,
-												text: e.text
-										};
-									
-									ctxdata.push(_d);
-								})
-								
-								for(var i =0;i<_this.transcript_array.length;i++) {
-									var transcriptElem = _this.transcript_array[i];
-									var $transcriptElem = $('#'+transcriptElem.id);
-									$transcriptElem.removeClass('sentence-highlight-pending');
-								}
-							} else {
-								var eid = $(elmnt).attr('id');
-								var curStart =$(elmnt).attr('data-start');
-								var curFin = $(elmnt).attr('data-fin');
-								var startTimeCode = $(elmnt).attr('data-startcode');
-								var finTimeCode = $(elmnt).attr('data-fincode');
-								var curTxt = $(elmnt).text();
-								
-								var _d = {
-										start: curStart,
-										startTimeCode: startTimeCode,
-										finTimeCode: finTimeCode,
-										end: curFin,
-										text: curTxt
-								};
-								ctxdata.push(_d);
-								
-								for(var i =0;i<_this.transcript_array.length;i++) {
-									var transcriptElem = _this.transcript_array[i];
-									var $transcriptElem = $('#'+transcriptElem.id);
-									$transcriptElem.removeClass('sentence-highlight-pending');
-								}
-								$(this).addClass('sentence-highlight-pending')
-							}
-							contextMenu.data({value: ctxdata});
-							contextMenu[0].style.left = e.pageX + 'px';
-							contextMenu[0].style.top = e.pageY + 'px';
-							contextMenu.removeClass('transcript-context-menu-hide');
-						
-						};
-					}).on('click', function(e){
 						var _that = this;
-					clicks++;
-					if(clicks === 1) {
+						if (e.ctrlKey){
+							e.preventDefault();
+							return false;
+						}
+						clicks++;
+						if(clicks === 1) {
 
-						timer = setTimeout(function() {
-							//perform single-click action  
+							timer = setTimeout(function() {
+								//perform single-click action  
+								switch(e.which){
+								case 1:
+									contextMenu.addClass('transcript-context-menu-hide');
+									$(_that).removeClass('sentence-highlight-pending')
+									var $span = $(_that);
+									var currentTime = $span.attr('data-start');
+									_this._updateCurrentTime(currentTime, 'text-oneclick');
+									break;
+								case 2:
+									break;
+								case 3:
+									_rightClickCallback(e, $(this), contextMenu, currentSelectSentences);
+
+								}  
+								clicks = 0;             //after action performed, reset counter
+
+							}, DELAY);
+
+						} else {
+
+							clearTimeout(timer);    //prevent single-click action
+							//perform double-click action
 							switch(e.which){
 							case 1:
 								contextMenu.addClass('transcript-context-menu-hide');
 								$(_that).removeClass('sentence-highlight-pending')
 								var $span = $(_that);
 								var currentTime = $span.attr('data-start');
-								_this._updateCurrentTime(currentTime, 'text-oneclick');
+								_this._updateCurrentTime(currentTime, 'text');
 								break;
 							case 2:
 								break;
 							case 3:
 								break;
-							
-							}  
+
+							}
 							clicks = 0;             //after action performed, reset counter
-
-						}, DELAY);
-
-					} else {
-
-						clearTimeout(timer);    //prevent single-click action
-						//perform double-click action
-						switch(e.which){
-						case 1:
-							contextMenu.addClass('transcript-context-menu-hide');
-							$(_that).removeClass('sentence-highlight-pending')
-							var $span = $(_that);
-							var currentTime = $span.attr('data-start');
-							_this._updateCurrentTime(currentTime, 'text');
-							break;
-						case 2:
-							break;
-						case 3:
-							break;
-						
 						}
-						clicks = 0;             //after action performed, reset counter
-					}
 
-				// close the context menu, if it still exists
-				})
+						// close the context menu, if it still exists
+					})
 				.on('dblclick', function(e){
 					e.preventDefault();
-				})	
+				})
+				.on ('contextmenu', function(e){
+					e.preventDefault();
+					return true;
+				})
 			}
+			$('div#'+ _this.transcriptId).multiSelect({
+				unselectOn: 'head',
+				keepSelection: false,
+				stop: function($sel, $elem) {
+					currentSelectSentences.length = 0;
+					$sel.each(function() {
+						currentSelectSentences.push($(this));
+					});
+				}
+			});
 			$transcript.on('scroll', function(){
 				
 				contextMenu.addClass('transcript-context-menu-hide');
@@ -2068,32 +2076,33 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	},
 	_isMultiSelected: function(){
 		var node = [];
-		var m = {
-				type: 'getSelectionUtilityAvailable'
-				,available: false
-			};
-		this.dispatchService.synchronousCall(DH,m);
-
-		if( m.available){
-			m = {
-					type: 'getSelectionUtility--getSelection'
-					,selection: null
-			};
-			this.dispatchService.synchronousCall(DH,m);
-			var rangySel = m.selection;
-			if (!rangySel){
-				return null;
-			}
-			$.each(rangySel,  function(i, el){
-				var _d = $n2.extend({
-					text: el.innerText
-				},$(el).data())
-				node.push(_d);
-			})
-			return node;
-		} else {
-			throw new Error('getSelectionUtility is NOT available');
-		};
+//		var m = {
+//				type: 'getSelectionUtilityAvailable'
+//				,available: false
+//			};
+//		this.dispatchService.synchronousCall(DH,m);
+//
+//		if( m.available){
+//			m = {
+//					type: 'getSelectionUtility--getSelection'
+//					,selection: null
+//			};
+//			this.dispatchService.synchronousCall(DH,m);
+//			var rangySel = m.selection;
+//			if (!rangySel){
+//				return null;
+//			}
+//			$.each(rangySel,  function(i, el){
+//				var _d = $n2.extend({
+//					text: el.innerText
+//				},$(el).data())
+//				node.push(_d);
+//			})
+//			return node;
+//		} else {
+//			throw new Error('getSelectionUtility is NOT available');
+//		};
+		
 	},
 	_closeDrawer: function(){
 		this.dispatchService.send(DH,{

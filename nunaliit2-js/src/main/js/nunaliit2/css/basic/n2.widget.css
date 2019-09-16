@@ -497,11 +497,30 @@ Polar Stereographic Projection Selector
 	color: green;
 }
 
-.n2widgetTranscript_transcript .highlight {
+.n2widgetTranscript_transcript .sentence-highlight-pending{
+/*  	color: white;  */
+/*  	background-color: orange;  */
+}
+
+.n2widgetTranscript_transcript .selected {
 	color: white;
 	background-color: darkorange;
 }
 
+.n2widgetTranscript_transcript .highlight {
+	text-decoration: underline;
+}
+
+.n2widgetTranscript_transcript .ui-selecting {
+	background: #ccc;
+}
+.n2widgetTranscript_transcript .ui-selected {
+	background: #999;
+}
+/* .n2widgetTranscript_transcript span.sentence-highlight-pending { */
+/* 	outline-style: dotted; */
+/* 	outline-color: invert; */
+/* } */
 /* For Annotation Editor*/
 .n2WidgetAnnotation_formfieldSection {
 	max-width: 420px;
