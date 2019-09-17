@@ -1863,7 +1863,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		
 
 		function _rightClickCallback (e, $this, contextMenu, selections){
-			//var elmnt = e.target;
+			var hoveredElem = e.target;
 			//e.preventDefault();
 
 			var isEditorAvailable = _this._isAnnotationEditorAvailable();
@@ -1874,12 +1874,49 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					var $transcriptElem = $('#'+transcriptElem.id);
 					$transcriptElem.removeClass('sentence-highlight-pending');
 				}
-				if (selections.length === 0) {
+				if (selections.size() === 0) {
 					return;
 				}
-				var ctxdata = [];
-				selections.forEach(function($elmnt){
 				
+				var ctxdata = [];
+				var idxOfHoverEl = selections
+						.index(
+						$('span#'+ $(hoveredElem).attr('id'))
+						);
+				if (idxOfHoverEl >= 0){
+					selections.each(function(){
+						var $elmnt = $(this);
+						var eid = $elmnt.attr('id');
+						var curStart =$elmnt.attr('data-start');
+						var curFin = $elmnt.attr('data-fin');
+						var startTimeCode = $elmnt.attr('data-startcode');
+						var finTimeCode = $elmnt.attr('data-fincode');
+						var curTxt = $elmnt.text();
+						
+						var _d = {
+								start: curStart,
+								startTimeCode: startTimeCode,
+								finTimeCode: finTimeCode,
+								end: curFin,
+								text: curTxt
+						};
+						ctxdata.push(_d);
+						
+						
+						$elmnt.addClass('sentence-highlight-pending')
+					})		
+				} else {
+					
+					$(hoveredElem)
+						.parent()
+						.children().each(function(){
+							if ($(this).hasClass('selected')){
+								$(this).removeClass('selected');
+							}
+						});
+					$(hoveredElem).addClass('selected');
+					
+					var $elmnt = $(hoveredElem);
 					var eid = $elmnt.attr('id');
 					var curStart =$elmnt.attr('data-start');
 					var curFin = $elmnt.attr('data-fin');
@@ -1895,10 +1932,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							text: curTxt
 					};
 					ctxdata.push(_d);
-					
-					
-					$elmnt.addClass('sentence-highlight-pending')
-				})		
+				}
+				
 				contextMenu.data({value: ctxdata});
 				contextMenu[0].style.left = e.pageX + 'px';
 				contextMenu[0].style.top = e.pageY + 'px';
@@ -1908,7 +1943,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 		function prep_transcript($transcript, transcript_array){
 			var temp;
-			var currentSelectSentences = [];
+			var currentSelectSentences = undefined;
 			
 			var contextMenu = $('div.' + _this._contextMenuClass);
 			if (contextMenu.length > 0){
@@ -1976,10 +2011,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 								switch(e.which){
 								case 1:
 									contextMenu.addClass('transcript-context-menu-hide');
-									$(_that).removeClass('sentence-highlight-pending')
-									var $span = $(_that);
-									var currentTime = $span.attr('data-start');
-									_this._updateCurrentTime(currentTime, 'text-oneclick');
+									if (e.ctrlKey || e.metaKey || e.shiftKey){
+										
+									} else {
+										$(_that).removeClass('sentence-highlight-pending')
+										var $span = $(_that);
+										var currentTime = $span.attr('data-start');
+										_this._updateCurrentTime(currentTime, 'text-oneclick');
+									}
+									
 									break;
 								case 2:
 									break;
@@ -2026,10 +2066,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				unselectOn: 'head',
 				keepSelection: false,
 				stop: function($sel, $elem) {
-					currentSelectSentences.length = 0;
-					$sel.each(function() {
-						currentSelectSentences.push($(this));
-					});
+					currentSelectSentences = undefined;
+						currentSelectSentences = $sel;
+					
 				}
 			});
 			$transcript.on('scroll', function(){
