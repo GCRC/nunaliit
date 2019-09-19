@@ -409,9 +409,9 @@
 			};
 		}
 	});
-	
+
 	SearchFilter.availableSearchFilters = [];
-	
+
 	// Opens a dialog, selects a search filter from available ones, and create
 	// a new list
 	SearchFilter.createNewList = function(opts_){
@@ -419,14 +419,13 @@
 			onSuccess: function(list){}
 			,onError: function(err){ alert('Unable to create a new list: '+err); }
 		},opts_);
-		
 
 		var selectSearchFilterDialog = new $n2.mdc.MDCDialog({
 			dialogTitle: 'Select Search Filter',
 			closeBtn: true,
 			closeBtnText: 'Cancel'
 		});
-		
+
 		new $n2.mdc.MDCButton({
 			parentElem: $('#' + selectSearchFilterDialog.getFooterId()),
 			btnLabel: 'OK',
@@ -434,14 +433,14 @@
 		});
 
 		var menuOptions = [];
-		for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
+		for (var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
 			var searchFilter = SearchFilter.availableSearchFilters[i];
 			menuOptions.push({
 				'value': searchFilter.id,
 				'label': searchFilter.name
 			});
-		};
-		
+		}
+
 		var filterSelect = new $n2.mdc.MDCSelect({
 			parentElem: $('#' + selectSearchFilterDialog.getContentId()),
 			menuLabel: 'Type of filter',
@@ -456,11 +455,11 @@
 
 		adjustOptions($('#' + selectSearchFilterDialog.getId()));
 
-		function okBtnFunc(){
+		function okBtnFunc() {
 			var $dialog = $('#'+selectSearchFilterDialog.getId());
 			var $options = $dialog.find('.searchFilterOptions');
 			var filterId = $dialog.find('select.searchFilterSelector').val();
-			
+
 			selectSearchFilterDialog.closeDialog();
 
 			var useFilter = findSearchFilterFromId(filterId);
@@ -469,36 +468,37 @@
 					options: $options
 					,onSuccess: opts.onSuccess
 				});
+
 			} else {
-				alert( _loc('Unable to find search filter') );
-			};
+				alert(_loc('Unable to find search filter'));
+			}
 
 			return false;
-		};
+		}
 
 		function adjustOptions($dialog){
 			var $select = $dialog.find('select.searchFilterSelector');
 
 			var id = $select.val();
 			var sf = findSearchFilterFromId(id);
-			
+
 			var $options = $dialog.find('.searchFilterOptions');
 			$options.empty();
-			
-			if( sf && typeof(sf.printOptions) === 'function' ) {
-				sf.printOptions($options);
-			};
-		};
 
-		function findSearchFilterFromId(id){
+			if (sf && typeof(sf.printOptions) === 'function') {
+				sf.printOptions($options);
+			}
+		}
+
+		function findSearchFilterFromId(id) {
 			for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
 				var searchFilter = SearchFilter.availableSearchFilters[i];
-				if( searchFilter.id === id ) {
+				if (searchFilter.id === id) {
 					return searchFilter;
-				};
-			};
+				}
+			}
 			return null;
-		};
+		}
 	};
 
 	// Opens a dialog, selects a search filter from available ones, and refines
