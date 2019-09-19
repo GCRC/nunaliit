@@ -1989,26 +1989,28 @@ class N2MapCanvas  {
 			{
 				if(active && !_this.isClustering){
 					let c_source =  _this.overlayLayers[0].getSource();
+					_this.overlayLayers[0].setSource(null);
 					let a_source = c_source.getSource();
 					let b_source = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_21__["default"]({source: a_source});
-					a_source.changed();
+					b_source.setSource(a_source)
+					c_source = new _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_14__["default"]({
+						interaction: _this.interactionSet.selectInteraction,
+						source: b_source,
+						dispatchService: _this.dispatchService
+					});	
+					_this.overlayLayers[0].setSource (c_source);
 					
-					c_source.setSource(b_source);
-					b_source.changed();
 					_this.isClustering = true;
-					_this.dispatchService.send(DH, {
-						type: 'n2rerender'
-					})
+
 				} else if (_this.isClustering && !active) {
 					let c_source =  _this.overlayLayers[0].getSource();
 					let b_source = c_source.getSource();
 					let a_source = b_source.getSource();
 					c_source.setSource(a_source);
+					b_source.setSource(null);
 					a_source.changed();
 					_this.isClustering = false;
-					_this.dispatchService.send(DH, {
-						type: 'n2rerender'
-					})
+
 				}
 			}
 		})
@@ -2040,7 +2042,7 @@ class N2MapCanvas  {
 				if( featurePopupHtmlFn ){
 					featurePopupHtmlFn({
 						feature: feature
-						,onSuccess: function(content){
+						,onSuccess: function( content ){
 							var mousepoint = mapBrowserEvent.coordinate;
 							popup.show(mousepoint, content);
 						}
@@ -2499,13 +2501,19 @@ class N2MapCanvas  {
 			}
 
 		} else if ('n2rerender' === type){
+			var olmap = _this.n2Map;
+			//This refresh strictly execute the invoke for rerender the ol5 map
 			if (_this.n2Map){
 				_this.overlayLayers.forEach(function(overlayLayer){
-						overlayLayer.changed();
+						overlayLayer.getSource().refresh();
 
 				});
-			}
+				//var viewExt = olmap.getView().calculateExtent(olmap.getSize());
+				//olmap.getView().fit(viewExt);
+				}
 		} else if ( 'mapRefreshCallbackRequest' === type ){
+			//This refresh only execute the last invoke,
+			//the earlier invoke will be cancelled if new invoke arrived
 			if ( m.cnt + 1 === this.refreshCnt) {
 				var cb = this.refreshCallback;
 				if ( cb && typeof cb === 'function'){
@@ -3449,6 +3457,9 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 //		}
 	}
 
+	refresh(){
+		//this.changed();
+	}
 	_modelSourceUpdated (state) {
 		
 		var _this = this;
@@ -3501,6 +3512,7 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 	
 	loadFeatures(extent, resolution, projection) {
 		//this.loading = false;
+		//this._reloadAllFeatures();
 	}
 	_reportLoading(flag){
 		if( this.loading && !flag ){
@@ -4044,7 +4056,14 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 			 +"this custom source");
 		}
 		//-------------------------
-		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_2__["default"].CHANGE, this.refresh, this);
+		this.sourceChangeKey_ = null;
+	    if (options.source){
+	    	this.source = options.source;
+	    	this.sourceChangeKey_ =
+	    		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_2__["default"].CHANGE, this.refresh, this);
+	    }
+		//listen(this.source, EventType.CHANGE, this.refresh, this);
+	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this, 'sourceRefChanged', this.handleSourceRefChange, this);
 		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "hover",  this.onHover, this);
 		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "clicked",  this.onClicked, this);
 
@@ -4070,11 +4089,31 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 	getSource(){
 		return this.source;
 	}
-	setSource(opt_source){
-		this.source = opt_source;
-		this.refresh();
-		this.changed();
+	handleSourceRefChange(){
+		 if (this.sourceChangeKey_) {
+		      Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["unlistenByKey"])(this.sourceChangeKey_);
+		      this.sourceChangeKey_ = null;
+		    }
+		    var source = this.source;
+		    if (source) {
+		      this.sourceChangeKey_ = Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(source,
+		        ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_2__["default"].CHANGE, this.refresh, this);
+		    }
+		    
 	}
+	
+	setSource(source){
+		if (source){
+			this.source = source;
+		} else {
+			this.source = null;
+		}
+		this.refresh();
+		this.dispatchEvent('sourceRefChanged');
+		this.changed();
+		
+	}
+
 	onHover(evt){
 
 		let selected  = evt.selected;
@@ -5476,16 +5515,51 @@ class N2DonutCluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["d
 		* @type {number}
 		*/
 		this.clusterId = 1;
-		
-	    /**
+		this.sourceChangeKey_ = null;
+	    if (options.source){
+	    	this.source = options.source;
+	    	this.sourceChangeKey_ =
+	    		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__["default"].CHANGE, this.refresh, this);
+	    }
+		/**
 	     * @type {Array<Feature>}
 	     * @protected
 	     */
 	    this.features = [];
-	    this.source = options.source;
+	   // this.source = options.source;
 	    
-	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__["default"].CHANGE, this.refresh, this);
+	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(this, 'sourceRefChanged', this.handleSourceRefChange, this);
+	    //listen(this.source, EventType.CHANGE, this.refresh, this);
 
+	}
+	
+	handleSourceRefChange(){
+		 if (this.sourceChangeKey_) {
+		      Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["unlistenByKey"])(this.sourceChangeKey_);
+		      this.sourceChangeKey_ = null;
+		    }
+		    var source = this.source;
+		    if (source) {
+		      this.sourceChangeKey_ = Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(source,
+		        ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__["default"].CHANGE, this.refresh, this);
+		    }
+		    
+	}
+	
+	setSource(source){
+		if (source){
+			this.source = source;
+		} else {
+			this.source = null;
+			
+		}
+		this.dispatchEvent('sourceRefChanged');
+		if (this.source){
+			this.refresh();
+			this.changed();
+		}
+
+		
 	}
 	/**
 	* Loading the feature from the layer source, and config the resolution and projection
@@ -5509,38 +5583,36 @@ class N2DonutCluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["d
 		this.addFeatures(this.features);
 		
 	}
-	clear(opt_fast){
-		
-		 if (opt_fast) {
-		      for (var featureId in this.featureChangeKeys_) {
-		        var keys = this.featureChangeKeys_[featureId];
-		        keys.forEach(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["unlistenByKey"]);
-		      }
-		      if (!this.featuresCollection_) {
-		        this.featureChangeKeys_ = {};
-		        this.idIndex_ = {};
-		        this.undefIdIndex_ = {};
-		      }
-		    } else {
-		      if (this.featuresRtree_) {
-		        this.featuresRtree_.forEach(this.removeFeatureInternal, this);
-		        for (var id in this.nullGeometryFeatures_) {
-		          this.removeFeatureInternal(this.nullGeometryFeatures_[id]);
-		        }
-		      }
-		    }
-		    if (this.featuresCollection_) {
-		      this.featuresCollection_.clear();
-		    }
-
-		    if (this.featuresRtree_) {
-		      this.featuresRtree_.clear();
-		    }
-		    this.loadedExtentsRtree_.clear();
-		    this.nullGeometryFeatures_ = {};
-
-		
-	}
+//	clear(opt_fast){
+//		
+//		 if (opt_fast) {
+//		      for (var featureId in this.featureChangeKeys_) {
+//		        var keys = this.featureChangeKeys_[featureId];
+//		        keys.forEach(unlistenByKey);
+//		      }
+//		      if (!this.featuresCollection_) {
+//		        this.featureChangeKeys_ = {};
+//		        this.idIndex_ = {};
+//		        this.undefIdIndex_ = {};
+//		      }
+//		    } else {
+//		      if (this.featuresRtree_) {
+//		        this.featuresRtree_.forEach(this.removeFeatureInternal, this);
+//		        for (var id in this.nullGeometryFeatures_) {
+//		          this.removeFeatureInternal(this.nullGeometryFeatures_[id]);
+//		        }
+//		      }
+//		    }
+//		    if (this.featuresCollection_) {
+//		      this.featuresCollection_.clear();
+//		    }
+//
+//		    if (this.featuresRtree_) {
+//		      this.featuresRtree_.clear();
+//		    }
+//		    this.loadedExtentsRtree_.clear();
+//		    this.nullGeometryFeatures_ = {};
+//	}
 	
 	getSource(){
 		return this.source;
