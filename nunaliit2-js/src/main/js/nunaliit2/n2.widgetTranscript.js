@@ -208,7 +208,7 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 					// Create if it does not exist
 					timeLinks = [];
 					doc.atlascine2_cinemap.timeLinks = timeLinks;
-					return;
+					//return;
 				};
 				if (data && $n2.isArray(data)){
 					data.forEach(function(d){
