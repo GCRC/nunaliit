@@ -420,23 +420,63 @@
 			,onError: function(err){ alert('Unable to create a new list: '+err); }
 		},opts_);
 		
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+dialogId+'">'
-			+'<select class="searchFilterSelector"></select>'
-			+'<div class="searchFilterOptions"></div>'
-			+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
-			+'</div>');
 
-		var $select = $dialog.find('select.searchFilterSelector');
+		var selectSearchFilterDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Select Search Filter',
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
+		
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + selectSearchFilterDialog.getFooterId()),
+			btnLabel: 'OK',
+			onBtnClick: okBtnFunc
+		});
+
+		var menuOptions = [];
 		for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
 			var searchFilter = SearchFilter.availableSearchFilters[i];
-			var $o = $('<option></option>');
-			$o.text(searchFilter.name);
-			$o.attr('value',searchFilter.id);
-			$select.append( $o );
+			menuOptions.push({
+				'value': searchFilter.id,
+				'label': searchFilter.name
+			});
 		};
-		$select.change(function(e){
-			var $dialog = $('#'+dialogId);
+		
+		var filterSelect = new $n2.mdc.MDCSelect({
+			parentElem: $('#' + selectSearchFilterDialog.getContentId()),
+			menuLabel: 'Type of filter',
+			menuOpts: menuOptions,
+			menuChgFunction: function(e){
+				adjustOptions($('#' + selectSearchFilterDialog.getId()));
+			}
+		});
+
+		$('#' + filterSelect.getSelectId()).addClass('searchFilterSelector');
+		$('<div>').addClass('searchFilterOptions').appendTo('#' + selectSearchFilterDialog.getContentId());
+
+		adjustOptions($('#' + selectSearchFilterDialog.getId()));
+
+		function okBtnFunc(){
+			var $dialog = $('#'+selectSearchFilterDialog.getId());
+			var $options = $dialog.find('.searchFilterOptions');
+			var filterId = $dialog.find('select.searchFilterSelector').val();
+			
+			selectSearchFilterDialog.closeDialog();
+
+			var useFilter = findSearchFilterFromId(filterId);
+			if (useFilter) {
+				useFilter.createList({
+					options: $options
+					,onSuccess: opts.onSuccess
+				});
+			} else {
+				alert( _loc('Unable to find search filter') );
+			};
+
+			return false;
+		};
+
+		function adjustOptions($dialog){
 			var $select = $dialog.find('select.searchFilterSelector');
 
 			var id = $select.val();
@@ -448,53 +488,8 @@
 			if( sf && typeof(sf.printOptions) === 'function' ) {
 				sf.printOptions($options);
 			};
-		});
-		
-		$dialog.find('button')
-			.first()
-				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					var $options = $dialog.find('.searchFilterOptions');
-					var $select = $dialog.find('select.searchFilterSelector');
-					var filterId = $select.val();
-	
-					$dialog.dialog('close');
-
-					var useFilter = findSearchFilterFromId(filterId);
-					if( useFilter ) {
-						useFilter.createList({
-							options: $options
-							,onSuccess: opts.onSuccess
-						});
-					} else {
-						alert( _loc('Unable to find search filter') );
-					};
-					
-					return false;
-				})
-			.next()
-				.button({icons:{primary:'ui-icon-cancel'}})
-				.click(function(){
-					var $dialog = $('#'+dialogId);
-					$dialog.dialog('close');
-					return false;
-				})
-			;
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Select Search Filter')
-			,modal: true
-			,width: 400
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
-			}
 		};
-		$dialog.dialog(dialogOptions);
-		
+
 		function findSearchFilterFromId(id){
 			for(var i=0,e=SearchFilter.availableSearchFilters.length; i<e; ++i) {
 				var searchFilter = SearchFilter.availableSearchFilters[i];
@@ -558,7 +553,7 @@
 			refineListDialog.closeDialog();
 
 			var useFilter = findSearchFilterFromId(filterId);
-			if(useFilter) {
+			if (useFilter) {
 				useFilter.refineList({
 					list: opts.list
 					,options: $options
