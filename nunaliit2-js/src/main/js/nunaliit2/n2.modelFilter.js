@@ -1039,6 +1039,9 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 						// Is not visible and did not used to be visible: nothing
 					};
 				};
+				
+				// Update visibility
+				docInfo.visible = visible;
 			};
 		};
 		
