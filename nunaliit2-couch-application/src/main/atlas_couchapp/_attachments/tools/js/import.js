@@ -34,6 +34,7 @@
 			.appendTo($inputTitle);
 		
 		var $buttonLine = $('<div class="buttonline">')
+			.css('display', 'flex')
 			.appendTo($inputSection);
 
 		if (importProfiles && importProfiles.length > 0) {
@@ -65,9 +66,13 @@
 
 		$('#' + inputTextField.getInputId()).addClass('importData');
 
+		var $buttonDiv = $('<div>')
+			.css('padding', '5px 0px 0px 5px')
+			.appendTo($buttonLine);
+
 		// Import Verify Button
 		new $n2.mdc.MDCButton({
-			parentElem: $buttonLine,
+			parentElem: $buttonDiv,
 			btnLabel: 'Verify',
 			onBtnClick: function(){
 				var $inputSection = $appDiv.find('.importAppInput');
