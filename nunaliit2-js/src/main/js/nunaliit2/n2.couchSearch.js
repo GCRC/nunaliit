@@ -131,12 +131,15 @@ var ResearchTerm = $n2.Class(Research,{
 	
 	searchView: null,
 	
+	dispatchService: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			textTerm: null
 			,constraint: null
 			,designDoc: null
 			,searchView: null
+			,dispatchService: null
 		},opts_);
 		
 		Research.prototype.initialize.apply(this,arguments);
@@ -145,6 +148,7 @@ var ResearchTerm = $n2.Class(Research,{
 		this.constraint = opts.constraint;
 		this.designDoc = opts.designDoc;
 		this.searchView = opts.searchView;
+		this.dispatchService = opts.dispatchService;
 		
 		if( typeof this.textTerm !== 'string' ){
 			throw 'In ResearchTerm constructor, the textTerm must be a string';
@@ -156,7 +160,119 @@ var ResearchTerm = $n2.Class(Research,{
 			throw 'In ResearchTerm constructor, the searchView must be provided';
 		};
 	},
+
+	constrainedQuery: function(opts, constraint, term){
+		var expectedCount, i, e, docId, index, result;
+		var resultsByDocId = null;
+
+		if ($n2.isArray(constraint)) {
+			expectedCount = constraint.length;
+			
+			for (i = 0, e = constraint.length; i < e; i += 1) {
+				if (!resultsByDocId){
+					resultsByDocId = {};
+				}
+
+				this.designDoc.queryView({
+					viewName: this.searchView
+					,startkey: [constraint[i], term, 0]
+					,endkey: [constraint[i], term, {}]
+					,constraint: constraint
+					,onSuccess: function(rows) {
+						for (i = 0, e = rows.length; i < e; i += 1) {
+							docId = rows[i].id;
+							index = rows[i].key[1];
+							
+							if (resultsByDocId[docId] 
+								&& resultsByDocId[docId].index <= index) {
+								// Do nothing
+
+							} else {
+								result = new ResearchResult({
+									id: docId
+									,index: index
+								});
+								resultsByDocId[docId] = result;
+							}
+						}
+
+						// Only call opts.onSuccess when all the queries have returned.
+						// Otherwise call opts.onPartial
+						expectedCount -= 1;
+						if (expectedCount <= 0) {
+							opts.onSuccess(resultsByDocId);
+						} else {
+							opts.onPartial(resultsByDocId);
+						}
+					}
+					,onError: function(err) {
+						opts.onError(err);
+					}
+				});
+			}
+
+		} else {
+			$n2.log("Invalid constraint. Expected an array of constraint values");
+		}
+	},
 	
+	getDocumentsFromModelId: function(modelId){
+		var state;
+		var docs = [];
+		
+		if (modelId && this.dispatchService) {
+			state = $n2.model.getModelState({
+				dispatchService: this.dispatchService
+				,modelId: modelId
+			});
+
+			if (state && state.added) {
+				docs = state.added;
+			}
+		}
+
+		return docs;
+	},
+
+	filterOutNonModelDocs: function(queryResults, modelDocs){
+		var i, e, doc, docId;
+		var filteredResults = [];
+
+		// Filter out docs not found in model
+		for (i = 0, e = queryResults.length; i < e; i += 1) {
+			doc = queryResults[i];
+			docId = queryResults[i].id;
+			if (modelDocs.hasOwnProperty(docId)) {
+				filteredResults.push(doc);
+			}
+		}
+
+		return filteredResults;
+	},
+
+	getUniqueResults: function(filteredResults){
+		var i, e, docId, index, result;
+		var uniqueResults = {};
+
+		for (i = 0, e = filteredResults.length; i < e; i += 1) {
+			docId = filteredResults[i].id;
+			index = filteredResults[i].key[1];
+			
+			if (uniqueResults[docId] 
+				&& uniqueResults[docId].index <= index) {
+				// Do nothing 
+
+			} else {
+				result = new ResearchResult({
+					id: docId,
+					index: index
+				});
+				uniqueResults[docId] = result;
+			}
+		}
+		return uniqueResults;
+	},
+
 	execute: function(opts_){
 		var opts = $n2.extend({
 			onSuccess: function(resultMap, research){}
@@ -168,68 +284,89 @@ var ResearchTerm = $n2.Class(Research,{
 
 		// Search terms are stored lower case in database
 		var term = this.textTerm.toLowerCase();
-		
 		var resultsByDocId = null;
+		var sourceModelIds = [];
+		var modelDocs = {};
+		var layerConstraint;
 
-		if( this.constraint ){
-			// Convert string to an array of 1 element for performing query view
-			if( typeof(this.constraint) === 'string'){
-				var key = [];
-				key.push(this.constraint);
-				this.constraint = key;
-			};
-			
-			if( $n2.isArray(this.constraint)
-			 && this.constraint.length > 0 ){
+		if (this.constraint) {
+			// Convert string to an array of 1 element for performing constrained query
+			if (typeof(this.constraint) === 'string') {
 
-				var expectedCount = this.constraint.length;
+				layerConstraint = [this.constraint];
+				this.constraint = layerConstraint;
+			}
+		
+			// Legacy search constraint 
+			if ($n2.isArray(this.constraint)
+				&& this.constraint.length > 0) {
 				
-				for(var i = 0, e = this.constraint.length; i<e; ++i){
-					if (!resultsByDocId){
-						resultsByDocId = {};
-					};
+				this.constrainedQuery(opts, this.constraint, term);
+			
+			} else if (typeof this.constraint === "object" 
+				&& this.constraint !== null) {
 
-					this.designDoc.queryView({
-						viewName: this.searchView
-						,startkey: [this.constraint[i],term,0]
-						,endkey: [this.constraint[i],term,{}]
-						,constraint: this.constraint
-						,onSuccess: function(rows) {
-							for(var i=0,e=rows.length; i<e; ++i) {
-								var docId = rows[i].id;
-								var index = rows[i].key[1];
+				// Updated Constraint
+				if (this.constraint.type) { 
+					if (this.constraint.type === "layer") {
+						// Convert layer string to an array of layers
+						if (typeof this.constraint.layerNames === 'string') {
+							layerConstraint = [this.constraint.layerNames];
+							this.constraint.layerNames = layerConstraint;
+						}
+
+						if ($n2.isArray(this.constraint.layerNames)) {
+							this.constrainedQuery(opts, this.constraint.layerNames, term);
+						}
+
+					} else if (this.constraint.type === "model") {
+
+						if (typeof this.constraint.sourceModelIds === 'string') {
+							sourceModelIds = [this.constraint.sourceModelIds];
+
+						} else if ($n2.isArray(this.constraint.sourceModelIds)) {
+							sourceModelIds = this.constraint.sourceModelIds;
+						}
+						
+						for (var i = 0, e = sourceModelIds.length; i < e; i += 1) {
+							var tempDocs = this.getDocumentsFromModelId(sourceModelIds[i]);
+							tempDocs.forEach(function(doc){
+								if (doc && doc._id && !modelDocs.hasOwnProperty(doc._id)) {
+									modelDocs[doc._id] = doc;
+								}
+							});
+						}
+
+						var startKey = [term,0];
+						var endKey = [term,{}];
+		
+						this.designDoc.queryView({
+							viewName: "text-search",
+							startkey: startKey,
+							endkey: endKey,
+							onSuccess: function(rows) {
+								var filteredRows = [];
+								var uniqueIndexResults = {};
 								
-								if( resultsByDocId[docId] 
-								&& resultsByDocId[docId].index <= index ){
-									// Do nothing
-								} else {
-									var result = new ResearchResult({
-										id: docId
-										,index: index
-									});
-									resultsByDocId[docId] = result;
-								};
-							};
+								filteredRows = _this.filterOutNonModelDocs(rows, modelDocs);
+								uniqueIndexResults = _this.getUniqueResults(filteredRows);
+								
+								opts.onSuccess(uniqueIndexResults);
+							},
+							onError: function(err) {
+								opts.onError(err);
+							}
+						});
+					}
+				}
 
-							// Only call opts.onSuccess when all the queries have returned.
-							// Otherwise call opts.onPartial
-							--expectedCount;
-							if( expectedCount <= 0 ){
-								opts.onSuccess(resultsByDocId);
-							} else {
-								opts.onPartial(resultsByDocId);
-							};
-						}
-						,onError: function(err) {
-							opts.onError(err);
-						}
-					});
-				};
 			} else {
 				opts.onError('Invalid search constraint');
-			};
+			}
 
 		} else {
+
+			// If no constraint provided, perform a regular text-search.
 			var startKey = [term,0];
 			var endKey = [term,{}];
 
@@ -244,7 +381,7 @@ var ResearchTerm = $n2.Class(Research,{
 						var index = rows[i].key[1];
 						
 						if( resultsByDocId[docId] 
-						 && resultsByDocId[docId].index <= index ){
+							&& resultsByDocId[docId].index <= index ){
 							// Do nothing
 						} else {
 							var result = new ResearchResult({
@@ -261,7 +398,7 @@ var ResearchTerm = $n2.Class(Research,{
 					opts.onError(err);
 				}
 			});
-		};
+		}
 	}
 });
 
@@ -591,12 +728,15 @@ var SearchRequest = $n2.Class({
 	
 	options: null,
 	
+	dispatchService: null,
+
 	searchResults: null,
 	
 	initialize: function(searchTermsLine, opts_) {
 		this.options = $n2.extend({
 			designDoc: null
 			,db: null
+			,dispatchService: null
 			,constraint: null
 			,dateService: null
 			,searchLimit: 25
@@ -605,6 +745,9 @@ var SearchRequest = $n2.Class({
 			,onSuccess: function(searchResults){}
 			,onError: function(err){ $n2.reportErrorForced(err); }
 		},opts_);
+
+
+		this.dispatchService = this.options.dispatchService;
 
 		// If search terms are array, rejoin into a line
 		if( $n2.isArray(searchTermsLine) ){
@@ -666,6 +809,7 @@ var SearchRequest = $n2.Class({
 				textTerm: searchTerms[i]
 				,constraint: this.options.constraint
 				,designDoc: this.options.designDoc
+				,dispatchService: this.dispatchService
 				,searchView: searchView
 			});
 			
@@ -698,6 +842,7 @@ var SearchRequest = $n2.Class({
 					textTerm: textTerm
 					,constraint: this.options.constraint
 					,designDoc: this.options.designDoc
+					,dispatchService: this.dispatchService
 					,searchView: searchView
 				});
 				
@@ -1499,6 +1644,7 @@ var SearchServer = $n2.Class({
 			,dateService: this.dateService
 			,searchLimit: this.searchLimit
 			,constraint: this.constraint
+			,dispatchService: this.dispatchService
 		},opts_);
 		
 		return new SearchRequest(searchTerms, requestOptions);
@@ -1637,3 +1783,4 @@ $n2.couchSearch = {
 };
 
 })(jQuery,nunaliit2);
+

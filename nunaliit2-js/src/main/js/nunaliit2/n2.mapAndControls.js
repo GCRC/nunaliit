@@ -759,7 +759,9 @@ var LayerInfo = $n2.Class({
 			
 			clustering: null,
 			
-			useHoverSound: false
+			useHoverSound: false,
+			
+			refreshCallback: null
 			
 		},opts_);
 		
@@ -784,7 +786,7 @@ var LayerInfo = $n2.Class({
 		this.clusterClickCallback = opts.clusterClickCallback;
 		this.clustering = opts.clustering;
 		this.useHoverSound = opts.useHoverSound;
-
+		
 		// Derive database projection from name
 		if( this.sourceSrsName ){
 			this.sourceProjection = new OpenLayers.Projection(this.sourceSrsName);
@@ -1197,8 +1199,12 @@ var MapAndControls = $n2.Class({
 			,features: []
 		};
 		
+		
+		
 		var addOrEditLabel = _loc('Add or Edit a Map Feature');
 		var cancelLabel = _loc('Cancel Feature Editing');
+		
+		this.refreshCallback = null;
 		var customService = this._getCustomService();
 		if( customService ){
 			var customAdd = customService.getOption('mapLabelEditFeature',null);
@@ -1210,6 +1216,14 @@ var MapAndControls = $n2.Class({
 			if( customCancel ){
 				cancelLabel = customCancel;
 			};
+			
+			//Refresh call back;
+			if ( !this.refreshCallback ){
+					var cb = customService.getOption('mapRefreshCallback' );
+					if ( typeof cb === 'function' ){
+						this.refreshCallback = cb;
+					}
+			}
 		};
 
 		// MODES
@@ -1333,6 +1347,7 @@ var MapAndControls = $n2.Class({
 	    this._registerDispatch('mapSwitchToEditMode');
 	    this._registerDispatch('simplifiedGeometryReport');
 	    this._registerDispatch('canvasGetStylesInUse');
+	    this._registerDispatch('mapRefreshCallbackRequest');
 	    
 		// Layers
 		this.infoLayers = [];
@@ -2132,6 +2147,7 @@ var MapAndControls = $n2.Class({
    				'displayClass': 'olControlMoveFeature'
    				,standalone: true
    				,clickout: false
+   				,deleteCodes : [46]
    			}
    		);
    		modifyFeatureGeometry.mode = OpenLayers.Control.ModifyFeature.RESHAPE;
@@ -2691,6 +2707,66 @@ var MapAndControls = $n2.Class({
 			} else {
 				$n2.log('Image layer can not be added since OpenLayers does not support this type of background');
 			};
+			
+		} else if( 'wmts' === layerDefinition.type ){
+			var options = layerDefinition.options;
+			
+			if( options ) {
+				var wmtsUrl = null;
+				var wmtsOptions = {};
+				var layerOptions = {
+					isBaseLayer: isBaseLayer
+					,name: "Default WMTS Layer"
+					,url : null
+					,layer: "default:wmts_layer"
+					,style: "_null"
+					,matrixSet : "EPSG:900913"
+				};
+				if( typeof(layerDefinition.visibility) === 'boolean' ){
+					layerOptions.visibility = layerDefinition.visibility;
+				};
+				if ($n2.isDefined(layerDefinition.gutter)) {
+					layerOptions.gutter = layerDefinition.gutter;
+				};
+				if ($n2.isDefined(layerDefinition.displayInLayerSwitcher)) {
+					layerOptions.displayInLayerSwitcher = layerDefinition.displayInLayerSwitcher;
+				};
+				for(var key in options){
+					if( 'url' === key ) {
+						//wmsUrl = options[key];
+						layerOptions.url = options[key];
+
+					} else if( 'srsName' === key ) {
+						var proj = new OpenLayers.Projection( options[key] );
+						layerOptions.projection = proj;
+
+					} else if( 'opacity' === key
+							|| 'scales' === key 
+							|| 'resolutions' === key  ) {
+						layerOptions[key] = options[key];
+						
+					} else if( 'numZoomLevels' === key){
+						var matrixIds = new Array(options["numZoomLevels"]);
+						var srsName = options['srsName'];
+						var numzoom = options["numZoomLevels"];
+					    for (var i=0; i< numzoom; ++i) {
+					        matrixIds[i] = srsName + ":" + i;
+					    }
+					    layerOptions.matrixIds = matrixIds;
+					    layerOptions.numZoomLevels = options[key];
+					} else {
+						layerOptions[key] = options[key];
+					};
+				};
+				var l = new OpenLayers.Layer.WMTS( layerOptions );
+				
+				return l;
+				
+			} else {
+				$n2.reportError('Bad configuration for layer: '+name);
+				return null;
+			};
+			
 			
 		} else {
 			$n2.reportError('Unknown layer type: '+layerDefinition.type);
@@ -5035,7 +5111,7 @@ var MapAndControls = $n2.Class({
 			alert('redefineFeatureLayerStylesAndRules: unknown layer name: ' + layerName);
 		} else {
     		//this._endClicked();
-    		layerInfo.olLayer.redraw();    			
+    		layerInfo.olLayer.redraw();
 		};
 	},
 	
@@ -5818,6 +5894,12 @@ var MapAndControls = $n2.Class({
 			if( this.getCanvasName() === m.canvasName ){
 				m.stylesInUse = this._getMapStylesInUse();
 			};
+		} else if ( 'mapRefreshCallbackRequest' === type ){
+			if ( m.cnt + 1 === this.refreshCnt) {
+				var cb = this.refreshCallback;
+				cb(null, this);
+			}
+
 		};
 	},
 	
@@ -5828,6 +5910,8 @@ var MapAndControls = $n2.Class({
 		var layerInfo = layerOptions._layerInfo;
 		var mapLayer = layerInfo.olLayer;
 
+		var dispatchService = this._getDispatchService();
+		
 		var mustReproject = false;
 		var remoteProjection = mapLayer.projection;
 		var localProjection = layerInfo.olLayer.map.getProjectionObject();
@@ -5914,6 +5998,21 @@ var MapAndControls = $n2.Class({
 		
 		// Update styles
 		this._updatedStylesInUse();
+    	
+		if( this.refreshCallback ){
+			if (!this.refreshCnt){
+				this.refreshCnt = 1;
+			}
+			
+			var curCnt = this.refreshCnt ;
+			dispatchService.send(DH, {
+				type: 'mapRefreshCallbackRequest',
+				cnt : curCnt
+	 		});
+			this.refreshCnt++;
+//			var cb = this.refreshCallback;
+//			cb(null, this);
+		};
 	},
 	
 	_handleAddLayerToMap: function(m){
