@@ -131,10 +131,6 @@ section.mdc-top-app-bar__section.mdc-top-app-bar__section--align-end {
 	max-width: 250px;
 }
 
-#importApp .importAppInput .mdc-select.mdc-select--outlined select.mdc-select__native-control {
-	min-width: 140px;
-}
-
 /* Display docIds on separate lines in dialog window */
 .selectAppTextDialog .mdc-dialog__content {
 	white-space: pre-line;
