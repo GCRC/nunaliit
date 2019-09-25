@@ -136,6 +136,12 @@ section.mdc-top-app-bar__section.mdc-top-app-bar__section--align-end {
 	white-space: pre-line;
 }
 
+/* Display export by script dialog components on their own lines */
+.export_by_script_dialog .mdc-dialog__content > div {
+	width: 100%;
+	margin: 8px 0px;
+}
+
 /* Overriding material-components-web.min.css styling */
 .mdc-dialog {
 	z-index: 1000 !important;
