@@ -115,123 +115,81 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		var knownScriptById = {};
 		var currentScript = 'function(opts){\n\tvar config = opts.config;\n\tvar doc = opts.doc;\n\tif( doc ){\n\t\tvar record = { _id: doc._id, _geometry: doc._id };\n\t\topts.addRecord(record);\n\t};\n\topts.next();\n}';
 
-		var dialogId = $n2.getUniqueId();
-		var $dialog = $('<div id="'+dialogId+'"></div>');
+		var $exportDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: ['export_by_script_dialog']
+			,dialogTitle: 'Export By Script'
+		});
 
-		$('<div>')
-			.text( _loc('Exporting') )
-			.appendTo($dialog);
+		var $methodSelect = new $n2.mdc.MDCSelect({
+			parentElem: $('#' + $exportDialog.getContentId())
+			,menuLabel: 'Script'
+			,menuChgFunction: methodChanged
+			,menuOpts: [{"value":"__custom__", "label":"Custom Script", "selected":"selected"}] 
+		});
 
-		// Method
-		var methodId = $n2.getUniqueId();
-		var $methodDiv = $('<div>')
-			.appendTo($dialog);
-		$('<label>')
-			.text( _loc('Script:') )
-			.attr('for',filterId)
-			.appendTo($methodDiv);
-		var $methodSelect = $('<select>')
-			.attr('id',methodId)
-			.appendTo($methodDiv)
-			.change(methodChanged);
-		$('<option>')
-			.val('__custom__')
-			.text( _loc('Custom Script') )
-			.appendTo($methodSelect);
-		
 		// Filter
-		var filterId = $n2.getUniqueId();
-		var $filterDiv = $('<div>')
-			.appendTo($dialog);
-		$('<label>')
-			.text( _loc('Filter:') )
-			.attr('for',filterId)
-			.appendTo($filterDiv);
-		var $filterSelect = $('<select>')
-			.attr('id',filterId)
-			.appendTo($filterDiv);
-		$('<option value="all"></options>')
-			.text( _loc('All Geometries') )
-			.appendTo($filterSelect);
-		$('<option value="points"></options>')
-			.text( _loc('Only Point Geometries') )
-			.appendTo($filterSelect);
-		$('<option value="linestrings"></options>')
-			.text( _loc('Only LineString Geometries') )
-			.appendTo($filterSelect);
-		$('<option value="polygons"></options>')
-			.text( _loc('Only Polygon Geometries') )
-			.appendTo($filterSelect);
-
+		var $filterSelect = new $n2.mdc.MDCSelect({
+			parentElem: $('#' + $exportDialog.getContentId())
+			,menuLabel: 'Filter'
+			,menuOpts: [
+				{"value":"all", "label":"All Geometries", "selected":"selected"}
+				,{"value":"points", "label":"Only Point Geometries"}
+				,{"value":"linestrings", "label":"Only LineString Geometries"}
+				,{"value":"polygons", "label":"Only Polygon Geometries"}
+			] 
+		});
+		
 		// Format
-		var formatId = $n2.getUniqueId();
-		var $formatDiv = $('<div>')
-			.appendTo($dialog);
-		$('<label>')
-			.text( _loc('Format:') )
-			.attr('for',formatId)
-			.appendTo($formatDiv);
-		var $formatSelect = $('<select>')
-			.attr('id',formatId)
-			.appendTo($formatDiv)
-			.change(formatChanged);
-		$('<option value="geojson"></options>')
-			.text( _loc('geojson') )
-			.appendTo($formatSelect);
-		$('<option value="csv"></options>')
-			.text( _loc('CSV') )
-			.appendTo($formatSelect);
-		
+		var $formatSelect = new $n2.mdc.MDCSelect({
+			parentElem: $('#' + $exportDialog.getContentId())
+			,menuLabel: 'Format'
+			,menuChgFunction: formatChanged
+			,menuOpts: [
+				{"value":"geojson", "label":"geojson", "selected":"selected"}
+				,{"value":"csv", "label":"CSV"}
+			] 
+		});
+
 		// File name
-		var fileNameId = $n2.getUniqueId();
-		var $fileNameDiv = $('<div>')
-			.appendTo($dialog);
-		$('<label>')
-			.text( _loc('File Name:') )
-			.attr('for',fileNameId)
-			.appendTo($fileNameDiv);
-		$('<input>')
-			.attr('type','text')
-			.attr('id',fileNameId)
-			.addClass('n2_export_fileNameInput')
-			.val('export.geojson')
-			.appendTo($dialog);
-		
+		var $fileNameInput = new $n2.mdc.MDCTextField({
+			parentElem: $('#' + $exportDialog.getContentId())
+			,txtFldLabel: 'File Name'
+			,prefilled: 'export.geojson'
+		});
+
 		// Script text area
-		var scriptAreaId = $n2.getUniqueId();
+		var $scriptInput = new $n2.mdc.MDCTextField({
+			parentElem: $('#' + $exportDialog.getContentId())
+			,txtFldLabel: 'Script'
+			,txtFldArea: true
+			,prefilled: currentScript
+		});
+
+		$('#' + $scriptInput.getInputId())
+			.addClass('n2_export_scriptArea');
+
 		var scriptDisplayId = $n2.getUniqueId();
-		var $scriptDiv = $('<div>')
-			.appendTo($dialog);
-		$('<label>')
-			.text( _loc('Script:') )
-			.attr('for',scriptAreaId)
-			.appendTo($scriptDiv);
-		$('<textarea>')
-			.attr('id',scriptAreaId)
-			.addClass('n2_export_scriptArea')
-			.appendTo($scriptDiv);
+
 		$('<div>')
 			.attr('id',scriptDisplayId)
 			.addClass('n2_export_scriptDisplay')
-			.appendTo($scriptDiv);
+			.appendTo($('#' + $exportDialog.getContentId()));
 
-		var $btnLine = $('<div>')
-			.appendTo($dialog);
-		$('<button>')
-			.text( _loc('Export') )
-			.appendTo($btnLine)
-			.click(function(){
-				var filter = $('#'+filterId).val();
-				var format = $('#'+formatId).val();
-				
-				var fileName = $('#'+fileNameId).val();
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + $exportDialog.getFooterId())
+			,btnLabel: 'Export'
+			,onBtnClick: function(){
+				var filter = $('#' + $filterSelect.getSelectId()).val();
+				var format = $('#' + $formatSelect.getSelectId()).val();
+				var fileName = $('#' + $fileNameInput.getInputId()).val();
+				var scriptText = $('#' + $scriptInput.getInputId()).val();
+
 				if( '' === fileName ) {
 					fileName = null;
 				};
 				
-				var scriptText = $('#'+scriptAreaId).val();
-				
-				$dialog.dialog('close');
+				$exportDialog.closeDialog();
+
 				_this._performExportScript({
 					filter: filter
 					,fileName: fileName
@@ -239,23 +197,8 @@ var ExportApplication = $n2.Class('ExportApplication',{
 					,script: scriptText
 				});
 				return false;
-			});
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Export')
-			,modal: true
-			,width: 550
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
 			}
-		};
-		$dialog.dialog(dialogOptions);
-		
-		formatChanged();
-		methodChanged();
+		});
 		
 		// Load up known scripts for export
 		if( this.atlasDesign ){
@@ -264,7 +207,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 				,include_docs: true
 				,onSuccess: function(rows){
 					rows.forEach(function(row){
-						var $sel = $('#'+methodId);
+						var $sel = $('#' + $methodSelect.getSelectId());
 
 						var scriptDoc = row.doc;
 						if( scriptDoc 
@@ -299,26 +242,26 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		};
 		
 		function formatChanged(){
-			var extension = $('#'+formatId).val();
-			var name = $('#'+fileNameId).val();
+			var extension = $('#' + $formatSelect.getSelectId()).val();
+			var name = $('#' + $fileNameInput.getInputId()).val();
 			var i = name.lastIndexOf('.');
 			if( i >= 0 ){
 				name = name.substr(0,i);
 			};
 			name = name + '.' + extension;
-			$('#'+fileNameId).val(name);
+			$('#' + $fileNameInput.getInputId()).val(name);
 		};
 		
 		function methodChanged(){
-			var method = $('#'+methodId).val();
+			var method = $('#' + $methodSelect.getSelectId()).val();
 
 			var scriptText = knownScriptById[method];
 			if( scriptText ){
 				currentScript = scriptText;
 			};
 
-			var $scriptArea = $('#'+scriptAreaId);
-			var $scriptDisplay = $('#'+scriptDisplayId);
+			var $scriptArea = $('#' + $scriptInput.getInputId());
+			var $scriptDisplay = $('#' + scriptDisplayId);
 			
 			$scriptArea.text(currentScript);
 			$scriptDisplay.text(currentScript);
