@@ -312,7 +312,9 @@ var TableCanvas = $n2.Class({
 	styleRules: null,
 	
 	useLazyDisplay: null,
-	
+
+	showRowCount: null,
+
 	refreshIntervalInMs: null,
 
 	initialize: function(opts_){
@@ -321,6 +323,7 @@ var TableCanvas = $n2.Class({
 			,sourceModelId: null
 			,elementGenerator: null
 			,useLazyDisplay: false
+			,showRowCount: false
 			,refreshIntervalInMs: 200
 			,styleRules: null
 			,dispatchService: null
@@ -336,6 +339,7 @@ var TableCanvas = $n2.Class({
 		this.sourceModelId = opts.sourceModelId;
 		this.elementGenerator = opts.elementGenerator;
 		this.useLazyDisplay = opts.useLazyDisplay;
+		this.showRowCount = opts.showRowCount;
 		this.refreshIntervalInMs = opts.refreshIntervalInMs;
 		this.dispatchService = opts.dispatchService;
 		this.showService = opts.showService;
@@ -426,7 +430,29 @@ var TableCanvas = $n2.Class({
 		};
 		return $elem;
 	},
- 	
+	
+	_getTableRowCount: function(){
+		var nunaliitRows = $('tbody tr[nunaliit-row]');
+
+		return nunaliitRows.length;
+	},
+
+	_displayRowCounter: function(){
+		var numRows = this._getTableRowCount();
+		var $tableCanvas = $('.n2TableCanvas');
+		if ($tableCanvas.length) {
+			if (!$('.n2TableCanvasRowCounter').length) {
+				$('<div>')
+					.addClass('n2TableCanvasRowCounter')
+					.prependTo($tableCanvas);
+			}
+
+			// Add/Update number of rows text
+			$('.n2TableCanvasRowCounter')
+				.text(_loc('Rows') + ': ' + numRows);
+		}
+	},
+
  	createGraph: function() {
 		var _this = this;
 		
@@ -643,6 +669,10 @@ var TableCanvas = $n2.Class({
 				};
 			});
 		});
+
+		if( this.showRowCount ){
+			this._displayRowCounter();
+		}
 
 		if( this.useLazyDisplay ){
 			this._refreshRows();

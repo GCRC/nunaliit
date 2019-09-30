@@ -2415,7 +2415,10 @@ var Form = $n2.Class({
 						};
 					};
 					if( shouldDelete ){
-						parentSelector.removeValue(obj);
+						selector.removeValue(obj);
+							// Materialize the parent of a localized string
+						selector.setValue(obj,{'nunaliit_type':'localized'});
+						
 					};
 					
 				} else if( 'date' === keyType ) {
