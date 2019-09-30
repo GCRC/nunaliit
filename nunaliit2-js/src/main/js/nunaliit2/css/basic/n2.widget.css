@@ -640,6 +640,11 @@ Single Filter Selection
 	padding: 4px 20px;
 }
 
+.nunaliit_module_title .n2widget_singleFilterSelection select {
+	border-width: 1px;
+	border-radius: 2px;
+	background-color: #F1F1F1;
+}
 /* 
 ==============================
 Multi Filter Selection 
@@ -675,6 +680,13 @@ Multi Drop Down Filter Selection
 	float: right;
 	padding: 4px 10px;
 }
+
+.nunaliit_module_title .n2widget_multiDropDownFilterSelection button {
+	border-width: 1px;
+	border-radius: 2px;
+	background-color: #F1F1F1;
+}
+
 .nunaliit_module_title .n2widget_multiDropDownFilterSelection.n2widget_multiDropDownFilterSelection_asLink {
 	padding: 8px 20px;
 }
