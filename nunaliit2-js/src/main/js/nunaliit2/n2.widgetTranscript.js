@@ -1874,7 +1874,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					var $transcriptElem = $('#'+transcriptElem.id);
 					$transcriptElem.removeClass('sentence-highlight-pending');
 				}
-				if (selections.size() === 0) {
+				if (! selections || selections.size() === 0) {
 					return;
 				}
 				
@@ -2698,7 +2698,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 });
 
 //--------------------------------------------------------------------------
-var reTimeCode = /([0-9][0-9]):([0-9][0-9]):([0-9][0-9])((\,|\.)[0-9]+)?\s*-->\s*([0-9][0-9]):([0-9][0-9]):([0-9][0-9])((\,|\.)[0-9]+)?/i;
+var reTimeCode = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)[0-9]+)?\s*-->\s*([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)[0-9]+)?/i;
 var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 	execute: function(srtData) {
 		var json = [];
