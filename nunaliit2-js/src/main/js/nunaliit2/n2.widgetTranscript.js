@@ -255,13 +255,13 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 			function findTimeLink(timeLinks, startTime, endTime){
 				 var result = [];
 				 
-				 timeLinks.forEach(function(timeLink){
+				 for (var i=0,e=timeLinks.length; i<e; i++){
+					 var timeLink = timeLinks[i];
 					 if( timeLink.starttime === startTime
-					  && timeLink.endtime === endTime ){
-						result.push(timeLink);
+							  && timeLink.endtime === endTime ){
+								result.push(timeLink);
 					 };
-				 });
-				 
+				 }
 				 return result;
 			};
 	},
@@ -1860,7 +1860,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		if (typeof _this._lastCtxTime !== 'undefined'){
 			_this._updateCurrentTime(_this._lastCtxTime, 'savedState');
 		}
-		
 
 		function _rightClickCallback (e, $this, contextMenu, selections){
 			var hoveredElem = e.target;
@@ -2698,7 +2697,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 });
 
 //--------------------------------------------------------------------------
-var reTimeCode = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)[0-9]+)?\s*-->\s*([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)[0-9]+)?/i;
+var reTimeCode = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*-->\s*([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?/i;
 var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 	execute: function(srtData) {
 		var json = [];
@@ -2723,9 +2722,9 @@ var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 				} else {
 					var curEntry = {
 							"start": null,
-							"startTimeCode": matcher[1]+ ':' + matcher[2] + ':' + matcher[3] + matcher[4],
+							"startTimeCode": matcher[1]+ ':' + matcher[2] + ':' + matcher[3] + ',' + matcher[6],
 							"fin": null,
-							"finTimeCode": matcher[6]+ ':' + matcher[7] + ':' + matcher[8] + matcher[9],
+							"finTimeCode": matcher[7]+ ':' + matcher[8] + ':' + matcher[9] + ',' + matcher[12],
 							"text": ""
 					};
 					//$n2.log("The"+tmpIdx+"-th transcript");
