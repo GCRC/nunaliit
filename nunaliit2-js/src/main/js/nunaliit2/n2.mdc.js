@@ -458,26 +458,60 @@ var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
 		}
 	},
 
-	addTableRow: function(cellValues) {
-		var $tr, $td, cell, i, e;
+	// Name: addTableRow
+	// Parameter:
+	// 	row: {
+	// 		id: ''
+	//		name: ''
+	//		cells: [
+	//			{
+	//			id: '',
+	//			headingname: '',
+	//			value: ''
+	//			}, ...
+	//		]
+	// }
+	addTableRow: function(row) {
+		var $tr, $td, cell, cellKeys, key, i, e;
 
-		$tr = $('<tr>')
-			.addClass('mdc-data-table__row')
-			.appendTo(this.$tbody);
+		if (row) {
+			$tr = $('<tr>')
+				.addClass('mdc-data-table__row')
+				.appendTo(this.$tbody);
 
-		if (cellValues && $n2.isArray(cellValues) && cellValues.length > 0) {
-			for (i = 0, e = cellValues.length; i < e; i += 1) {
-				cell = cellValues[i];
+				if (row.name) {
+					$tr.attr('nunaliit-row', row.name);
+				}
 
-				$td = $('<td>')
-					.addClass('mdc-data-table__cell')
-					.appendTo($tr)
-					.text(cell);
+				if (row.id) {
+					$tr.attr('id', row.id);
+				}
 
-				if (cell) {
-					$td.text(cell);
-					if (!isNaN(cell)) {
-						$td.addClass('mdc-data-table__cell--numeric');
+			if (row.cells && $n2.isArray(row.cells)) {
+				for (i = 0, e = row.cells.length; i < e; i += 1) {
+					cell = row.cells[i];
+
+					$td = $('<td>')
+						.addClass('mdc-data-table__cell')
+						.appendTo($tr);
+
+					if (row.name) {
+						$td.attr('nunaliit-row', row.name);
+					}
+
+					if (cell.id) {
+						$td.attr('id', cell.id);
+					}
+
+					if (cell.headingname) {
+						$td.attr('nunaliit-column', cell.headingname);
+					}
+
+					if (cell.value) {
+						$td.text(cell.value);
+						if (!isNaN(cell.value)) {
+							$td.addClass('mdc-data-table__cell--numeric');
+						}
 					}
 				}
 			}
