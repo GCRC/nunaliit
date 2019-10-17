@@ -381,6 +381,110 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	}
 });
 
+// Class:MDCDataTable
+// Description: Create a material design data table component
+var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
+
+	$tbody: null,
+
+	$thead: null,
+
+	initialize: function(opts_) {
+		var opts = $n2.extend({
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+
+		this._generateMDCDataTable();
+	},
+
+	_generateMDCDataTable: function() {
+		var $tableContainer, $table, keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-data-table', 'n2s_attachMDCDataTable');
+
+		$tableContainer = $('<div>')
+			.attr('id', this.mdcId)
+			.addClass(this.mdcClasses.join(' '));
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$tableContainer.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		$table = $('<table>')
+			.addClass('mdc-data-table__table')
+			.attr('aria-label', 'Table Canvas')
+			.appendTo($tableContainer);
+
+		this.$thead = $('<thead>')
+			.appendTo($table);
+
+		this.$tbody = $('<tbody>')
+			.addClass('mdc-data-table__content')
+			.appendTo($table);
+
+
+		$tableContainer.appendTo(this.parentElem);
+	},
+
+	addTableHeader: function(cellValues) {
+		var $tr, $th, cell, i, e;
+
+		$tr = $('<tr>')
+			.addClass('mdc-data-table__header-row')
+			.appendTo(this.$thead);
+
+		if (cellValues && $n2.isArray(cellValues) && cellValues.length > 0) {
+			for (i = 0, e = cellValues.length; i < e; i += 1) {
+				cell = cellValues[i];
+
+				$th = $('<th>')
+					.addClass('mdc-data-table__header-cell')
+					.attr('role', 'columnheader')
+					.attr('scope', 'col')
+					.appendTo($tr);
+
+				if (cell) {
+					$th.text(cell);
+					if (!isNaN(cell)) {
+						$th.addClass('mdc-data-table__header-cell--numeric');
+					}
+				}
+			}
+		}
+	},
+
+	addTableRow: function(cellValues) {
+		var $tr, $td, cell, i, e;
+
+		$tr = $('<tr>')
+			.addClass('mdc-data-table__row')
+			.appendTo(this.$tbody);
+
+		if (cellValues && $n2.isArray(cellValues) && cellValues.length > 0) {
+			for (i = 0, e = cellValues.length; i < e; i += 1) {
+				cell = cellValues[i];
+
+				$td = $('<td>')
+					.addClass('mdc-data-table__cell')
+					.appendTo($tr)
+					.text(cell);
+
+				if (cell) {
+					$td.text(cell);
+					if (!isNaN(cell)) {
+						$td.addClass('mdc-data-table__cell--numeric');
+					}
+				}
+			}
+		}
+	}
+});
+
 // Class MDCDialog
 // Description: Creates a material design dialog component
 // Options:
@@ -490,7 +594,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		if (this.closeBtn) {
 			this.addCloseBtn();
 		}
-		
+
 		this.openDialog();
 	},
 
@@ -1552,6 +1656,7 @@ $n2.mdc = {
 	MDCButton: MDCButton,
 	MDCCheckbox: MDCCheckbox,
 	MDCChipSet: MDCChipSet,
+	MDCDataTable: MDCDataTable,
 	MDCDialog: MDCDialog,
 	MDCDrawer: MDCDrawer,
 	MDCFormField: MDCFormField,
