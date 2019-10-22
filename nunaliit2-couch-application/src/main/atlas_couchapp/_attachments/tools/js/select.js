@@ -1585,6 +1585,49 @@
 
 	SearchFilter.availableSearchFilters.push(new SearchFilterSkeleton());
 
+		// **********************************************************************
+	var SearchFilterMediaWaitingForUpload = $n2.Class(SearchFilter, {
+
+		initialize: function(){
+			SearchFilter.prototype.initialize.apply(this);
+			this.name = _loc('Select documents with media files awaiting upload');
+		}
+	
+		,printOptions: function($parent){
+		}
+
+		,_retrieveDocIds: function(opts_){
+			var opts = $n2.extend({
+				options: null
+				,progressTitle: _loc('List Creation Progress')
+				,onSuccess: function(docIds,name){}
+				,onError: reportError
+			},opts_);
+			
+			atlasDesign.queryView({
+				viewName: 'attachments'
+				,startkey: 'waiting for upload'
+				,endkey: 'waiting for upload'
+				,onSuccess: function(rows){
+					var docIds = [];
+					for(var i=0,e=rows.length; i<e; ++i){
+						var row = rows[i];
+						docIds.push(row.id);
+					};
+					var locStr = _loc('Documents with media files in waiting for upload state');
+
+					opts.onSuccess(docIds,locStr);
+				}
+				,onError: function(err){
+					alert(_loc('Problem obtaining documents with media files in waiting for upload state')+': '+err);
+					opts.onError(err);
+				}
+			});
+		}
+	});
+
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaWaitingForUpload());
+	
 	// **********************************************************************
 	var SearchFilterMediaSubmitted = $n2.Class(SearchFilter, {
 
@@ -1670,13 +1713,13 @@
 	});
 
 	SearchFilter.availableSearchFilters.push(new SearchFilterMediaAnalyzed());
-
+	
 	// **********************************************************************
-	var SearchFilterMediaWaiting = $n2.Class(SearchFilter, {
+	var SearchFilterMediaWaitingForApproval = $n2.Class(SearchFilter, {
 
 		initialize: function(){
 			SearchFilter.prototype.initialize.apply(this);
-			this.name = _loc('Select documents with waiting media files');
+			this.name = _loc('Select documents with media files awaiting approval');
 		}
 	
 		,printOptions: function($parent){
@@ -1700,19 +1743,19 @@
 						var row = rows[i];
 						docIds.push(row.id);
 					};
-					var locStr = _loc('Documents with media files in waiting state');
+					var locStr = _loc('Documents with media files in waiting for approval state');
 
 					opts.onSuccess(docIds,locStr);
 				}
 				,onError: function(err){
-					alert(_loc('Problem obtaining documents with media files in waiting state')+': '+err);
+					alert(_loc('Problem obtaining documents with media files in waiting for approval state')+': '+err);
 					opts.onError(err);
 				}
 			});
 		}
 	});
 
-	SearchFilter.availableSearchFilters.push(new SearchFilterMediaWaiting());
+	SearchFilter.availableSearchFilters.push(new SearchFilterMediaWaitingForApproval());
 
 	// **********************************************************************
 	var SearchFilterMediaApproved = $n2.Class(SearchFilter, {
