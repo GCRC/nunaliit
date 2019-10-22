@@ -572,6 +572,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	scrollable: null,
 	closeBtn: null,
 	closeBtnText: null,
+	$dialogMessage: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -603,7 +604,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		var _this = this;
 		var content = "";
 
-		this.mdcClasses.push('mdc-dialog');
+		this.mdcClasses.push('mdc-dialog', 'n2s_attachMDCDialog');
 
 		if (this.scrollable) {
 			this.mdcClasses.push('mdc-dialog--scrollable');
@@ -637,16 +638,16 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			.text(_loc(this.dialogTitle))
 			.appendTo($dialogSurface);
 
-		$dialogMessage = $('<div>')
+		this.$dialogMessage = $('<div>')
 			.attr('id', this.contentId)
 			.addClass('mdc-dialog__content')
 			.text(content)
 			.appendTo($dialogSurface);
 
 		if (this.dialogHtmlContent) {
-			$dialogMessage.html(_loc(this.dialogHtmlContent));
+			this.$dialogMessage.html(_loc(this.dialogHtmlContent));
 		} else if (this.dialogTextContent) {
-			$dialogMessage.text(_loc(this.dialogTextContent));
+			this.$dialogMessage.text(_loc(this.dialogTextContent));
 		}
 
 		$('<footer>').attr('id', this.footerId)
@@ -664,6 +665,10 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 
 		if (this.closeBtn) {
 			this.addCloseBtn();
+		}
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 
 		this.openDialog();
@@ -693,8 +698,20 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	openDialog: function(){
+		var _this = this;
 		if (MDCDialogComponent && !MDCDialogComponent.isOpen) {
 			MDCDialogComponent.open();
+
+			MDCDialogComponent.listen('MDCDialog:opened', function(event){
+				if (event) {
+					// Slight delay before setting the scrollTop position to 0
+					// 1ms delay is required otherwise the scrollTop occurs
+					// before a scroll position is set to the bottom of the page
+					window.setTimeout(function(){
+						_this.$dialogMessage.scrollTop(0);
+					}, 1);
+				}
+			});
 		}
 	},
 
