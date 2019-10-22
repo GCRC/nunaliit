@@ -1604,6 +1604,39 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 		}
 	}
 });
+
+var MDCCard = $n2.Class('MDCCard', MDC, {
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parentElem: null,
+			mdcId: null,
+			mdcClasses: [],
+			mdcAttributes: null,
+			onChangeCallBack: undefined,
+			label: undefined,
+			initiallyOn : false
+		}, opts_);
+		this.onChangeCallBack = opts.onChangeCallBack;
+		this.label = opts.label;
+		this.initiallyOn = opts.initiallyOn;
+		MDC.prototype.initialize.call(this, opts);
+		this._generateMDCCard();
+	},
+	_generateMDCCard: function(){
+		var _this = this;
+		var $card;
+		$card = $($.parseHTML('<div class="mdc-card">'
+								+ '<div class="mdc-card__primary-action">'
+									+ '<div class="mdc-card__primary-action">'
+										+ '<div class="mdc-card__media mdc-card__media--square">'
+											+ '<div class="mdc-card__media-content">Title</div>'
+										+ '</div>'
+										+ '</div>'
+								+ '</div>'
+							+ '</div>'));
+	}
+
+})
 var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -1682,7 +1715,8 @@ $n2.mdc = {
 	MDCTagBox: MDCTagBox, 
 	MDCTextField: MDCTextField,
 	MDCTopAppBar: MDCTopAppBar,
-	MDCSwitch: MDCSwitch
+	MDCSwitch: MDCSwitch,
+	MDCCard: MDCCard
 };
 
 })(jQuery,nunaliit2);
