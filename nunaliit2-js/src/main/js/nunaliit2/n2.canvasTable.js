@@ -317,6 +317,8 @@ var TableCanvas = $n2.Class({
 
 	refreshIntervalInMs: null,
 
+	tableCanvas: null,
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			canvasId: null
@@ -455,32 +457,35 @@ var TableCanvas = $n2.Class({
 
  	createGraph: function() {
 		var _this = this;
-		
+
 		var $elem = this._getElem();
 		if( $elem ){
 			$elem
 				.empty()
 				.addClass('n2TableCanvas')
-				.click(function(e){
+				.click(function(e) {
 					_this._backgroundClicked();
 				});
 
 			$('<button>')
 				.text('Export CSV')
 				.appendTo($elem)
-				.click(function(){
+				.click(function() {
 					_this._exportCsv();
 					return false;
 				});
-		
 
-			var $table = $('<table>')
-				.appendTo($elem);
-			
-			$('<tbody>')
-				.appendTo($table)
-				.scroll(function(){
-					_this._scrollChanged( $(this) );
+			$('<br/>').appendTo($elem);
+
+			this.tableCanvas = new $n2.mdc.MDCDataTable({
+				parentElem: $elem,
+				addCellText: false
+			});
+
+			$('#' + this.tableCanvas.getId())
+				.find('tbody')
+				.scroll(function() {
+					_this._scrollChanged($(this));
 					return true;
 				});
 		};
@@ -497,7 +502,7 @@ var TableCanvas = $n2.Class({
 	_scrollChanged: function( $table ){
 		if( this.useLazyDisplay ){
 			var _this = this;
-			
+
 			var scrollTop = $table.scrollTop();
 
 			// Wait a bit before refreshing
@@ -554,7 +559,7 @@ var TableCanvas = $n2.Class({
 				CellElement(updated);
 			};
 		};
-		
+
 		// Make rows from elements
  		var sortedRows = [];
  		var rowsByName = {};
@@ -585,100 +590,122 @@ var TableCanvas = $n2.Class({
 		this.rowsByName = rowsByName;
 
 		this._redraw();
-		
+
 		function installHeader(element){
 			if( element.columns ){
 				_this.headings = element.columns;
 			};
 		};
 	},
-	
+
 	_redraw: function(){
+		var i, j, e, f, tableRow, row, $tr, $th;
+		var cellKeys, cell, currentCell, key, $td, heading;
 		var _this = this;
 
 		var $elem = this._getElem();
-		var $table = $elem.find('tbody');
-		
-		$table.empty();
-		
-		var $tr = $('<tr>')
-			.appendTo($table);
-		this.headings.forEach(function(heading){
-			var label = _loc( heading.label );
-			if( !label ){
-				label = heading.name;
-			};
-			var $th = $('<th>')
-				.appendTo($tr);
-			var $a = $('<a>')
-				.attr('href','#')
-				.attr('data-sort-name',heading.name)
-				.text(label)
-				.appendTo($th)
-				.click(function(){
-					var $a = $(this);
-					var headingName = $a.attr('data-sort-name');
-					_this._sortOnName(headingName);
-					return false;
-				});
-			
-			if( heading.title ){
-				$a.attr('title', _loc(heading.title));
-			};
-		});
-		
-		this.sortedRows.forEach(function(row){
-			var $tr = $('<tr>')
-				.attr('nunaliit-row',row.getRowName())
-				.appendTo($table);
+		var $table = $elem.find('.n2s_attachMDCDataTable');
+		var $thead = $elem.find('thead');
+		var $tbody = $elem.find('tbody');
 
-			// Assign element id to row
-			if( !row.elemId ){
+		$thead.empty();
+		$tbody.empty();
+
+		if (this.headings && $n2.isArray(this.headings)) {
+			this.tableCanvas.addTableHeaderRow();
+			for (i = 0, e = this.headings.length; i < e; i += 1) {
+				heading = {};
+				if (this.headings[i].label) {
+					heading.label = this.headings[i].label;
+				}
+
+				if (this.headings[i].name) {
+					heading.name = this.headings[i].name;
+				}
+
+				if (this.headings[i].title) {
+					heading.title = this.headings[i].title;
+				}
+
+				$th = this.tableCanvas.addHeaderCell(heading);
+
+				$th.find('a')
+					.click(function() {
+						var $a = $(this);
+						var headingName = $a.attr('data-sort-name');
+						_this._sortOnName(headingName);
+						return false;
+					});
+			}
+		}
+
+		for (i = 0, e = this.sortedRows.length; i < e; i += 1) {
+			row = this.sortedRows[i];
+			tableRow = {};
+
+			if (row.elemId) {
+				tableRow.id = row.elemId;
+			} else {
 				row.elemId = $n2.getUniqueId();
-			};
-			$tr.attr('id',row.elemId);
-			
-			// If row is an element, adjust styles
-			if( row.isRowElement ) {
-				_this._adjustStyles($tr, row);
-			};
+				tableRow.id = row.elemId;
+			}
 
-			_this.headings.forEach(function(heading){
-				var name = heading.name;
-				var $td = $('<td>')
-					.attr('nunaliit-column',name)
-					.attr('nunaliit-row',row.getRowName())
-					.appendTo($tr);
-				var cell = row.getCell(name);
-				
-				if( cell ){
-					if( cell.isCellElement ){
-						if( !cell.elemId ){
-							cell.elemId = $n2.getUniqueId();
+			tableRow.name = row.getRowName();
+			$tr = this.tableCanvas.addTableRow(tableRow);
+
+			if (row.isRowElement) {
+				this._adjustStyles($tr, row);
+			}
+
+			if (row && row.cells) {
+				cellKeys = Object.keys(row.cells);
+
+				for (j = 0, f = cellKeys.length; j < f; j += 1) {
+					key = cellKeys[j];
+					currentCell = row.getCell(key);
+
+					if (currentCell) {
+						cell = {
+							headingname: key,
+							name: row.getRowName()
 						};
-						$td.attr('id',cell.elemId);
-	
-						_this._adjustStyles($td, cell);
-					};
 
-					if( _this.useLazyDisplay ){
-						$td.addClass('n2TableCanvas_lazyDisplay');
-					} else {
-						_this._displayCell($td);
-					};
-				};
-			});
-		});
+						if (currentCell.value) {
+							cell.value = currentCell.value;
+						}
 
-		if( this.showRowCount ){
+						if (currentCell.elemId) {
+							cell.id = currentCell.elemId;
+						} else {
+							currentCell.elemId = $n2.getUniqueId();
+							cell.id = currentCell.elemId;
+						}
+
+						$td = this.tableCanvas.addRowCell(cell, $tr);
+
+						if (currentCell.isCellElement) {
+							this._adjustStyles($td, currentCell);
+						}
+
+						if (this.useLazyDisplay) {
+							$td.addClass('n2TableCanvas_lazyDisplay');
+						} else {
+							this._displayCell($td);
+						}
+					}
+				}
+			}
+		}
+
+		if (this.showRowCount) {
 			this._displayRowCounter();
 		}
 
-		if( this.useLazyDisplay ){
+		if (this.useLazyDisplay) {
 			this._refreshRows();
 		} else {
 			this.showService.fixElementAndChildren($table);
-		};
+		}
 	},
 	
 	/**
