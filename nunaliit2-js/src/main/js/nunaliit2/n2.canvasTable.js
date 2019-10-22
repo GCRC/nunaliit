@@ -691,6 +691,7 @@ var TableCanvas = $n2.Class({
 							$td.addClass('n2TableCanvas_lazyDisplay');
 						} else {
 							this._displayCell($td);
+							this.showService.fixElementAndChildren($td);
 						}
 					}
 				}

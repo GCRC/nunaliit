@@ -395,7 +395,7 @@ var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
 
 	initialize: function(opts_) {
 		var opts = $n2.extend({
-			addCellText: true
+			addCellText: false
 		}, opts_);
 
 		this.addCellText = opts.addCellText;
@@ -438,6 +438,10 @@ var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
 
 
 		$tableContainer.appendTo(this.parentElem);
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
 	},
 
 	addTableHeaderRow: function() {
