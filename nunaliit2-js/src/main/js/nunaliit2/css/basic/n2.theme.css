@@ -662,7 +662,8 @@
 
 .n2Display_attProgress_waiting .n2Display_attProgress_icon {
 	display: block;
-	background: transparent url(images/fbi_dude.png) no-repeat 0 0; 
+	background: transparent url(images/examine_file.png) no-repeat 0 0; 
+	background-size: contain;
 }
 
 .n2Display_attProgress_busy .n2Display_attProgress_icon {
