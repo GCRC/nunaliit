@@ -133,6 +133,17 @@
 	transition: ease color 0.3s;
 }
 
+.nunaliit_atlas .nunaliit_header-nav>ul>li.n2_nav_currentModule, 
+.nunaliit_atlas .nunaliit_header-nav>ul>li.n2_nav_childModuleCurrent {
+    border-bottom: solid 2px white;
+	bottom: 2px;
+}
+
+.nunaliit_atlas .nunaliit_header-nav>ul>li.n2_nav_currentModule>a, 
+.nunaliit_atlas .nunaliit_header-nav>ul>li.n2_nav_childModuleCurrent>a {
+	top: 37px;
+}
+
 .nunaliit_atlas .nunaliit_header-nav>ul>li>a,
 .nunaliit_atlas .nunaliit_header-nav>ul>li>span {
 	font-weight: normal;
@@ -141,7 +152,7 @@
 	color: {{header.color}};
 	line-height: 0;
 	position: relative;
-	top: 40px;	
+	top: 35px;	
 	padding: 0;
 }
 
