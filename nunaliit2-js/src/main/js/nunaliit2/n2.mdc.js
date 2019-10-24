@@ -425,6 +425,181 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	}
 });
 
+// Class:MDCDataTable
+// Description: Create a material design data table component
+// Options:
+//  - addCellText: (boolean) If set to true, text will be added to cells.
+var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
+
+	addCellText: null,
+
+	$tbody: null,
+
+	$thead: null,
+
+	initialize: function(opts_) {
+		var opts = $n2.extend({
+			addCellText: false
+		}, opts_);
+
+		this.addCellText = opts.addCellText;
+
+		MDC.prototype.initialize.call(this, opts);
+
+		this._generateMDCDataTable();
+	},
+
+	_generateMDCDataTable: function() {
+		var $tableContainer, $table, keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-data-table', 'n2s_attachMDCDataTable');
+
+		$tableContainer = $('<div>')
+			.attr('id', this.mdcId)
+			.addClass(this.mdcClasses.join(' '));
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$tableContainer.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		$table = $('<table>')
+			.addClass('mdc-data-table__table')
+			.attr('aria-label', 'Table Canvas')
+			.appendTo($tableContainer);
+
+		this.$thead = $('<thead>')
+			.appendTo($table);
+
+		this.addTableHeaderRow();
+
+		this.$tbody = $('<tbody>')
+			.addClass('mdc-data-table__content')
+			.appendTo($table);
+
+
+		$tableContainer.appendTo(this.parentElem);
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+	},
+
+	addTableHeaderRow: function() {
+		$('<tr>')
+			.addClass('mdc-data-table__header-row')
+			.appendTo(this.$thead);
+	},
+
+	// Name: addHeaderCell
+	// Parameter:
+	// 	heading: {
+	// 		label: '',
+	//		name: '',
+	//		title: ''
+	//  }
+	addHeaderCell: function(heading) {
+		var $th, $a;
+
+		$th = $('<th>')
+			.addClass('mdc-data-table__header-cell')
+			.attr('role', 'columnheader')
+			.attr('scope', 'col')
+			.appendTo(this.$thead.find('tr'));
+
+		if (heading.name) {
+			$a = $('<a>')
+				.attr('href', '#')
+				.attr('data-sort-name', heading.name)
+				.appendTo($th);
+
+			if (heading.label) {
+				$a.text(heading.label);
+			}
+
+			if (heading.title) {
+				$a.attr('title', _loc(heading.title));
+			}
+
+			if (!isNaN(heading.name)) {
+				$th.addClass('mdc-data-table__header-cell--numeric');
+			}
+		}
+
+		return $th;
+	},
+
+	// Name: addTableRow
+	// Parameter:
+	// 	row: {
+	// 		id: '',
+	//		name: ''
+	//  }
+	addTableRow: function(row) {
+		var $tr;
+
+		if (row) {
+			$tr = $('<tr>')
+				.addClass('mdc-data-table__row')
+				.appendTo(this.$tbody);
+
+			if (row.name) {
+				$tr.attr('nunaliit-row', row.name);
+			}
+
+			if (row.id) {
+				$tr.attr('id', row.id);
+			}
+
+			return $tr;
+		}
+	},
+
+	// Name: addRowCell
+	// Parameters:
+	// 	cell: {
+	//		id: '',
+	//		name: '',
+	//		headingname: '',
+	//		value: ''
+	// },
+	//  row: jQuery selection of the row in which the cell will be added.
+	addRowCell: function(cell, $row) {
+		var $td;
+		if (cell) {
+			$td = $('<td>')
+				.addClass('mdc-data-table__cell')
+				.appendTo($row);
+
+			if (cell.id) {
+				$td.attr('id', cell.id);
+			}
+
+			if (cell.name) {
+				$td.attr('nunaliit-row', cell.name);
+			}
+
+			if (cell.headingname) {
+				$td.attr('nunaliit-column', cell.headingname);
+			}
+
+			if (cell.value) {
+				if (this.addCellText) {
+					$td.text(cell.value.toString());
+				}
+
+				if (!isNaN(cell.value)) {
+					$td.addClass('mdc-data-table__cell--numeric');
+				}
+			}
+			return $td;
+		}
+	}
+});
+
 // Class MDCDialog
 // Description: Creates a material design dialog component
 // Options:
@@ -441,6 +616,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	scrollable: null,
 	closeBtn: null,
 	closeBtnText: null,
+	$dialogMessage: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -472,7 +648,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		var _this = this;
 		var content = "";
 
-		this.mdcClasses.push('mdc-dialog');
+		this.mdcClasses.push('mdc-dialog', 'n2s_attachMDCDialog');
 
 		if (this.scrollable) {
 			this.mdcClasses.push('mdc-dialog--scrollable');
@@ -506,16 +682,16 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			.text(_loc(this.dialogTitle))
 			.appendTo($dialogSurface);
 
-		$dialogMessage = $('<div>')
+		this.$dialogMessage = $('<div>')
 			.attr('id', this.contentId)
 			.addClass('mdc-dialog__content')
 			.text(content)
 			.appendTo($dialogSurface);
 
 		if (this.dialogHtmlContent) {
-			$dialogMessage.html(_loc(this.dialogHtmlContent));
+			this.$dialogMessage.html(_loc(this.dialogHtmlContent));
 		} else if (this.dialogTextContent) {
-			$dialogMessage.text(_loc(this.dialogTextContent));
+			this.$dialogMessage.text(_loc(this.dialogTextContent));
 		}
 
 		$('<footer>').attr('id', this.footerId)
@@ -534,7 +710,11 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		if (this.closeBtn) {
 			this.addCloseBtn();
 		}
-		
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+
 		this.openDialog();
 	},
 
@@ -562,8 +742,20 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	openDialog: function(){
+		var _this = this;
 		if (MDCDialogComponent && !MDCDialogComponent.isOpen) {
 			MDCDialogComponent.open();
+
+			MDCDialogComponent.listen('MDCDialog:opened', function(event){
+				if (event) {
+					// Slight delay before setting the scrollTop position to 0
+					// 1ms delay is required otherwise the scrollTop occurs
+					// before a scroll position is set to the bottom of the page
+					window.setTimeout(function(){
+						_this.$dialogMessage.scrollTop(0);
+					}, 1);
+				}
+			});
 		}
 	},
 
@@ -1671,6 +1863,7 @@ $n2.mdc = {
 	MDCButton: MDCButton,
 	MDCCheckbox: MDCCheckbox,
 	MDCChipSet: MDCChipSet,
+	MDCDataTable: MDCDataTable,
 	MDCDialog: MDCDialog,
 	MDCDrawer: MDCDrawer,
 	MDCFormField: MDCFormField,
