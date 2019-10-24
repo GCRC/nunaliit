@@ -1842,13 +1842,13 @@ var DialogService = $n2.Class({
 			opt.onSelected( opt.schemas[0] );
 			return;
 		}
+		var mustReset = true;
 
 		var selectSchemaDialog = new $n2.mdc.MDCDialog({
 			dialogTitle: 'Select a schema',
-			closeBtn: true,
-			closeBtnText: 'Cancel'
+			closeBtn: false
 		});
-		
+
 		var btnClasses = []
 		var dialogSelectClasses = [];
 		if (window.cordova) {
@@ -1878,27 +1878,52 @@ var DialogService = $n2.Class({
 			mdcClasses: dialogSelectClasses,
 		});
 
-		var mustReset = true;
+
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + selectSchemaDialog.getFooterId()),
+			mdcClasses: btnClasses,
+			btnLabel: 'Cancel',
+			onBtnClick: function() {
+				selectSchemaDialog.closeDialog();
+				if (mustReset) {
+					opt.onReset();
+				}
+
+				return false;
+			}
+		});
 
 		new $n2.mdc.MDCButton({
 			parentElem: $('#' + selectSchemaDialog.getFooterId()),
 			mdcClasses: btnClasses,
 			btnLabel: 'OK',
-			onBtnClick: function(){
+			onBtnClick: function() {
 				mustReset = false;
-				
+
 				var schemaName = $('#'+ dialogSelect.getSelectId()).val();
 				selectSchemaDialog.closeDialog();
 				_this.schemaRepository.getSchema({
 					name: schemaName
 					,onSuccess: opt.onSelected
-					,onError: function(err){
+					,onError: function(err) {
 						opt.onError(_loc('Unable to fetch schema'));
 					}
 				});
 				return false;
 			}
 		});
+
+		// Override close dialog function on scrim
+		$('#' + selectSchemaDialog.getId())
+			.find('.mdc-dialog__scrim')
+			.click(function() {
+				selectSchemaDialog.closeDialog();
+				if (mustReset) {
+					opt.onReset();
+				}
+
+				return false;
+			});
 	}
 });
 
