@@ -1750,28 +1750,40 @@ var MDCCard = $n2.Class('MDCCard', MDC, {
 			mdcId: null,
 			mdcClasses: [],
 			mdcAttributes: null,
-			onChangeCallBack: undefined,
 			label: undefined,
-			initiallyOn : false
+			imageGenerator: undefined,
+			infoGenerator: undefined
 		}, opts_);
 		this.onChangeCallBack = opts.onChangeCallBack;
+		this.infoGenerator = opts.infoGenerator;
+		this.imageGenerator = opts.imageGenerator;
 		this.label = opts.label;
 		this.initiallyOn = opts.initiallyOn;
 		MDC.prototype.initialize.call(this, opts);
 		this._generateMDCCard();
 	},
 	_generateMDCCard: function(){
+		
 		var _this = this;
-		var $card;
-		$card = $($.parseHTML('<div class="mdc-card">'
-								+ '<div class="mdc-card__primary-action">'
-									+ '<div class="mdc-card__primary-action">'
-										+ '<div class="mdc-card__media mdc-card__media--square">'
-											+ '<div class="mdc-card__media-content">Title</div>'
-										+ '</div>'
-										+ '</div>'
+		var $card, card_info, media_thumb;
+		if ( this.infoGenerator ){
+			card_info = this.infoGenerator();
+		}
+		if ( this.imageGenerator ){
+			media_thumb = this.imageGenerator();
+		}
+		card_info = card_info ? card_info : '';
+		media_thumb = media_thumb ? media_thumb : '';
+		$card = $($.parseHTML('<div class="mdc-card">' // Outside container for mdc-card
+								+ '<div class="mdc-card__primary-action">'// For ripple effects
+									+ media_thumb// For left column thumbnail
+									+ '<div class="n2card__primary">'
+									+ card_info
+									+ '</div>'
 								+ '</div>'
 							+ '</div>'));
+		$card.appendTo(this.parentElem);
+		
 	}
 
 })
@@ -1821,6 +1833,8 @@ var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
 				'<label for="basic-switch">off/on</label>'));
 		}
 		$switch.appendTo(this.parentElem);
+		
+		//add evt listener for 'change' in mdc way
 		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
 		if (this.onChangeCallBack 
 				&& typeof this.onChangeCallBack === 'function'){
