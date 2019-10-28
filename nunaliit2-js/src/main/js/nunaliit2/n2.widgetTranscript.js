@@ -992,10 +992,10 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 						if (timeLink.tags){
 							for (var tag in timeLink.tags){
 								var tagProfile = timeLink.tags[tag];
-								if ( !tagProfile.type || 'place' !==  tagProfile.type) {
-									lastThemeTags.push(tagProfile);
-								} else {
+								if ( 'place' ===  tagProfile.type || 'location' === tagProfile.type) {
 									lastPlaceTags.push(tagProfile);
+								} else {
+									lastThemeTags.push(tagProfile);
 								}
 							}
 						}
@@ -1175,7 +1175,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				senData.forEach(function(sd){
 					for (var tag in sd.tags){
 						if ( sd.tags[tag].type
-								&& sd.tags[tag].type === 'place'){
+								&& (sd.tags[tag].type === 'place' ||  sd.tags[tag].type === 'location') ){
 							fracMap[tag] = $n2.extend({fraction: 'full'}, sd.tags[tag]);
 						}
 						
