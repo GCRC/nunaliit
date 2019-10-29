@@ -59,14 +59,18 @@ var
 // }
 function findTimeLink(timeLinks, startTime, endTime){
 	 var result = [];
-	 
-	 timeLinks.forEach(function(timeLink){
-		 if( timeLink.starttime === startTime
-		  && timeLink.endtime === endTime ){
-			result.push(timeLink);
+	 var timeLink;
+	 var target_start = convertTimecodeToMs(startTime);
+	 var target_end = convertTimecodeToMs(endTime);
+	 for (var i=0,e=timeLinks.length; i<e; i++){
+		 timeLink =timeLinks[i];
+		 var start_in_ms = convertTimecodeToMs(timeLink.starttime);
+		 var end_in_ms = convertTimecodeToMs(timeLink.endtime);
+		 if( start_in_ms === target_start
+			&& end_in_ms === target_end ){
+					result.push(timeLink);
 		 };
-	 });
-	 
+	 }
 	 return result;
 };
 
@@ -252,18 +256,22 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 
 			}
 				
-			function findTimeLink(timeLinks, startTime, endTime){
-				 var result = [];
-				 
-				 for (var i=0,e=timeLinks.length; i<e; i++){
-					 var timeLink = timeLinks[i];
-					 if( timeLink.starttime === startTime
-							  && timeLink.endtime === endTime ){
-								result.push(timeLink);
-					 };
-				 }
-				 return result;
-			};
+		function findTimeLink(timeLinks, startTime, endTime){
+			 var result = [];
+			 var timeLink;
+			 var target_start = convertTimecodeToMs(startTime);
+			 var target_end = convertTimecodeToMs(endTime);
+			 for (var i=0,e=timeLinks.length; i<e; i++){
+				 timeLink =timeLinks[i];
+				 var start_in_ms = convertTimecodeToMs(timeLink.starttime);
+				 var end_in_ms = convertTimecodeToMs(timeLink.endtime);
+				 if( start_in_ms === target_start
+					&& end_in_ms === target_end ){
+							result.push(timeLink);
+				 };
+			 }
+			 return result;
+		};
 	},
 	getDoc: function(){
 		return this._doc;
@@ -1143,7 +1151,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				
 				senData.forEach(function(sd){
 					for (var tag in sd.tags){
-						if ( sd.tags[tag].type !== 'place' ){
+						if ( sd.tags[tag].type !== 'place' &&  sd.tags[tag].type !== 'location'){
 							fracMap[tag] = $n2.extend({fraction: 'full'}, sd.tags[tag]);
 						}
 					}
@@ -2695,9 +2703,17 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		this._refreshCurrentDoc();
 	}
 });
+//--------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------
 var reTimeCode = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*-->\s*([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?/i;
+var reTimeCode_s = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*/i;
+function convertTimecodeToMs (tmpTimecode){
+	var matcher = reTimeCode_s.exec(tmpTimecode);
+	var rst = 3600000*matcher[1] + 60000*matcher[2] + 1000*matcher[3] + 1*matcher[6];
+	return rst;
+}
+
 var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 	execute: function(srtData) {
 		var json = [];
