@@ -381,6 +381,12 @@ var DomStyler = $n2.Class({
 				,acceptsContextDocument: false
 			},
 			{
+				source: 'n2s_attachMDCDataTable'
+				,target: 'n2s_attachedMDCDataTable'
+				,fn: this._attachMDCDataTable
+				,acceptsContextDocument: false
+			},
+			{
 				source: 'n2s_attachMDCDrawer'
 				,target: 'n2s_attachedMDCDrawer'
 				,fn: this._attachMDCDrawer
@@ -2079,24 +2085,24 @@ var DomStyler = $n2.Class({
 				this.showService._requestDocument(docId);
 			};
 		};
-		
+
 		return docId;
 	},
-	
+
 	_attachMDCButton: function($jq) {
 		var btn = $jq[0];
 		if (btn) {
 			$mdc.ripple.MDCRipple.attachTo(btn);
 		}
 	},
-	
+
 	_attachMDCCheckbox: function($jq) {
 		var chkbox = $jq[0];
 		if (chkbox) {
 			$mdc.checkbox.MDCCheckbox.attachTo(chkbox);
 		}
 	},
-	
+
 	_attachMDCChipSet: function($jq) {
 		var attachedChipSet, $chipInput, chipInputId;
 		var chipSet = $jq[0];
@@ -2104,7 +2110,7 @@ var DomStyler = $n2.Class({
 		function updateTagList(){
 			var chipsList = [];
 			var chips = $jq.find('.mdc-chip__text');
-			
+
 			for (var i = 0, e = chips.length; i < e; i += 1) {
 				chipsList.push(chips[i].textContent);
 			}
@@ -2213,7 +2219,7 @@ var DomStyler = $n2.Class({
 						}
 					}
 				});
-				
+
 				attachedChipSet.listen('MDCChip:removal', function(event){
 					if (event.detail && event.detail.chipId) {
 						var $removedChip = $(event.target);
@@ -2233,7 +2239,14 @@ var DomStyler = $n2.Class({
 			}
 		}
 	},
-	
+
+	_attachMDCDataTable: function($jq) {
+		var datatable = $jq[0];
+		if (datatable) {
+			$mdc.dataTable.MDCDataTable.attachTo(datatable);
+		}
+	},
+
 	_attachMDCDrawer: function($jq) {
 		var attachedDrawer, drawerBtnId;
 		var drawer = $jq[0];

@@ -425,6 +425,144 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	}
 });
 
+// Class:MDCDataTable
+// Description: Create a material design data table component
+var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
+
+	$tbody: null,
+
+	$thead: null,
+
+	initialize: function(opts_) {
+		var opts = $n2.extend({
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+
+		this._generateMDCDataTable();
+	},
+
+	_generateMDCDataTable: function() {
+		var $tableContainer, $table, keys;
+		var _this = this;
+
+		this.mdcClasses.push('mdc-data-table', 'n2s_attachMDCDataTable');
+
+		$tableContainer = $('<div>')
+			.attr('id', this.mdcId)
+			.addClass(this.mdcClasses.join(' '));
+
+		if (this.mdcAttributes) {
+			keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				$tableContainer.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		$table = $('<table>')
+			.addClass('mdc-data-table__table')
+			.attr('aria-label', 'Table Canvas')
+			.appendTo($tableContainer);
+
+		this.$thead = $('<thead>')
+			.appendTo($table);
+
+		this.$tbody = $('<tbody>')
+			.addClass('mdc-data-table__content')
+			.appendTo($table);
+
+
+		$tableContainer.appendTo(this.parentElem);
+	},
+
+	addTableHeader: function(cellValues) {
+		var $tr, $th, cell, i, e;
+
+		$tr = $('<tr>')
+			.addClass('mdc-data-table__header-row')
+			.appendTo(this.$thead);
+
+		if (cellValues && $n2.isArray(cellValues) && cellValues.length > 0) {
+			for (i = 0, e = cellValues.length; i < e; i += 1) {
+				cell = cellValues[i];
+
+				$th = $('<th>')
+					.addClass('mdc-data-table__header-cell')
+					.attr('role', 'columnheader')
+					.attr('scope', 'col')
+					.appendTo($tr);
+
+				if (cell) {
+					$th.text(cell);
+					if (!isNaN(cell)) {
+						$th.addClass('mdc-data-table__header-cell--numeric');
+					}
+				}
+			}
+		}
+	},
+
+	// Name: addTableRow
+	// Parameter:
+	// 	row: {
+	// 		id: ''
+	//		name: ''
+	//		cells: [
+	//			{
+	//			id: '',
+	//			headingname: '',
+	//			value: ''
+	//			}, ...
+	//		]
+	// }
+	addTableRow: function(row) {
+		var $tr, $td, cell, cellKeys, key, i, e;
+
+		if (row) {
+			$tr = $('<tr>')
+				.addClass('mdc-data-table__row')
+				.appendTo(this.$tbody);
+
+				if (row.name) {
+					$tr.attr('nunaliit-row', row.name);
+				}
+
+				if (row.id) {
+					$tr.attr('id', row.id);
+				}
+
+			if (row.cells && $n2.isArray(row.cells)) {
+				for (i = 0, e = row.cells.length; i < e; i += 1) {
+					cell = row.cells[i];
+
+					$td = $('<td>')
+						.addClass('mdc-data-table__cell')
+						.appendTo($tr);
+
+					if (row.name) {
+						$td.attr('nunaliit-row', row.name);
+					}
+
+					if (cell.id) {
+						$td.attr('id', cell.id);
+					}
+
+					if (cell.headingname) {
+						$td.attr('nunaliit-column', cell.headingname);
+					}
+
+					if (cell.value) {
+						$td.text(cell.value);
+						if (!isNaN(cell.value)) {
+							$td.addClass('mdc-data-table__cell--numeric');
+						}
+					}
+				}
+			}
+		}
+	}
+});
+
 // Class MDCDialog
 // Description: Creates a material design dialog component
 // Options:
@@ -534,7 +672,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		if (this.closeBtn) {
 			this.addCloseBtn();
 		}
-		
+
 		this.openDialog();
 	},
 
@@ -1604,6 +1742,51 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 		}
 	}
 });
+
+var MDCCard = $n2.Class('MDCCard', MDC, {
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parentElem: null,
+			mdcId: null,
+			mdcClasses: [],
+			mdcAttributes: null,
+			label: undefined,
+			imageGenerator: undefined,
+			infoGenerator: undefined
+		}, opts_);
+		this.onChangeCallBack = opts.onChangeCallBack;
+		this.infoGenerator = opts.infoGenerator;
+		this.imageGenerator = opts.imageGenerator;
+		this.label = opts.label;
+		this.initiallyOn = opts.initiallyOn;
+		MDC.prototype.initialize.call(this, opts);
+		this._generateMDCCard();
+	},
+	_generateMDCCard: function(){
+		
+		var _this = this;
+		var $card, card_info, media_thumb;
+		if ( this.infoGenerator ){
+			card_info = this.infoGenerator();
+		}
+		if ( this.imageGenerator ){
+			media_thumb = this.imageGenerator();
+		}
+		card_info = card_info ? card_info : '';
+		media_thumb = media_thumb ? media_thumb : '';
+		$card = $($.parseHTML('<div class="mdc-card">' // Outside container for mdc-card
+								+ '<div class="mdc-card__primary-action">'// For ripple effects
+									+ media_thumb// For left column thumbnail
+									+ '<div class="n2card__primary">'
+									+ card_info
+									+ '</div>'
+								+ '</div>'
+							+ '</div>'));
+		$card.appendTo(this.parentElem);
+		
+	}
+
+})
 var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -1650,6 +1833,8 @@ var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
 				'<label for="basic-switch">off/on</label>'));
 		}
 		$switch.appendTo(this.parentElem);
+		
+		//add evt listener for 'change' in mdc way
 		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
 		if (this.onChangeCallBack 
 				&& typeof this.onChangeCallBack === 'function'){
@@ -1671,6 +1856,7 @@ $n2.mdc = {
 	MDCButton: MDCButton,
 	MDCCheckbox: MDCCheckbox,
 	MDCChipSet: MDCChipSet,
+	MDCDataTable: MDCDataTable,
 	MDCDialog: MDCDialog,
 	MDCDrawer: MDCDrawer,
 	MDCFormField: MDCFormField,
@@ -1682,7 +1868,8 @@ $n2.mdc = {
 	MDCTagBox: MDCTagBox, 
 	MDCTextField: MDCTextField,
 	MDCTopAppBar: MDCTopAppBar,
-	MDCSwitch: MDCSwitch
+	MDCSwitch: MDCSwitch,
+	MDCCard: MDCCard
 };
 
 })(jQuery,nunaliit2);
