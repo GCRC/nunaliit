@@ -802,7 +802,6 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					//clone the children tags group
 					rst = doc.atlascine2_cinemap.tagGroups[tagna].slice(0);
 				}
-
 			}
 			return rst;
 		}
