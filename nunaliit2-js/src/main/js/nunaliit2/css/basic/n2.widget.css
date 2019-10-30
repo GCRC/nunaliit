@@ -67,7 +67,8 @@
 	margin: 0;
 	padding: 0;
 }
-.nunaliit_header-nav a {
+.nunaliit_header-nav a,
+.nunaliit_header-nav span {
 	display: block;
 	position: relative;
 	padding: 15px;
