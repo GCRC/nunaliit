@@ -282,10 +282,14 @@ var Display = $n2.Class({
 		var $elem = $('<div class="couchDisplay_'+$n2.utils.stringToHtmlId(docId)+'"></div>');
 		$side.append($elem);
 
-		var $sElem = $('<div>')
+		var $mdcCard = $('<div>')
 			.addClass('n2s_handleHover mdc-card')
 			.appendTo($elem);
-		
+	
+		var $sElem = $('<div>')
+			.addClass('n2_card_content')
+			.appendTo($mdcCard);
+
 		this.showService.displayDocument($sElem, {
 			onDisplayed: onDisplayed
 		}, data);
@@ -314,7 +318,7 @@ var Display = $n2.Class({
 		function continueDisplay(schema){
 			_this._addAttachmentProgress($sElem, data);
 			
-			_this._addButtons($sElem, data, {
+			_this._addButtons($mdcCard, data, {
 				schema: schema
 				,related: true
 				,reply: true

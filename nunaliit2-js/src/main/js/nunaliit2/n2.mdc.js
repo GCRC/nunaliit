@@ -427,7 +427,11 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 // Class:MDCDataTable
 // Description: Create a material design data table component
+// Options:
+//  - addCellText: (boolean) If set to true, text will be added to cells.
 var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
+
+	addCellText: null,
 
 	$tbody: null,
 
@@ -435,7 +439,10 @@ var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
 
 	initialize: function(opts_) {
 		var opts = $n2.extend({
+			addCellText: false
 		}, opts_);
+
+		this.addCellText = opts.addCellText;
 
 		MDC.prototype.initialize.call(this, opts);
 
@@ -467,98 +474,128 @@ var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
 		this.$thead = $('<thead>')
 			.appendTo($table);
 
+		this.addTableHeaderRow();
+
 		this.$tbody = $('<tbody>')
 			.addClass('mdc-data-table__content')
 			.appendTo($table);
 
 
 		$tableContainer.appendTo(this.parentElem);
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
 	},
 
-	addTableHeader: function(cellValues) {
-		var $tr, $th, cell, i, e;
-
-		$tr = $('<tr>')
+	addTableHeaderRow: function() {
+		$('<tr>')
 			.addClass('mdc-data-table__header-row')
 			.appendTo(this.$thead);
+	},
 
-		if (cellValues && $n2.isArray(cellValues) && cellValues.length > 0) {
-			for (i = 0, e = cellValues.length; i < e; i += 1) {
-				cell = cellValues[i];
+	// Name: addHeaderCell
+	// Parameter:
+	// 	heading: {
+	// 		label: '',
+	//		name: '',
+	//		title: ''
+	//  }
+	addHeaderCell: function(heading) {
+		var $th, $a;
 
-				$th = $('<th>')
-					.addClass('mdc-data-table__header-cell')
-					.attr('role', 'columnheader')
-					.attr('scope', 'col')
-					.appendTo($tr);
+		$th = $('<th>')
+			.addClass('mdc-data-table__header-cell')
+			.attr('role', 'columnheader')
+			.attr('scope', 'col')
+			.appendTo(this.$thead.find('tr'));
 
-				if (cell) {
-					$th.text(cell);
-					if (!isNaN(cell)) {
-						$th.addClass('mdc-data-table__header-cell--numeric');
-					}
-				}
+		if (heading.name) {
+			$a = $('<a>')
+				.attr('href', '#')
+				.attr('data-sort-name', heading.name)
+				.appendTo($th);
+
+			if (heading.label) {
+				$a.text(heading.label);
+			}
+
+			if (heading.title) {
+				$a.attr('title', _loc(heading.title));
+			}
+
+			if (!isNaN(heading.name)) {
+				$th.addClass('mdc-data-table__header-cell--numeric');
 			}
 		}
+
+		return $th;
 	},
 
 	// Name: addTableRow
 	// Parameter:
 	// 	row: {
-	// 		id: ''
+	// 		id: '',
 	//		name: ''
-	//		cells: [
-	//			{
-	//			id: '',
-	//			headingname: '',
-	//			value: ''
-	//			}, ...
-	//		]
-	// }
+	//  }
 	addTableRow: function(row) {
-		var $tr, $td, cell, cellKeys, key, i, e;
+		var $tr;
 
 		if (row) {
 			$tr = $('<tr>')
 				.addClass('mdc-data-table__row')
 				.appendTo(this.$tbody);
 
-				if (row.name) {
-					$tr.attr('nunaliit-row', row.name);
+			if (row.name) {
+				$tr.attr('nunaliit-row', row.name);
+			}
+
+			if (row.id) {
+				$tr.attr('id', row.id);
+			}
+
+			return $tr;
+		}
+	},
+
+	// Name: addRowCell
+	// Parameters:
+	// 	cell: {
+	//		id: '',
+	//		name: '',
+	//		headingname: '',
+	//		value: ''
+	// },
+	//  row: jQuery selection of the row in which the cell will be added.
+	addRowCell: function(cell, $row) {
+		var $td;
+		if (cell) {
+			$td = $('<td>')
+				.addClass('mdc-data-table__cell')
+				.appendTo($row);
+
+			if (cell.id) {
+				$td.attr('id', cell.id);
+			}
+
+			if (cell.name) {
+				$td.attr('nunaliit-row', cell.name);
+			}
+
+			if (cell.headingname) {
+				$td.attr('nunaliit-column', cell.headingname);
+			}
+
+			if (cell.value) {
+				if (this.addCellText) {
+					$td.text(cell.value.toString());
 				}
 
-				if (row.id) {
-					$tr.attr('id', row.id);
-				}
-
-			if (row.cells && $n2.isArray(row.cells)) {
-				for (i = 0, e = row.cells.length; i < e; i += 1) {
-					cell = row.cells[i];
-
-					$td = $('<td>')
-						.addClass('mdc-data-table__cell')
-						.appendTo($tr);
-
-					if (row.name) {
-						$td.attr('nunaliit-row', row.name);
-					}
-
-					if (cell.id) {
-						$td.attr('id', cell.id);
-					}
-
-					if (cell.headingname) {
-						$td.attr('nunaliit-column', cell.headingname);
-					}
-
-					if (cell.value) {
-						$td.text(cell.value);
-						if (!isNaN(cell.value)) {
-							$td.addClass('mdc-data-table__cell--numeric');
-						}
-					}
+				if (!isNaN(cell.value)) {
+					$td.addClass('mdc-data-table__cell--numeric');
 				}
 			}
+			return $td;
 		}
 	}
 });
@@ -579,6 +616,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	scrollable: null,
 	closeBtn: null,
 	closeBtnText: null,
+	$dialogMessage: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -610,7 +648,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		var _this = this;
 		var content = "";
 
-		this.mdcClasses.push('mdc-dialog');
+		this.mdcClasses.push('mdc-dialog', 'n2s_attachMDCDialog');
 
 		if (this.scrollable) {
 			this.mdcClasses.push('mdc-dialog--scrollable');
@@ -644,16 +682,16 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			.text(_loc(this.dialogTitle))
 			.appendTo($dialogSurface);
 
-		$dialogMessage = $('<div>')
+		this.$dialogMessage = $('<div>')
 			.attr('id', this.contentId)
 			.addClass('mdc-dialog__content')
 			.text(content)
 			.appendTo($dialogSurface);
 
 		if (this.dialogHtmlContent) {
-			$dialogMessage.html(_loc(this.dialogHtmlContent));
+			this.$dialogMessage.html(_loc(this.dialogHtmlContent));
 		} else if (this.dialogTextContent) {
-			$dialogMessage.text(_loc(this.dialogTextContent));
+			this.$dialogMessage.text(_loc(this.dialogTextContent));
 		}
 
 		$('<footer>').attr('id', this.footerId)
@@ -671,6 +709,10 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 
 		if (this.closeBtn) {
 			this.addCloseBtn();
+		}
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 
 		this.openDialog();
@@ -700,8 +742,20 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	openDialog: function(){
+		var _this = this;
 		if (MDCDialogComponent && !MDCDialogComponent.isOpen) {
 			MDCDialogComponent.open();
+
+			MDCDialogComponent.listen('MDCDialog:opened', function(event){
+				if (event) {
+					// Slight delay before setting the scrollTop position to 0
+					// 1ms delay is required otherwise the scrollTop occurs
+					// before a scroll position is set to the bottom of the page
+					window.setTimeout(function(){
+						_this.$dialogMessage.scrollTop(0);
+					}, 1);
+				}
+			});
 		}
 	},
 

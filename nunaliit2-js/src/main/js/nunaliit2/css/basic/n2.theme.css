@@ -133,6 +133,17 @@
 	transition: ease color 0.3s;
 }
 
+.nunaliit_atlas .nunaliit_header-nav>ul>li.n2_nav_currentModule, 
+.nunaliit_atlas .nunaliit_header-nav>ul>li.n2_nav_childModuleCurrent {
+    border-bottom: solid 2px white;
+	bottom: 2px;
+}
+
+.nunaliit_atlas .nunaliit_header-nav>ul>li.n2_nav_currentModule>a, 
+.nunaliit_atlas .nunaliit_header-nav>ul>li.n2_nav_childModuleCurrent>a {
+	top: 37px;
+}
+
 .nunaliit_atlas .nunaliit_header-nav>ul>li>a,
 .nunaliit_atlas .nunaliit_header-nav>ul>li>span {
 	font-weight: normal;
@@ -662,7 +673,8 @@
 
 .n2Display_attProgress_waiting .n2Display_attProgress_icon {
 	display: block;
-	background: transparent url(images/fbi_dude.png) no-repeat 0 0; 
+	background: transparent url(images/examine_file.png) no-repeat 0 0; 
+	background-size: contain;
 }
 
 .n2Display_attProgress_busy .n2Display_attProgress_icon {

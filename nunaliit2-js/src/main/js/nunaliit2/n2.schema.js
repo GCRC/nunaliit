@@ -1834,28 +1834,7 @@ var Form = $n2.Class({
 			// Create view for displayTemplate
 			var view = computeViewObj(this.obj,this.context);
 			this._setHtml(view);
-			
-			// We are about to empty the $elem and redraw it. If this is
-			// a large form, emptying it to a size of 0 would mangle all
-			// offsets associated with various scroll bars that parent elements
-			// might have. Since the form will most likely be the same
-			// approximate size after the redraw, take the current size,
-			// apply it as minimum to retain the dimensions during the redraw,
-			// and remove changes after enough time was given for everything to
-			// redraw itself.
-			var currentHeight = $elem.height();
-			var currentWidth = $elem.width();
-			if( currentHeight > 0 ){
-				$elem.css('min-height',currentHeight+'px');
-			};
-			if( currentWidth > 0 ){
-				$elem.css('min-width',currentWidth+'px');
-			};
-			//Seems no longer needed for material design tab style editor views
-//			window.setTimeout(function(){
-//				$elem.removeAttr('style');
-//			},500);
-			
+
 			$elem.empty();
 			var $divEvent = $('<div>')
 				.addClass('n2schema_editorEvent')
