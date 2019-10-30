@@ -932,7 +932,7 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 //  - listItems (array): An array of object specifying list item details
 //   - list item attributes: text (string), href (string), activated (boolean), onItemClick (function) 
 //   - Example: [
-//   	{'text': 'foo', 'onItemClick': bar},
+//   	{'text': 'foo', 'onItemClick': bar, 'indent': 10},
 //   	{"href":"https://gcrc.carleton.ca", "text":"GCRC", "activated":true}
 //   	]
 var MDCList = $n2.Class('MDCList', MDC, {
@@ -985,8 +985,8 @@ var MDCList = $n2.Class('MDCList', MDC, {
 			});
 		}
 
-		if (this.listItems && $n2.isArray(this.listItems)){
-			this.listItems.forEach(function(listItem){
+		if (this.listItems && $n2.isArray(this.listItems)) {
+			this.listItems.forEach(function(listItem) {
 				$item = _this._generateMDCListItem(listItem);
 				$item.appendTo($list);
 			});
@@ -999,11 +999,15 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		}
 	},
 
-	_generateMDCListItem: function(item){
+	_generateMDCListItem: function(item) {
 		var $listItem, $listItemText;
-		
+
 		if (this.navList) {
 			$listItem = $('<a>');
+			if (item.indent) {
+				$listItem.addClass('nested_list_item');
+			}
+
 		} else {
 			$listItem = $('<li>');
 		}
@@ -1011,7 +1015,6 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		$listItem.attr('role', 'menuitem')
 			.attr('tabindex', '-1')
 			.addClass('mdc-list-item');
-			
 
 		if (item.activated) {
 			$listItem.attr('tabIndex', '0')
@@ -1027,6 +1030,10 @@ var MDCList = $n2.Class('MDCList', MDC, {
 			$listItemText = $('<span>')
 				.addClass('mdc-list-item__text')
 				.text(item.text);
+
+			if (item.indent) {
+				$listItemText.css('margin-left', item.indent + 'px');
+			}
 
 			if (item.onItemClick) {
 				$listItemText.click(item.onItemClick);
@@ -1076,7 +1083,6 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		this.$menuSurfaceAnchor = $('<div>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '));
-		
 
 		$menu = $('<div>').attr('id', this.menuId)
 			.attr('n2associatedmdc', this.anchorBtnId)

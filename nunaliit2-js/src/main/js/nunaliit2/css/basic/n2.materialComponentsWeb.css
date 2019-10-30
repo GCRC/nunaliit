@@ -117,6 +117,11 @@
 	font-weight: bold;
 }
 
+.mdc-drawer .mdc-drawer__content .mdc-list .mdc-list-item.nested_list_item {
+	line-height: 25px;
+	min-height: 25px;
+}
+
 .mdc-top-app-bar__navigation-icon {
 	font-size: 2em;
 	text-decoration: none;
