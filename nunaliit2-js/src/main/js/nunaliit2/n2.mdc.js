@@ -166,6 +166,51 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 	}
 });
 
+// Class MDCCard
+// Description: Creates a material design card component
+var MDCCard = $n2.Class('MDCCard', MDC, {
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parentElem: null,
+			mdcId: null,
+			mdcClasses: [],
+			mdcAttributes: null,
+			label: undefined,
+			imageGenerator: undefined,
+			infoGenerator: undefined
+		}, opts_);
+		this.onChangeCallBack = opts.onChangeCallBack;
+		this.infoGenerator = opts.infoGenerator;
+		this.imageGenerator = opts.imageGenerator;
+		this.label = opts.label;
+		this.initiallyOn = opts.initiallyOn;
+		MDC.prototype.initialize.call(this, opts);
+		this._generateMDCCard();
+	},
+	_generateMDCCard: function(){
+		
+		var _this = this;
+		var $card, card_info, media_thumb;
+		if ( this.infoGenerator ){
+			card_info = this.infoGenerator();
+		}
+		if ( this.imageGenerator ){
+			media_thumb = this.imageGenerator();
+		}
+		card_info = card_info ? card_info : '';
+		media_thumb = media_thumb ? media_thumb : '';
+		$card = $($.parseHTML('<div class="mdc-card">' // Outside container for mdc-card
+								+ '<div class="mdc-card__primary-action">'// For ripple effects
+									+ media_thumb// For left column thumbnail
+									+ '<div class="n2card__primary">'
+									+ card_info
+									+ '</div>'
+								+ '</div>'
+							+ '</div>'));
+		$card.appendTo(this.parentElem);
+	}
+})
+
 // Class MDCCheckbox
 // Description: Creates a material design checkbox component
 // Options:
@@ -931,7 +976,7 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 //  - listItems (array): An array of object specifying list item details
 //   - list item attributes: text (string), href (string), activated (boolean), onItemClick (function) 
 //   - Example: [
-//   	{'text': 'foo', 'onItemClick': bar},
+//   	{'text': 'foo', 'onItemClick': bar, 'indent': 10},
 //   	{"href":"https://gcrc.carleton.ca", "text":"GCRC", "activated":true}
 //   	]
 var MDCList = $n2.Class('MDCList', MDC, {
@@ -984,8 +1029,8 @@ var MDCList = $n2.Class('MDCList', MDC, {
 			});
 		}
 
-		if (this.listItems && $n2.isArray(this.listItems)){
-			this.listItems.forEach(function(listItem){
+		if (this.listItems && $n2.isArray(this.listItems)) {
+			this.listItems.forEach(function(listItem) {
 				$item = _this._generateMDCListItem(listItem);
 				$item.appendTo($list);
 			});
@@ -1003,6 +1048,10 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		
 		if (this.navList) {
 			$listItem = $('<a>');
+			if (item.indent) {
+				$listItem.addClass('nested_list_item');
+			}
+
 		} else {
 			$listItem = $('<li>');
 		}
@@ -1026,6 +1075,10 @@ var MDCList = $n2.Class('MDCList', MDC, {
 			$listItemText = $('<span>')
 				.addClass('mdc-list-item__text')
 				.text(item.text);
+
+			if (item.indent) {
+				$listItemText.css('margin-left', item.indent + 'px');
+			}
 
 			if (item.onItemClick) {
 				$listItemText.click(item.onItemClick);
@@ -1372,6 +1425,70 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 	getSelectId: function(){
 		return this.selectId;
+	}
+});
+
+// Class MDCSwitch
+// Description: Create a material design switch component
+var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parentElem: null,
+			mdcId: null,
+			mdcClasses: [],
+			mdcAttributes: null,
+			onChangeCallBack: undefined,
+			label: undefined,
+			initiallyOn : false
+		}, opts_);
+		this.onChangeCallBack = opts.onChangeCallBack;
+		this.label = opts.label;
+		this.initiallyOn = opts.initiallyOn;
+		MDC.prototype.initialize.call(this, opts);
+		this._generateMDCSwitch();
+	},
+	_generateMDCSwitch: function(){
+		var _this = this;
+		var $switch;
+		var label_t = 'off/on';
+		if (this.label){
+			label_t = this.label;
+		}
+		if (this.initiallyOn){
+			$switch = $($.parseHTML('<div class="mdc-switch mdc-switch--checked"><div class="mdc-switch__track">'+
+					'</div><div class="mdc-switch__thumb-underlay">'+
+						'<div class="mdc-switch__thumb">'+
+								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch" checked>'+
+							'</div>'+
+						'</div>'+
+				'</div>'+
+				'<label for="basic-switch">' + 
+				label_t +
+				'</label>'));
+		} else {
+			$switch = $($.parseHTML('<div class="mdc-switch"><div class="mdc-switch__track">'+
+					'</div><div class="mdc-switch__thumb-underlay">'+
+						'<div class="mdc-switch__thumb">'+
+								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch">'+
+							'</div>'+
+						'</div>'+
+				'</div>'+
+				'<label for="basic-switch">off/on</label>'));
+		}
+		$switch.appendTo(this.parentElem);
+
+		//add evt listener for 'change' in mdc way
+		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
+		if (this.onChangeCallBack 
+				&& typeof this.onChangeCallBack === 'function'){
+			vanilla.nativeControl_.addEventListener('change', function(){
+				_this.onChangeCallBack(this.checked);
+			})
+		}
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
 	}
 });
 
@@ -1797,117 +1914,12 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 	}
 });
 
-var MDCCard = $n2.Class('MDCCard', MDC, {
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			parentElem: null,
-			mdcId: null,
-			mdcClasses: [],
-			mdcAttributes: null,
-			label: undefined,
-			imageGenerator: undefined,
-			infoGenerator: undefined
-		}, opts_);
-		this.onChangeCallBack = opts.onChangeCallBack;
-		this.infoGenerator = opts.infoGenerator;
-		this.imageGenerator = opts.imageGenerator;
-		this.label = opts.label;
-		this.initiallyOn = opts.initiallyOn;
-		MDC.prototype.initialize.call(this, opts);
-		this._generateMDCCard();
-	},
-	_generateMDCCard: function(){
-		
-		var _this = this;
-		var $card, card_info, media_thumb;
-		if ( this.infoGenerator ){
-			card_info = this.infoGenerator();
-		}
-		if ( this.imageGenerator ){
-			media_thumb = this.imageGenerator();
-		}
-		card_info = card_info ? card_info : '';
-		media_thumb = media_thumb ? media_thumb : '';
-		$card = $($.parseHTML('<div class="mdc-card">' // Outside container for mdc-card
-								+ '<div class="mdc-card__primary-action">'// For ripple effects
-									+ media_thumb// For left column thumbnail
-									+ '<div class="n2card__primary">'
-									+ card_info
-									+ '</div>'
-								+ '</div>'
-							+ '</div>'));
-		$card.appendTo(this.parentElem);
-		
-	}
-
-})
-var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			parentElem: null,
-			mdcId: null,
-			mdcClasses: [],
-			mdcAttributes: null,
-			onChangeCallBack: undefined,
-			label: undefined,
-			initiallyOn : false
-		}, opts_);
-		this.onChangeCallBack = opts.onChangeCallBack;
-		this.label = opts.label;
-		this.initiallyOn = opts.initiallyOn;
-		MDC.prototype.initialize.call(this, opts);
-		this._generateMDCSwitch();
-	},
-	_generateMDCSwitch: function(){
-		var _this = this;
-		var $switch;
-		var label_t = 'off/on';
-		if (this.label){
-			label_t = this.label;
-		}
-		if (this.initiallyOn){
-			$switch = $($.parseHTML('<div class="mdc-switch mdc-switch--checked"><div class="mdc-switch__track">'+
-					'</div><div class="mdc-switch__thumb-underlay">'+
-						'<div class="mdc-switch__thumb">'+
-								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch" checked>'+
-							'</div>'+
-						'</div>'+
-				'</div>'+
-				'<label for="basic-switch">' + 
-				label_t +
-				'</label>'));
-		} else {
-			$switch = $($.parseHTML('<div class="mdc-switch"><div class="mdc-switch__track">'+
-					'</div><div class="mdc-switch__thumb-underlay">'+
-						'<div class="mdc-switch__thumb">'+
-								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch">'+
-							'</div>'+
-						'</div>'+
-				'</div>'+
-				'<label for="basic-switch">off/on</label>'));
-		}
-		$switch.appendTo(this.parentElem);
-		
-		//add evt listener for 'change' in mdc way
-		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
-		if (this.onChangeCallBack 
-				&& typeof this.onChangeCallBack === 'function'){
-			vanilla.nativeControl_.addEventListener('change', function(){
-				_this.onChangeCallBack(this.checked);
-			})
-		}
-		
-		if (showService) {
-			showService.fixElementAndChildren($('#' + this.mdcId));
-		}
-	}
-});
-
 
 $n2.mdc = {
 	Service: Service,
 	MDC: MDC,
 	MDCButton: MDCButton,
+	MDCCard: MDCCard,
 	MDCCheckbox: MDCCheckbox,
 	MDCChipSet: MDCChipSet,
 	MDCDataTable: MDCDataTable,
@@ -1918,12 +1930,11 @@ $n2.mdc = {
 	MDCMenu: MDCMenu,
 	MDCRadio: MDCRadio,
 	MDCSelect: MDCSelect,
+	MDCSwitch: MDCSwitch,
 	MDCTabBar: MDCTabBar,
 	MDCTagBox: MDCTagBox, 
 	MDCTextField: MDCTextField,
-	MDCTopAppBar: MDCTopAppBar,
-	MDCSwitch: MDCSwitch,
-	MDCCard: MDCCard
+	MDCTopAppBar: MDCTopAppBar
 };
 
 })(jQuery,nunaliit2);
