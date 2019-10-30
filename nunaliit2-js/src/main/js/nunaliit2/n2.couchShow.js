@@ -969,7 +969,12 @@ var DomStyler = $n2.Class({
 		
 		if( data && data._id === docId ){
 			var $card = $jq.find('.n2_card_content');
-			this.showService._displayDocumentFull($card, data, opt_);
+
+			if ($card.length) {
+				this.showService._displayDocumentFull($card, data, opt_);
+			} else {
+				this.showService._displayDocumentFull($jq, data, opt_);
+			}
 		};
 	},
 	
