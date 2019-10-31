@@ -334,58 +334,86 @@ var UserEditor = $n2.Class({
 	}
 	
 	,_rolesDialog: function(userDoc, selectedRolesFn){
-		var diagId = $n2.getUniqueId();
-		var $rolesDialog = $('<div id="'+diagId+'" class="n2_roles_dialog"></div>');
+		var selectRolesDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Select Roles',
+			scrollable: true,
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
+//		var diagId = $n2.getUniqueId();
+//		var $rolesDialog = $('<div id="'+diagId+'" class="n2_roles_dialog"></div>');
 
 		$('<div class="n2_roles_list"></div>')
-			.appendTo($rolesDialog)
-			.append( $('<div class="olkit_wait"></div>') )
-			;
+			.appendTo($('#' +selectRolesDialog.getContentId()))
+			.append( $('<div class="olkit_wait"></div>'));
 
-		var $buttons = $('<div class="n2_roles_buttons"></div>')
-			.appendTo($rolesDialog)
-			;
-
-		// OK button
-		$('<input type="button"/>')
-			.val( _loc('OK') )
-			.appendTo($buttons)
-			.click(function(){
-				var $dialog = $('#'+diagId);
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + selectRolesDialog.getFooterId()),
+			mdcClasses: ['ok', 'mdc-dialog__button'],
+			btnLabel: 'OK',
+			btnRaised: true,
+			onBtnClick: function(){
+				var $dialog = $('#'+selectRolesDialog.getId());
 				
 				var roles = [];
 				$dialog.find('input[type=checkbox]:checked').each(function(){
 					var $input = $(this);
+					var $chkboxName = $input.attr('name');
 					roles.push( $input.attr('name') );
 				});
 				
 				selectedRolesFn(roles);
 				
-				$dialog.dialog('close');
-			})
-			;
-
-		// Cancel button
-		$('<input type="button"/>')
-			.val( _loc('Cancel') )
-			.appendTo($buttons)
-			.click(function(){
-				$('#'+diagId).dialog('close');
-			})
-			;
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Select Roles')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
+				selectRolesDialog.closeDialog();
+				$('#' + selectRolesDialog.getId()).remove();
+				return false;
 			}
-		};
-		$rolesDialog.dialog(dialogOptions);
+		});
+
+//		var $buttons = $('<div class="n2_roles_buttons"></div>')
+//			.appendTo($rolesDialog)
+//			;
+//
+//		// OK button
+//		$('<input type="button"/>')
+//			.val( _loc('OK') )
+//			.appendTo($buttons)
+//			.click(function(){
+//				var $dialog = $('#'+diagId);
+//				
+//				var roles = [];
+//				$dialog.find('input[type=checkbox]:checked').each(function(){
+//					var $input = $(this);
+//					roles.push( $input.attr('name') );
+//				});
+//				
+//				selectedRolesFn(roles);
+//				
+//				$dialog.dialog('close');
+//			})
+//			;
+//
+//		// Cancel button
+//		$('<input type="button"/>')
+//			.val( _loc('Cancel') )
+//			.appendTo($buttons)
+//			.click(function(){
+//				$('#'+diagId).dialog('close');
+//			})
+//			;
+//		
+//		var dialogOptions = {
+//			autoOpen: true
+//			,title: _loc('Select Roles')
+//			,modal: true
+//			,width: 740
+//			,close: function(event, ui){
+//				var diag = $(event.target);
+//				diag.dialog('destroy');
+//				diag.remove();
+//			}
+//		};
+//		$rolesDialog.dialog(dialogOptions);
 		
 		if( this.configService
 		 && this.showServerRoles ){
@@ -429,32 +457,45 @@ var UserEditor = $n2.Class({
 			};
 			roles.sort();
 			
-			var $list = $('#'+diagId).find('.n2_roles_list');
+			var $list = $('#'+selectRolesDialog.getId()).find('.n2_roles_list');
 			$list.empty();
 			
 			for(var i=0,e=roles.length;i<e;++i){
 				var role = roles[i];
 				
-				var $div = $('<div></div>');
-				
-				var id = $n2.getUniqueId();
-				
-				var $input = $('<input type="checkbox"/>')
-					.attr('name',role)
-					.attr('id',id)
-					.appendTo($div)
-					;
+				var $listItem = $('<li>')
+					.addClass('mdc-list-item')
+					.attr('role', 'checkbox')
+					.appendTo($list);
+
+				var layerChkbox = new $n2.mdc.MDCCheckbox({
+					parentElem: $listItem,
+					chkboxLabel: role,
+					chkboxName: role
+				});
+
+//				var $div = $('<div></div>');
+//
+//				var id = $n2.getUniqueId();
+//				
+//				var $input = $('<input type="checkbox"/>')
+//					.attr('name',role)
+//					.attr('id',id)
+//					.appendTo($div)
+//					;
 				if( roleMap[role] ){
-					$input.attr('checked',"checked");
+					$('#' + layerChkbox.getId())
+						.find('input')
+						.attr('checked',"checked");
 				};
-				
-				$('<label/>')
-					.attr('for',id)
-					.text(role)
-					.appendTo($div)
-					;
-				
-				$list.append($div);
+//				
+//				$('<label/>')
+//					.attr('for',id)
+//					.text(role)
+//					.appendTo($div)
+//					;
+//				
+//				$list.append($div);
 			};
 		};
 	}
