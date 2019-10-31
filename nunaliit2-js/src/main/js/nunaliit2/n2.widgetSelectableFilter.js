@@ -79,6 +79,8 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 	suppressNoChoice: null,
 	
 	suppressedChoicesMap: null,
+
+	toolTip: null,
 	
 	/* 
 	 * These are versions of functions that are throttled. These
@@ -98,6 +100,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			,suppressAllChoices: false
 			,suppressNoChoice: false
 			,suppressChoices: undefined
+			,toolTip: null
 		},opts_);
 		
 		var _this = this;
@@ -109,7 +112,13 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		this.noChoiceLabel = opts.noChoiceLabel;
 		this.suppressAllChoices = opts.suppressAllChoices;
 		this.suppressNoChoice = opts.suppressNoChoice;
-		
+
+		if (opts.toolTip
+			&& typeof opts.toolTip === 'string'
+			&& opts.toolTip.length) {
+			this.toolTip = opts.toolTip;
+		}
+
 		this.availableChoices = [];
 		this.selectedChoices = [];
 		this.selectedChoiceIdMap = {};
@@ -232,6 +241,10 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			.change(function(){
 				_this._selectionChanged();
 			});
+
+		if (this.toolTip) {
+			$selector.attr('title', this.toolTip);
+		}
 
 		if( !this.suppressNoChoice ){
 			// No Choice
@@ -445,6 +458,8 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 	
 	allChoicesLabel: null,
 
+	toolTip: null,
+
 	/* 
 	 * These are versions of functions that are throttled. These
 	 * functions touch the DOM structure and should not be called too.
@@ -459,6 +474,7 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 			,showService: null
 			,sourceModelId: null
 			,allChoicesLabel: null
+			,toolTip: null
 		},opts_);
 		
 		var _this = this;
@@ -467,6 +483,12 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 		this.showService = opts.showService;
 		this.sourceModelId = opts.sourceModelId;
 		this.allChoicesLabel = opts.allChoicesLabel;
+
+		if (opts.toolTip
+			&& typeof opts.toolTip === 'string'
+			&& opts.toolTip.length) {
+			this.toolTip = opts.toolTip;
+		}
 		
 		this.availableChoices = [];
 		this.selectedChoices = [];
@@ -550,11 +572,16 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 		
 		this.elemId = $n2.getUniqueId();
 		
-		$('<div>')
+		var $selector = $('<div>')
 			.attr('id',this.elemId)
 			.addClass('n2widget_multiFilterSelection')
 			.appendTo($container);
 		
+
+		if (this.toolTip) {
+			$selector.attr('title', this.toolTip);
+		}
+
 		this._throttledAvailableChoicesUpdated();
 		
 		$n2.log(this._classname, this);
@@ -758,7 +785,9 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 	label: null,
 
 	showAsLink: null,
-	
+
+	toolTip: null,
+
 	/* 
 	 * These are versions of functions that are throttled. These
 	 * functions touch the DOM structure and should not be called too
@@ -776,6 +805,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			,noChoiceLabel: null
 			,label: null
 			,showAsLink: false
+			,toolTip: null
 		},opts_);
 		
 		var _this = this;
@@ -787,7 +817,13 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		this.noChoiceLabel = opts.noChoiceLabel;
 		this.label = opts.label;
 		this.showAsLink = opts.showAsLink;
-		
+
+		if (opts.toolTip
+			&& typeof opts.toolTip === 'string'
+			&& opts.toolTip.length) {
+			this.toolTip = opts.toolTip;
+		}
+
 		this.availableChoices = [];
 		this.selectedChoices = [];
 		this.selectedChoiceIdMap = {};
@@ -874,6 +910,10 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			.attr('id',this.elemId)
 			.addClass('n2widget_multiDropDownFilterSelection n2widget_multiDropDownFilterSelection_selection_hidden')
 			.appendTo($container);
+
+		if (this.toolTip) {
+			$elem.attr('title', this.toolTip);
+		}
 		
 		if( this.showAsLink ){
 			$elem.addClass('n2widget_multiDropDownFilterSelection_asLink');
