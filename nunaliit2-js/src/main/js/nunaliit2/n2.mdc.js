@@ -330,13 +330,17 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	inputChips: null,
 	inputId: null,
 
+	chipsetsUpdateCallback : null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			chips: [],
 			choiceChips: false,
 			filterChips: false,
 			inputChips: false,
-			inputId: null
+			inputId: null,
+			initialChipFull: false,
+			chipsetsUpdateCallback: undefined
 		}, opts_);
 
 		this.chips = opts.chips;
@@ -344,7 +348,8 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 		this.filterChips = opts.filterChips;
 		this.inputChips = opts.inputChips;
 		this.inputId = opts.inputId;
-
+		this.initialChipFull = opts.initialChipFull;
+		this.chipsetsUpdateCallback = opts.chipsetsUpdateCallback;
 		MDC.prototype.initialize.call(this, opts);
 
 		if (!this.parentElem) {
@@ -389,26 +394,65 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 		if (this.chips) {	
 			this.chips.forEach(function(chip){
-				$chip = _this._generateChip(chip);
+				$chip = _this._generateChip(chip, null, _this.initialChipFull);
 				$chip.appendTo($chipSet);
 			});
 		}
 
 		$chipSet.appendTo(this.parentElem);
+		$chipSet.data('chipsetsUpdateCallback', this.chipsetsUpdateCallback);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 	},
 
-	_generateChip: function(chipText){
+	_generateChip: function(chipObj, type_opt, initialChipFull){
 		var $chip;
-		var chipId = $n2.getUniqueId();
+		var chipText;
+		if (typeof chipObj === 'string'){
+			chipText = chipObj;
+			var chipId = $n2.getUniqueId();
 
-		$chip = $('<div>').addClass('mdc-chip')
-			.attr('id', chipId)
-			.attr('tabindex','0');
+			$chip = $('<div>').addClass('mdc-chip')
+				.attr('id', chipId)
+				.attr('tabindex','0');
+			var chipOriType = 'unknown';
+			if (type_opt){
+				chipOriType = type_opt;
+			}
+			$chip.data('n2Chip', {
+				chipText: chipObj,
+				type: chipOriType,
+				fraction: 'full'
+			})
+			
+		} else if ( typeof chipObj === 'object'){
+			chipText = chipObj.value;
+			var fraction= undefined;
+			if ( typeof chipObj.fraction !== 'undefined'){
+				fraction = chipObj.fraction;
+			};
+			var chipId = $n2.getUniqueId();
 
+			$chip = $('<div>').addClass('mdc-chip')
+				.attr('id', chipId)
+				.attr('tabindex','0');
+			
+			if (typeof fraction === 'undefined'){
+				
+			} else if (fraction === 'full'){
+				$chip.addClass('mdc-chip-full');
+			} else {
+				$chip.addClass('mdc-chip-partial');
+			}
+			var chipOriType = 'unknown';
+			if (type_opt){
+				chipOriType = type_opt;
+			}
+			$chip.data('n2Chip', $n2.extend({type: chipOriType }, chipObj));
+		}
+		
 		if (chipText) {
 			$('<div>').addClass('mdc-chip__text')
 				.text(chipText)
@@ -999,9 +1043,9 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		}
 	},
 
-	_generateMDCListItem: function(item) {
+	_generateMDCListItem: function(item){
 		var $listItem, $listItemText;
-
+		
 		if (this.navList) {
 			$listItem = $('<a>');
 			if (item.indent) {
@@ -1015,6 +1059,7 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		$listItem.attr('role', 'menuitem')
 			.attr('tabindex', '-1')
 			.addClass('mdc-list-item');
+			
 
 		if (item.activated) {
 			$listItem.attr('tabIndex', '0')
@@ -1083,6 +1128,7 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		this.$menuSurfaceAnchor = $('<div>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '));
+		
 
 		$menu = $('<div>').attr('id', this.menuId)
 			.attr('n2associatedmdc', this.anchorBtnId)
@@ -1247,6 +1293,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 	menuLabel: null,
 	menuOpts: null,
 	preSelected: null,
+	nativeClasses : null,
 	select: null,
 	selectId: null,
 
@@ -1255,7 +1302,8 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			menuChgFunction: null,
 			menuLabel: null,
 			menuOpts: [],
-			preSelected: false
+			preSelected: false,
+			nativeClasses : null
 		}, opts_);
 
 		MDC.prototype.initialize.call(this,opts);
@@ -1265,6 +1313,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.menuOpts = opts.menuOpts;
 		this.preSelected = opts.preSelected;
 		this.selectId = $n2.getUniqueId();
+		this.nativeClasses = opts.nativeClasses;
 		
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Select Component');
@@ -1293,9 +1342,14 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		$('<i>').addClass('mdc-select__dropdown-icon')
 			.appendTo($menu);
 
+		var classesOnSelectTag = '';
+		if ( this.nativeClasses ){
+			classesOnSelectTag = this.nativeClasses.join(' ');
+		}
 		this.select = $('<select>')
 			.attr('id', this.selectId)
 			.addClass('mdc-select__native-control')
+			.addClass(classesOnSelectTag)
 			.appendTo($menu)
 			.change(this.menuChgFunction);
 
@@ -1571,17 +1625,22 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 	$chipInput: null,
 	chips: null,
 	label: null,
-
+	initialChipFull : null,
+	chipsetsUpdateCallback : null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			chips: [],
 			label: '',
+			initialChipFull : false, 
+			chipsetsUpdateCallback : undefined
 		}, opts_);
 
 		this.chips = opts.chips;
 		this.label = opts.label;
 		this.inputId = $n2.getUniqueId();
-
+		this.initialChipFull = opts.initialChipFull;
+		this.chipsetsUpdateCallback = opts.chipsetsUpdateCallback;
 		MDC.prototype.initialize.call(this, opts);
 
 		if (!this.parentElem) {
@@ -1593,7 +1652,7 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 
 	_generateMDCTagBox: function(){
 		var $chipSet;
-
+		var _this = this;
 		this.$chipInput = new $n2.mdc.MDCTextField({
 			parentElem: this.parentElem,
 			mdcClasses: ['n2-tag-box'],
@@ -1609,7 +1668,9 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 			parentElem: this.parentElem.find('#' + this.$chipInput.getId()),
 			inputChips: true,
 			inputId: this.$chipInput.getInputId(),
-			chips: this.chips
+			initialChipFull : _this.initialChipFull,
+			chips: this.chips,
+			chipsetsUpdateCallback : this.chipsetsUpdateCallback
 		});
 
 		// Move input form field into chipset component
@@ -1871,7 +1932,7 @@ $n2.mdc = {
 	MDCSelect: MDCSelect,
 	MDCSwitch: MDCSwitch,
 	MDCTabBar: MDCTabBar,
-	MDCTagBox: MDCTagBox,
+	MDCTagBox: MDCTagBox, 
 	MDCTextField: MDCTextField,
 	MDCTopAppBar: MDCTopAppBar
 };
