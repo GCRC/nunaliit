@@ -340,8 +340,6 @@ var UserEditor = $n2.Class({
 			closeBtn: true,
 			closeBtnText: 'Cancel'
 		});
-//		var diagId = $n2.getUniqueId();
-//		var $rolesDialog = $('<div id="'+diagId+'" class="n2_roles_dialog"></div>');
 
 		$('<div class="n2_roles_list"></div>')
 			.appendTo($('#' +selectRolesDialog.getContentId()))
@@ -354,67 +352,20 @@ var UserEditor = $n2.Class({
 			btnRaised: true,
 			onBtnClick: function(){
 				var $dialog = $('#'+selectRolesDialog.getId());
-				
+
 				var roles = [];
 				$dialog.find('input[type=checkbox]:checked').each(function(){
 					var $input = $(this);
-					var $chkboxName = $input.attr('name');
-					roles.push( $input.attr('name') );
+					roles.push($input.attr('name'));
 				});
-				
+
 				selectedRolesFn(roles);
-				
 				selectRolesDialog.closeDialog();
 				$('#' + selectRolesDialog.getId()).remove();
 				return false;
 			}
 		});
 
-//		var $buttons = $('<div class="n2_roles_buttons"></div>')
-//			.appendTo($rolesDialog)
-//			;
-//
-//		// OK button
-//		$('<input type="button"/>')
-//			.val( _loc('OK') )
-//			.appendTo($buttons)
-//			.click(function(){
-//				var $dialog = $('#'+diagId);
-//				
-//				var roles = [];
-//				$dialog.find('input[type=checkbox]:checked').each(function(){
-//					var $input = $(this);
-//					roles.push( $input.attr('name') );
-//				});
-//				
-//				selectedRolesFn(roles);
-//				
-//				$dialog.dialog('close');
-//			})
-//			;
-//
-//		// Cancel button
-//		$('<input type="button"/>')
-//			.val( _loc('Cancel') )
-//			.appendTo($buttons)
-//			.click(function(){
-//				$('#'+diagId).dialog('close');
-//			})
-//			;
-//		
-//		var dialogOptions = {
-//			autoOpen: true
-//			,title: _loc('Select Roles')
-//			,modal: true
-//			,width: 740
-//			,close: function(event, ui){
-//				var diag = $(event.target);
-//				diag.dialog('destroy');
-//				diag.remove();
-//			}
-//		};
-//		$rolesDialog.dialog(dialogOptions);
-		
 		if( this.configService
 		 && this.showServerRoles ){
 			this.configService.getNunaliitServerRoles({
@@ -474,28 +425,11 @@ var UserEditor = $n2.Class({
 					chkboxName: role
 				});
 
-//				var $div = $('<div></div>');
-//
-//				var id = $n2.getUniqueId();
-//				
-//				var $input = $('<input type="checkbox"/>')
-//					.attr('name',role)
-//					.attr('id',id)
-//					.appendTo($div)
-//					;
 				if( roleMap[role] ){
 					$('#' + layerChkbox.getId())
 						.find('input')
 						.attr('checked',"checked");
 				};
-//				
-//				$('<label/>')
-//					.attr('for',id)
-//					.text(role)
-//					.appendTo($div)
-//					;
-//				
-//				$list.append($div);
 			};
 		};
 	}
