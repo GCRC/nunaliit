@@ -761,7 +761,10 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		if (doc
 			&& doc.atlascine2_cinemap 
 			&& doc.atlascine2_cinemap.tagColors ){
-			for (var tagna in doc.atlascine2_cinemap.tagColors ){
+			for (var tagna in doc.atlascine2_cinemap.tagGroups ){
+				if (tagna === 'place' || tagna === 'location'){
+					continue;
+				}
 				var taginfo = {
 						name: tagna,
 						color: doc.atlascine2_cinemap.tagColors[tagna],
@@ -2746,7 +2749,7 @@ var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
 					//$n2.log("The timecode: "+ tmpTimecode);
 
 					curEntry.start  =  3600*matcher[1] + 60*matcher[2] + 1*matcher[3];
-					curEntry.fin = 3600*matcher[6] + 60*matcher[7] + 1*matcher[8];
+					curEntry.fin = 3600*matcher[7] + 60*matcher[8] + 1*matcher[9];
 					while(++cur < totalLength){
 						curSentence = lines[cur];
 						if( curSentence.replace(/^\s+|\s+$/g,'') === "" ){

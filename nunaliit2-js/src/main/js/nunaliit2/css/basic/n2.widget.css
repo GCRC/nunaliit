@@ -503,12 +503,15 @@ Polar Stereographic Projection Selector
 }
 
 .n2widgetTranscript_transcript .selected {
-	color: white;
-	background-color: darkorange;
+	/*color: white;
+	background-color: darkorange;  */
+	font-weight: bold;
 }
-
 .n2widgetTranscript_transcript .highlight {
 	text-decoration: underline;
+}
+.n2widgetTranscript_transcript :not(.highlight) {
+	text-decoration: none;
 }
 
 .n2widgetTranscript_transcript .ui-selecting {
