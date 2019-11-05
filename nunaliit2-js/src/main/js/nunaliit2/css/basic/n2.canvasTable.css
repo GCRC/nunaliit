@@ -3,15 +3,33 @@
 	padding: 10px;
 }
 
-.n2TableCanvas td,
-.n2TableCanvas th {
-	border: 1px solid #000000;
-	white-space: pre-line;
+.n2TableCanvas .mdc-data-table {
+	margin-top: 5px;
 }
 
 .n2TableCanvas td.n2TableCanvas_lazyDisplay {
 	height: 10px;
 }
+
+/* Fixed Header Row Style Rules */
+/*
+.n2TableCanvas .mdc-data-table tbody {
+  display: block !important;
+  overflow: auto;
+  height: 200px;
+  width: 100%;
+}
+
+.n2TableCanvas .mdc-data-table thead tr {
+  display: block;
+}
+
+.n2TableCanvas .mdc-data-table thead tr th,
+.n2TableCanvas .mdc-data-table tbody tr td {
+    min-width: 250px;
+    max-width: 250px;
+}
+*/
 
 /* Table Row Counter */
 .n2TableCanvas .n2TableCanvasRowCounter {

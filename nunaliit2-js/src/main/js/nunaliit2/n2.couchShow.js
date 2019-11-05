@@ -968,7 +968,13 @@ var DomStyler = $n2.Class({
 		var docId = this._associateDocumentToElement(data, $jq);
 		
 		if( data && data._id === docId ){
-			this.showService._displayDocumentFull($jq, data, opt_);
+			var $card = $jq.find('.n2_card_content');
+
+			if ($card.length) {
+				this.showService._displayDocumentFull($card, data, opt_);
+			} else {
+				this.showService._displayDocumentFull($jq, data, opt_);
+			}
 		};
 	},
 	

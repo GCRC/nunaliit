@@ -408,13 +408,18 @@ var NavigationService = $n2.Class({
 		}
 	},
 
-	_insertHamburgerMenuList: function(items){
+	_insertHamburgerMenuList: function(items, indent){
 		var _this = this;
+		var indentIncrement = 10;
 		var menuList = [];
 
 		items.forEach(function(item){
 			var text, href, nestedList;
 			var activated = false;
+
+			if (!indent) {
+				indent = 0;
+			}
 
 			if (item.title) {
 				text = _loc(item.title);
@@ -444,10 +449,17 @@ var NavigationService = $n2.Class({
 				}
 			}
 
-			menuList.push({'text':text, 'href':href, 'activated':activated});
+			menuList.push(
+				{
+					'text': text,
+					'href': href,
+					'activated': activated,
+					'indent': indent
+				}
+			);
 
 			if (item.items) {
-				nestedList = _this._insertHamburgerMenuList(item.items);
+				nestedList = _this._insertHamburgerMenuList(item.items, indent+indentIncrement);
 				menuList = menuList.concat(nestedList);
 			}
 		});

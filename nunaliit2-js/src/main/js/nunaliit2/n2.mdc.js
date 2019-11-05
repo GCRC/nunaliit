@@ -166,6 +166,51 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 	}
 });
 
+// Class MDCCard
+// Description: Creates a material design card component
+var MDCCard = $n2.Class('MDCCard', MDC, {
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parentElem: null,
+			mdcId: null,
+			mdcClasses: [],
+			mdcAttributes: null,
+			label: undefined,
+			imageGenerator: undefined,
+			infoGenerator: undefined
+		}, opts_);
+		this.onChangeCallBack = opts.onChangeCallBack;
+		this.infoGenerator = opts.infoGenerator;
+		this.imageGenerator = opts.imageGenerator;
+		this.label = opts.label;
+		this.initiallyOn = opts.initiallyOn;
+		MDC.prototype.initialize.call(this, opts);
+		this._generateMDCCard();
+	},
+	_generateMDCCard: function(){
+		
+		var _this = this;
+		var $card, card_info, media_thumb;
+		if ( this.infoGenerator ){
+			card_info = this.infoGenerator();
+		}
+		if ( this.imageGenerator ){
+			media_thumb = this.imageGenerator();
+		}
+		card_info = card_info ? card_info : '';
+		media_thumb = media_thumb ? media_thumb : '';
+		$card = $($.parseHTML('<div class="mdc-card">' // Outside container for mdc-card
+								+ '<div class="mdc-card__primary-action">'// For ripple effects
+									+ media_thumb// For left column thumbnail
+									+ '<div class="n2card__primary">'
+									+ card_info
+									+ '</div>'
+								+ '</div>'
+							+ '</div>'));
+		$card.appendTo(this.parentElem);
+	}
+})
+
 // Class MDCCheckbox
 // Description: Creates a material design checkbox component
 // Options:
@@ -427,7 +472,11 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 // Class:MDCDataTable
 // Description: Create a material design data table component
+// Options:
+//  - addCellText: (boolean) If set to true, text will be added to cells.
 var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
+
+	addCellText: null,
 
 	$tbody: null,
 
@@ -435,7 +484,10 @@ var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
 
 	initialize: function(opts_) {
 		var opts = $n2.extend({
+			addCellText: false
 		}, opts_);
+
+		this.addCellText = opts.addCellText;
 
 		MDC.prototype.initialize.call(this, opts);
 
@@ -467,98 +519,128 @@ var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
 		this.$thead = $('<thead>')
 			.appendTo($table);
 
+		this.addTableHeaderRow();
+
 		this.$tbody = $('<tbody>')
 			.addClass('mdc-data-table__content')
 			.appendTo($table);
 
 
 		$tableContainer.appendTo(this.parentElem);
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
 	},
 
-	addTableHeader: function(cellValues) {
-		var $tr, $th, cell, i, e;
-
-		$tr = $('<tr>')
+	addTableHeaderRow: function() {
+		$('<tr>')
 			.addClass('mdc-data-table__header-row')
 			.appendTo(this.$thead);
+	},
 
-		if (cellValues && $n2.isArray(cellValues) && cellValues.length > 0) {
-			for (i = 0, e = cellValues.length; i < e; i += 1) {
-				cell = cellValues[i];
+	// Name: addHeaderCell
+	// Parameter:
+	// 	heading: {
+	// 		label: '',
+	//		name: '',
+	//		title: ''
+	//  }
+	addHeaderCell: function(heading) {
+		var $th, $a;
 
-				$th = $('<th>')
-					.addClass('mdc-data-table__header-cell')
-					.attr('role', 'columnheader')
-					.attr('scope', 'col')
-					.appendTo($tr);
+		$th = $('<th>')
+			.addClass('mdc-data-table__header-cell')
+			.attr('role', 'columnheader')
+			.attr('scope', 'col')
+			.appendTo(this.$thead.find('tr'));
 
-				if (cell) {
-					$th.text(cell);
-					if (!isNaN(cell)) {
-						$th.addClass('mdc-data-table__header-cell--numeric');
-					}
-				}
+		if (heading.name) {
+			$a = $('<a>')
+				.attr('href', '#')
+				.attr('data-sort-name', heading.name)
+				.appendTo($th);
+
+			if (heading.label) {
+				$a.text(heading.label);
+			}
+
+			if (heading.title) {
+				$a.attr('title', _loc(heading.title));
+			}
+
+			if (!isNaN(heading.name)) {
+				$th.addClass('mdc-data-table__header-cell--numeric');
 			}
 		}
+
+		return $th;
 	},
 
 	// Name: addTableRow
 	// Parameter:
 	// 	row: {
-	// 		id: ''
+	// 		id: '',
 	//		name: ''
-	//		cells: [
-	//			{
-	//			id: '',
-	//			headingname: '',
-	//			value: ''
-	//			}, ...
-	//		]
-	// }
+	//  }
 	addTableRow: function(row) {
-		var $tr, $td, cell, cellKeys, key, i, e;
+		var $tr;
 
 		if (row) {
 			$tr = $('<tr>')
 				.addClass('mdc-data-table__row')
 				.appendTo(this.$tbody);
 
-				if (row.name) {
-					$tr.attr('nunaliit-row', row.name);
+			if (row.name) {
+				$tr.attr('nunaliit-row', row.name);
+			}
+
+			if (row.id) {
+				$tr.attr('id', row.id);
+			}
+
+			return $tr;
+		}
+	},
+
+	// Name: addRowCell
+	// Parameters:
+	// 	cell: {
+	//		id: '',
+	//		name: '',
+	//		headingname: '',
+	//		value: ''
+	// },
+	//  row: jQuery selection of the row in which the cell will be added.
+	addRowCell: function(cell, $row) {
+		var $td;
+		if (cell) {
+			$td = $('<td>')
+				.addClass('mdc-data-table__cell')
+				.appendTo($row);
+
+			if (cell.id) {
+				$td.attr('id', cell.id);
+			}
+
+			if (cell.name) {
+				$td.attr('nunaliit-row', cell.name);
+			}
+
+			if (cell.headingname) {
+				$td.attr('nunaliit-column', cell.headingname);
+			}
+
+			if (cell.value) {
+				if (this.addCellText) {
+					$td.text(cell.value.toString());
 				}
 
-				if (row.id) {
-					$tr.attr('id', row.id);
-				}
-
-			if (row.cells && $n2.isArray(row.cells)) {
-				for (i = 0, e = row.cells.length; i < e; i += 1) {
-					cell = row.cells[i];
-
-					$td = $('<td>')
-						.addClass('mdc-data-table__cell')
-						.appendTo($tr);
-
-					if (row.name) {
-						$td.attr('nunaliit-row', row.name);
-					}
-
-					if (cell.id) {
-						$td.attr('id', cell.id);
-					}
-
-					if (cell.headingname) {
-						$td.attr('nunaliit-column', cell.headingname);
-					}
-
-					if (cell.value) {
-						$td.text(cell.value);
-						if (!isNaN(cell.value)) {
-							$td.addClass('mdc-data-table__cell--numeric');
-						}
-					}
+				if (!isNaN(cell.value)) {
+					$td.addClass('mdc-data-table__cell--numeric');
 				}
 			}
+			return $td;
 		}
 	}
 });
@@ -579,6 +661,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	scrollable: null,
 	closeBtn: null,
 	closeBtnText: null,
+	$dialogMessage: null,
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -610,7 +693,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		var _this = this;
 		var content = "";
 
-		this.mdcClasses.push('mdc-dialog');
+		this.mdcClasses.push('mdc-dialog', 'n2s_attachMDCDialog');
 
 		if (this.scrollable) {
 			this.mdcClasses.push('mdc-dialog--scrollable');
@@ -644,16 +727,16 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 			.text(_loc(this.dialogTitle))
 			.appendTo($dialogSurface);
 
-		$dialogMessage = $('<div>')
+		this.$dialogMessage = $('<div>')
 			.attr('id', this.contentId)
 			.addClass('mdc-dialog__content')
 			.text(content)
 			.appendTo($dialogSurface);
 
 		if (this.dialogHtmlContent) {
-			$dialogMessage.html(_loc(this.dialogHtmlContent));
+			this.$dialogMessage.html(_loc(this.dialogHtmlContent));
 		} else if (this.dialogTextContent) {
-			$dialogMessage.text(_loc(this.dialogTextContent));
+			this.$dialogMessage.text(_loc(this.dialogTextContent));
 		}
 
 		$('<footer>').attr('id', this.footerId)
@@ -671,6 +754,10 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 
 		if (this.closeBtn) {
 			this.addCloseBtn();
+		}
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 
 		this.openDialog();
@@ -700,8 +787,20 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	},
 
 	openDialog: function(){
+		var _this = this;
 		if (MDCDialogComponent && !MDCDialogComponent.isOpen) {
 			MDCDialogComponent.open();
+
+			MDCDialogComponent.listen('MDCDialog:opened', function(event){
+				if (event) {
+					// Slight delay before setting the scrollTop position to 0
+					// 1ms delay is required otherwise the scrollTop occurs
+					// before a scroll position is set to the bottom of the page
+					window.setTimeout(function(){
+						_this.$dialogMessage.scrollTop(0);
+					}, 1);
+				}
+			});
 		}
 	},
 
@@ -877,7 +976,7 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 //  - listItems (array): An array of object specifying list item details
 //   - list item attributes: text (string), href (string), activated (boolean), onItemClick (function) 
 //   - Example: [
-//   	{'text': 'foo', 'onItemClick': bar},
+//   	{'text': 'foo', 'onItemClick': bar, 'indent': 10},
 //   	{"href":"https://gcrc.carleton.ca", "text":"GCRC", "activated":true}
 //   	]
 var MDCList = $n2.Class('MDCList', MDC, {
@@ -930,8 +1029,8 @@ var MDCList = $n2.Class('MDCList', MDC, {
 			});
 		}
 
-		if (this.listItems && $n2.isArray(this.listItems)){
-			this.listItems.forEach(function(listItem){
+		if (this.listItems && $n2.isArray(this.listItems)) {
+			this.listItems.forEach(function(listItem) {
 				$item = _this._generateMDCListItem(listItem);
 				$item.appendTo($list);
 			});
@@ -949,6 +1048,10 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		
 		if (this.navList) {
 			$listItem = $('<a>');
+			if (item.indent) {
+				$listItem.addClass('nested_list_item');
+			}
+
 		} else {
 			$listItem = $('<li>');
 		}
@@ -972,6 +1075,10 @@ var MDCList = $n2.Class('MDCList', MDC, {
 			$listItemText = $('<span>')
 				.addClass('mdc-list-item__text')
 				.text(item.text);
+
+			if (item.indent) {
+				$listItemText.css('margin-left', item.indent + 'px');
+			}
 
 			if (item.onItemClick) {
 				$listItemText.click(item.onItemClick);
@@ -1318,6 +1425,70 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 	getSelectId: function(){
 		return this.selectId;
+	}
+});
+
+// Class MDCSwitch
+// Description: Create a material design switch component
+var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parentElem: null,
+			mdcId: null,
+			mdcClasses: [],
+			mdcAttributes: null,
+			onChangeCallBack: undefined,
+			label: undefined,
+			initiallyOn : false
+		}, opts_);
+		this.onChangeCallBack = opts.onChangeCallBack;
+		this.label = opts.label;
+		this.initiallyOn = opts.initiallyOn;
+		MDC.prototype.initialize.call(this, opts);
+		this._generateMDCSwitch();
+	},
+	_generateMDCSwitch: function(){
+		var _this = this;
+		var $switch;
+		var label_t = 'off/on';
+		if (this.label){
+			label_t = this.label;
+		}
+		if (this.initiallyOn){
+			$switch = $($.parseHTML('<div class="mdc-switch mdc-switch--checked"><div class="mdc-switch__track">'+
+					'</div><div class="mdc-switch__thumb-underlay">'+
+						'<div class="mdc-switch__thumb">'+
+								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch" checked>'+
+							'</div>'+
+						'</div>'+
+				'</div>'+
+				'<label for="basic-switch">' + 
+				label_t +
+				'</label>'));
+		} else {
+			$switch = $($.parseHTML('<div class="mdc-switch"><div class="mdc-switch__track">'+
+					'</div><div class="mdc-switch__thumb-underlay">'+
+						'<div class="mdc-switch__thumb">'+
+								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch">'+
+							'</div>'+
+						'</div>'+
+				'</div>'+
+				'<label for="basic-switch">off/on</label>'));
+		}
+		$switch.appendTo(this.parentElem);
+
+		//add evt listener for 'change' in mdc way
+		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
+		if (this.onChangeCallBack 
+				&& typeof this.onChangeCallBack === 'function'){
+			vanilla.nativeControl_.addEventListener('change', function(){
+				_this.onChangeCallBack(this.checked);
+			})
+		}
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
 	}
 });
 
@@ -1743,117 +1914,12 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 	}
 });
 
-var MDCCard = $n2.Class('MDCCard', MDC, {
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			parentElem: null,
-			mdcId: null,
-			mdcClasses: [],
-			mdcAttributes: null,
-			label: undefined,
-			imageGenerator: undefined,
-			infoGenerator: undefined
-		}, opts_);
-		this.onChangeCallBack = opts.onChangeCallBack;
-		this.infoGenerator = opts.infoGenerator;
-		this.imageGenerator = opts.imageGenerator;
-		this.label = opts.label;
-		this.initiallyOn = opts.initiallyOn;
-		MDC.prototype.initialize.call(this, opts);
-		this._generateMDCCard();
-	},
-	_generateMDCCard: function(){
-		
-		var _this = this;
-		var $card, card_info, media_thumb;
-		if ( this.infoGenerator ){
-			card_info = this.infoGenerator();
-		}
-		if ( this.imageGenerator ){
-			media_thumb = this.imageGenerator();
-		}
-		card_info = card_info ? card_info : '';
-		media_thumb = media_thumb ? media_thumb : '';
-		$card = $($.parseHTML('<div class="mdc-card">' // Outside container for mdc-card
-								+ '<div class="mdc-card__primary-action">'// For ripple effects
-									+ media_thumb// For left column thumbnail
-									+ '<div class="n2card__primary">'
-									+ card_info
-									+ '</div>'
-								+ '</div>'
-							+ '</div>'));
-		$card.appendTo(this.parentElem);
-		
-	}
-
-})
-var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			parentElem: null,
-			mdcId: null,
-			mdcClasses: [],
-			mdcAttributes: null,
-			onChangeCallBack: undefined,
-			label: undefined,
-			initiallyOn : false
-		}, opts_);
-		this.onChangeCallBack = opts.onChangeCallBack;
-		this.label = opts.label;
-		this.initiallyOn = opts.initiallyOn;
-		MDC.prototype.initialize.call(this, opts);
-		this._generateMDCSwitch();
-	},
-	_generateMDCSwitch: function(){
-		var _this = this;
-		var $switch;
-		var label_t = 'off/on';
-		if (this.label){
-			label_t = this.label;
-		}
-		if (this.initiallyOn){
-			$switch = $($.parseHTML('<div class="mdc-switch mdc-switch--checked"><div class="mdc-switch__track">'+
-					'</div><div class="mdc-switch__thumb-underlay">'+
-						'<div class="mdc-switch__thumb">'+
-								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch" checked>'+
-							'</div>'+
-						'</div>'+
-				'</div>'+
-				'<label for="basic-switch">' + 
-				label_t +
-				'</label>'));
-		} else {
-			$switch = $($.parseHTML('<div class="mdc-switch"><div class="mdc-switch__track">'+
-					'</div><div class="mdc-switch__thumb-underlay">'+
-						'<div class="mdc-switch__thumb">'+
-								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch">'+
-							'</div>'+
-						'</div>'+
-				'</div>'+
-				'<label for="basic-switch">off/on</label>'));
-		}
-		$switch.appendTo(this.parentElem);
-		
-		//add evt listener for 'change' in mdc way
-		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
-		if (this.onChangeCallBack 
-				&& typeof this.onChangeCallBack === 'function'){
-			vanilla.nativeControl_.addEventListener('change', function(){
-				_this.onChangeCallBack(this.checked);
-			})
-		}
-		
-		if (showService) {
-			showService.fixElementAndChildren($('#' + this.mdcId));
-		}
-	}
-});
-
 
 $n2.mdc = {
 	Service: Service,
 	MDC: MDC,
 	MDCButton: MDCButton,
+	MDCCard: MDCCard,
 	MDCCheckbox: MDCCheckbox,
 	MDCChipSet: MDCChipSet,
 	MDCDataTable: MDCDataTable,
@@ -1864,12 +1930,11 @@ $n2.mdc = {
 	MDCMenu: MDCMenu,
 	MDCRadio: MDCRadio,
 	MDCSelect: MDCSelect,
+	MDCSwitch: MDCSwitch,
 	MDCTabBar: MDCTabBar,
 	MDCTagBox: MDCTagBox, 
 	MDCTextField: MDCTextField,
-	MDCTopAppBar: MDCTopAppBar,
-	MDCSwitch: MDCSwitch,
-	MDCCard: MDCCard
+	MDCTopAppBar: MDCTopAppBar
 };
 
 })(jQuery,nunaliit2);
