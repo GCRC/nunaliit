@@ -242,6 +242,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		// Find roles associated with the user who submitted the change
 		List<String> roles = new Vector<String>();
 		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+		String submitter_name = submissionInfo.optString("submitter_name");
 		JSONArray jsonRoles = submissionInfo.optJSONArray("submitter_roles");
 		if( null != jsonRoles ){
 			for(int i=0,e=jsonRoles.length(); i<e; ++i){
@@ -252,8 +253,10 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		
 		JSONObject submittedDoc = submissionInfo.optJSONObject("submitted_doc");
 		JSONArray nunaliitLayers = null;
+		JSONObject nunaliitCreated = null;
 		if( null != submittedDoc ){
 			nunaliitLayers = submittedDoc.optJSONArray("nunaliit_layers");
+			nunaliitCreated = submittedDoc.optJSONObject("nunaliit_created");
 		}
 
 		// Check if submission should be automatically approved
@@ -312,6 +315,18 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			};
 		}
 
+		// Check if document is owned by submitter
+		if ( !approved ) {
+			if ( null != submitter_name ) {
+				if( null != nunaliitCreated ){
+					String creator = nunaliitCreated.getString("name");
+					if ( submitter_name.equals(creator)) {
+						approved = true;
+					}
+				}
+			}
+		}
+		
 		if( approved ) {
 			CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
 			submissionDoc.getJSONObject("nunaliit_submission")
