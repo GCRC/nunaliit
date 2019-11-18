@@ -888,10 +888,9 @@ var Service = $n2.Construct({
 			} else if( m.widgetType === 'button' ){
 				m.isAvailable = true;
 
-			} else if ($n2.utils.getMethod('$n2.'+ 
-					m.widgetType +
-					'.HandleWidgetAvailableRequests')
-					) {
+			} else if ($n2.utils.getMethod('$n2.'
+					+ m.widgetType
+					+'.HandleWidgetAvailableRequests')) {
 				m.isAvailable = true;
 			} else {
 				if( $n2.couchDbPerspective 
@@ -978,6 +977,11 @@ var Service = $n2.Construct({
 				 && $n2.widgetTranscript.HandleWidgetAvailableRequests ){
 					$n2.widgetTranscript.HandleWidgetAvailableRequests(m);
 				};
+				
+				if( $n2.widgetAnnotationEditor 
+				 && $n2.widgetAnnotationEditor.HandleWidgetAvailableRequests ){
+					$n2.widgetAnnotationEditor.HandleWidgetAvailableRequests(m);
+				};
 			};
 
 		} else if( 'widgetDisplay' === m.type ){
@@ -993,9 +997,9 @@ var Service = $n2.Construct({
 			} else if( m.widgetType === 'button' ){
 				BuildButtonWidget(m);
 
-			} else if ($n2.utils.getMethod('$n2.'+ 
-					m.widgetType +
-					'.HandleWidgetDisplayRequests')
+			} else if ($n2.utils.getMethod('$n2.'
+					+ m.widgetType
+					+ '.HandleWidgetDisplayRequests')
 					) {
 				var targetWidgetDisplayFunc = $n2.utils.getMethod('$n2.'+ m.widgetType +'.HandleWidgetDisplayRequests');
 				targetWidgetDisplay.apply(this,[m]);
@@ -1083,6 +1087,11 @@ var Service = $n2.Construct({
 				if( $n2.widgetTranscript 
 				 && $n2.widgetTranscript.HandleWidgetDisplayRequests ){
 					$n2.widgetTranscript.HandleWidgetDisplayRequests(m);
+				};
+				
+				if( $n2.widgetAnnotationEditor 
+				 && $n2.widgetAnnotationEditor.HandleWidgetDisplayRequests ){
+					$n2.widgetAnnotationEditor.HandleWidgetDisplayRequests(m);
 				};
 			};
 
