@@ -95,6 +95,15 @@ var MDC = $n2.Class('MDC',{
 	}
 });
 
+// Class MDCAccordion
+// Description: Creates a material design accordion list
+var MDCAccordion = $n2.Class('MDCAccordion', MDC, {
+	initialize: function(opts_){
+		
+	}
+})
+
+
 // Class MDCButton
 // Description: Creates a material design button component
 // Options:
@@ -1918,6 +1927,7 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 $n2.mdc = {
 	Service: Service,
 	MDC: MDC,
+	MDCAccordion: MDCAccordion,
 	MDCButton: MDCButton,
 	MDCCard: MDCCard,
 	MDCCheckbox: MDCCheckbox,
