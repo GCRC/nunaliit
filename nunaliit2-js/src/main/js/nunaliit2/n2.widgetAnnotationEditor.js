@@ -43,14 +43,28 @@ var
 	 var timeLink;
 	 var target_start = convertTimecodeToMs(startTime);
 	 var target_end = convertTimecodeToMs(endTime);
-	 for (var i=0,e=timeLinks.length; i<e; i++){
-		 timeLink =timeLinks[i];
-		 var start_in_ms = convertTimecodeToMs(timeLink.starttime);
-		 var end_in_ms = convertTimecodeToMs(timeLink.endtime);
-		 if( start_in_ms === target_start
-			&& end_in_ms === target_end ){
-					result.push(timeLink);
-		 };
+	 if ( target_start && target_end ){
+
+		 for (var i=0,e=timeLinks.length; i<e; i++){
+			 try{
+				 timeLink =timeLinks[i];
+				 var start_in_ms = convertTimecodeToMs(timeLink.starttime);
+				 var end_in_ms = convertTimecodeToMs(timeLink.endtime);
+				 if(  start_in_ms &&
+						 end_in_ms &&
+						 start_in_ms === target_start &&
+						 end_in_ms === target_end ){
+					 result.push(timeLink);
+				 }; 
+			 } catch (err){
+				 // $n2.log('Error: timelink formatting error');
+				 //console.log('Index:' + i + err.stack);
+				 continue;
+			 }
+
+
+		 }
+
 	 }
 	 return result;
 };
@@ -237,24 +251,7 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 
 			}
 				
-		function findTimeLink(timeLinks, startTime, endTime){
-			 var result = [];
-			 var timeLink;
-			 var target_start = convertTimecodeToMs(startTime);
-			 var target_end = convertTimecodeToMs(endTime);
-			 for (var i=0,e=timeLinks.length; i<e; i++){
-				 timeLink =timeLinks[i];
-				 var start_in_ms = convertTimecodeToMs(timeLink.starttime);
-				 var end_in_ms = convertTimecodeToMs(timeLink.endtime);
-				 if( start_in_ms &&
-					 end_in_ms &&
-					 start_in_ms === target_start &&
-					 end_in_ms === target_end ){
-							result.push(timeLink);
-				 };
-			 }
-			 return result;
-		};
+		
 	},
 	getDoc: function(){
 		return this._doc;
@@ -1021,13 +1018,13 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 								var addtar = $n2.extend({value: value}, target);
 								delete addtar['fraction'];
 								_this.dataDepot.addPartialTag(opts.start, opts.end, addtar)
-								$n2.log('I see adding tags', target);
+								$n2.log('Adding tags', target);
 								break;
 							case 'DELETE':
 								var value = target.chipText;
 								var deltar = $n2.extend({value: value}, target);
 								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
-								$n2.log('I see deleting tags', target);
+								$n2.log('Deleting tags', target);
 								break;
 						}
 						//$n2.log('I wonder what is this: ', tagList);
@@ -1047,14 +1044,14 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 								addtar['type'] = 'place';
 								delete addtar['fraction'];
 								_this.dataDepot.addPartialTag(opts.start, opts.end, addtar)
-								$n2.log('I see adding tags', addtar);
+								$n2.log('Adding tags', addtar);
 								break;
 							case 'DELETE':
 								var value = target.chipText;
 								var deltar = $n2.extend({value: value}, target);
 								deltar['type'] = 'place';
 								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
-								$n2.log('I see deleting tags', deltar);
+								$n2.log('Deleting tags', deltar);
 								break;
 						}
 						//$n2.log('I wonder what is this: ', tagList);
@@ -1104,13 +1101,13 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 						var value = target.chipText;
 						var addtar = $n2.extend({value: value}, target);
 						_this.dataDepot.addFullTag(addtar)
-						$n2.log('I see adding tags', target);
+						$n2.log('Adding tags', target);
 						break;
 					case 'DELETE':
 						var value = target.chipText;
 						var deltar = $n2.extend({value: value}, target);
 						_this.dataDepot.deleteTag(deltar);
-						$n2.log('I see deleting tags', target);
+						$n2.log('Deleting tags', target);
 						break;
 				}
 				//$n2.log('I wonder what is this: ', tagList);
@@ -1129,14 +1126,14 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 						var addtar = $n2.extend({value: value, type: 'place'}, target);
 						addtar['type'] = 'place';
 						_this.dataDepot.addFullTag(addtar)
-						$n2.log('I see adding tags', addtar);
+						$n2.log('Adding tags', addtar);
 						break;
 					case 'DELETE':
 						var value = target.chipText;
 						var deltar = $n2.extend({value: value, type: 'place'}, target);
 						deltar['type'] = 'place';
 						_this.dataDepot.deleteTag(deltar);
-						$n2.log('I see deleting tags', deltar);
+						$n2.log('Deleting tags', deltar);
 						break;
 				}
 				//$n2.log('I wonder what is this: ', tagList);
@@ -1478,12 +1475,15 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 });
 var reTimeCode_s = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*/i;
 function convertTimecodeToMs (tmpTimecode){
-	var rst = undefined;
+	var rst, matcher;
 	try{
-		var matcher = reTimeCode_s.exec(tmpTimecode);
+		if ( !tmpTimecode ){
+			throw new Error('Timecode is null');
+		}
+		matcher = reTimeCode_s.exec(tmpTimecode);
 		rst = 3600000*matcher[1] + 60000*matcher[2] + 1000*matcher[3] + 1*matcher[6];
-	} catch(err) {
-		console.log(err.stack);
+	} catch (err){
+		$n2.log(err.stack);
 	}
 	
 	return rst;

@@ -309,6 +309,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			};
 		} else if ( 'replyColorForDisplayedSentences' === m.type ){
 			$n2.log('colors: ', m.data);
+			this._color_transcript(m.data);
 		};
 	},
 	_getTranscriptDiv: function(){
@@ -888,7 +889,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			_this.dispatchService.send(DH, {
 				type: 'resetDisplayedSentences'
 				,data: tagsBySentenceSpanIds
-				,nextStop: 'replyColorForDisplayedSentences'
 			})
 			$('div#'+ _this.transcriptId).multiSelect({
 				unselectOn: 'head',
@@ -942,20 +942,26 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			
 		}
 	},
-	_coloring_transcript: function(ifAll, unicode){
+	_color_transcript: function(colorMap){
 		var $set = this._getTranscriptDiv();
-		if ($set){
-			var task = [];
-			if (ifAll){
-				
-			} else {
-				task.push(unicode);
-			}
-			for (var i=0,e=task.length; i<e; ++i){
-				
+		if ( $set ){
+		$set.find('.n2widgetTranscript_transcript').each(function(){
+			var $elem = $(this);
+			$elem.css({"background-color" : 'transparent'});
+		})
+		}
+		for (var id in colorMap) {
+			var _data = colorMap[id];
+			var _color = _data.color;
+			if ( _color ){
+				if ( $set ){
+					$set.find('.n2transcript_sentence_' + $n2.utils.stringToHtmlId(id)).each(function(){
+						var $elem = $(this);
+						$elem.css({"background-color" : _color});
+					})
+				}
 			}
 		}
-		
 	},
 	_isMultiSelected: function(){
 		var node = [];
@@ -1145,58 +1151,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				};
 			};
 		};
-		var _this = this;
-		var cineIsUpdated = false;
-		
-
-		// Loop through all removed documents
-		if( sourceState.removed ){
-			for(var i=0,e=sourceState.removed.length; i<e; ++i){
-				var doc = sourceState.removed[i];
-				var docId = doc._id;
-				if( doc.atlascine2_cinemap ){
-					//_this.docId = undefined;
-				};
-				
-			};
-		};
-		
-		if( sourceState.added ){
-			for(var i=0,e=sourceState.added.length; i<e; ++i){
-				var doc = sourceState.added[i];
-				var docId = doc._id;
-
-				if( doc.atlascine2_cinemap ){
-					var media_doc_ref = doc.atlascine2_cinemap.media_doc_ref;
-					var mediaDocId = media_doc_ref.doc;
-					if (mediaDocId
-						&& mediaDocId !== _this.docId)
-					_this.docId = mediaDocId;
-					cineIsUpdated = true;
-				};
-			};
-		};
-
-		// Loop through all updated documents
-		if( sourceState.updated ){
-			for(var i=0,e=sourceState.updated.length; i<e; ++i){
-				var doc = sourceState.updated[i];
-				var docId = doc._id;
-					if( doc.atlascine2_cinemap ){
-						var media_doc_ref = doc.atlascine2_cinemap.media_doc_ref;
-						var mediaDocId = media_doc_ref.doc;
-						if (mediaDocId
-							&& mediaDocId !== _this.docId)
-						_this.docId = mediaDocId;
-						cineIsUpdated = true;
-					};
-				};
-		};
-
-
-		return cineIsUpdated;
-	
-		
 		return undefined;
 	},
 	/**
