@@ -638,6 +638,39 @@ var Monitor = $n2.Class({
 			});
 		};
 		
+		var oldHref = document.location.href;
+
+		window.onload = function() {
+
+			var
+			bodyList = document.querySelector("body")
+
+			,observer = new MutationObserver(function(mutations) {
+
+				mutations.forEach(function(mutation) {
+
+					if (oldHref != document.location.href) {
+
+						oldHref = document.location.href;
+
+						_this._urlChanged();
+
+					}
+
+				});
+
+			});
+
+			var config = {
+					childList: true,
+					subtree: true
+			};
+
+			observer.observe(bodyList, config);
+
+		};
+		
+		
 		var d = this._getDispatcher();
 		if( d ){
 			var f = function(m){
@@ -652,6 +685,10 @@ var Monitor = $n2.Class({
 		};
 	},
 
+	_urlChanged: function(){
+		$n2.log('URL CHANGED');
+	},
+	
 	_getDispatcher: function(){
 		var d = null;
 		if( this.options.directory ){
