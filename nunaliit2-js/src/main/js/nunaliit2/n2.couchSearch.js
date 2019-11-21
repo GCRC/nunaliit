@@ -1341,6 +1341,14 @@ var SearchInput = $n2.Class({
 		if( $textInput.autocomplete ) {
 			$textInput.autocomplete({
 				source: this._getJqAutoCompleteSource()
+				,select: function(event, ui){
+					var line = ui.item.value;
+					if( line.length > 0 ) {
+						_this._closeLookAhead();
+						_this.performSearch(line);
+						_this._closeLookAhead();
+					};
+				}
 			});
 		};
 		
