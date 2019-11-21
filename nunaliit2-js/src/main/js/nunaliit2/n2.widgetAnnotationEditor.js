@@ -314,7 +314,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		
 		this.editorId = $n2.getUniqueId();
 		
-		this.gloScaleFactorId = $n2.getUniqueId();
+		
 		this.innerFormId = $n2.getUniqueId();
 		this.currentDoc = undefined;
 		this.currentStartTime = undefined;
@@ -324,6 +324,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		this.dataDepot = new AnnotationEditorDataDepot({});
 		this._default_setting = {
 				globalScaleFactor : 5
+				, globalTimeOffset : 0.5
 		}
 		var f = function(m, addr, dispatcher){
 			_this._handle(m, addr, dispatcher);
@@ -630,13 +631,16 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			var $formfieldSections = $('div.n2WidgetAnnotation_tagSettings_formfieldSection');
 			$formfieldSections.each(function(){
 				var _gsfInput = $(this).find('input.n2transcript_input.input_scaleFactor');
-				if (_gsfInput){
+				var _gtoInput = $(this).find('input.n2transcript_input.input_timeOffset');
+				if (_gsfInput.get(0) !== document || _gtoInput.get(0) !== document ){
 					var _gsfInputValue= _gsfInput.val();
-					if (_gsfInputValue){
+					var _gtoInputValue = _gtoInput.val();
+					if (_gsfInputValue || _gtoInputValue){
 						if (typeof doc.atlascine2_cinemap.settings === 'undefined'){
 							doc.atlascine2_cinemap.settings = {};
 						}
 						doc.atlascine2_cinemap.settings.globalScaleFactor = _gsfInputValue;
+						doc.atlascine2_cinemap.settings.globalTimeOffset = _gtoInputValue;
 						documentSource.updateDocument({
 							doc: doc
 							,onSuccess: onSaved
@@ -717,6 +721,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		var _this = this;
 		//current cinemap doc;
 		var doc = this.currentDoc;
+		this.gloScaleFactorId = $n2.getUniqueId();
+		this.gloTimeOffsetId = $n2.getUniqueId();
 		var _setting = $n2.extend({}, _this._default_setting);
 		
 		var $formFieldSection = $('<div>')
@@ -737,11 +743,22 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				var _sf = _setting[se];
 				$('<label>')
 				.attr('for', _this.gloScaleFactorId)
-				.html('globalScaleFactor')
+				.html('GlobalScaleFactor')
 				.appendTo($formFieldSection);
 				$('<input>')
 				.attr('id', _this.gloScaleFactorId)
 				.addClass('n2transcript_input input_scaleFactor')
+				.val(_sf)
+				.appendTo($formFieldSection);
+			} else if (se === 'globalTimeOffset'){
+				var _sf = _setting[se];
+				$('<label>')
+				.attr('for', _this.gloTimeOffsetId)
+				.html('GlobalTimeOffset')
+				.appendTo($formFieldSection);
+				$('<input>')
+				.attr('id', _this.gloTimeOffsetId)
+				.addClass('n2transcript_input input_timeOffset')
 				.val(_sf)
 				.appendTo($formFieldSection);
 			}
