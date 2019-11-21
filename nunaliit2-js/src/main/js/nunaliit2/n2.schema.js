@@ -683,6 +683,7 @@ function _inputField() {
 };
 
 function _arrayField() {
+	var attr, completeSelectors;
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
@@ -694,60 +695,92 @@ function _arrayField() {
 		newType = args[1];
 	};
 
-	var r = [];
-	
-	r.push('<div class="n2schema_array">');
+	if (newType === 'tagbox') {
 
-	if( obj && obj.length ) {
-		for(var i=0,e=obj.length; i<e; ++i){
-			var item = obj[i];
+		var r = $('<div>');
+		var $arrayField = $('<div>')
+			.addClass('n2schema_array')
+			.appendTo(r);
 
-			var completeSelectors = obj[SELECT];
-			completeSelectors = completeSelectors.getChildSelector(i);
-			var cl = createClassStringFromSelector(completeSelectors);
-			
-			r.push('<div class="n2schema_array_item">');
+		if( obj[SELECT] ) {
+			completeSelectors = obj[SELECT];
+			attr = completeSelectors.encodeForDomAttribute();
 
-			r.push('<div class="n2schema_array_item_buttons">');
-	
-			r.push('<div class="n2schema_array_item_delete '+cl+'"></div>');
+			var $arrayItemWrapper = $('<div>')
+				.addClass('n2schema_field_tagbox')
+				.attr('nunaliit-selector', attr)
+				.appendTo($arrayField);
 			
-			r.push('<div class="n2schema_array_item_up '+cl+'"></div>');
-			
-			r.push('<div class="n2schema_array_item_down '+cl+'"></div>');
+			var tagBox = new $n2.mdc.MDCTagBox({
+				parentElem: $arrayItemWrapper,
+				chips: args[0],
+				label: options.ids[0]
+			});
 
-			r.push('</div>'); // close buttons
+			if (args[0] && args[0].length) {
+				var tagBoxData = $('#' + tagBox.getId()).data();
+			}
+		}
+
+		var rb = r.html();
+		return rb;
+
+	} else {
+		var r = [];
+		
+		r.push('<div class="n2schema_array">');
 	
-			r.push('<div class="n2schema_array_item_wrapper">');
+		if( obj && obj.length ) {
+			for(var i=0,e=obj.length; i<e; ++i){
+				var item = obj[i];
 	
-			r.push( options.fn(item,{data:{n2_selector:completeSelectors, itemNum:i+1}}) );
-			
-			r.push('</div></div>');
+				var completeSelectors = obj[SELECT];
+				completeSelectors = completeSelectors.getChildSelector(i);
+				var cl = createClassStringFromSelector(completeSelectors);
+				
+				r.push('<div class="n2schema_array_item">');
+	
+				r.push('<div class="n2schema_array_item_buttons">');
+		
+				r.push('<div class="n2schema_array_item_delete '+cl+'"></div>');
+				
+				r.push('<div class="n2schema_array_item_up '+cl+'"></div>');
+				
+				r.push('<div class="n2schema_array_item_down '+cl+'"></div>');
+	
+				r.push('</div>'); // close buttons
+		
+				r.push('<div class="n2schema_array_item_wrapper">');
+		
+				r.push( options.fn(item,{data:{n2_selector:completeSelectors, itemNum:i+1}}) );
+				
+				r.push('</div></div>');
+			};
 		};
-	};
-
-	// Add a new item
-	var arraySelector = undefined;
-	if( obj ){
-		arraySelector = obj[SELECT];
-	} else if( options && options.ids && options.ids.length ){
-		var selectors = [];
-		pathFromData(options.data, selectors);
-		selectors.push(options.ids[0]);
-		arraySelector = new $n2.objectSelector.ObjectSelector(selectors);
-	};
-	if( arraySelector ){
-		var arrayClass = createClassStringFromSelector(arraySelector);
-		r.push('<div class="n2schema_array_add '+arrayClass+'"');
-		if( newType ) {
-			r.push('n2_array_new_type="'+newType+'"');
+	
+		// Add a new item
+		var arraySelector = undefined;
+		if( obj ){
+			arraySelector = obj[SELECT];
+		} else if( options && options.ids && options.ids.length ){
+			var selectors = [];
+			pathFromData(options.data, selectors);
+			selectors.push(options.ids[0]);
+			arraySelector = new $n2.objectSelector.ObjectSelector(selectors);
 		};
-		r.push('></div>');
-	};
-	
-	r.push('</div>');
-	
-	return r.join('');
+		if( arraySelector ){
+			var arrayClass = createClassStringFromSelector(arraySelector);
+			r.push('<div class="n2schema_array_add '+arrayClass+'"');
+			if( newType ) {
+				r.push('n2_array_new_type="'+newType+'"');
+			};
+			r.push('></div>');
+		};
+		
+		r.push('</div>');
+		
+		return r.join('');
+	}
 	
 	function pathFromData(data, path){
 		if( data._parent ){
@@ -1859,6 +1892,11 @@ var Form = $n2.Class({
 					_this._installGeometry($elem, $(this));
 				});
 
+				// Install tag box
+				$divEvent.find('.n2schema_field_tagbox').each(function(){
+					_this._installTagBox($elem, $(this));
+				});
+
 				// Install custom types
 				$divEvent.find('.n2schema_field_custom').each(function(){
 					_this._installCustomType($elem, $(this),_this.obj,_this.callback);
@@ -1900,6 +1938,9 @@ var Form = $n2.Class({
 								newItem = null;
 								
 							} else if( 'string' === newType ){
+								newItem = '';
+								
+							} else if( 'tagbox' === newType ){
 								newItem = '';
 								
 							} else if( 'localized' === newType ){
@@ -2295,10 +2336,8 @@ var Form = $n2.Class({
 				});
 			
 		} else {
-			
 			// Handle changes
 			var changeHandler = function(e) {
-			//	var $input = $(this);
 				
 				var parentObj = parentSelector.getValue(_this.obj);
 				if( parentObj ){
@@ -2453,6 +2492,34 @@ var Form = $n2.Class({
 				_this.refresh($container);
 				_this.callback(_this.obj,objSel.selectors,cbValue);
 			};
+		});
+	},
+	
+
+	_installTagBox: function($container, $elem) {
+		var _this = this;
+		
+		var domSelector = $elem.attr('nunaliit-selector');
+		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
+		var stringSelector = objSel.getSelectorString();
+		var parentSelector = objSel.getParentSelector();
+		var key = objSel.getKey();
+		var $tagBoxChipSet = $elem.find('.mdc-chip-set');
+
+		$tagBoxChipSet.on('taglist:updated', function(e){
+
+			var $elem = $(this);
+
+			var tagBoxData = $tagBoxChipSet.data();
+			if (tagBoxData
+				&& tagBoxData.tags
+				&& key
+				&& parentSelector) {
+				var schema = parentSelector.selectors[0];
+				var doc = _this.obj[schema];
+				doc[key] = tagBoxData.tags;
+			}
+
 		});
 	},
 	

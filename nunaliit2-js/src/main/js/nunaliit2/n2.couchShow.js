@@ -2122,7 +2122,8 @@ var DomStyler = $n2.Class({
 			}
 
 			// Store chips list data in chipset
-			$('#' + chipSet.id).data('tags',chipsList);
+			$('#' + chipSet.id).data('tags',chipsList)
+				.trigger('taglist:updated');
 		};
 
 		function generateChip(chipText){
