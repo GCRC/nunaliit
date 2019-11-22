@@ -308,7 +308,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				this._documentChanged();
 			};
 		} else if ( 'replyColorForDisplayedSentences' === m.type ){
-			$n2.log('colors: ', m.data);
+			//$n2.log('colors: ', m.data);
 			this._color_transcript(m.data);
 		};
 	},
