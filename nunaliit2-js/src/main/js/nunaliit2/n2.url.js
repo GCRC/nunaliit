@@ -55,8 +55,31 @@ var Url = $n2.Class({
 		return this.url;
 	},
 
-	getUrlWithoutHash: function() {
+	getUrlWithoutCoordination: function() {
 		var href = this.getUrl();
+
+		var index = href.indexOf('@');
+		if( index >= 0 ) {
+			href = href.substr(0,index);
+		};
+		
+		return href;
+	},
+	
+	getCoordination: function() {
+		var hash = undefined;
+		
+		var href = this.getUrl();
+		var index = href.indexOf('@');
+		if( index >= 0 ) {
+			hash = href.substr(index+1);
+		};
+		
+		return hash;
+	},
+	
+	getUrlWithoutHash: function() {
+		var href = this.getUrlWithoutCoordination();
 
 		var index = href.indexOf('#');
 		if( index >= 0 ) {
@@ -69,7 +92,7 @@ var Url = $n2.Class({
 	getHash: function() {
 		var hash = undefined;
 		
-		var href = this.getUrl();
+		var href = this.getUrlWithoutCoordination();
 		var index = href.indexOf('#');
 		if( index >= 0 ) {
 			hash = href.substr(index+1);
@@ -78,25 +101,52 @@ var Url = $n2.Class({
 		return hash;
 	},
 
+	setCoordination: function(coor) {
+		var href = this.getUrl();
+		var index = href.indexOf('@');
+		
+		if ( index >= 0 ){
+			if ( coor ) {
+				this.url = href.substr(0, index+1) + coor;
+			} else {
+				this.url = href.substr(0,index);
+			}
+		} else {
+			// Currently, there is no hash...
+			if( coor ){
+				// ...add one
+				this.url = href + '@' + coor;
+			};
+		};
+	},
+	
 	setHash: function(hash) {
 		var href = this.getUrl();
-		var index = href.indexOf('#');
-		if( index >= 0 ) {
+		var hrefWithoutCoor = this.getUrlWithoutCoordination();
+		var hash_index = hrefWithoutCoor.indexOf('#');
+		var coor_index = this.getUrl().indexOf('@');
+
+		if( hash_index >= 0 ) {
 			// There already exist a hash...
 			if( hash ){
 				// ...replace it
-				this.url = href.substr(0,index+1)+hash;
+				this.url = hrefWithoutCoor.substr(0,index+1)+hash;
 			} else {
 				// ...remove it
-				this.url = href.substr(0,index);
+				this.url = hrefWithoutCoor.substr(0,index);
 			};
 		} else {
 			// Currently, there is no hash...
 			if( hash ){
 				// ...add one
-				this.url = href + '#' + hash;
+				this.url = hrefWithoutCoor + '#' + hash;
 			};
 		};
+		if ( coor_index >= 0){
+			this.url += '@' + this.getCoordination();
+		} else {
+			
+		}
 		
 		return this;
 	},
@@ -151,18 +201,19 @@ var Url = $n2.Class({
 	},
 	
 	setParamValue: function(name, value){
+		var coor = this.getCoordination();
 		var hash = this.getHash();
 		var path = this.getUrlWithoutParams();
 		var params = this.getParams();
 		
 		params[name] = [value];
 		
-		this._setUrlFromComponents(path, params, hash);
+		this._setUrlFromComponents(path, params, hash, coor);
 		
 		return this;
 	},
 	
-	_setUrlFromComponents: function(path, params, hash){
+	_setUrlFromComponents: function(path, params, hash, coor){
 		var newUrl = [path];
 		
 		if( params ){
@@ -189,6 +240,11 @@ var Url = $n2.Class({
 		if( hash ){
 			newUrl.push( '#' );
 			newUrl.push( hash );
+		};
+		
+		if( coor ){
+			newUrl.push( '@' );
+			newUrl.push( coor );
 		};
 		
 		this.url = newUrl.join('');
