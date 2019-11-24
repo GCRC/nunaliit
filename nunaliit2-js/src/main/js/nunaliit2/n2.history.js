@@ -95,17 +95,45 @@ function computeHashFromEntry(entry){
 	return hash;
 };
  
+function decodeCoordinationFromHash(hash){
+	var coor_index = hash.indexOf('@');
+	if ( coor_index >= 0){
+		return hash.substr( coor_index + 1 );
+	} else {
+		return null;
+	}
+};
+
 function decodeEntryFromHash(hash){
 	var entry = undefined;
-	
+	var hashWithoutCoor = undefined;
 	try {
-		var d = $n2.Base64.decode(hash);
+		var coor_index = hash.indexOf('@');
+		if ( coor_index >= 0){
+			hashWithoutCoor = hash.substr(0, coor_index);
+		} else {
+			hashWithoutCoor = hash;
+		}
+		var d = $n2.Base64.decode(hashWithoutCoor);
 		entry = JSON.parse(d);
 	} catch(s) {};
 	
 	return entry;
 };
 
+function replaceCoordinationInHash ( coor ){
+	var hash = getCurrentHash();
+	hash = hash || 'nostate';
+	var coor_index = hash.indexOf('@');
+	var newhash = '';
+	if ( hash && coor_index >= 0 ){
+		newhash = hash.substr(0, coor_index)
+		newhash += '@' + coor
+	} else {
+		newhash += '@' + coor
+	}
+	return newhash;
+}
 function createNewEntry(entry){
 	if( !entry.s ){
 		entry.s = (new Date()).getTime();
@@ -133,7 +161,9 @@ function getEventFromHash(hash){
 		};
 	} else {
 		var entry = decodeEntryFromHash(hash);
+		var coor = decodeCoordinationFromHash (hash);
 		
+
 		if( entry && TYPE_SELECTED === entry.t ){
 			var docId = entry.i;
 			event = {
@@ -162,6 +192,24 @@ function getEventFromHash(hash){
 				,searchLine: searchLine
 			};
 		};
+		
+		if ( coor ){
+			var coor_arr = coor.split(',');
+			var x = coor_arr[0];
+			var y = coor_arr[1];
+			var zoom = coor_arr[2].substr(0, coor_arr[2].length-1);
+			var coor_ch_evt = {
+				type: 'n2ViewAnimation',
+				x: x,
+				y: y,
+				zoom: zoom
+			};
+			if ( event ){
+				event = [event, coor_ch_evt];
+			} else {
+				event = [coor_ch_evt];
+			}
+		}
 	};
 	
 	return event;
@@ -635,41 +683,9 @@ var Monitor = $n2.Class({
 			// Supported
 			$(window).bind('hashchange',function(e){
 				_this._hashChange(e);
+				//$n2.log('Detected hash changed');
 			});
 		};
-		
-		var oldHref = document.location.href;
-
-		window.onload = function() {
-
-			var
-			bodyList = document.querySelector("body")
-
-			,observer = new MutationObserver(function(mutations) {
-
-				mutations.forEach(function(mutation) {
-
-					if (oldHref != document.location.href) {
-
-						oldHref = document.location.href;
-
-						_this._urlChanged();
-
-					}
-
-				});
-
-			});
-
-			var config = {
-					childList: true,
-					subtree: true
-			};
-
-			observer.observe(bodyList, config);
-
-		};
-		
 		
 		var d = this._getDispatcher();
 		if( d ){
@@ -683,10 +699,6 @@ var Monitor = $n2.Class({
 			d.register(DH,'setHash',f);
 			d.register(DH,'replaceHash',f);
 		};
-	},
-
-	_urlChanged: function(){
-		$n2.log('URL CHANGED');
 	},
 	
 	_getDispatcher: function(){
@@ -820,6 +832,7 @@ var Tracker = $n2.Class({
 			d.register(DH,'editInitiate',f);
 			d.register(DH,'editCreateFromGeometry',f);
 			d.register(DH,'editClosed',f);
+			d.register(DH,'viewChanged', f);
 		};
 	},
 	
@@ -1069,13 +1082,52 @@ var Tracker = $n2.Class({
 					,docId: m.docId
 				});
 			};
+		} else if ('viewChanged' === m.type ){
+			if ( m.coordination ){
+				this.last = $n2.extend(this.last, {
+					coordination: m.coordination
+				})
+				if( !m._suppressSetHash ) {
+					var type = 'setHash';
+					if( m._replaceHash ) type = 'replaceHash';
+					
+					var hash = replaceCoordinationInHash( m.coordination );
+					
+					this._dispatch({
+						type: type
+						,hash: hash
+					});
+				};
+			}
 		};
 	},
 	
 	_reloadHash: function(hash){
+		var _this = this;
 		var m = getEventFromHash(hash);
-		
-		if( m ){
+		if ( m && Array.isArray(m) ){
+			m.forEach( function( me ){
+				if ( 'n2ViewAnimation' === me.type ){
+					me._suppressSetHash = true;
+					_this._dispatch(me);
+				} else if( me ){
+					me._suppressSetHash = true;
+
+					if( 'userSelect' === me.type
+							&& typeof me.docId === 'string'
+								&& _this.last.selected === me.docId ){
+						// Do not replay selection if already selected
+						if( _this.forceHashReplay ){
+							// Unless specifically requested
+							_this._dispatch(me);
+						};
+
+					} else {
+						_this._dispatch(me);
+					};
+				};
+			});
+		} else if ( m ){
 			m._suppressSetHash = true;
 			
 			if( 'userSelect' === m.type
@@ -1090,7 +1142,7 @@ var Tracker = $n2.Class({
 			} else {
 				this._dispatch(m);
 			};
-		};
+		}
 	}
 });
 

@@ -1591,6 +1591,7 @@ class N2MapCanvas  {
 		var _this = this;
 		this._classname = 'N2MapCanvas';
 		this.dispatchService  = null;
+		this._suppressSetHash = false;
 
 		this.showService = null;
 
@@ -1872,10 +1873,19 @@ class N2MapCanvas  {
 			customMap.once('moveend', function(evt){
 				let res = evt.frameState.viewState.resolution;
 				let proj = _this.n2View.getProjection();
+				let zoom = evt.frameState.viewState.zoom;
+				let center = evt.frameState.viewState.center;
 				_this.resolution = res;
 				var extent = olView.calculateExtent();
 				_this.sources.forEach(function(source){
 					source.onChangedResolution(res,proj, extent);
+				});
+				
+				var coor_string = center.join(',') + ',' + zoom + 'z';
+				_this.dispatchService.send(DH, {
+					type: 'viewChanged'
+					,coordination: coor_string
+					,_suppressSetHash : _this._suppressSetHash
 				});
 			})
 		}
@@ -2467,38 +2477,56 @@ class N2MapCanvas  {
 		if ('n2ViewAnimation' === type){
 			let x = m.x;
 			let y = m.y;
-			let sourceProjCode = m.projCode;
-			let targetProjCode = 'EPSG:3857';
+			let zoom = m.zoom || 9;
+			if ( m._suppressSetHash ){
+				this._suppressSetHash = m._suppressSetHash 
+			}
+			var extent = undefined;
 			var targetCenter = [x, y];
-			if ( targetProjCode !== sourceProjCode){
-				var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["getTransform"])( sourceProjCode, targetProjCode);
-				// Convert [0,0] and [0,1] to proj
-				targetCenter = transformFn([x, y]);
+			
+			if ( m.projCode ){
+				let sourceProjCode = m.projCode;
+				let targetProjCode = 'EPSG:3857';
+				if ( targetProjCode !== sourceProjCode){
+					var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["getTransform"])( sourceProjCode, targetProjCode);
+					// Convert [0,0] and [0,1] to proj
+					targetCenter = transformFn([x, y]);
+				}
+				extent =  this._computeFullBoundingBox(m.doc, 'EPSG:4326','EPSG:3857');
 			}
 
-			let extent =  this._computeFullBoundingBox(m.doc, 'EPSG:4326','EPSG:3857');
-
-
-
-//			_this.n2View.animate({
-//			center: targetCenter,
-//			duration: 1000
-//			});
-//			_this.n2View.animate({
-//			zoom: _this.n2View.getZoom()-1,
-//			duration: 500
-//			});
-			if (extent[0] === extent[2] || extent[1] === extent [3]){
-				_this.n2View.animate({
-					center: targetCenter,
-					duration: 500
-				},{
-					zoom: 9,
-					duration: 500
-				});
+			_this.n2View.cancelAnimations();
+			if ( extent ){
+				if (extent[0] === extent[2] || extent[1] === extent [3]){
+					_this.n2View.animate({
+						center: targetCenter,
+						duration: 500
+					},{
+						zoom: 9,
+						duration: 500
+					});
+				} else {
+					_this.n2View.fit(extent,{duration: 1500});
+				}
 			} else {
-				_this.n2View.fit(extent,{duration: 1500});
+				_this.n2View.animate({
+					center: targetCenter
+					,zoom : zoom
+					,duration : 200
+				});
 			}
+			var inid = setInterval(function(){
+				var isPlaying = _this.n2View.getAnimating();
+
+				if( isPlaying ){
+					
+				} else {
+					_this._suppressSetHash = false;
+					clearInterval(inid);
+				}
+				
+			},100);
+
 
 		} else if ('n2rerender' === type){
 			var olmap = _this.n2Map;

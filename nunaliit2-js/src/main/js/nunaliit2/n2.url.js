@@ -122,18 +122,19 @@ var Url = $n2.Class({
 	
 	setHash: function(hash) {
 		var href = this.getUrl();
+		var coor_index = this.getUrl().indexOf('@');
 		var hrefWithoutCoor = this.getUrlWithoutCoordination();
 		var hash_index = hrefWithoutCoor.indexOf('#');
-		var coor_index = this.getUrl().indexOf('@');
+		
 
 		if( hash_index >= 0 ) {
 			// There already exist a hash...
 			if( hash ){
 				// ...replace it
-				this.url = hrefWithoutCoor.substr(0,index+1)+hash;
+				this.url = hrefWithoutCoor.substr(0,hash_index+1)+hash;
 			} else {
 				// ...remove it
-				this.url = hrefWithoutCoor.substr(0,index);
+				this.url = hrefWithoutCoor.substr(0,hash_index);
 			};
 		} else {
 			// Currently, there is no hash...
