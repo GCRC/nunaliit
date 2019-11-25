@@ -1,10 +1,13 @@
 package ca.carleton.gcrc.couch.onUpload.inReach;
 
 import java.io.StringWriter;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.TimeZone;
 
 import org.json.JSONObject;
 
@@ -74,6 +77,9 @@ public class InReachProcessorImpl implements InReachProcessor {
 		// Extract time
 		if( null != jsonPosition ) {
 			String gpsTimestamp = jsonPosition.optString("GpsTimestamp", null);
+			DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+			df.setTimeZone(TimeZone.getTimeZone("UTC"));
+
 			
 			Date gpsDate = null;
 			if( null != gpsTimestamp ) {
@@ -86,13 +92,19 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 			// create date structure
 			if( null != gpsDate ) {
-				long intervalStart = gpsDate.getTime() / 1000;
-				long intervalEnd = intervalStart + 1;
+				// Round ms start interval timestamp to the nearest second
+				long intervalStart = (gpsDate.getTime() + 500) / 1000;
+				long intervalStart_ms = intervalStart * 1000;
+
+				long intervalEnd = intervalStart_ms + 1;
+
+				Date gpsTimestampDate = new Date(intervalStart_ms);
+				String formattedGpsTimestamp = df.format(gpsTimestampDate);
 
 				JSONObject jsonDate = new JSONObject();
 				jsonDate.put("nunaliit_type", "date");
-				jsonDate.put("date", gpsTimestamp);
-				jsonDate.put("min", intervalStart);
+				jsonDate.put("date", formattedGpsTimestamp);
+				jsonDate.put("min", intervalStart_ms);
 				jsonDate.put("max", intervalEnd);
 
 				jsonItem.put("NunaliitTimestamp", jsonDate);
