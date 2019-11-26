@@ -2144,7 +2144,8 @@ var DomStyler = $n2.Class({
 				.addClass('material-icons mdc-chip__icon mdc-chip__icon--trailing')
 				.attr('tabindex','0')
 				.attr('role','button')
-				.text('x')
+				.attr('width', '15')
+				.attr('height', '15')
 				.appendTo($chip);
 
 			return $chip;

@@ -702,24 +702,25 @@ function _arrayField() {
 			.addClass('n2schema_array')
 			.appendTo(r);
 
-		if( obj[SELECT] ) {
+		var $arrayItemWrapper = $('<div>')
+			.addClass('n2schema_field_tagbox')
+			.appendTo($arrayField);
+
+		if (obj && obj[SELECT]) {
 			completeSelectors = obj[SELECT];
 			attr = completeSelectors.encodeForDomAttribute();
 
-			var $arrayItemWrapper = $('<div>')
-				.addClass('n2schema_field_tagbox')
-				.attr('nunaliit-selector', attr)
-				.appendTo($arrayField);
-			
-			var tagBox = new $n2.mdc.MDCTagBox({
-				parentElem: $arrayItemWrapper,
-				chips: args[0],
-				label: options.ids[0]
-			});
+			$arrayItemWrapper.attr('nunaliit-selector', attr);
+		}
+		
+		var tagBox = new $n2.mdc.MDCTagBox({
+			parentElem: $arrayItemWrapper,
+			chips: args[0],
+			label: options.ids[0]
+		});
 
-			if (args[0] && args[0].length) {
-				var tagBoxData = $('#' + tagBox.getId()).data();
-			}
+		if (args[0] && args[0].length) {
+			var tagBoxData = $('#' + tagBox.getId()).data();
 		}
 
 		var rb = r.html();

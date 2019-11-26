@@ -97,6 +97,10 @@
 	max-width: none;
 }
 
+.mdc-chip .mdc-chip__icon {
+	background: transparent url('images/x_icon_naked_15.png') no-repeat 0 0;
+}
+
 /* Nunaliit2 Tool Page Styling */
 .drawer-frame-root {
 	display: -ms-flexbox;
