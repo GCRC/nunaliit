@@ -1324,13 +1324,6 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this._generateMDCSelectMenu();
 	},
 
-	_calcMinWidth: function(textWidth) {
-		var leftPadding = 12;
-		var rightPadding = 68.25;
-
-		return textWidth + leftPadding + rightPadding;
-	},
-
 	_generateMDCSelectMenu: function() {
 		var $menu, $menuNotchedOutline, $menuNotchedOutlineNotch, $label, keys;
 		var classesOnSelectTag = '';
@@ -1399,10 +1392,6 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
-
-		// Set min-width on select menu to prevent truncation of select label
-		var minWidth = this._calcMinWidth($label.innerWidth());
-		$menu.css('min-width', minWidth);
 	},
 
 	_addOptionToSelectMenu: function(menuOpt) {
