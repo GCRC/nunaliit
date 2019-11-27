@@ -2254,7 +2254,7 @@ var DomStyler = $n2.Class({
 		// truncation.
 		var _calcMinWidth = function(textWidth) {
 			var leftPadding = 12;
-			var rightPadding = 68;
+			var rightPadding = 78;
 
 			return textWidth + leftPadding + rightPadding;
 		};
