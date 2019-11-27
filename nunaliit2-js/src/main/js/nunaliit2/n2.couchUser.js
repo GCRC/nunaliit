@@ -268,65 +268,60 @@ var UserEditor = $n2.Class({
 			});
 		};
 
-		var $buttons = $('<div class="n2UserEdit_buttons"></div>')
+		var $buttons = $('<div>')
+			.addClass('n2UserEdit_buttons')
 			.appendTo($editor);
 
 		// Save button
-		$('<input type="button"/>')
-			.addClass('n2UserEdit_saveButton')
-			.val( _loc('Save') )
-			.appendTo($buttons)
-			.click(function(){
+		new $n2.mdc.MDCButton({
+			parentElem: $buttons,
+			mdcClasses: ['n2UserEdit_saveButton'],
+			btnLabel: 'Save',
+			onBtnClick: function() {
 				_this._save();
 				return false;
-			});
+			}
+		});
 
 		// Delete button
-		$('<input type="button"/>')
-			.addClass('n2UserEdit_deleteButton')
-			.val( _loc('Delete') )
-			.appendTo($buttons)
-			.click(function(){
+		new $n2.mdc.MDCButton({
+			parentElem: $buttons,
+			mdcClasses: ['n2UserEdit_deleteButton'],
+			btnLabel: 'Delete',
+			onBtnClick: function() {
 				_this._delete();
 				return false;
-			});
+			}
+		});
 
 		// Roles button
-		$('<input type="button"/>')
-			.addClass('n2UserEdit_rolesButton')
-			.val( _loc('Roles') )
-			.appendTo($buttons)
-			.click(function(e){
+		new $n2.mdc.MDCButton({
+			parentElem: $buttons,
+			mdcClasses: ['n2UserEdit_rolesButton'],
+			btnLabel: 'Roles',
+			onBtnClick: function() {
 				_this._rolesDialog(doc,function(roles){
 					if( roles.length > 0 ){
 						doc.roles = roles;
 					} else if( doc.roles ) {
 						delete doc.roles;
-					};
+					}
 					_this.treeEditor.refresh();
 				});
 				return false;
-			});
+			}
+		});
 
-		// Password button
-		$('<input type="button"/>')
-			.addClass('n2UserEdit_passwordButton')
-			.val( _loc('Set Password') )
-			.appendTo($buttons)
-			.click(function(e){
+		// Set Password button
+		new $n2.mdc.MDCButton({
+			parentElem: $buttons,
+			mdcClasses: ['n2UserEdit_passwordButton'],
+			btnLabel: 'Set Password',
+			onBtnClick: function() {
 				_this._passwordDialog();
 				return false;
-			});
-
-		// Cancel button
-		$('<input type="button"/>')
-			.addClass('n2UserEdit_cancelButton')
-			.val( _loc('Cancel') )
-			.appendTo($buttons)
-			.click(function(e){
-				_this._cancel();
-				return false;
-			});
+			}
+		});
 	}
 	
 	,_refresh: function(){
