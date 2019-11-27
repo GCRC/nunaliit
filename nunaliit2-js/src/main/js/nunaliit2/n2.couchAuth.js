@@ -1465,43 +1465,31 @@ var AuthService = $n2.Class({
 		});
 		
 		function userDocLoaded(userDoc){
+			var userEditDialog;
 			var userService = _this._getUserService();
-			if( userService ){
-				var $dialog = $('<div>')
-					.addClass('n2Auth_userEdit')
-					.appendTo( $(document.body) );
-				var dialogId = $n2.utils.getElementIdentifier($dialog);
-				
+			if (userService) {
+
+				userEditDialog = new $n2.mdc.MDCDialog({
+					mdcClasses: ['n2Auth_userEdit'],
+					dialogTitle: 'Edit User'
+				});
+
 				userService.startEdit({
 					userDoc: userDoc
-					,elem: $dialog
-					,onSavedFn: function(userDoc){
+					,elem: $('#' + userEditDialog.getContentId())
+					,onSavedFn: function(userDoc) {
 						var requestService = _this._getRequestService();
-						if( requestService && userDoc && userDoc.name ){
+						if (requestService
+							&& userDoc
+							&& userDoc.name) {
 							requestService.requestUser(userDoc.name);
-						};
-					}
-					,onFinishedFn: function(){
-						var diag = $('#'+dialogId);
-						diag.dialog('close');
+						}
 					}
 				});
-	
-				var dialogOptions = {
-					autoOpen: true
-					,modal: true
-					,width: 'auto'
-					,title: _loc('Edit User')
-					,close: function(event, ui){
-						var diag = $('#'+dialogId);
-						diag.remove();
-					}
-				};
-				$dialog.dialog(dialogOptions);
-			};
-		};
+			}
+		}
 	}
-	
+
 	,getCurrentUserName: function() {
 		var context = this._getAuthContext();
 
