@@ -433,58 +433,29 @@ var UserEditor = $n2.Class({
 			};
 		};
 	}
-	
-	,_passwordDialog: function(){
+
+	,_passwordDialog: function() {
 		var _this = this;
-		
-		var diagId = $n2.getUniqueId();
-		var $passwordDialog = $('<div id="'+diagId+'" class="n2User_setPassword_dialog"></div>');
 
-		var $passwordInputs = $('<div class="n2User_setPassword_inputs"></div>')
-			.appendTo($passwordDialog);
-		
-		// Password
-		var id = $n2.getUniqueId();
-		var $div = $('<div></div>')
-			.appendTo($passwordInputs);
-		$('<label/>')
-			.attr('for',id)
-			.text( _loc('Enter password:') )
-			.appendTo($div);
-		$('<input type="password" name="password"/>')
-			.attr('id',id)
-			.appendTo($div);
+		var passwordDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: ['n2User_setPassword_dialog'],
+			dialogTitle: 'Change Password',
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
 
-		// Confirm
-		var id = $n2.getUniqueId();
-		var $div = $('<div></div>')
-			.appendTo($passwordInputs);
-		$('<label/>')
-			.attr('for',id)
-			.text( _loc('Confirm password:') )
-			.appendTo($div);
-		$('<input type="password" name="confirm"/>')
-			.attr('id',id)
-			.appendTo($div);
-
-		// Buttons
-		var $buttons = $('<div class="n2User_setPassword_buttons"></div>')
-			.appendTo($passwordDialog);
-
-		// OK button
-		$('<input type="button"/>')
-			.val( _loc('OK') )
-			.appendTo($buttons)
-			.click(function(){
-				var $dialog = $('#'+diagId);
-				
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + passwordDialog.getFooterId()),
+			btnLabel: 'OK',
+			onBtnClick: function() {
+				var $dialog = $('#' + passwordDialog.getId());
 				var pw1 = $dialog.find('input[name=password]').val();
 				var pw2 = $dialog.find('input[name=confirm]').val();
-				
-				if( pw1 != pw2 ) {
-					alert( _loc('Passwords do not match') );
-				} else if( pw1.length < 6 ) {
-					alert( _loc('Password is too short') );
+
+				if (pw1 !== pw2) {
+					alert(_loc('Passwords do not match'));
+				} else if (pw1.length < 6) {
+					alert (_loc('Password is too short'));
 				} else {
 					_this.userDb.computeUserPassword({
 						userDoc: _this.userDoc
@@ -492,35 +463,39 @@ var UserEditor = $n2.Class({
 						,onSuccess: function() {
 							_this._refresh();
 							$dialog.dialog('close');
-						} 
-						,onError: function(errMsg){
-							alert( _loc('Unable to set password: ') + errMsg);
+						}
+						,onError: function(errMsg) {
+							alert(_loc('Unable to set password: ') + errMsg);
 						}
 					});
-				};
-			});
-
-		// Cancel button
-		$('<input type="button"/>')
-			.val( _loc('Cancel') )
-			.appendTo($buttons)
-			.click(function(){
-				$('#'+diagId).dialog('close');
-			})
-			;
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Change Password')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
+				}
 			}
-		};
-		$passwordDialog.dialog(dialogOptions);
+		});
+
+		var $passwordInputs = new $n2.mdc.MDCFormField({
+			parentElem: $('#' + passwordDialog.getContentId()),
+			mdcClasses: ['n2User_setPassword_inputs']	
+		});
+
+		var $passwordField = new $n2.mdc.MDCTextField({
+			parentElem: $('#' + $passwordInputs.getId()),
+			txtFldLabel: 'Enter password:',
+			passwordFld: true
+		});
+
+		$('#' + $passwordField.getInputId())
+			.attr('name','password');
+
+		$('<br/><br/>').appendTo($('#' + $passwordInputs.getId()));
+
+		var $confirmField = new $n2.mdc.MDCTextField({
+			parentElem: $('#' + $passwordInputs.getId()),
+			txtFldLabel: 'Confirm password:',
+			passwordFld: true
+		});
+
+		$('#' + $confirmField.getInputId())
+			.attr('name','confirm');
 	}
 	
 	,_save: function(){

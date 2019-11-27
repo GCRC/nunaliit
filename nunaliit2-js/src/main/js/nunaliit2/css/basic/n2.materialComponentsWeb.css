@@ -232,3 +232,7 @@ section.mdc-top-app-bar__section.mdc-top-app-bar__section--align-end {
 .nunaliit_application .nunaliit_login .mdc-button {
 	color: #ffffff;
 }
+
+.n2User_setPassword_inputs.mdc-form-field {
+	display: block;
+}
