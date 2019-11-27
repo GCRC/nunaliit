@@ -2249,6 +2249,21 @@ var DomStyler = $n2.Class({
 	_attachMDCSelect: function($jq) {
 		var attachedSelect;
 		var menu = $jq[0];
+
+		// Calculate a minimum width for select menus to prevent floating label
+		// truncation.
+		var _calcMinWidth = function(textWidth) {
+			var leftPadding = 12;
+			var rightPadding = 68;
+
+			return textWidth + leftPadding + rightPadding;
+		};
+
+		// Set min-width on select menu to prevent truncation of select label
+		var $label = $jq.find('.mdc-floating-label');
+		var minWidth = _calcMinWidth($label.innerWidth());
+		$jq.css('min-width', minWidth);
+
 		if (menu) {
 			attachedSelect = $mdc.select.MDCSelect.attachTo(menu);
 			attachedSelect.layout();
