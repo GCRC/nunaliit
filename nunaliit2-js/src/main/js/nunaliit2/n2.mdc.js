@@ -334,7 +334,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	filterChips: null,
 	inputChips: null,
 	inputId: null,
-	chipsetsUpdateCallback : null,
+	chipsetsUpdateCallback: null,
 
 	initialize: function(opts_) {
 		var opts = $n2.extend({
@@ -442,9 +442,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 				.attr('id', chipId)
 				.attr('tabindex', '0');
 
-			if (typeof fraction === 'undefined') {
-
-			} else if (fraction === 'full') {
+			if (fraction === 'full') {
 				$chip.addClass('mdc-chip-full');
 			} else {
 				$chip.addClass('mdc-chip-partial');
@@ -1307,7 +1305,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			menuLabel: null,
 			menuOpts: [],
 			preSelected: false,
-			nativeClasses : null
+			nativeClasses: null
 		}, opts_);
 
 		MDC.prototype.initialize.call(this,opts);
@@ -1326,8 +1324,16 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this._generateMDCSelectMenu();
 	},
 
-	_generateMDCSelectMenu: function(){
-		var $menu, $menuNotchedOutline, $menuNotchedOutlineNotch, keys;
+	_calcMinWidth: function(textWidth) {
+		var leftPadding = 12;
+		var rightPadding = 68.25;
+
+		return textWidth + leftPadding + rightPadding;
+	},
+
+	_generateMDCSelectMenu: function() {
+		var $menu, $menuNotchedOutline, $menuNotchedOutlineNotch, $label, keys;
+		var classesOnSelectTag = '';
 		var _this = this;
 
 		this.mdcClasses.push('mdc-select', 'mdc-select--outlined', 'n2s_attachMDCSelect');
@@ -1346,8 +1352,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		$('<i>').addClass('mdc-select__dropdown-icon')
 			.appendTo($menu);
 
-		var classesOnSelectTag = '';
-		if ( this.nativeClasses ){
+		if (this.nativeClasses) {
 			classesOnSelectTag = this.nativeClasses.join(' ');
 		}
 		this.select = $('<select>')
@@ -1368,14 +1373,14 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			.addClass('mdc-notched-outline__notch')
 			.appendTo($menuNotchedOutline);
 
-		var label = $('<label>')
+		$label = $('<label>')
 			.attr('for', this.selectId)
 			.addClass('mdc-floating-label')
 			.text(_loc(this.menuLabel))
 			.appendTo($menuNotchedOutlineNotch);
 
 		if (this.preSelected) {
-			label.addClass('mdc-floating-label--float-above');
+			$label.addClass('mdc-floating-label--float-above');
 		}
 
 		$('<div>').addClass('mdc-notched-outline__trailing')
@@ -1394,6 +1399,10 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
+
+		// Set min-width on select menu to prevent truncation of select label
+		var minWidth = this._calcMinWidth($label.innerWidth());
+		$menu.css('min-width', minWidth);
 	},
 
 	_addOptionToSelectMenu: function(menuOpt) {
