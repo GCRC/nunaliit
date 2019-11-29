@@ -3917,7 +3917,7 @@ var AttachmentEditor = $n2.Class({
 			parentElem: $div,
 			mdcClasses: ['attachmentEditor_delete'],
 			mdcAttributes: {
-				'n2AttName':'attName'
+				'n2AttName':attName
 			},
 			btnLabel: 'Remove',
 			onBtnClick: function(){

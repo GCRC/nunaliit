@@ -1259,6 +1259,30 @@ $n2.keys = function (obj) {
 	}
 	return arr;
 }
-	
+
+$n2.utils.convertSMPTEtoSeconds = function (SMPTE) {
+
+	if (typeof SMPTE !== 'string') {
+		throw new TypeError('Argument must be a string value');
+	}
+
+	SMPTE = SMPTE.replace(',', '.');
+
+	var decimalLen = ~SMPTE.indexOf('.') ? SMPTE.split('.')[1].length : 0;
+
+	var secs = 0,
+	    multiplier = 1;
+
+	SMPTE = SMPTE.split(':').reverse();
+
+	for (var i = 0, total = SMPTE.length; i < total; i++) {
+		multiplier = 1;
+		if (i > 0) {
+			multiplier = Math.pow(60, i);
+		}
+		secs += Number(SMPTE[i]) * multiplier;
+	}
+	return Number(secs.toFixed(decimalLen));
+}
 
 })(nunaliit2);

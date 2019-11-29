@@ -41,15 +41,15 @@ var
  function findTimeLink(timeLinks, startTime, endTime){
 	 var result = [];
 	 var timeLink;
-	 var target_start = convertTimecodeToMs(startTime);
-	 var target_end = convertTimecodeToMs(endTime);
+	 var target_start = $n2.utils.convertSMPTEtoSeconds(startTime);
+	 var target_end = $n2.utils.convertSMPTEtoSeconds(endTime);
 	 if ( target_start && target_end ){
 
 		 for (var i=0,e=timeLinks.length; i<e; i++){
 			 try{
 				 timeLink =timeLinks[i];
-				 var start_in_ms = convertTimecodeToMs(timeLink.starttime);
-				 var end_in_ms = convertTimecodeToMs(timeLink.endtime);
+				 var start_in_ms = $n2.utils.convertSMPTEtoSeconds(timeLink.starttime);
+				 var end_in_ms = $n2.utils.convertSMPTEtoSeconds(timeLink.endtime);
 				 if(  start_in_ms &&
 						 end_in_ms &&
 						 start_in_ms === target_start &&
@@ -1490,21 +1490,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		this._refreshCurrentDoc();
 	}
 });
-var reTimeCode_s = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*/i;
-function convertTimecodeToMs (tmpTimecode){
-	var rst, matcher;
-	try{
-		if ( !tmpTimecode ){
-			throw new Error('Timecode is null');
-		}
-		matcher = reTimeCode_s.exec(tmpTimecode);
-		rst = 3600000*matcher[1] + 60000*matcher[2] + 1000*matcher[3] + 1*matcher[6];
-	} catch (err){
-		$n2.log(err.stack);
-	}
-	
-	return rst;
-}
+
  function HandleWidgetAvailableRequests(m){
 	 if( m.widgetType === 'annotationEditorWidget' ){
 		 m.isAvailable = true;
