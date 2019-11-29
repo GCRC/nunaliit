@@ -253,7 +253,7 @@ var UserManagementApplication = $n2.Class({
 		$userForm.append('</br>');
 
 		new $n2.mdc.MDCButton({
-			parentElem, $userForm,
+			parentElem: $userForm,
 			mdcId: 'btnAddUser2',
 			btnLabel: 'Proceed',
 			btnRaised: true,

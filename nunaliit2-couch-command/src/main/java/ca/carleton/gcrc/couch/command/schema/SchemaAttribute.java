@@ -664,6 +664,9 @@ public class SchemaAttribute {
 					} else if( "date".equals(elementType) ){
 						pw.print("{{date}}");
 						
+					} else if( "tagbox".equals(elementType) ){
+						pw.print("{{.}}");
+						
 					} else if( "reference".equals(elementType) ){
 						pw.print("{{#doc}}");
 						pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
@@ -874,6 +877,8 @@ public class SchemaAttribute {
 						pw.println("{{#:localize}}.{{/:localize}}");
 					} else if( "date".equals(elementType) ){
 						pw.println("{{date}}");
+					} else if( "tagbox".equals(elementType) ){
+						pw.println("{{.}}");
 					} else if( "reference".equals(elementType) ){
 						pw.println("\t\t\t\t<a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a>");
 					} else if( "custom".equals(elementType) ){
@@ -1228,6 +1233,9 @@ public class SchemaAttribute {
 					} else if( "date".equals(elementType) ){
 						fieldType += ",date";
 						arrayType = " \"date\"";
+					} else if( "tagbox".equals(elementType) ){
+						fieldType += ",tagbox";
+						arrayType = " \"tagbox\"";
 					} else if( "reference".equals(elementType) ){
 						fieldType += ",reference";
 						arrayType = " \"reference\"";

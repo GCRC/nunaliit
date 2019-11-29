@@ -1591,6 +1591,7 @@ class N2MapCanvas  {
 		var _this = this;
 		this._classname = 'N2MapCanvas';
 		this.dispatchService  = null;
+		this._suppressSetHash = false;
 
 		this.showService = null;
 
@@ -1872,10 +1873,19 @@ class N2MapCanvas  {
 			customMap.once('moveend', function(evt){
 				let res = evt.frameState.viewState.resolution;
 				let proj = _this.n2View.getProjection();
+				let zoom = evt.frameState.viewState.zoom;
+				let center = evt.frameState.viewState.center;
 				_this.resolution = res;
 				var extent = olView.calculateExtent();
 				_this.sources.forEach(function(source){
 					source.onChangedResolution(res,proj, extent);
+				});
+				
+				var coor_string = center.join(',') + ',' + zoom + 'z';
+				_this.dispatchService.send(DH, {
+					type: 'viewChanged'
+					,coordination: coor_string
+					,_suppressSetHash : _this._suppressSetHash
 				});
 			})
 		}
@@ -1987,28 +1997,31 @@ class N2MapCanvas  {
 			active: _this.isClustering ? true: false,
 			onToggle: function(active)
 			{
+				//TODO toggle cluster button only change the clusting-setting for first overlay-layer
 				if(active && !_this.isClustering){
 					let c_source =  _this.overlayLayers[0].getSource();
+					_this.overlayLayers[0].setSource(null);
 					let a_source = c_source.getSource();
 					let b_source = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_21__["default"]({source: a_source});
-					a_source.changed();
+					b_source.setSource(a_source)
+					c_source = new _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_14__["default"]({
+						interaction: _this.interactionSet.selectInteraction,
+						source: b_source,
+						dispatchService: _this.dispatchService
+					});	
+					_this.overlayLayers[0].setSource (c_source);
 					
-					c_source.setSource(b_source);
-					b_source.changed();
 					_this.isClustering = true;
-					_this.dispatchService.send(DH, {
-						type: 'n2rerender'
-					})
+
 				} else if (_this.isClustering && !active) {
 					let c_source =  _this.overlayLayers[0].getSource();
 					let b_source = c_source.getSource();
 					let a_source = b_source.getSource();
 					c_source.setSource(a_source);
+					b_source.setSource(null);
 					a_source.changed();
 					_this.isClustering = false;
-					_this.dispatchService.send(DH, {
-						type: 'n2rerender'
-					})
+
 				}
 			}
 		})
@@ -2040,7 +2053,7 @@ class N2MapCanvas  {
 				if( featurePopupHtmlFn ){
 					featurePopupHtmlFn({
 						feature: feature
-						,onSuccess: function(content){
+						,onSuccess: function( content ){
 							var mousepoint = mapBrowserEvent.coordinate;
 							popup.show(mousepoint, content);
 						}
@@ -2143,7 +2156,7 @@ class N2MapCanvas  {
 					style: StyleFn,
 					renderOrder: function(feature1, feature2){
 						var valueSelector = _this.renderOrderBasedOn;
-						var tt = valueSelector.getValue(feature1) ;
+
 						if ( typeof valueSelector === 'object'
 							&& typeof valueSelector.getValue(feature1) === 'number'){
 								
@@ -2465,47 +2478,71 @@ class N2MapCanvas  {
 		if ('n2ViewAnimation' === type){
 			let x = m.x;
 			let y = m.y;
-			let sourceProjCode = m.projCode;
-			let targetProjCode = 'EPSG:3857';
+			let zoom = m.zoom || 9;
+			if ( m._suppressSetHash ){
+				this._suppressSetHash = m._suppressSetHash 
+			}
+			var extent = undefined;
 			var targetCenter = [x, y];
-			if ( targetProjCode !== sourceProjCode){
-				var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["getTransform"])( sourceProjCode, targetProjCode);
-				// Convert [0,0] and [0,1] to proj
-				targetCenter = transformFn([x, y]);
+			
+			if ( m.projCode ){
+				let sourceProjCode = m.projCode;
+				let targetProjCode = 'EPSG:3857';
+				if ( targetProjCode !== sourceProjCode){
+					var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["getTransform"])( sourceProjCode, targetProjCode);
+					// Convert [0,0] and [0,1] to proj
+					targetCenter = transformFn([x, y]);
+				}
+				extent =  this._computeFullBoundingBox(m.doc, 'EPSG:4326','EPSG:3857');
 			}
 
-			let extent =  this._computeFullBoundingBox(m.doc, 'EPSG:4326','EPSG:3857');
-
-
-
-//			_this.n2View.animate({
-//			center: targetCenter,
-//			duration: 1000
-//			});
-//			_this.n2View.animate({
-//			zoom: _this.n2View.getZoom()-1,
-//			duration: 500
-//			});
-			if (extent[0] === extent[2] || extent[1] === extent [3]){
-				_this.n2View.animate({
-					center: targetCenter,
-					duration: 500
-				},{
-					zoom: 9,
-					duration: 500
-				});
+			_this.n2View.cancelAnimations();
+			if ( extent ){
+				if (extent[0] === extent[2] || extent[1] === extent [3]){
+					_this.n2View.animate({
+						center: targetCenter,
+						duration: 500
+					},{
+						zoom: 9,
+						duration: 500
+					});
+				} else {
+					_this.n2View.fit(extent,{duration: 1500});
+				}
 			} else {
-				_this.n2View.fit(extent,{duration: 1500});
+				_this.n2View.animate({
+					center: targetCenter
+					,zoom : zoom
+					,duration : 200
+				});
 			}
+			var inid = setInterval(function(){
+				var isPlaying = _this.n2View.getAnimating();
+
+				if( isPlaying ){
+					
+				} else {
+					_this._suppressSetHash = false;
+					clearInterval(inid);
+				}
+				
+			},100);
+
 
 		} else if ('n2rerender' === type){
+			var olmap = _this.n2Map;
+			//This refresh strictly execute the invoke for rerender the ol5 map
 			if (_this.n2Map){
 				_this.overlayLayers.forEach(function(overlayLayer){
-						overlayLayer.changed();
+						overlayLayer.getSource().refresh();
 
 				});
-			}
+				//var viewExt = olmap.getView().calculateExtent(olmap.getSize());
+				//olmap.getView().fit(viewExt);
+				}
 		} else if ( 'mapRefreshCallbackRequest' === type ){
+			//This refresh only execute the last invoke,
+			//the earlier invoke will be cancelled if new invoke arrived
 			if ( m.cnt + 1 === this.refreshCnt) {
 				var cb = this.refreshCallback;
 				if ( cb && typeof cb === 'function'){
@@ -3449,6 +3486,9 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 //		}
 	}
 
+	refresh(){
+		//this.changed();
+	}
 	_modelSourceUpdated (state) {
 		
 		var _this = this;
@@ -3501,6 +3541,7 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 	
 	loadFeatures(extent, resolution, projection) {
 		//this.loading = false;
+		//this._reloadAllFeatures();
 	}
 	_reportLoading(flag){
 		if( this.loading && !flag ){
@@ -4044,7 +4085,14 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 			 +"this custom source");
 		}
 		//-------------------------
-		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_2__["default"].CHANGE, this.refresh, this);
+		this.sourceChangeKey_ = null;
+	    if (options.source){
+	    	this.source = options.source;
+	    	this.sourceChangeKey_ =
+	    		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_2__["default"].CHANGE, this.refresh, this);
+	    }
+		//listen(this.source, EventType.CHANGE, this.refresh, this);
+	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this, 'sourceRefChanged', this.handleSourceRefChange, this);
 		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "hover",  this.onHover, this);
 		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "clicked",  this.onClicked, this);
 
@@ -4070,11 +4118,31 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 	getSource(){
 		return this.source;
 	}
-	setSource(opt_source){
-		this.source = opt_source;
-		this.refresh();
-		this.changed();
+	handleSourceRefChange(){
+		 if (this.sourceChangeKey_) {
+		      Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["unlistenByKey"])(this.sourceChangeKey_);
+		      this.sourceChangeKey_ = null;
+		    }
+		    var source = this.source;
+		    if (source) {
+		      this.sourceChangeKey_ = Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(source,
+		        ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_2__["default"].CHANGE, this.refresh, this);
+		    }
+		    
 	}
+	
+	setSource(source){
+		if (source){
+			this.source = source;
+		} else {
+			this.source = null;
+		}
+		this.refresh();
+		this.dispatchEvent('sourceRefChanged');
+		this.changed();
+		
+	}
+
 	onHover(evt){
 
 		let selected  = evt.selected;
@@ -5476,16 +5544,51 @@ class N2DonutCluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["d
 		* @type {number}
 		*/
 		this.clusterId = 1;
-		
-	    /**
+		this.sourceChangeKey_ = null;
+	    if (options.source){
+	    	this.source = options.source;
+	    	this.sourceChangeKey_ =
+	    		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__["default"].CHANGE, this.refresh, this);
+	    }
+		/**
 	     * @type {Array<Feature>}
 	     * @protected
 	     */
 	    this.features = [];
-	    this.source = options.source;
+	   // this.source = options.source;
 	    
-	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__["default"].CHANGE, this.refresh, this);
+	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(this, 'sourceRefChanged', this.handleSourceRefChange, this);
+	    //listen(this.source, EventType.CHANGE, this.refresh, this);
 
+	}
+	
+	handleSourceRefChange(){
+		 if (this.sourceChangeKey_) {
+		      Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["unlistenByKey"])(this.sourceChangeKey_);
+		      this.sourceChangeKey_ = null;
+		    }
+		    var source = this.source;
+		    if (source) {
+		      this.sourceChangeKey_ = Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(source,
+		        ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__["default"].CHANGE, this.refresh, this);
+		    }
+		    
+	}
+	
+	setSource(source){
+		if (source){
+			this.source = source;
+		} else {
+			this.source = null;
+			
+		}
+		this.dispatchEvent('sourceRefChanged');
+		if (this.source){
+			this.refresh();
+			this.changed();
+		}
+
+		
 	}
 	/**
 	* Loading the feature from the layer source, and config the resolution and projection
@@ -5509,38 +5612,36 @@ class N2DonutCluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["d
 		this.addFeatures(this.features);
 		
 	}
-	clear(opt_fast){
-		
-		 if (opt_fast) {
-		      for (var featureId in this.featureChangeKeys_) {
-		        var keys = this.featureChangeKeys_[featureId];
-		        keys.forEach(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["unlistenByKey"]);
-		      }
-		      if (!this.featuresCollection_) {
-		        this.featureChangeKeys_ = {};
-		        this.idIndex_ = {};
-		        this.undefIdIndex_ = {};
-		      }
-		    } else {
-		      if (this.featuresRtree_) {
-		        this.featuresRtree_.forEach(this.removeFeatureInternal, this);
-		        for (var id in this.nullGeometryFeatures_) {
-		          this.removeFeatureInternal(this.nullGeometryFeatures_[id]);
-		        }
-		      }
-		    }
-		    if (this.featuresCollection_) {
-		      this.featuresCollection_.clear();
-		    }
-
-		    if (this.featuresRtree_) {
-		      this.featuresRtree_.clear();
-		    }
-		    this.loadedExtentsRtree_.clear();
-		    this.nullGeometryFeatures_ = {};
-
-		
-	}
+//	clear(opt_fast){
+//		
+//		 if (opt_fast) {
+//		      for (var featureId in this.featureChangeKeys_) {
+//		        var keys = this.featureChangeKeys_[featureId];
+//		        keys.forEach(unlistenByKey);
+//		      }
+//		      if (!this.featuresCollection_) {
+//		        this.featureChangeKeys_ = {};
+//		        this.idIndex_ = {};
+//		        this.undefIdIndex_ = {};
+//		      }
+//		    } else {
+//		      if (this.featuresRtree_) {
+//		        this.featuresRtree_.forEach(this.removeFeatureInternal, this);
+//		        for (var id in this.nullGeometryFeatures_) {
+//		          this.removeFeatureInternal(this.nullGeometryFeatures_[id]);
+//		        }
+//		      }
+//		    }
+//		    if (this.featuresCollection_) {
+//		      this.featuresCollection_.clear();
+//		    }
+//
+//		    if (this.featuresRtree_) {
+//		      this.featuresRtree_.clear();
+//		    }
+//		    this.loadedExtentsRtree_.clear();
+//		    this.nullGeometryFeatures_ = {};
+//	}
 	
 	getSource(){
 		return this.source;
