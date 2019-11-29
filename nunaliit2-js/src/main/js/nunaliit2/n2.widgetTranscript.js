@@ -98,6 +98,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	rangeChangeEventName: null,
 	rangeGetEventName: null,
 	rangeSetEventName: null,
+	subtitleFormat : null, 
 
 	/*
 		[
@@ -110,7 +111,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		]
 	 */
 	timeTable: null,
-	transcriptConvertor: null,
 
 	isInsideContentTextPanel : null,
 
@@ -145,9 +145,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			this.name = $n2.getUniqueId();
 		};
 
-		this.transcriptConvertor = new SrtToJsonConvertor();
 		this.transcriptDiv = undefined;
 		this.transcript_array = [];
+		
+		this.subtitleFormat = undefined;
 
 		this.lastTimeUserScroll = 0;
 		this.mediaDivId = undefined;
@@ -232,6 +233,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				this.timeTable = [];
 				this.transcript = undefined;
 				this.srtData = undefined;
+				this.subtitleFormat = undefined;
 				//this.dispatchService.register(DH,'selected',f);
 			};
 		};
@@ -295,6 +297,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					this.timeTable = [];
 					this.transcript = undefined;
 					this.srtData = undefined;
+					this.subtitleFormat = undefined;
 					this._documentChanged();
 				}
 			}
@@ -305,6 +308,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				this.timeTable = [];
 				this.transcript = undefined;
 				this.srtData = undefined;
+				this.subtitleFormat = undefined;
 				this._documentChanged();
 			};
 		} else if ( 'replyColorForDisplayedSentences' === m.type ){
@@ -454,7 +458,13 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					,dataType: 'text'
 					,success: function(srtData) {
 						_this.srtData = srtData;
-						_this.transcript_array = _this.transcriptConvertor.execute(srtData);
+						_this.subtitleFormat = _this.subtitleFormat || 'SRT';
+						switch(_this.subtitleFormat){
+							case 'SRT':
+								_this.transcript_array = SubtitleFileParser.srt.parse(srtData);
+							case 'WEBVTT':
+								_this.transcript_array = SubtitleFileParser.webvtt.parse(srtData);
+						}
 						_this._documentChanged();
 					}
 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
@@ -465,67 +475,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				});
 			} else {
 				// element is wronly configured. Report error
-				_this._renderError('Can not compute URL for SRT');
+				_this._renderError('Can not compute URL for SRT/WEBVTT');
 			};
 			
 		} else if( this.transcript.timeTable ){
-//			if( !$n2.isArray(this.transcript.timeTable) ){
-//				_this._renderError('timeTable must be an array');
-//			} else {
-//				this.timeTable = [];
-//
-//				var videoMinStart = undefined;
-//				var videoMaxEnd = undefined;
-//
-//				this.transcript.timeTable.forEach(function(timeEntry){
-//					if( typeof timeEntry !== 'object' ){
-//						throw new Error('Entries in timeTable must be objects');
-//					} else if( null === timeEntry ){
-//						throw new Error('Entries in timeTable can not be null');
-//					};
-//					
-//					var videoStart = timeEntry.videoStart;
-//					var videoEnd = timeEntry.videoEnd;
-//					var timeStart = timeEntry.timeStart;
-//					var timeEnd = timeEntry.timeEnd;
-//
-//					if( typeof videoStart !== 'number' ){
-//						throw new Error('videoStart in timeTable must be a number');
-//					};
-//					if( typeof videoEnd !== 'number' ){
-//						throw new Error('videoEnd in timeTable must be a number');
-//					};
-//					
-//					if( undefined === videoMinStart ){
-//						videoMinStart = videoStart;
-//					} else if(videoMinStart > videoStart) {
-//						videoMinStart = videoStart;
-//					};
-//					if( undefined === videoMaxEnd ){
-//						videoMaxEnd = videoEnd;
-//					} else if(videoMaxEnd < videoEnd) {
-//						videoMaxEnd = videoEnd;
-//					};
-//
-//					// Try to parse time
-//					var timeStartInt = $n2.date.parseUserDate(timeStart);
-//					var timeEndInt = $n2.date.parseUserDate(timeEnd);
-//					
-//					var timeObj = {
-//						intervalStart: timeStartInt
-//						,intervalEnd: timeEndInt
-//						,timeStart: timeStartInt.min
-//						,timeEnd: timeEndInt.min
-//						,videoStart: videoStart
-//						,videoEnd: videoEnd
-//					};
-//					_this.timeTable.push(timeObj);
-//				});
-//				
-//				// Report video start and end
-//				$n2.log('Video start:'+videoMinStart+' end:'+videoMaxEnd);
-//				_this._rangeChanged(videoMinStart,videoMaxEnd);
-//			};
+
 		};
 
 		// At the end of all this, refresh
@@ -911,32 +865,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					$transcriptElem.removeClass('sentence-highlight-pending');
 				}
 			})
-//			$(document).on('click', function(e){
-//				// TBD: This will never be true
-//				if(_this.drawer){
-//					var $clickTarget = e.target;
-//					if ( $clickTarget.closest('.transcript-context-menu')){
-//
-//						contextMenu.addClass('transcript-context-menu-hide');
-//						for(var i =0;i<_this.transcript_array.length;i++) {
-//							var transcriptElem = _this.transcript_array[i];
-//							var $transcriptElem = $('#'+transcriptElem.id);
-//							$transcriptElem.removeClass('sentence-highlight-pending');
-//						}
-//					}
-//					//not click on editor drawer, close drawer
-//					else if ( !$clickTarget.closest('#' + _this.drawer.getId())){
-//						contextMenu.addClass('transcript-context-menu-hide');
-//						_this._closeDrawer();
-//						
-//						for(var i =0;i<_this.transcript_array.length;i++) {
-//							var transcriptElem = _this.transcript_array[i];
-//							var $transcriptElem = $('#'+transcriptElem.id);
-//							$transcriptElem.removeClass('sentence-highlight-pending');
-//						}
-//					} 
-//				}	
-//			})
 		};
 		function closeCtxMenu(){
 			
@@ -962,36 +890,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				}
 			}
 		}
-	},
-	_isMultiSelected: function(){
-		var node = [];
-//		var m = {
-//				type: 'getSelectionUtilityAvailable'
-//				,available: false
-//			};
-//		this.dispatchService.synchronousCall(DH,m);
-//
-//		if( m.available){
-//			m = {
-//					type: 'getSelectionUtility--getSelection'
-//					,selection: null
-//			};
-//			this.dispatchService.synchronousCall(DH,m);
-//			var rangySel = m.selection;
-//			if (!rangySel){
-//				return null;
-//			}
-//			$.each(rangySel,  function(i, el){
-//				var _d = $n2.extend({
-//					text: el.innerText
-//				},$(el).data())
-//				node.push(_d);
-//			})
-//			return node;
-//		} else {
-//			throw new Error('getSelectionUtility is NOT available');
-//		};
-		
 	},
 	_closeDrawer: function(){
 		this.dispatchService.send(DH,{
@@ -1030,51 +928,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			var transcriptAttName = this._findTranscriptAttachmentName(this.doc);
 			var mediaAttName = this._findVideoAttachmentName(this.doc);
 			if (transcriptAttName && mediaAttName){
-				var trans = {
+				_this.transcript = {
 						srtAttName : transcriptAttName,
 						videoAttName: mediaAttName
 				};
-//				var documentSource = undefined;
-//				if( this.dispatchService ){
-//					var m = {
-//						type: 'documentSourceFromDocument'
-//						,doc: doc
-//					};
-//					this.dispatchService.synchronousCall(DH,m);
-//					documentSource = m.documentSource;
-//				};
-//				if( !documentSource ){
-//					$n2.logError('Can not find document source for: '+doc._id);
-//				};
-//				documentSource.getDocument({
-//						docId: doc._id
-//						,onSuccess:function(doc){
-//							assignNunaliitTranscriptProperty(doc, trans);
-//						}
-//						,onError: function(err){
-//							$n2.reportErrorForced( _loc('Unable to reload document: {err}',{err:err}) );
-//						}
-//					});
-//
-//				function assignNunaliitTranscriptProperty(doc, n2_transcript){
-//					
-//						doc['nunaliit_transcript'] = n2_transcript;
-//						documentSource.updateDocument({
-//							doc: doc
-//							,onSuccess: function(doc){
-//								if( doc && doc.nunaliit_transcript ){
-				_this.transcript = trans
 				_this._documentChanged();
-//								}
-//							}
-//							,onError: function(err){
-//								$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
-//							}
-//						});
 
-				
-
-//				};
 			} else {	
 				_this._renderError('Transcript or media attachment names not found for '+this.doc._id);
 				alert('Transcript or media attachment not found in media document ' + this.doc._id);
@@ -1131,7 +990,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		 && doc.nunaliit_attachments.files ){
 			for(var attName in doc.nunaliit_attachments.files){
 				var att = doc.nunaliit_attachments.files[attName];
-				if( attName.endsWith('.srt') ){
+				if( attName.endsWith('.srt')){
+					this.subtitleFormat = 'SRT';
+					return attName;
+				} else if( attName.endsWith('.vtt') ){
+					this.subtitleFormat = 'WEBVTT';
 					return attName;
 				};
 			};
@@ -1247,23 +1110,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			},100);
 		} else if('startEditing' === origin){
 			_this._lastCtxTime = currentTime;
-//			var $video = $('#'+this.videoId);
-//			$video[0].currentTime = currentTime;
-//			$video[0].play();
-//			var inid = setInterval(function(){
-//				var isPlaying = $video[0].currentTime > 0 && !$video[0].paused && !$video[0].ended 
-//					&& $video[0].readyState > 2;
-//
-//				if(!isPlaying){
-//					
-//				} else {
-//					$video[0].pause();
-//					clearInterval(inid);
-//				}
-//				
-//			},100);
-
-
 		} else if ( 'savedState' === origin ){
 		
 			var $video = $('#'+this.videoId);
@@ -1314,16 +1160,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		var $elem = this._getElem();
 		
 		$elem.empty();
-		//If no valid tether transcript content to show, only logging into console
-//
-//		var label = _loc('Unable to display tether content({docId})',{
-//			docId: this.docId
-//		});
-//		$('<span>')
-//			.addClass('n2widgetTranscript_error')
-//			.text(label)
-//			.appendTo($elem);
-//
+
 		$n2.logError('Unable to display tether content({docId}): '+errMsg);
 	}
 });
@@ -1333,64 +1170,116 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 //--------------------------------------------------------------------------
 
 //--------------------------------------------------------------------------
-var reTimeCode = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*-->\s*([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?/i;
-var reTimeCode_s = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*/i;
-function convertTimecodeToMs (tmpTimecode){
-	var matcher = reTimeCode_s.exec(tmpTimecode);
-	var rst = 3600000*matcher[1] + 60000*matcher[2] + 1000*matcher[3] + 1*matcher[6];
-	return rst;
+
+
+var SubtitleFileParser = {
+		srt:{
+			
+			parse: function(srtData) {
+				var reTimeCode = /^([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{1,3})?) --\> ([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{3})?)(.*)$/;
+				var reTimeCode_s = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*/i;
+				var json = [];
+				var lines = srtData.split(/\r?\n/);
+				if( !$n2.isArray(lines) ){
+					throw new Error('srtFile data processing error');
+				};
+				var cur = -1;
+				var totalLength = lines.length;
+				
+				var curSentence = "";
+				while( ++cur < (totalLength-1)){
+					if( lines[cur].replace(/^\s+|\s+$/g,'') === ""){
+						continue;
+					} else {
+						var tmpIdx = lines[cur].replace(/^\s+|\s+$/g,'');
+						var tmpTimecode = lines[++cur].replace(/^\s+|\s+$/g,'');
+						var matcher = reTimeCode.exec(tmpTimecode);
+						if(tmpIdx.search(/[0-9]+/i) === -1
+						 || !matcher ) {
+							continue;
+						} else {
+							var curEntry = {
+									"start": null,
+									"startTimeCode": matcher[1],
+									"fin": null,
+									"finTimeCode": matcher[3],
+									"text": ""
+							};
+							//$n2.log("The"+tmpIdx+"-th transcript");
+							//$n2.log("The timecode: "+ tmpTimecode);
+
+							curEntry.start  =  $n2.utils.convertSMPTEtoSeconds(matcher[1]);
+							curEntry.fin = $n2.utils.convertSMPTEtoSeconds(matcher[3]);
+							while(++cur < totalLength){
+								curSentence = lines[cur];
+								if( curSentence.replace(/^\s+|\s+$/g,'') === "" ){
+									break;
+								};
+								curEntry.text += curSentence;
+							}
+							json.push(curEntry);
+							
+						}
+						
+					}
+				}
+				return json;
+			}
+		},
+		webvtt:{
+			pattern_identifier : /^([a-zA-z]+-)?[0-9]+$/
+			,pattern_timecode : /^([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{1,3})?) --\> ([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{3})?)(.*)$/
+
+			
+			,parse: function(trackText) {
+				// match start "chapter-" (or anythingelse)
+				
+				var 
+					i = 0,
+					lines = trackText.split(/\r?\n/),
+					//entries = {text:[], times:[]},
+					entries = [],
+					timecode,
+					text;
+				for(; i<lines.length; i++) {
+					// check for the line number
+					//if (this.pattern_identifier.exec(lines[i])){
+						// skip to the next line where the start --> end time code should be
+						//i++;
+						timecode = this.pattern_timecode.exec(lines[i]);				
+						//if (timecode) {
+						if (timecode && i<lines.length){
+							i++;
+							// grab all the (possibly multi-line) text that follows
+							text = lines[i];
+							i++;
+							while(lines[i] !== '' && i<lines.length){
+								text = text + '\n' + lines[i];
+								i++;
+							}
+							//text = $.trim(text).replace(/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig, "<a href='$1' target='_blank'>$1</a>");
+							// Text is in a different array so I can use .join
+							//entries.text.push(text);
+							entries.push(
+							{
+								start: ($n2.utils.convertSMPTEtoSeconds(timecode[1]) == 0) ? 0.000 : $n2.utils.convertSMPTEtoSeconds(timecode[1]),
+								stop: $n2.utils.convertSMPTEtoSeconds(timecode[3]),
+								startTimeCode : timecode[1], 
+								finTimeCode: timecode[3],
+								settings: timecode[5],
+								text : text
+							});
+						//}
+					}
+				}
+				return entries;
+			}
+		
+		}
+
+		
 }
 
-var SrtToJsonConvertor = $n2.Class('SrtToJsonConvertor',{
-	execute: function(srtData) {
-		var json = [];
-		var lines = srtData.split("\n");
-		if( !$n2.isArray(lines) ){
-			throw new Error('srtFile data processing error');
-		};
-		var cur = -1;
-		var totalLength = lines.length;
-		
-		var curSentence = "";
-		while( ++cur < (totalLength-1)){
-			if( lines[cur].replace(/^\s+|\s+$/g,'') === ""){
-				continue;
-			} else {
-				var tmpIdx = lines[cur].replace(/^\s+|\s+$/g,'');
-				var tmpTimecode = lines[++cur].replace(/^\s+|\s+$/g,'');
-				var matcher = reTimeCode.exec(tmpTimecode);
-				if(tmpIdx.search(/[0-9]+/i) === -1
-				 || !matcher ) {
-					continue;
-				} else {
-					var curEntry = {
-							"start": null,
-							"startTimeCode": matcher[1]+ ':' + matcher[2] + ':' + matcher[3] + ',' + matcher[6],
-							"fin": null,
-							"finTimeCode": matcher[7]+ ':' + matcher[8] + ':' + matcher[9] + ',' + matcher[12],
-							"text": ""
-					};
-					//$n2.log("The"+tmpIdx+"-th transcript");
-					//$n2.log("The timecode: "+ tmpTimecode);
-
-					curEntry.start  =  3600*matcher[1] + 60*matcher[2] + 1*matcher[3];
-					curEntry.fin = 3600*matcher[7] + 60*matcher[8] + 1*matcher[9];
-					while(++cur < totalLength){
-						curSentence = lines[cur];
-						if( curSentence.replace(/^\s+|\s+$/g,'') === "" ){
-							break;
-						};
-						curEntry.text += curSentence;
-					}
-					json.push(curEntry);
-					
-				}
-				
-			}
-		}
-		return json;
-	},
-});
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
 	if( m.widgetType === 'transcriptWidget' ){
@@ -1430,7 +1319,6 @@ function HandleWidgetDisplayRequests(m){
 //--------------------------------------------------------------------------
 $n2.widgetTranscript = {
 	TranscriptWidget: TranscriptWidget
-	,SrtToJsonConvertor: SrtToJsonConvertor
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
 };
