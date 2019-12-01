@@ -1,0 +1,2 @@
+Nunaliit system can be built and run under the environment of Ubuntu 18.04 server version, openjdk-11-jdk and virtualBox 6.0 without error.
+

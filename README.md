@@ -12,3 +12,6 @@ Pre-compiled and packaged Nunaliit .tar.gz files can be found in the [Releases](
 
 The [Documentation](https://github.com/GCRC/nunaliit/wiki/)
 describes the setup and use of Nunaliit, as well as build instructions for developers.
+
+## this is the comments about installing and running a Nunaliit System on  openjdk11 #819 (Java > 8 compatibility)
+
