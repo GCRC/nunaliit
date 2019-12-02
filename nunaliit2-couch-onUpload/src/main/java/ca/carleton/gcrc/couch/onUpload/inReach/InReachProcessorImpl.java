@@ -96,7 +96,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 				long intervalStart = (gpsDate.getTime() + 500) / 1000;
 				long intervalStart_ms = intervalStart * 1000;
 
-				long intervalEnd = intervalStart_ms + 1;
+				long intervalEnd = intervalStart_ms + 1000;
 
 				Date gpsTimestampDate = new Date(intervalStart_ms);
 				String formattedGpsTimestamp = df.format(gpsTimestampDate);
