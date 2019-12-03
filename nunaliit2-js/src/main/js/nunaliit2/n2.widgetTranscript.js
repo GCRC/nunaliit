@@ -1054,7 +1054,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	_timeChanged: function(currentTime, origin){
 		
 		var _this = this;
-
+		var n_cur = Number (currentTime);
 			// console.dir($._data($('#'+ this.transcriptId)[0], 'events'));
 		// Act upon the text
 		for(var i =0;i<this.transcript_array.length;i++) {
@@ -1063,8 +1063,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 			$transcriptElem.removeClass('highlight');
 
-			if(currentTime >= transcriptElem.start 
-			 && currentTime < transcriptElem.fin) {
+			if(n_cur >= transcriptElem.start 
+			 && n_cur < transcriptElem.fin) {
 				$transcriptElem.addClass('highlight');
 				//scroll transcript div, so that the ongoing subtitle always stay in the viewport
 				if ($.now() - this.lastTimeUserScroll > 5000){
@@ -1262,12 +1262,12 @@ var SubtitleFileParser = {
 							//entries.text.push(text);
 							entries.push(
 							{
-								start: ($n2.utils.convertSMPTEtoSeconds(timecode[1]) == 0) ? 0.000 : $n2.utils.convertSMPTEtoSeconds(timecode[1]),
-								stop: $n2.utils.convertSMPTEtoSeconds(timecode[3]),
-								startTimeCode : timecode[1], 
-								finTimeCode: timecode[3],
-								settings: timecode[5],
-								text : text
+								'start': ($n2.utils.convertSMPTEtoSeconds(timecode[1]) == 0) ? 0.000 : $n2.utils.convertSMPTEtoSeconds(timecode[1]),
+								'fin': $n2.utils.convertSMPTEtoSeconds(timecode[3]),
+								'startTimeCode' : timecode[1], 
+								'finTimeCode': timecode[3],
+								'settings': timecode[5],
+								'text' : text
 							});
 						//}
 					}
