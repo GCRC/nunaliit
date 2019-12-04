@@ -45,7 +45,7 @@ if (!$mdc) {
 
 var Service = $n2.Class({
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			showService: null
 		}, opts_);
@@ -55,10 +55,13 @@ var Service = $n2.Class({
 });
 
 // Class: MDC
-// Description: Generic Material design component which all other material design components are based off of.
+// Description: Generic Material design component which all other material
+// design components are based off of.
 // Options:
-//  - parentElem: A reference to the parent element that the component is appended to.
-//  - mdcId (String): The id of the element. If none is provided, Nunaliit will generate a unique id.
+//  - parentElem: A reference to the parent element that the component is
+//  appended to.
+//  - mdcId (String): The id of the element. If none is provided, Nunaliit will
+//  generate a unique id.
 //  - mdcClasses (Array): Specific classes to added to the component.
 //  - mdcAttributes (Object): Unique attributes to be added to the component.
 var MDC = $n2.Class('MDC',{
@@ -978,9 +981,9 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 // Description: Create a material design list component
 // Options:
 //  - listItems (array): An array of object specifying list item details
-//   - list item attributes: text (string), href (string), activated (boolean), onItemClick (function) 
+//   - list item attributes: text (string), value (string), href (string), activated (boolean), onItemClick (function) 
 //   - Example: [
-//   	{'text': 'foo', 'onItemClick': bar, 'indent': 10},
+//   	{'text': 'foo', 'value': 'bar', 'onItemClick': bar, 'indent': 10},
 //   	{"href":"https://gcrc.carleton.ca", "text":"GCRC", "activated":true}
 //   	]
 var MDCList = $n2.Class('MDCList', MDC, {
@@ -1070,8 +1073,17 @@ var MDCList = $n2.Class('MDCList', MDC, {
 				.addClass('mdc-list-item--activated');
 		}
 
+		if (item.selected) {
+			$listItem.attr('aria-selected', true)
+				.addClass('mdc-list-item--selected');
+		}
+
 		if (item.href && typeof item.href === 'string') {
 			$listItem.attr('href', item.href);
+		}
+
+		if (item.value && typeof item.value === 'string') {
+			$listItem.attr('data-value', item.value);
 		}
 
 		if (item.text && typeof item.text === 'string') {
@@ -1282,13 +1294,15 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 //  - preSelected (Boolean): Define a select menu as pre-selected (default = false)
 //  - menuChgFunction (Function): Function to occur when
 //  - menuLabel (String): Defines the text label on the select menu.
-//  - menuOpts (Array of Objects): Define an array of objects describing each option for the select menu.
+//  - menuOpts (Array of Objects): Define an array of objects describing each
+//  option for the select menu.
 //   - Expected option object keys:
 //    - value - value when selected
-//    - label - label shown to the user
-//    - selected - initially selected
+//    - text - text shown to the user
+//    - activated - boolean value to specify if a menu item is selected or not.
 //    - disabled - not selected-able
-//   - Example: [{"value":"1", "label":"One", "selected":"selected"}, {"value":"2", "label":"Two"}]
+//   - Example: [{"value":"1", "text":"One", "activated": true},
+//   {"value":"2", "text":"Two"}]
 var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 	menuChgFunction: null,
@@ -1325,8 +1339,9 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 	},
 
 	_generateMDCSelectMenu: function() {
-		var $menu, $menuNotchedOutline, $menuNotchedOutlineNotch, $label, keys;
-		var classesOnSelectTag = '';
+		var $menu, $menuNotchedOutline, $menuNotchedOutlineNotch, $menuAnchor;
+		var $menuList, $label, keys;
+		var classesOnSelectMenu = '';
 		var _this = this;
 
 		this.mdcClasses.push('mdc-select', 'mdc-select--outlined', 'n2s_attachMDCSelect');
@@ -1342,22 +1357,20 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			});
 		}
 
-		$('<i>').addClass('mdc-select__dropdown-icon')
+		$menuAnchor = $('<div>')
+			.addClass('mdc-select__anchor')
 			.appendTo($menu);
 
-		if (this.nativeClasses) {
-			classesOnSelectTag = this.nativeClasses.join(' ');
-		}
-		this.select = $('<select>')
-			.attr('id', this.selectId)
-			.addClass('mdc-select__native-control')
-			.addClass(classesOnSelectTag)
-			.appendTo($menu)
-			.change(this.menuChgFunction);
+		$('<i>').addClass('mdc-select__dropdown-icon')
+			.appendTo($menuAnchor);
 
+		$('<div>').addClass('mdc-select__selected-text')
+			.appendTo($menuAnchor);
+
+		// mdc-select label and outline
 		$menuNotchedOutline = $('<div>')
 			.addClass('mdc-notched-outline')
-			.appendTo($menu);
+			.appendTo($menuAnchor);
 
 		$('<div>').addClass('mdc-notched-outline__leading')
 			.appendTo($menuNotchedOutline);
@@ -1372,61 +1385,57 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			.text(_loc(this.menuLabel))
 			.appendTo($menuNotchedOutlineNotch);
 
-		if (this.preSelected) {
-			$label.addClass('mdc-floating-label--float-above');
-		}
-
 		$('<div>').addClass('mdc-notched-outline__trailing')
 			.appendTo($menuNotchedOutline);
+
+		// mdc-select menu
+		if (this.nativeClasses) {
+			classesOnSelectMenu = this.nativeClasses.join(' ');
+		}
+		this.select = $('<div>')
+			.attr('id', this.selectId)
+			.addClass('mdc-select__menu mdc-menu mdc-menu-surface')
+			.addClass(classesOnSelectMenu)
+			.appendTo($menu);
 
 		if (this.menuOpts
 			&& $n2.isArray(this.menuOpts)
 			&& this.menuOpts.length > 0) {
-			this.menuOpts.forEach(function(menuOpt) {
-				_this._addOptionToSelectMenu(menuOpt);
+
+			// Added select menu items to list
+			new $n2.mdc.MDCList({
+				parentElem: this.select,
+				listItems: this.menuOpts
 			});
 		}
 
 		$menu.appendTo(this.parentElem);
 
+		// Handle change events
+		document.getElementById(this.getId())
+			.addEventListener("MDCSelect:change", this.menuChgFunction);
+
+		if (this.preSelected) {
+			$label.addClass('mdc-floating-label--float-above');
+		}
+
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
-	},
 
-	_addOptionToSelectMenu: function(menuOpt) {
-		var $opt, value, label;
-
-		if (menuOpt) {
-			if (menuOpt.value) {
-				value = menuOpt.value;
-			} else {
-				value = '';
-			}
-
-			if (menuOpt.label) {
-				label = menuOpt.label;
-			}
-
-			if (value || value === '') {
-				$opt = $('<option>')
-					.attr('value', value)
-					.text(label)
-					.appendTo(this.select);
-
-				if (menuOpt.selected) {
-					$opt.attr('selected', 'selected');
-				}
-
-				if (menuOpt.disabled) {
-					$opt.attr('disabled', 'disabled');
-				}
-			}
-		}
 	},
 
 	getSelectId: function() {
 		return this.selectId;
+	},
+
+	getSelectedValue: function() {
+		var $selectedItem = $('#' + this.selectId)
+			.find('li.mdc-list-item--selected');
+
+		if ($selectedItem.length) {
+			return $selectedItem.attr('data-value');
+		}
 	}
 });
 
