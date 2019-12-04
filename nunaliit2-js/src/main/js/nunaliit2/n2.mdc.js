@@ -1340,7 +1340,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 	_generateMDCSelectMenu: function() {
 		var $menu, $menuNotchedOutline, $menuNotchedOutlineNotch, $menuAnchor;
-		var $menuList, $label, keys;
+		var $menuList, $label, keys, selector;
 		var classesOnSelectMenu = '';
 		var _this = this;
 
@@ -1412,8 +1412,10 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		$menu.appendTo(this.parentElem);
 
 		// Handle change events
-		document.getElementById(this.getId())
-			.addEventListener("MDCSelect:change", this.menuChgFunction);
+		selector = document.getElementById(this.getId());
+		if (selector) {
+			selector.addEventListener("MDCSelect:change", this.menuChgFunction);
+		}
 
 		if (this.preSelected) {
 			$label.addClass('mdc-floating-label--float-above');
