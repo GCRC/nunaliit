@@ -1867,7 +1867,7 @@ var DialogService = $n2.Class({
 			var schema = opt.schemas[i];
 			dialogSelectItems.push({
 				"value": schema.name,
-				"label": schema.getLabel()
+				"text": schema.getLabel()
 			});
 		}
 
@@ -1875,7 +1875,7 @@ var DialogService = $n2.Class({
 			parentElem: $('#' + selectSchemaDialog.getContentId()),
 			menuLabel: 'Select schema',
 			menuOpts: dialogSelectItems,
-			mdcClasses: dialogSelectClasses,
+			mdcClasses: dialogSelectClasses
 		});
 
 
@@ -1898,9 +1898,11 @@ var DialogService = $n2.Class({
 			mdcClasses: btnClasses,
 			btnLabel: 'OK',
 			onBtnClick: function() {
+				var schemaName;
 				mustReset = false;
 
-				var schemaName = $('#'+ dialogSelect.getSelectId()).val();
+				schemaName = dialogSelect.getSelectedValue();
+
 				selectSchemaDialog.closeDialog();
 				_this.schemaRepository.getSchema({
 					name: schemaName
