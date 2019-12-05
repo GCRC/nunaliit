@@ -1195,12 +1195,13 @@ public class SchemaAttribute {
 					pw.println("\t\t\t\t\t\t</div>");
 					pw.println("\t\t\t\t\t\t<div class=\"mdc-notched-outline__trailing\"></div>");
 					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t</div>");
 
-					pw.println("\t\t\t\t\t<div class=\"{{#:input}}"+id+"{{/:input}} mdc-select__menu mdc-menu mdc-menu-surface\">");
-					pw.println("\t\t\t\t\t\t<ul class=\"mdc-list\">");
+					pw.println("\t\t\t\t<div class=\"{{#:input}}"+id+"{{/:input}} mdc-select__menu mdc-menu mdc-menu-surface\">");
+					pw.println("\t\t\t\t\t<ul class=\"mdc-list\">");
 
 					for(SelectionOption option : options){
-						pw.print("\t\t\t\t\t\t\t<li class=\"n2s_localize mdc-list-item\" role=\"option\" data-value=\""+option.getValue()+"\">");
+						pw.print("\t\t\t\t\t\t<li class=\"n2s_localize mdc-list-item\" role=\"option\" data-value=\""+option.getValue()+"\">");
 						String optLabel = option.getLabel();
 						if( null == optLabel ){
 							optLabel = option.getValue();
@@ -1211,8 +1212,6 @@ public class SchemaAttribute {
 
 					pw.println("\t\t\t\t\t</ul>");
 					
-					pw.println("\t\t\t\t\t</div>");
-
 					pw.println("\t\t\t\t</div>");
 
 					pw.println("\t\t\t</div>");
