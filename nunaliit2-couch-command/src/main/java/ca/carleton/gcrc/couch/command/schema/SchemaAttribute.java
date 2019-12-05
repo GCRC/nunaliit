@@ -1184,28 +1184,37 @@ public class SchemaAttribute {
 
 					pw.println("\t\t<div class=\"value\">");
 					pw.println("\t\t\t<div class=\"mdc-select mdc-select--outlined n2s_attachMDCSelect\">");
-					pw.println("\t\t\t\t<i class=\"mdc-select__dropdown-icon\"></i>");
-					pw.println("\t\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}} mdc-select__native-control\">");
-					
+					pw.println("\t\t\t\t<div class=\"mdc-select__anchor\">");
+					pw.println("\t\t\t\t\t<i class=\"mdc-select__dropdown-icon\"></i>");
+					pw.println("\t\t\t\t\t<div class=\"mdc-select__selected-text\"></div>");
+
+					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline\">");
+					pw.println("\t\t\t\t\t\t<div class=\"mdc-notched-outline__leading\"></div>");
+					pw.println("\t\t\t\t\t\t<div class=\"mdc-notched-outline__notch\">");
+					pw.println("\t\t\t\t\t\t\t<label class=\"mdc-floating-label "+labelLocalizeClass+"\">"+label+"</label>");
+					pw.println("\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"mdc-notched-outline__trailing\"></div>");
+					pw.println("\t\t\t\t\t</div>");
+
+					pw.println("\t\t\t\t\t<div class=\"{{#:input}}"+id+"{{/:input}} mdc-select__menu mdc-menu mdc-menu-surface\">");
+					pw.println("\t\t\t\t\t\t<ul class=\"mdc-list\">");
+
 					for(SelectionOption option : options){
-						pw.print("\t\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
+						pw.print("\t\t\t\t\t\t\t<li class=\"n2s_localize mdc-list-item\" role=\"option\" data-value=\""+option.getValue()+"\">");
 						String optLabel = option.getLabel();
 						if( null == optLabel ){
 							optLabel = option.getValue();
 						}
 						pw.print(optLabel);
-						pw.println("</option>");
+						pw.println("</li>");
 					}
-					
-					pw.println("\t\t\t\t</select>");
 
-					pw.println("\t\t\t\t<div class=\"mdc-notched-outline\">");
-					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__leading\"></div>");
-					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__notch\">");
-					pw.println("\t\t\t\t\t\t<label class=\"mdc-floating-label "+labelLocalizeClass+"\">"+label+"</label>");
+					pw.println("\t\t\t\t\t</ul>");
+					
 					pw.println("\t\t\t\t\t</div>");
-					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__trailing\"></div>");
+
 					pw.println("\t\t\t\t</div>");
+
 					pw.println("\t\t\t</div>");
 
 					pw.println("\t\t</div>");
