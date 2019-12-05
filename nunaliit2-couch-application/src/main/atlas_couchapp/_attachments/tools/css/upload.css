@@ -19,6 +19,7 @@ tr.upload_line td {
 
 #requests .uploadButtonLine {
 	margin-bottom: 10px;
+	display: inline-flex;
 }
 
 #requests .uploadButtonLine .mdc-select {
