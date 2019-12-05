@@ -212,24 +212,24 @@ function showButtons(opts_){
 		menuOpts: [
 			{
 				"value": "csv",
-				"label": "csv",
+				"text": "csv",
 				"selected": true
 			},
 			{
 				"value": "geojson",
-				"label": "geojson"
+				"text": "geojson"
 			}
 		]
 	});
 
-	$('#' + formatSelect.getSelectId()).addClass('exportControls_formatSelector');
+	$('#' + formatSelect.getSelectId())
+		.addClass('exportControls_formatSelector');
 
 	new $n2.mdc.MDCButton({
 		parentElem: $div,
 		btnLabel: 'Show',
-		onBtnClick: function(){
-			var $formatSel = $('#' + formatSelect.getSelectId());
-			var format = $formatSel.val();
+		onBtnClick: function() {
+			var format = formatSelect.getSelectedValue();
 			showDocs({
 				schema: opts.schema
 				,layerId: opts.layerId
@@ -242,9 +242,8 @@ function showButtons(opts_){
 	new $n2.mdc.MDCButton({
 		parentElem: $div,
 		btnLabel: 'Download',
-		onBtnClick: function(){
-			var $formatSel = $('#' + formatSelect.getSelectId());
-			var format = $formatSel.val();
+		onBtnClick: function() {
+			var format = formatSelect.getSelectedValue();
 			downloadDocs({
 				schema: opts.schema
 				,layerId: opts.layerId
@@ -318,40 +317,61 @@ function layerSelected(layerId){
 };
 
 function installSchemaLayerSelect(menuOptions) {
-	var $methodResult = $('.exportControls_methodResult');
+
+	var $methodResult = $('.exportControls_methodResult')
+		.empty();
+
 	var schemaLayerSelect = new $n2.mdc.MDCSelect({
 		parentElem: $methodResult,
-		menuChgFunction: function(){
-			var $sel = $(this);
-			var selectedType = $('.exportControls_methodSelector').val();
-			if (selectedType === 'schema') {
-				schemaSelected($sel.val());
+		menuLabel: 'Schema / Layer Name',
+		menuOpts: menuOptions,
+		menuChgFunction: function() {
+			var $sel = $(this)
+				.find('li.mdc-list-item--selected');
+
+			var selectedType = $('.exportControls_methodSelector')
+				.find('li.mdc-list-item--selected');
+
+			var selectedTypeValue = selectedType.attr('data-value');
+
+			if (selectedTypeValue === 'schema') {
+				schemaSelected($sel.attr('data-value'));
 				return true;
 
-			} else if (selectedType === 'layer') {
-				layerSelected($sel.val());
+			} else if (selectedTypeValue === 'layer') {
+				layerSelected($sel.attr('data-value'));
 				return true;
 			}
-		},
-		menuLabel: 'Schema / Layer Name',
-		menuOpts: menuOptions
+		}
 	});
-	
+
 	// Add result spans based on type
-	var selectionType = $('.exportControls_methodSelector').val();
-	if (selectionType === 'schema') {
+	var selectionType = $('.exportControls_methodSelector')
+		.find('li.mdc-list-item--selected');
+
+	var selectionTypeValue = selectionType.attr('data-value');
+
+	if (selectionTypeValue === 'schema') {
+
+		// Add span container if it doesn't exist
+		if (!$('.exportControls_schemaResult').length) {
 		$('<span>')
 			.addClass('exportControls_schemaResult')
 			.appendTo($methodResult);
-		
-		schemaSelected($('#' + schemaLayerSelect.getSelectId()).val());
+		}
 
-	} else if (selectionType === 'layer') {
-		$('<span>')
-			.addClass('exportControls_layerResult')
-			.appendTo($methodResult);
-		
-		layerSelected($('#' + schemaLayerSelect.getSelectId()).val());
+		schemaSelected(schemaLayerSelect.getSelectedValue());
+
+	} else if (selectionTypeValue === 'layer') {
+
+		// Add span container if it doesn't exist
+		if (!$('.exportControls_layerResult').length) {
+			$('<span>')
+				.addClass('exportControls_layerResult')
+				.appendTo($methodResult);
+		}
+
+		layerSelected(schemaLayerSelect.getSelectedValue());
 	}
 };
 
@@ -392,14 +412,15 @@ function methodChanged(selectVal){
 
 						menuOptions.push({
 							'value': s.name,
-							'label': s.name,
+							'text': s.name,
 							'selected': selected
 						});
 					}
 					installSchemaLayerSelect(menuOptions);
 
 				} else {
-					$('.exportControls_methodResult').text('No exportable schema found');
+					$('.exportControls_methodResult')
+						.text('No exportable schema found');
 				}
 			}
 			,onError: function(err){
@@ -429,7 +450,7 @@ function methodChanged(selectVal){
 
 						menuOptions.push({
 							'value': layerId,
-							'label': layerId,
+							'text': layerId,
 							'selected': selected
 						});
 					}
@@ -446,39 +467,43 @@ function methodChanged(selectVal){
 	}
 };
 
-function installMethodButton(){
+function installMethodButton() {
 	var $controls = $('.exportControls')
 		.empty();
-	
+
 	var typeSelect = new $n2.mdc.MDCSelect({
 		parentElem: $controls,
 		preSelected: true,
-		menuChgFunction: function(){
-			var $sel = $(this);
-			methodChanged($sel.val());
+		menuChgFunction: function() {
+			var $sel = $(this).find('li.mdc-list-item--selected');
+			if ($sel.length) {
+				var value = $sel.attr('data-value');
+				methodChanged(value);
+			}
 			return true;
 		},
 		menuLabel: 'Type',
 		menuOpts: [
 			{
-				'value':'schema',
-				'label':'Schemas',
+				'value': 'schema',
+				'text': 'Schemas',
 				'selected': true
 			},
 			{
-				'value':'layer',
-				'label':'Layers'
+				'value': 'layer',
+				'text': 'Layers'
 			}
 		]
 	});
 
-	$('#' + typeSelect.getSelectId()).addClass('exportControls_methodSelector');
-	
+	$('#' + typeSelect.getSelectId())
+		.addClass('exportControls_methodSelector');
+
 	$('<span>')
 		.addClass('exportControls_methodResult')
 		.appendTo($controls);
-	
-	methodChanged($('#' + typeSelect.getSelectId()).val());
+
+	methodChanged(typeSelect.getSelectedValue());
 };
 
 function reportError(err){
