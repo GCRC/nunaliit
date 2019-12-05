@@ -377,16 +377,16 @@ function installSchemaLayerSelect(menuOptions) {
 
 function methodChanged(selectVal){
 	var methodChgFunction;
-	var selected = false;
 	var menuOptions = [];
 	var $methodResult = $('.exportControls_methodResult').empty();
 
 	if (selectVal === 'schema') {
 		schemaRepository.getRootSchemas({
 			onSuccess: function(schemas){
+				var selected, i, e, s;
 				var exportableSchemas = [];
-				for (var i = 0, e = schemas.length; i < e; i += 1) {
-					var s = schemas[i];
+				for (i = 0, e = schemas.length; i < e; i += 1) {
+					s = schemas[i];
 					if (s.csvExport) {
 						exportableSchemas.push(s);
 					}
@@ -403,8 +403,9 @@ function methodChanged(selectVal){
 				});
 				
 				if (exportableSchemas.length > 0) {
-					for (var i = 0 , e = exportableSchemas.length; i < e; i += 1) {
-						var s = exportableSchemas[i];
+					for (i = 0 , e = exportableSchemas.length; i < e; i += 1) {
+						selected = false;
+						s = exportableSchemas[i];
 
 						if (i === 0) {
 							selected = true;
@@ -434,15 +435,17 @@ function methodChanged(selectVal){
 			,reduce: true
 			,group: true
 			,onSuccess: function(rows){
+				var selected, i, e, layerId;
 				var layerIds = [];
-				for (var i = 0, e = rows.length; i < e; i += 1) {
-					var layerId = rows[i].key;
+				for (i = 0, e = rows.length; i < e; i += 1) {
+					layerId = rows[i].key;
 					layerIds.push(layerId);
 				}
 				
 				if (layerIds.length > 0) {
-					for (var i = 0, e = layerIds.length; i < e; i += 1) {
-						var layerId = layerIds[i];
+					for (i = 0, e = layerIds.length; i < e; i += 1) {
+						selected = false;
+						layerId = layerIds[i];
 
 						if (i === 0) {
 							selected = true;
