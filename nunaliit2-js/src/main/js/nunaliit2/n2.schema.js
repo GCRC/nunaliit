@@ -2251,7 +2251,8 @@ var Form = $n2.Class({
 			// After setting the value to a <select>, it is possible that no option
 			// is representing the current value. In this case, insert an option to
 			// represent the current state
-			if( 'select' === inputNodeName ){
+			if( 'div' === inputNodeName 
+				&& classNames.indexOf('mdc-select__menu') >= 0 ){
 				var effectiveValue = value;
 				if( null === effectiveValue || undefined === effectiveValue ){
 					// This is a text field. Null does not have a meaning
