@@ -1304,9 +1304,9 @@ public class SchemaAttribute {
 						pw.println("\t\t\t\t</div>");
 
 						if( null == itemLabel ) {
-							pw.println(" <label for=\""+forId+"\">"+itemId+"</label>");
+							pw.println("\t\t\t\t<label for=\""+forId+"\">"+itemId+"</label>");
 						} else {
-							pw.println(" <label for=\""+forId+"\" class=\"n2s_localize\">"+itemLabel+"</label>");
+							pw.println("\t\t\t\t<label for=\""+forId+"\" class=\"n2s_localize\">"+itemLabel+"</label>");
 						}
 
 						pw.println("\t\t\t</li>");
