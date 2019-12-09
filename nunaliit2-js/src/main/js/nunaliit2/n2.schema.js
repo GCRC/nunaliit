@@ -1,31 +1,31 @@
 /*
-Copyright (c) 2010, Geomatics and Cartographic Research Centre, Carleton 
+Copyright (c) 2010, Geomatics and Cartographic Research Centre, Carleton
 University
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
- - Redistributions of source code must retain the above copyright notice, 
+ - Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
  - Redistributions in binary form must reproduce the above copyright notice,
    this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
- - Neither the name of the Geomatics and Cartographic Research Centre, 
-   Carleton University nor the names of its contributors may be used to 
-   endorse or promote products derived from this software without specific 
+ - Neither the name of the Geomatics and Cartographic Research Centre,
+   Carleton University nor the names of its contributors may be used to
+   endorse or promote products derived from this software without specific
    prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 */
@@ -54,19 +54,19 @@ var SELECT = '::cur-selector';
 var LOCALIZE = ':localize';
 var ARRAY = ':array';
 
-//============================================================
+// ============================================================
 // Object
 
 function parseSelectorString(selStr){
 	if( '.' === selStr ){
 		return new $n2.objectSelector.ObjectSelector([]);
 	};
-	
+
 	var selectors = selStr.split('.');
 	return new $n2.objectSelector.ObjectSelector(selectors);
 };
 
-//============================================================
+// ============================================================
 var customFieldHandlers = {};
 
 function registerCustomFieldHandler(opts_){
@@ -74,14 +74,14 @@ function registerCustomFieldHandler(opts_){
 		customType: null
 		,handler: null
 	},opts_);
-	
+
 	if( typeof opts.customType === 'string'
 	 && typeof opts.handler === 'function' ){
 		customFieldHandlers[opts.customType] = opts.handler;
 	};
 };
 
-//============================================================
+// ============================================================
 
 function _localizeString() {
 	var args = [];
@@ -114,27 +114,27 @@ function _localizeString() {
 			opts[optSplit[0]]=[];
 		};
 	};
-	
+
 	// Get data from key
 	var objSel = parseSelectorString(key);
 	var s = objSel.getValue(this);
 
 	if( s
-	 && typeof(s) === 'object' 
+	 && typeof(s) === 'object'
 	 && s.nunaliit_type === 'localized') {
 		var lang = 'en';
 		if( $n2.l10n && $n2.l10n.getLocale ){
 			lang = $n2.l10n.getLocale().lang;
 		};
-		
+
 		if( s[lang] ) {
 			if( opts.html ) {
 				return s[lang];
 			};
-			
+
 			var escaped = $n2.utils.escapeHtml(s[lang]);
 			return escaped;
-			
+
 		} else {
 			// Find a language to fall back on
 			var fbLang = 'en';
@@ -151,7 +151,7 @@ function _localizeString() {
 					};
 				};
 			};
-			
+
 			if( fbLang ){
 				var result = [];
 				result.push('<span class="n2_localized_string n2_localize_fallback">');
@@ -168,18 +168,18 @@ function _localizeString() {
 				};
 				result.push('</span>');
 				return result.join('');
-				
+
 			} else {
 				return '';
 			};
 		};
-		
+
 	} else if( typeof(s) === 'undefined' ) {
 		return '';
 
 	} else if( s === null ) {
 		return '';
-		
+
 	} else {
 		// Must be string, number, boolean, float, ...
 		// From Handlebars, we do not get a real "string". Instead,
@@ -188,10 +188,10 @@ function _localizeString() {
 		if( opts.html ) {
 			return ''+s;
 		};
-		
+
 		var escaped = $n2.utils.escapeHtml(''+s);
 		return escaped;
-		
+
 	};
 };
 
@@ -215,14 +215,14 @@ function _formField() {
 
 	// Compute current selector
 	var currentSelector = null;
-	if (options 
-		&& options.data 
+	if (options
+		&& options.data
 		&& options.data.n2_selector) {
 		// Within an array, the current selector is passed in options
 		currentSelector = options.data.n2_selector;
 
-	} else if (typeof this === 'object' 
-    	&& this !== null 
+	} else if (typeof this === 'object'
+    	&& this !== null
     	&& this[SELECT]) {
 		currentSelector = this[SELECT];
 	}
@@ -230,7 +230,7 @@ function _formField() {
 	// Gets the text between start and end tags and
 	// parse it
 	var text = options.fn(this);
-	
+
 	var splits = text.split(',');
 	var identifier = splits[0];
 	var objSel = parseSelectorString(identifier);
@@ -238,13 +238,13 @@ function _formField() {
 	var completeSelectors = currentSelector.getChildSelector(objSel);
 	var selClass = createClassStringFromSelector(completeSelectors);
 	var labelLocalizeClass = "n2s_localize";
-	
+
 	if (obj
 		&& typeof obj === 'object'
 		&& !obj[SELECT]) {
 		obj[SELECT] = completeSelectors;
 	}
-	
+
 	// <option> is one of:
 	// - optionName
 	// - optionName=optionValue
@@ -263,7 +263,7 @@ function _formField() {
 			opts[optSplit[0]]=[];
 		}
 	}
-	
+
 	if (opts.id && opts.label) {
 
 		if (opts.id === opts.label) {
@@ -295,7 +295,7 @@ function _formField() {
 		}
 
 		$customDiv.appendTo($formField);
-		
+
 	} else if (opts.checkbox) {
 
 		var chkboxFormField = new $n2.mdc.MDCFormField({
@@ -315,13 +315,13 @@ function _formField() {
 
 		$formField.find('#' + chkbox.getId())
 			.find('label')
-			.addClass(labelLocalizeClass); 
+			.addClass(labelLocalizeClass);
 
 	} else if (obj && obj.nunaliit_type === 'localized') {
 
 		var fieldLabel;
 		var langs = getSortedLanguages(opts.localized, obj);
-		
+
 		// Turn on "localized" option, if not already on
 		if (!opts.localized) {
 			opts.localized = [];
@@ -330,7 +330,7 @@ function _formField() {
 		if (opts.label) {
 			fieldLabel = opts.label;
 		}
-		
+
 		for (var i=0, e=langs.length; i<e; i += 1) {
 			var lang = langs[i];
 			var langSel = completeSelectors.getChildSelector(lang);
@@ -350,7 +350,7 @@ function _formField() {
 				txtFldLabel: opts.label,
 				txtFldArea: txtFldArea
 			});
-			
+
 			$formField.find('#' + locTextField.getInputId())
 				.addClass(selClass + '-s' + lang);
 
@@ -359,8 +359,8 @@ function _formField() {
 
 			$formField.find('#' + locTextField.getId())
 				.find('label')
-				.addClass(labelLocalizeClass); 
-				
+				.addClass(labelLocalizeClass);
+
 			if (opts.date) {
 				$formField.find('#' + locTextField.getInputId())
 					.addClass(typeClassStringPrefix + 'date');
@@ -368,17 +368,17 @@ function _formField() {
 			} else if (opts.numeric) {
 				$formField.find('#' + locTextField.getInputId())
 					.addClass(typeClassStringPrefix + 'numeric');
-				
+
 			} else if (opts.layers) {
 				$formField.find('#' + locTextField.getInputId())
 					.addClass(typeClassStringPrefix + 'layers');
-				
+
 			} else if (opts.localized) {
 				$formField.find('#' + locTextField.getInputId())
 					.addClass(typeClassStringPrefix + 'localized');
 			}
 		}
-		
+
 	} else if (!obj && opts.localized) {
 		// This is a localized string that does not yet exist
 		// This condition is true if obj is an empty string or
@@ -393,7 +393,7 @@ function _formField() {
 
 		for (var i=0, e=langs.length; i<e; i += 1) {
 			var lang = langs[i];
-			
+
 			var langSel = completeSelectors.getChildSelector(lang);
 			var mdcClasses = ['n2schema_field_container', 'n2schema_field_container_localized'];
 			var txtFldArea = false;
@@ -420,8 +420,8 @@ function _formField() {
 
 			$formField.find('#' + undefinedLocTextField.getId())
 				.find('label')
-				.addClass(labelLocalizeClass); 
-				
+				.addClass(labelLocalizeClass);
+
 			if (opts.date) {
 				$formField.find('#' + undefinedLocTextField.getInputId())
 					.addClass(typeClassStringPrefix + 'date');
@@ -429,11 +429,11 @@ function _formField() {
 			} else if (opts.numeric) {
 				$formField.find('#' + undefinedLocTextField.getInputId())
 					.addClass(typeClassStringPrefix + 'numeric');
-				
+
 			} else if (opts.layers) {
 				$formField.find('#' + undefinedLocTextField.getInputId())
 					.addClass(typeClassStringPrefix + 'layers');
-				
+
 			} else if (opts.localized) {
 				$formField.find('#' + undefinedLocTextField.getInputId())
 					.addClass(typeClassStringPrefix + 'localized');
@@ -448,7 +448,7 @@ function _formField() {
 		if (opts.label) {
 			mdcAttributes['nunaliit-label'] = opts.label;
 		}
-		
+
 		if (opts.search && opts.search[0]) {
 			mdcAttributes['n2-search-func'] = opts.search[0];
 		}
@@ -462,7 +462,7 @@ function _formField() {
 
 		$formField.find('#' + refField.getId())
 			.find('label')
-			.addClass(labelLocalizeClass); 
+			.addClass(labelLocalizeClass);
 
 	} else if (opts.geometry) {
 		var attr = completeSelectors.encodeForDomAttribute();
@@ -506,29 +506,29 @@ function _formField() {
 
 			$formField.find('#' + txtFldArea.getId())
 				.find('label')
-				.addClass(labelLocalizeClass); 
+				.addClass(labelLocalizeClass);
 
 			if (opts.date) {
 				$('<div>')
 					.addClass('n2schema_help_date')
 					.appendTo($formField.find('#' + txtFldArea.getId()));
-				
+
 				$formField.find('#' + txtFldArea.getInputId())
 					.addClass(typeClassStringPrefix + 'date');
 
 			} else if (opts.numeric) {
 				$formField.find('#' + txtFldArea.getInputId())
 					.addClass(typeClassStringPrefix + 'numeric');
-				
+
 			} else if (opts.layers) {
 				$formField.find('#' + txtFldArea.getInputId())
 					.addClass(typeClassStringPrefix + 'layers');
-				
+
 			} else if (opts.localized) {
 				$formField.find('#' + txtFldArea.getInputId())
 					.addClass(typeClassStringPrefix + 'localized');
 			}
-	
+
 			if (opts.wikiTransform) {
 				$('<div>')
 					.addClass('n2schema_help_wiki')
@@ -557,29 +557,29 @@ function _formField() {
 
 			$formField.find('#' + txtFld.getId())
 				.find('label')
-				.addClass(labelLocalizeClass); 
+				.addClass(labelLocalizeClass);
 
 			if (opts.date) {
 				$('<div>')
 					.addClass('n2schema_help_date')
 					.appendTo($formField.find('#' + txtFld.getId()));
-		
+
 				$formField.find('#' + txtFld.getInputId())
 					.addClass(typeClassStringPrefix + 'date');
 
 			} else if (opts.numeric) {
 				$formField.find('#' + txtFld.getInputId())
 					.addClass(typeClassStringPrefix + 'numeric');
-				
+
 			} else if (opts.layers) {
 				$formField.find('#' + txtFld.getInputId())
 					.addClass(typeClassStringPrefix + 'layers');
-				
+
 			} else if (opts.localized) {
 				$formField.find('#' + txtFld.getInputId())
 					.addClass(typeClassStringPrefix + 'localized');
 			}
-	
+
 			if (opts.wikiTransform) {
 				$('<div>')
 					.addClass('n2schema_help_wiki')
@@ -596,10 +596,10 @@ function _formField() {
 		}
 	};
 	return r.html();
-	
+
 	function getSortedLanguages(langOpts, localizedStr){
 		var langMap = {};
-		
+
 		if( localizedStr ){
 			for(var lang in localizedStr){
 				if( lang === 'nunaliit_type' || lang[0] === ':' ){
@@ -616,7 +616,7 @@ function _formField() {
 				langMap[lang] = true;
 			};
 		};
-		
+
 		var languages = $n2.languageSupport.getLanguages();
 		if( languages ){
 			for(var i=0,e=languages.length; i<e; ++i){
@@ -624,12 +624,12 @@ function _formField() {
 				langMap[lang] = true;
 			};
 		};
-		
+
 		var langs = [];
 		for(var lang in langMap){
 			langs.push(lang);
 		};
-		
+
 		var locale = $n2.l10n.getLocale();
 		var localeLang = locale.lang;
 		langs.sort(function(l1,l2){
@@ -639,7 +639,7 @@ function _formField() {
 			if( l1 > l2 ) return 1;
 			return 0;
 		});
-		
+
 		return langs;
 	};
 };
@@ -648,13 +648,13 @@ function _inputField() {
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
-	
+
 	var text = options.fn(this);
 
 	// Syntax is: <selector>(,<type>)?
 	var splits = text.split(',');
 	var key = splits[0];
-	
+
 	var completeSelectors = null;
 	if( options
 	 && options.data
@@ -670,15 +670,15 @@ function _inputField() {
 	} else {
 		var sels = key.split('.');
 		completeSelectors = completeSelectors.getChildSelector(sels);
-	};	
-	
+	};
+
 	var cl = 'n2schema_input ' + createClassStringFromSelector(completeSelectors);
 
 	var type = '';
 	if( splits[1] ) {
 		type = ' n2schema_type_'+splits[1];
 	};
-	
+
 	return cl + type;
 };
 
@@ -687,9 +687,9 @@ function _arrayField() {
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
-	
+
 	var obj = args[0];
-	
+
 	var newType = null;
 	if( args.length > 1 ){
 		newType = args[1];
@@ -712,7 +712,7 @@ function _arrayField() {
 
 			$arrayItemWrapper.attr('nunaliit-selector', attr);
 		}
-		
+
 		var tagBox = new $n2.mdc.MDCTagBox({
 			parentElem: $arrayItemWrapper,
 			chips: args[0],
@@ -728,37 +728,37 @@ function _arrayField() {
 
 	} else {
 		var r = [];
-		
+
 		r.push('<div class="n2schema_array">');
-	
+
 		if( obj && obj.length ) {
 			for(var i=0,e=obj.length; i<e; ++i){
 				var item = obj[i];
-	
+
 				var completeSelectors = obj[SELECT];
 				completeSelectors = completeSelectors.getChildSelector(i);
 				var cl = createClassStringFromSelector(completeSelectors);
-				
+
 				r.push('<div class="n2schema_array_item">');
-	
+
 				r.push('<div class="n2schema_array_item_buttons">');
-		
+
 				r.push('<div class="n2schema_array_item_delete '+cl+'"></div>');
-				
+
 				r.push('<div class="n2schema_array_item_up '+cl+'"></div>');
-				
+
 				r.push('<div class="n2schema_array_item_down '+cl+'"></div>');
-	
+
 				r.push('</div>'); // close buttons
-		
+
 				r.push('<div class="n2schema_array_item_wrapper">');
-		
+
 				r.push( options.fn(item,{data:{n2_selector:completeSelectors, itemNum:i+1}}) );
-				
+
 				r.push('</div></div>');
 			};
 		};
-	
+
 		// Add a new item
 		var arraySelector = undefined;
 		if( obj ){
@@ -777,12 +777,12 @@ function _arrayField() {
 			};
 			r.push('></div>');
 		};
-		
+
 		r.push('</div>');
-		
+
 		return r.join('');
 	}
-	
+
 	function pathFromData(data, path){
 		if( data._parent ){
 			pathFromData(data._parent, path);
@@ -808,21 +808,21 @@ function _selectorField(){
 	var args = [];
 	args.push.apply(args,arguments);
 	var options = args.pop();
-	
+
 	// Compute current selector
 	var currentSelector = null;
-	if( options 
-	 && options.data 
+	if( options
+	 && options.data
 	 && options.data.n2_selector ){
 		// Within an array, the current selector is passed in options
 		currentSelector = options.data.n2_selector;
 
-	} else if( typeof this === 'object' 
-     && this !== null 
+	} else if( typeof this === 'object'
+     && this !== null
      && this[SELECT]){
 		currentSelector = this[SELECT];
 	};
-	
+
 	if( !currentSelector ){
 		return '';
 	};
@@ -830,14 +830,14 @@ function _selectorField(){
 	// Gets the text between start and end tags and
 	// parse it
 	var text = options.fn(this);
-	
+
 	var objSel = parseSelectorString(text);
 	var completeSelectors = currentSelector.getChildSelector(objSel);
 	return completeSelectors.encodeForDomAttribute();
 };
 
 
-if( typeof(Handlebars) !== 'undefined' 
+if( typeof(Handlebars) !== 'undefined'
  && Handlebars.registerHelper ) {
 	Handlebars.registerHelper(LOCALIZE ,_localizeString );
 	Handlebars.registerHelper(FIELD    ,_formField      );
@@ -849,23 +849,23 @@ if( typeof(Handlebars) !== 'undefined'
 };
 
 function computeViewObj(origObj, context, selector, parent) {
-	
+
 	if( !selector ){
 		selector = new $n2.objectSelector.ObjectSelector([]);
 	};
-	
+
 	if( null === origObj ) {
 		return origObj;
-		
+
 	} else if( typeof(origObj) === 'undefined' ) {
 		return null;
-		
+
 	} else if( $n2.isArray(origObj) ) {
 		var view = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
 		view[SELECT] = selector;
-		
+
 		for(var i=0,e=origObj.length; i<e; ++i) {
 			var childSelector = selector.getChildSelector(i);
 			var value = computeViewObj(origObj[i], context, childSelector, view);
@@ -873,10 +873,10 @@ function computeViewObj(origObj, context, selector, parent) {
 		};
 
 		return view;
-		
+
 	} else if( typeof(origObj) === 'object' ) {
 		var view = {};
-		
+
 		view[ITERATE] = [];
 		view[CONTEXT] = context;
 		view[PARENT] = parent;
@@ -891,36 +891,36 @@ function computeViewObj(origObj, context, selector, parent) {
 			view[ITERATE].push({key:key,value:value});
 		};
 		view[EMPTY] = (0 == view[ITERATE].length);
-		
+
 		view[ITERATE].sort(function(a,b){
 			if( a.key < b.key ) {
 				return -1;
-			}; 
+			};
 			if( a.key > b.key ) {
 				return 1;
-			}; 
+			};
 			return 0;
 		});
-		
+
 		return view;
-		
+
 	} else {
 		return origObj;
 	};
 };
 
 
-//============================================================
+// ============================================================
 // Object Query
 
 var ObjectQueryResults = $n2.Class({
-	
+
 	objects: null
-	
+
 	,length: 0
-	
+
 	,initialize: function(obj) {
-		
+
 		if( null === obj ) {
 			this.objects = [];
 		} else if( typeof(obj) === 'undefined' ) {
@@ -939,11 +939,11 @@ var ObjectQueryResults = $n2.Class({
 		if( null === selectors ) {
 			var interim = this._selectInterim(null, this.objects);
 			return new ObjectQueryResults(interim);
-			
+
 		} else if( typeof(selectors) === 'string' ) {
 			var interim = this._selectInterim(selectors, this.objects);
 			return new ObjectQueryResults(interim);
-			
+
 		} else if( typeof(selectors) === 'undefined' ) {
 			return ObjectQueryResultsEmpty;
 
@@ -954,19 +954,19 @@ var ObjectQueryResults = $n2.Class({
 				interim = this._selectInterim(sel, interim);
 			};
 			return new ObjectQueryResults(interim);
-		
+
 		} else {
 			return ObjectQueryResultsEmpty;
 		}
 	}
-	
+
 	,each: function(f) {
 		for(var i=0,e=this.objects.length; i<e; ++i) {
 			var obj = this.objects[i];
 			f(obj, i);
 		};
 	}
-	
+
 	,_selectInterim: function(sel, arr) {
 		var result = [];
 		for(var i=0,e=arr.length; i<e; ++i) {
@@ -974,7 +974,7 @@ var ObjectQueryResults = $n2.Class({
 		};
 		return result;
 	}
-	
+
 	,_selectFromObject: function(obj, sel, result) {
 		if( null === sel ) {
 			// matches any
@@ -999,19 +999,19 @@ var ObjectQueryResults = $n2.Class({
 var ObjectQueryResultsEmpty = new ObjectQueryResults();
 
 $n2.ObjectQuery = function(obj, query){
-	
+
 	var result = new ObjectQueryResults(obj);
 	return result.query(query);
 };
 
 
-//============================================================
+// ============================================================
 // Schema Repository Functions
 
 var SchemaRepositoryFunctions = $n2.Class({
-	
+
 	onCreateFns: null
-	
+
 	,initialize: function(){
 		this.onCreateFns = [];
 	}
@@ -1021,7 +1021,7 @@ var SchemaRepositoryFunctions = $n2.Class({
 			this.onCreateFns.push(fn);
 		};
 	}
-	
+
 	,onDocumentCreate: function(doc, schema){
 		for(var i=0,e=this.onCreateFns.length;i<e;++i){
 			var f = this.onCreateFns[i];
@@ -1030,64 +1030,64 @@ var SchemaRepositoryFunctions = $n2.Class({
 	}
 });
 
-//============================================================
+// ============================================================
 // Schema Repository
 
 var SchemaRepository = $n2.Class({
-	
+
 	schemasByName: null
-	
+
 	,loadSchemasFn: null
-	
+
 	,rootSchemasQueried: false
-	
+
 	,repositoryFunctions: null
-	
+
 	,initialize: function() {
 		this.schemasByName = {};
 		this.repositoryFunctions = new SchemaRepositoryFunctions();
 	}
 
 	,addSchemas: function(opt_) {
-		
+
 		var opt = $n2.extend({
 			schemas: null
 			,onSuccess: defaultSuccessFn
 			,onError: defaultErrorFn
 		},opt_);
-		
+
 		var schemas = opt.schemas;
 		if( ! $n2.isArray(schemas) ) {
 			schemas = [ schemas ];
 		};
-		
+
 		for(var i=0,e=schemas.length; i<e; ++i) {
 			var schema = schemas[i];
-			
+
 			if( schema.isSchema ) {
 				var schemaObj = schema;
 				schemaObj.repositoryFunctions = this.repositoryFunctions;
 			} else {
 				var schemaObj = new Schema(this, schema);
 			};
-			
+
 			var name = schemaObj.name;
 			this.schemasByName[name] = schemaObj;
 		};
-		
+
 		this._resolveSchemaDependencies(opt);
 	}
 
 	,getSchema: function(opt_) {
-		
+
 		var _this = this;
-		
+
 		var opt = $n2.extend({
 			name: null
 			,onSuccess: defaultSuccessFn
 			,onError: defaultErrorFn
 		},opt_);
-		
+
 		if( this.schemasByName[opt.name] ) {
 			if( this.schemasByName[opt.name]._error ) {
 				opt.onError( 'Schema "'+opt.name+'" not found' );
@@ -1096,7 +1096,7 @@ var SchemaRepository = $n2.Class({
 			};
 			return;
 		};
-		
+
 		if( this.loadSchemasFn ) {
 			this._loadSchemaDefinitions({
 				names: [ opt.name ]
@@ -1111,23 +1111,23 @@ var SchemaRepository = $n2.Class({
 			});
 			return;
 		};
-		
+
 		opt.onError('Can not find schema named: '+opt.name);
 	}
 
 	,getSchemas: function(opt_) {
-		
+
 		var _this = this;
-		
+
 		var opt = $n2.extend({
 			names: null
 			,onSuccess: defaultSuccessFn
 			,onError: defaultErrorFn
 		},opt_);
-		
+
 		var resultSchemas = [];
 		var namesToQuery = null;
-		
+
 		// Collect schemas already cached
 		for(var i=0,e=opt.names.length; i<e; ++i){
 			var n = opt.names[i]; // name
@@ -1141,13 +1141,13 @@ var SchemaRepository = $n2.Class({
 				namesToQuery[namesToQuery.length] = n;
 			};
 		};
-		
+
 		// If all in cache, just return
 		if( null === namesToQuery ) {
 			opt.onSuccess( resultSchemas );
 			return;
 		};
-		
+
 		if( this.loadSchemasFn ) {
 			this._loadSchemaDefinitions({
 				names: namesToQuery
@@ -1164,20 +1164,20 @@ var SchemaRepository = $n2.Class({
 			});
 			return;
 		};
-		
+
 		opt.onError('Can not find requested schemas: '+namesToQuery);
 	}
 
 	,getRootSchemas: function(opt_) {
-		
+
 		var opt = $n2.extend({
 			onSuccess: defaultSuccessFn
 			,onError: defaultErrorFn
 		},opt_);
-		
+
 		var _this = this;
-		
-		if( !this.rootSchemasQueried 
+
+		if( !this.rootSchemasQueried
 		 && this.loadSchemasFn ) {
 			var _this = this;
 			this._loadSchemaDefinitions({
@@ -1190,7 +1190,7 @@ var SchemaRepository = $n2.Class({
 			});
 			return;
 		};
-		
+
 		var schemas = [];
 		for(var name in this.schemasByName) {
 			var schema = this.schemasByName[name];
@@ -1200,16 +1200,16 @@ var SchemaRepository = $n2.Class({
 				schemas.push(schema);
 			};
 		};
-		
+
 		opt.onSuccess( schemas );
 	}
-	
+
 	// Forgets all schemas loaded, so far
 	,reset: function(){
 		this.schemasByName = {};
 		this.rootSchemasQueried = false;
 	}
-	
+
 	,getRepositoryFunctions: function(){
 		return this.repositoryFunctions;
 	}
@@ -1217,13 +1217,13 @@ var SchemaRepository = $n2.Class({
 	,_loadSchemaDefinitions: function(opt) {
 
 		var _this = this;
-		
+
 		var loadingOpt = {
 			names: opt.names
 			,onSuccess: loaded
 			,onError: opt.onError
 		};
-		
+
 		this.loadSchemasFn(loadingOpt);
 
 		function loaded(schemaDefinitions) {
@@ -1249,14 +1249,14 @@ var SchemaRepository = $n2.Class({
 					};
 				};
 			};
-			
+
 			_this.addSchemas({
 				schemas: schemaDefinitions
 				,onSuccess: opt.onSuccess
 				,onError: opt.onError
 			});
 		};
-		
+
 		function findSchemaDefinition(name, definitions) {
 			for(var i=0,e=definitions.length; i<e; ++i){
 				var def = definitions[i];
@@ -1267,18 +1267,18 @@ var SchemaRepository = $n2.Class({
 			return null;
 		};
 	}
-	
+
 	,_resolveSchemaDependencies: function(opt_) {
 		var _this = this;
-		
+
 		var missingSchemas = {};
 		var currentSchemas = this.schemasByName;
-		
+
 		for(var name in this.schemasByName) {
 			var schema = this.schemasByName[name];
 			schema._resolveSchemaDependencies(currentSchemas, missingSchemas);
 		};
-		
+
 		var missingSchemasArr = [];
 		for(var missingSchemaName in missingSchemas) {
 			missingSchemasArr.push(missingSchemaName);
@@ -1289,45 +1289,45 @@ var SchemaRepository = $n2.Class({
 			opt_.onSuccess();
 			return;
 		};
-		
+
 		if( missingSchemasArr.length > 0
-		 && !this.loadSchemasFn 
+		 && !this.loadSchemasFn
 		 ) {
 			// missing dependencies, but no way to fetch more
 			opt_.onError('Can not find missing dependencies');
 			return;
 		};
-		
+
 		this._loadSchemaDefinitions({
 			names: missingSchemasArr
 			,onSuccess: opt_.onSuccess
 			,onError: opt_.onError
 		});
 	}
-	
+
 	,_getSchemaMap: function() {
 		return this.schemasByName;
 	}
 });
 
-//============================================================
+// ============================================================
 // Schema Extension
 
 var SchemaExtension = $n2.Class({
-	
+
 	selector: null
-	
+
 	,create: null
-	
+
 	,schemaName: null
-	
+
 	,dependentSchema: null
-	
+
 	,initialize: function(jsonDefinition) {
-		
+
 		this.selector = jsonDefinition.selector;
 		this.schemaName = jsonDefinition.schemaName;
-		
+
 		this.create = false;
 		if( typeof(jsonDefinition.create) === 'boolean' ) {
 			this.create = jsonDefinition.create;
@@ -1351,7 +1351,7 @@ var SchemaExtension = $n2.Class({
 
 		// Verify if it is necessary to create this
 		// extension
-		if( !this.create 
+		if( !this.create
 		 && !targetDefValues ) {
 //$n2.log('Skip',this,targetDefValues);
 			return;
@@ -1361,7 +1361,7 @@ var SchemaExtension = $n2.Class({
 		var targetObj = obj;
 		for(var i=0,e=this.selector.length-1; i<e; ++i) {
 			var keyName = this.selector[i];
-			
+
 			if( targetObj[keyName] ) {
 				targetObj = targetObj[keyName];
 			} else {
@@ -1376,7 +1376,7 @@ var SchemaExtension = $n2.Class({
 	}
 
 	,_resolveSchemaDependencies: function(currentSchemas, missingSchemas) {
-		if( ! this.dependentSchema 
+		if( ! this.dependentSchema
 		 && this.schemaName
 		 ) {
 			if( currentSchemas[this.schemaName] ) {
@@ -1388,57 +1388,57 @@ var SchemaExtension = $n2.Class({
 	}
 });
 
-//============================================================
+// ============================================================
 // Schema
 
 var Schema = $n2.Class({
-	
+
 	isSchema: null
-	
+
 	,isRootSchema: false
-	
+
 	,name: null
-	
+
 	,repositoryFunctions: null
-	
+
 	,displayTemplate: null
-	
+
 	,briefTemplate: null
-	
+
 	,popupTemplate: null
-	
+
 	,formTemplate: null
-	
+
 	,relatedSchemaNames: null
-	
+
 	,extensions: null
-	
+
 	,extensionsByName: null
-	
+
 	,cachedDisplay: null
-	
+
 	,cachedBrief: null
-	
+
 	,cachedPopup: null
-	
+
 	,csvExport: null
 
 	,exportInfo: null
-	
+
 	,label: null
 
 	,definition: null
 
 	,options: null
-	
+
 	,jsonDefinition: null
-	
+
 	,_error: null
-	
+
 	,initialize: function(repository, jsonDefinition) {
-		
+
 		this.repositoryFunctions = repository.getRepositoryFunctions();
-			
+
 		this.name = jsonDefinition.name;
 		this.displayTemplate = jsonDefinition.display;
 		this.briefTemplate = jsonDefinition.brief;
@@ -1451,7 +1451,7 @@ var Schema = $n2.Class({
 		this.definition = jsonDefinition.definition;
 		this.options = jsonDefinition.options;
 		this.jsonDefinition = jsonDefinition;
-		
+
 		if( jsonDefinition.isRootSchema ) {
 			this.isRootSchema = true;
 		};
@@ -1464,7 +1464,7 @@ var Schema = $n2.Class({
 		if( !this.relatedSchemaNames ) {
 			this.relatedSchemaNames = [];
 		};
-		
+
 		this.extensions = [];
 		this.extensionsByName = {};
 		if( jsonDefinition.extensions ) {
@@ -1482,7 +1482,7 @@ var Schema = $n2.Class({
 				};
 			};
 		};
-		
+
 		this.isSchema = true;
 	}
 
@@ -1495,12 +1495,12 @@ var Schema = $n2.Class({
 
 	,createObject: function(defValues) {
 		var result = {};
-		
+
 		// Start with default object, if provided
 		if( this.create ) {
 			$n2.extend(true, result, this.create);
 		};
-		
+
 		// Add all elements not covered by extensions
 		if( defValues ) {
 			for(var name in defValues) {
@@ -1516,42 +1516,42 @@ var Schema = $n2.Class({
 			var attr = this.extensions[i];
 			attr.createObject(result,defValues);
 		};
-		
+
 		this.repositoryFunctions.onDocumentCreate(result,this);
-		
+
 		return result;
 	}
-	
+
 	,display: function(obj, $elem, ctxt_) {
 		if( !this.displayTemplate ) return;
-		
+
 		if( !this.cachedDisplay ) {
 			this.cachedDisplay = new Display(this,'displayTemplate');
 		};
-		
+
 		this.cachedDisplay.display(obj, $elem, ctxt_);
 	}
-	
+
 	,brief: function(obj, $elem, ctxt_) {
 		if( !this.briefTemplate ) return;
-		
+
 		if( !this.cachedBrief ) {
 			this.cachedBrief = new Display(this,'briefTemplate');
 		};
-		
+
 		this.cachedBrief.display(obj, $elem, ctxt_);
 	}
-	
+
 	,popup: function(obj, $elem, ctxt_) {
 		if( !this.popupTemplate ) return;
-		
+
 		if( !this.cachedPopup ) {
 			this.cachedPopup = new Display(this,'popupTemplate');
 		};
-		
+
 		this.cachedPopup.display(obj, $elem, ctxt_);
 	}
-	
+
 	,form: function(obj, $elem, ctxt_, callback, functionMap) {
 		var form = new Form(this);
 		form.form(obj, $elem, ctxt_, callback, functionMap);
@@ -1566,13 +1566,13 @@ var Schema = $n2.Class({
 	}
 });
 
-//============================================================
+// ============================================================
 // Display
 
 function DisplaySelectAny(obj, key) {
-	if( EMPTY === key 
+	if( EMPTY === key
 	 || ITERATE === key
-	 || CONTEXT === key 
+	 || CONTEXT === key
 	 ) {
 		return false;
 	};
@@ -1580,20 +1580,20 @@ function DisplaySelectAny(obj, key) {
 };
 
 var DisplayExtension = $n2.Class({
-	
+
 	schemaExtension: null
-	
+
 	,subDisplay: null
-	
+
 	,selector: null
-	
+
 	,initialize: function(schemaExtension, templateName) {
 		this.schemaExtension = schemaExtension;
 		this.templateName = templateName;
 
 		var subSchema = this.schemaExtension.dependentSchema;
 		this.subDisplay = new Display(subSchema, templateName);
-		
+
 		this.selector = [];
 		for(var i=0,e=schemaExtension.selector.length; i<e; ++i) {
 			var sel = schemaExtension.selector[i];
@@ -1615,15 +1615,15 @@ var DisplayExtension = $n2.Class({
 			subDisplay._setHtml(obj);
 		});
 	}
-	
+
 });
 
 var Display = $n2.Class({
-	
+
 	schema: null
-	
+
 	,templateName: null
-	
+
 	,extensions: null
 
 	,initialize: function(schema, templateName) {
@@ -1632,7 +1632,7 @@ var Display = $n2.Class({
 		if( !this.templateName ) {
 			this.templateName = 'displayTemplate';
 		};
-		
+
 		this.extensions = [];
 		for(var i=0,e=schema.extensions.length; i<e; ++i) {
 			var attr = new DisplayExtension(schema.extensions[i], this.templateName);
@@ -1641,11 +1641,11 @@ var Display = $n2.Class({
 	}
 
 	,display: function(obj, $elem, ctxt_) {
-		
+
 		var context = {
 			root: obj
 		};
-		
+
 		$n2.extend(context, ctxt_);
 
 		// Create view for displayTemplate
@@ -1656,12 +1656,12 @@ var Display = $n2.Class({
 			$elem.html(view[HTML]);
 		}
 	}
-	
+
 	,_setHtml: function(obj) {
 		if( null == obj ){
 			return;
 		};
-		
+
 		for(var i=0,e=this.extensions.length; i<e; ++i) {
 			var attr = this.extensions[i];
 			attr._setHtml(obj);
@@ -1681,7 +1681,7 @@ var Display = $n2.Class({
 	}
 });
 
-//============================================================
+// ============================================================
 // Form
 
 var selectorClassStringPrefix = 'n2schema_selector';
@@ -1711,17 +1711,17 @@ function unescapeSelector(sel) {
 	var res = [];
 	for(var i=0,e=sel.length; i<e; ++i) {
 		var c = sel[i];
-		if( c === '_' ) { 
+		if( c === '_' ) {
 			++i;
 			var o2 = sel.charCodeAt(i);
 			++i;
 			var o1 = sel.charCodeAt(i);
 			++i;
 			var o0 = sel.charCodeAt(i);
-			
+
 			var b = ((o2-0x30)<<6)+((o1-0x30)<<3)+(o0-0x30);
 			res.push(String.fromCharCode(b));
-			
+
 		} else {
 			res.push(c);
 		};
@@ -1730,7 +1730,7 @@ function unescapeSelector(sel) {
 };
 
 function createClassStringFromSelector(selector) {
-	var cs = 
+	var cs =
 		selectorClassStringPrefix
 		+selector.encodeForDomAttribute();
 	return cs;
@@ -1739,50 +1739,50 @@ function createClassStringFromSelector(selector) {
 // Given a class name, returns an array that represents the encoded selector.
 // Returns null if the class name is not encoding a selector
 function createSelectorFromClassString(classString) {
-	if( selectorClassStringPrefix 
+	if( selectorClassStringPrefix
 			=== classString.substr(0,selectorClassStringPrefix.length) ) {
 		var selectorString = classString.substr(selectorClassStringPrefix.length);
 		var selector = $n2.objectSelector.decodeFromDomAttribute(selectorString);
-		
+
 		return selector;
 	};
-	
+
 	return null;
 };
 
 function parseClassNames(classNames) {
 	var parsed = {};
-	
+
 	for(var i=0,e=classNames.length; i<e; ++i) {
 		var className = classNames[i];
-		
+
 		var selector = createSelectorFromClassString(className);
 		if( selector ) {
 			parsed.selector = selector;
 		};
-		
+
 		if( typeClassStringPrefix === className.substr(0,typeClassStringPrefix.length) ) {
 			var typeString = className.substr(typeClassStringPrefix.length);
 			parsed.type = typeString;
 		};
 	};
-	
+
 	return parsed;
 };
 
 var FormExtension = $n2.Class({
-	
+
 	schemaExtension: null
-	
+
 	,innerForm: null
-	
+
 	,selector: null
 	,initialize: function(schemaExtension) {
 		this.schemaExtension = schemaExtension;
 
 		var subSchema = this.schemaExtension.dependentSchema;
 		this.innerForm = new Form(subSchema);
-		
+
 		this.selector = [];
 		for(var i=0,e=schemaExtension.selector.length; i<e; ++i) {
 			var sel = schemaExtension.selector[i];
@@ -1807,22 +1807,22 @@ var FormExtension = $n2.Class({
 });
 
 var Form = $n2.Class({
-	
+
 	schema: null
-	
+
 	,extensions: null
-	
+
 	,obj: null
-	
+
 	,elemId: null
-	
+
 	,context: null
-	
+
 	,callback: null
 
 	,initialize: function(schema) {
 		this.schema = schema;
-		
+
 		this.extensions = [];
 		for(var i=0,e=schema.extensions.length; i<e; ++i) {
 			var attr = new FormExtension(schema.extensions[i]);
@@ -1831,9 +1831,9 @@ var Form = $n2.Class({
 	}
 
 	,form: function(obj, $elem, ctxt_, callback, functionMap) {
-		
+
 		this.obj = obj;
-		
+
 		this.context = $n2.extend({
 			root: obj
 		}, ctxt_);
@@ -1842,24 +1842,24 @@ var Form = $n2.Class({
 		if( !this.callback ) {
 			this.callback = function(obj,selector,value){};
 		};
-		
+
 		this.functionMap = {};
 		if( functionMap ) {
 			for(var fName in functionMap) {
 				this.functionMap[fName] = functionMap[fName];
 			};
 		};
-		
+
 		var unique = $elem.attr('id');
 		if( typeof(unique) === 'undefined' ) {
 			unique = $n2.getUniqueId();
 			$elem.attr('id',unique);
 		};
 		this.elemId = $elem.attr('id');
-		
+
 		this.refresh($elem);
 	}
-	
+
 	,refresh: function($elem) {
 		if(typeof($elem) === 'undefined'){
 			$elem = $('#'+this.elemId);
@@ -1876,7 +1876,7 @@ var Form = $n2.Class({
 
 			if( view[HTML] ) {
 				$divEvent.html(view[HTML]);
-				
+
 				// Install callbacks
 				var _this = this;
 				$divEvent.find('.n2schema_input').each(function(){
@@ -1902,7 +1902,7 @@ var Form = $n2.Class({
 				$divEvent.find('.n2schema_field_custom').each(function(){
 					_this._installCustomType($elem, $(this),_this.obj,_this.callback);
 				});
-				
+
 				$divEvent.click(function(e){
 					var $clicked = $(e.target);
 					var classString = $clicked.attr('class');
@@ -1934,16 +1934,16 @@ var Form = $n2.Class({
 							var newItem = '';
 							if( 'reference' === newType ){
 								newItem = null;
-								
+
 							} else if( 'date' === newType ){
 								newItem = null;
-								
+
 							} else if( 'string' === newType ){
 								newItem = '';
-								
+
 							} else if( 'tagbox' === newType ){
 								newItem = '';
-								
+
 							} else if( 'localized' === newType ){
 								newItem = {
 									nunaliit_type: 'localized'
@@ -1951,10 +1951,10 @@ var Form = $n2.Class({
 								var locale = $n2.l10n.getLocale();
 								var lang = locale.lang;
 								newItem[lang] = '';
-								
+
 							} else if( 'textarea' === newType ){
 								newItem = '';
-								
+
 							} else if( newType ){
 								try {
 									eval('newItem = '+newType);
@@ -1966,19 +1966,19 @@ var Form = $n2.Class({
 						};
 						_this.refresh($elem);
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
-						
+
 					} else if( $clicked.hasClass('n2schema_array_item_delete') ){
 						var itemIndex = 1 * classInfo.selector.getKey();
 						var parentSelector = classInfo.selector.getParentSelector();
 						var ary = parentSelector.getValue(_this.obj);
 						ary.splice(itemIndex,1);
-						
+
 						var $item = $clicked.parents('.n2schema_array_item').first();
 						$item.remove();
 						_this.refresh($elem);
 
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
-						
+
 					} else if( $clicked.hasClass('n2schema_array_item_up') ){
 						// Push item earlier in array
 						var itemIndex = 1 * classInfo.selector.getKey();
@@ -1987,7 +1987,7 @@ var Form = $n2.Class({
 							var ary = parentSelector.getValue(_this.obj);
 							var removedItems = ary.splice(itemIndex,1);
 							ary.splice(itemIndex-1,0,removedItems[0]);
-							
+
 							var $item = $clicked.parents('.n2schema_array_item').first();
 							var $prevItem = $item.prev();
 							$item.insertBefore($prevItem);
@@ -1995,7 +1995,7 @@ var Form = $n2.Class({
 
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
-						
+
 					} else if( $clicked.hasClass('n2schema_array_item_down') ){
 						// Push item later in array
 						var itemIndex = 1 * classInfo.selector.getKey();
@@ -2004,7 +2004,7 @@ var Form = $n2.Class({
 						if( itemIndex < (ary.length - 1) ) {
 							var removedItems = ary.splice(itemIndex,1);
 							ary.splice(itemIndex+1,0,removedItems[0]);
-							
+
 							var $item = $clicked.parents('.n2schema_array_item').first();
 							var $nextItem = $item.next();
 							$item.insertAfter($nextItem);
@@ -2012,7 +2012,7 @@ var Form = $n2.Class({
 
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
-						
+
 					} else if( $clicked.hasClass('n2schema_referenceDelete') ){
 						var referenceKey = classInfo.selector.getKey();
 						var parentSelector = classInfo.selector.getParentSelector();
@@ -2022,10 +2022,10 @@ var Form = $n2.Class({
 							_this.refresh($elem);
 							_this.callback(_this.obj,classInfo.selector.selectors,null);
 						};
-						
+
 					} else if( $clicked.hasClass('n2schema_help_date') ){
 						$n2.help.ShowHelp('dates', $clicked);
-						
+
 					} else if( $clicked.hasClass('n2schema_help_wiki') ){
 						$n2.help.ShowHelp('wiki', $clicked);
 					};
@@ -2036,7 +2036,7 @@ var Form = $n2.Class({
 
 	_setHtml: function(obj) {
 		if( !obj ) return;
-		
+
 		for(var i=0,e=this.extensions.length; i<e; ++i) {
 			var attr = this.extensions[i];
 			attr._setHtml(obj);
@@ -2054,19 +2054,19 @@ var Form = $n2.Class({
 			obj[HTML] = compiledTemplate(obj);
 		};
 	},
-	
+
 	_installHandlers: function($elem,$input,obj,callback) {
 		var _this = this;
-		
+
 		var classNames = $input.attr('class').split(' ');
 		var classInfo = parseClassNames(classNames);
 		var inputNodeName = $input.prop('nodeName');
 		if( typeof inputNodeName === 'string' ){
 			inputNodeName = inputNodeName.toLowerCase();
 		};
-		
+
 		// Special case for references. Convert input into field
-		if( 'reference' === classInfo.type 
+		if( 'reference' === classInfo.type
 		 && classInfo.selector ){
 			var $span = $('<span>')
 				.attr('nunaliit-selector',classInfo.selector.encodeForDomAttribute())
@@ -2106,7 +2106,7 @@ var Form = $n2.Class({
 			if( 'date' !== classInfo.type ){ // no key up event for date text boxes
 				$input.keyup(keyupHandler);
 			};
-			
+
 			// Set value
 			var value = selector.getValue(obj);
 			var type = $input.attr('type');
@@ -2136,7 +2136,7 @@ var Form = $n2.Class({
 						}
 					});
 				};
-				
+
 			} else if( 'numeric' === classInfo.type ) {
 				//if( false == $n2.utils.isNumber(value) ) {
 				//	value = 0;
@@ -2146,7 +2146,7 @@ var Form = $n2.Class({
 				// On key down, save previous value
 				$input.keydown(function(event) {
 					var $input = $(this);
-					
+
 					var val = $input.val();
 					$input.attr('n2Numeric', val);
 
@@ -2157,11 +2157,11 @@ var Form = $n2.Class({
 				// Else, restore previous value
 				$input.keyup(function(event) {
 					var $input = $(this);
-					
+
 					var previous = $input.attr('n2Numeric');
-					
+
 					var val = $input.val();
-					if( '' === val 
+					if( '' === val
 						|| '+' === val
 						|| '-' === val
 					  ){
@@ -2170,17 +2170,17 @@ var Form = $n2.Class({
 					} else if( $n2.utils.isNumber(val) ){
 						// OK. Allow a number
 
-					} else if( 
+					} else if(
 							// Allow: delete
-							event.keyCode === 46 
+							event.keyCode === 46
 							// Allow: backspace
-							|| event.keyCode === 8 
+							|| event.keyCode === 8
 							// Allow: tab
-							|| event.keyCode === 9 
+							|| event.keyCode === 9
 							// Allow: escape
-							|| event.keyCode === 27 
+							|| event.keyCode === 27
 				             // Allow: Ctrl+A
-				            || (event.keyCode === 65 && event.ctrlKey) 
+				            || (event.keyCode === 65 && event.ctrlKey)
 				             // Allow: home and end
 				            || (event.keyCode >= 35 && event.keyCode <= 36)
 				             // Allow: left
@@ -2193,34 +2193,34 @@ var Form = $n2.Class({
 						// OK. Allow special characters so that user
 						// can perform editing of a value, even if it is
 						// not yet numeric
-						
+
 					} else {
 						// Restore previous
 						$input.val(previous);
 					}
 
 					//$n2.log('key up',val,event);
-					
+
 					return true;
 				});
-				
+
 			} else if( 'layers' === classInfo.type ) {
 				if( $n2.isArray(value) ) {
 					value = value.join(',');
 				};
 				$input.val(value);
-				
+
 				var getLayersFn = this.functionMap['getLayers'];
 				if( getLayersFn && $input.is('input') ) {
 					$input.focus(function(e, eventParam){
 						if( eventParam && eventParam.inhibitCallback ) {
 							return true;
 						};
-						
+
 						var layerValue = selector.getValue(obj);
-						
+
 						getLayersFn({
-							currentLayers: layerValue	
+							currentLayers: layerValue
 							,onSelected: function(layers){ // callback with docId
 								var p = parentSelector.getValue(obj);
 								if( p ) {
@@ -2239,19 +2239,19 @@ var Form = $n2.Class({
 								$input.trigger('focus',{inhibitCallback:true});
 							}
 						});
-						
+
 						return true;
 					});
 				};
-				
+
 			} else {
 				$input.val(value);
 			};
-			
+
 			// After setting the value to a <select>, it is possible that no option
 			// is representing the current value. In this case, insert an option to
 			// represent the current state
-			if( 'div' === inputNodeName 
+			if( 'div' === inputNodeName
 				&& classNames.indexOf('mdc-select__menu') >= 0 ){
 				var effectiveValue = value;
 				if( null === effectiveValue || undefined === effectiveValue ){
@@ -2270,7 +2270,7 @@ var Form = $n2.Class({
 							foundCurrentValue = true;
 						};
 					};
-					
+
 					if( !foundCurrentValue ){
 						// At this point, the value carried by the document is not
 						// properly represented by the <select> form element. Correct
@@ -2291,7 +2291,7 @@ var Form = $n2.Class({
 
 	_installReference: function($container, $elem) {
 		var _this = this;
-		
+
 		var domSelector = $elem.attr('nunaliit-selector');
 		var referenceLabel = $elem.attr('nunaliit-label');
 		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
@@ -2300,9 +2300,9 @@ var Form = $n2.Class({
 		var $input = $elem.find('input');
 
 		var funcIdentifier = $elem.attr('n2-search-func');
-		
+
 		var ref = objSel.getValue(this.obj);
-		
+
 		if (ref && ref.doc) {
 
 			// Hide input element to show document brief
@@ -2312,15 +2312,15 @@ var Form = $n2.Class({
 			$('<span>').addClass('n2s_briefDisplay')
 				.text(ref.doc)
 				.insertBefore($input);
-				
+
 			// Delete button
 			$('<div>')
 				.addClass('n2schema_referenceDelete')
 				.appendTo($elem)
 				.click(function(){
 					var parentObj = parentSelector.getValue(_this.obj);
-					if( $n2.isArray(parentObj) 
-					 && typeof key === 'number' 
+					if( $n2.isArray(parentObj)
+					 && typeof key === 'number'
 					 && parentObj.length > key ){
 						// Dealing with an array of references
 						if( parentObj[key] ){
@@ -2336,22 +2336,22 @@ var Form = $n2.Class({
 						};
 					};
 				});
-			
+
 		} else {
 			// Handle changes
 			var changeHandler = function(e) {
-				
+
 				var parentObj = parentSelector.getValue(_this.obj);
 				if( parentObj ){
 					var value = $input.val();
 					var cbValue = null;
-					
+
 					if( null === value || value === '' ) {
 						// delete
 						if( parentObj[key] ) {
 							delete parentObj[key];
 						};
-						
+
 					} else {
 						// update
 						if( !parentObj[key] ) {
@@ -2359,10 +2359,10 @@ var Form = $n2.Class({
 						};
 						parentObj[key].nunaliit_type = 'reference';
 						parentObj[key].doc = value;
-						
+
 						cbValue = parentObj[key];
 					};
-					
+
 					_this.refresh($container);
 					_this.callback(_this.obj,objSel.selectors,cbValue);
 				};
@@ -2374,7 +2374,7 @@ var Form = $n2.Class({
 				fn: this.functionMap['getDocumentId']
 				,args: []
 			};
-//			if( funcIdentifier 
+//			if( funcIdentifier
 //			 && this.functionMap[funcIdentifier] ){
 //				getDocumentIdFn = this.functionMap[funcIdentifier];
 //			};
@@ -2404,7 +2404,7 @@ var Form = $n2.Class({
 					if( eventParam && eventParam.inhibitCallback ) {
 						return true;
 					};
-					
+
 					window.setTimeout(function(){
 						focusHandler.fn({
 							contextDoc: _this.obj
@@ -2420,10 +2420,10 @@ var Form = $n2.Class({
 
 									// Update input
 									$input.val(docId);
-									
+
 									// Call change handler
 									changeHandler.call($input);
-									
+
 									// Put focus in input
 									$input.trigger('focus',{inhibitCallback:true});
 								};
@@ -2433,45 +2433,45 @@ var Form = $n2.Class({
 							}
 						});
 					}, 0);
-					
+
 					return true;
 				});
 			};
-			
+
 		};
 	},
 
 	_installGeometry: function($container, $elem) {
 		var _this = this;
-		
+
 		var domSelector = $elem.attr('nunaliit-selector');
 		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
 		var parentSelector = objSel.getParentSelector();
 		var key = objSel.getKey();
 
 		var geom = objSel.getValue(this.obj);
-		
+
 		if( geom && geom.wkt ) {
 			// There is a geometry
 			$elem.val(geom.wkt);
 		} else {
 			$elem.val('');
 		};
-		
+
 		$elem.change(function(e) {
 			var $elem = $(this);
-			
+
 			var parentObj = parentSelector.getValue(_this.obj);
 			if( parentObj ){
 				var value = $elem.val();
 				var cbValue = null;
-				
+
 				if( null === value || value === '' ) {
 					// delete
 					if( parentObj[key] ) {
 						delete parentObj[key];
 					};
-					
+
 				} else {
 					// update
 					if( !parentObj[key] ) {
@@ -2479,28 +2479,28 @@ var Form = $n2.Class({
 					};
 					parentObj[key].nunaliit_type = 'geometry';
 					parentObj[key].wkt = value;
-					
+
 					if( parentObj[key].bbox ){
 						delete parentObj[key].bbox;
 					};
-					
+
 					if( parentObj[key].simplified ){
 						delete parentObj[key].simplified;
 					};
-					
+
 					cbValue = parentObj[key];
 				};
-				
+
 				_this.refresh($container);
 				_this.callback(_this.obj,objSel.selectors,cbValue);
 			};
 		});
 	},
-	
+
 
 	_installTagBox: function($container, $elem) {
 		var _this = this;
-		
+
 		var domSelector = $elem.attr('nunaliit-selector');
 		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
 		var stringSelector = objSel.getSelectorString();
@@ -2524,18 +2524,18 @@ var Form = $n2.Class({
 
 		});
 	},
-	
+
 	_installCustomType: function($container, $elem, doc , callbackFn){
 		var _this = this;
-		
+
 		var customType = $elem.attr('n2-custom-type');
-		
+
 		var selectorStr = $elem.attr('nunaliit-selector');
 		var selector = null;
 		if( selectorStr ){
 			selector = $n2.objectSelector.decodeFromDomAttribute(selectorStr);
 		};
-		
+
 		function cb(value, suppressFullRefresh){
 			if( suppressFullRefresh ){
 				$elem.empty();
@@ -2546,7 +2546,7 @@ var Form = $n2.Class({
 					if( selector && doc ){
 						obj = selector.getValue(doc);
 					};
-					
+
 					handler({
 						elem: $elem
 						,doc: doc
@@ -2560,10 +2560,10 @@ var Form = $n2.Class({
 			} else {
 				_this.refresh($container);
 			};
-			
+
 			_this.callback(doc,selector,value);
 		};
-		
+
 		if( typeof customType === 'string' ){
 			var handler = customFieldHandlers[customType];
 			if( handler ){
@@ -2571,7 +2571,7 @@ var Form = $n2.Class({
 				if( selector && doc ){
 					obj = selector.getValue(doc);
 				};
-				
+
 				handler({
 					elem: $elem
 					,doc: doc
@@ -2584,19 +2584,19 @@ var Form = $n2.Class({
 			} else {
 				$elem.attr('nunaliit-error','No handler found for custom type: "'+customType+'"');
 			};
-			
+
 		} else {
 			$elem.attr('nunaliit-error','Custom type not provided');
 		};
-		
+
 	},
-	
+
 	_createChangeHandler: function(obj, selector, parentSelector, keyType, callback) {
 		return function(e) {
 			var $input = $(this);
 			var parentObj = parentSelector.getValue(obj);
 			var effectiveKey = selector.getKey();
-			
+
 			if( !parentObj ){
 				if( 'localized' === keyType ) {
 					var value = $input.val();
@@ -2607,7 +2607,7 @@ var Form = $n2.Class({
 					};
 				};
 			};
-			
+
 			if( parentObj ) {
 				var assignValue = true;
 				var type = $input.attr('type');
@@ -2617,7 +2617,7 @@ var Form = $n2.Class({
 					} else {
 						value = false;
 					};
-					
+
 				} else if( 'reference' === keyType ) {
 					value = $input.val();
 					if( null === value || value === '' ) {
@@ -2634,12 +2634,12 @@ var Form = $n2.Class({
 						parentObj = parentObj[effectiveKey];
 						effectiveKey = 'doc';
 					};
-					
+
 				} else if( 'localized' === keyType ) {
 					value = $input.val();
 					parentObj[effectiveKey] = value;
 					assignValue = false;
-					
+
 					var shouldDelete = true;
 					for(var lang in parentObj){
 						if( 'nunaliit_type' === lang ){
@@ -2653,15 +2653,15 @@ var Form = $n2.Class({
 						selector.removeValue(obj);
 							// Materialize the parent of a localized string
 						selector.setValue(obj,{'nunaliit_type':'localized'});
-						
+
 					};
-					
+
 				} else if( 'date' === keyType ) {
 					// For date, we will update object
 					assignValue = false;
-					
+
 					var dateStr = $input.val();
-					
+
 					if( !dateStr ){
 						if( parentObj[effectiveKey] ) {
 							parentObj[effectiveKey] = null;
@@ -2690,12 +2690,12 @@ var Form = $n2.Class({
 							};
 						};
 					};
-					
+
 					// We should be updating parent object with the
 					// complete date structure
 					value = parentObj[effectiveKey];
-					
-					
+
+
 				} else if( 'numeric' === keyType ) {
 					value = $input.val();
 
@@ -2705,7 +2705,7 @@ var Form = $n2.Class({
 						// Convert to number
 						value = 1 * value;
 					};
-					
+
 				} else if( 'layers' === keyType ) {
 					value = $input.val();
 					if( null === value || value === '' ) {
