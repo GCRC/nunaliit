@@ -14,4 +14,9 @@ The [Documentation](https://github.com/GCRC/nunaliit/wiki/)
 describes the setup and use of Nunaliit, as well as build instructions for developers.
 
 ## this is the comments about installing and running a Nunaliit System on  openjdk11 #819 (Java > 8 compatibility)
-
+I built and run the Nunaliit system on the OpenJdk11.
+How to install "Openjdk-11-jdk" is 
+1)apt-cache pkgnames | grep jdk
+2)sudo apt-get install openjdk-11-jdk
+3)insert sudo password.
+after installing the "Openjdk-11-jdk" just insert the command "java -version" then you will see the java version the Ubuntu server shows.
