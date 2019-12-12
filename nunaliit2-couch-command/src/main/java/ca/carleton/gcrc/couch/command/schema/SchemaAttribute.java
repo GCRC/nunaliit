@@ -1197,7 +1197,7 @@ public class SchemaAttribute {
 					pw.println("\t\t\t\t\t</div>");
 					pw.println("\t\t\t\t</div>");
 
-					pw.println("\t\t\t\t<div class=\"{{#:input}}"+id+"{{/:input}} mdc-select__menu mdc-menu mdc-menu-surface\">");
+					pw.println("\t\t\t\t<div class=\"{{#:input}}"+id+",select{{/:input}} mdc-select__menu mdc-menu mdc-menu-surface\">");
 					pw.println("\t\t\t\t\t<ul class=\"mdc-list\">");
 
 					for(SelectionOption option : options){

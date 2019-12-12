@@ -1941,9 +1941,6 @@ var Form = $n2.Class({
 							} else if( 'string' === newType ){
 								newItem = '';
 
-							} else if( 'tagbox' === newType ){
-								newItem = '';
-
 							} else if( 'localized' === newType ){
 								newItem = {
 									nunaliit_type: 'localized'
@@ -2244,6 +2241,20 @@ var Form = $n2.Class({
 					});
 				};
 
+			} else if( 'select' === classInfo.type ) {
+				var i, e, menuItem, $menuItemValue;
+				var $menuItems = $input.find('.mdc-list-item');
+
+				for (i = 0, e = $menuItems.length; i < e; i += 1) {
+					menuItem = $menuItems[i];
+					$menuItemValue = $(menuItem).attr('data-value');
+					if ($menuItemValue === value) {
+						$(menuItem).addClass('mdc-list-item--selected')
+							.attr('aria-selected', 'true');
+						break;
+					}
+				}
+
 			} else {
 				$input.val(value);
 			};
@@ -2251,8 +2262,7 @@ var Form = $n2.Class({
 			// After setting the value to a <select>, it is possible that no option
 			// is representing the current value. In this case, insert an option to
 			// represent the current state
-			if( 'div' === inputNodeName
-				&& classNames.indexOf('mdc-select__menu') >= 0 ){
+			if( classNames.indexOf('mdc-select__menu') >= 0 ){
 				var effectiveValue = value;
 				if( null === effectiveValue || undefined === effectiveValue ){
 					// This is a text field. Null does not have a meaning
