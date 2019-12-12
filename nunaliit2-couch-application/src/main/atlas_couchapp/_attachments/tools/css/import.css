@@ -159,7 +159,3 @@ main {
 	color: #ff0000;
 }
 
-#importApp .importAppInput .mdc-select.mdc-select--outlined select.mdc-select__native-control {
-	min-width: 145px;
-}
-
