@@ -2263,38 +2263,43 @@ var Form = $n2.Class({
 			// is representing the current value. In this case, insert an option to
 			// represent the current state
 			if( classNames.indexOf('mdc-select__menu') >= 0 ){
+				var i, e, menuItem, $menuItemValue;
+				var $menuItems = $input.find('.mdc-list-item');
 				var effectiveValue = value;
+				var foundCurrentValue = false;
 				if( null === effectiveValue || undefined === effectiveValue ){
 					// This is a text field. Null does not have a meaning
 					effectiveValue = '';
-				};
+				}
 
-				var selectedOptions = $input[0].selectedOptions;
-				if( selectedOptions ){
-					var foundCurrentValue = false;
-					for(var i=0,e=selectedOptions.length; i<e; ++i){
-						var selectedOption = selectedOptions.item(i);
-						var $selectedOptions = $(selectedOption);
-						var selectedValue = $selectedOptions.attr('value');
-						if( selectedValue === effectiveValue ){
+				if (effectiveValue) {
+					for (i = 0, e = $menuItems.length; i < e; i += 1) {
+						menuItem = $menuItems[i];
+						$menuItemValue = $(menuItem).attr('data-value');
+						if ($menuItemValue === value) {
 							foundCurrentValue = true;
-						};
-					};
+							break;
+						}
+					}
 
 					if( !foundCurrentValue ){
 						// At this point, the value carried by the document is not
-						// properly represented by the <select> form element. Correct
-						// the situation by prepending an <option> element with the
+						// properly represented by the select menu form element. Correct
+						// the situation by prepending a new menu-list-item element with the
 						// correct value. Make this option 'disabled' so that user can
 						// not choose it.
-						$('<option>')
-							.attr('value',effectiveValue)
-							.attr('disabled','disabled')
-							.text( effectiveValue )
-							.prependTo($input);
-						$input.val(value);
-					};
-				};
+						var $mdcList = $input.find('.mdc-list');
+
+						$('<li>')
+							.addClass('mdc-list-item mdc-list-item--disabled mdc-list-item--selected')
+							.attr('aria-disabled', 'true')
+							.attr('aria-selected', 'true')
+							.attr('role', 'option')
+							.attr('data-value', effectiveValue)
+							.text(effectiveValue)
+							.prependTo($mdcList);
+					}
+				}
 			};
 		};
 	},
