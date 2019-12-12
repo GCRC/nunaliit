@@ -2254,6 +2254,10 @@ var Form = $n2.Class({
 						break;
 					}
 				}
+				var $selectParent = $input.parent();
+				$selectParent.on("MDCSelect:change", function(){
+					changeHandler.call($input);
+				});
 
 			} else {
 				$input.val(value);
@@ -2633,6 +2637,11 @@ var Form = $n2.Class({
 						value = false;
 					};
 
+				} else if( 'select' === keyType ) {
+					var $selectedItem = $input.find('.mdc-list-item--selected');
+					if ($selectedItem.attr('data-value')) {
+						value = $selectedItem.attr('data-value');
+					}
 				} else if( 'reference' === keyType ) {
 					value = $input.val();
 					if( null === value || value === '' ) {
