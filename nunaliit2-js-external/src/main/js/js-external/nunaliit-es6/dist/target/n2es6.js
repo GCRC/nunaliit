@@ -1471,12 +1471,14 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ol-ext/dist/ol-ext.css */ "./node_modules/ol-ext/dist/ol-ext.css");
 /* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_35___default = /*#__PURE__*/__webpack_require__.n(ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_35__);
 /* harmony import */ var ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ol-ext/control/Bar */ "./node_modules/ol-ext/control/Bar.js");
-/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
-/* harmony import */ var ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_38__ = __webpack_require__(/*! ol-ext/control/Timeline */ "./node_modules/ol-ext/control/Timeline.js");
-/* harmony import */ var ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_39__ = __webpack_require__(/*! ol-ext/overlay/Popup */ "./node_modules/ol-ext/overlay/Popup.js");
+/* harmony import */ var ol_ext_control_EditBar__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ol-ext/control/EditBar */ "./node_modules/ol-ext/control/EditBar.js");
+/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_38__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
+/* harmony import */ var ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_39__ = __webpack_require__(/*! ol-ext/control/Timeline */ "./node_modules/ol-ext/control/Timeline.js");
+/* harmony import */ var ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_40__ = __webpack_require__(/*! ol-ext/overlay/Popup */ "./node_modules/ol-ext/overlay/Popup.js");
 /**
  * @module n2es6/n2mapModule/N2MapCanvas
  */
+
 
 
 
@@ -1589,13 +1591,16 @@ class N2MapCanvas  {
 		},opts_);
 
 		var _this = this;
+		this.options = opts;
 		this._classname = 'N2MapCanvas';
 		this.dispatchService  = null;
+		this._suppressSetHash = false;
 
 		this.showService = null;
 
 		this.canvasId = opts.canvasId;
 		this.sourceModelId = opts.sourceModelId;
+		this.interactionId = opts.interactionId;
 		this.elementGenerator = opts.elementGenerator;
 
 		var config = opts.config;
@@ -1644,12 +1649,108 @@ class N2MapCanvas  {
 				}
 		}
 		}
+		
+		
 		this.interactionSet = {
 				selectInteraction : null,
 				drawInteraction : null
 		};
 		this.currentInteract = null;
 		this._processOverlay(opts.overlays);
+		
+		
+		// MODES
+		
+		var addOrEditLabel = _loc('Add or Edit a Map Feature');
+		var cancelLabel = _loc('Cancel Feature Editing');
+		
+		this.modes = {
+			NAVIGATE: {
+				name        : "NAVIGATE"
+				,buttonValue : addOrEditLabel
+				,onStartHover: function(feature, layer) {
+					_this._hoverFeature(feature, layer);
+					_this._hoverFeaturePopup(feature, layer);
+				}
+				,onStartClick: function(feature, mapFeature) {
+					_this.initAndDisplayClickedPlaceInfo(feature);
+				}
+				,onEndClick: function(feature) {
+				}
+				,featureAdded: function(feature) {
+					
+				}
+			}
+			,ADD_OR_SELECT_FEATURE: {
+				name        : "ADD_OR_SELECT"
+				,buttonValue : cancelLabel
+				,onStartHover: function(feature, layer) {
+					_this._hoverFeature(feature, layer);
+					_this._hoverFeaturePopup(feature, layer);
+				}
+				,onStartClick: function(feature, mapFeature) {
+
+					var editAllowed = true;
+					if( mapFeature.cluster && mapFeature.cluster.length > 1 ) {
+						alert( _loc('This feature is a cluster and can not be edited directly. Please, zoom in to see features within cluster.') );
+						editAllowed = false;
+					};
+					
+					if( editAllowed ) {
+			    		_this._dispatch({
+			    			type: 'editInitiate'
+			    			,doc: feature.data
+			    		});
+					};
+				}
+				,onEndClick: function(feature) {
+				}
+				,featureAdded: function(feature) {
+					_this.editFeatureInfo.original = {};
+					_this.editFeatureInfo.fid = undefined;
+					_this.editFeatureInfo.suppressZoom = true;
+					
+					var mapProj = feature.layer.map.getProjectionObject();
+
+		    		_this._dispatch({
+		    			type: 'editCreateFromGeometry'
+		    			,geometry: feature.geometry.clone()
+		    			,projection: mapProj
+		    			,_origin: _this
+		    		});
+				}
+			}
+			,ADD_GEOMETRY: {
+				name        : "ADD_GEOMETRY"
+				,buttonValue : cancelLabel
+				,onStartHover: function(feature, layer) {
+					_this._hoverFeature(feature, layer);
+					_this._hoverFeaturePopup(feature, layer);
+				}
+				,featureAdded: function(feature) {
+					var proj = null;
+					if( feature 
+					 && feature.layer 
+					 && feature.layer.map ){
+						proj = feature.layer.map.getProjectionObject();
+					};
+					
+		    		_this._dispatch({
+		    			type: 'mapGeometryAdded'
+		        		,geometry: feature.geometry
+		        		,projection: proj
+		    		});
+				}
+			}
+			,EDIT_FEATURE: {
+				name        : "EDIT_FEATURE"
+				,buttonValue : cancelLabel
+				,featureAdded: function(feature) {
+				}
+			}
+		};
+		this.currentMode = this.modes.NAVIGATE;
+		this.createMapInteractionSwitch();
 		
 		// Register to events
 		if( this.dispatchService ){
@@ -1803,7 +1904,181 @@ class N2MapCanvas  {
 
 	};
 
+ 	createMapInteractionSwitch() {
+ 		var _this = this;
+ 		var mapInteractionButton = $('<input type="button" class="n2map_map_interaction_switch"/>')
+ 			.val(this.modes.NAVIGATE.buttonValue)
+ 			.click( function(evt) { 
+ 				_this._clickedMapInteractionSwitch(evt);
+ 			})
+ 			;
+		$("#"+this.interactionId)
+			.empty()
+			.append(mapInteractionButton);
+	};
+	
+	_clickedMapInteractionSwitch(e){
+		if( this.currentMode === this.modes.NAVIGATE ) {
+		//	this.switchToEditMode();
+			
+		} else if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
+		//	this._switchMapMode(this.modes.NAVIGATE);
+			
+		} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
+		//	this._cancelEditFeatureMode();
+			
+		} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
+		//	this._cancelEditFeatureMode();
+		};
+		return false;
+	};
+    _switchMapMode(mode, opts) {
+    	if( this.currentMode === mode ) {
+    		// nothing to do
+    		return;
+    	};
+    	
+    	// Remove current mode
+    	if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
+    		this.deactivateControl( this.editControls.addPoints );
+    		this.deactivateControl( this.editControls.toolbar );
+    		this.deactivateControl( this.editControls.modifyFeature );
+    		this.editLayer.events.unregister('featureadded', null, this.editModeAddFeatureCallback);
+            this.editLayer.events.unregister('beforefeaturesadded', null, this.convertToMultiGeometry);
 
+            this.deactivateSelectFeatureControl();
+            
+    	} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
+    		this.deactivateControl( this.editControls.addPoints );
+    		this.deactivateControl( this.editControls.toolbar );
+    		this.deactivateControl( this.editControls.modifyFeature );
+    		this.editLayer.events.unregister('featureadded', null, this.editModeAddFeatureCallback);
+            this.editLayer.events.unregister('beforefeaturesadded', null, this.convertToMultiGeometry);
+
+            this.deactivateSelectFeatureControl();
+            
+    	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
+    		this._removeGeometryEditor();
+            
+    	} else if( this.currentMode === this.modes.NAVIGATE ) {
+    		this.deactivateSelectFeatureControl();
+    	};
+
+    	// Apply new mode
+    	this.currentMode = mode;
+    	this._getMapInteractionSwitch().val(mode.buttonValue);
+    	if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
+    		this.editLayer.events.register('featureadded', null, this.editModeAddFeatureCallback);
+    		this.editLayer.events.register('beforefeaturesadded', null, this.convertToMultiGeometry);
+    		this.activateControl( this.editControls.addPoints );
+    		this.activateControl( this.editControls.toolbar );
+    		this.activateControl( this.editControls.modifyFeature );
+    		
+    		this.activateSelectFeatureControl();
+    		
+    		if( this.editControls.toolbar 
+    		 && this.editControls.toolbar.div ){
+    			var $toolbar = $(this.editControls.toolbar.div);
+    			$toolbar.find('.olControlNavigationItemActive').attr('title',_loc('Scroll Map'));
+    			$toolbar.find('.olControlDrawFeaturePointItemInactive').attr('title',_loc('Add a point to the map'));
+    			$toolbar.find('.olControlDrawFeaturePathItemInactive').attr('title',_loc('Add a line to the map'));
+    			$toolbar.find('.olControlDrawFeaturePolygonItemInactive').attr('title',_loc('Add a polygon to the map'));
+    			$toolbar.find('.olControlNunaliitGazetteerItemInactive').attr('title',_loc('Add a feature to the map based on a gazetteer service'));
+    		};
+            
+    	} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
+    		this.editLayer.events.register('featureadded', null, this.editModeAddFeatureCallback);
+    		this.editLayer.events.register('beforefeaturesadded', null, this.convertToMultiGeometry);
+    		this.activateControl( this.editControls.addPoints );
+    		this.activateControl( this.editControls.toolbar );
+    		this.activateControl( this.editControls.modifyFeature );
+    		
+    		if( this.editControls.toolbar 
+    		 && this.editControls.toolbar.div ){
+    			var $toolbar = $(this.editControls.toolbar.div);
+    			$toolbar.find('.olControlNavigationItemActive').attr('title',_loc('Scroll Map'));
+    			$toolbar.find('.olControlDrawFeaturePointItemInactive').attr('title',_loc('Add a point to the map'));
+    			$toolbar.find('.olControlDrawFeaturePathItemInactive').attr('title',_loc('Add a line to the map'));
+    			$toolbar.find('.olControlDrawFeaturePolygonItemInactive').attr('title',_loc('Add a polygon to the map'));
+    			$toolbar.find('.olControlNunaliitGazetteerItemInactive').attr('title',_loc('Add a feature to the map based on a gazetteer service'));
+    		};
+            
+    	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
+    		var editFeature = opts.feature;
+   			this._installGeometryEditor(editFeature);
+            
+    	} else if( this.currentMode === this.modes.NAVIGATE ) {
+    		this.activateSelectFeatureControl();
+    	};
+
+    	// Broadcast mode change
+		var dispatcher = this._getDispatchService();
+		if( dispatcher ) {
+			dispatcher.send(DH,{
+				type: 'mapReportMode'
+				,mapControl: this
+				,mode: this.currentMode.name
+			});
+		};
+    };
+    switchToEditMode () {
+    	var _this = this;
+    	
+    	var authService = this._getAuthService();
+    	if( authService ) {
+    		var logInRequired = true;
+    		
+    		// The auth module is present, check if user logged in
+    		// and is not anonymous
+    		var userNotAnonymous = authService.isLoggedIn();
+    		if( userNotAnonymous ) {
+    			logInRequired = false;
+    		};
+    		
+    		if( logInRequired ) {
+    			// User is not logged in
+    			authService.showLoginForm({
+    				prompt: '<p>You must log in as a registered user to add a point to the map.</p>'
+    				,anonymousLoginAllowed: false
+    				,onSuccess: function(){ _this.switchToEditMode(); }
+    			});
+    		} else {
+    			// Already logged in, just switch
+    	    	this._switchMapMode(this.modes.ADD_OR_SELECT_FEATURE);
+    		};
+    	} else {
+    		alert("Authentication module not installed.");
+    	};
+    };
+    
+    switchToEditFeatureMode(fid, feature) {
+    	this._switchMapMode(this.modes.EDIT_FEATURE,{
+    		fid: fid
+    		,feature: feature
+    	});
+    };
+    
+    switchToAddGeometryMode(docId) {
+    	this._switchMapMode(this.modes.ADD_GEOMETRY,{
+    		fid: docId
+    	});
+    };
+    
+    _cancelEditFeatureMode() {
+   		this._dispatch({
+   			type: 'editCancel'
+   		});
+    };
+	
+	_getAuthService (){
+		var auth = null;
+		
+		if( this.options.directory ) {
+			auth = this.options.directory.authService;
+		};
+		
+		return auth;
+	};
 	_mapBusyStatus(delta){
 		
 		//TODO new version of progressControl
@@ -1872,10 +2147,19 @@ class N2MapCanvas  {
 			customMap.once('moveend', function(evt){
 				let res = evt.frameState.viewState.resolution;
 				let proj = _this.n2View.getProjection();
+				let zoom = evt.frameState.viewState.zoom;
+				let center = evt.frameState.viewState.center;
 				_this.resolution = res;
 				var extent = olView.calculateExtent();
 				_this.sources.forEach(function(source){
 					source.onChangedResolution(res,proj, extent);
+				});
+				
+				var coor_string = center.join(',') + ',' + zoom + 'z';
+				_this.dispatchService.send(DH, {
+					type: 'viewChanged'
+					,coordination: coor_string
+					,_suppressSetHash : _this._suppressSetHash
 				});
 			})
 		}
@@ -1890,7 +2174,7 @@ class N2MapCanvas  {
 		this.mapLayers = this._genBackgroundMapLayers(this.bgSources);
 
 		
-		var customPopup= new ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_39__["default"]({
+		var customPopup= new ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_40__["default"]({
 			popupClass: "",
 			positioning: 'auto',
 			autoPan: true,
@@ -1934,7 +2218,7 @@ class N2MapCanvas  {
 
 
 		// Add selection tool (a toggle control with a select interaction)
-		var selectCtrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__["default"](
+		var selectCtrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_38__["default"](
 				{	html: '<i class="fa fa-hand-pointer-o"></i>',
 					className: "select",
 					title: "Select",
@@ -1969,17 +2253,17 @@ class N2MapCanvas  {
 			source: this.overlayLayers[0].getSource()
 		});
 		// Add editing tools
-		var pedit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__["default"](
-				{	html: '<i class="fa fa-map-marker" ></i>',
-					className: "edit",
-					title: 'Point',
-					interaction: this.interactionSet.drawInteraction,
-					onToggle: function(active)
-					{
-					}
-				});
-		//nested.addControl ( pedit );
-		var pcluster = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__["default"]({
+//		var pedit = new Toggle(
+//				{	html: '<i class="fa fa-map-marker" ></i>',
+//					className: "edit",
+//					title: 'Point',
+//					interaction: this.interactionSet.drawInteraction,
+//					onToggle: function(active)
+//					{
+//					}
+//				});
+//		//nested.addControl ( pedit );
+		var pcluster = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_38__["default"]({
 			html: '<i class="fa fa-map-marker" ></i>',
 			className: "cluster_toggle",
 			title: 'Toggle clustering',
@@ -1987,33 +2271,104 @@ class N2MapCanvas  {
 			active: _this.isClustering ? true: false,
 			onToggle: function(active)
 			{
+				//TODO toggle cluster button only change the clusting-setting for first overlay-layer
 				if(active && !_this.isClustering){
 					let c_source =  _this.overlayLayers[0].getSource();
+					_this.overlayLayers[0].setSource(null);
 					let a_source = c_source.getSource();
 					let b_source = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_21__["default"]({source: a_source});
-					a_source.changed();
+					b_source.setSource(a_source)
+					c_source = new _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_14__["default"]({
+						interaction: _this.interactionSet.selectInteraction,
+						source: b_source,
+						dispatchService: _this.dispatchService
+					});	
+					_this.overlayLayers[0].setSource (c_source);
 					
-					c_source.setSource(b_source);
-					b_source.changed();
 					_this.isClustering = true;
-					_this.dispatchService.send(DH, {
-						type: 'n2rerender'
-					})
+
 				} else if (_this.isClustering && !active) {
 					let c_source =  _this.overlayLayers[0].getSource();
 					let b_source = c_source.getSource();
 					let a_source = b_source.getSource();
 					c_source.setSource(a_source);
+					b_source.setSource(null);
 					a_source.changed();
 					_this.isClustering = false;
-					_this.dispatchService.send(DH, {
-						type: 'n2rerender'
-					})
+
 				}
 			}
 		})
 		mainbar.addControl (pcluster);
 
+		//Create editing layer
+		var editLayer = new ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_17__["default"]({
+			title: 'Edit',
+			source: new ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_12__["default"]() 
+		});
+
+		this.overlayLayers.push(editLayer);
+		
+		
+		var edit = new ol_ext_control_EditBar__WEBPACK_IMPORTED_MODULE_37__["default"]({source: editLayer.getSource()});
+		customMap.addControl(edit);
+		
+		
+	    edit.getInteraction('Select').on('select', function(e){
+	       // if (this.getFeatures().getLength()) {
+	      //    tooltip.setInfo('Drag points on features to edit...');
+	       // }
+	      //  else tooltip.setInfo();
+	      });
+	      edit.getInteraction('Select').on('change:active', function(e){
+	        //tooltip.setInfo('');
+	      });
+	      edit.getInteraction('ModifySelect').on('modifystart', function(e){
+	        //if (e.features.length===1) tooltip.setFeature(e.features[0]);
+	      });
+	      edit.getInteraction('ModifySelect').on('modifyend', function(e){
+	      //  tooltip.setFeature();
+	      });
+	      edit.getInteraction('DrawPoint').on('change:active', function(e){
+	      //  tooltip.setInfo(e.oldValue ? '' : 'Click map to place a point...');
+	      });
+	      edit.getInteraction('DrawLine').on(['change:active','drawend'], function(e){
+	       // tooltip.setFeature();
+	       // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing line...');
+	      });
+	      edit.getInteraction('DrawLine').on('drawstart', function(e){
+	       // tooltip.setFeature(e.feature);
+	       // tooltip.setInfo('Click to continue drawing line...');
+	      });
+	      edit.getInteraction('DrawPolygon').on('drawstart', function(e){
+	       // tooltip.setFeature(e.feature);
+	       // tooltip.setInfo('Click to continue drawing shape...');
+	      });
+	      edit.getInteraction('DrawPolygon').on(['change:active','drawend'], function(e){
+	       // tooltip.setFeature();
+	       // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
+	      });
+	      edit.getInteraction('DrawHole').on('drawstart', function(e){
+	       // tooltip.setFeature(e.feature);
+	       // tooltip.setInfo('Click to continue drawing hole...');
+	      });
+	      edit.getInteraction('DrawHole').on(['change:active','drawend'], function(e){
+	       // tooltip.setFeature();
+	       // tooltip.setInfo(e.oldValue ? '' : 'Click polygon to start drawing hole...');
+	      });
+	      edit.getInteraction('DrawRegular').on('drawstart', function(e){
+	       // tooltip.setFeature(e.feature);
+	       // tooltip.setInfo('Move and click map to finish drawing...');
+	      });
+	      edit.getInteraction('DrawRegular').on(['change:active','drawend'], function(e){
+	       // tooltip.setFeature();
+	       // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
+	      });
+		
+		
+		
+		
+		
 		/* Standard Controls */
 //		mainbar.addControl (new ZoomToExtent({  extent: [ 265971,6243397 , 273148,6250665 ] }));
 //		mainbar.addControl (new Rotate());
@@ -2040,7 +2395,7 @@ class N2MapCanvas  {
 				if( featurePopupHtmlFn ){
 					featurePopupHtmlFn({
 						feature: feature
-						,onSuccess: function(content){
+						,onSuccess: function( content ){
 							var mousepoint = mapBrowserEvent.coordinate;
 							popup.show(mousepoint, content);
 						}
@@ -2143,7 +2498,7 @@ class N2MapCanvas  {
 					style: StyleFn,
 					renderOrder: function(feature1, feature2){
 						var valueSelector = _this.renderOrderBasedOn;
-						var tt = valueSelector.getValue(feature1) ;
+
 						if ( typeof valueSelector === 'object'
 							&& typeof valueSelector.getValue(feature1) === 'number'){
 								
@@ -2465,47 +2820,71 @@ class N2MapCanvas  {
 		if ('n2ViewAnimation' === type){
 			let x = m.x;
 			let y = m.y;
-			let sourceProjCode = m.projCode;
-			let targetProjCode = 'EPSG:3857';
+			let zoom = m.zoom || 9;
+			if ( m._suppressSetHash ){
+				this._suppressSetHash = m._suppressSetHash 
+			}
+			var extent = undefined;
 			var targetCenter = [x, y];
-			if ( targetProjCode !== sourceProjCode){
-				var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["getTransform"])( sourceProjCode, targetProjCode);
-				// Convert [0,0] and [0,1] to proj
-				targetCenter = transformFn([x, y]);
+			
+			if ( m.projCode ){
+				let sourceProjCode = m.projCode;
+				let targetProjCode = 'EPSG:3857';
+				if ( targetProjCode !== sourceProjCode){
+					var transformFn = Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["getTransform"])( sourceProjCode, targetProjCode);
+					// Convert [0,0] and [0,1] to proj
+					targetCenter = transformFn([x, y]);
+				}
+				extent =  this._computeFullBoundingBox(m.doc, 'EPSG:4326','EPSG:3857');
 			}
 
-			let extent =  this._computeFullBoundingBox(m.doc, 'EPSG:4326','EPSG:3857');
-
-
-
-//			_this.n2View.animate({
-//			center: targetCenter,
-//			duration: 1000
-//			});
-//			_this.n2View.animate({
-//			zoom: _this.n2View.getZoom()-1,
-//			duration: 500
-//			});
-			if (extent[0] === extent[2] || extent[1] === extent [3]){
-				_this.n2View.animate({
-					center: targetCenter,
-					duration: 500
-				},{
-					zoom: 9,
-					duration: 500
-				});
+			_this.n2View.cancelAnimations();
+			if ( extent ){
+				if (extent[0] === extent[2] || extent[1] === extent [3]){
+					_this.n2View.animate({
+						center: targetCenter,
+						duration: 500
+					},{
+						zoom: 9,
+						duration: 500
+					});
+				} else {
+					_this.n2View.fit(extent,{duration: 1500});
+				}
 			} else {
-				_this.n2View.fit(extent,{duration: 1500});
+				_this.n2View.animate({
+					center: targetCenter
+					,zoom : zoom
+					,duration : 200
+				});
 			}
+			var inid = setInterval(function(){
+				var isPlaying = _this.n2View.getAnimating();
+
+				if( isPlaying ){
+					
+				} else {
+					_this._suppressSetHash = false;
+					clearInterval(inid);
+				}
+				
+			},100);
+
 
 		} else if ('n2rerender' === type){
+			var olmap = _this.n2Map;
+			//This refresh strictly execute the invoke for rerender the ol5 map
 			if (_this.n2Map){
 				_this.overlayLayers.forEach(function(overlayLayer){
-						overlayLayer.changed();
+						overlayLayer.getSource().refresh();
 
 				});
-			}
+				//var viewExt = olmap.getView().calculateExtent(olmap.getSize());
+				//olmap.getView().fit(viewExt);
+				}
 		} else if ( 'mapRefreshCallbackRequest' === type ){
+			//This refresh only execute the last invoke,
+			//the earlier invoke will be cancelled if new invoke arrived
 			if ( m.cnt + 1 === this.refreshCnt) {
 				var cb = this.refreshCallback;
 				if ( cb && typeof cb === 'function'){
@@ -2671,7 +3050,7 @@ function HandleCanvasDisplayRequest(m){
 		options.config = m.config;
 		options.onSuccess = m.onSuccess;
 		options.onError = m.onError;
-
+		options.interactionId = m.interactionId;
 		new N2MapCanvas(options);
 	};
 };
@@ -3449,6 +3828,9 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 //		}
 	}
 
+	refresh(){
+		//this.changed();
+	}
 	_modelSourceUpdated (state) {
 		
 		var _this = this;
@@ -3501,6 +3883,7 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 	
 	loadFeatures(extent, resolution, projection) {
 		//this.loading = false;
+		//this._reloadAllFeatures();
 	}
 	_reportLoading(flag){
 		if( this.loading && !flag ){
@@ -4044,7 +4427,14 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 			 +"this custom source");
 		}
 		//-------------------------
-		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_2__["default"].CHANGE, this.refresh, this);
+		this.sourceChangeKey_ = null;
+	    if (options.source){
+	    	this.source = options.source;
+	    	this.sourceChangeKey_ =
+	    		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_2__["default"].CHANGE, this.refresh, this);
+	    }
+		//listen(this.source, EventType.CHANGE, this.refresh, this);
+	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this, 'sourceRefChanged', this.handleSourceRefChange, this);
 		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "hover",  this.onHover, this);
 		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "clicked",  this.onClicked, this);
 
@@ -4070,11 +4460,31 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 	getSource(){
 		return this.source;
 	}
-	setSource(opt_source){
-		this.source = opt_source;
-		this.refresh();
-		this.changed();
+	handleSourceRefChange(){
+		 if (this.sourceChangeKey_) {
+		      Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["unlistenByKey"])(this.sourceChangeKey_);
+		      this.sourceChangeKey_ = null;
+		    }
+		    var source = this.source;
+		    if (source) {
+		      this.sourceChangeKey_ = Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(source,
+		        ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_2__["default"].CHANGE, this.refresh, this);
+		    }
+		    
 	}
+	
+	setSource(source){
+		if (source){
+			this.source = source;
+		} else {
+			this.source = null;
+		}
+		this.refresh();
+		this.dispatchEvent('sourceRefChanged');
+		this.changed();
+		
+	}
+
 	onHover(evt){
 
 		let selected  = evt.selected;
@@ -5476,16 +5886,51 @@ class N2DonutCluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["d
 		* @type {number}
 		*/
 		this.clusterId = 1;
-		
-	    /**
+		this.sourceChangeKey_ = null;
+	    if (options.source){
+	    	this.source = options.source;
+	    	this.sourceChangeKey_ =
+	    		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__["default"].CHANGE, this.refresh, this);
+	    }
+		/**
 	     * @type {Array<Feature>}
 	     * @protected
 	     */
 	    this.features = [];
-	    this.source = options.source;
+	   // this.source = options.source;
 	    
-	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(this.source, ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__["default"].CHANGE, this.refresh, this);
+	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(this, 'sourceRefChanged', this.handleSourceRefChange, this);
+	    //listen(this.source, EventType.CHANGE, this.refresh, this);
 
+	}
+	
+	handleSourceRefChange(){
+		 if (this.sourceChangeKey_) {
+		      Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["unlistenByKey"])(this.sourceChangeKey_);
+		      this.sourceChangeKey_ = null;
+		    }
+		    var source = this.source;
+		    if (source) {
+		      this.sourceChangeKey_ = Object(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["listen"])(source,
+		        ol_events_EventType_js__WEBPACK_IMPORTED_MODULE_3__["default"].CHANGE, this.refresh, this);
+		    }
+		    
+	}
+	
+	setSource(source){
+		if (source){
+			this.source = source;
+		} else {
+			this.source = null;
+			
+		}
+		this.dispatchEvent('sourceRefChanged');
+		if (this.source){
+			this.refresh();
+			this.changed();
+		}
+
+		
 	}
 	/**
 	* Loading the feature from the layer source, and config the resolution and projection
@@ -5509,38 +5954,36 @@ class N2DonutCluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["d
 		this.addFeatures(this.features);
 		
 	}
-	clear(opt_fast){
-		
-		 if (opt_fast) {
-		      for (var featureId in this.featureChangeKeys_) {
-		        var keys = this.featureChangeKeys_[featureId];
-		        keys.forEach(ol_events_js__WEBPACK_IMPORTED_MODULE_2__["unlistenByKey"]);
-		      }
-		      if (!this.featuresCollection_) {
-		        this.featureChangeKeys_ = {};
-		        this.idIndex_ = {};
-		        this.undefIdIndex_ = {};
-		      }
-		    } else {
-		      if (this.featuresRtree_) {
-		        this.featuresRtree_.forEach(this.removeFeatureInternal, this);
-		        for (var id in this.nullGeometryFeatures_) {
-		          this.removeFeatureInternal(this.nullGeometryFeatures_[id]);
-		        }
-		      }
-		    }
-		    if (this.featuresCollection_) {
-		      this.featuresCollection_.clear();
-		    }
-
-		    if (this.featuresRtree_) {
-		      this.featuresRtree_.clear();
-		    }
-		    this.loadedExtentsRtree_.clear();
-		    this.nullGeometryFeatures_ = {};
-
-		
-	}
+//	clear(opt_fast){
+//		
+//		 if (opt_fast) {
+//		      for (var featureId in this.featureChangeKeys_) {
+//		        var keys = this.featureChangeKeys_[featureId];
+//		        keys.forEach(unlistenByKey);
+//		      }
+//		      if (!this.featuresCollection_) {
+//		        this.featureChangeKeys_ = {};
+//		        this.idIndex_ = {};
+//		        this.undefIdIndex_ = {};
+//		      }
+//		    } else {
+//		      if (this.featuresRtree_) {
+//		        this.featuresRtree_.forEach(this.removeFeatureInternal, this);
+//		        for (var id in this.nullGeometryFeatures_) {
+//		          this.removeFeatureInternal(this.nullGeometryFeatures_[id]);
+//		        }
+//		      }
+//		    }
+//		    if (this.featuresCollection_) {
+//		      this.featuresCollection_.clear();
+//		    }
+//
+//		    if (this.featuresRtree_) {
+//		      this.featuresRtree_.clear();
+//		    }
+//		    this.loadedExtentsRtree_.clear();
+//		    this.nullGeometryFeatures_ = {};
+//	}
 	
 	getSource(){
 		return this.source;
@@ -5783,7 +6226,7 @@ exports = module.exports = __webpack_require__(/*! ../../css-loader/lib/css-base
 
 
 // module
-exports.push([module.i, ".ol-control i {\n\tcursor: default;\n}\n\n/* Bar style */\n.ol-control.ol-bar {\n  left: 50%;\n\tmin-height: 1em;\n\tmin-width: 1em;\n\tposition: absolute;\n\ttop: 0.5em;\n\ttransform: translate(-50%,0);\n\t-webkit-transform: translate(-50%,0);\n\twhite-space: nowrap;\n}\n\n/* Hide subbar when not inserted in a parent bar */\n.ol-control.ol-toggle .ol-option-bar {\n  display: none;\n}\n\n/* Default position for controls */\n.ol-control.ol-bar .ol-bar {\n  position: static;\n}\n.ol-control.ol-bar .ol-control {\n  position: relative;\n\ttop: auto;\n\tleft:auto;\n\tright:auto;\n\tbottom: auto;\n\tdisplay: inline-block;\n\tvertical-align: middle;\n\tbackground: none;\n\tpadding: 0;\n\tmargin: 0;\n\ttransform: none;\n\t-webkit-transform: none;\n}\n.ol-control.ol-bar .ol-bar {\n  position: static;\n}\n.ol-control.ol-bar .ol-control button {\n  margin:2px 1px;\n}\n\n/* Positionning */\n.ol-control.ol-bar.ol-left {\n  left: 0.5em;\n\ttop: 50%;\n\t-webkit-transform: translate(0px, -50%);\n\t        transform: translate(0px, -50%);\n}\n.ol-control.ol-bar.ol-left .ol-control {\n  display: block;\n}\n\n.ol-control.ol-bar.ol-right {\n  left: auto;\n\tright: 0.5em;\n\ttop: 50%;\n\t-webkit-transform: translate(0px, -50%);\n\t        transform: translate(0px, -50%);\n}\n.ol-control.ol-bar.ol-right .ol-control {\n  display: block;\n}\n\n.ol-control.ol-bar.ol-bottom {\n  top: auto;\n\tbottom: 0.5em;\n}\n\n.ol-control.ol-bar.ol-top.ol-left,\n.ol-control.ol-bar.ol-top.ol-right {\n  top: 4.5em;\n\t-webkit-transform:none;\n\t        transform:none;\n}\n.ol-touch .ol-control.ol-bar.ol-top.ol-left,\n.ol-touch .ol-control.ol-bar.ol-top.ol-right {\n  top: 5.5em; \n}\n.ol-control.ol-bar.ol-bottom.ol-left,\n.ol-control.ol-bar.ol-bottom.ol-right {\n  top: auto;\n\tbottom: 0.5em;\n\t-webkit-transform:none;\n\t        transform:none;\n}\n\n/* Group buttons */\n.ol-control.ol-bar.ol-group {\n  margin: 1px 1px 1px 0;\n}\n.ol-control.ol-bar.ol-right .ol-group,\n.ol-control.ol-bar.ol-left .ol-group {\n  margin: 1px 1px 0 1px;\n}\n\n.ol-control.ol-bar.ol-group button {\n  border-radius:0;\n\tmargin: 0 0 0 1px;\n}\n.ol-control.ol-bar.ol-right.ol-group button,\n.ol-control.ol-bar.ol-left.ol-group button,\n.ol-control.ol-bar.ol-right .ol-group button,\n.ol-control.ol-bar.ol-left .ol-group button {\n  margin: 0 0 1px 0;\n}\n.ol-control.ol-bar.ol-group .ol-control:first-child > button {\n  border-radius: 5px 0 0 5px;\n}\n.ol-control.ol-bar.ol-group .ol-control:last-child > button {\n  border-radius: 0 5px 5px 0;\n}\n.ol-control.ol-bar.ol-left.ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-right.ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-left .ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-right .ol-group .ol-control:first-child > button {\n  border-radius: 5px 5px 0 0;\n}\n.ol-control.ol-bar.ol-left.ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-right.ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-left .ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-right .ol-group .ol-control:last-child > button {\n  border-radius: 0 0 5px 5px;\n}\n\n/* */\n.ol-control.ol-bar .ol-rotate {\n  opacity:1;\n\tvisibility: visible;\n}\n.ol-control.ol-bar .ol-rotate button {\n  display: block\n}\n\n/* Active buttons */\n.ol-control.ol-bar .ol-toggle.ol-active > button {\n  background: rgba(60, 136, 0, 0.7)\n}\n.ol-control.ol-bar .ol-toggle.ol-active button:hover {\n  background: rgba(60, 136, 0, 0.7)\n}\n.ol-control.ol-toggle button:disabled {\n  background: rgba(0,60,136,.3);\n}\n\n/* Subbar toolbar */\n.ol-control.ol-bar .ol-control.ol-option-bar {\n  display: none;\n\tposition:absolute;\n\ttop:100%;\n\tleft:0;\n\tmargin: 5px 0;\n\tborder-radius: 0;\n\tbackground: rgba(255,255,255, 0.8);\n\t/* border: 1px solid rgba(0, 60, 136, 0.5); */\n\t-webkit-box-shadow: 0 0 0 1px rgba(0, 60, 136, 0.5), 1px 1px 2px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 0 0 0 1px rgba(0, 60, 136, 0.5), 1px 1px 2px rgba(0, 0, 0, 0.5);\n}\n\n.ol-control.ol-bar .ol-option-bar:before {\n  content: \"\";\n\tborder: 0.5em solid transparent;\n\tborder-color: transparent transparent rgba(0, 60, 136, 0.5);\n\tposition: absolute;\n\tbottom: 100%;\n\tleft: 0.3em;\n}\n\n.ol-control.ol-bar .ol-option-bar .ol-control {\n  display: table-cell;\n}\n.ol-control.ol-bar .ol-control .ol-bar\n{\tdisplay: none;\n}\n.ol-control.ol-bar .ol-control.ol-active > .ol-option-bar {\n  display: block;\n}\n\n.ol-control.ol-bar .ol-control.ol-collapsed ul {\n  display: none;\n}\n\n.ol-control.ol-bar .ol-control.ol-text-button > div:hover,\n.ol-control.ol-bar .ol-control.ol-text-button > div {\n  background: none;\n\tcolor: rgba(0, 60, 136, 0.5);\n\twidth: auto;\n\tmin-width: 1.375em;\n\tmargin: 0;\n}\n\n.ol-control.ol-bar .ol-control.ol-text-button {\n  font-size:0.9em;\n\tborder-left: 1px solid rgba(0, 60, 136, 0.8);\n\tborder-radius: 0;\n}\n.ol-control.ol-bar .ol-control.ol-text-button:first-child {\n  border-left:0;\n}\n.ol-control.ol-bar .ol-control.ol-text-button > div {\n\tpadding: .11em 0.3em;\n\tfont-weight: normal;\n\tfont-size: 1.14em;\n\tfont-family: Arial,Helvetica,sans-serif;\n}\n.ol-control.ol-bar .ol-control.ol-text-button div:hover {\n  color: rgba(0, 60, 136, 1);\n}\n\n.ol-control.ol-bar.ol-bottom .ol-option-bar {\n  top: auto;\n\tbottom: 100%;\n}\n.ol-control.ol-bar.ol-bottom .ol-option-bar:before {\n  border-color: rgba(0, 60, 136, 0.5) transparent transparent ;\n\tbottom: auto;\n\ttop: 100%;\n}\n\n.ol-control.ol-bar.ol-left .ol-option-bar {\n  left:100%;\n\ttop: 0;\n\tbottom: auto;\n\tmargin: 0 5px;\n}\n.ol-control.ol-bar.ol-left .ol-option-bar:before {\n  border-color: transparent rgba(0, 60, 136, 0.5) transparent transparent;\n\tbottom: auto;\n\tright: 100%;\n\tleft: auto;\n\ttop: 0.3em;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar {\n  right:100%;\n\tleft:auto;\n\ttop: 0;\n\tbottom: auto;\n\tmargin: 0 5px;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar:before {\n  border-color: transparent transparent transparent rgba(0, 60, 136, 0.5);\n\tbottom: auto;\n\tleft: 100%;\n\ttop: 0.3em;\n}\n\n.ol-control.ol-bar.ol-left .ol-option-bar .ol-option-bar,\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar {\n  top: 100%;\n\tbottom: auto;\n\tleft: 0.3em;\n\tright: auto;\n\tmargin: 5px 0;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar {\n  right: 0.3em;\n\tleft: auto;\n}\n.ol-control.ol-bar.ol-left .ol-option-bar .ol-option-bar:before,\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar:before {\n  border-color: transparent transparent rgba(0, 60, 136, 0.5);\n\tbottom: 100%;\n\ttop: auto;\n\tleft: 0.3em;\n\tright: auto;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar:before {\n  right: 0.3em;\n\tleft: auto;\n}\n\n.ol-editbar .ol-button button {\n  position: relative;\n  display: inline-block;\n  font-style: normal;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  vertical-align: middle;\n}\n.ol-editbar .ol-button button:before, \n.ol-editbar .ol-button button:after {\n  content: \"\";\n  border-width: 0;\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  background-color: currentColor;\n}\n.ol-editbar .ol-button button:focus {\n  outline: none;\n}\n\n.ol-editbar .ol-selection > button:before {\n  width: .6em;\n  height: 1em;\n  background-color: transparent;\n  border: .5em solid currentColor;\n  border-width: 0 .25em .65em;\n  border-color: currentColor transparent;\n  -webkit-box-shadow:0 0.6em 0 -0.23em;\n          box-shadow:0 0.6em 0 -0.23em;\n  top: .35em;\n  left: .5em;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n}\n.ol-editbar .ol-selection0 > button:after {\n  width: .28em;\n  height: .6em;\n  background-color: transparent;\n  border: .5em solid currentColor;\n  border-width: 0 .05em .7em;\n  border-color: currentColor transparent;\n  top: .5em;\n  left: .7em;\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n\n.ol-editbar .ol-delete button:after,\n.ol-editbar .ol-delete button:before {\n  width: 1em;\n  height: .2em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(45deg);\n          transform: translate(-50%, -50%) rotate(45deg);\n}\n.ol-editbar .ol-delete button:after {\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-editbar .ol-info button:before {\n  width: .25em;\n  height: .6em;\n  border-radius: .03em;\n  top: .47em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-info button:after {\n  width: .25em;\n  height: .2em;\n  border-radius: .03em;\n  -webkit-box-shadow: -0.1em 0.35em, -0.1em 0.82em, 0.1em 0.82em;\n          box-shadow: -0.1em 0.35em, -0.1em 0.82em, 0.1em 0.82em;\n  top: .12em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n\n.ol-editbar .ol-drawpoint button:before {\n  width: .7em;\n  height: .7em;\n  border-radius: 50%;\n  border: .15em solid currentColor;\n  background-color: transparent;\n  top: .2em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-drawpoint button:after {\n  width: .4em;\n  height: .4em;\n  border: .15em solid currentColor;\n  border-color: currentColor transparent;\n  border-width: .4em .2em 0;\n  background-color: transparent;\n  top: .8em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n\n.ol-editbar .ol-drawline > button:before,\n.ol-editbar .ol-drawpolygon > button:before,\n.ol-editbar .ol-drawhole > button:before {\n  width: .8em;\n  height: .8em;\n  border: .13em solid currentColor;\n  background-color: transparent;\n  border-width: .2em .13em .09em;\n  top: .2em;\n  left: .25em;\n  -webkit-transform: rotate(10deg) perspective(1em) rotateX(40deg);\n          transform: rotate(10deg) perspective(1em) rotateX(40deg);\n}\n.ol-editbar .ol-drawline > button:before {\n  border-bottom: 0;\n}\n.ol-editbar .ol-drawline > button:after,\n.ol-editbar .ol-drawhole > button:after,\n.ol-editbar .ol-drawpolygon > button:after {\n  width: .3em;\n  height: .3em;\n  top: 0.2em;\n  left: .25em;\n  -webkit-box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em;\n          box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em;\n}\n.ol-editbar .ol-drawhole > button:after {\n  -webkit-box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em, 0.25em 0.35em;\n          box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em, 0.25em 0.35em;\n}\n\n\n.ol-editbar .ol-offset > button i,\n.ol-editbar .ol-transform > button i {\n  position: absolute;\n  width: .9em;\n  height: .9em;\n  overflow: hidden;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-editbar .ol-offset > button i{\n  width: .8em;\n  height: .8em;\n}\n\n.ol-editbar .ol-offset > button i:before,\n.ol-editbar .ol-transform > button i:before,\n.ol-editbar .ol-transform > button i:after {\n  content: \"\";\n  height: 1em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(45deg);\n          transform: translate(-50%, -50%) rotate(45deg);\n  -webkit-box-shadow: 0.5em 0 0 0.1em, -0.5em 0 0 0.1em;\n          box-shadow: 0.5em 0 0 0.1em, -0.5em 0 0 0.1em;\n  width: .1em;\n  position: absolute;\n  background-color: currentColor;\n}\n.ol-editbar .ol-offset > button i:before{\n  -webkit-box-shadow: 0.45em 0 0 0.1em, -0.45em 0 0 0.1em;\n          box-shadow: 0.45em 0 0 0.1em, -0.45em 0 0 0.1em;\n}\n.ol-editbar .ol-transform > button i:after {\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-editbar .ol-split > button:before {\n  width: .3em;\n  height: .3em;\n  top: .81em;\n  left: .75em;\n  border-radius: 50%;\n  -webkit-box-shadow: 0.1em -0.4em, -0.15em -0.25em;\n          box-shadow: 0.1em -0.4em, -0.15em -0.25em;\n}\n.ol-editbar .ol-split > button:after {\n  width: .8em;\n  height: .8em;\n  top: .15em;\n  left: -.1em;\n  border: .1em solid currentColor;\n  border-width: 0 .2em .2em 0;\n  background-color: transparent;\n  border-radius: .1em;\n  -webkit-transform: rotate(20deg) scaleY(.6) rotate(-45deg);\n          transform: rotate(20deg) scaleY(.6) rotate(-45deg);\n}\n\n.ol-editbar .ol-drawregular > button:before {\n  width: .9em;\n  height: .9em;\n  top: 50%;\n  left: 50%;\n  border: .1em solid currentColor;\n  background-color: transparent;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div {\n  border: .5em solid currentColor;\n  border-color: transparent currentColor;\n  display: inline-block;\n  cursor: pointer;\n  vertical-align: text-bottom;\n}\n.ol-editbar .ol-drawregular .ol-bar:before,\n.ol-control.ol-bar.ol-editbar .ol-drawregular .ol-bar {\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button {\n  min-width: 6em;\n  text-align: center;\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div:first-child {\n  border-width: .5em .5em .5em 0;\n  margin: 0 .5em 0 0;\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div:last-child {\n  border-width: .5em 0 .5em .5em;\n  margin: 0 0 0 .5em;\n}\n\n.ol-gauge\n{\ttop: 0.5em;\n\tleft: 50%;\n\t-webkit-transform: translateX(-50%);\n\ttransform: translateX(-50%);\n}\n\n.ol-gauge > *\n{\tdisplay: inline-block;\n\tvertical-align: middle;\n}\n.ol-gauge > span\n{\n\tmargin: 0 0.5em;\n}\n.ol-gauge > div\n{\twidth: 200px;\n\tborder: 1px solid rgba(0,60,136,.5);\n\tborder-radius: 3px;\n\tpadding:1px;\n}\n.ol-gauge button\n{\theight: 0.8em;\n\tmargin:0;\n\tmax-width:100%;\n}\n\n.ol-control.ol-bookmark \n{\ttop: 0.5em;\n\tleft: 3em;\n}\n.ol-control.ol-bookmark button\n{\tposition: relative;\n}\n.ol-control.ol-bookmark > button::before\n{\tcontent: \"\";\n\tposition: absolute;\n\tborder-width: 10px 5px 4px;\n\tborder-style: solid;\n\tborder-color: #fff;\n\tborder-bottom-color: transparent;\n\ttop: 50%;\n\tleft: 50%;\n\t-webkit-transform: translate(-50%, -50%);\n\ttransform: translate(-50%, -50%);\n\theight: 0;\n}\n\n.ol-control.ol-bookmark > div\n{\tdisplay: none;\n\tmin-width: 5em;\n}\n.ol-control.ol-bookmark input\n{\tfont-size: 0.9em;\n\tmargin: 0.1em 0 ;\n\tpadding: 0 0.5em;\n}\n.ol-control.ol-bookmark ul\n{\tmargin:0;\n\tpadding: 0;\n\tlist-style: none;\n\tmin-width: 10em;\n}\n.ol-control.ol-bookmark li\n{\tcolor: rgba(0,60,136,0.8);\n\tfont-size: 0.9em;\n\tpadding: 0 0.2em 0 0.5em;\n\tcursor: default;\n\tclear:both;\n}\n\n.ol-control.ol-bookmark li:hover\n{\tbackground-color: rgba(0,60,136,.5);\n\tcolor: #fff;\n}\n\n.ol-control.ol-bookmark > div button\n{\twidth: 1em;\n\theight: 0.8em;\n\tfloat: right;\n\tbackground-color: transparent;\n\tcursor: pointer;\n\tborder-radius: 0;\n}\n.ol-control.ol-bookmark > div button:before\n{\tcontent: \"\\2A2F\";\n    color: #936;\n\tfont-size: 1.2em;\n\tline-height: 1em;\n\tborder-radius: 0;\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    -webkit-transform: translate(-50%, -50%);\n    transform: translate(-50%, -50%);\n}\n\n.ol-bookmark ul li button,\n.ol-bookmark input\n{\tdisplay: none;\n}\n.ol-bookmark.ol-editable ul li button,\n.ol-bookmark.ol-editable input\n{\tdisplay: block;\n}\n\n\n.ol-control.ol-bar.ol-geobar .ol-control {\n\tdisplay: inline-block;\n\tvertical-align: middle;\n}\n\n.ol-control.ol-bar.ol-geobar .ol-bar {\n  display: none;\n}\n.ol-bar.ol-geobar.ol-active .ol-bar {\n  display: inline-block;\n}\n\n.ol-bar.ol-geobar .geolocBt button:before,\n.ol-bar.ol-geobar .geolocBt button:after {\n  content: \"\";\n  display: block;\n  position: absolute;\n  border: 1px solid transparent;\n  border-width: 0.3em 0.8em 0 0.2em;\n  border-color: #fff transparent transparent;\n  -webkit-transform: rotate(-30deg);\n  transform: rotate(-30deg);\n  top: .45em;\n  left: 0.15em;\n  font-size: 1.2em;\n}\n.ol-bar.ol-geobar .geolocBt button:after {\n  border-width: 0 0.8em .3em 0.2em;\n  border-color: transparent transparent #fff;\n\t-webkit-transform: rotate(-61deg);\n\ttransform: rotate(-61deg);\n}\n\n.ol-bar.ol-geobar .startBt button:before {\n  content: \"\";\n  display: block;\n  position: absolute;\n  width: 1em;\n  height: 1em;\n  background-color: #800;\n  border-radius: 50%;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%,-50%);\n  transform: translate(-50%,-50%);\n}\n.ol-bar.ol-geobar .pauseBt button:before,\n.ol-bar.ol-geobar .pauseBt button:after {\n  content: \"\";\n  display: block;\n  position: absolute;\n  width: .25em;\n  height: 1em;\n  background-color: #fff;\n  top: 50%;\n  left: 35%;\n  -webkit-transform: translate(-50%,-50%);\n  transform: translate(-50%,-50%);\n}\n.ol-bar.ol-geobar .pauseBt button:after {\n  left: 65%;\n}\n\n.ol-control.ol-bar.ol-geobar .centerBt,\n.ol-control.ol-bar.ol-geobar .pauseBt,\n.ol-bar.ol-geobar.pauseTrack .startBt,\n.ol-bar.ol-geobar.centerTrack .startBt,\n.ol-bar.ol-geobar.centerTrack.pauseTrack .pauseBt,\n.ol-bar.ol-geobar.centerTrack .pauseBt {\n  display: none;\n}\n.ol-bar.ol-geobar.pauseTrack .pauseBt,\n.ol-bar.ol-geobar.centerTrack .centerBt{\n  display: inline-block;\n}\n\n.ol-control.ol-globe\n{\tposition: absolute;\n\tleft: 0.5em;\n\tbottom: 0.5em;\n\tborder-radius: 50%;\n\topacity: 0.7;\n\ttransform: scale(0.5);\n\ttransform-origin: 0 100%;\n\t-webkit-transform: scale(0.5);\n\t-webkit-transform-origin: 0 100%;\n}\n.ol-control.ol-globe:hover\n{\topacity: 0.9;\n}\n\n.ol-control.ol-globe .panel\n{\tdisplay:block;\n\twidth:170px;\n\theight:170px;\n\tbackground-color:#fff;\n\tcursor: pointer;\n\tborder-radius: 50%;\n\toverflow: hidden;\n\t-webkit-box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);\n\t        box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);\n}\n.ol-control.ol-globe .panel .ol-viewport\n{\tborder-radius: 50%;\n}\n\n.ol-control.ol-globe .ol-pointer\n{\tdisplay: block;\n\tbackground-color: #fff;\n\twidth:10px;\n\theight: 10px;\n\tborder:10px solid red;\n\tposition: absolute;\n\ttop: 50%;\n\tleft:50%;\n\ttransform: translate(-15px, -40px);\n\t-webkit-transform: translate(-15px, -40px);\n\tborder-radius: 50%;\n\tz-index:1;\n\ttransition: opacity 0.15s, top 0s, left 0s;\n\t-webkit-transition: opacity 0.15s, top 0s, left 0s;\n}\n.ol-control.ol-globe .ol-pointer.hidden\n{\topacity:0;\n\ttransition: opacity 0.15s, top 3s, left 5s;\n\t-webkit-transition: opacity 0.15s, top 3s, left 5s;\n}\n\n.ol-control.ol-globe .ol-pointer::before\n{\tborder-radius: 50%;\n\t-webkit-box-shadow: 6px 6px 10px 5px #000;\n\t        box-shadow: 6px 6px 10px 5px #000;\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 0;\n\tleft: 0;\n\tposition: absolute;\n\ttop: 23px;\n\twidth: 0;\n}\n.ol-control.ol-globe .ol-pointer::after\n{\tcontent:\"\";\n\twidth:0;\n\theight:0;\n\tdisplay: block;\n\tposition: absolute;\n\tborder-width: 20px 10px 0;\n\tborder-color: red transparent;\n\tborder-style: solid;\n\tleft: -50%;\n\ttop: 100%;\n}\n\n.ol-control.ol-globe .panel::before {\n  border-radius: 50%;\n  -webkit-box-shadow: -20px -20px 80px 2px rgba(0, 0, 0, 0.7) inset;\n          box-shadow: -20px -20px 80px 2px rgba(0, 0, 0, 0.7) inset;\n  content: \"\";\n  display: block;\n  height: 100%;\n  left: 0;\n  position: absolute;\n  top: 0;\n  width: 100%;\n  z-index: 1;\n}\n.ol-control.ol-globe .panel::after {\n  border-radius: 50%;\n  -webkit-box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n          box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n  content: \"\";\n  display: block;\n  height: 0;\n  left: 23%;\n  position: absolute;\n  top: 20%;\n  -webkit-transform: rotate(-40deg);\n          transform: rotate(-40deg);\n  width: 20%;\n  z-index: 1;\n}\n\n\n.ol-control.ol-globe.ol-collapsed .panel\n{\tdisplay:none;\n}\n\n.ol-control-top.ol-globe\n{\tbottom: auto;\n\ttop: 5em;\n\ttransform-origin: 0 0;\n\t-webkit-transform-origin: 0 0;\n}\n.ol-control-right.ol-globe\n{\tleft: auto;\n\tright: 0.5em;\n\ttransform-origin: 100% 100%;\n\t-webkit-transform-origin: 100% 100%;\n}\n.ol-control-right.ol-control-top.ol-globe\n{\tleft: auto;\n\tright: 0.5em;\n\ttransform-origin: 100% 0;\n\t-webkit-transform-origin: 100% 0;\n}\n\n.ol-gridreference\n{\tbackground: #fff;\n\tborder: 1px solid #000;\n\toverflow: auto;\n\tmax-height: 100%;\n\ttop:0;\n\tright:0;\n}\n.ol-gridreference input\n{\twidth:100%;\n}\n.ol-gridreference ul\n{\tmargin:0;\n\tpadding:0;\n\tlist-style: none;\n} \n.ol-gridreference li\n{\tpadding: 0 0.5em;\n\tcursor: pointer;\n}\n.ol-gridreference ul li:hover \n{\tbackground-color: #ccc;\n}\n.ol-gridreference li.ol-title,\n.ol-gridreference li.ol-title:hover\n{\tbackground:rgba(0,60,136,.5);\n\tcolor:#fff;\n\tcursor:default;\n}\n.ol-gridreference ul li .ol-ref\n{\tmargin-left: 0.5em;\n}\n.ol-gridreference ul li .ol-ref:before\n{\tcontent:\"(\";\n}\n.ol-gridreference ul li .ol-ref:after\n{\tcontent:\")\";\n}\n\n.ol-control.ol-imageline {\n  bottom:0;\n  left: 0;\n  right: 0;\n  padding: 0;\n  overflow: visible;\n  -webkit-transition: .3s;\n  transition: .3s;\n}\n.ol-control.ol-imageline.ol-collapsed {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.ol-imageline > div {\n  height: 4em;\n  position: relative;\n  white-space: nowrap;\n  scroll-behavior: smooth;\n  overflow: hidden;\n  width: 100%;\n}\n.ol-imageline.ol-touch > div {\n  overflow-x: auto;\n}\n.ol-imageline > div.ol-move {\n  scroll-behavior: unset;\n}\n\n.ol-control.ol-imageline button {\n  position: absolute;\n  top: -1em;\n  -webkit-transform: translateY(-100%);\n          transform: translateY(-100%);\n  margin: .65em;\n  -webkit-box-shadow: 0 0 0 0.15em rgba(255,255,255,.4);\n          box-shadow: 0 0 0 0.15em rgba(255,255,255,.4);\n}\n.ol-control.ol-imageline button:before {\n  content: '';\n  position: absolute;\n  -webkit-transform: translate(-50%, -50%) rotate(135deg);\n          transform: translate(-50%, -50%) rotate(135deg);\n  top: 40%;\n  left: 50%;\n  width: .4em;\n  height: .4em;\n  border: .1em solid currentColor;\n  border-width: .15em .15em 0 0;\n}\n.ol-control.ol-imageline.ol-collapsed button:before {\n  top: 60%;\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-imageline,\n.ol-imageline:hover {\n  background-color: rgba(0,0,0,.75);\n}\n\n.ol-imageline.ol-arrow:after,\n.ol-imageline.ol-arrow:before {\n  content: \"\";\n  position: absolute;\n  top: 50%;\n  left: .2em;\n  border-color: #fff #000;\n  border-width: 1em .6em 1em 0;\n  border-style: solid;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n  z-index: 1;\n  opacity: .8;\n  pointer-events: none;\n  -webkit-box-shadow: -0.6em 0 0 1em #fff;\n          box-shadow: -0.6em 0 0 1em #fff;\n}\n.ol-imageline.ol-arrow:after {\n  border-width: 1em 0 1em .6em;\n  left: auto;\n  right: .2em;\n  -webkit-box-shadow: 0.6em 0 0 1em #fff;\n          box-shadow: 0.6em 0 0 1em #fff;\n}\n\n.ol-imageline .ol-image {\n  position: relative;\n  height: 100%;\n  display: inline-block;\n  cursor: pointer;\n}\n.ol-imageline img {\n  max-height: 100%;\n  border: .25em solid transparent;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  opacity: 0;\n  -webkit-transition: 1s;\n  transition: 1s;\n}\n.ol-imageline img.ol-loaded {\n  opacity:1;\n}\n\n.ol-imageline .ol-image.select {\n  background-color: #fff;\n}\n.ol-imageline .ol-image span {\n  position: absolute;\n  width: 125%;\n  max-height: 2.4em;\n  left: 50%;\n  bottom: 0;\n  display: none;\n  color: #fff;\n  background-color: rgba(0,0,0,.5);\n  font-size: .8em;\n  overflow: hidden;\n  white-space: normal;\n  text-align: center;\n  line-height: 1.2em;\n  -webkit-transform: translateX(-50%) scaleX(.8);\n          transform: translateX(-50%) scaleX(.8);\n}\n/*\n.ol-imageline .ol-image.select span,\n*/\n.ol-imageline .ol-image:hover span {\n  display: block;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-method-time,\n.ol-control.ol-routing.ol-isochrone .ol-method-distance,\n.ol-control.ol-routing.ol-isochrone > button {\n  position: relative;\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-time:before,\n.ol-control.ol-routing.ol-isochrone > button:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  border: .1em solid currentColor;\n  width: .8em;\n  height: .8em;\n  border-radius: 50%;\n  -webkit-box-shadow: 0 -0.5em 0 -0.35em, 0.4em -0.35em 0 -0.35em;\n          box-shadow: 0 -0.5em 0 -0.35em, 0.4em -0.35em 0 -0.35em;\n  clip: unset;\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-time:after,\n.ol-control.ol-routing.ol-isochrone > button:after {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-60deg);\n          transform: translate(-50%, -50%) rotate(-60deg);\n  border-radius: 50%;\n  border: .3em solid transparent;\n  border-right-color: currentColor;\n  -webkit-box-shadow: none;\n          box-shadow: none;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  clip: unset;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-method-distance:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n  width: 1em;\n  height: .5em;\n  border: .1em solid currentColor;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-distance:after {\n  content: '';\n  position: absolute;\n  width: .1em;\n  height: .15em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n  -webkit-box-shadow: inset 0 -0.15em, 0 0.1em, 0.25em 0.1em, -0.25em 0.1em;\n          box-shadow: inset 0 -0.15em, 0 0.1em, 0.25em 0.1em, -0.25em 0.1em;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-direction-direct:before,\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 30%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  width: .3em;\n  height: .3em;\n  border-radius: 50%;\n  border: .1em solid currentColor;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-box-shadow: 0.25em 0 0 -0.05em;\n          box-shadow: 0.25em 0 0 -0.05em;\n}\n.ol-control.ol-routing.ol-isochrone .ol-direction-direct:after,\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:after {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 70%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  border: .4em solid transparent;\n  border-width: .4em 0 .4em .4em;\n  border-color: transparent currentColor;\n}\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:after {\n  border-width: .4em .4em .4em 0;\n}\n\n.ol-control.ol-isochrone.ol-collapsed .content {\n  display: none;\n}\n.ol-control.ol-isochrone input[type=\"number\"] {\n  width: 3em;\n  text-align: right;\n  margin: 0 .1em;\n}\n.ol-control.ol-isochrone .ol-distance input[type=\"number\"] {\n  width: 5em;\n}\n\n.ol-isochrone .ol-time,\n.ol-isochrone .ol-distance {\n  display: none;\n}\n.ol-isochrone .ol-time.selected,\n.ol-isochrone .ol-distance.selected {\n  display: block;\n}\n\n.ol-control.ol-layerswitcher-popup\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 3em;\n}\n.ol-control.ol-layerswitcher-popup .panel \n{\tclear:both;\n\tbackground:#fff;\n}\n\n.ol-layerswitcher-popup .panel\n{\tlist-style: none;\n\tpadding: 0.25em;\n\tmargin:0;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-popup .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-popup.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher-popup.ol-forceopen .panel\n{\tdisplay:block;\n}\n\n.ol-layerswitcher-popup button \n{\tbackground-color: white;\n\tbackground-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAACE1BMVEX///8A//8AgICA//8AVVVAQID///8rVVVJtttgv98nTmJ2xNgkW1ttyNsmWWZmzNZYxM4gWGgeU2JmzNNr0N1Rwc0eU2VXxdEhV2JqytQeVmMhVmNoydUfVGUgVGQfVGQfVmVqy9hqy9dWw9AfVWRpydVry9YhVmMgVGNUw9BrytchVWRexdGw294gVWQgVmUhVWPd4N6HoaZsy9cfVmQgVGRrytZsy9cgVWQgVWMgVWRsy9YfVWNsy9YgVWVty9YgVWVry9UgVWRsy9Zsy9UfVWRsy9YgVWVty9YgVWRty9Vsy9aM09sgVWRTws/AzM0gVWRtzNYgVWRuy9Zsy9cgVWRGcHxty9bb5ORbxdEgVWRty9bn6OZTws9mydRfxtLX3Nva5eRix9NFcXxOd4JPeINQeIMiVmVUws9Vws9Vw9BXw9BYxNBaxNBbxNBcxdJexdElWWgmWmhjyNRlx9IqXGtoipNpytVqytVryNNrytZsjZUuX210k5t1y9R2zNR3y9V4lp57zth9zdaAnKOGoaeK0NiNpquV09mesrag1tuitbmj1tuj19uktrqr2d2svcCu2d2xwMO63N+7x8nA3uDC3uDFz9DK4eHL4eLN4eIyYnDX5OM5Z3Tb397e4uDf4uHf5uXi5ePi5+Xj5+Xk5+Xm5+Xm6OY6aHXQ19fT4+NfhI1Ww89gx9Nhx9Nsy9ZWw9Dpj2abAAAAWnRSTlMAAQICAwQEBgcIDQ0ODhQZGiAiIyYpKywvNTs+QklPUlNUWWJjaGt0dnd+hIWFh4mNjZCSm6CpsbW2t7nDzNDT1dje5efr7PHy9PT29/j4+Pn5+vr8/f39/f6DPtKwAAABTklEQVR4Xr3QVWPbMBSAUTVFZmZmhhSXMjNvkhwqMzMzMzPDeD+xASvObKePPa+ffHVl8PlsnE0+qPpBuQjVJjno6pZpSKXYl7/bZyFaQxhf98hHDKEppwdWIW1frFnrxSOWHFfWesSEWC6R/P4zOFrix3TzDFLlXRTR8c0fEEJ1/itpo7SVO9Jdr1DVxZ0USyjZsEY5vZfiiAC0UoTGOrm9PZLuRl8X+Dq1HQtoFbJZbv61i+Poblh/97TC7n0neCcK0ETNUrz1/xPHf+DNAW9Ac6t8O8WH3Vp98f5lCaYKAOFZMLyHL4Y0fe319idMNgMMp+zWVSybUed/+/h7I4wRAG1W6XDy4XmjR9HnzvDRZXUAYDFOhC1S/Hh+fIXxen+eO+AKqbs+wAo30zDTDvDxKoJN88sjUzDFAvBzEUGFsnADoIvAJzoh2BZ8sner+Ke/vwECuQAAAABJRU5ErkJggg==\");\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tfloat: right;\n\theight: 38px;\n\twidth: 38px;\n}\n\n.ol-layerswitcher-popup li\n{\tcolor:#369;\n\tpadding:0.25em 1em;\n\tfont-family:\"Trebuchet MS\",Helvetica,sans-serif;\n\tcursor:pointer;\n}\n.ol-layerswitcher-popup li.ol-header\n{\tdisplay: none;\n}\n.ol-layerswitcher-popup li.select\n{\tbackground:rgba(0, 60, 136, 0.7);\n\tcolor:#fff;\n}\n.ol-layerswitcher-popup li:hover\n{\tbackground:rgba(0, 60, 136, 0.9);\n\tcolor:#fff;\n}\n\n.ol-control.ol-layerswitcher\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 3em;\n\tmax-height: calc(100% - 6em);\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n\toverflow: hidden;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\tdisplay: block\n}\n.ol-control.ol-layerswitcher.ol-collapsed .ol-switchertopdiv,\n.ol-control.ol-layerswitcher.ol-collapsed .ol-switcherbottomdiv\n{\tdisplay: none;\n}\n.ol-layerswitcher.ol-forceopen.ol-collapsed .ol-switchertopdiv,\n.ol-layerswitcher.ol-forceopen.ol-collapsed .ol-switcherbottomdiv\n{\tdisplay: block;\n}\n\n.ol-control.ol-layerswitcher .ol-switchertopdiv,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\tposition: absolute;\n\ttop:0;\n\tleft:0;\n\tright:0;\n\theight: 45px;\n\tbackground: #fff; \n\tz-index:2;\n\topacity:1;\n\tcursor: pointer;\n\tborder-top:2px solid transparent;\n\tborder-bottom:2px solid #369;\n\tmargin:0 2px;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n}\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\ttop: auto;\n\tbottom: 0;\n\theight: 2em;\n\tborder-top:2px solid #369;\n\tborder-bottom:2px solid transparent;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv:before,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:before\n{\tcontent:\"\";\n\tposition: absolute;\n\tleft:50%;\n\ttop:50%;\n\tborder:10px solid transparent;\n\twidth:0;\n\theight:0;\n\ttransform: translate(-50%, -50%);\n\t-webkit-transform: translate(-50%, -50%);\n\topacity:0.8;\n}\n\n.ol-control.ol-layerswitcher .ol-switchertopdiv:hover:before,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:hover:before\n{\topacity:1;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv:before\n{\tborder-bottom-color: #369;\n\tborder-top: 0;\n}\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:before\n{\tborder-top-color: #369;\n\tborder-bottom: 0;\n}\n\n.ol-control.ol-layerswitcher .panel \n{\tbackground-color: #fff;\n\tborder-radius: 0 0 2px 2px;\n\tclear: both;\n\tdisplay: block; /* display:block to show panel on over */\n}\n\n.ol-layerswitcher .panel\n{\tlist-style: none;\n\tpadding: 0.5em 0.5em 0;\n\tmargin:0;\n\toverflow: hidden;\n\tfont-family: Tahoma,Geneva,sans-serif;\n\tfont-size:0.9em;\n\t-webkit-transition: top 0.3s;\n\ttransition: top 0.3s;\n\tposition: relative;\n\ttop:0;\n}\n\n.ol-layerswitcher .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n\tclear: both;\n}\n\n/** Customize checkbox\n*/\n.ol-layerswitcher input[type=\"radio\"],\n.ol-layerswitcher input[type=\"checkbox\"]\n{\tdisplay:none;\n}\n\n.ol-layerswitcher .panel li\n{\t-weblit-transition: -webkit-transform 0.2s linear;\n\t-webkit-transition: -webkit-transform 0.2s linear;\n\ttransition: -webkit-transform 0.2s linear;\n\ttransition: transform 0.2s linear;\n\ttransition: transform 0.2s linear, -webkit-transform 0.2s linear;\n\tclear: both;\n\tdisplay: block;\n\tborder:1px solid transparent;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n}\n/* drag and drop */\n.ol-layerswitcher .panel li.drag\n{\topacity: 0.5;\n\ttransform:scale(0.8);\n\t-webkit-transform:scale(0.8);\n}\n.ol-dragover\n{\tbackground:rgba(51,102,153,0.5);\n\topacity:0.8;\n}\n.ol-layerswitcher .panel li.forbidden,\n.forbidden .ol-layerswitcher-buttons div,\n.forbidden .layerswitcher-opacity div\n{\tbackground:rgba(255,0,0,0.5);\n\tcolor:#f00!important;\n}\n\n/* cursor management */\n.ol-layerswitcher.drag,\n.ol-layerswitcher.drag *\n{\tcursor:not-allowed!important;\n\tcursor:no-drop!important;\n}\n.ol-layerswitcher.drag .panel li.dropover,\n.ol-layerswitcher.drag .panel li.dropover *\n{\tcursor: pointer!important;\n\tcursor: n-resize!important;\n\tcursor: ns-resize!important;\n\tcursor: -webkit-grab!important;\n\tcursor: grab!important;\n\tcursor: -webkit-grabbing!important;\n\tcursor: grabbing!important;\n}\n\n.ol-layerswitcher .panel li.dropover\n{\tbackground: rgba(51, 102, 153, 0.5);\n}\n\n.ol-layerswitcher .panel li label\n{\tdisplay: inline-block;\n\theight: 1.4em;\n\tmax-width: 12em;\n\toverflow: hidden;\n\twhite-space: nowrap;\n\ttext-overflow: ellipsis;\n\tpadding: 0 0.2em 0 1.7em;\n\tposition: relative;\n}\n\n.ol-layerswitcher [type=\"radio\"] + label:before,\n.ol-layerswitcher [type=\"checkbox\"] + label:before,\n.ol-layerswitcher [type=\"radio\"]:checked + label:after,\n.ol-layerswitcher [type=\"checkbox\"]:checked + label:after\n{\tcontent: '';\n\tposition: absolute;\n\tleft: 0.1em; top: 0.1em;\n\twidth: 1.2em; height: 1.2em; \n\tborder: 2px solid #369;\n\tbackground: #fff;\n\t-webkit-box-sizing:border-box;\n\t        box-sizing:border-box;\n}\n\n.ol-layerswitcher [type=\"radio\"] + label:before,\n.ol-layerswitcher [type=\"radio\"] + label:after\n{\tborder-radius: 50%;\n}\n\n.ol-layerswitcher [type=\"radio\"]:checked + label:after\n{\tbackground: #369 none repeat scroll 0 0;\n\tmargin: 0.3em;\n\twidth: 0.6em;\n\theight: 0.6em;\n}\n\n.ol-layerswitcher [type=\"checkbox\"]:checked + label:after\n{\tbackground: transparent;\n    border-width: 0 3px 3px 0;\n\tborder-style: solid;\n\tborder-color: #369;\n    width: 0.7em;\n    height: 1em;\n    -webkit-transform: rotate(45deg);\n    transform: rotate(45deg);\n    left: 0.55em;\n    top: -0.05em;\n    -webkit-box-shadow: 1px 0px 1px 1px #fff;\n            box-shadow: 1px 0px 1px 1px #fff;\n}\n\n.ol-layerswitcher .panel li.ol-layer-hidden\n{\topacity: 0.6;\n}\n\n.ol-layerswitcher.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher.ol-forceopen .panel\n{\tdisplay:block;\n}\n\n.ol-layerswitcher button {\n\tbackground-color: white;\n\tfloat: right;\n\tz-index: 10;\n\tposition: relative;\n\tfont-size: 1.7em;\n}\n.ol-touch .ol-layerswitcher button {\n\tfont-size: 2.5em;\n}\n.ol-layerswitcher button:before,\n.ol-layerswitcher button:after {\n\tcontent: \"\";\n\tposition:absolute;\n\twidth: .75em;\n\theight: .75em;\n\tborder-radius: 0.15em;\n\t-webkit-transform: scaleY(.8) rotate(45deg);\n\ttransform: scaleY(.8) rotate(45deg);\n}\n.ol-layerswitcher button:before {\n\tbackground: #e2e4e1;\n\ttop: .32em;\n    left: .34em;\n\t-webkit-box-shadow: 0.1em 0.1em #325158;\n\tbox-shadow: 0.1em 0.1em #325158;\n}\n.ol-layerswitcher button:after {\n\ttop: .22em;\n    left: .34em;\n\tbackground: #83bcc5;\n\tbackground-image: radial-gradient( circle at .85em .6em, #70b3be 0, #70b3be .65em, #83bcc5 .65em);\n}\n.ol-layerswitcher-buttons \n{\tdisplay:block;\n\tfloat: right;\n\ttext-align:right;\n}\n.ol-layerswitcher-buttons > div\n{\tdisplay: inline-block;\n\tposition: relative;\n\tcursor: pointer;\n\theight:1em;\n\twidth:1em;\n\tmargin:2px;\n\tline-height: 1em;\n    text-align: center;\n    background: #369;\n    vertical-align: middle;\n    color: #fff;\n}\n\n.ol-layerswitcher .panel li > div\n{\tdisplay: inline-block;\n\tposition: relative;\n}\n\n/* line break */\n.ol-layerswitcher .ol-separator\n{\tdisplay:block;\n\twidth:0;\n\theight:0;\n\tpadding:0;\n\tmargin:0;\n}\n\n.ol-layerswitcher .layerup\n{\tfloat: right;\n\theight:2.5em;\n\tbackground-color: #369;\n\topacity: 0.5;\n\tcursor: move;\n\tcursor: ns-resize;\n}\n\n.ol-layerswitcher .layerup:before,\n.ol-layerswitcher .layerup:after\n{\tborder-color: #fff transparent;\n\tborder-style: solid;\n\tborder-width: 0.4em 0.4em 0;\n\tcontent: \"\";\n\theight: 0;\n\tposition: absolute;\n\tbottom: 3px;\n\tleft: 0.1em;\n\twidth: 0;\n}\n.ol-layerswitcher .layerup:after\n{\tborder-width: 0 0.4em 0.4em;\n\ttop:3px;\n\tbottom: auto;\n}\n\n.ol-layerswitcher .layerInfo\n{\tbackground: #369;\n\tborder-radius: 100%;\n}\n.ol-layerswitcher .layerInfo:before\n{\tcolor: #fff;\n\tcontent: \"i\";\n\tdisplay: block;\n\tfont-size: 0.8em;\n\tfont-weight: bold;\n\ttext-align: center;\n\twidth: 1.25em;\n\tposition:absolute;\n\tleft: 0;\n\ttop: 0;\n}\n\n.ol-layerswitcher .layerTrash\n{\tbackground: #369;\n}\n.ol-layerswitcher .layerTrash:before\n{\tcolor: #fff;\n\tcontent: \"\\D7\";\n\tfont-size:1em;\n\ttop: 50%;\n\tleft: 0;\n\tright: 0;\n\ttext-align: center;\n\tline-height: 1em;\n\tmargin: -0.5em 0;\n\tposition: absolute;\n}\n\n.ol-layerswitcher .layerExtent\n{\tbackground: #369;\n}\n.ol-layerswitcher .layerExtent:before\n{\tborder-right: 1px solid #fff;\n\tborder-bottom: 1px solid #fff;\n\tcontent: \"\";\n\tdisplay: block;\n\tposition: absolute;\n\tleft: 6px;\n\tright: 2px;\n\ttop: 6px;\n\tbottom: 3px;\n}\n.ol-layerswitcher .layerExtent:after\n{\tborder-left: 1px solid #fff;\n\tborder-top: 1px solid #fff;\n\tcontent: \"\";\n\tdisplay: block;\n\tposition: absolute;\n\tbottom: 6px;\n\tleft: 2px;\n\tright: 6px;\n\ttop: 3px;\n}\n\n.ol-layerswitcher .expend-layers,\n.ol-layerswitcher .collapse-layers\n{\tmargin: 0 2px;\n\tbackground-color: transparent;\n}\n.ol-layerswitcher .expend-layers:before,\n.ol-layerswitcher .collapse-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\ttop:50%;\n\tleft:0;\n\tmargin-top:-2px;\n\theight:4px;\n\twidth:100%;\n\tbackground:#369;\n}\n.ol-layerswitcher .expend-layers:after\n{\tcontent:\"\";\n\tposition:absolute;\n\tleft:50%;\n\ttop:0;\n\tmargin-left:-2px;\n\twidth:4px;\n\theight:100%;\n\tbackground:#369;\n}\n/*\n.ol-layerswitcher .collapse-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\tborder:0.5em solid #369;\n\tborder-color: #369 transparent transparent;\n\tmargin-top:0.25em;\n}\n.ol-layerswitcher .expend-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\tborder:0.5em solid #369;\n\tborder-color: transparent transparent transparent #369 ;\n\tmargin-left:0.25em;\n}\n*/\n\n.ol-layerswitcher .layerswitcher-opacity\n{\tposition:relative;\n\tborder: 1px solid #369;\n\theight: 3px;\n\twidth: 120px;\n\tmargin:5px 1em 10px 7px;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n\tborder-radius: 3px;\n\tbackground: #69c;\n\tbackground: -webkit-gradient(linear, left top, right top, from(rgba(0,60,136,0)), to(rgba(0,60,136,0.6)));\n\tbackground: linear-gradient(to right, rgba(0,60,136,0), rgba(0,60,136,0.6));\n\tcursor: pointer;\n\t-webkit-box-shadow: 1px 1px 1px rgba(0,0,0,0.5);\n\t        box-shadow: 1px 1px 1px rgba(0,0,0,0.5);\n}\n\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor,\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor:before\n{\tposition: absolute;\n\twidth: 20px;\n\theight: 20px;\n\ttop: 50%;\n\tleft: 50%;\n\tbackground: rgba(0,60,136,0.5);\n\tborder-radius: 50%;\n\t-webkit-transform: translate(-50%, -50%);\n\ttransform: translate(-50%, -50%);\n\tz-index: 1;\n}\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor:before\n{\tcontent: \"\";\n\tposition: absolute;\n\twidth: 50%;\n\theight: 50%;\n}\n.ol-touch .ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor\n{\twidth: 26px;\n\theight: 26px;\n}\n\n.ol-layerswitcher .layerswitcher-opacity-label { \n\tdisplay:none;\n\tposition: absolute;\n    right: -2.5em;\n    bottom: 5px;\n    font-size: 0.8em;\n}\n.ol-layerswitcher .layerswitcher-opacity-label::after {\n\tcontent:\"%\";\n}\n\n.ol-layerswitcher .layerswitcher-progress\n{\tdisplay:block;\n\tmargin:-4px 1em 2px 7px;\n\twidth: 120px;\n}\n.ol-layerswitcher .layerswitcher-progress div\n{\tbackground-color: #369;\n\theight:2px;\n\tdisplay:block;\n\twidth:0;\n}\n\n.ol-control.ol-layerswitcher-image\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 1em;\n\ttransition: all 0.2s ease 0s;\n\t-webkit-transition: all 0.2s ease 0s;\n}\n.ol-control.ol-layerswitcher-image.ol-collapsed\n{\ttop:3em;\n\ttransition: none;\n\t-webkit-transition: none;\n\n}\n\n.ol-layerswitcher-image .panel\n{\tlist-style: none;\n\tpadding: 0.25em;\n\tmargin:0;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-image .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-image.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher-image.ol-forceopen .panel\n{\tdisplay:block;\n\tclear:both;\n}\n\n.ol-layerswitcher-image button \n{\tbackground-color: white;\n\tbackground-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAACE1BMVEX///8A//8AgICA//8AVVVAQID///8rVVVJtttgv98nTmJ2xNgkW1ttyNsmWWZmzNZYxM4gWGgeU2JmzNNr0N1Rwc0eU2VXxdEhV2JqytQeVmMhVmNoydUfVGUgVGQfVGQfVmVqy9hqy9dWw9AfVWRpydVry9YhVmMgVGNUw9BrytchVWRexdGw294gVWQgVmUhVWPd4N6HoaZsy9cfVmQgVGRrytZsy9cgVWQgVWMgVWRsy9YfVWNsy9YgVWVty9YgVWVry9UgVWRsy9Zsy9UfVWRsy9YgVWVty9YgVWRty9Vsy9aM09sgVWRTws/AzM0gVWRtzNYgVWRuy9Zsy9cgVWRGcHxty9bb5ORbxdEgVWRty9bn6OZTws9mydRfxtLX3Nva5eRix9NFcXxOd4JPeINQeIMiVmVUws9Vws9Vw9BXw9BYxNBaxNBbxNBcxdJexdElWWgmWmhjyNRlx9IqXGtoipNpytVqytVryNNrytZsjZUuX210k5t1y9R2zNR3y9V4lp57zth9zdaAnKOGoaeK0NiNpquV09mesrag1tuitbmj1tuj19uktrqr2d2svcCu2d2xwMO63N+7x8nA3uDC3uDFz9DK4eHL4eLN4eIyYnDX5OM5Z3Tb397e4uDf4uHf5uXi5ePi5+Xj5+Xk5+Xm5+Xm6OY6aHXQ19fT4+NfhI1Ww89gx9Nhx9Nsy9ZWw9Dpj2abAAAAWnRSTlMAAQICAwQEBgcIDQ0ODhQZGiAiIyYpKywvNTs+QklPUlNUWWJjaGt0dnd+hIWFh4mNjZCSm6CpsbW2t7nDzNDT1dje5efr7PHy9PT29/j4+Pn5+vr8/f39/f6DPtKwAAABTklEQVR4Xr3QVWPbMBSAUTVFZmZmhhSXMjNvkhwqMzMzMzPDeD+xASvObKePPa+ffHVl8PlsnE0+qPpBuQjVJjno6pZpSKXYl7/bZyFaQxhf98hHDKEppwdWIW1frFnrxSOWHFfWesSEWC6R/P4zOFrix3TzDFLlXRTR8c0fEEJ1/itpo7SVO9Jdr1DVxZ0USyjZsEY5vZfiiAC0UoTGOrm9PZLuRl8X+Dq1HQtoFbJZbv61i+Poblh/97TC7n0neCcK0ETNUrz1/xPHf+DNAW9Ac6t8O8WH3Vp98f5lCaYKAOFZMLyHL4Y0fe319idMNgMMp+zWVSybUed/+/h7I4wRAG1W6XDy4XmjR9HnzvDRZXUAYDFOhC1S/Hh+fIXxen+eO+AKqbs+wAo30zDTDvDxKoJN88sjUzDFAvBzEUGFsnADoIvAJzoh2BZ8sner+Ke/vwECuQAAAABJRU5ErkJggg==\");\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tfloat: right;\n\theight: 38px;\n\twidth: 38px;\n\tdisplay:none;\n}\n\n.ol-layerswitcher-image.ol-collapsed button\n{\tdisplay:block;\n\tposition:relative;\n}\n\n.ol-layerswitcher-image li\n{\tborder-radius: 4px;\n\tborder: 3px solid transparent;\n\t-webkit-box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);\n\tdisplay: inline-block;\n\twidth: 64px;\n\theight: 64px;\n\tmargin:2px;\n\tposition: relative;\n\tbackground-color: #fff;\n\toverflow: hidden;\n\tvertical-align: middle;\n\tcursor:pointer;\n}\n.ol-layerswitcher-image li.ol-layer-hidden\n{\topacity: 0.5;\n\tborder-color:#555;\n}\n.ol-layerswitcher-image li.ol-header\n{\tdisplay: none;\n}\n\n.ol-layerswitcher-image li img\n{\tposition:absolute;\n\tmax-width:100%;\n}\n.ol-layerswitcher-image li.select\n{\tborder: 3px solid red;\n}\n\n.ol-layerswitcher-image li p\n{\tdisplay:none;\n}\n.ol-layerswitcher-image li:hover p\n{\tbackground-color: rgba(0, 0, 0, 0.5);\n\tcolor: #fff;\n\tbottom: 0;\n\tdisplay: block;\n\tleft: 0;\n\tmargin: 0;\n\toverflow: hidden;\n\tposition: absolute;\n\tright: 0;\n\ttext-align: center;\n\theight:1.2em;\n\tfont-family:Verdana, Geneva, sans-serif;\n\tfont-size:0.8em;\n}\n.ol-control.ol-legend {\n  bottom: .5em;\n  left: .5em;\n  z-index: 1;\n  max-height: 90%;\n  max-width: 90%;\n  overflow-x: hidden;\n  overflow-y: auto;\n}\n.ol-control.ol-legend button {\n  position: relative;\n  display: none;\n}\n.ol-control.ol-legend.ol-collapsed button {\n    display: block;\n}\n.ol-control.ol-legend.ol-uncollapsible button {\n  display: none;\n}\n\n.ol-control.ol-legend button.ol-closebox {\n  display: block;\n  position: absolute;\n  top: 0;\n  right: 0;\n  background: none;\n  cursor: pointer;\n  z-index: 1;\n}\n.ol-control.ol-legend.ol-uncollapsible button.ol-closebox,\n.ol-control.ol-legend.ol-collapsed button.ol-closebox {\n  display: none;\n}\n.ol-control.ol-legend button.ol-closebox:before {\n  content: \"\\D7\";\n  background: none;\n  color: rgba(0,60,136,.5);\n  font-size: 1.3em;\n}\n.ol-control.ol-legend button.ol-closebox:hover:before {\n  color: rgba(0,60,136,1);\n}\n.ol-control.ol-legend.ol-uncollapsible .ol-legendImg,\n.ol-control.ol-legend .ol-legendImg {\n  position: absolute;\n  z-index: -1;\n}\n.ol-control.ol-legend.ol-collapsed .ol-legendImg {\n  display: none;\n}\n.ol-control.ol-legend.ol-uncollapsible .ol-legendImg {\n  display: block  ;\n}\n\n.ol-control.ol-legend .ol-legendImg canvas {\n  height: 100%;;\n}\n\n.ol-control.ol-legend > button:first-child:before,\n.ol-control.ol-legend > button:first-child:after {\n  content: \"\";\n  position: absolute;\n  top: .25em;\n  left: .2em;\n  width: .2em;\n  height: .2em;\n  background-color: currentColor;\n  -webkit-box-shadow: 0 0.35em, 0 0.7em;\n          box-shadow: 0 0.35em, 0 0.7em;\n}\n.ol-control.ol-legend button:first-child:after {\n  top: .27em;\n  left: .55em;\n  height: .15em;\n  width: .6em;\n}\n\n.ol-legend ul {\n  min-width: 1.5em;\n  min-height: 1.5em;\n  margin: 0 0 2px;\n  padding: 0;\n  list-style: none;\n  display: inline-block;\n}\n.ol-control.ol-legend.ol-collapsed ul {\n  display: none;\n}\n.ol-control.ol-legend.ol-uncollapsible ul {\n  display: block;\n}\n.ol-legend ul li.ol-title {\n  text-align: center;\n  font-weight: bold;\n}\n.ol-legend ul li {\n  overflow: hidden;\n  padding: 0 .5em;\n}\n.ol-legend ul li div {\n    display: inline-block;\n  vertical-align: middle;\n}\n\n.ol-control.ol-legend .ol-legend {\n  display: inline-block;\n}\n.ol-control.ol-legend.ol-collapsed .ol-legend {\n  display: none;\n}\n.ol-notification {\n  width: 150%;\n  bottom: 0;\n  border: 0;\n  background: none;\n  margin: 0;\n  padding: 0;\n}\n.ol-notification > div,\n.ol-notification > div:hover {\n  position: absolute;\n  background-color: rgba(0,0,0,.8);\n  color: #fff;\n  bottom: 0;\n  left: 33.33%;\n  max-width: calc(66% - 4em);\n  min-width: 5em;\n  max-height: 5em;\n  min-height: 1em;\n  border-radius: 4px 4px 0 0;\n  padding: .2em .5em;\n  text-align: center;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  -webkit-transition: .3s;\n  transition: .3s;\n  opacity: 1;\n}\n.ol-notification.ol-collapsed > div {\n  bottom: -5em;\n  opacity: 0;\n}\n\n.ol-notification a {\n  color: #9cf;\n  cursor: pointer;\n}\n\n.ol-overlay\n{\tposition: absolute;\n\ttop: 0;\n    left: 0;\n\twidth:100%;\n\theight: 100%;\n    background-color: rgba(0,0,0,0.4);\n    padding: 1em;\n    color: #fff;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n\tz-index: 1;\n\topacity: 0;\n\tdisplay: none;\n\tcursor: default;\n\toverflow: hidden;\n\t-webkit-transition: all 0.5s;\n\ttransition: all 0.5s;\n}\n\n.ol-overlay.slide-up\n{\ttransform: translateY(100%);\n\t-webkit-transform: translateY(100%);\n}\n.ol-overlay.slide-down\n{\t-webkit-transform: translateY(-100%);\n\ttransform: translateY(-100%);\n}\n.ol-overlay.slide-left\n{\t-webkit-transform: translateX(-100%);\n\ttransform: translateX(-100%);\n}\n.ol-overlay.slide-right\n{\t-webkit-transform: translateX(100%);\n\ttransform: translateX(100%);\n}\n.ol-overlay.zoom\n{\ttop: 50%;\n    left: 50%;\n\topacity:0.5;\n\t-webkit-transform: translate(-50%,-50%) scale(0);\n\ttransform: translate(-50%,-50%) scale(0);\n}\n.ol-overlay.zoomout\n{\t-webkit-transform: scale(3);\n\ttransform: scale(3);\n}\n.ol-overlay.zoomrotate\n{\ttop: 50%;\n    left: 50%;\n\topacity:0.5;\n\t-webkit-transform: translate(-50%,-50%) scale(0) rotate(360deg);\n\ttransform: translate(-50%,-50%) scale(0) rotate(360deg);\n}\n.ol-overlay.stretch\n{\ttop: 50%;\n    left: 50%;\n\topacity:0.5;\n\t-webkit-transform: translate(-50%,-50%) scaleX(0);\n\ttransform: translate(-50%,-50%) scaleX(0) ;\n}\n.ol-overlay.stretchy\n{\ttop: 50%;\n    left: 50%;\n\topacity:0.5;\n\t-webkit-transform: translate(-50%,-50%) scaleY(0);\n\ttransform: translate(-50%,-50%) scaleY(0) ;\n}\n.ol-overlay.wipe\n{\topacity: 1;\n\t/* clip: must be set programmatically */\n\t/* clip-path: use % but not crossplatform (IE) */\n}\n.ol-overlay.flip\n{\t-webkit-transform: perspective(600px) rotateY(180deg);\n\ttransform: perspective(600px) rotateY(180deg);\n}\n.ol-overlay.card\n{\topacity: 0.5;\n\t-webkit-transform: translate(-80%, 100%) rotate(-0.5turn);\n\ttransform: translate(-80%, 100%) rotate(-0.5turn);\n}\n.ol-overlay.book\n{\t-webkit-transform: perspective(600px) rotateY(-180deg) scaleX(0.6);\n\ttransform: perspective(600px) rotateY(-180deg) scaleX(0.6) ;\n\t-webkit-transform-origin: 10% 50%;\n\ttransform-origin: 10% 50%;\n}\n.ol-overlay.book.visible\n{\t-webkit-transform-origin: 10% 50%;\n\ttransform-origin: 10% 50%;\n}\n\n.ol-overlay.ol-visible\n{\topacity:1;\n\ttop: 0;\n    left: 0;\n    right: 0;\n    bottom: 0;\n\t-webkit-transform: none;\n\ttransform: none;\n}\n\n.ol-overlay .ol-closebox\n{\tposition: absolute;\n\ttop: 1em;\n\tright: 1em;\n\twidth: 1em;\n\theight: 1em;\n\tcursor: pointer;\n\tz-index:1;\n}\n.ol-overlay .ol-closebox:before\n{\tcontent: \"\\274C\";\n\tdisplay: block;\n    text-align: center;\n    vertical-align: middle;\n}\n\n.ol-control.ol-overview\n{\tposition: absolute;\n\tleft: 0.5em;\n\ttext-align: left;\n\tbottom: 0.5em;\n}\n\n.ol-control.ol-overview .panel\n{\tdisplay:block;\n\twidth:150px;\n\theight:150px;\n\tmargin:2px;\n\tbackground-color:#fff;\n\tborder:1px solid #369;\n\tcursor: pointer;\n}\n\n.ol-overview:not(.ol-collapsed) button\n{\tposition:absolute;\n\tbottom:2px;\n\tleft:2px;\n\tz-index:2;\n}\n\n.ol-control.ol-overview.ol-collapsed .panel\n{\tdisplay:none;\n}\n\n.ol-overview.ol-collapsed button:before\n{\tcontent:'\\BB';\n}\n.ol-overview button:before\n{\tcontent:'\\AB';\n}\n\n\n.ol-control-right.ol-overview\n{\tleft: auto;\n\tright: 0.5em;\n}\n.ol-control-right.ol-overview:not(.ol-collapsed) button\n{\tleft:auto;\n\tright:2px;\n}\n.ol-control-right.ol-overview.ol-collapsed button:before\n{\tcontent:'\\AB';\n}\n.ol-control-right.ol-overview button:before\n{\tcontent:'\\BB';\n}\n\n.ol-control-top.ol-overview\n{\tbottom: auto;\n\ttop: 5em;\n}\n.ol-control-top.ol-overview:not(.ol-collapsed) button\n{\tbottom:auto;\n\ttop:2px;\n}\n\n.ol-permalink\n{\tposition: absolute;\n\ttop:0.5em;\n\tright: 2.5em;\n}\n.ol-touch .ol-permalink\n{\tright: 3em;\n}\n\n.ol-permalink button\n{\tbackground-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AcFBjYE1ZK03gAAAUlJREFUOMuVk71KA1EQhc/NaiP+gCRpFHwGBSFlCrFVfAsbwSJCBMv06QIGJOBziI3EYAgkjU8gIloIAasIn4WzMqx34zrN7J6de+6ZmbNSgQDSfADcATPgHbgCyvonSYv8KEzWdofegH3gwmG9Ikq67sAESFzNueHThTyiEIKAmr2OJCUhhO30Aou+5aUQU2Ik65K2JC1KegohPGfUBkmvksqShnntHEcGOs60NXHfjmKz6czZTsNqbhzW+muwY2ATWAWawCOwBgxcTfvnvCPxKx4Cy5bPgBWgauRpdL2ImNlGhp3MabETm8mh94nDk4yCNE5/KTGg7xxbyhYAG0AN2AEqURIDZ0a0Fxn+LXAPXDpzRqMk6cOedz1ubdYl1b6NHgZRJe72nuu/CdSBl+yKi/zZlTnbaeXOJIesClwDU+ATeEhtX5TkCwAWUyAsHH1QAAAAAElFTkSuQmCC');\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n}\n.ol-control.ol-profil {\n  position: absolute;\n\ttop: 0.5em;\n\tright: 3em;\n\ttext-align: right;\n\toverflow: hidden;\n}\n.ol-profil .ol-inner  {\n  position: relative;\n\tpadding: 0.5em;\n\tfont-size: 0.8em;\n}\n.ol-control.ol-profil .ol-inner {\n  display: block;\n\tbackground-color: rgba(255,255,255,0.7);\n\tmargin: 2.3em 2px 2px;\n}\n.ol-control.ol-profil.ol-collapsed .ol-inner {\n  display: none;\n}\n\n.ol-profil canvas {\n  display: block;\n}\n.ol-profil button {\n  display: block;\n\tposition: absolute;\n\tright: 2px;\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tbackground-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAPCAYAAAALWoRrAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgXCR4dn7j9TAAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAz0lEQVQ4y7WTMU4CURRFz0xIpLUBEhdAY2tJYW1jaWlsXYVxDWyBhWCFCYugYgnDFPMOhTMJGf3AwHiqn/uTk5v/3gfAH6b0RH7sMiIe1Ts162z+q2lVVbd1XqijLuJk0zzP1/VxCGyApLgsy+HJphGx8DeFOm6L1bn6eVQaEW+m2amTRqx+1fkqKY2Ie0+zUx/U7WGYfNMsy57PmMMN8A1MWsWeUoPyivV8PWtPOzL7D+lYHfUtBXgHGLTCJfBxodD6k9Dsm8BLE17LobQ39nJC61aLVoVsAAAAAElFTkSuQmCC');\n}\n\n.ol-profil.ol-collapsed button {\n  position: static;\n}\n\n.ol-profil .ol-profilbar,\n.ol-profil .ol-profilcursor {\n  position:absolute;\n\tpointer-events: none;\n\twidth: 1px;\n\tdisplay: none;\n}\n.ol-profil .ol-profilcursor {\n  width: 0;\n\theight: 0;\n}\n.ol-profil .ol-profilcursor:before {\n  content:\"\";\n\tpointer-events: none;\n\tdisplay: block;\n\tmargin: -2px;\n\twidth:5px;\n\theight:5px;\n}\n.ol-profil .ol-profilbar,\n.ol-profil .ol-profilcursor:before {\n  background: red;\n}\n\n.ol-profil table {\n  text-align: center;\n  width: 100%;\n}\n\n.ol-profil table span {\n  display: block;\n}\n\n.ol-profilpopup {\n  background-color: rgba(255, 255, 255, 0.5);\n\tmargin: 0.5em;\n\tpadding: 0 0.5em;\n\tposition: absolute;\n\ttop:-1em;\n\twhite-space: nowrap;\n}\n.ol-profilpopup.ol-left {\n  right:0;\n}\n\n\n.ol-profil table td {\n  padding: 0 2px;\n}\n\n.ol-profil table .track-info {\n  display: table-row;\n}\n.ol-profil table .point-info {\n  display: none;\n}\n.ol-profil .over table .track-info {\n  display: none;\n}\n.ol-profil .over table .point-info {\n  display: table-row;\n}\n\n.ol-profil p {\n  text-align: center;\n\tmargin:0;\n}\n\n.ol-control.ol-routing {\n  top: 0.5em;\n  left: 3em;\n  max-height: 90%;\n  overflow-y: auto;\n}\n.ol-touch .ol-control.ol-routing {\n  left: 3.5em;\n}\n.ol-control.ol-routing.ol-searching {\n  opacity: .5;\n}\n\n.ol-control.ol-routing .ol-car,\n.ol-control.ol-routing > button {\n  position: relative;\n}\n.ol-control.ol-routing .ol-car:after,\n.ol-control.ol-routing > button:after {\n  content: \"\";\n  position: absolute;\n  width: .78em;\n  height: 0.6em;\n  border-radius: 40% 50% 0 0 / 50% 70% 0 0;\n  -webkit-box-shadow: inset 0 0 0 0.065em, -0.35em 0.14em 0 -0.09em, inset 0 -0.37em, inset -0.14em 0.005em;\n          box-shadow: inset 0 0 0 0.065em, -0.35em 0.14em 0 -0.09em, inset 0 -0.37em, inset -0.14em 0.005em;\n  clip: rect(0 1em .5em -1em);\n  top: .35em;\n  left: .4em;\n}\n.ol-control.ol-routing .ol-car:before,\n.ol-control.ol-routing > button:before {\n  content: \"\";\n  position: absolute;\n  width: .28em;\n  height: .28em;\n  border-radius: 50%;\n  -webkit-box-shadow: inset 0 0 0 1em, 0.65em 0;\n          box-shadow: inset 0 0 0 1em, 0.65em 0;\n  top: 0.73em;\n  left: .20em;\n}\n.ol-control.ol-routing .ol-pedestrian:after {\n  content: \"\";\n  position: absolute;\n  width: .3em;\n  height: .4em;\n  top: .25em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  -webkit-box-shadow: inset 0.3em 0, 0.1em 0.5em 0 -0.1em, -0.1em 0.5em 0 -0.1em, 0.25em 0.1em 0 -0.1em, -0.25em 0.1em 0 -0.1em;\n          box-shadow: inset 0.3em 0, 0.1em 0.5em 0 -0.1em, -0.1em 0.5em 0 -0.1em, 0.25em 0.1em 0 -0.1em, -0.25em 0.1em 0 -0.1em;\n  border-top: .2em solid transparent;\n}\n.ol-control.ol-routing .ol-pedestrian:before {\n  content: \"\";\n  position: absolute;\n  width: .3em;\n  height: .3em;\n  top: .1em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  border-radius: 50%;\n  background-color: currentColor;\n}\n\n.ol-control.ol-routing.ol-collapsed .content {\n  display: none;\n}\n\n.ol-routing .ol-search.ol-collapsed ul {\n\tdisplay: none;\n}\n.ol-routing .ol-search ul .copy {\n  display: none;\n}\n.ol-routing .ol-search ul.history {\n  display: none;\n}\n.ol-routing .content > div > * {\n  display: inline-block;\n  vertical-align: top;\n}\n.ol-routing .ol-result ul {\n  list-style: none;\n  display: block;\n}\n.ol-routing .ol-result li {\n  position: relative;\n  min-height: 1.65em;\n}\n.ol-routing .ol-result li i {\n  display: block;\n  font-size: .8em;\n  font-weight: bold;\n}\n\n.ol-routing .ol-result li:before {\n  content: \"\";\n  border: 5px solid transparent;\n  position: absolute;\n  left: -1.75em;\n  border-bottom-color: #369;\n  border-width: .6em .4em .6em;\n  -webkit-transform-origin: 50% 125%;\n          transform-origin: 50% 125%;\n  -webkit-box-shadow: 0 0.65em 0 -0.25em #369;\n          box-shadow: 0 0.65em 0 -0.25em #369;\n  top: -.8em;\n}\n.ol-routing .ol-result li:after {\n  content: \"\";\n  position: absolute;\n  width: 0.3em;\n  height: .6em;\n  left: -1.5em;\n  background: #369;\n  top: .6em;\n}\n.ol-routing .ol-result li.R:before {\n  -webkit-transform: rotate(90deg);\n          transform: rotate(90deg);\n}\n.ol-routing .ol-result li.FR:before {\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n}\n.ol-routing .ol-result li.L:before {\n  -webkit-transform: rotate(-90deg);\n          transform: rotate(-90deg);\n}\n.ol-routing .ol-result li.FL:before {\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n\n.ol-routing .content > i {\n  vertical-align: middle;\n}\n.ol-routing .ol-button,\n.ol-routing .ol-button:focus,\n.ol-routing .ol-pedestrian,\n.ol-routing .ol-car {\n  font-size: 1.1em;\n  position: relative;\n  display: inline-block;\n  width: 1.4em;\n  height: 1.4em;\n  color: rgba(0,60,136,1);\n  background-color: transparent;\n  margin: 0 .1em;\n  opacity: .5;\n  vertical-align: middle;\n  outline: none;\n  cursor: pointer;\n}\n.ol-routing .ol-button:hover,\n.ol-routing .ol-button.selected,\n.ol-routing i.selected {\n  opacity: 1;\n  background: transparent;\n}\n\n.ol-viewport .ol-scale {\n\tleft: .5em;\n\tbottom: 2.5em;\n\ttext-align: center;\n\t-webkit-transform: scaleX(.8);\n\t-webkit-transform-origin: 0 0;\n\ttransform: scaleX(.8);\n\ttransform-origin: 0 0;\n}\n.ol-viewport .ol-scale input {\n\tbackground: none;\n    border: 0;\n    width: 8em;\n    text-align: center;\n}\n\n.ol-search{\n  top: 0.5em;\n  left: 3em;\n}\n.ol-touch .ol-search {\n  left: 3.5em;\n}\n.ol-search button {\n  background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAABPUlEQVQoU41SwXHCQAzUHh58eoUOIBWEDkI6oAToIKkg7iAuwakgpAIowXRACcnrzp6BzchjMx4wE/S6kW5XK60gvQghzJIkmVoqSZI9gJ9+/fINS5Cc1HX9QXIlIr/tpwcRyb33b7cIGnAIYQdg4pxbjcfj0nJ1Xc+Px+PGObdN03Q9RIAQwgpAnqbp7FKmjQGgJLlU1d2V7BjjRkQO3vvXIXarkyxVNbsCm2QR2Q0V7XOMMReRmfd+OQQubN6hYgs22ZtbnRcAtiRfLueqqmpJ8ovko6oeBq0KIWQA3gFkzrlmMafTaUEyI/mpqmbhVTRWWbRdbClPbeobQNES5KPRqOxs7DBn8K1DsAOKMZYApiTXqlrcDe4d0XN7jWeCfzt351tVle2iGalTcBd4gGDvvZ/fDe4RmCOFLe8Pr7mvEP2N9PQAAAAASUVORK5CYII=\");\n  background-repeat: no-repeat;\n  background-position: center center;\n  background-size: 1em;\n  top: 2px;\n  left: 2px;\n  float: left;\n}\n.ol-search input {\n  display: inline-block;\n  border: 0;\n  margin: 1px 1px 1px 2px;\n  font-size: 1.14em;\n  padding-left: 0.3em;\n  height: 1.375em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-transition: all 0.1s;\n  transition: all 0.1s;\n}\n.ol-touch .ol-search input,\n.ol-touch .ol-search ul {\n  font-size: 1.5em;\n}\n.ol-control.ol-search.ol-collapsed > * {\n  display: none;\n}\n.ol-control.ol-search.ol-collapsed > button {\n  display: block;\n}\n\n.ol-search ul {\n  list-style: none;\n  padding: 0;\n  margin: 0;\n  display: block;\n  clear: both;\n  cursor: pointer;\n  max-width: 17em;\n  overflow-x: hidden;\n}\n/*\n.ol-control.ol-search ul {\n  position: absolute;\n  background: #fff;\n  box-shadow: 5px 5px 5px rgba(0,0,0,0.5);\n}\n*/\n.ol-control.ol-search ul li {\n  padding: 0.1em 0.5em;\n}\n.ol-search ul li {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.ol-search ul li.select,\n.ol-search ul li:hover {\n  background-color: rgba(0,60,136,.5);\n  color: #fff;\n}\n.ol-search ul li img {\n  float: left;\n  max-height: 2em;\n}\n.ol-search li.copy {\n    background: rgba(0,0,0,.5);\n  color: #fff;\n}\n.ol-search li.copy a {\n  color: #fff;\n  text-decoration: none;\n}\n\n.ol-search.searching:before {\n    content: '';\n    position: absolute;\n    height: 3px;\n    left: 0;\n    top: 1.6em;\n    -webkit-animation: pulse .5s infinite alternate linear;\n            animation: pulse .5s infinite alternate linear;\n    background: red;\n}\n\n@-webkit-keyframes pulse {\n  0% { left:0; right: 95%; }\n  50% {\tleft: 30%; right: 30%; }\n  100% {\tleft: 95%; right: 0; }\n}\n\n@keyframes pulse {\n  0% { left:0; right: 95%; }\n  50% {\tleft: 30%; right: 30%; }\n  100% {\tleft: 95%; right: 0; }\n}\n\n\n.ol-search.IGNF-parcelle input {\n  width: 13.5em;\n}\n.ol-search.IGNF-parcelle input:-moz-read-only {\n  background: #ccc;\n  opacity: .8;\n}\n.ol-search.IGNF-parcelle input:read-only {\n  background: #ccc;\n  opacity: .8;\n}\n.ol-search.IGNF-parcelle.ol-collapsed-list > ul.autocomplete {\n  display: none;\n}\n\n.ol-search.IGNF-parcelle label {\n  display: block;\n  clear: both;\n}\n.ol-search.IGNF-parcelle > div * {\n  width: 5em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  display: inline-block;\n  margin: .1em;\n  font-size: 1em;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page {\n  margin-top:.5em;\n  width:100%;\n  text-align: center;\n  display: none;\n}\n.ol-search.IGNF-parcelle.ol-collapsed-list ul.autocomplete-parcelle,\n.ol-search.IGNF-parcelle.ol-collapsed-list ul.autocomplete-page {\n  display: block;\n}\n.ol-search.IGNF-parcelle.ol-collapsed ul.autocomplete-page,\n.ol-search.IGNF-parcelle.ol-collapsed ul.autocomplete-parcelle,\n.ol-search.IGNF-parcelle ul.autocomplete-parcelle {\n  display: none;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page li {\n  display: inline-block;\n  color: #fff;\n  background: rgba(0,60,136,.5);\n  border-radius: 50%;\n  width: 1.3em;\n  height: 1.3em;\n  padding: .1em;\n  margin: 0 .1em;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page li.selected {\n  background: rgba(0,60,136,1);\n}\n\n/* GPS */\n.ol-searchgps input.search {\n  display: none;\n}\n.ol-control.ol-searchgps > button:first-child {\n  background-image: none;\n}\n.ol-control.ol-searchgps > button:first-child:before {\n  content: \"x/y\";\n  display: block;\n  -webkit-transform: scaleX(.8);\n          transform: scaleX(.8);\n}\n.ol-control.ol-searchgps .ol-latitude,\n.ol-control.ol-searchgps .ol-longitude {\n  clear: both;\n}\n.ol-control.ol-searchgps .ol-latitude label,\n.ol-control.ol-searchgps .ol-longitude label {\n  width: 5.5em;\n  display: inline-block;\n  text-align: right;\n  -webkit-transform: scaleX(.8);\n          transform: scaleX(.8);\n  margin: 0 -.8em 0 0;\n  -webkit-transform-origin: 0 0;\n          transform-origin: 0 0;\n}\n.ol-control.ol-searchgps .ol-latitude input,\n.ol-control.ol-searchgps .ol-longitude input {\n  max-width: 10em;\n}\n\n.ol-control.ol-searchgps .ol-switch {\n  cursor: pointer;\n  float: right;\n  margin: .5em;\n  font-size: .9em;\n}\n.ol-control.ol-searchgps .ol-switch input {\n  display: none;\n}\n.ol-control.ol-searchgps .ol-switch span {\n  color: rgba(0,60,136,.5);\n  position: relative;\n  cursor: pointer;\n  background-color: #ccc;\n  -webkit-transition: .4s;\n  transition: .4s;\n  width: 1.6em;\n  height: 1em;\n  display: inline-block;\n  border-radius: 1em;\n  font-size: 1.3em;\n  vertical-align: middle;\n  margin: 0 .2em;\n}\n.ol-control.ol-searchgps .ol-switch span:before {\n  position: absolute;\n  content: \"\";\n  height: 1em;\n  width: 1em;\n  left: 0;\n  top: 50%;\n  background-color: #fff;\n  -webkit-transition: .4s;\n  transition: .4s;\n  border-radius: 1em;\n  display: block;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n  border: 2px solid #ccc;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n.ol-control.ol-searchgps .ol-switch input:checked + span {\n  background-color: currentColor;\n}\n.ol-control.ol-searchgps .ol-switch input:checked + span:before {\n  -webkit-transform: translate(.6em,-50%);\n          transform: translate(.6em,-50%);\n  border-color: currentColor;\n}\n\n.ol-searchgps .ol-decimal{\n  display: inline-block;\n}\n.ol-searchgps .ol-dms,\n.ol-searchgps.ol-dms .ol-decimal {\n  display: none;\n  width: 3em;\n  text-align: right;\n}\n.ol-searchgps.ol-dms .ol-dms {\n  display: inline-block;\n}\n\n.ol-searchgps span.ol-dms {\n  width: auto;\n}\n.ol-searchgps.ol-control.ol-collapsed button.ol-geoloc {\n  display: none;\n}\n.ol-searchgps button.ol-geoloc {\n  top: 0;\n  float: right;\n  margin-right: 3px;\n  background-image: none;\n  position: relative;\n}\n.ol-searchgps button.ol-geoloc:before {\n  content:\"\";\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  width: .6em;\n  height: .6em;\n  border: .1em solid currentColor;\n  border-radius: 50%;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n}\n.ol-searchgps button.ol-geoloc:after {\n  content:\"\";\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  width: .2em;\n  height: .2em;\n  background-color: transparent;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n  -webkit-box-shadow: \n    .45em 0 currentColor, -.45em 0 currentColor, 0 -.45em currentColor, 0 .45em currentColor,\n    .25em 0 currentColor, -.25em 0 currentColor, 0 -.25em currentColor, 0 .25em currentColor;\n          box-shadow: \n    .45em 0 currentColor, -.45em 0 currentColor, 0 -.45em currentColor, 0 .45em currentColor,\n    .25em 0 currentColor, -.25em 0 currentColor, 0 -.25em currentColor, 0 .25em currentColor;\n}\n.ol-control.ol-select {\n  top: .5em;\n  left: 3em;\n}\n.ol-control.ol-select > button:before {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  width: .73em;\n  height: .73em;\n  background-color: transparent;\n  border: .12em solid currentColor;\n  border-radius: 100%;\n  top: .35em;\n  left: .35em;\n}\n.ol-control.ol-select > button:after {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  top: 1.1em;\n  left: 1em;\n  border-width: .08em .23em;\n  border-style: solid;\n  border-radius: .03em;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n  -webkit-box-shadow: -0.18em 0 0 -0.03em;\n          box-shadow: -0.18em 0 0 -0.03em;\n}\n.ol-select > div button {\n    width: auto;\n    padding: 0 .5em;\n    float: right;\n    font-weight: normal;\n}\n.ol-select .ol-delete {\n    width: 1.5em;\n  height: 1em;\n  vertical-align: middle;\n  display: inline-block;\n  position: relative;\n  cursor: pointer;\n}\n.ol-select .ol-delete:before {\n  content:'\\D7';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  width: 100%;\n  text-align: center;\n  font-weight: bold;\n}\n\n.ol-control.ol-select > div {\n  display: block;\n}\n.ol-control.ol-select.ol-collapsed > div {\n  display: none;\n}\n\n.ol-select ul {\n  list-style: none;\n  margin: 0;\n  padding: 0;\n}\n.ol-control.ol-select input[type=\"text\"]  {\n  width: 8em;\n}\n\n.ol-control.ol-select label  {\n  display: block;\n}\n\n.ol-select .ol-autocomplete {\n  display: inline;\n}\n.ol-select .ol-autocomplete ul {\n  position: absolute;\n  display: block;\n  background: #fff;\n  border: 1px solid #999;\n  min-width: 10em;\n  font-size: .85em;\n}\n.ol-select .ol-autocomplete ul li {\n  padding: 0 .5em;\n}\n.ol-select .ol-autocomplete ul li:hover {\n  color: #fff;\n  background: rgba(0,60,136,.5);\n}\n.ol-select ul.ol-hidden {\n  display: none;\n}\n.ol-control.ol-storymap {\n  top: .5em;\n  left: .5em;\n  bottom: .5em;\n  max-width: 35%;\n  border-radius: .5em;\n  position: absolute;\n  height: auto;\n}\n.ol-storymap {\n  overflow: hidden;\n  padding: 0;\n  height: 100%;\n  position: relative;\n  scroll-behavior: smooth;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.ol-storymap.ol-move {\n  scroll-behavior: unset;\n}\n.ol-storymap.ol-touch {\n  overflow-y: auto;\n}\n\n.ol-storymap .ol-scroll-top,\n.ol-storymap .ol-scroll-next {\n  position: relative;\n  min-height: 1em;\n  color: rgba(0,60,136,.5);\n}\n.ol-storymap .ol-scroll-top:before,\n.ol-storymap .ol-scroll-next:before {\n  content: \"\";\n  border: .3em solid currentColor;\n  border-radius: .3em;\n  border-color: transparent currentColor currentColor transparent;\n  width: .8em;\n  height: .8em;\n  display: block;\n  position: absolute;\n  left: 50%;\n  -webkit-transform: translateX(-50%) rotate(45deg);\n          transform: translateX(-50%) rotate(45deg);\n  -webkit-animation: ol-bounce-bottom 0.35s linear infinite alternate;\n          animation: ol-bounce-bottom 0.35s linear infinite alternate;\n  pointer-events: none;\n}\n.ol-storymap .ol-scroll-top:before {\n  border-color: currentColor transparent transparent currentColor;\n  -webkit-animation: ol-bounce-top 0.35s linear infinite alternate;\n          animation: ol-bounce-top 0.35s linear infinite alternate;\n}\n\n@-webkit-keyframes ol-bounce-top{\n  from {top: -.2em;}\n  to   {top: .5em;}\n}\n\n@keyframes ol-bounce-top{\n  from {top: -.2em;}\n  to   {top: .5em;}\n}\n@-webkit-keyframes ol-bounce-bottom{\n  from {bottom: -.2em;}\n  to   {bottom: .5em;}\n}\n@keyframes ol-bounce-bottom{\n  from {bottom: -.2em;}\n  to   {bottom: .5em;}\n}\n.ol-swipe\n{\tposition: absolute;\n\ttop: 50%;\n\tleft: 50%;\n\ttransform: translate(-50%, -50%);\n\t-webkit-transform: translate(-50%, -50%);\n}\n\n.ol-swipe:before\n{\tcontent: \"\";\n\tposition: absolute;\n\ttop: -5000px;\n\tbottom: -5000px;\n\tleft: 50%;\n\twidth: 4px;\n\tbackground: #fff;\n\tz-index:-1;\n\ttransform: translate(-2px, 0);\n\t-webkit-transform: translate(-2px, 0);\n}\n.ol-swipe.horizontal:before\n{\tleft: -5000px;\n\tright: -5000px;\n\ttop: 50%;\n\tbottom: auto;\n\twidth: auto;\n\theight: 4px;\n}\n\n.ol-swipe,\n.ol-swipe button\n{\tcursor: ew-resize;\n}\n.ol-swipe.horizontal,\n.ol-swipe.horizontal button\n{\tcursor: ns-resize;\n}\n\n.ol-swipe:after,\n.ol-swipe button:before,\n.ol-swipe button:after\n{\tcontent: \"\";\n\tposition: absolute;\n\ttop: 25%;\n\tbottom: 25%;\n\tleft: 50%;\n\twidth: 2px;\n\tbackground: rgba(255,255,255,0.8);\n\ttransform: translate(-1px, 0);\n\t-webkit-transform: translate(-1px, 0);\n}\n.ol-swipe button:after\n{\ttransform: translateX(5px);\n\t-webkit-transform: translateX(5px);\n}\n.ol-swipe button:before\n{\ttransform: translateX(-7px);\n\t-webkit-transform: translateX(-7px);\n}\n\n.ol-control.ol-timeline {\n  bottom: 0;\n  left: 0;\n  right: 0;\n  -webkit-transition: .3s;\n  transition: .3s;\n}\n.ol-control.ol-timeline.ol-collapsed {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.ol-timeline {\n  overflow: hidden;\n  padding: 2px 0 0;\n}\n.ol-timeline .ol-scroll {\n  overflow: hidden;\n  padding: 0;\n  scroll-behavior: smooth;\n  line-height: 1em;\n}\n.ol-timeline .ol-scroll.ol-move {\n  scroll-behavior: unset;\n}\n.ol-timeline.ol-touch .ol-scroll{\n  overflow-x: auto;\n}\n\n.ol-timeline .ol-scroll {\n  height: 6em;\n}\n.ol-timeline.ol-hasbutton .ol-scroll {\n  margin-left: 1.5em;\n}\n.ol-timeline .ol-buttons {\n  display: none;\n  position: absolute;\n  top: 0;\n  background: rgba(255,255,255,.5);\n  width: 1.5em;\n  bottom: 0;\n  left: 0;\n  z-index: 10;\n}\n.ol-timeline.ol-hasbutton .ol-buttons {\n  display: block;\n}\n.ol-timeline .ol-buttons button {\n  font-size: 1em;\n  margin: 1px;\n  position: relative;\n}\n.ol-timeline .ol-buttons .ol-zoom-in:before,\n.ol-timeline .ol-buttons .ol-zoom-out:before {\n  content: \"+\";\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-timeline .ol-buttons .ol-zoom-out:before{\n  content: '\\2212';\n}\n\n.ol-timeline .ol-scroll > div {\n  height: 100%;\n  position: relative;\n}\n\n.ol-timeline .ol-scroll .ol-times {\n  background: rgba(255,255,255,.5);\n  height: 1em;\n  bottom: 0;\n  position: absolute;\n  left: -200px;\n  right: -200px;\n}\n.ol-timeline .ol-scroll .ol-time {\n  position: absolute;\n  font-size: .7em;\n  color: #999;\n  bottom: 0;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-timeline .ol-scroll .ol-time.ol-year {\n  color: #666;\n  z-index: 1;\n}\n.ol-timeline .ol-scroll .ol-time:before {\n  content: \"\";\n  position: absolute;\n  bottom: 1.2em;\n  left: 50%;\n  height: 500px;\n  border-left: 1px solid currentColor;\n}\n\n.ol-timeline .ol-scroll .ol-features {\n  position: absolute;\n  top: 0;\n  bottom: 1em;\n  left: -200px;\n  right: -400px;\n  margin: 0 0 0 200px;\n  overflow: hidden;\n}\n\n.ol-timeline .ol-scroll .ol-feature {\n  position: absolute;\n  font-size: .7em;\n  color: #999;\n  top: 0;\n  background: #fff;\n  max-width: 3em;\n  max-height: 2.4em;\n  min-height: 1em;\n  line-height: 1.2em;\n  border: 1px solid #ccc;\n  overflow: hidden;\n  padding: 0 .5em 0 0;\n  -webkit-transition: all .3s;\n  transition: all .3s;\n  cursor: pointer;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n\n.ol-timeline.ol-zoomhover .ol-scroll .ol-feature:hover,\n.ol-timeline.ol-zoomhover .ol-scroll .ol-feature.ol-select {\n  z-index: 1;\n  -webkit-transform: scale(1.2);\n          transform: scale(1.2);\n  background: #eee;\n  /* max-width: 14em!important; */\n}\n\n/* Center */\n.ol-timeline .ol-center-date {\n  display: none;\n  position: absolute;\n  left: 50%;\n  height: 100%;\n  width: 2px;\n  bottom: 0;\n  z-index: 2;\n  pointer-events: none;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  background-color: #f00;\n  opacity: .4;\n}\n.ol-timeline.ol-hasbutton .ol-center-date {\n  left: calc(50% + .75em);\n}\n\n/* Show center */ \n.ol-timeline.ol-pointer .ol-center-date {\n  display: block;\n}\n.ol-timeline.ol-pointer .ol-center-date:before, \n.ol-timeline.ol-pointer .ol-center-date:after {\n  content: '';\n  border: 0.3em solid transparent;\n  border-width: .3em .25em;\n  position: absolute;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-timeline.ol-pointer .ol-center-date:before {\n  border-top-color: #f00;\n  top: 0;\n}\n.ol-timeline.ol-pointer .ol-center-date:after {\n  border-bottom-color: #f00;\n  bottom: 0\n}\n\n/* show interval */\n.ol-timeline.ol-interval .ol-center-date {\n  display: block;\n  background-color: transparent;\n  border: 0 solid #000;\n  border-width: 0 10000px;\n  -webkit-box-sizing: content-box;\n          box-sizing: content-box;\n  opacity: .2;\n}\n.ol-target-overlay .ol-target \n{\tborder: 1px solid transparent;\n\t-webkit-box-shadow: 0 0 1px 1px #fff;\n\t        box-shadow: 0 0 1px 1px #fff;\n\tdisplay: block;\n\theight: 20px;\n\twidth: 0;\n}\n\n.ol-target-overlay .ol-target:after,\n.ol-target-overlay .ol-target:before\n{\tcontent:\"\";\n\tborder: 1px solid #369;\n\t-webkit-box-shadow: 0 0 1px 1px #fff;\n\t        box-shadow: 0 0 1px 1px #fff;\n\tdisplay: block;\n\twidth: 20px;\n\theight: 0;\n\tposition:absolute;\n\ttop:10px;\n\tleft:-10px;\n}\n.ol-target-overlay .ol-target:after\n{\t-webkit-box-shadow: none;\tbox-shadow: none;\n\theight: 20px;\n\twidth: 0;\n\ttop:0px;\n\tleft:0px;\n}\n\n.ol-overlay-container .ol-magnify \n{\tbackground: rgba(0,0,0, 0.5);\n\tborder:3px solid #369;\n\tborder-radius: 50%;\n\theight: 150px;\n\twidth: 150px;\n\toverflow: hidden;\n\t-webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);\n\tposition:relative;\n\tz-index:0;\n}\n\n.ol-overlay-container .ol-magnify:before \n{\tborder-radius: 50%;\n\t-webkit-box-shadow: 0 0 40px 2px rgba(0, 0, 0, 0.25) inset;\n\t        box-shadow: 0 0 40px 2px rgba(0, 0, 0, 0.25) inset;\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 100%;\n\tleft: 0;\n\tposition: absolute;\n\ttop: 0;\n\twidth: 100%;\n\tz-index: 1;\n}\n\n.ol-overlay-container .ol-magnify:after \n{\n\tborder-radius: 50%;\n\t-webkit-box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n\t        box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 0;\n\tleft: 23%;\n\tposition: absolute;\n\ttop: 20%;\n\twidth: 20%;\n\tz-index: 1;\n\ttransform: rotate(-40deg);\n\t-webkit-transform: rotate(-40deg);\n}\n/** popup animation using visible class\n*/\n.ol-popup.anim\n{\tvisibility: hidden;\n}\n\n/** No transform when visible \n*/\n.ol-popup.anim.visible\n{\tvisibility: visible;\n\ttransform: none;\n\t-webkit-transform: none;\n\t-webkit-animation: ol-popup_bounce 0.4s ease 1;\n\t        animation: ol-popup_bounce 0.4s ease 1;\n}\n\n@-webkit-keyframes ol-popup_bounce\n{\tfrom { -webkit-transform: scale(0); transform: scale(0); }\n\t50%  { -webkit-transform: scale(1.1); transform: scale(1.1) }\n\t80%  { -webkit-transform: scale(0.95); transform: scale(0.95) }\n\tto   { -webkit-transform: scale(1); transform: scale(1); }\n}\n\n@keyframes ol-popup_bounce\n{\tfrom { -webkit-transform: scale(0); transform: scale(0); }\n\t50%  { -webkit-transform: scale(1.1); transform: scale(1.1) }\n\t80%  { -webkit-transform: scale(0.95); transform: scale(0.95) }\n\tto   { -webkit-transform: scale(1); transform: scale(1); }\n}\n\n/* Hide to prevent flickering on animate */\n.ol-popup.anim.visible .anchor\n{\t/* animation: ol-popup_opacity 0.4s ease 1; */\n}\n@-webkit-keyframes ol-popup_opacity\n{\tfrom { visibility:hidden }\n\tto   { visibility:hidden }\n}\n@keyframes ol-popup_opacity\n{\tfrom { visibility:hidden }\n\tto   { visibility:hidden }\n}\n\n/** Transform Origin */\n.ol-popup.anim.ol-popup-bottom.ol-popup-left \n{\ttransform-origin:0 100%;\n\t-webkit-transform-origin:0 100%;\n}\n.ol-popup.anim.ol-popup-bottom.ol-popup-right \n{\ttransform-origin:100% 100%;\n\t-webkit-transform-origin:100% 100%;\n}\n.ol-popup.anim.ol-popup-bottom.ol-popup-center \n{\ttransform-origin:50% 100%;\n\t-webkit-transform-origin:50% 100%;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-left \n{\ttransform-origin:0 0;\n\t-webkit-transform-origin:0 0;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-right \n{\ttransform-origin:100% 0;\n\t-webkit-transform-origin:100% 0;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-center \n{\ttransform-origin:50% 0;\n\t-webkit-transform-origin:50% 0;\n}\n.ol-popup.anim.ol-popup-middle.ol-popup-left\n{\ttransform-origin:0 50%;\n\t-webkit-transform-origin:0 50%;\n}\n.ol-popup.anim.ol-popup-middle.ol-popup-right\n{\ttransform-origin:100% 50%;\n\t-webkit-transform-origin:100% 50%;\n}\n\n/** ol.popup */\n.ol-popup {\n  font-size:0.9em;\n  -webkit-user-select: none;  \n  -moz-user-select: none;    \n  -ms-user-select: none;      \n  user-select: none;\n}\n.ol-popup .content {\n  overflow:hidden;\n  cursor: default;\n  padding: 0.25em 0.5em;\n}\n.ol-popup.hasclosebox .content {\n  margin-right: 1.7em;\n}\n.ol-popup .content:after {\n  clear: both;\n  content: \"\";\n  display: block;\n  font-size: 0;\n  height: 0;\n}\n\n/** Anchor position */\n.ol-popup .anchor {\n  display:block;\n  width:0px;\n  height:0px;\n  background:red;\n  position:absolute;\n  margin: -11px 21px;\n    pointer-events: none;\n}\n.ol-popup .anchor:after,\n.ol-popup .anchor:before {\n  position:absolute;\n}\n.ol-popup-right .anchor:after,\n.ol-popup-right .anchor:before {\n  right:0;\n}\n.ol-popup-top .anchor { top:0; }\n.ol-popup-bottom .anchor { bottom:0; }\n.ol-popup-right .anchor { right:0; }\n.ol-popup-left .anchor { left:0; }\n.ol-popup-center .anchor { \n  left:50%; \n  margin-left: 0!important;\n}\n.ol-popup-middle .anchor { \n  top:50%; \n  margin-top: 0!important;\n}\n.ol-popup-center.ol-popup-middle .anchor { \n  display:none; \n}\n\n/** Fixed popup */\n.ol-popup.ol-fixed {\n  margin: 0!important;\n  top: .5em!important;\n  right: .5em!important;\n  left: auto!important;\n  bottom: auto!important;\n}\n.ol-popup.ol-fixed .anchor {\n  display: none;\n}\n.ol-popup.ol-fixed.anim {\n  -webkit-animation: none;\n  animation: none;\n}\n\n.ol-popup .ol-fix {\n  width: 1em;\n  height: .9em;\n  background: #fff;\n  position: relative;\n  float: right;\n  margin: .2em;\n  cursor: pointer;\n}\n.ol-popup .ol-fix:before {\n  content: \"\";\n  width: .8em;\n  height: .7em;\n  display: block;\n  border: .1em solid #666;\n      border-right-width: 0.1em;\n  border-right-width: .3em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  margin: .1em;\n}\n\n/** Add a shadow to the popup */\n.ol-popup.shadow {\n  -webkit-box-shadow: 2px 2px 2px 2px rgba(0,0,0,0.5);\n          box-shadow: 2px 2px 2px 2px rgba(0,0,0,0.5);\n}\n\n/** Close box */\n.ol-popup .closeBox {\n  background-color: rgba(0, 60, 136, 0.5);\n  color: #fff;\n  border: 0;\n  border-radius: 2px;\n  cursor: pointer;\n  float: right;\n  font-size: 0.9em;\n  font-weight: 700;\n  width: 1.4em;\n  height: 1.4em;\n  margin: 5px 5px 0 0;\n  padding: 0;\n  position: relative;\n  display:none;\n}\n.ol-popup.hasclosebox .closeBox {\n  display:block;\n}\n\n.ol-popup .closeBox:hover {\n  background-color: rgba(0, 60, 136, 0.7);\n}\n/* the X */\n.ol-popup .closeBox:after {\n  content: \"\\D7\";\n  font-size:1.5em;\n  top: 50%;\n  left: 0;\n  right: 0;\n  width: 100%;\n  text-align: center;\n  line-height: 1em;\n  margin: -0.5em 0;\n  position: absolute;\n}\n\n/** Modify touch poup */\n.ol-popup.modifytouch {\n  background-color: #eee;\n}\n.ol-popup.modifytouch .content {\t\n  padding: 0 0.25em;\n  font-size: 0.85em;\n  white-space: nowrap;\n}\n.ol-popup.modifytouch .content a {\n  text-decoration: none;\n}\n\n/** Tool tips popup*/\n.ol-popup.tooltips {\n  background-color: #ffa;\n}\n.ol-popup.tooltips .content{\n  padding: 0 0.25em;\n  font-size: 0.85em;\n  white-space: nowrap;\n}\n\n/** Default popup */\n.ol-popup.default {\n  background-color: #fff;\n  border:1px solid #69f;\n  border-radius: 5px;\n  margin:11px 0;\n}\n.ol-popup-left.default {\n  margin:11px 10px 11px -22px;\n}\n.ol-popup-right.default {\n  margin:11px -22px 11px 10px;\n}\n.ol-popup-middle.default {\n  margin:0 10px;\n}\n\n.ol-popup.default .anchor:after,\n.ol-popup.default .anchor:before {\n  content:\"\";\n  border-color: #69f transparent;\n  border-style: solid;\n  border-width: 11px;\n  margin: 0 -11px;\n}\n.ol-popup.default .anchor:after {\n  border-color: #fff transparent;\n  border-width: 9px;\n  margin: 3px -9px;\n}\n\n.ol-popup-top.default .anchor:before,\n.ol-popup-top.default .anchor:after {\n  border-top:0;\n  top:0;\n}\n\n.ol-popup-bottom.default .anchor:before,\n.ol-popup-bottom.default .anchor:after {\n  border-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-middle.default .anchor:before {\n  margin: -11px -33px;\n  border-color: transparent #69f;\n}\n.ol-popup-middle.default .anchor:after {\n  margin: -9px -30px;\n  border-color: transparent #fff;\n}\n.ol-popup-middle.ol-popup-left.default .anchor:before,\n.ol-popup-middle.ol-popup-left.default .anchor:after\n{\tborder-left:0;\n}\n.ol-popup-middle.ol-popup-right.default .anchor:before,\n.ol-popup-middle.ol-popup-right.default .anchor:after\n{\tborder-right:0;\n}\n\n/** Placemark popup */\n.ol-popup.placemark {\n  font-size: 15px;\t\n    color: #c00;\n    background-color: #fff;\n    border: .45em solid currentColor;\n    margin: .65em 0;\n    width: 2em;\n    height: 2em;\n    border-radius: 50%;\n    min-width: unset;\n    -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  -webkit-transform-origin: 50% 150%!important;\n          transform-origin: 50% 150%!important;\n}\n\n.ol-popup.placemark .content {\n  overflow: hidden;\n    cursor: default;\n    padding: 0;\n    text-align: center;\n    margin: -.1em;\n}\n.ol-popup.placemark .anchor {\n  margin: -.4em;\n}\n\n.ol-popup.placemark .anchor:before {\n    content: \"\";\n    margin: -.5em -.5em;\n    background: transparent;\n    width: 1em;\n    height: .5em;\n    border-radius: 50%;\n    -webkit-box-shadow: 0 1em 0.5em rgba(0,0,0,.5);\n            box-shadow: 0 1em 0.5em rgba(0,0,0,.5);\n}\n.ol-popup.placemark .anchor:after {\n    content: \"\";\n    border-color: currentColor transparent;\n    border-style: solid;\n    border-width: 1em .7em 0;\n    margin: -.75em -.7em;\n  bottom:0;\n}\n\n/** Placemark Shield */\n.ol-popup.placemark.shield {\n  border-radius: .2em;\n}\n\n.ol-popup.placemark.shield .anchor:after {\n    border-width: .8em 1em 0;\n    margin: -.7em -1em;\n}\n\n/** Placemark Blazon */\n.ol-popup.placemark.blazon {\n  border-radius: .2em;\n}\n\n/** Placemark Needle/Pushpin */\n.ol-popup.placemark.pushpin {\t\n  margin: 1.5em 0;\n  border-radius: 0;\n  border-color: currentColor transparent;\n  background: transparent!important;\n  -webkit-box-shadow: inset 2em 0 currentColor;\n          box-shadow: inset 2em 0 currentColor;\n  border-width: .3em .5em .5em;\n}\n.ol-popup.placemark.needle {\t\n  margin: 1.5em 0;\n}\n.ol-popup.placemark.pushpin .anchor,\n.ol-popup.placemark.needle .anchor {\n  margin: -1.5em;\n}\n.ol-popup.placemark.pushpin .anchor:after,\n.ol-popup.placemark.needle .anchor:after {\n  border-style: solid;\n    border-width: 2em .15em 0;\n    margin: -.55em -0.2em;\n    width: .1em;\n}\n.ol-popup.placemark.pushpin .anchor:before,\n.ol-popup.placemark.needle .anchor:before {\n    margin: -.75em -.5em;\n}\n\n/** Placemark Flag */\n.ol-popup.placemark.flagv {\n  border-radius: 0;\n  margin: 0 0 1.5em 1em;\n  border-color: transparent transparent transparent currentColor;\n  border-width: 1em 0 1em 2em;\n  width: 0;\n  height: 0;\n  background-color: transparent;\n  -webkit-transform-origin: 0% 150%!important;\n          transform-origin: 0% 150%!important;\n}\n.ol-popup.placemark.flagv .anchor {\n  margin: -2em;\n  margin-left: -1em !important;\n}\n\n.ol-popup.placemark.flag {\t\n  margin: 0 0 1.5em 1em;\n  border-radius: 0;\n  -webkit-transform-origin: 0% 150%!important;\n          transform-origin: 0% 150%!important;\n}\n.ol-popup.placemark.flag .anchor {\n  margin: -1.5em;\n}\n.ol-popup.placemark.flagv .anchor:after, \n.ol-popup.placemark.flag .anchor:after {\n  border-style: solid;\n  border-width: 2em .15em 0;\n  margin: -.55em -1em;\n  width: .1em;\n}\n.ol-popup.placemark.flagv .anchor:before,\n.ol-popup.placemark.flag .anchor:before {\n  margin: -.75em -1.25em;\n}\n\n.ol-popup.placemark.flag.finish {\n  background-image: \n    linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor), \n    linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor);\n  background-size: 1em 1em;\n  background-position: .5em 0, 0 .5em;\n  border-width: .25em;\n  margin: 0 0 1.7em .8em;\n}\n\n/** Black popup */\n.ol-popup.black .closeBox \n{\tbackground-color: rgba(0,0,0, 0.5);\n  border-radius: 5px;\n  color: #f80;\n}\n.ol-popup.black .closeBox:hover\n{\tbackground-color: rgba(0,0,0, 0.7);\n  color:#da2;\n}\n\n.ol-popup.black \n{\tbackground-color: rgba(0,0,0,0.6);\n  border-radius: 5px;\n  margin:20px 0;\n  color:#fff;\n}\n.ol-popup-left.black\n{\tmargin:20px 10px 20px -22px;\n}\n.ol-popup-right.black\n{\tmargin:20px -22px 20px 10px;\n}\n.ol-popup-middle.black \n{\tmargin:0 11px;\n}\n\n.ol-popup.black .anchor {\n  margin: -20px 11px;\n} \n.ol-popup.black .anchor:before \n{\tcontent:\"\";\n  border-color: rgba(0,0,0,0.6) transparent;\n  border-style: solid;\n  border-width: 20px 11px;\n}\n\n.ol-popup-top.black .anchor:before\n{\tborder-top:0;\n  top:0;\n}\n\n.ol-popup-bottom.black .anchor:before\n{\tborder-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-middle.black .anchor:before\n{\tmargin: -20px -22px;\n  border-color: transparent rgba(0,0,0,0.6);\n}\n.ol-popup-middle.ol-popup-left.black .anchor:before\n{\tborder-left:0;\n}\n.ol-popup-middle.ol-popup-right.black .anchor:before {\n  border-right:0;\n}\n\n.ol-popup-center.black .anchor:before {\n  margin: 0 -10px;\n}\n\n\n/** Green tips popup */\n.ol-popup.tips .closeBox {\n  background-color: #f00;\n  border-radius: 50%;\n  color: #fff;\n  width:1.2em;\n  height:1.2em;\n}\n.ol-popup.tips .closeBox:hover {\n  background-color: #f40;\n}\n\n.ol-popup.tips {\n  background-color: #cea;\n  border: 5px solid #ad7;\n  border-radius: 5px;\n  margin:20px 0;\n  color:#333;\n}\n.ol-popup-left.tips {\n  margin:20px 10px 20px -22px;\n}\n.ol-popup-right.tips {\n  margin:20px -22px 20px 10px;\n}\n.ol-popup-middle.tips {\n  margin:0 20px;\n}\n\n.ol-popup.tips .anchor {\n  margin: -25px 16px;\n} \n.ol-popup.tips .anchor:before {\n  content:\"\";\n  border-color: #ad7 transparent;\n  border-style: solid;\n  border-width: 20px 11px;\n}\n\n.ol-popup-top.tips .anchor:before {\n  border-top:0;\n  top:0;\n}\n.ol-popup-bottom.tips .anchor:before {\n  border-bottom:0;\n  bottom:0;\n}\n.ol-popup-center.tips .anchor:before {\n  border-width: 20px 6px;\n  margin: 0 -6px;\n}\n.ol-popup-left.tips .anchor:before {\n  border-left:0;\n  margin-left:0;\n}\n.ol-popup-right.tips .anchor:before {\n  border-right:0;\n  margin-right:0;\n}\n\n.ol-popup-middle.tips .anchor:before {\n  margin: -6px -41px;\n  border-color: transparent #ad7;\n  border-width:6px 20px;\n}\n.ol-popup-middle.ol-popup-left.tips .anchor:before {\n  border-left:0;\n}\n.ol-popup-middle.ol-popup-right.tips .anchor:before {\n  border-right:0;\n}\n\n/** Warning popup */\n.ol-popup.warning .closeBox {\n  background-color: #f00;\n  border-radius: 50%;\n  color: #fff;\n  font-size: 0.83em;\n}\n.ol-popup.warning .closeBox:hover {\n  background-color: #f40;\n}\n\n.ol-popup.warning {\n  background-color: #fd0;\n  border-radius: 3px;\n  border:4px dashed #f00;\n  margin:20px 0;\n  color:#900;\n  margin:28px 10px;\n}\n.ol-popup-left.warning {\n  margin-left:-22px;\n  margin-right:10px;\n}\n.ol-popup-right.warning {\n  margin-right:-22px;\n  margin-left:10px;\n}\n.ol-popup-middle.warning {\n  margin:0 22px;\n}\n\n.ol-popup.warning .anchor {\n  margin: -33px 7px;\n} \n.ol-popup.warning .anchor:before {\n  content:\"\";\n  border-color: #f00 transparent;\n  border-style: solid;\n  border-width: 30px 11px;\n}\n\n.ol-popup-top.warning .anchor:before {\n  border-top:0;\n  top:0;\n}\n.ol-popup-bottom.warning .anchor:before {\n  border-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-center.warning .anchor:before {\n  margin: 0 -21px;\n}\n.ol-popup-middle.warning .anchor:before {\n  margin: -10px -33px;\n  border-color: transparent #f00;\n  border-width:10px 22px;\n}\n.ol-popup-middle.ol-popup-left.warning .anchor:before {\n  border-left:0;\n}\n.ol-popup-middle.ol-popup-right.warning .anchor:before {\n  border-right:0;\n}\n\n.ol-popup .ol-popupfeature table {\n  width: 100%;\n}\n.ol-popup .ol-popupfeature tr:nth-child(2n+1) {\n  background-color: #eee;\n}\n.ol-popup .ol-popupfeature .ol-zoombt {\n  border: 0;\n  width: 2em;\n  height: 2em;\n  display: inline-block;\n  color: rgba(0,60,136,.5);\n  position: relative;\n  background: transparent;\n  outline: none;\n}\n.ol-popup .ol-popupfeature .ol-zoombt:before {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  width: 1em;\n  height: 1em;\n  background-color: transparent;\n  border: .17em solid currentColor;\n  border-radius: 100%;\n  top: .3em;\n  left: .3em;\n}\n.ol-popup .ol-popupfeature .ol-zoombt:after {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  top: 1.35em;\n  left: 1.15em;\n  border-width: .1em .3em;\n  border-style: solid;\n  border-radius: .03em;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n  -webkit-box-shadow: -0.2em 0 0 -0.04em;\n          box-shadow: -0.2em 0 0 -0.04em;\n}\n\n.ol-popup .ol-popupfeature .ol-count{\n  float: right;\n  margin: .25em 0;\n}\n.ol-popup .ol-popupfeature .ol-prev,\n.ol-popup .ol-popupfeature .ol-next {\n  border-style: solid;\n  border-color: transparent rgba(0,60,136,.5);\n  border-width: .5em 0 .5em .5em;\n  display: inline-block;\n  vertical-align: bottom;\n  margin: 0 .5em;\n  cursor: pointer;\n}\n.ol-popup .ol-popupfeature .ol-prev{\n  border-width: .5em .5em .5em 0;\n}\n\n.ol-popup.tooltips.black {\n  -webkit-transform: scaleY(1.3);\n          transform: scaleY(1.3);\n  padding: .2em .5em;\n  background-color: rgba(0,0,0, 0.5);\n}\n.ol-popup-middle.tooltips.black .anchor:before {\n  border-width: 5px 10px;\n  margin: -5px -21px;\n}", ""]);
+exports.push([module.i, ".ol-control i {\n\tcursor: default;\n}\n\n/* Bar style */\n.ol-control.ol-bar {\n  left: 50%;\n\tmin-height: 1em;\n\tmin-width: 1em;\n\tposition: absolute;\n\ttop: 0.5em;\n\ttransform: translate(-50%,0);\n\t-webkit-transform: translate(-50%,0);\n\twhite-space: nowrap;\n}\n\n/* Hide subbar when not inserted in a parent bar */\n.ol-control.ol-toggle .ol-option-bar {\n  display: none;\n}\n\n/* Default position for controls */\n.ol-control.ol-bar .ol-bar {\n  position: static;\n}\n.ol-control.ol-bar .ol-control {\n  position: relative;\n\ttop: auto;\n\tleft:auto;\n\tright:auto;\n\tbottom: auto;\n\tdisplay: inline-block;\n\tvertical-align: middle;\n\tbackground: none;\n\tpadding: 0;\n\tmargin: 0;\n\ttransform: none;\n\t-webkit-transform: none;\n}\n.ol-control.ol-bar .ol-bar {\n  position: static;\n}\n.ol-control.ol-bar .ol-control button {\n  margin:2px 1px;\n}\n\n/* Positionning */\n.ol-control.ol-bar.ol-left {\n  left: 0.5em;\n\ttop: 50%;\n\t-webkit-transform: translate(0px, -50%);\n\t        transform: translate(0px, -50%);\n}\n.ol-control.ol-bar.ol-left .ol-control {\n  display: block;\n}\n\n.ol-control.ol-bar.ol-right {\n  left: auto;\n\tright: 0.5em;\n\ttop: 50%;\n\t-webkit-transform: translate(0px, -50%);\n\t        transform: translate(0px, -50%);\n}\n.ol-control.ol-bar.ol-right .ol-control {\n  display: block;\n}\n\n.ol-control.ol-bar.ol-bottom {\n  top: auto;\n\tbottom: 0.5em;\n}\n\n.ol-control.ol-bar.ol-top.ol-left,\n.ol-control.ol-bar.ol-top.ol-right {\n  top: 4.5em;\n\t-webkit-transform:none;\n\t        transform:none;\n}\n.ol-touch .ol-control.ol-bar.ol-top.ol-left,\n.ol-touch .ol-control.ol-bar.ol-top.ol-right {\n  top: 5.5em; \n}\n.ol-control.ol-bar.ol-bottom.ol-left,\n.ol-control.ol-bar.ol-bottom.ol-right {\n  top: auto;\n\tbottom: 0.5em;\n\t-webkit-transform:none;\n\t        transform:none;\n}\n\n/* Group buttons */\n.ol-control.ol-bar.ol-group {\n  margin: 1px 1px 1px 0;\n}\n.ol-control.ol-bar.ol-right .ol-group,\n.ol-control.ol-bar.ol-left .ol-group {\n  margin: 1px 1px 0 1px;\n}\n\n.ol-control.ol-bar.ol-group button {\n  border-radius:0;\n\tmargin: 0 0 0 1px;\n}\n.ol-control.ol-bar.ol-right.ol-group button,\n.ol-control.ol-bar.ol-left.ol-group button,\n.ol-control.ol-bar.ol-right .ol-group button,\n.ol-control.ol-bar.ol-left .ol-group button {\n  margin: 0 0 1px 0;\n}\n.ol-control.ol-bar.ol-group .ol-control:first-child > button {\n  border-radius: 5px 0 0 5px;\n}\n.ol-control.ol-bar.ol-group .ol-control:last-child > button {\n  border-radius: 0 5px 5px 0;\n}\n.ol-control.ol-bar.ol-left.ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-right.ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-left .ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-right .ol-group .ol-control:first-child > button {\n  border-radius: 5px 5px 0 0;\n}\n.ol-control.ol-bar.ol-left.ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-right.ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-left .ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-right .ol-group .ol-control:last-child > button {\n  border-radius: 0 0 5px 5px;\n}\n\n/* */\n.ol-control.ol-bar .ol-rotate {\n  opacity:1;\n\tvisibility: visible;\n}\n.ol-control.ol-bar .ol-rotate button {\n  display: block\n}\n\n/* Active buttons */\n.ol-control.ol-bar .ol-toggle.ol-active > button {\n  background: rgba(60, 136, 0, 0.7)\n}\n.ol-control.ol-bar .ol-toggle.ol-active button:hover {\n  background: rgba(60, 136, 0, 0.7)\n}\n.ol-control.ol-toggle button:disabled {\n  background: rgba(0,60,136,.3);\n}\n\n/* Subbar toolbar */\n.ol-control.ol-bar .ol-control.ol-option-bar {\n  display: none;\n\tposition:absolute;\n\ttop:100%;\n\tleft:0;\n\tmargin: 5px 0;\n\tborder-radius: 0;\n\tbackground: rgba(255,255,255, 0.8);\n\t/* border: 1px solid rgba(0, 60, 136, 0.5); */\n\t-webkit-box-shadow: 0 0 0 1px rgba(0, 60, 136, 0.5), 1px 1px 2px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 0 0 0 1px rgba(0, 60, 136, 0.5), 1px 1px 2px rgba(0, 0, 0, 0.5);\n}\n\n.ol-control.ol-bar .ol-option-bar:before {\n  content: \"\";\n\tborder: 0.5em solid transparent;\n\tborder-color: transparent transparent rgba(0, 60, 136, 0.5);\n\tposition: absolute;\n\tbottom: 100%;\n\tleft: 0.3em;\n}\n\n.ol-control.ol-bar .ol-option-bar .ol-control {\n  display: table-cell;\n}\n.ol-control.ol-bar .ol-control .ol-bar\n{\tdisplay: none;\n}\n.ol-control.ol-bar .ol-control.ol-active > .ol-option-bar {\n  display: block;\n}\n\n.ol-control.ol-bar .ol-control.ol-collapsed ul {\n  display: none;\n}\n\n.ol-control.ol-bar .ol-control.ol-text-button > div:hover,\n.ol-control.ol-bar .ol-control.ol-text-button > div {\n  background: none;\n\tcolor: rgba(0, 60, 136, 0.5);\n\twidth: auto;\n\tmin-width: 1.375em;\n\tmargin: 0;\n}\n\n.ol-control.ol-bar .ol-control.ol-text-button {\n  font-size:0.9em;\n\tborder-left: 1px solid rgba(0, 60, 136, 0.8);\n\tborder-radius: 0;\n}\n.ol-control.ol-bar .ol-control.ol-text-button:first-child {\n  border-left:0;\n}\n.ol-control.ol-bar .ol-control.ol-text-button > div {\n\tpadding: .11em 0.3em;\n\tfont-weight: normal;\n\tfont-size: 1.14em;\n\tfont-family: Arial,Helvetica,sans-serif;\n}\n.ol-control.ol-bar .ol-control.ol-text-button div:hover {\n  color: rgba(0, 60, 136, 1);\n}\n\n.ol-control.ol-bar.ol-bottom .ol-option-bar {\n  top: auto;\n\tbottom: 100%;\n}\n.ol-control.ol-bar.ol-bottom .ol-option-bar:before {\n  border-color: rgba(0, 60, 136, 0.5) transparent transparent ;\n\tbottom: auto;\n\ttop: 100%;\n}\n\n.ol-control.ol-bar.ol-left .ol-option-bar {\n  left:100%;\n\ttop: 0;\n\tbottom: auto;\n\tmargin: 0 5px;\n}\n.ol-control.ol-bar.ol-left .ol-option-bar:before {\n  border-color: transparent rgba(0, 60, 136, 0.5) transparent transparent;\n\tbottom: auto;\n\tright: 100%;\n\tleft: auto;\n\ttop: 0.3em;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar {\n  right:100%;\n\tleft:auto;\n\ttop: 0;\n\tbottom: auto;\n\tmargin: 0 5px;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar:before {\n  border-color: transparent transparent transparent rgba(0, 60, 136, 0.5);\n\tbottom: auto;\n\tleft: 100%;\n\ttop: 0.3em;\n}\n\n.ol-control.ol-bar.ol-left .ol-option-bar .ol-option-bar,\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar {\n  top: 100%;\n\tbottom: auto;\n\tleft: 0.3em;\n\tright: auto;\n\tmargin: 5px 0;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar {\n  right: 0.3em;\n\tleft: auto;\n}\n.ol-control.ol-bar.ol-left .ol-option-bar .ol-option-bar:before,\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar:before {\n  border-color: transparent transparent rgba(0, 60, 136, 0.5);\n\tbottom: 100%;\n\ttop: auto;\n\tleft: 0.3em;\n\tright: auto;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar:before {\n  right: 0.3em;\n\tleft: auto;\n}\n\n.ol-control-title {\n  position: absolute;\n  top: 0;\n  left: 0;\n  right: 0;\n}\n\n.ol-center-position {\n  position: absolute;\n  bottom: 0;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  background-color: rgba(255,255,255,.8);\n  padding: .1em 1em;\n}\n\n.ol-ext-dialog {\n  position: fixed;\n  top: -100%;\n  left: 0;\n  width: 150%;\n  height: 100%;\n  opacity: 0;\n  background-color: rgba(0,0,0,.5);\n  z-index: 1000;\n  pointer-events: none;\n  -webkit-transition: opacity .2s, top 0s .2s;\n  transition: opacity .2s, top 0s .2s;\n}\n.ol-ext-dialog.ol-visible {\n  opacity: 1;\n  top: 0;\n  pointer-events: unset;\n  -webkit-transition: opacity .2s, top 0s;\n  transition: opacity .2s, top 0s;\n}\n\n.ol-viewport .ol-ext-dialog {\n  position: absolute;\n}\n.ol-ext-dialog h2 {\n  margin: 0 .5em .5em 0;\n  display: none;\n}\n.ol-ext-dialog > form.ol-title h2 {\n  display: block;;\n}\n.ol-ext-dialog > form {\n  position: absolute;\n  top: 0;\n  left: 33.33%;\n  min-width: 5em;\n  max-width: 60%;\n  min-height: 3em;\n  max-height: 100%;\n  background-color: #fff;\n  border: 1px solid #333;\n  -webkit-box-shadow: 3px 3px 4px rgba(0,0,0, 0.5);\n          box-shadow: 3px 3px 4px rgba(0,0,0, 0.5);\n  -webkit-transform: translate(-50%, -30%);\n          transform: translate(-50%, -30%);\n  -webkit-transition: top .2s, -webkit-transform .2s;\n  transition: top .2s, -webkit-transform .2s;\n  transition: top .2s, transform .2s;\n  transition: top .2s, transform .2s, -webkit-transform .2s;\n  padding: 1em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n.ol-ext-dialog > form.ol-closebox {\n  padding-top: 1.5em;\n}\n.ol-ext-dialog > form.ol-title {\n  padding-top: 1em;\n}\n.ol-ext-dialog > form.ol-button {\n  padding-bottom: .5em;\n}\n\n.ol-ext-dialog.ol-zoom > form {\n  top: 30%;\n  -webkit-transform: translate(-30%, -50%) scale(0);\n          transform: translate(-30%, -50%) scale(0);\n}\n.ol-ext-dialog.ol-visible > form {\n  top: 30%;\n}\n.ol-ext-dialog.ol-zoom.ol-visible > form {\n  -webkit-transform: translate(-30%, -50%) scale(1);\n          transform: translate(-30%, -50%) scale(1);\n}\n\n.ol-ext-dialog > form .ol-content {\n  overflow-x: hidden;\n}\n\n.ol-ext-dialog > form .ol-closebox {\n  position: absolute;\n  top: .5em;\n  right: .5em;\n  width: 1em;\n  height: 1em;\n  cursor: pointer;\n  display: none;\n}\n.ol-ext-dialog > form.ol-closebox .ol-closebox {\n  display: block;\n}\n.ol-ext-dialog > form .ol-closebox:before,\n.ol-ext-dialog > form .ol-closebox:after {\n  content: \"\";\n  position: absolute;\n  background-color: currentColor;\n  top: 50%;\n  left: 50%;\n  width: 1em;\n  height: .1em;\n  border-radius: .1em;\n  -webkit-transform: translate(-50%, -50%) rotate(45deg);\n          transform: translate(-50%, -50%) rotate(45deg);\n}\n.ol-ext-dialog > form .ol-closebox:before {\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-ext-dialog > form .ol-buttons {\n  text-align: right;\n}\n.ol-ext-dialog > form .ol-buttons input {\n  margin-top: .5em;\n  padding: .5em;\n  background: none;\n  border: 0;\n  font-size: 1em;\n  color: rgba(0,60,136,1);\n  cursor: pointer;\n}\n.ol-ext-dialog > form .ol-buttons input:hover {\n  background-color:  rgba(0,60,136,.1);\n}\n.ol-ext-dialog > form .ol-buttons input[type=submit] {\n  font-weight: bold;\n}\n.ol-editbar .ol-button button {\n  position: relative;\n  display: inline-block;\n  font-style: normal;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  vertical-align: middle;\n}\n.ol-editbar .ol-button button:before, \n.ol-editbar .ol-button button:after {\n  content: \"\";\n  border-width: 0;\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  background-color: currentColor;\n}\n.ol-editbar .ol-button button:focus {\n  outline: none;\n}\n\n.ol-editbar .ol-selection > button:before {\n  width: .6em;\n  height: 1em;\n  background-color: transparent;\n  border: .5em solid currentColor;\n  border-width: 0 .25em .65em;\n  border-color: currentColor transparent;\n  -webkit-box-shadow:0 0.6em 0 -0.23em;\n          box-shadow:0 0.6em 0 -0.23em;\n  top: .35em;\n  left: .5em;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n}\n.ol-editbar .ol-selection0 > button:after {\n  width: .28em;\n  height: .6em;\n  background-color: transparent;\n  border: .5em solid currentColor;\n  border-width: 0 .05em .7em;\n  border-color: currentColor transparent;\n  top: .5em;\n  left: .7em;\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n\n.ol-editbar .ol-delete button:after,\n.ol-editbar .ol-delete button:before {\n  width: 1em;\n  height: .2em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(45deg);\n          transform: translate(-50%, -50%) rotate(45deg);\n}\n.ol-editbar .ol-delete button:after {\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-editbar .ol-info button:before {\n  width: .25em;\n  height: .6em;\n  border-radius: .03em;\n  top: .47em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-info button:after {\n  width: .25em;\n  height: .2em;\n  border-radius: .03em;\n  -webkit-box-shadow: -0.1em 0.35em, -0.1em 0.82em, 0.1em 0.82em;\n          box-shadow: -0.1em 0.35em, -0.1em 0.82em, 0.1em 0.82em;\n  top: .12em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n\n.ol-editbar .ol-drawpoint button:before {\n  width: .7em;\n  height: .7em;\n  border-radius: 50%;\n  border: .15em solid currentColor;\n  background-color: transparent;\n  top: .2em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-drawpoint button:after {\n  width: .4em;\n  height: .4em;\n  border: .15em solid currentColor;\n  border-color: currentColor transparent;\n  border-width: .4em .2em 0;\n  background-color: transparent;\n  top: .8em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n\n.ol-editbar .ol-drawline > button:before,\n.ol-editbar .ol-drawpolygon > button:before,\n.ol-editbar .ol-drawhole > button:before {\n  width: .8em;\n  height: .8em;\n  border: .13em solid currentColor;\n  background-color: transparent;\n  border-width: .2em .13em .09em;\n  top: .2em;\n  left: .25em;\n  -webkit-transform: rotate(10deg) perspective(1em) rotateX(40deg);\n          transform: rotate(10deg) perspective(1em) rotateX(40deg);\n}\n.ol-editbar .ol-drawline > button:before {\n  border-bottom: 0;\n}\n.ol-editbar .ol-drawline > button:after,\n.ol-editbar .ol-drawhole > button:after,\n.ol-editbar .ol-drawpolygon > button:after {\n  width: .3em;\n  height: .3em;\n  top: 0.2em;\n  left: .25em;\n  -webkit-box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em;\n          box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em;\n}\n.ol-editbar .ol-drawhole > button:after {\n  -webkit-box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em, 0.25em 0.35em;\n          box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em, 0.25em 0.35em;\n}\n\n\n.ol-editbar .ol-offset > button i,\n.ol-editbar .ol-transform > button i {\n  position: absolute;\n  width: .9em;\n  height: .9em;\n  overflow: hidden;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-editbar .ol-offset > button i{\n  width: .8em;\n  height: .8em;\n}\n\n.ol-editbar .ol-offset > button i:before,\n.ol-editbar .ol-transform > button i:before,\n.ol-editbar .ol-transform > button i:after {\n  content: \"\";\n  height: 1em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(45deg);\n          transform: translate(-50%, -50%) rotate(45deg);\n  -webkit-box-shadow: 0.5em 0 0 0.1em, -0.5em 0 0 0.1em;\n          box-shadow: 0.5em 0 0 0.1em, -0.5em 0 0 0.1em;\n  width: .1em;\n  position: absolute;\n  background-color: currentColor;\n}\n.ol-editbar .ol-offset > button i:before{\n  -webkit-box-shadow: 0.45em 0 0 0.1em, -0.45em 0 0 0.1em;\n          box-shadow: 0.45em 0 0 0.1em, -0.45em 0 0 0.1em;\n}\n.ol-editbar .ol-transform > button i:after {\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-editbar .ol-split > button:before {\n  width: .3em;\n  height: .3em;\n  top: .81em;\n  left: .75em;\n  border-radius: 50%;\n  -webkit-box-shadow: 0.1em -0.4em, -0.15em -0.25em;\n          box-shadow: 0.1em -0.4em, -0.15em -0.25em;\n}\n.ol-editbar .ol-split > button:after {\n  width: .8em;\n  height: .8em;\n  top: .15em;\n  left: -.1em;\n  border: .1em solid currentColor;\n  border-width: 0 .2em .2em 0;\n  background-color: transparent;\n  border-radius: .1em;\n  -webkit-transform: rotate(20deg) scaleY(.6) rotate(-45deg);\n          transform: rotate(20deg) scaleY(.6) rotate(-45deg);\n}\n\n.ol-editbar .ol-drawregular > button:before {\n  width: .9em;\n  height: .9em;\n  top: 50%;\n  left: 50%;\n  border: .1em solid currentColor;\n  background-color: transparent;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div {\n  border: .5em solid currentColor;\n  border-color: transparent currentColor;\n  display: inline-block;\n  cursor: pointer;\n  vertical-align: text-bottom;\n}\n.ol-editbar .ol-drawregular .ol-bar:before,\n.ol-control.ol-bar.ol-editbar .ol-drawregular .ol-bar {\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button {\n  min-width: 6em;\n  text-align: center;\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div:first-child {\n  border-width: .5em .5em .5em 0;\n  margin: 0 .5em 0 0;\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div:last-child {\n  border-width: .5em 0 .5em .5em;\n  margin: 0 0 0 .5em;\n}\n\n.ol-gauge\n{\ttop: 0.5em;\n\tleft: 50%;\n\t-webkit-transform: translateX(-50%);\n\ttransform: translateX(-50%);\n}\n\n.ol-gauge > *\n{\tdisplay: inline-block;\n\tvertical-align: middle;\n}\n.ol-gauge > span\n{\n\tmargin: 0 0.5em;\n}\n.ol-gauge > div\n{\twidth: 200px;\n\tborder: 1px solid rgba(0,60,136,.5);\n\tborder-radius: 3px;\n\tpadding:1px;\n}\n.ol-gauge button\n{\theight: 0.8em;\n\tmargin:0;\n\tmax-width:100%;\n}\n\n.ol-control.ol-bookmark \n{\ttop: 0.5em;\n\tleft: 3em;\n}\n.ol-control.ol-bookmark button\n{\tposition: relative;\n}\n.ol-control.ol-bookmark > button::before\n{\tcontent: \"\";\n\tposition: absolute;\n\tborder-width: 10px 5px 4px;\n\tborder-style: solid;\n\tborder-color: #fff;\n\tborder-bottom-color: transparent;\n\ttop: 50%;\n\tleft: 50%;\n\t-webkit-transform: translate(-50%, -50%);\n\ttransform: translate(-50%, -50%);\n\theight: 0;\n}\n\n.ol-control.ol-bookmark > div\n{\tdisplay: none;\n\tmin-width: 5em;\n}\n.ol-control.ol-bookmark input\n{\tfont-size: 0.9em;\n\tmargin: 0.1em 0 ;\n\tpadding: 0 0.5em;\n}\n.ol-control.ol-bookmark ul\n{\tmargin:0;\n\tpadding: 0;\n\tlist-style: none;\n\tmin-width: 10em;\n}\n.ol-control.ol-bookmark li\n{\tcolor: rgba(0,60,136,0.8);\n\tfont-size: 0.9em;\n\tpadding: 0 0.2em 0 0.5em;\n\tcursor: default;\n\tclear:both;\n}\n\n.ol-control.ol-bookmark li:hover\n{\tbackground-color: rgba(0,60,136,.5);\n\tcolor: #fff;\n}\n\n.ol-control.ol-bookmark > div button\n{\twidth: 1em;\n\theight: 0.8em;\n\tfloat: right;\n\tbackground-color: transparent;\n\tcursor: pointer;\n\tborder-radius: 0;\n}\n.ol-control.ol-bookmark > div button:before\n{\tcontent: \"\\2A2F\";\n    color: #936;\n\tfont-size: 1.2em;\n\tline-height: 1em;\n\tborder-radius: 0;\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    -webkit-transform: translate(-50%, -50%);\n    transform: translate(-50%, -50%);\n}\n\n.ol-bookmark ul li button,\n.ol-bookmark input\n{\tdisplay: none;\n}\n.ol-bookmark.ol-editable ul li button,\n.ol-bookmark.ol-editable input\n{\tdisplay: block;\n}\n\n\n.ol-control.ol-bar.ol-geobar .ol-control {\n\tdisplay: inline-block;\n\tvertical-align: middle;\n}\n\n.ol-control.ol-bar.ol-geobar .ol-bar {\n  display: none;\n}\n.ol-bar.ol-geobar.ol-active .ol-bar {\n  display: inline-block;\n}\n\n.ol-bar.ol-geobar .geolocBt button:before,\n.ol-bar.ol-geobar .geolocBt button:after {\n  content: \"\";\n  display: block;\n  position: absolute;\n  border: 1px solid transparent;\n  border-width: 0.3em 0.8em 0 0.2em;\n  border-color: #fff transparent transparent;\n  -webkit-transform: rotate(-30deg);\n  transform: rotate(-30deg);\n  top: .45em;\n  left: 0.15em;\n  font-size: 1.2em;\n}\n.ol-bar.ol-geobar .geolocBt button:after {\n  border-width: 0 0.8em .3em 0.2em;\n  border-color: transparent transparent #fff;\n\t-webkit-transform: rotate(-61deg);\n\ttransform: rotate(-61deg);\n}\n\n.ol-bar.ol-geobar .startBt button:before {\n  content: \"\";\n  display: block;\n  position: absolute;\n  width: 1em;\n  height: 1em;\n  background-color: #800;\n  border-radius: 50%;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%,-50%);\n  transform: translate(-50%,-50%);\n}\n.ol-bar.ol-geobar .pauseBt button:before,\n.ol-bar.ol-geobar .pauseBt button:after {\n  content: \"\";\n  display: block;\n  position: absolute;\n  width: .25em;\n  height: 1em;\n  background-color: #fff;\n  top: 50%;\n  left: 35%;\n  -webkit-transform: translate(-50%,-50%);\n  transform: translate(-50%,-50%);\n}\n.ol-bar.ol-geobar .pauseBt button:after {\n  left: 65%;\n}\n\n.ol-control.ol-bar.ol-geobar .centerBt,\n.ol-control.ol-bar.ol-geobar .pauseBt,\n.ol-bar.ol-geobar.pauseTrack .startBt,\n.ol-bar.ol-geobar.centerTrack .startBt,\n.ol-bar.ol-geobar.centerTrack.pauseTrack .pauseBt,\n.ol-bar.ol-geobar.centerTrack .pauseBt {\n  display: none;\n}\n.ol-bar.ol-geobar.pauseTrack .pauseBt,\n.ol-bar.ol-geobar.centerTrack .centerBt{\n  display: inline-block;\n}\n\n.ol-control.ol-globe\n{\tposition: absolute;\n\tleft: 0.5em;\n\tbottom: 0.5em;\n\tborder-radius: 50%;\n\topacity: 0.7;\n\ttransform: scale(0.5);\n\ttransform-origin: 0 100%;\n\t-webkit-transform: scale(0.5);\n\t-webkit-transform-origin: 0 100%;\n}\n.ol-control.ol-globe:hover\n{\topacity: 0.9;\n}\n\n.ol-control.ol-globe .panel\n{\tdisplay:block;\n\twidth:170px;\n\theight:170px;\n\tbackground-color:#fff;\n\tcursor: pointer;\n\tborder-radius: 50%;\n\toverflow: hidden;\n\t-webkit-box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);\n\t        box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);\n}\n.ol-control.ol-globe .panel .ol-viewport\n{\tborder-radius: 50%;\n}\n\n.ol-control.ol-globe .ol-pointer\n{\tdisplay: block;\n\tbackground-color: #fff;\n\twidth:10px;\n\theight: 10px;\n\tborder:10px solid red;\n\tposition: absolute;\n\ttop: 50%;\n\tleft:50%;\n\ttransform: translate(-15px, -40px);\n\t-webkit-transform: translate(-15px, -40px);\n\tborder-radius: 50%;\n\tz-index:1;\n\ttransition: opacity 0.15s, top 0s, left 0s;\n\t-webkit-transition: opacity 0.15s, top 0s, left 0s;\n}\n.ol-control.ol-globe .ol-pointer.hidden\n{\topacity:0;\n\ttransition: opacity 0.15s, top 3s, left 5s;\n\t-webkit-transition: opacity 0.15s, top 3s, left 5s;\n}\n\n.ol-control.ol-globe .ol-pointer::before\n{\tborder-radius: 50%;\n\t-webkit-box-shadow: 6px 6px 10px 5px #000;\n\t        box-shadow: 6px 6px 10px 5px #000;\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 0;\n\tleft: 0;\n\tposition: absolute;\n\ttop: 23px;\n\twidth: 0;\n}\n.ol-control.ol-globe .ol-pointer::after\n{\tcontent:\"\";\n\twidth:0;\n\theight:0;\n\tdisplay: block;\n\tposition: absolute;\n\tborder-width: 20px 10px 0;\n\tborder-color: red transparent;\n\tborder-style: solid;\n\tleft: -50%;\n\ttop: 100%;\n}\n\n.ol-control.ol-globe .panel::before {\n  border-radius: 50%;\n  -webkit-box-shadow: -20px -20px 80px 2px rgba(0, 0, 0, 0.7) inset;\n          box-shadow: -20px -20px 80px 2px rgba(0, 0, 0, 0.7) inset;\n  content: \"\";\n  display: block;\n  height: 100%;\n  left: 0;\n  position: absolute;\n  top: 0;\n  width: 100%;\n  z-index: 1;\n}\n.ol-control.ol-globe .panel::after {\n  border-radius: 50%;\n  -webkit-box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n          box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n  content: \"\";\n  display: block;\n  height: 0;\n  left: 23%;\n  position: absolute;\n  top: 20%;\n  -webkit-transform: rotate(-40deg);\n          transform: rotate(-40deg);\n  width: 20%;\n  z-index: 1;\n}\n\n\n.ol-control.ol-globe.ol-collapsed .panel\n{\tdisplay:none;\n}\n\n.ol-control-top.ol-globe\n{\tbottom: auto;\n\ttop: 5em;\n\ttransform-origin: 0 0;\n\t-webkit-transform-origin: 0 0;\n}\n.ol-control-right.ol-globe\n{\tleft: auto;\n\tright: 0.5em;\n\ttransform-origin: 100% 100%;\n\t-webkit-transform-origin: 100% 100%;\n}\n.ol-control-right.ol-control-top.ol-globe\n{\tleft: auto;\n\tright: 0.5em;\n\ttransform-origin: 100% 0;\n\t-webkit-transform-origin: 100% 0;\n}\n\n.ol-gridreference\n{\tbackground: #fff;\n\tborder: 1px solid #000;\n\toverflow: auto;\n\tmax-height: 100%;\n\ttop:0;\n\tright:0;\n}\n.ol-gridreference input\n{\twidth:100%;\n}\n.ol-gridreference ul\n{\tmargin:0;\n\tpadding:0;\n\tlist-style: none;\n} \n.ol-gridreference li\n{\tpadding: 0 0.5em;\n\tcursor: pointer;\n}\n.ol-gridreference ul li:hover \n{\tbackground-color: #ccc;\n}\n.ol-gridreference li.ol-title,\n.ol-gridreference li.ol-title:hover\n{\tbackground:rgba(0,60,136,.5);\n\tcolor:#fff;\n\tcursor:default;\n}\n.ol-gridreference ul li .ol-ref\n{\tmargin-left: 0.5em;\n}\n.ol-gridreference ul li .ol-ref:before\n{\tcontent:\"(\";\n}\n.ol-gridreference ul li .ol-ref:after\n{\tcontent:\")\";\n}\n\n.ol-control.ol-imageline {\n  bottom:0;\n  left: 0;\n  right: 0;\n  padding: 0;\n  overflow: visible;\n  -webkit-transition: .3s;\n  transition: .3s;\n}\n.ol-control.ol-imageline.ol-collapsed {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.ol-imageline > div {\n  height: 4em;\n  position: relative;\n  white-space: nowrap;\n  scroll-behavior: smooth;\n  overflow: hidden;\n  width: 100%;\n}\n.ol-imageline.ol-touch > div {\n  overflow-x: auto;\n}\n.ol-imageline > div.ol-move {\n  scroll-behavior: unset;\n}\n\n.ol-control.ol-imageline button {\n  position: absolute;\n  top: -1em;\n  -webkit-transform: translateY(-100%);\n          transform: translateY(-100%);\n  margin: .65em;\n  -webkit-box-shadow: 0 0 0 0.15em rgba(255,255,255,.4);\n          box-shadow: 0 0 0 0.15em rgba(255,255,255,.4);\n}\n.ol-control.ol-imageline button:before {\n  content: '';\n  position: absolute;\n  -webkit-transform: translate(-50%, -50%) rotate(135deg);\n          transform: translate(-50%, -50%) rotate(135deg);\n  top: 40%;\n  left: 50%;\n  width: .4em;\n  height: .4em;\n  border: .1em solid currentColor;\n  border-width: .15em .15em 0 0;\n}\n.ol-control.ol-imageline.ol-collapsed button:before {\n  top: 60%;\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-imageline,\n.ol-imageline:hover {\n  background-color: rgba(0,0,0,.75);\n}\n\n.ol-imageline.ol-arrow:after,\n.ol-imageline.ol-arrow:before {\n  content: \"\";\n  position: absolute;\n  top: 50%;\n  left: .2em;\n  border-color: #fff #000;\n  border-width: 1em .6em 1em 0;\n  border-style: solid;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n  z-index: 1;\n  opacity: .8;\n  pointer-events: none;\n  -webkit-box-shadow: -0.6em 0 0 1em #fff;\n          box-shadow: -0.6em 0 0 1em #fff;\n}\n.ol-imageline.ol-arrow:after {\n  border-width: 1em 0 1em .6em;\n  left: auto;\n  right: .2em;\n  -webkit-box-shadow: 0.6em 0 0 1em #fff;\n          box-shadow: 0.6em 0 0 1em #fff;\n}\n\n.ol-imageline .ol-image {\n  position: relative;\n  height: 100%;\n  display: inline-block;\n  cursor: pointer;\n}\n.ol-imageline img {\n  max-height: 100%;\n  border: .25em solid transparent;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  opacity: 0;\n  -webkit-transition: 1s;\n  transition: 1s;\n}\n.ol-imageline img.ol-loaded {\n  opacity:1;\n}\n\n.ol-imageline .ol-image.select {\n  background-color: #fff;\n}\n.ol-imageline .ol-image span {\n  position: absolute;\n  width: 125%;\n  max-height: 2.4em;\n  left: 50%;\n  bottom: 0;\n  display: none;\n  color: #fff;\n  background-color: rgba(0,0,0,.5);\n  font-size: .8em;\n  overflow: hidden;\n  white-space: normal;\n  text-align: center;\n  line-height: 1.2em;\n  -webkit-transform: translateX(-50%) scaleX(.8);\n          transform: translateX(-50%) scaleX(.8);\n}\n/*\n.ol-imageline .ol-image.select span,\n*/\n.ol-imageline .ol-image:hover span {\n  display: block;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-method-time,\n.ol-control.ol-routing.ol-isochrone .ol-method-distance,\n.ol-control.ol-routing.ol-isochrone > button {\n  position: relative;\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-time:before,\n.ol-control.ol-routing.ol-isochrone > button:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  border: .1em solid currentColor;\n  width: .8em;\n  height: .8em;\n  border-radius: 50%;\n  -webkit-box-shadow: 0 -0.5em 0 -0.35em, 0.4em -0.35em 0 -0.35em;\n          box-shadow: 0 -0.5em 0 -0.35em, 0.4em -0.35em 0 -0.35em;\n  clip: unset;\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-time:after,\n.ol-control.ol-routing.ol-isochrone > button:after {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-60deg);\n          transform: translate(-50%, -50%) rotate(-60deg);\n  border-radius: 50%;\n  border: .3em solid transparent;\n  border-right-color: currentColor;\n  -webkit-box-shadow: none;\n          box-shadow: none;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  clip: unset;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-method-distance:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n  width: 1em;\n  height: .5em;\n  border: .1em solid currentColor;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-distance:after {\n  content: '';\n  position: absolute;\n  width: .1em;\n  height: .15em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n  -webkit-box-shadow: inset 0 -0.15em, 0 0.1em, 0.25em 0.1em, -0.25em 0.1em;\n          box-shadow: inset 0 -0.15em, 0 0.1em, 0.25em 0.1em, -0.25em 0.1em;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-direction-direct:before,\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 30%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  width: .3em;\n  height: .3em;\n  border-radius: 50%;\n  border: .1em solid currentColor;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-box-shadow: 0.25em 0 0 -0.05em;\n          box-shadow: 0.25em 0 0 -0.05em;\n}\n.ol-control.ol-routing.ol-isochrone .ol-direction-direct:after,\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:after {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 70%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  border: .4em solid transparent;\n  border-width: .4em 0 .4em .4em;\n  border-color: transparent currentColor;\n}\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:after {\n  border-width: .4em .4em .4em 0;\n}\n\n.ol-control.ol-isochrone.ol-collapsed .content {\n  display: none;\n}\n.ol-control.ol-isochrone input[type=\"number\"] {\n  width: 3em;\n  text-align: right;\n  margin: 0 .1em;\n}\n.ol-control.ol-isochrone .ol-distance input[type=\"number\"] {\n  width: 5em;\n}\n\n.ol-isochrone .ol-time,\n.ol-isochrone .ol-distance {\n  display: none;\n}\n.ol-isochrone .ol-time.selected,\n.ol-isochrone .ol-distance.selected {\n  display: block;\n}\n\n.ol-control.ol-layerswitcher-popup\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 3em;\n}\n.ol-control.ol-layerswitcher-popup .panel \n{\tclear:both;\n\tbackground:#fff;\n}\n\n.ol-layerswitcher-popup .panel\n{\tlist-style: none;\n\tpadding: 0.25em;\n\tmargin:0;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-popup .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-popup.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher-popup.ol-forceopen .panel\n{\tdisplay:block;\n}\n\n.ol-layerswitcher-popup button \n{\tbackground-color: white;\n\tbackground-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAACE1BMVEX///8A//8AgICA//8AVVVAQID///8rVVVJtttgv98nTmJ2xNgkW1ttyNsmWWZmzNZYxM4gWGgeU2JmzNNr0N1Rwc0eU2VXxdEhV2JqytQeVmMhVmNoydUfVGUgVGQfVGQfVmVqy9hqy9dWw9AfVWRpydVry9YhVmMgVGNUw9BrytchVWRexdGw294gVWQgVmUhVWPd4N6HoaZsy9cfVmQgVGRrytZsy9cgVWQgVWMgVWRsy9YfVWNsy9YgVWVty9YgVWVry9UgVWRsy9Zsy9UfVWRsy9YgVWVty9YgVWRty9Vsy9aM09sgVWRTws/AzM0gVWRtzNYgVWRuy9Zsy9cgVWRGcHxty9bb5ORbxdEgVWRty9bn6OZTws9mydRfxtLX3Nva5eRix9NFcXxOd4JPeINQeIMiVmVUws9Vws9Vw9BXw9BYxNBaxNBbxNBcxdJexdElWWgmWmhjyNRlx9IqXGtoipNpytVqytVryNNrytZsjZUuX210k5t1y9R2zNR3y9V4lp57zth9zdaAnKOGoaeK0NiNpquV09mesrag1tuitbmj1tuj19uktrqr2d2svcCu2d2xwMO63N+7x8nA3uDC3uDFz9DK4eHL4eLN4eIyYnDX5OM5Z3Tb397e4uDf4uHf5uXi5ePi5+Xj5+Xk5+Xm5+Xm6OY6aHXQ19fT4+NfhI1Ww89gx9Nhx9Nsy9ZWw9Dpj2abAAAAWnRSTlMAAQICAwQEBgcIDQ0ODhQZGiAiIyYpKywvNTs+QklPUlNUWWJjaGt0dnd+hIWFh4mNjZCSm6CpsbW2t7nDzNDT1dje5efr7PHy9PT29/j4+Pn5+vr8/f39/f6DPtKwAAABTklEQVR4Xr3QVWPbMBSAUTVFZmZmhhSXMjNvkhwqMzMzMzPDeD+xASvObKePPa+ffHVl8PlsnE0+qPpBuQjVJjno6pZpSKXYl7/bZyFaQxhf98hHDKEppwdWIW1frFnrxSOWHFfWesSEWC6R/P4zOFrix3TzDFLlXRTR8c0fEEJ1/itpo7SVO9Jdr1DVxZ0USyjZsEY5vZfiiAC0UoTGOrm9PZLuRl8X+Dq1HQtoFbJZbv61i+Poblh/97TC7n0neCcK0ETNUrz1/xPHf+DNAW9Ac6t8O8WH3Vp98f5lCaYKAOFZMLyHL4Y0fe319idMNgMMp+zWVSybUed/+/h7I4wRAG1W6XDy4XmjR9HnzvDRZXUAYDFOhC1S/Hh+fIXxen+eO+AKqbs+wAo30zDTDvDxKoJN88sjUzDFAvBzEUGFsnADoIvAJzoh2BZ8sner+Ke/vwECuQAAAABJRU5ErkJggg==\");\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tfloat: right;\n\theight: 38px;\n\twidth: 38px;\n}\n\n.ol-layerswitcher-popup li\n{\tcolor:#369;\n\tpadding:0.25em 1em;\n\tfont-family:\"Trebuchet MS\",Helvetica,sans-serif;\n\tcursor:pointer;\n}\n.ol-layerswitcher-popup li.ol-header\n{\tdisplay: none;\n}\n.ol-layerswitcher-popup li.select\n{\tbackground:rgba(0, 60, 136, 0.7);\n\tcolor:#fff;\n}\n.ol-layerswitcher-popup li:hover\n{\tbackground:rgba(0, 60, 136, 0.9);\n\tcolor:#fff;\n}\n\n.ol-control.ol-layerswitcher\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 3em;\n\tmax-height: calc(100% - 6em);\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n\toverflow: hidden;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\tdisplay: block\n}\n.ol-control.ol-layerswitcher.ol-collapsed .ol-switchertopdiv,\n.ol-control.ol-layerswitcher.ol-collapsed .ol-switcherbottomdiv\n{\tdisplay: none;\n}\n.ol-layerswitcher.ol-forceopen.ol-collapsed .ol-switchertopdiv,\n.ol-layerswitcher.ol-forceopen.ol-collapsed .ol-switcherbottomdiv\n{\tdisplay: block;\n}\n\n.ol-control.ol-layerswitcher .ol-switchertopdiv,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\tposition: absolute;\n\ttop:0;\n\tleft:0;\n\tright:0;\n\theight: 45px;\n\tbackground: #fff; \n\tz-index:2;\n\topacity:1;\n\tcursor: pointer;\n\tborder-top:2px solid transparent;\n\tborder-bottom:2px solid #369;\n\tmargin:0 2px;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n}\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\ttop: auto;\n\tbottom: 0;\n\theight: 2em;\n\tborder-top:2px solid #369;\n\tborder-bottom:2px solid transparent;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv:before,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:before\n{\tcontent:\"\";\n\tposition: absolute;\n\tleft:50%;\n\ttop:50%;\n\tborder:10px solid transparent;\n\twidth:0;\n\theight:0;\n\ttransform: translate(-50%, -50%);\n\t-webkit-transform: translate(-50%, -50%);\n\topacity:0.8;\n}\n\n.ol-control.ol-layerswitcher .ol-switchertopdiv:hover:before,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:hover:before\n{\topacity:1;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv:before\n{\tborder-bottom-color: #369;\n\tborder-top: 0;\n}\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:before\n{\tborder-top-color: #369;\n\tborder-bottom: 0;\n}\n\n.ol-control.ol-layerswitcher .panel \n{\tbackground-color: #fff;\n\tborder-radius: 0 0 2px 2px;\n\tclear: both;\n\tdisplay: block; /* display:block to show panel on over */\n}\n\n.ol-layerswitcher .panel\n{\tlist-style: none;\n\tpadding: 0.5em 0.5em 0;\n\tmargin:0;\n\toverflow: hidden;\n\tfont-family: Tahoma,Geneva,sans-serif;\n\tfont-size:0.9em;\n\t-webkit-transition: top 0.3s;\n\ttransition: top 0.3s;\n\tposition: relative;\n\ttop:0;\n}\n\n.ol-layerswitcher .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n\tclear: both;\n}\n\n/** Customize checkbox\n*/\n.ol-layerswitcher input[type=\"radio\"],\n.ol-layerswitcher input[type=\"checkbox\"]\n{\tdisplay:none;\n}\n\n.ol-layerswitcher .panel li\n{\t-weblit-transition: -webkit-transform 0.2s linear;\n\t-webkit-transition: -webkit-transform 0.2s linear;\n\ttransition: -webkit-transform 0.2s linear;\n\ttransition: transform 0.2s linear;\n\ttransition: transform 0.2s linear, -webkit-transform 0.2s linear;\n\tclear: both;\n\tdisplay: block;\n\tborder:1px solid transparent;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n}\n/* drag and drop */\n.ol-layerswitcher .panel li.drag\n{\topacity: 0.5;\n\ttransform:scale(0.8);\n\t-webkit-transform:scale(0.8);\n}\n.ol-dragover\n{\tbackground:rgba(51,102,153,0.5);\n\topacity:0.8;\n}\n.ol-layerswitcher .panel li.forbidden,\n.forbidden .ol-layerswitcher-buttons div,\n.forbidden .layerswitcher-opacity div\n{\tbackground:rgba(255,0,0,0.5);\n\tcolor:#f00!important;\n}\n\n/* cursor management */\n.ol-layerswitcher.drag,\n.ol-layerswitcher.drag *\n{\tcursor:not-allowed!important;\n\tcursor:no-drop!important;\n}\n.ol-layerswitcher.drag .panel li.dropover,\n.ol-layerswitcher.drag .panel li.dropover *\n{\tcursor: pointer!important;\n\tcursor: n-resize!important;\n\tcursor: ns-resize!important;\n\tcursor: -webkit-grab!important;\n\tcursor: grab!important;\n\tcursor: -webkit-grabbing!important;\n\tcursor: grabbing!important;\n}\n\n.ol-layerswitcher .panel li.dropover\n{\tbackground: rgba(51, 102, 153, 0.5);\n}\n\n.ol-layerswitcher .panel li label\n{\tdisplay: inline-block;\n\theight: 1.4em;\n\tmax-width: 12em;\n\toverflow: hidden;\n\twhite-space: nowrap;\n\ttext-overflow: ellipsis;\n\tpadding: 0 0.2em 0 1.7em;\n\tposition: relative;\n}\n\n.ol-layerswitcher [type=\"radio\"] + label:before,\n.ol-layerswitcher [type=\"checkbox\"] + label:before,\n.ol-layerswitcher [type=\"radio\"]:checked + label:after,\n.ol-layerswitcher [type=\"checkbox\"]:checked + label:after\n{\tcontent: '';\n\tposition: absolute;\n\tleft: 0.1em; top: 0.1em;\n\twidth: 1.2em; height: 1.2em; \n\tborder: 2px solid #369;\n\tbackground: #fff;\n\t-webkit-box-sizing:border-box;\n\t        box-sizing:border-box;\n}\n\n.ol-layerswitcher [type=\"radio\"] + label:before,\n.ol-layerswitcher [type=\"radio\"] + label:after\n{\tborder-radius: 50%;\n}\n\n.ol-layerswitcher [type=\"radio\"]:checked + label:after\n{\tbackground: #369 none repeat scroll 0 0;\n\tmargin: 0.3em;\n\twidth: 0.6em;\n\theight: 0.6em;\n}\n\n.ol-layerswitcher [type=\"checkbox\"]:checked + label:after\n{\tbackground: transparent;\n    border-width: 0 3px 3px 0;\n\tborder-style: solid;\n\tborder-color: #369;\n    width: 0.7em;\n    height: 1em;\n    -webkit-transform: rotate(45deg);\n    transform: rotate(45deg);\n    left: 0.55em;\n    top: -0.05em;\n    -webkit-box-shadow: 1px 0px 1px 1px #fff;\n            box-shadow: 1px 0px 1px 1px #fff;\n}\n\n.ol-layerswitcher .panel li.ol-layer-hidden\n{\topacity: 0.6;\n}\n\n.ol-layerswitcher.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher.ol-forceopen .panel\n{\tdisplay:block;\n}\n\n.ol-layerswitcher > button {\n\tbackground-color: white;\n\tfloat: right;\n\tz-index: 10;\n\tposition: relative;\n\tfont-size: 1.7em;\n}\n.ol-touch .ol-layerswitcher > button {\n\tfont-size: 2.5em;\n}\n.ol-layerswitcher > button:before,\n.ol-layerswitcher > button:after {\n\tcontent: \"\";\n\tposition:absolute;\n\twidth: .75em;\n\theight: .75em;\n\tborder-radius: 0.15em;\n\t-webkit-transform: scaleY(.8) rotate(45deg);\n\ttransform: scaleY(.8) rotate(45deg);\n}\n.ol-layerswitcher > button:before {\n\tbackground: #e2e4e1;\n\ttop: .32em;\n    left: .34em;\n\t-webkit-box-shadow: 0.1em 0.1em #325158;\n\tbox-shadow: 0.1em 0.1em #325158;\n}\n.ol-layerswitcher > button:after {\n\ttop: .22em;\n    left: .34em;\n\tbackground: #83bcc5;\n\tbackground-image: radial-gradient( circle at .85em .6em, #70b3be 0, #70b3be .65em, #83bcc5 .65em);\n}\n.ol-layerswitcher-buttons \n{\tdisplay:block;\n\tfloat: right;\n\ttext-align:right;\n}\n.ol-layerswitcher-buttons > div\n{\tdisplay: inline-block;\n\tposition: relative;\n\tcursor: pointer;\n\theight:1em;\n\twidth:1em;\n\tmargin:2px;\n\tline-height: 1em;\n    text-align: center;\n    background: #369;\n    vertical-align: middle;\n    color: #fff;\n}\n\n.ol-layerswitcher .panel li > div\n{\tdisplay: inline-block;\n\tposition: relative;\n}\n\n/* line break */\n.ol-layerswitcher .ol-separator\n{\tdisplay:block;\n\twidth:0;\n\theight:0;\n\tpadding:0;\n\tmargin:0;\n}\n\n.ol-layerswitcher .layerup\n{\tfloat: right;\n\theight:2.5em;\n\tbackground-color: #369;\n\topacity: 0.5;\n\tcursor: move;\n\tcursor: ns-resize;\n}\n\n.ol-layerswitcher .layerup:before,\n.ol-layerswitcher .layerup:after\n{\tborder-color: #fff transparent;\n\tborder-style: solid;\n\tborder-width: 0.4em 0.4em 0;\n\tcontent: \"\";\n\theight: 0;\n\tposition: absolute;\n\tbottom: 3px;\n\tleft: 0.1em;\n\twidth: 0;\n}\n.ol-layerswitcher .layerup:after\n{\tborder-width: 0 0.4em 0.4em;\n\ttop:3px;\n\tbottom: auto;\n}\n\n.ol-layerswitcher .layerInfo\n{\tbackground: #369;\n\tborder-radius: 100%;\n}\n.ol-layerswitcher .layerInfo:before\n{\tcolor: #fff;\n\tcontent: \"i\";\n\tdisplay: block;\n\tfont-size: 0.8em;\n\tfont-weight: bold;\n\ttext-align: center;\n\twidth: 1.25em;\n\tposition:absolute;\n\tleft: 0;\n\ttop: 0;\n}\n\n.ol-layerswitcher .layerTrash\n{\tbackground: #369;\n}\n.ol-layerswitcher .layerTrash:before\n{\tcolor: #fff;\n\tcontent: \"\\D7\";\n\tfont-size:1em;\n\ttop: 50%;\n\tleft: 0;\n\tright: 0;\n\ttext-align: center;\n\tline-height: 1em;\n\tmargin: -0.5em 0;\n\tposition: absolute;\n}\n\n.ol-layerswitcher .layerExtent\n{\tbackground: #369;\n}\n.ol-layerswitcher .layerExtent:before\n{\tborder-right: 1px solid #fff;\n\tborder-bottom: 1px solid #fff;\n\tcontent: \"\";\n\tdisplay: block;\n\tposition: absolute;\n\tleft: 6px;\n\tright: 2px;\n\ttop: 6px;\n\tbottom: 3px;\n}\n.ol-layerswitcher .layerExtent:after\n{\tborder-left: 1px solid #fff;\n\tborder-top: 1px solid #fff;\n\tcontent: \"\";\n\tdisplay: block;\n\tposition: absolute;\n\tbottom: 6px;\n\tleft: 2px;\n\tright: 6px;\n\ttop: 3px;\n}\n\n.ol-layerswitcher .expend-layers,\n.ol-layerswitcher .collapse-layers\n{\tmargin: 0 2px;\n\tbackground-color: transparent;\n}\n.ol-layerswitcher .expend-layers:before,\n.ol-layerswitcher .collapse-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\ttop:50%;\n\tleft:0;\n\tmargin-top:-2px;\n\theight:4px;\n\twidth:100%;\n\tbackground:#369;\n}\n.ol-layerswitcher .expend-layers:after\n{\tcontent:\"\";\n\tposition:absolute;\n\tleft:50%;\n\ttop:0;\n\tmargin-left:-2px;\n\twidth:4px;\n\theight:100%;\n\tbackground:#369;\n}\n/*\n.ol-layerswitcher .collapse-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\tborder:0.5em solid #369;\n\tborder-color: #369 transparent transparent;\n\tmargin-top:0.25em;\n}\n.ol-layerswitcher .expend-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\tborder:0.5em solid #369;\n\tborder-color: transparent transparent transparent #369 ;\n\tmargin-left:0.25em;\n}\n*/\n\n.ol-layerswitcher .layerswitcher-opacity\n{\tposition:relative;\n\tborder: 1px solid #369;\n\theight: 3px;\n\twidth: 120px;\n\tmargin:5px 1em 10px 7px;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n\tborder-radius: 3px;\n\tbackground: #69c;\n\tbackground: -webkit-gradient(linear, left top, right top, from(rgba(0,60,136,0)), to(rgba(0,60,136,0.6)));\n\tbackground: linear-gradient(to right, rgba(0,60,136,0), rgba(0,60,136,0.6));\n\tcursor: pointer;\n\t-webkit-box-shadow: 1px 1px 1px rgba(0,0,0,0.5);\n\t        box-shadow: 1px 1px 1px rgba(0,0,0,0.5);\n}\n\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor,\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor:before\n{\tposition: absolute;\n\twidth: 20px;\n\theight: 20px;\n\ttop: 50%;\n\tleft: 50%;\n\tbackground: rgba(0,60,136,0.5);\n\tborder-radius: 50%;\n\t-webkit-transform: translate(-50%, -50%);\n\ttransform: translate(-50%, -50%);\n\tz-index: 1;\n}\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor:before\n{\tcontent: \"\";\n\tposition: absolute;\n\twidth: 50%;\n\theight: 50%;\n}\n.ol-touch .ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor\n{\twidth: 26px;\n\theight: 26px;\n}\n\n.ol-layerswitcher .layerswitcher-opacity-label { \n\tdisplay:none;\n\tposition: absolute;\n    right: -2.5em;\n    bottom: 5px;\n    font-size: 0.8em;\n}\n.ol-layerswitcher .layerswitcher-opacity-label::after {\n\tcontent:\"%\";\n}\n\n.ol-layerswitcher .layerswitcher-progress\n{\tdisplay:block;\n\tmargin:-4px 1em 2px 7px;\n\twidth: 120px;\n}\n.ol-layerswitcher .layerswitcher-progress div\n{\tbackground-color: #369;\n\theight:2px;\n\tdisplay:block;\n\twidth:0;\n}\n\n.ol-control.ol-layerswitcher-image\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 1em;\n\ttransition: all 0.2s ease 0s;\n\t-webkit-transition: all 0.2s ease 0s;\n}\n.ol-control.ol-layerswitcher-image.ol-collapsed\n{\ttop:3em;\n\ttransition: none;\n\t-webkit-transition: none;\n\n}\n\n.ol-layerswitcher-image .panel\n{\tlist-style: none;\n\tpadding: 0.25em;\n\tmargin:0;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-image .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-image.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher-image.ol-forceopen .panel\n{\tdisplay:block;\n\tclear:both;\n}\n\n.ol-layerswitcher-image button \n{\tbackground-color: white;\n\tbackground-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAACE1BMVEX///8A//8AgICA//8AVVVAQID///8rVVVJtttgv98nTmJ2xNgkW1ttyNsmWWZmzNZYxM4gWGgeU2JmzNNr0N1Rwc0eU2VXxdEhV2JqytQeVmMhVmNoydUfVGUgVGQfVGQfVmVqy9hqy9dWw9AfVWRpydVry9YhVmMgVGNUw9BrytchVWRexdGw294gVWQgVmUhVWPd4N6HoaZsy9cfVmQgVGRrytZsy9cgVWQgVWMgVWRsy9YfVWNsy9YgVWVty9YgVWVry9UgVWRsy9Zsy9UfVWRsy9YgVWVty9YgVWRty9Vsy9aM09sgVWRTws/AzM0gVWRtzNYgVWRuy9Zsy9cgVWRGcHxty9bb5ORbxdEgVWRty9bn6OZTws9mydRfxtLX3Nva5eRix9NFcXxOd4JPeINQeIMiVmVUws9Vws9Vw9BXw9BYxNBaxNBbxNBcxdJexdElWWgmWmhjyNRlx9IqXGtoipNpytVqytVryNNrytZsjZUuX210k5t1y9R2zNR3y9V4lp57zth9zdaAnKOGoaeK0NiNpquV09mesrag1tuitbmj1tuj19uktrqr2d2svcCu2d2xwMO63N+7x8nA3uDC3uDFz9DK4eHL4eLN4eIyYnDX5OM5Z3Tb397e4uDf4uHf5uXi5ePi5+Xj5+Xk5+Xm5+Xm6OY6aHXQ19fT4+NfhI1Ww89gx9Nhx9Nsy9ZWw9Dpj2abAAAAWnRSTlMAAQICAwQEBgcIDQ0ODhQZGiAiIyYpKywvNTs+QklPUlNUWWJjaGt0dnd+hIWFh4mNjZCSm6CpsbW2t7nDzNDT1dje5efr7PHy9PT29/j4+Pn5+vr8/f39/f6DPtKwAAABTklEQVR4Xr3QVWPbMBSAUTVFZmZmhhSXMjNvkhwqMzMzMzPDeD+xASvObKePPa+ffHVl8PlsnE0+qPpBuQjVJjno6pZpSKXYl7/bZyFaQxhf98hHDKEppwdWIW1frFnrxSOWHFfWesSEWC6R/P4zOFrix3TzDFLlXRTR8c0fEEJ1/itpo7SVO9Jdr1DVxZ0USyjZsEY5vZfiiAC0UoTGOrm9PZLuRl8X+Dq1HQtoFbJZbv61i+Poblh/97TC7n0neCcK0ETNUrz1/xPHf+DNAW9Ac6t8O8WH3Vp98f5lCaYKAOFZMLyHL4Y0fe319idMNgMMp+zWVSybUed/+/h7I4wRAG1W6XDy4XmjR9HnzvDRZXUAYDFOhC1S/Hh+fIXxen+eO+AKqbs+wAo30zDTDvDxKoJN88sjUzDFAvBzEUGFsnADoIvAJzoh2BZ8sner+Ke/vwECuQAAAABJRU5ErkJggg==\");\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tfloat: right;\n\theight: 38px;\n\twidth: 38px;\n\tdisplay:none;\n}\n\n.ol-layerswitcher-image.ol-collapsed button\n{\tdisplay:block;\n\tposition:relative;\n}\n\n.ol-layerswitcher-image li\n{\tborder-radius: 4px;\n\tborder: 3px solid transparent;\n\t-webkit-box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);\n\tdisplay: inline-block;\n\twidth: 64px;\n\theight: 64px;\n\tmargin:2px;\n\tposition: relative;\n\tbackground-color: #fff;\n\toverflow: hidden;\n\tvertical-align: middle;\n\tcursor:pointer;\n}\n.ol-layerswitcher-image li.ol-layer-hidden\n{\topacity: 0.5;\n\tborder-color:#555;\n}\n.ol-layerswitcher-image li.ol-header\n{\tdisplay: none;\n}\n\n.ol-layerswitcher-image li img\n{\tposition:absolute;\n\tmax-width:100%;\n}\n.ol-layerswitcher-image li.select\n{\tborder: 3px solid red;\n}\n\n.ol-layerswitcher-image li p\n{\tdisplay:none;\n}\n.ol-layerswitcher-image li:hover p\n{\tbackground-color: rgba(0, 0, 0, 0.5);\n\tcolor: #fff;\n\tbottom: 0;\n\tdisplay: block;\n\tleft: 0;\n\tmargin: 0;\n\toverflow: hidden;\n\tposition: absolute;\n\tright: 0;\n\ttext-align: center;\n\theight:1.2em;\n\tfont-family:Verdana, Geneva, sans-serif;\n\tfont-size:0.8em;\n}\n.ol-control.ol-legend {\n  bottom: .5em;\n  left: .5em;\n  z-index: 1;\n  max-height: 90%;\n  max-width: 90%;\n  overflow-x: hidden;\n  overflow-y: auto;\n}\n.ol-control.ol-legend button {\n  position: relative;\n  display: none;\n}\n.ol-control.ol-legend.ol-collapsed button {\n    display: block;\n}\n.ol-control.ol-legend.ol-uncollapsible button {\n  display: none;\n}\n\n.ol-control.ol-legend button.ol-closebox {\n  display: block;\n  position: absolute;\n  top: 0;\n  right: 0;\n  background: none;\n  cursor: pointer;\n  z-index: 1;\n}\n.ol-control.ol-legend.ol-uncollapsible button.ol-closebox,\n.ol-control.ol-legend.ol-collapsed button.ol-closebox {\n  display: none;\n}\n.ol-control.ol-legend button.ol-closebox:before {\n  content: \"\\D7\";\n  background: none;\n  color: rgba(0,60,136,.5);\n  font-size: 1.3em;\n}\n.ol-control.ol-legend button.ol-closebox:hover:before {\n  color: rgba(0,60,136,1);\n}\n.ol-control.ol-legend.ol-uncollapsible .ol-legendImg,\n.ol-control.ol-legend .ol-legendImg {\n  position: absolute;\n  z-index: -1;\n}\n.ol-control.ol-legend.ol-collapsed .ol-legendImg {\n  display: none;\n}\n.ol-control.ol-legend.ol-uncollapsible .ol-legendImg {\n  display: block  ;\n}\n\n.ol-control.ol-legend .ol-legendImg canvas {\n  height: 100%;;\n}\n\n.ol-control.ol-legend > button:first-child:before,\n.ol-control.ol-legend > button:first-child:after {\n  content: \"\";\n  position: absolute;\n  top: .25em;\n  left: .2em;\n  width: .2em;\n  height: .2em;\n  background-color: currentColor;\n  -webkit-box-shadow: 0 0.35em, 0 0.7em;\n          box-shadow: 0 0.35em, 0 0.7em;\n}\n.ol-control.ol-legend button:first-child:after {\n  top: .27em;\n  left: .55em;\n  height: .15em;\n  width: .6em;\n}\n\n.ol-legend ul {\n  min-width: 1.5em;\n  min-height: 1.5em;\n  margin: 0 0 2px;\n  padding: 0;\n  list-style: none;\n  display: inline-block;\n}\n.ol-control.ol-legend.ol-collapsed ul {\n  display: none;\n}\n.ol-control.ol-legend.ol-uncollapsible ul {\n  display: block;\n}\n.ol-legend ul li.ol-title {\n  text-align: center;\n  font-weight: bold;\n}\n.ol-legend ul li {\n  overflow: hidden;\n  padding: 0 .5em;\n}\n.ol-legend ul li div {\n    display: inline-block;\n  vertical-align: middle;\n}\n\n.ol-control.ol-legend .ol-legend {\n  display: inline-block;\n}\n.ol-control.ol-legend.ol-collapsed .ol-legend {\n  display: none;\n}\n.ol-control.ol-mapzone {\n  position: absolute;\n  right: 0.5em;\n  text-align: left;\n  top: .5em;\n  max-height: calc(100% - 6em);\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  overflow: hidden;\n}\n\n.ol-control.ol-mapzone.ol-collapsed {\n  top: 3em;\n}\n\n.ol-control.ol-mapzone button {\n  position: relative;\n  float: right;\n  margin-top: 2.2em;\n}\n.ol-touch .ol-control.ol-mapzone button {\n  margin-top: 1.67em;\n}\n.ol-control.ol-mapzone.ol-collapsed button {\n  margin-top: 0;\n}\n\n.ol-control.ol-mapzone button i {\n  border: .1em solid currentColor;\n  border-radius: 50%;\n  width: .9em;\n  height: .9em; \n  overflow: hidden;\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-control.ol-mapzone button i:before {\n  content: \"\";\n  background-color: currentColor;\n  width: 0.4em;\n  height: .4em;\n  position: absolute;\n  left: .5em;\n  top: 0.3em;\n  border-radius: 50%;\n  -webkit-box-shadow: .05em .3em 0 -.051em currentColor,\n  \t-.05em -.35em 0 -.1em currentColor,\n  \t-.5em -.35em 0 0em currentColor,\n  \t-.65em .1em 0 -.03em currentColor,\n  \t-.65em -.05em 0 -.05em currentColor;\n          box-shadow: .05em .3em 0 -.051em currentColor,\n  \t-.05em -.35em 0 -.1em currentColor,\n  \t-.5em -.35em 0 0em currentColor,\n  \t-.65em .1em 0 -.03em currentColor,\n  \t-.65em -.05em 0 -.05em currentColor\n}\n\n.ol-mapzone > div {\n  position: relative;\n  display: inline-block;\n  width: 5em;\n  height: 5em;\n  margin: 0 .2em 0 0;\n}\n.ol-control.ol-mapzone.ol-collapsed > div {\n  display: none;\n}\n.ol-mapzone > div p {\n  margin: 0;\n  position: absolute;\n  bottom: 0;\n  /* background: rgba(255,255,255,.5); */\n  color: #fff;\n  font-weight: bold;\n  text-align: center;\n  width: 160%;\n  overflow: hidden;\n  font-family: 'Lucida Grande',Verdana,Geneva,Lucida,Arial,Helvetica,sans-serif;\n  -webkit-transform: scaleX(.625);\n          transform: scaleX(.625);\n  -webkit-transform-origin: 0 0;\n          transform-origin: 0 0;\n  cursor: default;\n}\n\n.ol-notification {\n  width: 150%;\n  bottom: 0;\n  border: 0;\n  background: none;\n  margin: 0;\n  padding: 0;\n}\n.ol-notification > div,\n.ol-notification > div:hover {\n  position: absolute;\n  background-color: rgba(0,0,0,.8);\n  color: #fff;\n  bottom: 0;\n  left: 33.33%;\n  max-width: calc(66% - 4em);\n  min-width: 5em;\n  max-height: 5em;\n  min-height: 1em;\n  border-radius: 4px 4px 0 0;\n  padding: .2em .5em;\n  text-align: center;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  -webkit-transition: .3s;\n  transition: .3s;\n  opacity: 1;\n}\n.ol-notification.ol-collapsed > div {\n  bottom: -5em;\n  opacity: 0;\n}\n\n.ol-notification a {\n  color: #9cf;\n  cursor: pointer;\n}\n\n.ol-overlay {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width:100%;\n  height: 100%;\n  background-color: rgba(0,0,0,0.4);\n  padding: 1em;\n  color: #fff;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  z-index: 1;\n  opacity: 0;\n  display: none;\n  cursor: default;\n  overflow: hidden;\n  -webkit-transition: all 0.5s;\n  transition: all 0.5s;\n  pointer-events: none;\n}\n\n.ol-overlay.slide-up {\n  transform: translateY(100%);\n  -webkit-transform: translateY(100%);\n}\n.ol-overlay.slide-down {\n  -webkit-transform: translateY(-100%);\n  transform: translateY(-100%);\n}\n.ol-overlay.slide-left\n{\t-webkit-transform: translateX(-100%);\n  transform: translateX(-100%);\n}\n.ol-overlay.slide-right {\n  -webkit-transform: translateX(100%);\n  transform: translateX(100%);\n}\n.ol-overlay.zoom {\n  top: 50%;\n  left: 50%;\n  opacity:0.5;\n  -webkit-transform: translate(-50%,-50%) scale(0);\n  transform: translate(-50%,-50%) scale(0);\n}\n.ol-overlay.zoomout {\n  -webkit-transform: scale(3);\n  transform: scale(3);\n}\n.ol-overlay.zoomrotate {\n  top: 50%;\n  left: 50%;\n  opacity:0.5;\n  -webkit-transform: translate(-50%,-50%) scale(0) rotate(360deg);\n  transform: translate(-50%,-50%) scale(0) rotate(360deg);\n}\n.ol-overlay.stretch {\n  top: 50%;\n  left: 50%;\n  opacity:0.5;\n  -webkit-transform: translate(-50%,-50%) scaleX(0);\n  transform: translate(-50%,-50%) scaleX(0) ;\n}\n.ol-overlay.stretchy {\n  top: 50%;\n  left: 50%;\n  opacity:0.5;\n  -webkit-transform: translate(-50%,-50%) scaleY(0);\n  transform: translate(-50%,-50%) scaleY(0) ;\n}\n.ol-overlay.wipe {\n  opacity: 1;\n  /* clip: must be set programmatically */\n  /* clip-path: use % but not crossplatform (IE) */\n}\n.ol-overlay.flip {\n  -webkit-transform: perspective(600px) rotateY(180deg);\n  transform: perspective(600px) rotateY(180deg);\n}\n.ol-overlay.card {\n  opacity: 0.5;\n  -webkit-transform: translate(-80%, 100%) rotate(-0.5turn);\n  transform: translate(-80%, 100%) rotate(-0.5turn);\n}\n.ol-overlay.book {\n  -webkit-transform: perspective(600px) rotateY(-180deg) scaleX(0.6);\n  transform: perspective(600px) rotateY(-180deg) scaleX(0.6) ;\n  -webkit-transform-origin: 10% 50%;\n  transform-origin: 10% 50%;\n}\n.ol-overlay.book.visible {\n  -webkit-transform-origin: 10% 50%;\n  transform-origin: 10% 50%;\n}\n\n.ol-overlay.ol-visible {\n  opacity:1;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  -webkit-transform: none;\n  transform: none;\n  pointer-events: all;  \n}\n\n.ol-overlay .ol-closebox {\n  position: absolute;\n  top: 1em;\n  right: 1em;\n  width: 1em;\n  height: 1em;\n  cursor: pointer;\n  z-index:1;\n}\n.ol-overlay .ol-closebox:before {\n  content: \"\\274C\";\n  display: block;\n  text-align: center;\n  vertical-align: middle;\n}\n\n.ol-overlay .ol-fullscreen-image {\n  position: absolute;\n  top: 0;\n  left: 0;\n  bottom: 0;\n  right: 0;\n}\n.ol-overlay .ol-fullscreen-image img {\n  position: absolute;\n  max-width: 100%;\n  max-height: 100%;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  padding: 1em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n  transform: translate(-50%, -50%);\n}\n.ol-overlay .ol-fullscreen-image.ol-has-title img {\n  padding-bottom: 3em;\n}\n.ol-overlay .ol-fullscreen-image p {\n  background-color: rgba(0,0,0,.5);\n  padding: .5em;\n  position: absolute;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  margin: 0;\n  text-align: center;\n}\n.ol-control.ol-overview\n{\tposition: absolute;\n\tleft: 0.5em;\n\ttext-align: left;\n\tbottom: 0.5em;\n}\n\n.ol-control.ol-overview .panel\n{\tdisplay:block;\n\twidth:150px;\n\theight:150px;\n\tmargin:2px;\n\tbackground-color:#fff;\n\tborder:1px solid #369;\n\tcursor: pointer;\n}\n\n.ol-overview:not(.ol-collapsed) button\n{\tposition:absolute;\n\tbottom:2px;\n\tleft:2px;\n\tz-index:2;\n}\n\n.ol-control.ol-overview.ol-collapsed .panel\n{\tdisplay:none;\n}\n\n.ol-overview.ol-collapsed button:before\n{\tcontent:'\\BB';\n}\n.ol-overview button:before\n{\tcontent:'\\AB';\n}\n\n\n.ol-control-right.ol-overview\n{\tleft: auto;\n\tright: 0.5em;\n}\n.ol-control-right.ol-overview:not(.ol-collapsed) button\n{\tleft:auto;\n\tright:2px;\n}\n.ol-control-right.ol-overview.ol-collapsed button:before\n{\tcontent:'\\AB';\n}\n.ol-control-right.ol-overview button:before\n{\tcontent:'\\BB';\n}\n\n.ol-control-top.ol-overview\n{\tbottom: auto;\n\ttop: 5em;\n}\n.ol-control-top.ol-overview:not(.ol-collapsed) button\n{\tbottom:auto;\n\ttop:2px;\n}\n\n.ol-permalink\n{\tposition: absolute;\n\ttop:0.5em;\n\tright: 2.5em;\n}\n.ol-touch .ol-permalink\n{\tright: 3em;\n}\n\n.ol-permalink button\n{\tbackground-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AcFBjYE1ZK03gAAAUlJREFUOMuVk71KA1EQhc/NaiP+gCRpFHwGBSFlCrFVfAsbwSJCBMv06QIGJOBziI3EYAgkjU8gIloIAasIn4WzMqx34zrN7J6de+6ZmbNSgQDSfADcATPgHbgCyvonSYv8KEzWdofegH3gwmG9Ikq67sAESFzNueHThTyiEIKAmr2OJCUhhO30Aou+5aUQU2Ik65K2JC1KegohPGfUBkmvksqShnntHEcGOs60NXHfjmKz6czZTsNqbhzW+muwY2ATWAWawCOwBgxcTfvnvCPxKx4Cy5bPgBWgauRpdL2ImNlGhp3MabETm8mh94nDk4yCNE5/KTGg7xxbyhYAG0AN2AEqURIDZ0a0Fxn+LXAPXDpzRqMk6cOedz1ubdYl1b6NHgZRJe72nuu/CdSBl+yKi/zZlTnbaeXOJIesClwDU+ATeEhtX5TkCwAWUyAsHH1QAAAAAElFTkSuQmCC');\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n}\n.ol-control.ol-print {\n\ttop:.5em;\n\tleft: 3em;\n}\n.ol-control.ol-print button:before {\n\tcontent: \"\";\n\twidth: .9em;\n\theight: .35em;\n\tposition: absolute;\n\tleft: 50%;\n\ttop: 50%;\n\t-webkit-transform: translateX(-50%);\n\t        transform: translateX(-50%);\n\t-webkit-box-shadow: inset 0 0 0 0.1em, inset 0.55em 0, 0 0.2em 0 -0.1em;\n\t        box-shadow: inset 0 0 0 0.1em, inset 0.55em 0, 0 0.2em 0 -0.1em;\n}\n.ol-control.ol-print button:after {\n\tcontent: \"\";\n\twidth: .7em;\n\theight: .6em;\n\tposition: absolute;\n\tleft: 50%;\n\ttop: 25%;\n\t-webkit-transform: translateX(-50%);\n\t        transform: translateX(-50%);\n\t-webkit-box-shadow: inset 0 0 0 0.15em;\n\t        box-shadow: inset 0 0 0 0.15em;\n}\n.ol-control.ol-profil {\n  position: absolute;\n\ttop: 0.5em;\n\tright: 3em;\n\ttext-align: right;\n\toverflow: hidden;\n}\n.ol-profil .ol-inner  {\n  position: relative;\n\tpadding: 0.5em;\n\tfont-size: 0.8em;\n}\n.ol-control.ol-profil .ol-inner {\n  display: block;\n\tbackground-color: rgba(255,255,255,0.7);\n\tmargin: 2.3em 2px 2px;\n}\n.ol-control.ol-profil.ol-collapsed .ol-inner {\n  display: none;\n}\n\n.ol-profil canvas {\n  display: block;\n}\n.ol-profil button {\n  display: block;\n\tposition: absolute;\n\tright: 2px;\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tbackground-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAPCAYAAAALWoRrAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgXCR4dn7j9TAAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAz0lEQVQ4y7WTMU4CURRFz0xIpLUBEhdAY2tJYW1jaWlsXYVxDWyBhWCFCYugYgnDFPMOhTMJGf3AwHiqn/uTk5v/3gfAH6b0RH7sMiIe1Ts162z+q2lVVbd1XqijLuJk0zzP1/VxCGyApLgsy+HJphGx8DeFOm6L1bn6eVQaEW+m2amTRqx+1fkqKY2Ie0+zUx/U7WGYfNMsy57PmMMN8A1MWsWeUoPyivV8PWtPOzL7D+lYHfUtBXgHGLTCJfBxodD6k9Dsm8BLE17LobQ39nJC61aLVoVsAAAAAElFTkSuQmCC');\n}\n\n.ol-profil.ol-collapsed button {\n  position: static;\n}\n\n.ol-profil .ol-profilbar,\n.ol-profil .ol-profilcursor {\n  position:absolute;\n\tpointer-events: none;\n\twidth: 1px;\n\tdisplay: none;\n}\n.ol-profil .ol-profilcursor {\n  width: 0;\n\theight: 0;\n}\n.ol-profil .ol-profilcursor:before {\n  content:\"\";\n\tpointer-events: none;\n\tdisplay: block;\n\tmargin: -2px;\n\twidth:5px;\n\theight:5px;\n}\n.ol-profil .ol-profilbar,\n.ol-profil .ol-profilcursor:before {\n  background: red;\n}\n\n.ol-profil table {\n  text-align: center;\n  width: 100%;\n}\n\n.ol-profil table span {\n  display: block;\n}\n\n.ol-profilpopup {\n  background-color: rgba(255, 255, 255, 0.5);\n\tmargin: 0.5em;\n\tpadding: 0 0.5em;\n\tposition: absolute;\n\ttop:-1em;\n\twhite-space: nowrap;\n}\n.ol-profilpopup.ol-left {\n  right:0;\n}\n\n\n.ol-profil table td {\n  padding: 0 2px;\n}\n\n.ol-profil table .track-info {\n  display: table-row;\n}\n.ol-profil table .point-info {\n  display: none;\n}\n.ol-profil .over table .track-info {\n  display: none;\n}\n.ol-profil .over table .point-info {\n  display: table-row;\n}\n\n.ol-profil p {\n  text-align: center;\n\tmargin:0;\n}\n\n.ol-control.ol-routing {\n  top: 0.5em;\n  left: 3em;\n  max-height: 90%;\n  overflow-y: auto;\n}\n.ol-touch .ol-control.ol-routing {\n  left: 3.5em;\n}\n.ol-control.ol-routing.ol-searching {\n  opacity: .5;\n}\n\n.ol-control.ol-routing .ol-car,\n.ol-control.ol-routing > button {\n  position: relative;\n}\n.ol-control.ol-routing .ol-car:after,\n.ol-control.ol-routing > button:after {\n  content: \"\";\n  position: absolute;\n  width: .78em;\n  height: 0.6em;\n  border-radius: 40% 50% 0 0 / 50% 70% 0 0;\n  -webkit-box-shadow: inset 0 0 0 0.065em, -0.35em 0.14em 0 -0.09em, inset 0 -0.37em, inset -0.14em 0.005em;\n          box-shadow: inset 0 0 0 0.065em, -0.35em 0.14em 0 -0.09em, inset 0 -0.37em, inset -0.14em 0.005em;\n  clip: rect(0 1em .5em -1em);\n  top: .35em;\n  left: .4em;\n}\n.ol-control.ol-routing .ol-car:before,\n.ol-control.ol-routing > button:before {\n  content: \"\";\n  position: absolute;\n  width: .28em;\n  height: .28em;\n  border-radius: 50%;\n  -webkit-box-shadow: inset 0 0 0 1em, 0.65em 0;\n          box-shadow: inset 0 0 0 1em, 0.65em 0;\n  top: 0.73em;\n  left: .20em;\n}\n.ol-control.ol-routing .ol-pedestrian:after {\n  content: \"\";\n  position: absolute;\n  width: .3em;\n  height: .4em;\n  top: .25em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  -webkit-box-shadow: inset 0.3em 0, 0.1em 0.5em 0 -0.1em, -0.1em 0.5em 0 -0.1em, 0.25em 0.1em 0 -0.1em, -0.25em 0.1em 0 -0.1em;\n          box-shadow: inset 0.3em 0, 0.1em 0.5em 0 -0.1em, -0.1em 0.5em 0 -0.1em, 0.25em 0.1em 0 -0.1em, -0.25em 0.1em 0 -0.1em;\n  border-top: .2em solid transparent;\n}\n.ol-control.ol-routing .ol-pedestrian:before {\n  content: \"\";\n  position: absolute;\n  width: .3em;\n  height: .3em;\n  top: .1em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  border-radius: 50%;\n  background-color: currentColor;\n}\n\n.ol-control.ol-routing.ol-collapsed .content {\n  display: none;\n}\n\n.ol-routing .ol-search.ol-collapsed ul {\n\tdisplay: none;\n}\n.ol-routing .ol-search ul .copy {\n  display: none;\n}\n.ol-routing .ol-search ul.history {\n  /* display: none; */\n}\n.ol-routing .content .search-input > div > * {\n  display: inline-block;\n  vertical-align: top;\n}\n.ol-routing .ol-result ul {\n  list-style: none;\n  display: block;\n}\n.ol-routing .ol-result li {\n  position: relative;\n  min-height: 1.65em;\n}\n.ol-routing .ol-result li i {\n  display: block;\n  font-size: .8em;\n  font-weight: bold;\n}\n\n.ol-routing .ol-result li:before {\n  content: \"\";\n  border: 5px solid transparent;\n  position: absolute;\n  left: -1.75em;\n  border-bottom-color: #369;\n  border-width: .6em .4em .6em;\n  -webkit-transform-origin: 50% 125%;\n          transform-origin: 50% 125%;\n  -webkit-box-shadow: 0 0.65em 0 -0.25em #369;\n          box-shadow: 0 0.65em 0 -0.25em #369;\n  top: -.8em;\n}\n.ol-routing .ol-result li:after {\n  content: \"\";\n  position: absolute;\n  width: 0.3em;\n  height: .6em;\n  left: -1.5em;\n  background: #369;\n  top: .6em;\n}\n.ol-routing .ol-result li.R:before {\n  -webkit-transform: rotate(90deg);\n          transform: rotate(90deg);\n}\n.ol-routing .ol-result li.FR:before {\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n}\n.ol-routing .ol-result li.L:before {\n  -webkit-transform: rotate(-90deg);\n          transform: rotate(-90deg);\n}\n.ol-routing .ol-result li.FL:before {\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n\n.ol-routing .content > i {\n  vertical-align: middle;\n  margin: 0 .3em 0 .1em;\n  font-style: normal;\n}\n.ol-routing .ol-button,\n.ol-routing .ol-button:focus,\n.ol-routing .ol-pedestrian,\n.ol-routing .ol-car {\n  font-size: 1.1em;\n  position: relative;\n  display: inline-block;\n  width: 1.4em;\n  height: 1.4em;\n  color: rgba(0,60,136,1);\n  background-color: transparent;\n  margin: 0 .1em;\n  opacity: .5;\n  vertical-align: middle;\n  outline: none;\n  cursor: pointer;\n}\n.ol-routing .ol-button:hover,\n.ol-routing .ol-button.selected,\n.ol-routing i.selected {\n  opacity: 1;\n  background: transparent;\n}\n\n.ol-control.ol-routing:hover {\n  background-color: rgba(255,255,255,.85);\n}\n\n.search-input > div > button:before {\n  content: '\\B1';\n}\n.ol-viewport .ol-scale {\n\tleft: .5em;\n\tbottom: 2.5em;\n\ttext-align: center;\n\t-webkit-transform: scaleX(.8);\n\t-webkit-transform-origin: 0 0;\n\ttransform: scaleX(.8);\n\ttransform-origin: 0 0;\n}\n.ol-viewport .ol-scale input {\n\tbackground: none;\n    border: 0;\n    width: 8em;\n    text-align: center;\n}\n\n.ol-search{\n  top: 0.5em;\n  left: 3em;\n}\n.ol-touch .ol-search {\n  left: 3.5em;\n}\n.ol-search button {\n  background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAABPUlEQVQoU41SwXHCQAzUHh58eoUOIBWEDkI6oAToIKkg7iAuwakgpAIowXRACcnrzp6BzchjMx4wE/S6kW5XK60gvQghzJIkmVoqSZI9gJ9+/fINS5Cc1HX9QXIlIr/tpwcRyb33b7cIGnAIYQdg4pxbjcfj0nJ1Xc+Px+PGObdN03Q9RIAQwgpAnqbp7FKmjQGgJLlU1d2V7BjjRkQO3vvXIXarkyxVNbsCm2QR2Q0V7XOMMReRmfd+OQQubN6hYgs22ZtbnRcAtiRfLueqqmpJ8ovko6oeBq0KIWQA3gFkzrlmMafTaUEyI/mpqmbhVTRWWbRdbClPbeobQNES5KPRqOxs7DBn8K1DsAOKMZYApiTXqlrcDe4d0XN7jWeCfzt351tVle2iGalTcBd4gGDvvZ/fDe4RmCOFLe8Pr7mvEP2N9PQAAAAASUVORK5CYII=\");\n  background-repeat: no-repeat;\n  background-position: center center;\n  background-size: 1em;\n  top: 2px;\n  left: 2px;\n  float: left;\n}\n\n.ol-search button.ol-revers {\n  float: none;\n  background-image: none;\n  display: inline-block;\n  vertical-align: bottom;\n  position: relative;\n  top: 0;\n  left: 0;\n}\n.ol-search.ol-revers button.ol-revers {\n  background-color: rgba(0,136,60,.5)\n}\n\n.ol-control.ol-search.ol-collapsed button.ol-revers {\n  display: none;\n}\n.ol-search button.ol-revers:before {\n  content: \"\";\n  border: .1em solid currentColor;\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n  border-radius: 50%;\n  width: .55em;\n  height: .55em;\n}\n.ol-search button.ol-revers:after {\n  content: \"\";\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n  width: .2em;\n  height: .2em;\n  background-color: transparent;\n  -webkit-box-shadow: .4em 0 currentColor, 0 .4em currentColor, -.4em 0 currentColor, 0 -.4em currentColor;\n          box-shadow: .4em 0 currentColor, 0 .4em currentColor, -.4em 0 currentColor, 0 -.4em currentColor;\n}\n\n.ol-search input {\n  display: inline-block;\n  border: 0;\n  margin: 1px 1px 1px 2px;\n  font-size: 1.14em;\n  padding-left: 0.3em;\n  height: 1.375em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-transition: all 0.1s;\n  transition: all 0.1s;\n}\n.ol-touch .ol-search input,\n.ol-touch .ol-search ul {\n  font-size: 1.5em;\n}\n.ol-search.ol-revers > ul,\n.ol-control.ol-search.ol-collapsed > * {\n  display: none;\n}\n.ol-control.ol-search.ol-collapsed > button {\n  display: block;\n}\n\n.ol-search ul {\n  list-style: none;\n  padding: 0;\n  margin: 0;\n  display: block;\n  clear: both;\n  cursor: pointer;\n  max-width: 17em;\n  overflow-x: hidden;\n  z-index: 1;\n  background: #fff;\n}\n/*\n.ol-control.ol-search ul {\n  position: absolute;\n  box-shadow: 5px 5px 5px rgba(0,0,0,0.5);\n}\n*/\n.ol-search ul li {\n  padding: 0.1em 0.5em;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.ol-search ul li.select,\n.ol-search ul li:hover {\n  background-color: rgba(0,60,136,.5);\n  color: #fff;\n}\n.ol-search ul li img {\n  float: left;\n  max-height: 2em;\n}\n.ol-search li.copy {\n    background: rgba(0,0,0,.5);\n  color: #fff;\n}\n.ol-search li.copy a {\n  color: #fff;\n  text-decoration: none;\n}\n\n.ol-search.searching:before {\n  content: '';\n  position: absolute;\n  height: 3px;\n  left: 0;\n  top: 1.6em;\n  -webkit-animation: pulse .5s infinite alternate linear;\n          animation: pulse .5s infinite alternate linear;\n  background: red;\n  z-index: 2;\n}\n\n@-webkit-keyframes pulse {\n  0% { left:0; right: 95%; }\n  50% {\tleft: 30%; right: 30%; }\n  100% {\tleft: 95%; right: 0; }\n}\n\n@keyframes pulse {\n  0% { left:0; right: 95%; }\n  50% {\tleft: 30%; right: 30%; }\n  100% {\tleft: 95%; right: 0; }\n}\n\n\n.ol-search.IGNF-parcelle input {\n  width: 13.5em;\n}\n.ol-search.IGNF-parcelle input:-moz-read-only {\n  background: #ccc;\n  opacity: .8;\n}\n.ol-search.IGNF-parcelle input:read-only {\n  background: #ccc;\n  opacity: .8;\n}\n.ol-search.IGNF-parcelle.ol-collapsed-list > ul.autocomplete {\n  display: none;\n}\n\n.ol-search.IGNF-parcelle label {\n  display: block;\n  clear: both;\n}\n.ol-search.IGNF-parcelle > div input,\n.ol-search.IGNF-parcelle > div label {\n  width: 5em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  display: inline-block;\n  margin: .1em;\n  font-size: 1em;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page {\n  margin-top:.5em;\n  width:100%;\n  text-align: center;\n  display: none;\n}\n.ol-search.IGNF-parcelle.ol-collapsed-list ul.autocomplete-parcelle,\n.ol-search.IGNF-parcelle.ol-collapsed-list ul.autocomplete-page {\n  display: block;\n}\n.ol-search.IGNF-parcelle.ol-collapsed ul.autocomplete-page,\n.ol-search.IGNF-parcelle.ol-collapsed ul.autocomplete-parcelle,\n.ol-search.IGNF-parcelle ul.autocomplete-parcelle {\n  display: none;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page li {\n  display: inline-block;\n  color: #fff;\n  background: rgba(0,60,136,.5);\n  border-radius: 50%;\n  width: 1.3em;\n  height: 1.3em;\n  padding: .1em;\n  margin: 0 .1em;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page li.selected {\n  background: rgba(0,60,136,1);\n}\n\n/* GPS */\n.ol-searchgps input.search {\n  display: none;\n}\n.ol-control.ol-searchgps > button:first-child {\n  background-image: none;\n}\n.ol-control.ol-searchgps > button:first-child:before {\n  content: \"x/y\";\n  display: block;\n  -webkit-transform: scaleX(.8);\n          transform: scaleX(.8);\n}\n.ol-control.ol-searchgps .ol-latitude,\n.ol-control.ol-searchgps .ol-longitude {\n  clear: both;\n}\n.ol-control.ol-searchgps .ol-latitude label,\n.ol-control.ol-searchgps .ol-longitude label {\n  width: 5.5em;\n  display: inline-block;\n  text-align: right;\n  -webkit-transform: scaleX(.8);\n          transform: scaleX(.8);\n  margin: 0 -.8em 0 0;\n  -webkit-transform-origin: 0 0;\n          transform-origin: 0 0;\n}\n.ol-control.ol-searchgps .ol-latitude input,\n.ol-control.ol-searchgps .ol-longitude input {\n  max-width: 10em;\n}\n\n.ol-control.ol-searchgps .ol-switch {\n  cursor: pointer;\n  float: right;\n  margin: .5em;\n  font-size: .9em;\n}\n.ol-control.ol-searchgps .ol-switch input {\n  display: none;\n}\n.ol-control.ol-searchgps .ol-switch span {\n  color: rgba(0,60,136,.5);\n  position: relative;\n  cursor: pointer;\n  background-color: #ccc;\n  -webkit-transition: .4s;\n  transition: .4s;\n  width: 1.6em;\n  height: 1em;\n  display: inline-block;\n  border-radius: 1em;\n  font-size: 1.3em;\n  vertical-align: middle;\n  margin: 0 .2em;\n}\n.ol-control.ol-searchgps .ol-switch span:before {\n  position: absolute;\n  content: \"\";\n  height: 1em;\n  width: 1em;\n  left: 0;\n  top: 50%;\n  background-color: #fff;\n  -webkit-transition: .4s;\n  transition: .4s;\n  border-radius: 1em;\n  display: block;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n  border: 2px solid #ccc;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n.ol-control.ol-searchgps .ol-switch input:checked + span {\n  background-color: currentColor;\n}\n.ol-control.ol-searchgps .ol-switch input:checked + span:before {\n  -webkit-transform: translate(.6em,-50%);\n          transform: translate(.6em,-50%);\n  border-color: currentColor;\n}\n\n.ol-searchgps .ol-decimal{\n  display: inline-block;\n}\n.ol-searchgps .ol-dms,\n.ol-searchgps.ol-dms .ol-decimal {\n  display: none;\n  width: 3em;\n  text-align: right;\n}\n.ol-searchgps.ol-dms .ol-dms {\n  display: inline-block;\n}\n\n.ol-searchgps span.ol-dms {\n  width: auto;\n}\n.ol-searchgps.ol-control.ol-collapsed button.ol-geoloc {\n  display: none;\n}\n.ol-searchgps button.ol-geoloc {\n  top: 0;\n  float: right;\n  margin-right: 3px;\n  background-image: none;\n  position: relative;\n}\n.ol-searchgps button.ol-geoloc:before {\n  content:\"\";\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  width: .6em;\n  height: .6em;\n  border: .1em solid currentColor;\n  border-radius: 50%;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n}\n.ol-searchgps button.ol-geoloc:after {\n  content:\"\";\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  width: .2em;\n  height: .2em;\n  background-color: transparent;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n  -webkit-box-shadow: \n    .45em 0 currentColor, -.45em 0 currentColor, 0 -.45em currentColor, 0 .45em currentColor,\n    .25em 0 currentColor, -.25em 0 currentColor, 0 -.25em currentColor, 0 .25em currentColor;\n          box-shadow: \n    .45em 0 currentColor, -.45em 0 currentColor, 0 -.45em currentColor, 0 .45em currentColor,\n    .25em 0 currentColor, -.25em 0 currentColor, 0 -.25em currentColor, 0 .25em currentColor;\n}\n.ol-control.ol-select {\n  top: .5em;\n  left: 3em;\n}\n.ol-control.ol-select > button:before {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  width: .73em;\n  height: .73em;\n  background-color: transparent;\n  border: .12em solid currentColor;\n  border-radius: 100%;\n  top: .35em;\n  left: .35em;\n}\n.ol-control.ol-select > button:after {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  top: 1.1em;\n  left: 1em;\n  border-width: .08em .23em;\n  border-style: solid;\n  border-radius: .03em;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n  -webkit-box-shadow: -0.18em 0 0 -0.03em;\n          box-shadow: -0.18em 0 0 -0.03em;\n}\n.ol-select > div button {\n    width: auto;\n    padding: 0 .5em;\n    float: right;\n    font-weight: normal;\n}\n.ol-select .ol-delete {\n    width: 1.5em;\n  height: 1em;\n  vertical-align: middle;\n  display: inline-block;\n  position: relative;\n  cursor: pointer;\n}\n.ol-select .ol-delete:before {\n  content:'\\D7';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  width: 100%;\n  text-align: center;\n  font-weight: bold;\n}\n.ol-control.ol-select input {\n  font-size: 1em;\n}\n.ol-control.ol-select select {\n  font-size: 1em;\n  max-width: 10em;\n}\n.ol-control.ol-select select option.ol-default {\n  color: #999;\n  font-style: italic;\n}\n.ol-control.ol-select > div {\n  display: block;\n}\n.ol-control.ol-select.ol-collapsed > div {\n  display: none;\n}\n.ol-control.ol-select.ol-select-check {\n  max-width: 20em;\n}\n.ol-control.ol-select.ol-select-check label,\n.ol-control.ol-select-check div {\n  position: relative;\n  display: inline-block;\n}\n.ol-control.ol-select.ol-select-condition input,\n.ol-control.ol-select.ol-select-check input {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n  height: 0;\n  width: 0;\n}\n.ol-control.ol-select.ol-select-condition label div {\n  position: relative;\n  padding: 0 1em 0 2em;\n}\n.ol-control.ol-select.ol-select-condition label div:before {\n  content: \"\";\n  position: absolute;\n  left: 0;\n  height: 1.1em;\n  width: 1.8em;\n  background-color: rgba(192,192,192,.7);\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  border-radius: 1em;\n}\n.ol-control.ol-select.ol-select-condition label div:after {\n  content: \"\";\n  position: absolute;\n  left: .1em;\n  top: .1em;\n  height: .9em;\n  width: .9em;\n  background-color: #fff;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  border-radius: 1em;\n  -webkit-transition: .3s;\n  transition: .3s;\n}\n.ol-control.ol-select.ol-select-condition input:checked ~ div:after {\n  left: .7em;\n}\n\n.ol-control.ol-select.ol-select-check label > div {\n  padding: 0 1em 0 1.5em;\n}\n.ol-control.ol-select.ol-select-check label > div:before {\n  content: \"\";\n  position: absolute;\n  width: 1.1em;\n  height: 1.1em;\n  left: .2em;\n  background-color: rgba(192,192,192,.7);\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n.ol-control.ol-select.ol-select-check label.ol-radio > div:before {\n  border-radius: 50%;\n}\n.ol-control.ol-select.ol-select-condition label > div:hover:before,\n.ol-control.ol-select.ol-select-check label > div:hover:before {\n  background-color: rgba(128,128,128,.7);\n}\n.ol-control.ol-select.ol-select-condition input:checked ~ div:before,\n.ol-control.ol-select.ol-select-check input:checked ~ div:before {\n  background-color: rgba(0,60,136,.7);\n}\n.ol-control.ol-select.ol-select-check label.ol-checkbox input:checked ~ div:after {\n  content: \"\";\n  position: absolute;\n  width: .5em;\n  height: .8em;\n  top: .05em;\n  left: .5em;\n  border: 2px solid #fff;\n  border-width: 0 3px 3px 0;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n.ol-control.ol-select.ol-select-check label.ol-radio input:checked ~ div:before {\n  border: .3em solid rgba(0,60,136,.7);\n  background-color: #fff;\n}\n\n.ol-select ul {\n  list-style: none;\n  margin: 0;\n  padding: 0;\n}\n.ol-control.ol-select input[type=\"text\"]  {\n  width: 8em;\n}\n\n.ol-select .ol-autocomplete {\n  display: inline;\n}\n.ol-select .ol-autocomplete ul {\n  position: absolute;\n  display: block;\n  background: #fff;\n  border: 1px solid #999;\n  min-width: 10em;\n  font-size: .85em;\n}\n.ol-select .ol-autocomplete ul li {\n  padding: 0 .5em;\n}\n.ol-select .ol-autocomplete ul li:hover {\n  color: #fff;\n  background: rgba(0,60,136,.5);\n}\n.ol-select ul.ol-hidden {\n  display: none;\n}\n\n.ol-select-multi li > div:hover,\n.ol-select-multi li > div.ol-control.ol-select {\n  position: relative;\n  top: unset;\n  left: unset;\n  background: transparent;\n}\n.ol-select-multi li > div  > button,\n.ol-select-multi li > div  .ol-ok {\n  display: none;\n}\n.ol-select-multi li .ol-control.ol-select.ol-collapsed > div,\n.ol-select-multi li > div  > div {\n  display: block;\n}\n\n.ol-control.ol-status {\n  top: 0;\n  left: 0;\n  background: rgba(0,0,0,.2);\n  color: #fff;\n  font-size: .9em;\n  padding: .3em 3em;\n  border-radius: 0;\n  width: 100%;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  pointer-events: none;\n}\n.ol-control.ol-status.ol-bottom {\n  top: auto;\n  bottom: 0;\n}\n.ol-control.ol-status.ol-left {\n  top: 0;\n  bottom: 0;\n  padding: .3em .5em .3em 3em;\n  width: auto;\n}\n.ol-control.ol-status.ol-right {\n  top: 0;\n  bottom: 0;\n  left: auto;\n  right: 0;\n  padding: .3em 3em .3em .5em;\n  width: auto;\n}\n.ol-control.ol-status.ol-center {\n  top: 50%;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n}\n\n.ol-control.ol-storymap {\n  top: .5em;\n  left: .5em;\n  bottom: .5em;\n  max-width: 35%;\n  border-radius: .5em;\n  position: absolute;\n  height: auto;\n}\n.ol-storymap {\n  overflow: hidden;\n  padding: 0;\n  height: 100%;\n  position: relative;\n  scroll-behavior: smooth;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.ol-storymap.ol-move {\n  scroll-behavior: unset;\n}\n.ol-storymap.ol-touch {\n  overflow-y: auto;\n}\n\n.ol-control.ol-storymap .chapter {\n  padding: .5em;\n}\n.ol-storymap .chapter {\n  cursor: pointer;\n  opacity: .4;\n}\n.ol-storymap .chapter.select {\n  cursor: default;\n  opacity: 1;\n}\n\n.ol-storymap .ol-scroll-top,\n.ol-storymap .ol-scroll-next {\n  position: relative;\n  min-height: 1.7em;\n  color: rgba(0,60,136,.5);\n  text-align: center;\n  cursor: pointer;\n}\n.ol-storymap .ol-scroll-next span {\n  padding-bottom: 1.4em;\n  display: block;\n}\n.ol-storymap .ol-scroll-top span {\n  padding-top: 1.4em;\n  display: block;\n}\n\n.ol-storymap .ol-scroll-top:before,\n.ol-storymap .ol-scroll-next:before {\n  content: \"\";\n  border: .3em solid currentColor;\n  border-radius: .3em;\n  border-color: transparent currentColor currentColor transparent;\n  width: .8em;\n  height: .8em;\n  display: block;\n  position: absolute;\n  left: 50%;\n  -webkit-transform: translateX(-50%) rotate(45deg);\n          transform: translateX(-50%) rotate(45deg);\n  -webkit-animation: ol-bounce-bottom 0.35s linear infinite alternate;\n          animation: ol-bounce-bottom 0.35s linear infinite alternate;\n  pointer-events: none;\n}\n.ol-storymap .ol-scroll-top:before {\n  border-color: currentColor transparent transparent currentColor;\n  -webkit-animation: ol-bounce-top 0.35s linear infinite alternate;\n          animation: ol-bounce-top 0.35s linear infinite alternate;\n}\n\n@-webkit-keyframes ol-bounce-top{\n  from {top: -.2em;}\n  to   {top: .5em;}\n}\n\n@keyframes ol-bounce-top{\n  from {top: -.2em;}\n  to   {top: .5em;}\n}\n@-webkit-keyframes ol-bounce-bottom{\n  from {bottom: -.2em;}\n  to   {bottom: .5em;}\n}\n@keyframes ol-bounce-bottom{\n  from {bottom: -.2em;}\n  to   {bottom: .5em;}\n}\n\n.ol-storymap img[data-title] {\n  cursor: pointer;\n}\n\n.ol-swipe\n{\tposition: absolute;\n\ttop: 50%;\n\tleft: 50%;\n\ttransform: translate(-50%, -50%);\n\t-webkit-transform: translate(-50%, -50%);\n}\n\n.ol-swipe:before\n{\tcontent: \"\";\n\tposition: absolute;\n\ttop: -5000px;\n\tbottom: -5000px;\n\tleft: 50%;\n\twidth: 4px;\n\tbackground: #fff;\n\tz-index:-1;\n\ttransform: translate(-2px, 0);\n\t-webkit-transform: translate(-2px, 0);\n}\n.ol-swipe.horizontal:before\n{\tleft: -5000px;\n\tright: -5000px;\n\ttop: 50%;\n\tbottom: auto;\n\twidth: auto;\n\theight: 4px;\n}\n\n.ol-swipe,\n.ol-swipe button\n{\tcursor: ew-resize;\n}\n.ol-swipe.horizontal,\n.ol-swipe.horizontal button\n{\tcursor: ns-resize;\n}\n\n.ol-swipe:after,\n.ol-swipe button:before,\n.ol-swipe button:after\n{\tcontent: \"\";\n\tposition: absolute;\n\ttop: 25%;\n\tbottom: 25%;\n\tleft: 50%;\n\twidth: 2px;\n\tbackground: rgba(255,255,255,0.8);\n\ttransform: translate(-1px, 0);\n\t-webkit-transform: translate(-1px, 0);\n}\n.ol-swipe button:after\n{\ttransform: translateX(5px);\n\t-webkit-transform: translateX(5px);\n}\n.ol-swipe button:before\n{\ttransform: translateX(-7px);\n\t-webkit-transform: translateX(-7px);\n}\n\n.ol-control.ol-timeline {\n  bottom: 0;\n  left: 0;\n  right: 0;\n  -webkit-transition: .3s;\n  transition: .3s;\n}\n.ol-control.ol-timeline.ol-collapsed {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.ol-timeline {\n  overflow: hidden;\n  padding: 2px 0 0;\n}\n.ol-timeline .ol-scroll {\n  overflow: hidden;\n  padding: 0;\n  scroll-behavior: smooth;\n  line-height: 1em;\n  height: 6em;\n  padding: 0 50%;\n}\n.ol-timeline .ol-scroll.ol-move {\n  scroll-behavior: unset;\n}\n.ol-timeline.ol-touch .ol-scroll{\n  overflow-x: auto;\n}\n\n.ol-timeline.ol-hasbutton .ol-scroll {\n  margin-left: 1.5em;\n  padding: 0 calc(50% - .75em);\n}\n.ol-timeline .ol-buttons {\n  display: none;\n  position: absolute;\n  top: 0;\n  background: rgba(255,255,255,.5);\n  width: 1.5em;\n  bottom: 0;\n  left: 0;\n  z-index: 10;\n}\n.ol-timeline.ol-hasbutton .ol-buttons {\n  display: block;\n}\n.ol-timeline .ol-buttons button {\n  font-size: 1em;\n  margin: 1px;\n  position: relative;\n}\n.ol-timeline .ol-buttons .ol-zoom-in:before,\n.ol-timeline .ol-buttons .ol-zoom-out:before {\n  content: \"+\";\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-timeline .ol-buttons .ol-zoom-out:before{\n  content: '\\2212';\n}\n\n.ol-timeline .ol-scroll > div {\n  height: 100%;\n  position: relative;\n}\n\n.ol-timeline .ol-scroll .ol-times {\n  background: rgba(255,255,255,.5);\n  height: 1em;\n  bottom: 0;\n  position: absolute;\n  left: -1000px;\n  right: -1000px;\n}\n.ol-timeline .ol-scroll .ol-time {\n  position: absolute;\n  font-size: .7em;\n  color: #999;\n  bottom: 0;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-timeline .ol-scroll .ol-time.ol-year {\n  color: #666;\n  z-index: 1;\n}\n.ol-timeline .ol-scroll .ol-time:before {\n  content: \"\";\n  position: absolute;\n  bottom: 1.2em;\n  left: 50%;\n  height: 500px;\n  border-left: 1px solid currentColor;\n}\n\n.ol-timeline .ol-scroll .ol-features {\n  position: absolute;\n  top: 0;\n  bottom: 1em;\n  left: -200px;\n  right: -1000px;\n  margin: 0 0 0 200px;\n  overflow: hidden;\n}\n\n.ol-timeline .ol-scroll .ol-feature {\n  position: absolute;\n  font-size: .7em;\n  color: #999;\n  top: 0;\n  background: #fff;\n  max-width: 3em;\n  max-height: 2.4em;\n  min-height: 1em;\n  line-height: 1.2em;\n  border: 1px solid #ccc;\n  overflow: hidden;\n  padding: 0 .5em 0 0;\n  -webkit-transition: all .3s;\n  transition: all .3s;\n  cursor: pointer;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n\n.ol-timeline.ol-zoomhover .ol-scroll .ol-feature:hover,\n.ol-timeline.ol-zoomhover .ol-scroll .ol-feature.ol-select {\n  z-index: 1;\n  -webkit-transform: scale(1.2);\n          transform: scale(1.2);\n  background: #eee;\n  /* max-width: 14em!important; */\n}\n\n/* Center */\n.ol-timeline .ol-center-date {\n  display: none;\n  position: absolute;\n  left: 50%;\n  height: 100%;\n  width: 2px;\n  bottom: 0;\n  z-index: 2;\n  pointer-events: none;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  background-color: #f00;\n  opacity: .4;\n}\n.ol-timeline.ol-hasbutton .ol-center-date {\n  left: calc(50% + .75em);\n}\n\n/* Show center */ \n.ol-timeline.ol-pointer .ol-center-date {\n  display: block;\n}\n.ol-timeline.ol-pointer .ol-center-date:before, \n.ol-timeline.ol-pointer .ol-center-date:after {\n  content: '';\n  border: 0.3em solid transparent;\n  border-width: .3em .25em;\n  position: absolute;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-timeline.ol-pointer .ol-center-date:before {\n  border-top-color: #f00;\n  top: 0;\n}\n.ol-timeline.ol-pointer .ol-center-date:after {\n  border-bottom-color: #f00;\n  bottom: 0\n}\n\n/* show interval */\n.ol-timeline.ol-interval .ol-center-date {\n  display: block;\n  background-color: transparent;\n  border: 0 solid #000;\n  border-width: 0 10000px;\n  -webkit-box-sizing: content-box;\n          box-sizing: content-box;\n  opacity: .2;\n}\n.ol-target-overlay .ol-target \n{\tborder: 1px solid transparent;\n\t-webkit-box-shadow: 0 0 1px 1px #fff;\n\t        box-shadow: 0 0 1px 1px #fff;\n\tdisplay: block;\n\theight: 20px;\n\twidth: 0;\n}\n\n.ol-target-overlay .ol-target:after,\n.ol-target-overlay .ol-target:before\n{\tcontent:\"\";\n\tborder: 1px solid #369;\n\t-webkit-box-shadow: 0 0 1px 1px #fff;\n\t        box-shadow: 0 0 1px 1px #fff;\n\tdisplay: block;\n\twidth: 20px;\n\theight: 0;\n\tposition:absolute;\n\ttop:10px;\n\tleft:-10px;\n}\n.ol-target-overlay .ol-target:after\n{\t-webkit-box-shadow: none;\tbox-shadow: none;\n\theight: 20px;\n\twidth: 0;\n\ttop:0px;\n\tleft:0px;\n}\n\n.ol-overlay-container .ol-magnify \n{\tbackground: rgba(0,0,0, 0.5);\n\tborder:3px solid #369;\n\tborder-radius: 50%;\n\theight: 150px;\n\twidth: 150px;\n\toverflow: hidden;\n\t-webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);\n\tposition:relative;\n\tz-index:0;\n}\n\n.ol-overlay-container .ol-magnify:before \n{\tborder-radius: 50%;\n\t-webkit-box-shadow: 0 0 40px 2px rgba(0, 0, 0, 0.25) inset;\n\t        box-shadow: 0 0 40px 2px rgba(0, 0, 0, 0.25) inset;\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 100%;\n\tleft: 0;\n\tposition: absolute;\n\ttop: 0;\n\twidth: 100%;\n\tz-index: 1;\n}\n\n.ol-overlay-container .ol-magnify:after \n{\n\tborder-radius: 50%;\n\t-webkit-box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n\t        box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 0;\n\tleft: 23%;\n\tposition: absolute;\n\ttop: 20%;\n\twidth: 20%;\n\tz-index: 1;\n\ttransform: rotate(-40deg);\n\t-webkit-transform: rotate(-40deg);\n}\n/** popup animation using visible class\n*/\n.ol-popup.anim\n{\tvisibility: hidden;\n}\n\n/** No transform when visible \n*/\n.ol-popup.anim.visible\n{\tvisibility: visible;\n\ttransform: none;\n\t-webkit-transform: none;\n\t-webkit-animation: ol-popup_bounce 0.4s ease 1;\n\t        animation: ol-popup_bounce 0.4s ease 1;\n}\n\n@-webkit-keyframes ol-popup_bounce\n{\tfrom { -webkit-transform: scale(0); transform: scale(0); }\n\t50%  { -webkit-transform: scale(1.1); transform: scale(1.1) }\n\t80%  { -webkit-transform: scale(0.95); transform: scale(0.95) }\n\tto   { -webkit-transform: scale(1); transform: scale(1); }\n}\n\n@keyframes ol-popup_bounce\n{\tfrom { -webkit-transform: scale(0); transform: scale(0); }\n\t50%  { -webkit-transform: scale(1.1); transform: scale(1.1) }\n\t80%  { -webkit-transform: scale(0.95); transform: scale(0.95) }\n\tto   { -webkit-transform: scale(1); transform: scale(1); }\n}\n\n/* Hide to prevent flickering on animate */\n.ol-popup.anim.visible .anchor\n{\t/* animation: ol-popup_opacity 0.4s ease 1; */\n}\n@-webkit-keyframes ol-popup_opacity\n{\tfrom { visibility:hidden }\n\tto   { visibility:hidden }\n}\n@keyframes ol-popup_opacity\n{\tfrom { visibility:hidden }\n\tto   { visibility:hidden }\n}\n\n/** Transform Origin */\n.ol-popup.anim.ol-popup-bottom.ol-popup-left \n{\ttransform-origin:0 100%;\n\t-webkit-transform-origin:0 100%;\n}\n.ol-popup.anim.ol-popup-bottom.ol-popup-right \n{\ttransform-origin:100% 100%;\n\t-webkit-transform-origin:100% 100%;\n}\n.ol-popup.anim.ol-popup-bottom.ol-popup-center \n{\ttransform-origin:50% 100%;\n\t-webkit-transform-origin:50% 100%;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-left \n{\ttransform-origin:0 0;\n\t-webkit-transform-origin:0 0;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-right \n{\ttransform-origin:100% 0;\n\t-webkit-transform-origin:100% 0;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-center \n{\ttransform-origin:50% 0;\n\t-webkit-transform-origin:50% 0;\n}\n.ol-popup.anim.ol-popup-middle.ol-popup-left\n{\ttransform-origin:0 50%;\n\t-webkit-transform-origin:0 50%;\n}\n.ol-popup.anim.ol-popup-middle.ol-popup-right\n{\ttransform-origin:100% 50%;\n\t-webkit-transform-origin:100% 50%;\n}\n\n.ol-overlaycontainer-stopevent {\n  /* BOUG OL6 to enable DragOverlay interaction */\n  position: initial!important;\n}\n\n/** ol.popup */\n.ol-popup {\n  font-size:0.9em;\n  -webkit-user-select: none;  \n  -moz-user-select: none;    \n  -ms-user-select: none;      \n  user-select: none;\n}\n.ol-popup .ol-popup-content {\n  overflow:hidden;\n  cursor: default;\n  padding: 0.25em 0.5em;\n}\n.ol-popup.hasclosebox .ol-popup-content {\n  margin-right: 1.7em;\n}\n.ol-popup .ol-popup-content:after {\n  clear: both;\n  content: \"\";\n  display: block;\n  font-size: 0;\n  height: 0;\n}\n\n/** Anchor position */\n.ol-popup .anchor {\n  display:block;\n  width:0px;\n  height:0px;\n  background:red;\n  position:absolute;\n  margin: -11px 21px;\n    pointer-events: none;\n}\n.ol-popup .anchor:after,\n.ol-popup .anchor:before {\n  position:absolute;\n}\n.ol-popup-right .anchor:after,\n.ol-popup-right .anchor:before {\n  right:0;\n}\n.ol-popup-top .anchor { top:0; }\n.ol-popup-bottom .anchor { bottom:0; }\n.ol-popup-right .anchor { right:0; }\n.ol-popup-left .anchor { left:0; }\n.ol-popup-center .anchor { \n  left:50%; \n  margin-left: 0!important;\n}\n.ol-popup-middle .anchor { \n  top:50%; \n  margin-top: 0!important;\n}\n.ol-popup-center.ol-popup-middle .anchor { \n  display:none; \n}\n\n/** Fixed popup */\n.ol-popup.ol-fixed {\n  margin: 0!important;\n  top: .5em!important;\n  right: .5em!important;\n  left: auto!important;\n  bottom: auto!important;\n}\n.ol-popup.ol-fixed .anchor {\n  display: none;\n}\n.ol-popup.ol-fixed.anim {\n  -webkit-animation: none;\n  animation: none;\n}\n\n.ol-popup .ol-fix {\n  width: 1em;\n  height: .9em;\n  background: #fff;\n  position: relative;\n  float: right;\n  margin: .2em;\n  cursor: pointer;\n}\n.ol-popup .ol-fix:before {\n  content: \"\";\n  width: .8em;\n  height: .7em;\n  display: block;\n  border: .1em solid #666;\n      border-right-width: 0.1em;\n  border-right-width: .3em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  margin: .1em;\n}\n\n/** Add a shadow to the popup */\n.ol-popup.shadow {\n  -webkit-box-shadow: 2px 2px 2px 2px rgba(0,0,0,0.5);\n          box-shadow: 2px 2px 2px 2px rgba(0,0,0,0.5);\n}\n\n/** Close box */\n.ol-popup .closeBox {\n  background-color: rgba(0, 60, 136, 0.5);\n  color: #fff;\n  border: 0;\n  border-radius: 2px;\n  cursor: pointer;\n  float: right;\n  font-size: 0.9em;\n  font-weight: 700;\n  width: 1.4em;\n  height: 1.4em;\n  margin: 5px 5px 0 0;\n  padding: 0;\n  position: relative;\n  display:none;\n}\n.ol-popup.hasclosebox .closeBox {\n  display:block;\n}\n\n.ol-popup .closeBox:hover {\n  background-color: rgba(0, 60, 136, 0.7);\n}\n/* the X */\n.ol-popup .closeBox:after {\n  content: \"\\D7\";\n  font-size:1.5em;\n  top: 50%;\n  left: 0;\n  right: 0;\n  width: 100%;\n  text-align: center;\n  line-height: 1em;\n  margin: -0.5em 0;\n  position: absolute;\n}\n\n/** Modify touch poup */\n.ol-popup.modifytouch {\n  background-color: #eee;\n}\n.ol-popup.modifytouch .ol-popup-content {\t\n  padding: 0 0.25em;\n  font-size: 0.85em;\n  white-space: nowrap;\n}\n.ol-popup.modifytouch .ol-popup-content a {\n  text-decoration: none;\n}\n\n/** Tool tips popup*/\n.ol-popup.tooltips {\n  background-color: #ffa;\n}\n.ol-popup.tooltips .ol-popup-content{\n  padding: 0 0.25em;\n  font-size: 0.85em;\n  white-space: nowrap;\n}\n\n/** Default popup */\n.ol-popup.default {\n  background-color: #fff;\n  border:1px solid #69f;\n  border-radius: 5px;\n  margin:11px 0;\n}\n.ol-popup-left.default {\n  margin:11px 10px 11px -22px;\n}\n.ol-popup-right.default {\n  margin:11px -22px 11px 10px;\n}\n.ol-popup-middle.default {\n  margin:0 10px;\n}\n\n.ol-popup.default .anchor:after,\n.ol-popup.default .anchor:before {\n  content:\"\";\n  border-color: #69f transparent;\n  border-style: solid;\n  border-width: 11px;\n  margin: 0 -11px;\n}\n.ol-popup.default .anchor:after {\n  border-color: #fff transparent;\n  border-width: 9px;\n  margin: 3px -9px;\n}\n\n.ol-popup-top.default .anchor:before,\n.ol-popup-top.default .anchor:after {\n  border-top:0;\n  top:0;\n}\n\n.ol-popup-bottom.default .anchor:before,\n.ol-popup-bottom.default .anchor:after {\n  border-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-middle.default .anchor:before {\n  margin: -11px -33px;\n  border-color: transparent #69f;\n}\n.ol-popup-middle.default .anchor:after {\n  margin: -9px -30px;\n  border-color: transparent #fff;\n}\n.ol-popup-middle.ol-popup-left.default .anchor:before,\n.ol-popup-middle.ol-popup-left.default .anchor:after\n{\tborder-left:0;\n}\n.ol-popup-middle.ol-popup-right.default .anchor:before,\n.ol-popup-middle.ol-popup-right.default .anchor:after\n{\tborder-right:0;\n}\n\n/** Placemark popup */\n.ol-popup.placemark {\n  font-size: 15px;\t\n    color: #c00;\n    background-color: #fff;\n    border: .45em solid currentColor;\n    margin: .65em 0;\n    width: 2em;\n    height: 2em;\n    border-radius: 50%;\n    min-width: unset;\n    -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  -webkit-transform-origin: 50% 150%!important;\n          transform-origin: 50% 150%!important;\n}\n\n.ol-popup.placemark .ol-popup-content {\n  overflow: hidden;\n    cursor: default;\n    padding: 0;\n    text-align: center;\n    margin: -.1em;\n}\n.ol-popup.placemark .anchor {\n  margin: -.4em;\n}\n\n.ol-popup.placemark .anchor:before {\n    content: \"\";\n    margin: -.5em -.5em;\n    background: transparent;\n    width: 1em;\n    height: .5em;\n    border-radius: 50%;\n    -webkit-box-shadow: 0 1em 0.5em rgba(0,0,0,.5);\n            box-shadow: 0 1em 0.5em rgba(0,0,0,.5);\n}\n.ol-popup.placemark .anchor:after {\n    content: \"\";\n    border-color: currentColor transparent;\n    border-style: solid;\n    border-width: 1em .7em 0;\n    margin: -.75em -.7em;\n  bottom:0;\n}\n\n/** Placemark Shield */\n.ol-popup.placemark.shield {\n  border-radius: .2em;\n}\n\n.ol-popup.placemark.shield .anchor:after {\n    border-width: .8em 1em 0;\n    margin: -.7em -1em;\n}\n\n/** Placemark Blazon */\n.ol-popup.placemark.blazon {\n  border-radius: .2em;\n}\n\n/** Placemark Needle/Pushpin */\n.ol-popup.placemark.pushpin {\t\n  margin: 1.5em 0;\n  border-radius: 0;\n  border-color: currentColor transparent;\n  background: transparent!important;\n  -webkit-box-shadow: inset 2em 0 currentColor;\n          box-shadow: inset 2em 0 currentColor;\n  border-width: .3em .5em .5em;\n}\n.ol-popup.placemark.needle {\t\n  margin: 1.5em 0;\n}\n.ol-popup.placemark.pushpin .anchor,\n.ol-popup.placemark.needle .anchor {\n  margin: -1.5em;\n}\n.ol-popup.placemark.pushpin .anchor:after,\n.ol-popup.placemark.needle .anchor:after {\n  border-style: solid;\n    border-width: 2em .15em 0;\n    margin: -.55em -0.2em;\n    width: .1em;\n}\n.ol-popup.placemark.pushpin .anchor:before,\n.ol-popup.placemark.needle .anchor:before {\n    margin: -.75em -.5em;\n}\n\n/** Placemark Flag */\n.ol-popup.placemark.flagv {\n  border-radius: 0;\n  margin: 0 0 1.5em 1em;\n  border-color: transparent transparent transparent currentColor;\n  border-width: 1em 0 1em 2em;\n  width: 0;\n  height: 0;\n  background-color: transparent;\n  -webkit-transform-origin: 0% 150%!important;\n          transform-origin: 0% 150%!important;\n}\n.ol-popup.placemark.flagv .anchor {\n  margin: -2em;\n  margin-left: -1em !important;\n}\n\n.ol-popup.placemark.flag {\t\n  margin: 0 0 1.5em 1em;\n  border-radius: 0;\n  -webkit-transform-origin: 0% 150%!important;\n          transform-origin: 0% 150%!important;\n}\n.ol-popup.placemark.flag .anchor {\n  margin: -1.5em;\n}\n.ol-popup.placemark.flagv .anchor:after, \n.ol-popup.placemark.flag .anchor:after {\n  border-style: solid;\n  border-width: 2em .15em 0;\n  margin: -.55em -1em;\n  width: .1em;\n}\n.ol-popup.placemark.flagv .anchor:before,\n.ol-popup.placemark.flag .anchor:before {\n  margin: -.75em -1.25em;\n}\n\n.ol-popup.placemark.flag.finish {\n  background-image: \n    linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor), \n    linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor);\n  background-size: 1em 1em;\n  background-position: .5em 0, 0 .5em;\n  border-width: .25em;\n  margin: 0 0 1.7em .8em;\n}\n\n/** Black popup */\n.ol-popup.black .closeBox \n{\tbackground-color: rgba(0,0,0, 0.5);\n  border-radius: 5px;\n  color: #f80;\n}\n.ol-popup.black .closeBox:hover\n{\tbackground-color: rgba(0,0,0, 0.7);\n  color:#da2;\n}\n\n.ol-popup.black \n{\tbackground-color: rgba(0,0,0,0.6);\n  border-radius: 5px;\n  margin:20px 0;\n  color:#fff;\n}\n.ol-popup-left.black\n{\tmargin:20px 10px 20px -22px;\n}\n.ol-popup-right.black\n{\tmargin:20px -22px 20px 10px;\n}\n.ol-popup-middle.black \n{\tmargin:0 11px;\n}\n\n.ol-popup.black .anchor {\n  margin: -20px 11px;\n} \n.ol-popup.black .anchor:before \n{\tcontent:\"\";\n  border-color: rgba(0,0,0,0.6) transparent;\n  border-style: solid;\n  border-width: 20px 11px;\n}\n\n.ol-popup-top.black .anchor:before\n{\tborder-top:0;\n  top:0;\n}\n\n.ol-popup-bottom.black .anchor:before\n{\tborder-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-middle.black .anchor:before\n{\tmargin: -20px -22px;\n  border-color: transparent rgba(0,0,0,0.6);\n}\n.ol-popup-middle.ol-popup-left.black .anchor:before\n{\tborder-left:0;\n}\n.ol-popup-middle.ol-popup-right.black .anchor:before {\n  border-right:0;\n}\n\n.ol-popup-center.black .anchor:before {\n  margin: 0 -10px;\n}\n\n\n/** Green tips popup */\n.ol-popup.tips .closeBox {\n  background-color: #f00;\n  border-radius: 50%;\n  color: #fff;\n  width:1.2em;\n  height:1.2em;\n}\n.ol-popup.tips .closeBox:hover {\n  background-color: #f40;\n}\n\n.ol-popup.tips {\n  background-color: #cea;\n  border: 5px solid #ad7;\n  border-radius: 5px;\n  margin:20px 0;\n  color:#333;\n}\n.ol-popup-left.tips {\n  margin:20px 10px 20px -22px;\n}\n.ol-popup-right.tips {\n  margin:20px -22px 20px 10px;\n}\n.ol-popup-middle.tips {\n  margin:0 20px;\n}\n\n.ol-popup.tips .anchor {\n  margin: -25px 16px;\n} \n.ol-popup.tips .anchor:before {\n  content:\"\";\n  border-color: #ad7 transparent;\n  border-style: solid;\n  border-width: 20px 11px;\n}\n\n.ol-popup-top.tips .anchor:before {\n  border-top:0;\n  top:0;\n}\n.ol-popup-bottom.tips .anchor:before {\n  border-bottom:0;\n  bottom:0;\n}\n.ol-popup-center.tips .anchor:before {\n  border-width: 20px 6px;\n  margin: 0 -6px;\n}\n.ol-popup-left.tips .anchor:before {\n  border-left:0;\n  margin-left:0;\n}\n.ol-popup-right.tips .anchor:before {\n  border-right:0;\n  margin-right:0;\n}\n\n.ol-popup-middle.tips .anchor:before {\n  margin: -6px -41px;\n  border-color: transparent #ad7;\n  border-width:6px 20px;\n}\n.ol-popup-middle.ol-popup-left.tips .anchor:before {\n  border-left:0;\n}\n.ol-popup-middle.ol-popup-right.tips .anchor:before {\n  border-right:0;\n}\n\n/** Warning popup */\n.ol-popup.warning .closeBox {\n  background-color: #f00;\n  border-radius: 50%;\n  color: #fff;\n  font-size: 0.83em;\n}\n.ol-popup.warning .closeBox:hover {\n  background-color: #f40;\n}\n\n.ol-popup.warning {\n  background-color: #fd0;\n  border-radius: 3px;\n  border:4px dashed #f00;\n  margin:20px 0;\n  color:#900;\n  margin:28px 10px;\n}\n.ol-popup-left.warning {\n  margin-left:-22px;\n  margin-right:10px;\n}\n.ol-popup-right.warning {\n  margin-right:-22px;\n  margin-left:10px;\n}\n.ol-popup-middle.warning {\n  margin:0 22px;\n}\n\n.ol-popup.warning .anchor {\n  margin: -33px 7px;\n} \n.ol-popup.warning .anchor:before {\n  content:\"\";\n  border-color: #f00 transparent;\n  border-style: solid;\n  border-width: 30px 11px;\n}\n\n.ol-popup-top.warning .anchor:before {\n  border-top:0;\n  top:0;\n}\n.ol-popup-bottom.warning .anchor:before {\n  border-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-center.warning .anchor:before {\n  margin: 0 -21px;\n}\n.ol-popup-middle.warning .anchor:before {\n  margin: -10px -33px;\n  border-color: transparent #f00;\n  border-width:10px 22px;\n}\n.ol-popup-middle.ol-popup-left.warning .anchor:before {\n  border-left:0;\n}\n.ol-popup-middle.ol-popup-right.warning .anchor:before {\n  border-right:0;\n}\n\n.ol-popup .ol-popupfeature table {\n  width: 100%;\n}\n.ol-popup .ol-popupfeature table td {\n  max-width: 25em;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.ol-popup .ol-popupfeature table td img {\n  max-width: 100px;\n  max-height: 100px;\n}\n.ol-popup .ol-popupfeature tr:nth-child(2n+1) {\n  background-color: #eee;\n}\n.ol-popup .ol-popupfeature .ol-zoombt {\n  border: 0;\n  width: 2em;\n  height: 2em;\n  display: inline-block;\n  color: rgba(0,60,136,.5);\n  position: relative;\n  background: transparent;\n  outline: none;\n}\n.ol-popup .ol-popupfeature .ol-zoombt:before {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  width: 1em;\n  height: 1em;\n  background-color: transparent;\n  border: .17em solid currentColor;\n  border-radius: 100%;\n  top: .3em;\n  left: .3em;\n}\n.ol-popup .ol-popupfeature .ol-zoombt:after {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  top: 1.35em;\n  left: 1.15em;\n  border-width: .1em .3em;\n  border-style: solid;\n  border-radius: .03em;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n  -webkit-box-shadow: -0.2em 0 0 -0.04em;\n          box-shadow: -0.2em 0 0 -0.04em;\n}\n\n.ol-popup .ol-popupfeature .ol-count{\n  float: right;\n  margin: .25em 0;\n}\n.ol-popup .ol-popupfeature .ol-prev,\n.ol-popup .ol-popupfeature .ol-next {\n  border-style: solid;\n  border-color: transparent rgba(0,60,136,.5);\n  border-width: .5em 0 .5em .5em;\n  display: inline-block;\n  vertical-align: bottom;\n  margin: 0 .5em;\n  cursor: pointer;\n}\n.ol-popup .ol-popupfeature .ol-prev{\n  border-width: .5em .5em .5em 0;\n}\n\n.ol-popup.tooltips.black {\n  -webkit-transform: scaleY(1.3);\n          transform: scaleY(1.3);\n  padding: .2em .5em;\n  background-color: rgba(0,0,0, 0.5);\n}\n.ol-popup-middle.tooltips.black .anchor:before {\n  border-width: 5px 10px;\n  margin: -5px -21px;\n}\n.ol-fixedoverlay {\n    position: absolute;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n  }\n  ", ""]);
 
 // exports
 
@@ -5917,11 +6360,11 @@ var require;var require;!function(e){if(true)module.exports=e();else { var t; }}
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var ol_control_Control__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/control/Control */ "./node_modules/ol/control/Control.js");
 /*	Copyright (c) 2016 Jean-Marc VIGLINO,
-	released under the CeCILL-B license (French BSD license)
-	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
 */
 
 
@@ -5934,52 +6377,52 @@ __webpack_require__.r(__webpack_exports__);
  * @constructor
  * @extends {ol_control_Control}
  * @param {Object=} options Control options.
- *	@param {String} options.className class of the control
- *	@param {bool} options.group is a group, default false
- *	@param {bool} options.toggleOne only one toggle control is active at a time, default false
- *	@param {bool} options.autoDeactivate used with subbar to deactivate all control when top level control deactivate, default false
- *	@param {Array<_ol_control_>} options.controls a list of control to add to the bar
+ *  @param {String} options.className class of the control
+ *  @param {bool} options.group is a group, default false
+ *  @param {bool} options.toggleOne only one toggle control is active at a time, default false
+ *  @param {bool} options.autoDeactivate used with subbar to deactivate all control when top level control deactivate, default false
+ *  @param {Array<_ol_control_>} options.controls a list of control to add to the bar
  */
 var ol_control_Bar = function(options) {
   if (!options) options={};
-	var element = document.createElement("div");
+  var element = document.createElement("div");
       element.classList.add('ol-unselectable', 'ol-control', 'ol-bar');
-	if (options.className) {
-		var classes = options.className.split(' ').filter(function(className) {
-			return className.length > 0;
-		});
-		element.classList.add.apply(element.classList, classes)
-	}
-	if (options.group) element.classList.add('ol-group');
+  if (options.className) {
+    var classes = options.className.split(' ').filter(function(className) {
+      return className.length > 0;
+    });
+    element.classList.add.apply(element.classList, classes)
+  }
+  if (options.group) element.classList.add('ol-group');
 
-	ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {
+  ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {
     element: element,
-		target: options.target
-	});
+    target: options.target
+  });
 
-	this.set('toggleOne', options.toggleOne);
-	this.set('autoDeactivate', options.autoDeactivate);
+  this.set('toggleOne', options.toggleOne);
+  this.set('autoDeactivate', options.autoDeactivate);
 
-	this.controls_ = [];
-	if (options.controls instanceof Array) {
+  this.controls_ = [];
+  if (options.controls instanceof Array) {
     for (var i=0; i<options.controls.length; i++) {
       this.addControl(options.controls[i]);
-		}
-	}
+    }
+  }
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Bar, ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_Bar, ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 /** Set the control visibility
-* @param {boolean} b
-*/
+ * @param {boolean} b
+ */
 ol_control_Bar.prototype.setVisible = function (val) {
-	if (val) this.element.style.display = '';
-	else this.element.style.display = 'none';
+  if (val) this.element.style.display = '';
+  else this.element.style.display = 'none';
 }
 
 /** Get the control visibility
-* @return {boolean} b
-*/
+ * @return {boolean} b
+ */
 ol_control_Bar.prototype.getVisible = function () {
   return this.element.style.display != 'none';
 }
@@ -5992,116 +6435,130 @@ ol_control_Bar.prototype.getVisible = function () {
 ol_control_Bar.prototype.setMap = function (map) {
   ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.setMap.call(this, map);
 
-	for (var i=0; i<this.controls_.length; i++) {
+  for (var i=0; i<this.controls_.length; i++) {
     var c = this.controls_[i];
-		// map.addControl(c);
-		c.setMap(map);
-	}
+    // map.addControl(c);
+    c.setMap(map);
+  }
 };
 
 /** Get controls in the panel
-*	@param {Array<_ol_control_>}
-*/
+ *	@param {Array<_ol_control_>}
+ */
 ol_control_Bar.prototype.getControls = function () {
   return this.controls_;
 };
 
 /** Set tool bar position
-*	@param {top|left|bottom|right} pos
-*/
+ *	@param {top|left|bottom|right} pos
+ */
 ol_control_Bar.prototype.setPosition = function (pos) {
   this.element.classList.remove('ol-left', 'ol-top', 'ol-bottom', 'ol-right');
-	pos=pos.split ('-');
-	for (var i=0; i<pos.length; i++) {
+  pos=pos.split ('-');
+  for (var i=0; i<pos.length; i++) {
     switch (pos[i]) {
       case 'top':
-			case 'left':
-			case 'bottom':
-			case 'right':
-				this.element.classList.add("ol-"+pos[i]);
-				break;
-			default: break;
-		}
-	}
+      case 'left':
+      case 'bottom':
+      case 'right':
+        this.element.classList.add("ol-"+pos[i]);
+        break;
+      default: break;
+    }
+  }
 };
 
 /** Add a control to the bar
-*	@param {_ol_control_} c control to add
-*/
+ *	@param {_ol_control_} c control to add
+ */
 ol_control_Bar.prototype.addControl = function (c) {
   this.controls_.push(c);
-	c.setTarget(this.element);
-	if (this.getMap()) {
+  c.setTarget(this.element);
+  if (this.getMap()) {
     this.getMap().addControl(c);
-	}
-	// Activate and toogleOne
-	c.on ('change:active', this.onActivateControl_.bind(this));
-	if (c.getActive && c.getActive()) {
-    c.dispatchEvent({ type:'change:active', key:'active', oldValue:false, active:true });
-	}
+  }
+  // Activate and toogleOne
+  c.on ('change:active', function(e) { this.onActivateControl_(e, c); }.bind(this));
+  if (c.getActive) {
+    // c.dispatchEvent({ type:'change:active', key:'active', oldValue:false, active:true });
+    this.onActivateControl_({ target: c, active: c.getActive() }, c);
+  }
 };
 
 /** Deativate all controls in a bar
-* @param {_ol_control_} except a control
-*/
+ * @param {_ol_control_} except a control
+ */
 ol_control_Bar.prototype.deactivateControls = function (except) {
   for (var i=0; i<this.controls_.length; i++) {
   if (this.controls_[i] !== except && this.controls_[i].setActive) {
     this.controls_[i].setActive(false);
-		}
-	}
+    }
+  }
 };
 
 
 ol_control_Bar.prototype.getActiveControls = function () {
   var active = [];
-	for (var i=0, c; c=this.controls_[i]; i++) {
+  for (var i=0, c; c=this.controls_[i]; i++) {
     if (c.getActive && c.getActive()) active.push(c);
-	}
-	return active;
+  }
+  return active;
 }
 
 /** Auto activate/deactivate controls in the bar
-* @param {boolean} b activate/deactivate
-*/
+ * @param {boolean} b activate/deactivate
+ */
 ol_control_Bar.prototype.setActive = function (b) {
   if (!b && this.get("autoDeactivate")) {
     this.deactivateControls();
-	}
-	if (b) {
+  }
+  if (b) {
     var ctrls = this.getControls();
-		for (var i=0, sb; (sb = ctrls[i]); i++) {
+    for (var i=0, sb; (sb = ctrls[i]); i++) {
       if (sb.get("autoActivate")) sb.setActive(true);
-		}
-	}
+    }
+  }
 }
 
 /** Post-process an activated/deactivated control
-*	@param {ol.event} e :an object with a target {_ol_control_} and active flag {bool}
-*/
-ol_control_Bar.prototype.onActivateControl_ = function (e) {
-	if (this.get('toggleOne')) {
+ *	@param {ol.event} e :an object with a target {_ol_control_} and active flag {bool}
+ */
+ol_control_Bar.prototype.onActivateControl_ = function (e, ctrl) {
+  if (this.get('toggleOne')) {
     if (e.active) {
       var n;
-			var ctrl = e.target;
-			for (n=0; n<this.controls_.length; n++) {
+      //var ctrl = e.target;
+      for (n=0; n<this.controls_.length; n++) {
         if (this.controls_[n]===ctrl) break;
-			}
-			// Not here!
-			if (n==this.controls_.length) return;
-			this.deactivateControls (this.controls_[n]);
-		} else {
+      }
+      // Not here!
+      if (n==this.controls_.length) return;
+      this.deactivateControls (this.controls_[n]);
+    } else {
       // No one active > test auto activate
-			if (!this.getActiveControls().length) {
+      if (!this.getActiveControls().length) {
         for (var i=0, c; c=this.controls_[i]; i++) {
           if (c.get("autoActivate")) {
             c.setActive(true);
-						break;
-					}
-				}
-			}
-		}
-	}
+            break;
+          }
+        }
+      }
+    }
+  }
+};
+
+/**
+ * @param {string} name of the control to search
+ * @return {ol.control.Control}
+ */
+ol_control_Bar.prototype.getControlsByName = function(name) {
+  var controls = this.getControls();
+  return controls.filter(
+    function(control) {
+      return (control.get('name') === name);
+    }
+  );
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (ol_control_Bar);
@@ -6118,8 +6575,580 @@ ol_control_Bar.prototype.onActivateControl_ = function (e) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var ol_control_Control__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/control/Control */ "./node_modules/ol/control/Control.js");
+/* harmony import */ var _util_element__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../util/element */ "./node_modules/ol-ext/util/element.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO,
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+/** A simple push button control
+ * @constructor
+ * @extends {ol_control_Control}
+ * @param {Object=} options Control options.
+ *  @param {String} options.className class of the control
+ *  @param {String} options.title title of the control
+ *  @param {String} options.name an optional name, default none
+ *  @param {String} options.html html to insert in the control
+ *  @param {function} options.handleClick callback when control is clicked (or use change:active event)
+ */
+var ol_control_Button = function(options){
+  options = options || {};
+
+  var element = document.createElement("div");
+  element.className = (options.className || '') + " ol-button ol-unselectable ol-control";
+  var self = this;
+
+  var bt = this.button_ = document.createElement(/ol-text-button/.test(options.className) ? "div": "button");
+  bt.type = "button";
+  if (options.title) bt.title = options.title;
+  if (options.html instanceof Element) bt.appendChild(options.html)
+  else bt.innerHTML = options.html || "";
+  var evtFunction = function(e) {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (options.handleClick) {
+      options.handleClick.call(self, e);
+    }
+  };
+  bt.addEventListener("click", evtFunction);
+  bt.addEventListener("touchstart", evtFunction);
+  element.appendChild(bt);
+
+  // Try to get a title in the button content
+  if (!options.title && bt.firstElementChild) {
+    bt.title = bt.firstElementChild.title;
+  }
+
+  ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {
+    element: element,
+    target: options.target
+  });
+
+  if (options.title) {
+    this.set("title", options.title);
+  }
+  if (options.title) this.set("title", options.title);
+  if (options.name) this.set("name", options.name);
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_Button, ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/** Set the control visibility
+* @param {boolean} b 
+*/
+ol_control_Button.prototype.setVisible = function (val) {
+  if (val) _util_element__WEBPACK_IMPORTED_MODULE_2__["default"].show(this.element);
+  else _util_element__WEBPACK_IMPORTED_MODULE_2__["default"].hide(this.element);
+};
+
+/**
+ * Set the button title
+ * @param {string} title
+ * @returns {undefined}
+ */
+ol_control_Button.prototype.setTitle = function(title) {
+  this.button_.setAttribute('title', title);
+};
+
+/**
+ * Set the button html
+ * @param {string} html
+ * @returns {undefined}
+ */
+ol_control_Button.prototype.setHtml = function(html) {
+  _util_element__WEBPACK_IMPORTED_MODULE_2__["default"].setHTML (this.button_, html);
+};
+
+/**
+ * Get the button element
+ * @returns {undefined}
+ */
+ol_control_Button.prototype.getButtonElement = function() {
+  return this.button_;
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_control_Button);
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/control/EditBar.js":
+/*!************************************************!*\
+  !*** ./node_modules/ol-ext/control/EditBar.js ***!
+  \************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_events_condition__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/events/condition */ "./node_modules/ol/events/condition.js");
+/* harmony import */ var ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/interaction/Draw */ "./node_modules/ol/interaction/Draw.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/* harmony import */ var ol_interaction_Select__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/interaction/Select */ "./node_modules/ol/interaction/Select.js");
+/* harmony import */ var _Bar__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./Bar */ "./node_modules/ol-ext/control/Bar.js");
+/* harmony import */ var _Button__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./Button */ "./node_modules/ol-ext/control/Button.js");
+/* harmony import */ var _Toggle__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./Toggle */ "./node_modules/ol-ext/control/Toggle.js");
+/* harmony import */ var _TextButton__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./TextButton */ "./node_modules/ol-ext/control/TextButton.js");
+/* harmony import */ var _interaction_Delete__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ../interaction/Delete */ "./node_modules/ol-ext/interaction/Delete.js");
+/* harmony import */ var _util_element__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../util/element */ "./node_modules/ol-ext/util/element.js");
+/* harmony import */ var _interaction_Offset__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../interaction/Offset */ "./node_modules/ol-ext/interaction/Offset.js");
+/* harmony import */ var _interaction_Split__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ../interaction/Split */ "./node_modules/ol-ext/interaction/Split.js");
+/* harmony import */ var _interaction_Transform__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ../interaction/Transform */ "./node_modules/ol-ext/interaction/Transform.js");
+/* harmony import */ var _interaction_ModifyFeature__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ../interaction/ModifyFeature */ "./node_modules/ol-ext/interaction/ModifyFeature.js");
+/* harmony import */ var _interaction_DrawRegular__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ../interaction/DrawRegular */ "./node_modules/ol-ext/interaction/DrawRegular.js");
+/* harmony import */ var _interaction_DrawHole__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ../interaction/DrawHole */ "./node_modules/ol-ext/interaction/DrawHole.js");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Control bar for editing in a layer
+ * @constructor
+ * @extends {ol_control_Bar}
+ * @fires info
+ * @param {Object=} options Control options.
+ *	@param {String} options.className class of the control
+ *	@param {String} options.target Specify a target if you want the control to be rendered outside of the map's viewport.
+ *	@param {boolean} options.edition false to remove the edition tools, default true
+ *	@param {Object} options.interactions List of interactions to add to the bar 
+ *    ie. Select, Delete, Info, DrawPoint, DrawLine, DrawPolygon
+ *    Each interaction can be an interaction or true (to get the default one) or false to remove it from bar
+ *	@param {ol.source.Vector} options.source Source for the drawn features. 
+ */
+var ol_control_EditBar = function(options) {
+  options = options || {};
+  options.interactions = options.interactions || {};
+
+  // New bar
+	_Bar__WEBPACK_IMPORTED_MODULE_6__["default"].call(this, {
+    className: (options.className ? options.className+' ': '') + 'ol-editbar',
+    toggleOne: true,
+		target: options.target
+  });
+
+  this._source = options.source;
+  // Add buttons / interaction
+  this._interactions = {};
+  this._setSelectInteraction(options);
+  if (options.edition!==false) this._setEditInteraction(options);
+  this._setModifyInteraction(options);
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_EditBar, _Bar__WEBPACK_IMPORTED_MODULE_6__["default"]);
+
+/**
+ * Set the map instance the control is associated with
+ * and add its controls associated to this map.
+ * @param {_ol_Map_} map The map instance.
+ */
+ol_control_EditBar.prototype.setMap = function (map) {
+  if (this.getMap()) {
+    if (this._interactions.Delete) this.getMap().removeInteraction(this._interactions.Delete);
+    if (this._interactions.ModifySelect) this.getMap().removeInteraction(this._interactions.ModifySelect);
+  }
+  
+  _Bar__WEBPACK_IMPORTED_MODULE_6__["default"].prototype.setMap.call(this, map);
+
+  if (this.getMap()) {
+    if (this._interactions.Delete) this.getMap().addInteraction(this._interactions.Delete);
+    if (this._interactions.ModifySelect) this.getMap().addInteraction(this._interactions.ModifySelect);
+  }
+};
+
+/** Get an interaction associated with the bar
+ * @param {string} name 
+ */
+ol_control_EditBar.prototype.getInteraction = function (name) {
+  return this._interactions[name];
+};
+
+/** Get the option title */
+ol_control_EditBar.prototype._getTitle = function (option) {
+  return (option && option.title) ? option.title : option;
+};
+
+/** Add selection tool:
+ * 1. a toggle control with a select interaction
+ * 2. an option bar to delete / get information on the selected feature
+ * @private
+ */
+ol_control_EditBar.prototype._setSelectInteraction = function (options) {
+  var self = this;
+  
+  // Sub bar
+  var sbar = new _Bar__WEBPACK_IMPORTED_MODULE_6__["default"]();
+  var selectCtrl;
+
+  // Delete button
+  if (options.interactions.Delete !== false) {
+    if (options.interactions.Delete instanceof _interaction_Delete__WEBPACK_IMPORTED_MODULE_10__["default"]) {
+      this._interactions.Delete = options.interactions.Delete; 
+    } else {
+      this._interactions.Delete = new _interaction_Delete__WEBPACK_IMPORTED_MODULE_10__["default"]();
+    }
+    var del = this._interactions.Delete;
+    del.setActive(false);
+    if (this.getMap()) this.getMap().addInteraction(del);
+    sbar.addControl (new _Button__WEBPACK_IMPORTED_MODULE_7__["default"]({
+      className: 'ol-delete',
+      title: this._getTitle(options.interactions.Delete) || "Delete",
+      handleClick: function(e) {
+        // Delete selection
+        del.delete(selectCtrl.getInteraction().getFeatures());
+        console.log('del')
+        var evt = {
+          type: 'select',
+          selected: [],
+          deselected: selectCtrl.getInteraction().getFeatures().getArray().slice(),
+          mapBrowserEvent: e.mapBrowserEvent
+        };
+        selectCtrl.getInteraction().getFeatures().clear();
+        selectCtrl.getInteraction().dispatchEvent(evt);
+      }
+    }));
+  }
+
+  // Info button
+  if (options.interactions.Info !== false) {
+    sbar.addControl (new _Button__WEBPACK_IMPORTED_MODULE_7__["default"]({
+      className: 'ol-info',
+      title: this._getTitle(options.interactions.Info) || "Show informations",
+      handleClick: function() {
+        self.dispatchEvent({ 
+          type: 'info', 
+          features: selectCtrl.getInteraction().getFeatures() 
+        });
+      }
+    }));
+  }
+
+  // Select button
+  if (options.interactions.Select !== false) {
+    if (options.interactions.Select instanceof ol_interaction_Select__WEBPACK_IMPORTED_MODULE_5__["default"]) {
+      this._interactions.Select = options.interactions.Select
+    } else {
+      this._interactions.Select = new ol_interaction_Select__WEBPACK_IMPORTED_MODULE_5__["default"]({
+        condition: ol_events_condition__WEBPACK_IMPORTED_MODULE_1__["click"]
+      });
+    }
+    var sel = this._interactions.Select;
+    selectCtrl = new _Toggle__WEBPACK_IMPORTED_MODULE_8__["default"]({
+      className: 'ol-selection',
+      title: this._getTitle(options.interactions.Select) || "Select",
+      interaction: sel,
+      bar: sbar.getControls().length ? sbar : undefined,
+      autoActivate:true,
+      active:true
+    });
+
+    this.addControl(selectCtrl);
+    sel.on('change:active', function() {
+      sel.getFeatures().clear();
+    });
+  }
+};
+
+
+/** Add editing tools
+ * @private
+ */ 
+ol_control_EditBar.prototype._setEditInteraction = function (options) {
+  if (options.interactions.DrawPoint !== false) {
+    if (options.interactions.DrawPoint instanceof ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"]) {
+      this._interactions.DrawPoint = options.interactions.DrawPoint;
+    } else {
+      this._interactions.DrawPoint = new ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"]({
+        type: 'Point',
+        source: this._source
+      });
+    }
+    var pedit = new _Toggle__WEBPACK_IMPORTED_MODULE_8__["default"]({
+      className: 'ol-drawpoint',
+      title: this._getTitle(options.interactions.DrawPoint) || 'Point',
+      interaction: this._interactions.DrawPoint
+    });
+    this.addControl ( pedit );
+  }
+
+  if (options.interactions.DrawLine !== false) {
+    if (options.interactions.DrawLine instanceof ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"]) {
+      this._interactions.DrawLine = options.interactions.DrawLine
+    } else {
+      this._interactions.DrawLine = new ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"] ({
+        type: 'LineString',
+        source: this._source,
+        // Count inserted points
+        geometryFunction: function(coordinates, geometry) {
+          if (geometry) geometry.setCoordinates(coordinates);
+          else geometry = new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_3__["default"](coordinates);
+          this.nbpts = geometry.getCoordinates().length;
+          return geometry;
+        }
+      });
+    }
+    var ledit = new _Toggle__WEBPACK_IMPORTED_MODULE_8__["default"]({
+      className: 'ol-drawline',
+      title: this._getTitle(options.interactions.DrawLine) || 'LineString',
+      interaction: this._interactions.DrawLine,
+      // Options bar associated with the control
+      bar: new _Bar__WEBPACK_IMPORTED_MODULE_6__["default"] ({
+        controls:[ 
+          new _TextButton__WEBPACK_IMPORTED_MODULE_9__["default"]({
+            html: this._getTitle(options.interactions.UndoDraw) || 'undo',
+            title: this._getTitle(options.interactions.UndoDraw) || "delete last point",
+            handleClick: function() {
+              if (ledit.getInteraction().nbpts>1) ledit.getInteraction().removeLastPoint();
+            }
+          }),
+          new _TextButton__WEBPACK_IMPORTED_MODULE_9__["default"] ({
+            html: this._getTitle(options.interactions.FinishDraw) || 'finish',
+            title: this._getTitle(options.interactions.FinishDraw) || "finish",
+            handleClick: function() {
+              // Prevent null objects on finishDrawing
+              if (ledit.getInteraction().nbpts>2) ledit.getInteraction().finishDrawing();
+            }
+          })
+        ]
+      }) 
+    });
+
+    this.addControl ( ledit );
+  }
+
+  if (options.interactions.DrawPolygon !== false) {
+    if (options.interactions.DrawPolygon instanceof ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"]){
+      this._interactions.DrawPolygon = options.interactions.DrawPolygon
+    } else {
+      this._interactions.DrawPolygon = new ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"] ({
+        type: 'Polygon',
+        source: this._source,
+        // Count inserted points
+        geometryFunction: function(coordinates, geometry) {
+          this.nbpts = coordinates[0].length;
+          if (geometry) geometry.setCoordinates([coordinates[0].concat([coordinates[0][0]])]);
+          else geometry = new ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_4__["default"](coordinates);
+          return geometry;
+        }
+      });
+    }
+    this._setDrawPolygon(
+      'ol-drawpolygon', 
+      this._interactions.DrawPolygon, 
+      this._getTitle(options.interactions.DrawPolygon) || 'Polygon', 
+      options
+    );
+  }
+
+  // Draw hole
+  if (options.interactions.DrawHole !== false) {
+    if (options.interactions.DrawHole instanceof _interaction_DrawHole__WEBPACK_IMPORTED_MODULE_17__["default"]){
+      this._interactions.DrawHole = options.interactions.DrawHole;
+    } else {
+      this._interactions.DrawHole = new _interaction_DrawHole__WEBPACK_IMPORTED_MODULE_17__["default"] ();
+    }
+    this._setDrawPolygon(
+      'ol-drawhole', 
+      this._interactions.DrawHole, 
+      this._getTitle(options.interactions.DrawHole) || 'Hole', 
+      options
+    );
+  }
+
+  // Draw regular
+  if (options.interactions.DrawRegular !== false) {
+    if (options.interactions.DrawRegular instanceof _interaction_DrawRegular__WEBPACK_IMPORTED_MODULE_16__["default"]) {
+      this._interactions.DrawRegular = options.interactions.DrawRegular
+    } else {
+      this._interactions.DrawRegular = new _interaction_DrawRegular__WEBPACK_IMPORTED_MODULE_16__["default"] ({
+        source: this._source,
+        sides: 4
+      });
+    }
+    var regular = this._interactions.DrawRegular;
+
+    var div = document.createElement('DIV');
+
+    var down = _util_element__WEBPACK_IMPORTED_MODULE_11__["default"].create('DIV', { parent: div });
+    _util_element__WEBPACK_IMPORTED_MODULE_11__["default"].addListener(down, ['click', 'touchstart'], function() {
+      var sides = regular.getSides() -1;
+      if (sides < 2) sides = 2;
+      regular.setSides (sides);
+      text.textContent = sides>2 ? sides+' pts' : 'circle';
+    }.bind(this));
+
+    var text = _util_element__WEBPACK_IMPORTED_MODULE_11__["default"].create('TEXT', { html:'4 pts', parent: div });
+    
+    var up = _util_element__WEBPACK_IMPORTED_MODULE_11__["default"].create('DIV', { parent: div });
+    _util_element__WEBPACK_IMPORTED_MODULE_11__["default"].addListener(up, ['click', 'touchstart'], function() {
+      var sides = regular.getSides() +1;
+      if (sides<3) sides=3;
+      regular.setSides(sides);
+      text.textContent = sides+' pts';
+    }.bind(this));
+
+    var ctrl = new _Toggle__WEBPACK_IMPORTED_MODULE_8__["default"]({
+      className: 'ol-drawregular',
+      title: this._getTitle(options.interactions.DrawRegular) || 'Regular',
+      interaction: this._interactions.DrawRegular,
+      // Options bar associated with the control
+      bar: new _Bar__WEBPACK_IMPORTED_MODULE_6__["default"] ({
+        controls:[ 
+          new _TextButton__WEBPACK_IMPORTED_MODULE_9__["default"]({
+            html: div
+          })
+        ]
+      }) 
+    });
+    this.addControl (ctrl);
+  }
+
+};
+
+/**
+ * @private
+ */
+ol_control_EditBar.prototype._setDrawPolygon = function (className, interaction, title, options) {
+  var fedit = new _Toggle__WEBPACK_IMPORTED_MODULE_8__["default"] ({
+    className: className,
+    title: title,
+    interaction: interaction,
+    // Options bar associated with the control
+    bar: new _Bar__WEBPACK_IMPORTED_MODULE_6__["default"]({
+      controls:[ 
+        new _TextButton__WEBPACK_IMPORTED_MODULE_9__["default"] ({
+          html: this._getTitle(options.interactions.UndoDraw) || 'undo',
+          title: this._getTitle(options.interactions.UndoDraw) || 'undo last point',
+          handleClick: function(){
+            if (fedit.getInteraction().nbpts>1) fedit.getInteraction().removeLastPoint();
+          }
+        }),
+        new _TextButton__WEBPACK_IMPORTED_MODULE_9__["default"]({
+          html: this._getTitle(options.interactions.FinishDraw) || 'finish',
+          title: this._getTitle(options.interactions.FinishDraw) || 'finish',
+          handleClick: function() {
+            // Prevent null objects on finishDrawing
+            if (fedit.getInteraction().nbpts>3) fedit.getInteraction().finishDrawing();
+          }
+        })
+      ]
+    }) 
+  });
+  this.addControl (fedit);
+};
+
+/** Add modify tools
+ * @private
+ */ 
+ol_control_EditBar.prototype._setModifyInteraction = function (options) {
+  // Modify on selected features
+  if (options.interactions.ModifySelect !== false && options.interactions.Select !== false) {
+    if (options.interactions.ModifySelect instanceof _interaction_ModifyFeature__WEBPACK_IMPORTED_MODULE_15__["default"]) {
+      this._interactions.ModifySelect = options.interactions.ModifySelect;
+    } else {
+      this._interactions.ModifySelect = new _interaction_ModifyFeature__WEBPACK_IMPORTED_MODULE_15__["default"]({
+        features: this.getInteraction('Select').getFeatures()
+      });
+    }
+    if (this.getMap()) this.getMap().addInteraction(this._interactions.ModifySelect);
+    // Activate with select
+    this._interactions.ModifySelect.setActive(this._interactions.Select.getActive());
+    this._interactions.Select.on('change:active', function() {
+      this._interactions.ModifySelect.setActive(this._interactions.Select.getActive());
+    }.bind(this));
+  }
+
+  if (options.interactions.Transform !== false) {
+    if (options.interactions.Transform instanceof _interaction_Transform__WEBPACK_IMPORTED_MODULE_14__["default"]) {
+      this._interactions.Transform = options.interactions.Transform;
+    } else {
+      this._interactions.Transform = new _interaction_Transform__WEBPACK_IMPORTED_MODULE_14__["default"] ({
+        addCondition: ol_events_condition__WEBPACK_IMPORTED_MODULE_1__["shiftKeyOnly"]
+      });
+    }
+    var transform = new _Toggle__WEBPACK_IMPORTED_MODULE_8__["default"] ({
+      html: '<i></i>',
+      className: 'ol-transform',
+      title: this._getTitle(options.interactions.Transform) || 'Transform',
+      interaction: this._interactions.Transform
+    });
+    this.addControl (transform);
+  }
+
+  if (options.interactions.Split !== false) {
+    if (options.interactions.Split instanceof _interaction_Split__WEBPACK_IMPORTED_MODULE_13__["default"]) {
+      this._interactions.Split = options.interactions.Split;
+    } else {
+      this._interactions.Split = new _interaction_Split__WEBPACK_IMPORTED_MODULE_13__["default"] ({
+          sources: this._source
+      });
+    }
+    var split = new _Toggle__WEBPACK_IMPORTED_MODULE_8__["default"] ({
+      className: 'ol-split',
+      title: this._getTitle(options.interactions.Split) || 'Split',
+      interaction: this._interactions.Split
+    });
+    this.addControl (split);
+  }
+
+  if (options.interactions.Offset !== false) {
+    if (options.interactions.Offset instanceof _interaction_Offset__WEBPACK_IMPORTED_MODULE_12__["default"]) {
+      this._interactions.Offset = options.interactions.Offset;
+    } else {
+      this._interactions.Offset = new _interaction_Offset__WEBPACK_IMPORTED_MODULE_12__["default"] ({
+          source: this._source
+      });
+    }
+    var offset = new _Toggle__WEBPACK_IMPORTED_MODULE_8__["default"] ({
+      html: '<i></i>',
+      className: 'ol-offset',
+      title: this._getTitle(options.interactions.Offset) || 'Offset',
+      interaction: this._interactions.Offset
+    });
+    this.addControl (offset);
+  }
+
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_control_EditBar);
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/control/TextButton.js":
+/*!***************************************************!*\
+  !*** ./node_modules/ol-ext/control/TextButton.js ***!
+  \***************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var _Button__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Button */ "./node_modules/ol-ext/control/Button.js");
 /*	Copyright (c) 2016 Jean-Marc VIGLINO,
 	released under the CeCILL-B license (French BSD license)
 	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
@@ -6127,59 +7156,25 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-/** A simple push button control
-* @constructor
-* @extends {ol_control_Control}
-* @param {Object=} options Control options.
-*	@param {String} options.className class of the control
-*	@param {String} options.title title of the control
-*	@param {String} options.html html to insert in the control
-*	@param {function} options.handleClick callback when control is clicked (or use change:active event)
-*/
-var ol_control_Button = function(options)
+
+/** A simple push button control drawn as text
+ * @constructor
+ * @extends {ol_control_Button}
+ * @param {Object=} options Control options.
+ *	@param {String} options.className class of the control
+ *	@param {String} options.title title of the control
+ *	@param {String} options.html html to insert in the control
+ *	@param {function} options.handleClick callback when control is clicked (or use change:active event)
+ */
+
+var ol_control_TextButton = function(options)
 {	options = options || {};
-
-	var element = document.createElement("div");
-	element.className = (options.className || '') + " ol-button ol-unselectable ol-control";
-	var self = this;
-
-	var bt = document.createElement(/ol-text-button/.test(options.className) ? "div": "button");
-	bt.type = "button";
-	if (options.title) bt.title = options.title;
-	if (options.html instanceof Element) bt.appendChild(options.html)
-	else bt.innerHTML = options.html || "";
-	var evtFunction = function(e) {
-		if (e && e.preventDefault) {
-			e.preventDefault();
-			e.stopPropagation();
-		}
-		if (options.handleClick) {
-			options.handleClick.call(self, e);
-		}
-	};
-	bt.addEventListener("click", evtFunction);
-	bt.addEventListener("touchstart", evtFunction);
-	element.appendChild(bt);
-
-	// Try to get a title in the button content
-	if (!options.title && bt.firstElementChild) {
-		bt.title = bt.firstElementChild.title;
-	}
-
-	ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"].call(this,
-	{	element: element,
-		target: options.target
-	});
-
-	if (options.title) {
-		this.set("title", options.title);
-	}
-	if (options.title) this.set("title", options.title);
+    options.className = (options.className||"") + " ol-text-button";
+    _Button__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, options);
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Button, ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_TextButton, _Button__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
-
-/* harmony default export */ __webpack_exports__["default"] = (ol_control_Button);
+/* harmony default export */ __webpack_exports__["default"] = (ol_control_TextButton);
 
 
 /***/ }),
@@ -6193,15 +7188,11 @@ Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Button, ol_contro
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
-/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/Feature */ "./node_modules/ol/Feature.js");
-/* harmony import */ var ol_control_Control__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/control/Control */ "./node_modules/ol/control/Control.js");
-/* harmony import */ var ol_has__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/has */ "./node_modules/ol/has.js");
-/* harmony import */ var _util_element__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../util/element */ "./node_modules/ol-ext/util/element.js");
+/* harmony import */ var ol_control_Control__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/control/Control */ "./node_modules/ol/control/Control.js");
+/* harmony import */ var _util_element__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../util/element */ "./node_modules/ol-ext/util/element.js");
 /*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
-
-
 
 
 
@@ -6233,27 +7224,27 @@ __webpack_require__.r(__webpack_exports__);
  */
 var ol_control_Timeline = function(options) {
 
-  var element = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  var element = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     className: (options.className || '') + ' ol-timeline'
       + (options.target ? '': ' ol-unselectable ol-control')
       + (options.zoomButton ? ' ol-hasbutton':'')
-      + (ol_has__WEBPACK_IMPORTED_MODULE_4__["default"] ? ' ol-touch' : '')
+      + ('ontouchstart' in window ? ' ol-touch' : '')
   });
 
   // Initialize
-  ol_control_Control__WEBPACK_IMPORTED_MODULE_3__["default"].call(this, {
+  ol_control_Control__WEBPACK_IMPORTED_MODULE_2__["default"].call(this, {
     element: element,
     target: options.target
   });
 
   // Scroll div
-  this._scrollDiv = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  this._scrollDiv = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     className: 'ol-scroll',
     parent: this.element
   });
 
   // Add a button bar
-  this._buttons = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  this._buttons = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     className: 'ol-buttons',
     parent: this.element
   });
@@ -6290,7 +7281,7 @@ var ol_control_Timeline = function(options) {
   }
 
   // Draw center date
-  this._intervalDiv = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  this._intervalDiv = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     className: 'ol-center-date',
     parent: this.element
   });
@@ -6316,9 +7307,11 @@ var ol_control_Timeline = function(options) {
       });
     }.bind(this), options.scrollTimeout || 15);
   }.bind(this));
+  // Magic to give "live" scroll events on touch devices
+  this._scrollDiv.addEventListener('gesturechange', function() {});
 
   // Scroll timeline
-  _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].scrollDiv(this._scrollDiv, {
+  _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].scrollDiv(this._scrollDiv, {
     onmove: function(b) {
       // Prevent selection on moving
       this._moving = b; 
@@ -6342,7 +7335,7 @@ var ol_control_Timeline = function(options) {
   // Feature source 
   this.setFeatures(options.features || options.source, options.zoom);
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Timeline, ol_control_Control__WEBPACK_IMPORTED_MODULE_3__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_Timeline, ol_control_Control__WEBPACK_IMPORTED_MODULE_2__["default"]);
 
 /**
  * Set the map instance the control is associated with
@@ -6350,8 +7343,8 @@ Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Timeline, ol_cont
  * @param {_ol_Map_} map The map instance.
  */
 ol_control_Timeline.prototype.setMap = function(map) {
-  ol_control_Control__WEBPACK_IMPORTED_MODULE_3__["default"].prototype.setMap.call(this, map);
-  this.refresh();
+  ol_control_Control__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.setMap.call(this, map);
+  this.refresh(this.get('zoom')||1, true);
 };
 
 /** Add a button on the timeline
@@ -6363,7 +7356,7 @@ ol_control_Timeline.prototype.setMap = function(map) {
  */
 ol_control_Timeline.prototype.addButton = function(button) {
   this.element.classList.add('ol-hasbutton');
-  _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('BUTTON', {
+  _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('BUTTON', {
     className: button.className || undefined,
     title: button.title,
     html : button.html,
@@ -6412,7 +7405,7 @@ ol_control_Timeline.prototype._getHTML = function(feature) {
  * @private
  */
 ol_control_Timeline.prototype._getFeatureDate = function(feature) {
-  return feature.get('date');
+  return (feature && feature.get) ? feature.get('date') : null;
 };
 
 /** Default function to get the end date of a feature, return undefined
@@ -6471,7 +7464,7 @@ ol_control_Timeline.prototype.getFeatures = function() {
  * Refresh the timeline with new data
  * @param {Number} zoom Zoom factor from 0.25 to 10, default 1
  */
-ol_control_Timeline.prototype.refresh = function(zoom) {
+ol_control_Timeline.prototype.refresh = function(zoom, first) {
   if (!this.getMap()) return;
   if (!zoom) zoom = this.get('zoom');
   zoom = Math.min(this.get('maxZoom'), Math.max(this.get('minZoom'), zoom || 1));
@@ -6508,7 +7501,7 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
   });
 
   // Draw
-  var div = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  var div = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     parent: this._scrollDiv
   });
 
@@ -6523,7 +7516,7 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
   // Leave 10px on right
   min = this._minDate = this._minDate - 10/scale;
   delta = (max-min) * scale;
-  _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].setStyle(div, {
+  _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].setStyle(div, {
     width: delta,
     maxWidth: 'unset'
   });
@@ -6533,17 +7526,17 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
 
   // Set interval
   if (this.get('interval')) {
-    _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].setStyle (this._intervalDiv, { width: this.get('interval') * scale });
+    _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].setStyle (this._intervalDiv, { width: this.get('interval') * scale });
   } else {
-    _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].setStyle (this._intervalDiv, { width: '' });
+    _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].setStyle (this._intervalDiv, { width: '' });
   }
 
   // Draw features
   var line = [];
-  var lineHeight = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'lineHeight');
+  var lineHeight = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'lineHeight');
   
   // Wrapper
-  var fdiv = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  var fdiv = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
       className: 'ol-features',
       parent: div
   });
@@ -6551,7 +7544,7 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
   // Add features on the line
   tline.forEach(function(f) {
     var d = f.date;
-    var t = f.elt = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+    var t = f.elt = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
       className: 'ol-feature',
       style: {
         left: Math.round((d-min)*scale),
@@ -6567,13 +7560,13 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
 
     // Calculate image width
     if (f.end) {
-      _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].setStyle(t, { 
+      _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].setStyle(t, { 
         minWidth: (f.end-d) * scale, 
         width: (f.end-d) * scale, 
         maxWidth: 'unset'
       });
     }
-    var left = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(t, 'left');
+    var left = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(t, 'left');
     // Select on click
     t.addEventListener('click', function(){
       if (!this._moving) {
@@ -6588,11 +7581,12 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
         break;
       }
     }
-    line[pos] = left + _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(t, 'width');
-    _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].setStyle(t, { top: pos*lineHeight });
+    line[pos] = left + _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(t, 'width');
+    _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].setStyle(t, { top: pos*lineHeight });
   }.bind(this));
   this._nbline = line.length;
 
+  if (first) this.setDate(this._minDate, { anim: false, position: 'start' });
   // Dispatch scroll event
   this.dispatchEvent({ 
     type: 'scroll', 
@@ -6608,19 +7602,21 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
  */
 ol_control_Timeline.prototype._drawTime = function(div, min, max, scale) {
   // Times div
-  var tdiv = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  var tdiv = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     className: 'ol-times',
     parent: div
   });
   var d, dt, month, dmonth;
-  var dx = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(tdiv, 'left');
-  var heigth = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(tdiv, 'height');
+  var dx = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(tdiv, 'left');
+  var heigth = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(tdiv, 'height');
   // Year
   var year = (new Date(this._minDate)).getFullYear();
+  dt = ((new Date(0)).setFullYear(String(year)) - new Date(0).setFullYear(String(year-1))) * scale;
+  var dyear = Math.round(2*heigth/dt)+1;
   while(true) {
-    d = new Date(String(year));
+    d = new Date(0).setFullYear(year);
     if (d > this._maxDate) break;
-    _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+    _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
       className: 'ol-time ol-year',
       style: {
         left: Math.round((d-this._minDate)*scale) - dx
@@ -6628,19 +7624,21 @@ ol_control_Timeline.prototype._drawTime = function(div, min, max, scale) {
       html: year,
       parent: tdiv
     });
-    year++;
+    year += dyear;
   }
   // Month
   if (/day|month/.test(this.get('graduation'))) {
-    dt = (new Date(String(year)) - new Date(String(year-1))) * scale;
+    dt = ((new Date(0)).setFullYear(String(year)) - new Date(0).setFullYear(String(year-1))) * scale;
     dmonth = Math.max(1, Math.round(12 / Math.round(dt/heigth/2)));
     if (dmonth < 12) {
       year = (new Date(this._minDate)).getFullYear();
       month = dmonth+1;
       while(true) {
-        d = new Date(year+'/'+month+'/01');
+        d = new Date('0/01/01');
+        d.setFullYear(year);
+        d.setMonth(month-1);
         if (d > this._maxDate) break;
-        _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+        _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
           className: 'ol-time ol-month',
           style: {
             left: Math.round((d-this._minDate)*scale) - dx
@@ -6658,24 +7656,27 @@ ol_control_Timeline.prototype._drawTime = function(div, min, max, scale) {
   }
   // Day
   if (this.get('graduation')==='day') {
-    dt = (new Date(year+'/02/01') - new Date(year+'/01/01')) * scale;
+    dt = (new Date('2000/02/01') - new Date('2000/01/01')) * scale;
     var dday = Math.max(1, Math.round(31 / Math.round(dt/heigth/2)));
     if (dday < 31) {
       year = (new Date(this._minDate)).getFullYear();
-      month = 1;
+      month = 0;
       var day = dday;
       while(true) {
-        d = new Date(year+'/'+month+'/'+day);
+        d = new Date(0);
+        d.setFullYear(year);
+        d.setMonth(month);
+        d.setDate(day);
         if (isNaN(d)) {
           month++;
           if (month>12) {
             month = 1;
             year++;
           }
-          day=dday;
+          day = dday;
         } else {
           if (d > this._maxDate) break;
-          _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+          _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
             className: 'ol-time ol-day',
             style: {
               left: Math.round((d-this._minDate)*scale) - dx
@@ -6683,8 +7684,13 @@ ol_control_Timeline.prototype._drawTime = function(div, min, max, scale) {
             html: day,
             parent: tdiv
           });
-          day += dday;
-          if (day+dday/2>31) day=32;
+          year = d.getFullYear();
+          month = d.getMonth();
+          day = d.getDate() + dday;
+          if (day+dday/2>31) {
+            month++;
+            day = dday;
+          }
         }
       }
     }
@@ -6693,25 +7699,38 @@ ol_control_Timeline.prototype._drawTime = function(div, min, max, scale) {
 
 /** Center timeline on a date
  * @param {Date|String|ol.feature} feature a date or a feature with a date
- * @param {boolean} anim animate scroll
+ * @param {Object} options
+ *  @param {boolean} options.anim animate scroll
+ *  @param {string} options.position start, end or middle, default middle
  */
-ol_control_Timeline.prototype.setDate = function(feature, anim) {
+ol_control_Timeline.prototype.setDate = function(feature, options) {
   var date;
-  // Get date from Feature
-  if (feature instanceof ol_Feature__WEBPACK_IMPORTED_MODULE_2__["ol_Feature"]) {
-    date = this._getFeatureDate(feature);
-    if (!(date instanceof Date)) {
-      date = new Date(date);
-    }
-  } else if (feature instanceof Date) {
+  options = options || {};
+  // It's a date
+  if (feature instanceof Date) {
     date = feature;
   } else {
-    date = new Date(String(feature));
+    // Get date from Feature
+    if (this.getFeatures().indexOf(feature) >= 0) {
+      date = this._getFeatureDate(feature);
+    }
+    if (date && !(date instanceof Date)) {
+      date = new Date(date);
+    }
+    if (!date || isNaN(date)) {
+      date = new Date(String(feature));
+    }
   }
   if (!isNaN(date)) {
-    if (anim === false) this._scrollDiv.classList.add('ol-move');
-    this._scrollDiv.scrollLeft = (date-this._minDate)*this._scale - _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'width')/2;
-    if (anim === false) this._scrollDiv.classList.remove('ol-move');
+    if (options.anim === false) this._scrollDiv.classList.add('ol-move');
+    var scrollLeft = (date-this._minDate)*this._scale;
+    if (options.position==='start') {
+      scrollLeft += _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].outerWidth(this._scrollDiv)/2 - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
+    } else if (options.position==='end') {
+      scrollLeft -= _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].outerWidth(this._scrollDiv)/2 - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
+    }
+    this._scrollDiv.scrollLeft = scrollLeft;
+    if (options.anim === false) this._scrollDiv.classList.remove('ol-move');
     if (feature) {
       for (var i=0, f; f = this._tline[i]; i++) {
         if (f.feature === feature) {
@@ -6734,28 +7753,42 @@ ol_control_Timeline.prototype.getDate = function(position) {
   switch (position) {
     case 'start': {
       if (this.get('interval')) {
-        pos = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'width')/2 - _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._intervalDiv, 'width')/2;
+        pos = - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._intervalDiv, 'width')/2 + _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
       } else {
-        pos = 0;
+        pos = - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].outerWidth(this._scrollDiv)/2 + _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
       }
       break;
     }
     case 'end': {
       if (this.get('interval')) {
-        pos = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'width')/2 + _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._intervalDiv, 'width')/2;
+        pos = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._intervalDiv, 'width')/2 - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
       } else {
-        pos = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'width');
+        pos = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].outerWidth(this._scrollDiv)/2 - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
       }
       break;
     }
     default: {
-      pos = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'width')/2;
+      pos = 0;
       break;
     }
   }
   var d = (this._scrollDiv.scrollLeft + pos)/this._scale + this._minDate;
   return new Date(d);
 };
+
+/** Get the start date of the control
+ * @return {Date}
+ */
+ol_control_Timeline.prototype.getStartDate = function() {
+  return new Date(this.get('minDate'));
+}
+
+/** Get the end date of the control
+ * @return {Date}
+ */
+ol_control_Timeline.prototype.getEndDate = function() {
+  return new Date(this.get('maxDate'));
+}
 
 /* harmony default export */ __webpack_exports__["default"] = (ol_control_Timeline);
 
@@ -6770,12 +7803,12 @@ ol_control_Timeline.prototype.getDate = function(position) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var _Button__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Button */ "./node_modules/ol-ext/control/Button.js");
 /* harmony import */ var ol_control_Control__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/control/Control */ "./node_modules/ol/control/Control.js");
 /*	Copyright (c) 2016 Jean-Marc VIGLINO,
-	released under the CeCILL-B license (French BSD license)
-	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
 */
 
 
@@ -6789,75 +7822,76 @@ __webpack_require__.r(__webpack_exports__);
  * @extends {ol_control_Control}
  * @fires change:active, change:disable
  * @param {Object=} options Control options.
- *	@param {String} options.className class of the control
- *	@param {String} options.title title of the control
- *	@param {String} options.html html to insert in the control
- *	@param {ol.interaction} options.interaction interaction associated with the control
- *	@param {bool} options.active the control is created active, default false
- *	@param {bool} options.disable the control is created disabled, default false
- *	@param {ol.control.Bar} options.bar a subbar associated with the control (drawn when active if control is nested in a ol.control.Bar)
- *	@param {bool} options.autoActive the control will activate when shown in an ol.control.Bar, default false
- *	@param {function} options.onToggle callback when control is clicked (or use change:active event)
+ *  @param {String} options.className class of the control
+ *  @param {String} options.title title of the control
+ *  @param {String} options.html html to insert in the control
+ *  @param {ol.interaction} options.interaction interaction associated with the control
+ *  @param {bool} options.active the control is created active, default false
+ *  @param {bool} options.disable the control is created disabled, default false
+ *  @param {ol.control.Bar} options.bar a subbar associated with the control (drawn when active if control is nested in a ol.control.Bar)
+ *  @param {bool} options.autoActive the control will activate when shown in an ol.control.Bar, default false
+ *  @param {function} options.onToggle callback when control is clicked (or use change:active event)
  */
-var ol_control_Toggle = function(options)
-{	options = options || {};
-	var self = this;
+var ol_control_Toggle = function(options) {
+  options = options || {};
+  var self = this;
 
-	this.interaction_ = options.interaction;
-	if (this.interaction_)
-	{	this.interaction_.on("change:active", function(e)
-		{	self.setActive(!e.oldValue);
-		});
-	}
+  this.interaction_ = options.interaction;
+  if (this.interaction_) {
+    this.interaction_.setActive(options.active);
+    this.interaction_.on("change:active", function() {
+      self.setActive(self.interaction_.getActive());
+    });
+  }
 
-	if (options.toggleFn) options.onToggle = options.toggleFn; // compat old version
-	options.handleClick = function()
-		{	self.toggle();
-			if (options.onToggle) options.onToggle.call(self, self.getActive());
-		};
-	options.className = (options.className||"") + " ol-toggle";
-	_Button__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, options);
+  if (options.toggleFn) options.onToggle = options.toggleFn; // compat old version
+  options.handleClick = function() {
+    self.toggle();
+    if (options.onToggle) options.onToggle.call(self, self.getActive());
+  };
+  options.className = (options.className||"") + " ol-toggle";
+  _Button__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, options);
 
-	this.set("title", options.title);
+  this.set("title", options.title);
 
-	this.set ("autoActivate", options.autoActivate);
-	if (options.bar)
-	{	this.subbar_ = options.bar;
-		this.subbar_.setTarget(this.element);
-		this.subbar_.element.classList.add("ol-option-bar");
-	}
+  this.set ("autoActivate", options.autoActivate);
+  if (options.bar) {
+    this.subbar_ = options.bar;
+    this.subbar_.setTarget(this.element);
+    this.subbar_.element.classList.add("ol-option-bar");
+  }
 
-	this.setActive (options.active);
-	this.setDisable (options.disable);
+  this.setActive (options.active);
+  this.setDisable (options.disable);
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Toggle, _Button__WEBPACK_IMPORTED_MODULE_1__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_Toggle, _Button__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 /**
  * Set the map instance the control is associated with
  * and add interaction attached to it to this map.
  * @param {_ol_Map_} map The map instance.
  */
-ol_control_Toggle.prototype.setMap = function(map)
-{	if (!map && this.getMap())
-	{	if (this.interaction_)
-		{	this.getMap().removeInteraction (this.interaction_);
-		}
-		if (this.subbar_) this.getMap().removeControl (this.subbar_);
-	}
+ol_control_Toggle.prototype.setMap = function(map) {
+  if (!map && this.getMap()) {
+    if (this.interaction_) {
+      this.getMap().removeInteraction (this.interaction_);
+    }
+    if (this.subbar_) this.getMap().removeControl (this.subbar_);
+  }
 
-	ol_control_Control__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.setMap.call(this, map);
+  ol_control_Control__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.setMap.call(this, map);
 
-	if (map)
-	{	if (this.interaction_) map.addInteraction (this.interaction_);
-		if (this.subbar_) map.addControl (this.subbar_);
-	}
+  if (map) {
+    if (this.interaction_) map.addInteraction (this.interaction_);
+    if (this.subbar_) map.addControl (this.subbar_);
+  }
 };
 
 /** Get the subbar associated with a control
-* @return {ol_control_Bar}
-*/
-ol_control_Toggle.prototype.getSubBar = function ()
-{	return this.subbar_;
+ * @return {ol_control_Bar}
+ */
+ol_control_Toggle.prototype.getSubBar = function () {
+  return this.subbar_;
 };
 
 /**
@@ -6865,20 +7899,20 @@ ol_control_Toggle.prototype.getSubBar = function ()
  * @return {bool}.
  * @api stable
  */
-ol_control_Toggle.prototype.getDisable = function()
-{	var button = this.element.querySelector("button");
-	return button && button.disabled;
+ol_control_Toggle.prototype.getDisable = function() {
+  var button = this.element.querySelector("button");
+  return button && button.disabled;
 };
 
 /** Disable the control. If disable, the control will be deactivated too.
 * @param {bool} b disable (or enable) the control, default false (enable)
 */
-ol_control_Toggle.prototype.setDisable = function(b)
-{	if (this.getDisable()==b) return;
-	this.element.querySelector("button").disabled = b;
-	if (b && this.getActive()) this.setActive(false);
+ol_control_Toggle.prototype.setDisable = function(b) {
+  if (this.getDisable()==b) return;
+  this.element.querySelector("button").disabled = b;
+  if (b && this.getActive()) this.setActive(false);
 
-	this.dispatchEvent({ type:'change:disable', key:'disable', oldValue:!b, disable:b });
+  this.dispatchEvent({ type:'change:disable', key:'disable', oldValue:!b, disable:b });
 };
 
 /**
@@ -6886,42 +7920,42 @@ ol_control_Toggle.prototype.setDisable = function(b)
  * @return {bool}.
  * @api stable
  */
-ol_control_Toggle.prototype.getActive = function()
-{	return this.element.classList.contains("ol-active");
+ol_control_Toggle.prototype.getActive = function() {
+  return this.element.classList.contains("ol-active");
 };
 
 /** Toggle control state active/deactive
-*/
-ol_control_Toggle.prototype.toggle = function()
-{	if (this.getActive()) this.setActive(false);
-	else this.setActive(true);
+ */
+ol_control_Toggle.prototype.toggle = function() {
+  if (this.getActive()) this.setActive(false);
+  else this.setActive(true);
 };
 
 /** Change control state
-* @param {bool} b activate or deactivate the control, default false
-*/
-ol_control_Toggle.prototype.setActive = function(b)
-{	if (this.getActive()==b) return;
-	if (b) this.element.classList.add("ol-active");
-	else this.element.classList.remove("ol-active");
-	if (this.interaction_) this.interaction_.setActive (b);
-	if (this.subbar_) this.subbar_.setActive(b);
+ * @param {bool} b activate or deactivate the control, default false
+ */
+ol_control_Toggle.prototype.setActive = function(b) {	
+  if (this.interaction_) this.interaction_.setActive (b);
+  if (this.subbar_) this.subbar_.setActive(b);
+  if (this.getActive()===b) return;
+  if (b) this.element.classList.add("ol-active");
+  else this.element.classList.remove("ol-active");
 
-	this.dispatchEvent({ type:'change:active', key:'active', oldValue:!b, active:b });
+  this.dispatchEvent({ type:'change:active', key:'active', oldValue:!b, active:b });
 };
 
 /** Set the control interaction
 * @param {_ol_interaction_} i interaction to associate with the control
 */
-ol_control_Toggle.prototype.setInteraction = function(i)
-{	this.interaction_ = i;
+ol_control_Toggle.prototype.setInteraction = function(i) {
+  this.interaction_ = i;
 };
 
 /** Get the control interaction
 * @return {_ol_interaction_} interaction associated with the control
 */
-ol_control_Toggle.prototype.getInteraction = function()
-{	return this.interaction_;
+ol_control_Toggle.prototype.getInteraction = function() {
+  return this.interaction_;
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (ol_control_Toggle);
@@ -6954,6 +7988,3124 @@ if(false) {}
 
 /***/ }),
 
+/***/ "./node_modules/ol-ext/geom/GeomUtils.js":
+/*!***********************************************!*\
+  !*** ./node_modules/ol-ext/geom/GeomUtils.js ***!
+  \***********************************************/
+/*! exports provided: ol_geom_createFromType, ol_coordinate_dist2d, ol_coordinate_equal, ol_coordinate_findSegment, ol_coordinate_getFeatureCenter, ol_coordinate_getGeomCenter, ol_coordinate_offsetCoords, ol_coordinate_splitH */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_geom_createFromType", function() { return ol_geom_createFromType; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_dist2d", function() { return ol_coordinate_dist2d; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_equal", function() { return ol_coordinate_equal; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_findSegment", function() { return ol_coordinate_findSegment; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_getFeatureCenter", function() { return ol_coordinate_getFeatureCenter; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_getGeomCenter", function() { return ol_coordinate_getGeomCenter; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_offsetCoords", function() { return ol_coordinate_offsetCoords; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_splitH", function() { return ol_coordinate_splitH; });
+/* harmony import */ var ol_extent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol/extent */ "./node_modules/ol/extent.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var ol_geom_LinearRing__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/geom/LinearRing */ "./node_modules/ol/geom/LinearRing.js");
+/* harmony import */ var ol_geom_MultiLineString__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/geom/MultiLineString */ "./node_modules/ol/geom/MultiLineString.js");
+/* harmony import */ var ol_geom_MultiPoint__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/geom/MultiPoint */ "./node_modules/ol/geom/MultiPoint.js");
+/* harmony import */ var ol_geom_MultiPolygon__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/geom/MultiPolygon */ "./node_modules/ol/geom/MultiPolygon.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/geom/Point */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO, 
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+
+  Usefull function to handle geometric operations
+*/
+
+
+
+/** Distance beetween 2 points
+ *	Usefull geometric functions
+ * @param {ol.Coordinate} p1 first point
+ * @param {ol.Coordinate} p2 second point
+ * @return {number} distance
+ */
+var ol_coordinate_dist2d = function(p1, p2) {
+  var dx = p1[0]-p2[0];
+  var dy = p1[1]-p2[1];
+  return Math.sqrt(dx*dx+dy*dy);
+}
+
+/** 2 points are equal
+ *	Usefull geometric functions
+ * @param {ol.Coordinate} p1 first point
+ * @param {ol.Coordinate} p2 second point
+ * @return {boolean}
+ */
+var ol_coordinate_equal = function(p1, p2) {
+  return (p1[0]==p2[0] && p1[1]==p2[1]);
+}
+
+/** Get center coordinate of a feature
+ * @param {ol.Feature} f
+ * @return {ol.coordinate} the center
+ */
+var ol_coordinate_getFeatureCenter = function(f) {
+  return ol_coordinate_getGeomCenter (f.getGeometry());
+};
+
+/** Get center coordinate of a geometry
+* @param {ol.Feature} geom
+* @return {ol.Coordinate} the center
+*/
+var ol_coordinate_getGeomCenter = function(geom) {
+  switch (geom.getType()) {
+    case 'Point': 
+      return geom.getCoordinates();
+    case "MultiPolygon":
+            geom = geom.getPolygon(0);
+            // fallthrough
+    case "Polygon":
+      return geom.getInteriorPoint().getCoordinates();
+    default:
+      return geom.getClosestPoint(Object(ol_extent__WEBPACK_IMPORTED_MODULE_0__["getCenter"])(geom.getExtent()));
+  }
+};
+
+/** Offset a polyline
+ * @param {Array<ol.Coordinate>} coords
+ * @param {number} offset
+ * @return {Array<ol.Coordinate>} resulting coord
+ * @see http://stackoverflow.com/a/11970006/796832
+ * @see https://drive.google.com/viewerng/viewer?a=v&pid=sites&srcid=ZGVmYXVsdGRvbWFpbnxqa2dhZGdldHN0b3JlfGd4OjQ4MzI5M2Y0MjNmNzI2MjY
+ */
+var ol_coordinate_offsetCoords = function (coords, offset) {
+  var path = [];
+  var N = coords.length-1;
+  var max = N;
+  var mi, mi1, li, li1, ri, ri1, si, si1, Xi1, Yi1;
+  var p0, p1, p2;
+  var isClosed = ol_coordinate_equal(coords[0],coords[N]);
+  if (!isClosed) {
+    p0 = coords[0];
+    p1 = coords[1];
+    p2 = [
+      p0[0] + (p1[1] - p0[1]) / ol_coordinate_dist2d(p0,p1) *offset,
+      p0[1] - (p1[0] - p0[0]) / ol_coordinate_dist2d(p0,p1) *offset
+    ];
+    path.push(p2);
+    coords.push(coords[N])
+    N++;
+    max--;
+  }
+  for (var i = 0; i < max; i++) {
+    p0 = coords[i];
+    p1 = coords[(i+1) % N];
+    p2 = coords[(i+2) % N];
+
+    mi = (p1[1] - p0[1])/(p1[0] - p0[0]);
+    mi1 = (p2[1] - p1[1])/(p2[0] - p1[0]);
+    // Prevent alignements
+    if (Math.abs(mi-mi1) > 1e-10) {
+      li = Math.sqrt((p1[0] - p0[0])*(p1[0] - p0[0])+(p1[1] - p0[1])*(p1[1] - p0[1]));
+      li1 = Math.sqrt((p2[0] - p1[0])*(p2[0] - p1[0])+(p2[1] - p1[1])*(p2[1] - p1[1]));
+      ri = p0[0] + offset*(p1[1] - p0[1])/li;
+      ri1 = p1[0] + offset*(p2[1] - p1[1])/li1;
+      si = p0[1] - offset*(p1[0] - p0[0])/li;
+      si1 = p1[1] - offset*(p2[0] - p1[0])/li1;
+      Xi1 = (mi1*ri1-mi*ri+si-si1) / (mi1-mi);
+      Yi1 = (mi*mi1*(ri1-ri)+mi1*si-mi*si1) / (mi1-mi);
+
+      // Correction for vertical lines
+      if(p1[0] - p0[0] == 0) {
+        Xi1 = p1[0] + offset*(p1[1] - p0[1])/Math.abs(p1[1] - p0[1]);
+        Yi1 = mi1*Xi1 - mi1*ri1 + si1;
+      }
+      if (p2[0] - p1[0] == 0 ) {
+        Xi1 = p2[0] + offset*(p2[1] - p1[1])/Math.abs(p2[1] - p1[1]);
+        Yi1 = mi*Xi1 - mi*ri + si;
+      }
+
+      path.push([Xi1, Yi1]);
+    }
+  }
+  if (isClosed) {
+    path.push(path[0]);
+  } else {
+    coords.pop();
+    p0 = coords[coords.length-1];
+    p1 = coords[coords.length-2];
+    p2 = [
+      p0[0] - (p1[1] - p0[1]) / ol_coordinate_dist2d(p0,p1) *offset,
+      p0[1] + (p1[0] - p0[0]) / ol_coordinate_dist2d(p0,p1) *offset
+    ];
+    path.push(p2);
+  }
+  return path;
+}
+
+/** Find the segment a point belongs to
+ * @param {ol.Coordinate} pt
+ * @param {Array<ol.Coordinate>} coords
+ * @return {} the index (-1 if not found) and the segment
+ */
+var ol_coordinate_findSegment = function (pt, coords) {
+  for (var i=0; i<coords.length-1; i++) {
+    var p0 = coords[i];
+    var p1 = coords[i+1];
+    if (ol_coordinate_equal(pt, p0) || ol_coordinate_equal(pt, p1)) {
+      return { index:1, segment: [p0,p1] };
+    } else {
+      var d0 = ol_coordinate_dist2d(p0,p1);
+      var v0 = [ (p1[0] - p0[0]) / d0, (p1[1] - p0[1]) / d0 ];
+      var d1 = ol_coordinate_dist2d(p0,pt);
+      var v1 = [ (pt[0] - p0[0]) / d1, (pt[1] - p0[1]) / d1 ];
+      if (Math.abs(v0[0]*v1[1] - v0[1]*v1[0]) < 1e-10) {
+        return { index:1, segment: [p0,p1] };
+      }
+    }
+  }
+  return { index: -1 };
+};
+
+/**
+ * Split a Polygon geom with horizontal lines
+ * @param {Array<ol.Coordinate>} geom
+ * @param {number} y the y to split
+ * @param {number} n contour index
+ * @return {Array<Array<ol.Coordinate>>}
+ */
+var ol_coordinate_splitH = function (geom, y, n) {
+  var x, abs;
+  var list = [];
+  for (var i=0; i<geom.length-1; i++) {
+    // Hole separator?
+    if (!geom[i].length || !geom[i+1].length) continue;
+    // Intersect
+    if (geom[i][1]<=y && geom[i+1][1]>y || geom[i][1]>=y && geom[i+1][1]<y) {
+      abs = (y-geom[i][1]) / (geom[i+1][1]-geom[i][1]);
+      x = abs * (geom[i+1][0]-geom[i][0]) + geom[i][0];
+      list.push ({ contour: n, index: i, pt: [x,y], abs: abs });
+    }
+  }
+  // Sort x
+  list.sort(function(a,b) { return a.pt[0] - b.pt[0] });
+  // Horizontal segement
+  var result = [];
+  for (var j=0; j<list.length-1; j += 2) {
+    result.push([list[j], list[j+1]])
+  }
+  return result;
+};
+
+
+
+
+
+
+
+
+
+/** Create a geometrie given a type and coordinates */
+var ol_geom_createFromType = function (type, coordinates) {
+  switch (type) {
+    case 'LineString': return new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__["default"](coordinates);
+    case 'LinearRing': return new ol_geom_LinearRing__WEBPACK_IMPORTED_MODULE_2__["default"](coordinates);
+    case 'MultiLineString': return new ol_geom_MultiLineString__WEBPACK_IMPORTED_MODULE_3__["default"](coordinates);
+    case 'MultiPoint': return new ol_geom_MultiPoint__WEBPACK_IMPORTED_MODULE_4__["default"](coordinates);
+    case 'MultiPolygon': return new ol_geom_MultiPolygon__WEBPACK_IMPORTED_MODULE_5__["default"](coordinates);
+    case 'Point': return new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"](coordinates);
+    case 'Polygon': return new ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_7__["default"](coordinates);
+    default:
+      console.error('[createFromType] Unsupported type: '+type);
+      return null;
+  }
+};
+
+
+
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/geom/LineStringSplitAt.js":
+/*!*******************************************************!*\
+  !*** ./node_modules/ol-ext/geom/LineStringSplitAt.js ***!
+  \*******************************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _GeomUtils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./GeomUtils */ "./node_modules/ol-ext/geom/GeomUtils.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+
+
+
+/** Split a lineString by a point or a list of points
+ *	NB: points must be on the line, use getClosestPoint() to get one
+* @param {ol.Coordinate | Array<ol.Coordinate>} pt points to split the line
+* @param {Number} tol distance tolerance for 2 points to be equal
+*/
+ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.splitAt = function(pt, tol) {
+  var i;
+  if (!pt) return [this];
+    if (!tol) tol = 1e-10;
+    // Test if list of points
+    if (pt.length && pt[0].length) {
+      var result = [this];
+      for (i=0; i<pt.length; i++) {
+        var r = [];
+        for (var k=0; k<result.length; k++) {
+          var ri = result[k].splitAt(pt[i], tol);
+          r = r.concat(ri);
+        }
+        result = r;
+      }
+      return result;
+    }
+    // Nothing to do
+    if (Object(_GeomUtils__WEBPACK_IMPORTED_MODULE_0__["ol_coordinate_equal"])(pt,this.getFirstCoordinate())
+    || Object(_GeomUtils__WEBPACK_IMPORTED_MODULE_0__["ol_coordinate_equal"])(pt,this.getLastCoordinate())) {
+      return [this];
+    }
+    // Get
+    var c0 = this.getCoordinates();
+    var ci=[c0[0]];
+    var c = [];
+    for (i=0; i<c0.length-1; i++) {
+      // Filter equal points
+      if (Object(_GeomUtils__WEBPACK_IMPORTED_MODULE_0__["ol_coordinate_equal"])(c0[i],c0[i+1])) continue;
+      // Extremity found
+      if (Object(_GeomUtils__WEBPACK_IMPORTED_MODULE_0__["ol_coordinate_equal"])(pt,c0[i+1])) {
+        ci.push(c0[i+1]);
+        c.push(new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__["default"](ci));
+        ci = [];
+      }
+      // Test alignement
+      else if (!Object(_GeomUtils__WEBPACK_IMPORTED_MODULE_0__["ol_coordinate_equal"])(pt,c0[i])) {
+        var d1, d2, split=false;
+        if (c0[i][0] == c0[i+1][0]) {
+          d1 = (c0[i][1]-pt[1]) / (c0[i][1]-c0[i+1][1]);
+          split = (c0[i][0] == pt[0]) && (0 < d1 && d1 <= 1)
+        } else if (c0[i][1] == c0[i+1][1]) {
+          d1 = (c0[i][0]-pt[0]) / (c0[i][0]-c0[i+1][0]);
+          split = (c0[i][1] == pt[1]) && (0 < d1 && d1 <= 1)
+        } else {
+          d1 = (c0[i][0]-pt[0]) / (c0[i][0]-c0[i+1][0]);
+          d2 = (c0[i][1]-pt[1]) / (c0[i][1]-c0[i+1][1]);
+          split = (Math.abs(d1-d2) <= tol && 0 < d1 && d1 <= 1)
+        }
+        // pt is inside the segment > split
+        if (split) {
+          ci.push(pt);
+          c.push (new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__["default"](ci));
+          ci = [pt];
+        }
+      }
+      ci.push(c0[i+1]);
+    }
+    if (ci.length>1) c.push (new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__["default"](ci));
+    if (c.length) return c;
+    else return [this];
+}
+
+// import('ol-ext/geom/LineStringSplitAt')
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/Delete.js":
+/*!***************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/Delete.js ***!
+  \***************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_interaction_Select__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Select */ "./node_modules/ol/interaction/Select.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
+/*	Copyright (c) 2018 Jean-Marc VIGLINO, 
+	released under the CeCILL-B license (French BSD license)
+	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+/** A Select interaction to delete features on click.
+ * @constructor
+ * @extends {ol_interaction_Interaction}
+ * @fires deletestart
+ * @fires deleteend
+ * @param {*} options ol.interaction.Select options
+ */
+var ol_interaction_Delete = function(options) {
+  ol_interaction_Select__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, options);
+  this.on('select', function(e) {
+    this.getFeatures().clear();
+    this.delete(e.selected);
+  }.bind(this));
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_Delete, ol_interaction_Select__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/** Get vector source of the map
+ * @return {Array<ol.source.Vector>}
+ */
+ol_interaction_Delete.prototype._getSources = function(layers) {
+  if (!this.getMap()) return [];
+  if (!layers) layers = this.getMap().getLayers();
+  var sources = [];
+  layers.forEach(function (l) {
+    // LayerGroup
+    if (l.getLayers) {
+      sources = sources.concat(this._getSources(l.getLayers()));
+    } else {
+      if (l.getSource && l.getSource() instanceof ol_source_Vector__WEBPACK_IMPORTED_MODULE_2__["default"]) {
+        sources.push(l.getSource());
+      }
+    }
+  }.bind(this));
+  return sources;
+};
+
+/** Delete features: remove the features from the map (from all layers in the map)
+ * @param {ol.Collection<ol.Feature>|Array<ol.Feature>} features The features to delete
+ * @api
+ */
+ol_interaction_Delete.prototype.delete = function(features) {
+  if (features && (features.length || features.getLength())) {
+    this.dispatchEvent({ type: 'deletestart', features: features });
+    var delFeatures = [];
+    // Get the sources concerned
+    this._getSources().forEach(function (source) {
+      try {
+        // Try to delete features in the source
+        features.forEach(function(f) {
+          source.removeFeature(f);
+          delFeatures.push(f);
+        });
+      } catch(e) { /* ok */ }
+    })
+    this.dispatchEvent({ type: 'deleteend', features: delFeatures });
+  }
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_Delete);
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/DrawHole.js":
+/*!*****************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/DrawHole.js ***!
+  \*****************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/* harmony import */ var ol_geom_MultiPolygon__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/geom/MultiPolygon */ "./node_modules/ol/geom/MultiPolygon.js");
+/* harmony import */ var ol_geom_LinearRing__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/geom/LinearRing */ "./node_modules/ol/geom/LinearRing.js");
+/* harmony import */ var ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/interaction/Draw */ "./node_modules/ol/interaction/Draw.js");
+/* harmony import */ var ol_interaction_Select__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/interaction/Select */ "./node_modules/ol/interaction/Select.js");
+/*	Copyright (c) 2017 Jean-Marc VIGLINO, 
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+
+
+
+/** Interaction to draw holes in a polygon.
+ * It fires a drawstart, drawend event when drawing the hole
+ * and a modifystart, modifyend event before and after inserting the hole in the feature geometry.
+ * @constructor
+ * @extends {ol_interaction_Interaction}
+ * @fires drawstart
+ * @fires drawend
+ * @fires modifystart
+ * @fires modifyend
+ * @param {olx.interaction.DrawHoleOptions} options extend olx.interaction.DrawOptions
+ * 	@param {Array<ol.layer.Vector> | function | undefined} options.layers A list of layers from which polygons should be selected. Alternatively, a filter function can be provided. default: all visible layers
+ * 	@param { ol.style.Style | Array<ol.style.Style> | StyleFunction | undefined }	Style for the selected features, default: default edit style
+ */
+var ol_interaction_DrawHole = function(options) {
+  if (!options) options = {};
+  var self = this;
+
+  // Select interaction for the current feature
+  this._select = new ol_interaction_Select__WEBPACK_IMPORTED_MODULE_5__["default"]({ style: options.style });
+  this._select.setActive(false);
+
+  // Geometry function that test points inside the current
+  var geometryFn, geomFn = options.geometryFunction;
+  if (geomFn) {
+    geometryFn = function(c,g) {
+      g = self._geometryFn (c, g);
+      return geomFn (c,g);
+    }
+  } else {
+    geometryFn = function(c,g) { return self._geometryFn (c, g); }
+  }
+
+  // Create draw interaction
+  options.type = "Polygon";
+  options.geometryFunction = geometryFn;
+  ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__["default"].call(this, options);
+
+  // Layer filter function
+  if (options.layers) {
+    if (typeof (options.layers) === 'function') {
+      this.layers_ = options.layers;
+    } else if (options.layers.indexOf) {
+      this.layers_ = function(l) {
+        return (options.layers.indexOf(l) >= 0); 
+      };
+    }
+  }
+
+  // Start drawing if inside a feature
+  this.on('drawstart', this._startDrawing.bind(this));
+  // End drawing add the hole to the current Polygon
+  this.on('drawend', this._finishDrawing.bind(this));
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_DrawHole, ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__["default"]);
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_DrawHole.prototype.setMap = function(map) {
+  if (this.getMap()) this.getMap().removeInteraction(this._select);
+  if (map) map.addInteraction(this._select);
+  ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__["default"].prototype.setMap.call (this, map);
+};
+
+/**
+ * Activate/deactivate the interaction
+ * @param {boolean}
+ * @api stable
+ */
+ol_interaction_DrawHole.prototype.setActive = function(b) {
+  this._select.getFeatures().clear();
+  ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__["default"].prototype.setActive.call (this, b);
+};
+
+/**
+ * Remove last point of the feature currently being drawn 
+ * (test if points to remove before).
+ */
+ol_interaction_DrawHole.prototype.removeLastPoint = function() {
+  if (this._feature && this._feature.getGeometry().getCoordinates()[0].length>2) {
+    ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__["default"].prototype.removeLastPoint.call(this);
+  }
+};
+
+/** 
+ * Get the current polygon to hole
+ * @return {ol.Feature}
+ */
+ol_interaction_DrawHole.prototype.getPolygon = function() {
+  return this._polygon;
+  // return this._select.getFeatures().item(0).getGeometry();
+};
+
+/**
+ * Get current feature to add a hole and start drawing
+ * @param {ol_interaction_Draw.Event} e
+ * @private
+ */
+ol_interaction_DrawHole.prototype._startDrawing = function(e) {
+  var map = this.getMap();
+  var layersFilter = this.layers_;
+  this._feature = e.feature;
+  var coord = e.feature.getGeometry().getCoordinates()[0][0];
+  // Check object under the pointer
+  var features = map.getFeaturesAtPixel(
+    map.getPixelFromCoordinate(coord), {
+      layerFilter: layersFilter
+    }
+  );
+  this._current = null;
+  if (features) {
+    for (var k=0; k<features.length; k++) {
+      var poly = features[k].getGeometry();
+      if (poly.getType() === "Polygon"
+        && poly.intersectsCoordinate(coord)) {
+        this._polygonIndex = false;
+        this._polygon = poly;
+        this._current = features[k];
+      }
+      else if (poly.getType() === "MultiPolygon"
+        && poly.intersectsCoordinate(coord)) {
+        for (var i=0, p; p=poly.getPolygon(i); i++) {
+          if (p.intersectsCoordinate(coord)) {
+            this._polygonIndex = i;
+            this._polygon = p;
+            this._current = features[k];
+            break;
+          }
+        }
+      }
+      if (this._current) break;
+    }
+  }
+  this._select.getFeatures().clear();
+  if (!this._current) {
+    this.setActive(false);
+    this.setActive(true);
+  } else {
+    this._select.getFeatures().push(this._current);
+  }
+};
+
+/**
+ * Stop drawing and add the sketch feature to the target feature. 
+ * @param {ol_interaction_Draw.Event} e
+ * @private
+ */
+ol_interaction_DrawHole.prototype._finishDrawing = function(e) {
+  // The feature is the hole
+  e.hole = e.feature;
+  // Get the current feature
+  e.feature = this._select.getFeatures().item(0);
+  this.dispatchEvent({ type: 'modifystart', features: [ this._current ] });
+  // Create the hole
+  var c = e.hole.getGeometry().getCoordinates()[0];
+  if (c.length > 3) {
+    if (this._polygonIndex!==false) {
+      var geom = e.feature.getGeometry();
+      var newGeom = new ol_geom_MultiPolygon__WEBPACK_IMPORTED_MODULE_2__["default"]([]);
+      for (var i=0, pi; pi=geom.getPolygon(i); i++) {
+        if (i===this._polygonIndex) {
+          pi.appendLinearRing(new ol_geom_LinearRing__WEBPACK_IMPORTED_MODULE_3__["default"](c));
+          newGeom.appendPolygon(pi);
+        } else {
+          newGeom.appendPolygon(pi);
+        }
+      }
+      e.feature.setGeometry(newGeom);
+    } else {
+      this.getPolygon().appendLinearRing(new ol_geom_LinearRing__WEBPACK_IMPORTED_MODULE_3__["default"](c));
+    }
+  }
+  this.dispatchEvent({ type: 'modifyend', features: [ this._current ] });
+  // reset
+  this._feature = null;
+  this._select.getFeatures().clear();
+};
+
+/**
+ * Function that is called when a geometry's coordinates are updated.
+ * @param {Array<ol.coordinate>} coordinates
+ * @param {ol_geom_Polygon} geometry
+ * @return {ol_geom_Polygon}
+ * @private
+ */
+ol_interaction_DrawHole.prototype._geometryFn = function(coordinates, geometry) {
+  var coord = coordinates[0].pop();
+  if (!this.getPolygon() || this.getPolygon().intersectsCoordinate(coord)) {
+    this.lastOKCoord = [coord[0],coord[1]];
+  }
+  coordinates[0].push([this.lastOKCoord[0],this.lastOKCoord[1]]);
+
+  if (geometry) {
+    geometry.setCoordinates([coordinates[0].concat([coordinates[0][0]])]);
+  } else {
+    geometry = new ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_1__["default"](coordinates);
+  }
+  return geometry;
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_DrawHole);
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/DrawRegular.js":
+/*!********************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/DrawRegular.js ***!
+  \********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Interaction */ "./node_modules/ol/interaction/Interaction.js");
+/* harmony import */ var ol_style_Style__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/style/Style */ "./node_modules/ol/style/Style.js");
+/* harmony import */ var ol_style_Circle__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/style/Circle */ "./node_modules/ol/style/Circle.js");
+/* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
+/* harmony import */ var ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/style/Fill */ "./node_modules/ol/style/Fill.js");
+/* harmony import */ var ol_Collection__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/Collection */ "./node_modules/ol/Collection.js");
+/* harmony import */ var ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/layer/Vector */ "./node_modules/ol/layer/Vector.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
+/* harmony import */ var ol_geom_Circle__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/geom/Circle */ "./node_modules/ol/geom/Circle.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ol/geom/Point */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ol/Feature */ "./node_modules/ol/Feature.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO, 
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Interaction rotate
+ * @constructor
+ * @extends {ol_interaction_Interaction}
+ * @fires drawstart, drawing, drawend, drawcancel
+ * @param {olx.interaction.TransformOptions} options
+ *  @param {Array<ol.Layer>} source Destination source for the drawn features
+ *  @param {ol.Collection<ol.Feature>} features Destination collection for the drawn features 
+ *  @param {ol.style.Style | Array.<ol.style.Style> | ol.style.StyleFunction | undefined} style style for the sketch
+ *  @param {integer} sides number of sides, default 0 = circle
+ *  @param { ol.events.ConditionType | undefined } squareCondition A function that takes an ol.MapBrowserEvent and returns a boolean to draw square features.
+ *  @param { ol.events.ConditionType | undefined } centerCondition A function that takes an ol.MapBrowserEvent and returns a boolean to draw centered features.
+ *  @param { bool } canRotate Allow rotation when centered + square, default: true
+ *  @param { number } clickTolerance click tolerance on touch devices, default: 6
+ *  @param { number } maxCircleCoordinates Maximum number of point on a circle, default: 100
+ */
+var ol_interaction_DrawRegular = function(options) {
+  if (!options) options={};
+
+  this.squaredClickTolerance_ = options.clickTolerance ? options.clickTolerance * options.clickTolerance : 36;
+  this.maxCircleCoordinates_ = options.maxCircleCoordinates || 100;
+
+  // Collection of feature to transform 
+  this.features_ = options.features;
+  // List of layers to transform 
+  this.source_ = options.source;
+  // Square condition
+  this.squareFn_ = options.squareCondition;
+  // Centered condition
+  this.centeredFn_ = options.centerCondition;
+  // Allow rotation when centered + square
+  this.canRotate_ = (options.canRotate !== false);
+  // Specify custom geometry name
+  this.geometryName_ = options.geometryName
+
+  // Number of sides (default=0: circle)
+  this.setSides(options.sides);
+
+  // Style
+  var white = [255, 255, 255, 1];
+  var blue = [0, 153, 255, 1];
+  var width = 3;
+  var defaultStyle = [
+    new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+      stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_4__["default"]({ color: white, width: width + 2 })
+    }),
+    new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+      image: new ol_style_Circle__WEBPACK_IMPORTED_MODULE_3__["default"]({
+        radius: width * 2,
+        fill: new ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__["default"]({ color: blue }),
+        stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_4__["default"]({ color: white, width: width / 2 })
+      }),
+      stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_4__["default"]({ color: blue, width: width }),
+      fill: new ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__["default"]({
+        color: [255, 255, 255, 0.5]
+      })
+    })
+  ];
+
+  // Create a new overlay layer for the sketch
+  this.sketch_ = new ol_Collection__WEBPACK_IMPORTED_MODULE_6__["default"]();
+  this.overlayLayer_ = new ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__["default"]({
+    source: new ol_source_Vector__WEBPACK_IMPORTED_MODULE_8__["default"]({
+      features: this.sketch_,
+      useSpatialIndex: false
+    }),
+    name:'DrawRegular overlay',
+    displayInLayerSwitcher: false,
+    style: options.style || defaultStyle
+  });
+
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {	
+      /*
+      handleDownEvent: this.handleDownEvent_,
+      handleMoveEvent: this.handleMoveEvent_,
+      handleUpEvent: this.handleUpEvent_,
+      */
+      handleEvent: this.handleEvent_
+    });
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_DrawRegular, ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.setMap = function(map) {
+  if (this.getMap()) this.getMap().removeLayer(this.overlayLayer_);
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.setMap.call (this, map);
+  this.overlayLayer_.setMap(map);
+};
+
+/**
+ * Activate/deactivate the interaction
+ * @param {boolean}
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.setActive = function(b) {
+  this.reset();
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.setActive.call (this, b);
+}
+
+/**
+ * Reset the interaction
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.reset = function() {
+  this.overlayLayer_.getSource().clear();
+  this.started_ = false;
+}
+
+/**
+ * Set the number of sides.
+ * @param {int} number of sides.
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.setSides = function (nb) {
+  nb = parseInt(nb);
+  this.sides_ = nb>2 ? nb : 0;
+}
+
+/**
+ * Allow rotation when centered + square
+ * @param {bool} 
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.canRotate = function (b) {
+  if (b===true || b===false) this.canRotate_ = b;
+  return this.canRotate_;
+}
+
+/**
+ * Get the number of sides.
+ * @return {int} number of sides.
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.getSides = function () {
+  return this.sides_;
+}
+
+/** Default start angle array for each sides
+*/
+ol_interaction_DrawRegular.prototype.startAngle = {
+  'default':Math.PI/2,
+  3: -Math.PI/2,
+  4: Math.PI/4
+};
+
+/** Get geom of the current drawing
+* @return {ol.geom.Polygon | ol.geom.Point}
+*/
+ol_interaction_DrawRegular.prototype.getGeom_ = function () {
+  this.overlayLayer_.getSource().clear();
+  if (!this.center_) return false;
+
+  var g;
+  if (this.coord_) {
+    var center = this.center_;
+    var coord = this.coord_;
+
+    // Specific case: circle
+    var d, dmax, r, circle, centerPx;
+    if (!this.sides_ && this.square_ && !this.centered_) {
+      center = [(coord[0] + center[0])/2, (coord[1] + center[1])/2];
+      d = [coord[0] - center[0], coord[1] - center[1]];
+      r = Math.sqrt(d[0]*d[0]+d[1]*d[1]);
+      circle = new ol_geom_Circle__WEBPACK_IMPORTED_MODULE_9__["default"](center, r, 'XY');
+      // Optimize points on the circle
+      centerPx = this.getMap().getPixelFromCoordinate(center);
+      dmax = Math.max (100, Math.abs(centerPx[0]-this.coordPx_[0]), Math.abs(centerPx[1]-this.coordPx_[1]));
+      dmax = Math.min ( this.maxCircleCoordinates_, Math.round(dmax / 3 ));
+      return Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_10__["fromCircle"]) (circle, dmax, 0);
+    } else {
+      var hasrotation = this.canRotate_ && this.centered_ && this.square_;
+      d = [coord[0] - center[0], coord[1] - center[1]];
+      if (this.square_ && !hasrotation) {
+        //var d = [coord[0] - center[0], coord[1] - center[1]];
+        var dm = Math.max (Math.abs(d[0]), Math.abs(d[1])); 
+        coord = [ 
+          center[0] + (d[0]>0 ? dm:-dm),
+          center[1] + (d[1]>0 ? dm:-dm)
+        ];
+      }
+      r = Math.sqrt(d[0]*d[0]+d[1]*d[1]);
+      if (r>0) {
+        circle = new ol_geom_Circle__WEBPACK_IMPORTED_MODULE_9__["default"](center, r, 'XY');
+        var a;
+        if (hasrotation) a = Math.atan2(d[1], d[0]);
+        else a = this.startAngle[this.sides_] || this.startAngle['default'];
+
+        if (this.sides_) {
+          g = Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_10__["fromCircle"]) (circle, this.sides_, a);
+        } else {
+          // Optimize points on the circle
+          centerPx = this.getMap().getPixelFromCoordinate(this.center_);
+          dmax = Math.max (100, Math.abs(centerPx[0]-this.coordPx_[0]), Math.abs(centerPx[1]-this.coordPx_[1]));
+          dmax = Math.min ( this.maxCircleCoordinates_, Math.round(dmax / (this.centered_ ? 3:5) ));
+          g = Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_10__["fromCircle"]) (circle, dmax, 0);
+        }
+
+        if (hasrotation) return g;
+      
+        // Scale polygon to fit extent
+        var ext = g.getExtent();
+        if (!this.centered_) center = this.center_;
+        else center = [ 2*this.center_[0]-this.coord_[0], 2*this.center_[1]-this.coord_[1] ];
+        var scx = (center[0] - coord[0]) / (ext[0] - ext[2]);
+        var scy = (center[1] - coord[1]) / (ext[1] - ext[3]);
+        if (this.square_) {
+          var sc = Math.min(Math.abs(scx),Math.abs(scy));
+          scx = Math.sign(scx)*sc;
+          scy = Math.sign(scy)*sc;
+        }
+        var t = [ center[0] - ext[0]*scx, center[1] - ext[1]*scy ];
+      
+        g.applyTransform(function(g1, g2, dim) {
+          for (var i=0; i<g1.length; i+=dim) {
+            g2[i] = g1[i]*scx + t[0];
+            g2[i+1] = g1[i+1]*scy + t[1];
+          }
+          return g2;
+        });
+        return g;
+      }
+    }
+  }
+
+  // No geom => return a point
+  return new ol_geom_Point__WEBPACK_IMPORTED_MODULE_11__["default"](this.center_);
+};
+
+/** Draw sketch
+* @return {ol.Feature} The feature being drawn.
+*/
+ol_interaction_DrawRegular.prototype.drawSketch_ = function(evt) {
+  this.overlayLayer_.getSource().clear();
+  if (evt) {
+    this.square_ = this.squareFn_ ? this.squareFn_(evt) : evt.originalEvent.shiftKey;
+    this.centered_ = this.centeredFn_ ? this.centeredFn_(evt) : evt.originalEvent.metaKey || evt.originalEvent.ctrlKey;
+    var g = this.getGeom_();
+    if (g) {
+      var f = this.feature_;
+      if (this.geometryName_) f.setGeometryName(this.geometryName_)
+
+      //f.setGeometry (g);
+      if (g.getType()==='Polygon') f.getGeometry().setCoordinates(g.getCoordinates());
+      this.overlayLayer_.getSource().addFeature(f);
+      if (this.coord_ 
+        && this.square_ 
+        && ((this.canRotate_ && this.centered_ && this.coord_) || (!this.sides_ && !this.centered_))) {
+        this.overlayLayer_.getSource().addFeature(new ol_Feature__WEBPACK_IMPORTED_MODULE_13__["default"](new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_12__["default"]([this.center_,this.coord_])));
+      }
+      return f;
+    }
+  }
+};
+
+/** Draw sketch (Point)
+*/
+ol_interaction_DrawRegular.prototype.drawPoint_ = function(pt, noclear) {
+  if (!noclear) this.overlayLayer_.getSource().clear();
+  this.overlayLayer_.getSource().addFeature(new ol_Feature__WEBPACK_IMPORTED_MODULE_13__["default"](new ol_geom_Point__WEBPACK_IMPORTED_MODULE_11__["default"](pt)));
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ */
+ol_interaction_DrawRegular.prototype.handleEvent_ = function(evt) {
+  var dx, dy;
+  // Event date time
+  this._eventTime = new Date();
+  switch (evt.type) {
+    case "pointerdown": {
+      this.downPx_ = evt.pixel;
+      this.start_(evt);
+      // Test long touch
+      var dt = 500;
+      this._longTouch = false;
+      setTimeout(function() {
+        this._longTouch = (new Date() - this._eventTime > .9*dt);
+        if (this._longTouch) this.handleMoveEvent_(evt);
+      }.bind(this), dt);
+      break;
+    }
+    case "pointerup": {
+      // Started and fisrt move
+      if (this.started_ && this.coord_) {
+        dx = this.downPx_[0] - evt.pixel[0];
+        dy = this.downPx_[1] - evt.pixel[1];
+        if (dx*dx + dy*dy <= this.squaredClickTolerance_) {
+          // The pointer has moved
+          if ( this.lastEvent == "pointermove" || this.lastEvent == "keydown" ) {
+            this.end_(evt);
+          }
+          // On touch device there is no move event : terminate = click on the same point
+          else {
+            dx = this.upPx_[0] - evt.pixel[0];
+            dy = this.upPx_[1] - evt.pixel[1];
+            if ( dx*dx + dy*dy <= this.squaredClickTolerance_) {
+              this.end_(evt);
+            } else  {
+              this.handleMoveEvent_(evt);
+              this.drawPoint_(evt.coordinate,true);
+            }
+          }
+        }
+      }
+      this.upPx_ = evt.pixel;	
+      break;
+    }
+    case "pointerdrag": {
+      if (this.started_) {
+        var centerPx = this.getMap().getPixelFromCoordinate(this.center_);
+        dx = centerPx[0] - evt.pixel[0];
+        dy = centerPx[1] - evt.pixel[1];
+        if (dx*dx + dy*dy <= this.squaredClickTolerance_) {
+          this.reset();
+        }
+      }
+      return !this._longTouch;
+      // break;
+    }
+    case "pointermove": {
+      if (this.started_) {
+        dx = this.downPx_[0] - evt.pixel[0];
+        dy = this.downPx_[1] - evt.pixel[1];
+        if (dx*dx + dy*dy > this.squaredClickTolerance_) {
+          this.handleMoveEvent_(evt);
+          this.lastEvent = evt.type;
+        }
+      }
+      break;
+    }
+    default: {
+      this.lastEvent = evt.type;
+      // Prevent zoom in on dblclick
+      if (this.started_ && evt.type==='dblclick') {
+        //evt.stopPropagation();
+        return false;
+      }
+      break;
+    }
+  }
+  return true;
+}
+
+/** Stop drawing.
+ */
+ol_interaction_DrawRegular.prototype.finishDrawing = function() {
+  if (this.started_ && this.coord_) {
+    this.end_({ pixel: this.upPx_, coordinate: this.coord_});
+  }
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ */
+ol_interaction_DrawRegular.prototype.handleMoveEvent_ = function(evt) {
+  if (this.started_) {
+    this.coord_ = evt.coordinate;
+    this.coordPx_ = evt.pixel;
+    var f = this.drawSketch_(evt);
+    this.dispatchEvent({ 
+      type:'drawing', 
+      feature: f, 
+      pixel: evt.pixel, 
+      startCoordinate: this.center_,
+      coordinate: evt.coordinate, 
+      square: this.square_, 
+      centered: this.centered_ 
+    });
+  } else  {
+    this.drawPoint_(evt.coordinate);
+  }
+};
+
+/** Start an new draw
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `false` to stop the drag sequence.
+ */
+ol_interaction_DrawRegular.prototype.start_ = function(evt) {
+  if (!this.started_) {
+    this.started_ = true;
+    this.center_ = evt.coordinate;
+    this.coord_ = null;
+    var geom = new ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_10__["default"]([[evt.coordinate,evt.coordinate,evt.coordinate]]);
+    var f = this.feature_ = new ol_Feature__WEBPACK_IMPORTED_MODULE_13__["default"](geom);
+    this.drawSketch_(evt);
+    this.dispatchEvent({ type:'drawstart', feature: f, pixel: evt.pixel, coordinate: evt.coordinate });
+  } else {
+    this.coord_ = evt.coordinate;
+  }
+};
+
+/** End drawing
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `false` to stop the drag sequence.
+ */
+ol_interaction_DrawRegular.prototype.end_ = function(evt) {
+  this.coord_ = evt.coordinate;
+  this.started_ = false;
+  // Add new feature
+  if (this.coord_ && this.center_[0]!=this.coord_[0] && this.center_[1]!=this.coord_[1]) {
+    var f = this.feature_;
+    if (this.geometryName_) f.setGeometryName(this.geometryName_)
+
+    f.setGeometry(this.getGeom_());
+    if (this.source_) this.source_.addFeature(f);
+    else if (this.features_) this.features_.push(f);
+    this.dispatchEvent({ type:'drawend', feature: f, pixel: evt.pixel, coordinate: evt.coordinate, square: this.square_, centered: this.centered_ });
+  } else {
+    this.dispatchEvent({ type:'drawcancel', feature: null, pixel: evt.pixel, coordinate: evt.coordinate, square: this.square_, centered: this.centered_ });
+  }
+
+  this.center_ = this.coord_ = null;
+  this.drawSketch_();
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_DrawRegular);
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/ModifyFeature.js":
+/*!**********************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/ModifyFeature.js ***!
+  \**********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Pointer */ "./node_modules/ol/interaction/Pointer.js");
+/* harmony import */ var ol_style_Style__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/style/Style */ "./node_modules/ol/style/Style.js");
+/* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
+/* harmony import */ var ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/style/Fill */ "./node_modules/ol/style/Fill.js");
+/* harmony import */ var ol_style_Circle__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/style/Circle */ "./node_modules/ol/style/Circle.js");
+/* harmony import */ var ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/layer/Vector */ "./node_modules/ol/layer/Vector.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/geom/Point */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/Feature */ "./node_modules/ol/Feature.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ol/interaction/Interaction */ "./node_modules/ol/interaction/Interaction.js");
+/* harmony import */ var _geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../geom/GeomUtils */ "./node_modules/ol-ext/geom/GeomUtils.js");
+/* harmony import */ var ol_extent__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ol/extent */ "./node_modules/ol/extent.js");
+/* harmony import */ var ol_events_condition__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ol/events/condition */ "./node_modules/ol/events/condition.js");
+/* harmony import */ var _geom_LineStringSplitAt__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ../geom/LineStringSplitAt */ "./node_modules/ol-ext/geom/LineStringSplitAt.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO, 
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Interaction for modifying feature geometries. Similar to the core ol/interaction/Modify.
+ * The interaction is more suitable to use to handle feature modification: only features concerned 
+ * by the modification are passed to the events (instead of all feature with ol/interaction/Modify)
+ * - the modifystart event is fired before the feature is modified (no points still inserted)
+ * - the modifyend event is fired after the modification
+ * - it fires a modifying event
+ * @constructor
+ * @extends {ol_interaction_Pointer}
+ * @fires modifystart
+ * @fires modifying
+ * @fires modifyend
+ * @param {*} options
+ *	@param {ol.source.Vector|Array<ol.source.Vector>} options.source a list of source to modify (configured with useSpatialIndex set to true)
+ *  @param {ol.Collection.<ol.Feature>} options.features collection of feature to modify
+ *  @param {integer} options.pixelTolerance Pixel tolerance for considering the pointer close enough to a segment or vertex for editing. Default is 10.
+ *  @param {function|undefined} options.filter a filter that takes a feature and return true if it can be modified, default always true.
+ *  @param {ol.style.Style | Array<ol.style.Style> | undefined} options.style Style for the sketch features.
+ *  @param {ol.EventsConditionType | undefined} options.condition A function that takes an ol.MapBrowserEvent and returns a boolean to indicate whether that event will be considered to add or move a vertex to the sketch. Default is ol.events.condition.primaryAction.
+ *  @param {ol.EventsConditionType | undefined} options.deleteCondition A function that takes an ol.MapBrowserEvent and returns a boolean to indicate whether that event should be handled. By default, ol.events.condition.singleClick with ol.events.condition.altKeyOnly results in a vertex deletion.
+ *  @param {ol.EventsConditionType | undefined} options.insertVertexCondition A function that takes an ol.MapBrowserEvent and returns a boolean to indicate whether a new vertex can be added to the sketch features. Default is ol.events.condition.always
+ */
+var ol_interaction_ModifyFeature = function(options){
+  if (!options) options = {};
+
+  var dragging, modifying;
+  ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__["default"].call(this,{
+    /*
+    handleDownEvent: this.handleDownEvent,
+    handleDragEvent: this.handleDragEvent,
+    handleMoveEvent: this.handleMoveEvent,
+    handleUpEvent: this.handleUpEvent,
+    */
+    handleEvent: function(e) {
+      switch(e.type) {
+        case 'pointerdown': {
+          dragging = this.handleDownEvent(e);
+          modifying = dragging || this._deleteCondition(e);
+          return !dragging;
+        }
+        case 'pointerup': {
+          dragging = false;
+          return this.handleUpEvent(e);
+        }
+        case 'pointerdrag': {
+          if (dragging) return this.handleDragEvent(e);
+          else return true;
+        }
+        case 'pointermove': {
+          if (!dragging) return this.handleMoveEvent(e);
+          else return true;
+        }
+        case 'singleclick':
+        case 'click': {
+          // Prevent click when modifying
+          return !modifying;
+        }
+        default: return true;
+      }
+    }
+  });
+
+  // Snap distance (in px)
+  this.snapDistance_ = options.pixelTolerance || 10;
+  // Split tolerance between the calculated intersection and the geometry
+  this.tolerance_ = 1e-10;
+  // Cursor
+  this.cursor_ = options.cursor;
+
+  // List of source to split
+  this.sources_ = options.sources ? (options.sources instanceof Array) ? options.sources:[options.sources] : [];
+
+  if (options.features) {
+    this.sources_.push (new ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__["default"]({ features: options.features }));
+  }
+
+  // Get all features candidate
+  this.filterSplit_ = options.filter || function(){ return true; };
+
+  this._condition = options.condition || ol_events_condition__WEBPACK_IMPORTED_MODULE_14__["primaryAction"];
+  this._deleteCondition = options.deleteCondition || ol_events_condition__WEBPACK_IMPORTED_MODULE_14__["altKeyOnly"];
+  this._insertVertexCondition = options.insertVertexCondition || ol_events_condition__WEBPACK_IMPORTED_MODULE_14__["always"];
+
+  // Default style
+  var sketchStyle = function() {
+    return [ new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+        image: new ol_style_Circle__WEBPACK_IMPORTED_MODULE_6__["default"]({
+          radius: 6,
+          fill: new ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__["default"]({ color: [0, 153, 255, 1] }),
+          stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__["default"]({ color: '#FFF', width: 1.25 })
+        })
+      })
+    ];
+  }
+
+  // Custom style
+  if (options.style) {
+    if (typeof(options.style) === 'function') {
+      sketchStyle = options.style
+     } else {
+       sketchStyle = function() { return options.style; }
+     }
+  }
+
+  // Create a new overlay for the sketch
+  this.overlayLayer_ = new ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__["default"]({
+    source: new ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__["default"]({
+      useSpatialIndex: false
+    }),
+    name:'Modify overlay',
+    displayInLayerSwitcher: false,
+    style: sketchStyle
+  });
+
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_ModifyFeature, ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_ModifyFeature.prototype.setMap = function(map) {
+  if (this.getMap()) this.getMap().removeLayer(this.overlayLayer_);
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_11__["default"].prototype.setMap.call (this, map);
+  this.overlayLayer_.setMap(map);
+};
+
+/**
+ * Activate or deactivate the interaction + remove the sketch.
+ * @param {boolean} active.
+ * @api stable
+ */
+ol_interaction_ModifyFeature.prototype.setActive = function(active) {
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_11__["default"].prototype.setActive.call (this, active);
+  if (this.overlayLayer_) this.overlayLayer_.getSource().clear();
+};
+
+/** Get closest feature at pixel
+ * @param {ol.Pixel} 
+ * @return {*} 
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype.getClosestFeature = function(e) {
+  var f, c, d = this.snapDistance_+1;
+  for (var i=0; i<this.sources_.length; i++) {
+    var source = this.sources_[i];
+    f = source.getClosestFeatureToCoordinate(e.coordinate);
+    if (f && this.filterSplit_(f)) {
+      var ci = f.getGeometry().getClosestPoint(e.coordinate);
+      var di = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_dist2d"])(e.coordinate,ci) / e.frameState.viewState.resolution;
+      if (di < d){
+        d = di;
+        c = ci;
+      }
+      break;
+    }
+  }
+  if (d > this.snapDistance_) {
+    return false;
+  } else {
+    // Snap to node
+    var coord = this.getNearestCoord (c, f.getGeometry());
+    if (coord) {
+      coord = coord.coord;
+      var p = this.getMap().getPixelFromCoordinate(coord);
+      if (Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_dist2d"])(e.pixel, p) < this.snapDistance_) {
+        c = coord;
+      }
+      //
+      return { source:source, feature:f, coord: c };
+    }
+  }
+}
+
+/** Get nearest coordinate in a list 
+* @param {ol.coordinate} pt the point to find nearest
+* @param {ol.geom} coords list of coordinates
+* @return {*} the nearest point with a coord (projected point), dist (distance to the geom), ring (if Polygon)
+*/
+ol_interaction_ModifyFeature.prototype.getNearestCoord = function(pt, geom) {
+  var i, l, p, p0, dm;
+  switch (geom.getType()) {
+    case 'Point': {
+      return { coord: geom.getCoordinates(), dist: Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_dist2d"])(geom.getCoordinates(), pt) };
+    }
+    case 'MultiPoint': {
+      return this.getNearestCoord (pt, new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__["default"](geom.getCoordinates()));
+    }
+    case 'LineString':
+    case 'LinearRing': {
+      var d;
+      dm = Number.MAX_VALUE;
+      var coords = geom.getCoordinates();
+      for (i=0; i < coords.length; i++) {
+        d = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_dist2d"]) (pt, coords[i]);
+        if (d < dm) {
+          dm = d;
+          p0 = coords[i];
+        }
+      }
+      return { coord: p0, dist: dm };
+    }
+    case 'MultiLineString': {
+      var lstring = geom.getLineStrings();
+      p0 = false, dm = Number.MAX_VALUE;
+      for (i=0; l=lstring[i]; i++) {
+        p = this.getNearestCoord(pt, l);
+        if (p && p.dist<dm) {
+          p0 = p;
+          dm = p.dist;
+          p0.ring = i;
+        }
+      }
+      return p0;
+    }
+    case 'Polygon': {
+      var lring = geom.getLinearRings();
+      p0 = false;
+      dm = Number.MAX_VALUE;
+      for (i=0; l=lring[i]; i++) {
+        p = this.getNearestCoord(pt, l);
+        if (p && p.dist<dm) {
+          p0 = p;
+          dm = p.dist;
+          p0.ring = i;
+        }
+      }
+      return p0;
+    }
+    case 'MultiPolygon': {
+      var poly = geom.getPolygons();
+      p0 = false;
+      dm = Number.MAX_VALUE;
+      for (i=0; l=poly[i]; i++) {
+        p = this.getNearestCoord(pt, l);
+        if (p && p.dist<dm) {
+          p0 = p;
+          dm = p.dist;
+          p0.poly = i;
+        }
+      }
+      return p0;
+    }
+    case 'GeometryCollection': {
+      var g = geom.getGeometries();
+      p0 = false;
+      dm = Number.MAX_VALUE;
+      for (i=0; l=g[i]; i++) {
+        p = this.getNearestCoord(pt, l);
+        if (p && p.dist<dm) {
+          p0 = p;
+          dm = p.dist;
+          p0.geom = i;
+        }
+      }
+      return p0;
+    }
+    default: return false;
+  }
+};
+
+/** Get arcs concerned by a modification 
+ * @param {ol.geom} geom the geometry concerned
+ * @param {ol.coordinate} coord pointed coordinates
+ */
+ol_interaction_ModifyFeature.prototype.getArcs = function(geom, coord) {
+  var arcs = false;
+  var coords, i, s, l;
+  switch(geom.getType()) {
+    case 'Point': {
+      if (Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_equal"])(coord, geom.getCoordinates())) {
+        arcs = { 
+          geom: geom, 
+          type: geom.getType(),
+          coord1: [],
+          coord2: [],
+          node: true
+        }
+      }
+      break;
+    }
+    case 'MultiPoint': {
+      coords = geom.getCoordinates();
+      for (i=0; i < coords.length; i++) {
+        if (Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_equal"])(coord, coords[i])) {
+          arcs = { 
+            geom: geom, 
+            type: geom.getType(),
+            index: i,
+            coord1: [],
+            coord2: [],
+            node: true
+          }
+          break;
+        }
+      }
+      break;
+    }
+    case 'LinearRing': 
+    case 'LineString': {
+      var p = geom.getClosestPoint(coord);
+      if (Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_dist2d"])(p,coord) < 1.5*this.tolerance_) {
+        var split;
+        // Split the line in two
+        if (geom.getType() === 'LinearRing') {
+          var g = new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__["default"](geom.getCoordinates());
+          split = g.splitAt(coord, this.tolerance_);
+        } else {
+          split = geom.splitAt(coord, this.tolerance_);
+        }
+        // If more than 2
+        if (split.length>2) {
+          coords = split[1].getCoordinates();
+          for (i=2; s=split[i]; i++) {
+            var c = s.getCoordinates();
+            c.shift();
+            coords = coords.concat(c);
+          }
+          split = [ split[0], new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__["default"](coords) ];
+        }
+        // Split in two
+        if (split.length === 2) {
+          var c0 = split[0].getCoordinates();
+          var c1 = split[1].getCoordinates();
+          var nbpt = c0.length + c1.length -1;
+          c0.pop();
+          c1.shift();
+          arcs = { 
+            geom: geom, 
+            type: geom.getType(),
+            coord1: c0, 
+            coord2: c1,
+            node: (geom.getCoordinates().length === nbpt),
+            closed: false
+          }
+        } else if (split.length === 1) {
+          s = split[0].getCoordinates();
+          var start = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_equal"])(s[0], coord);
+          var end = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_equal"])(s[s.length-1], coord);
+          // Move first point
+          if (start) {
+            s.shift();
+            if (end) s.pop();
+            arcs = { 
+              geom: geom, 
+              type: geom.getType(),
+              coord1: [], 
+              coord2: s,
+              node: true,
+              closed: end
+            }
+          } else if (end) {
+            // Move last point
+            s.pop()
+            arcs = { 
+              geom: geom, 
+              type: geom.getType(),
+              coord1: s, 
+              coord2: [],
+              node: true,
+              closed: false
+            }
+          }
+        }
+      }
+      break;
+    }
+    case 'MultiLineString': {
+      var lstring = geom.getLineStrings();
+      for (i=0; l=lstring[i]; i++) {
+        arcs = this.getArcs(l, coord);
+        if (arcs) {
+          arcs.geom = geom;
+          arcs.type = geom.getType();
+          arcs.lstring = i;
+          break;
+        }
+      }
+      break;
+    }
+    case 'Polygon': {
+      var lring = geom.getLinearRings();
+      for (i=0; l=lring[i]; i++) {
+        arcs = this.getArcs(l, coord);
+        if (arcs) {
+          arcs.geom = geom;
+          arcs.type = geom.getType();
+          arcs.index = i;
+          break;
+        }
+      }
+      break;
+    }
+    case 'MultiPolygon': {
+      var poly = geom.getPolygons();
+      for (i=0; l=poly[i]; i++) {
+        arcs = this.getArcs(l, coord);
+        if (arcs) {
+          arcs.geom = geom;
+          arcs.type = geom.getType();
+          arcs.poly = i;
+          break;
+        }
+      }
+      break;
+    }
+    case 'GeometryCollection': {
+      for (i=0; l=g[i]; i++) {
+        arcs = this.getArcs(l, coord);
+        if (arcs) {
+          arcs.geom = geom;
+          arcs.g = i;
+          arcs.typeg = arcs.type;
+          arcs.type = geom.getType();
+          break;
+        }
+      }
+      break;
+    }
+    default: {
+      console.error('ol/interaction/ModifyFeature '+geom.getType()+' not supported!');
+      break;
+    }
+  }
+  return arcs;
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ */
+ol_interaction_ModifyFeature.prototype.handleDownEvent = function(evt) {
+  if (!this.getActive()) return false;
+
+  // Something to split ?
+  var current = this.getClosestFeature(evt);
+
+  if (current && (this._condition(evt) || this._deleteCondition(evt))) {
+    var features = [];
+    this.arcs = [];
+
+    // Get features concerned
+    this.sources_.forEach(function(s) {
+      var extent = Object(ol_extent__WEBPACK_IMPORTED_MODULE_13__["buffer"]) (Object(ol_extent__WEBPACK_IMPORTED_MODULE_13__["boundingExtent"])([current.coord]), this.tolerance_);
+      features = features.concat(features, s.getFeaturesInExtent(extent));
+    }.bind(this));
+
+    // Get arcs concerned
+    this._modifiedFeatures = [];
+    features.forEach(function(f) {
+      var a = this.getArcs(f.getGeometry(), current.coord);
+      if (a) {
+        if (this._insertVertexCondition(evt) || a.node) {
+          a.feature = f;
+          this._modifiedFeatures.push(f);
+          this.arcs.push(a);
+        }
+      }
+    }.bind(this));
+
+    if (this._modifiedFeatures.length) {
+      if (this._deleteCondition(evt)) {
+        return !this._removePoint(current, evt); 
+      } else {
+        this.dispatchEvent({ 
+          type:'modifystart', 
+          coordinate: current.coord,
+          originalEvent: evt.originalEvent,
+          features: this._modifiedFeatures
+        });
+        this.handleDragEvent({ coordinate: current.coord })
+        return true;
+      }
+    } else {
+      return true;
+    }
+  } else {
+    return false;
+  }
+};
+
+/** Get modified features
+ * @return {Array<ol.Feature>} list of modified features
+ */
+ol_interaction_ModifyFeature.prototype.getModifiedFeatures = function() {
+  return this._modifiedFeatures || [];
+};
+
+/** Removes the vertex currently being pointed.
+ */
+ol_interaction_ModifyFeature.prototype.removePoint = function() {
+  this._removePoint({},{});
+};
+
+/**
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype._getModification = function(a) {
+  var coords = a.coord1.concat(a.coord2);
+  switch (a.type) {
+    case 'LineString': {
+      if (a.closed) coords.push(coords[0]);
+      if (coords.length>1) {
+        if (a.geom.getCoordinates().length != coords.length) {
+          a.coords = coords;
+          return true;
+        }
+      }
+      break;
+    }
+    case 'MultiLineString': {
+      if (a.closed) coords.push(coords[0]);
+      if (coords.length>1) {
+        var c = a.geom.getCoordinates();
+        if (c[a.lstring].length != coords.length) {
+          c[a.lstring] = coords;
+          a.coords = c;
+          return true;
+        }
+      }
+      break;
+    }
+    case 'Polygon': {
+      if (a.closed) coords.push(coords[0]);
+      if (coords.length>3) {
+        c = a.geom.getCoordinates();
+        if (c[a.index].length != coords.length) {
+          c[a.index] = coords;
+          a.coords = c;
+          return true;
+        }
+      }
+      break;
+    }
+    case 'MultiPolygon': {
+      if (a.closed) coords.push(coords[0]);
+      if (coords.length>3) {
+        c = a.geom.getCoordinates();
+        if (c[a.poly][a.index].length != coords.length) {
+          c[a.poly][a.index] = coords;
+          a.coords = c;
+          return true;
+        }
+      }
+      break;
+    }
+    case 'GeometryCollection': {
+      a.type = a.typeg;
+      var geom = a.geom;
+      var geoms = geom.getGeometries();
+      a.geom = geoms[a.g];
+      var found = this._getModification(a);
+      // Restore current arc
+      geom.setGeometries(geoms);
+      a.geom = geom;
+      a.type = 'GeometryCollection';
+      return found;
+    }
+    default: {
+      //console.error('ol/interaction/ModifyFeature '+a.type+' not supported!');
+      break;
+    }
+  }
+  return false;
+};
+
+/** Removes the vertex currently being pointed.
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype._removePoint = function(current, evt) {
+  if (!this.arcs) return false;
+
+  this.overlayLayer_.getSource().clear();
+
+  var found = false;
+  // Get all modifications
+  this.arcs.forEach(function(a) {
+    found = found || this._getModification(a);
+  }.bind(this));
+
+  // Almost one point is removed
+  if (found) {
+    this.dispatchEvent({ 
+      type:'modifystart', 
+      coordinate: current.coord,
+      originalEvent: evt.originalEvent,
+      features: this._modifiedFeatures
+    });
+    this.arcs.forEach(function(a) {
+      if (a.geom.getType() === 'GeometryCollection') {
+        if (a.coords) {
+          var geoms = a.geom.getGeometries();
+          geoms[a.g].setCoordinates(a.coords);
+          a.geom.setGeometries(geoms);
+        }
+      } else {
+        if (a.coords) a.geom.setCoordinates(a.coords);
+      }
+    }.bind(this));
+    this.dispatchEvent({ 
+      type:'modifyend', 
+      coordinate: current.coord,
+      originalEvent: evt.originalEvent,
+      features: this._modifiedFeatures
+    });
+  }
+
+  this.arcs = [];
+  return found;
+};
+
+/**
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype.handleUpEvent = function(e) {
+  if (!this.getActive()) return false;
+  if (!this.arcs || !this.arcs.length) return true;
+
+  this.overlayLayer_.getSource().clear();
+  this.dispatchEvent({ 
+    type:'modifyend', 
+    coordinate: e.coordinate,
+    originalEvent: e.originalEvent,
+    features: this._modifiedFeatures
+  });
+
+  return true;
+};
+
+/**
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype.setArcCoordinates = function(a, coords) {
+  var c;
+  switch (a.type) {
+    case 'Point': {
+      a.geom.setCoordinates(coords[0]);
+      break;
+    }
+    case 'MultiPoint': {
+      c = a.geom.getCoordinates();
+      c[a.index] = coords[0];
+      a.geom.setCoordinates(c);
+      break;
+    }
+    case 'LineString': {
+      a.geom.setCoordinates(coords);
+      break;
+    }
+    case 'MultiLineString': {
+      c = a.geom.getCoordinates();
+      c[a.lstring] = coords;
+      a.geom.setCoordinates(c);
+      break;
+    }
+    case 'Polygon': {
+      c = a.geom.getCoordinates();
+      c[a.index] = coords;
+      a.geom.setCoordinates(c);
+      break;
+    }
+    case 'MultiPolygon': {
+      c = a.geom.getCoordinates();
+      c[a.poly][a.index] = coords;
+      a.geom.setCoordinates(c);
+      break;
+    }
+    case 'GeometryCollection': {
+      a.type = a.typeg;
+      var geom = a.geom;
+      var geoms = geom.getGeometries();
+      a.geom = geoms[a.g];
+      this.setArcCoordinates(a, coords);
+      geom.setGeometries(geoms);
+      a.geom = geom;
+      a.type = 'GeometryCollection';
+      break;
+    }
+  }
+};
+/**
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype.handleDragEvent = function(e) {
+  if (!this.getActive()) return false;
+  if (!this.arcs) return true;
+
+  // Show sketch
+  this.overlayLayer_.getSource().clear();
+  var p = new ol_Feature__WEBPACK_IMPORTED_MODULE_9__["default"](new ol_geom_Point__WEBPACK_IMPORTED_MODULE_8__["default"](e.coordinate));
+  this.overlayLayer_.getSource().addFeature(p);
+
+  // Nothing to do
+  if (!this.arcs.length) return true;
+
+  // Move arcs
+  this.arcs.forEach(function(a) {
+    var coords = a.coord1.concat([e.coordinate], a.coord2);
+    if (a.closed) coords.push(e.coordinate);
+    this.setArcCoordinates(a, coords);
+  }.bind(this));
+
+  this.dispatchEvent({ 
+    type:'modifying', 
+    coordinate: e.coordinate,
+    originalEvent: e.originalEvent,
+    features: this._modifiedFeatures
+  });
+
+  return true;
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype.handleMoveEvent = function(e) {
+  if (!this.getActive()) return false;
+
+  this.overlayLayer_.getSource().clear();
+  var current = this.getClosestFeature(e);
+
+  // Draw sketch
+  if (current) {
+    var p = new ol_Feature__WEBPACK_IMPORTED_MODULE_9__["default"](new ol_geom_Point__WEBPACK_IMPORTED_MODULE_8__["default"](current.coord));
+    this.overlayLayer_.getSource().addFeature(p);
+  }
+
+  // Show cursor
+  var element = e.map.getTargetElement();
+  if (this.cursor_) {
+    if (current) {
+      if (element.style.cursor != this.cursor_) {
+        this.previousCursor_ = element.style.cursor;
+        element.style.cursor = this.cursor_;
+      }
+    } else if (this.previousCursor_ !== undefined) {
+      element.style.cursor = this.previousCursor_;
+      this.previousCursor_ = undefined;
+    }
+  }
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_ModifyFeature);
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/Offset.js":
+/*!***************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/Offset.js ***!
+  \***************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Pointer */ "./node_modules/ol/interaction/Pointer.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/* harmony import */ var _geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../geom/GeomUtils */ "./node_modules/ol-ext/geom/GeomUtils.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO, 
+	released under the CeCILL-B license (French BSD license)
+	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+
+/** Offset interaction for offseting feature geometry
+ * @constructor
+ * @extends {ol_interaction_Pointer}
+ * @fires offsetstart
+ * @fires offsetting
+ * @fires offsetend
+ * @param {any} options
+ *	@param {ol.layer.Vector | Array<ol.layer.Vector>} options.layers list of feature to transform 
+ *	@param {ol.Collection.<ol.Feature>} options.features collection of feature to transform
+ *	@param {ol.source.Vector | undefined} options.source source to duplicate feature when ctrl key is down
+ *	@param {boolean} options.duplicate force feature to duplicate (source must be set)
+ */
+var ol_interaction_Offset = function(options) {
+  if (!options) options = {};
+
+	// Extend pointer
+	ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {
+    handleDownEvent: this.handleDownEvent_,
+    handleDragEvent: this.handleDragEvent_,
+    handleMoveEvent: this.handleMoveEvent_,
+    handleUpEvent: this.handleUpEvent_
+  });
+    
+	// Collection of feature to transform
+	this.features_ = options.features;
+	// List of layers to transform
+  this.layers_ = options.layers ? (options.layers instanceof Array) ? options.layers:[options.layers] : null;
+  // duplicate
+  this.set('duplicate', options.duplicate);
+  this.source_ = options.source;
+
+  // init
+  this.previousCursor_ = false;
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_Offset, ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_Offset.prototype.setMap = function(map) {
+	ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.setMap.call (this, map);
+};
+
+/** Get Feature at pixel
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {any} a feature and the hit point
+ * @private
+ */
+ol_interaction_Offset.prototype.getFeatureAtPixel_ = function(e) {
+  var self = this;
+	return this.getMap().forEachFeatureAtPixel(e.pixel,
+		function(feature, layer) {
+      var current;
+			// feature belong to a layer
+			if (self.layers_) {
+        for (var i=0; i<self.layers_.length; i++) {
+          if (self.layers_[i]===layer) {
+            current = feature;
+            break;
+          }
+				}
+			}
+			// feature in the collection
+			else if (self.features_) {
+        self.features_.forEach (function(f) {
+          if (f===feature) {
+            current = feature 
+          }
+        });
+			}
+			// Others
+			else {
+        current = feature;
+      }
+
+      // Only poygon or linestring
+      var typeGeom = current.getGeometry().getType();
+      if (current && /Polygon|LineString/.test(typeGeom)) {
+        if (typeGeom==='Polygon' && current.getGeometry().getCoordinates().length>1) return false;
+        // test distance
+        var p = current.getGeometry().getClosestPoint(e.coordinate);
+        var dx = p[0]-e.coordinate[0];
+        var dy = p[1]-e.coordinate[1];
+        var d = Math.sqrt(dx*dx+dy*dy) / e.frameState.viewState.resolution;
+      
+        if (d<5) {
+          return { 
+            feature: current, 
+            hit: p, 
+            coordinates: current.getGeometry().getCoordinates(),
+            geom: current.getGeometry().clone(),
+            geomType: typeGeom
+          }
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+		},  { hitTolerance: 5 });
+};
+
+/**
+ * @param {ol.MapBrowserEvent} e Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ * @private
+ */
+ol_interaction_Offset.prototype.handleDownEvent_ = function(e) {	
+  this.current_ = this.getFeatureAtPixel_(e);
+  if (this.source_ && (this.get('duplicate') || e.originalEvent.ctrlKey)) {
+    this.current_.feature = this.current_.feature.clone();
+    this.source_.addFeature(this.current_.feature);
+  } else {
+    // Modify the current feature
+    if (this.current_) {
+      this.dispatchEvent({ type:'modifystart', features: [ this.current_.feature ] });
+    }
+  }
+	if (this.current_) {
+    this.dispatchEvent({ type:'offsetstart', feature: this.current_.feature, offset: 0 });
+    return true;
+  } else  {
+    return false;
+  }
+};
+
+/**
+ * @param {ol.MapBrowserEvent} e Map browser event.
+ * @private
+ */
+ol_interaction_Offset.prototype.handleDragEvent_ = function(e) {
+  var p = this.current_.geom.getClosestPoint(e.coordinate);
+  var d = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__["ol_coordinate_dist2d"])(p, e.coordinate);
+  var seg, v1, v2, offset;
+  switch (this.current_.geomType) {
+    case  'Polygon': {
+      seg = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__["ol_coordinate_findSegment"])(p, this.current_.coordinates[0]).segment;
+      if (seg) {
+        v1 = [ seg[1][0]-seg[0][0], seg[1][1]-seg[0][1] ];
+        v2 = [ e.coordinate[0]-p[0], e.coordinate[1]-p[1] ];
+        if (v1[0]*v2[1] - v1[1]*v2[0] > 0) {
+          d = -d;
+        }
+
+        offset = [];
+        for (var i=0; i<this.current_.coordinates.length; i++) {
+          offset.push( Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__["ol_coordinate_offsetCoords"])(this.current_.coordinates[i], i==0 ? d : -d) );
+        }
+        this.current_.feature.setGeometry(new ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_3__["default"](offset));
+      }
+      break;
+    }
+    case 'LineString': {
+      seg = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__["ol_coordinate_findSegment"])(p, this.current_.coordinates).segment;
+      if (seg) {
+        v1 = [ seg[1][0]-seg[0][0], seg[1][1]-seg[0][1] ];
+        v2 = [ e.coordinate[0]-p[0], e.coordinate[1]-p[1] ];
+        if (v1[0]*v2[1] - v1[1]*v2[0] > 0) {
+          d = -d;
+        }
+        offset = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__["ol_coordinate_offsetCoords"])(this.current_.coordinates, d);
+        this.current_.feature.setGeometry(new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_2__["default"](offset));
+      }
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+  this.dispatchEvent({ type:'offsetting', feature: this.current_.feature, offset: d, segment: [p, e.coordinate], coordinate: e.coordinate });  
+};
+
+/**
+ * @param {ol.MapBrowserEvent} e Map browser event.
+ * @private
+ */
+ol_interaction_Offset.prototype.handleUpEvent_ = function(e) {
+  this.dispatchEvent({ type:'offsetend', feature: this.current_.feature, coordinate: e.coordinate });  
+  this.current_ = false;
+};
+
+/**
+ * @param {ol.MapBrowserEvent} e Event.
+ * @private
+ */
+ol_interaction_Offset.prototype.handleMoveEvent_ = function(e) {	
+  var f = this.getFeatureAtPixel_(e);
+  if (f) {
+    if (this.previousCursor_ === false) {
+      this.previousCursor_ = e.map.getTargetElement().style.cursor;
+    }
+    e.map.getTargetElement().style.cursor = 'pointer';
+  } else {
+    e.map.getTargetElement().style.cursor = this.previousCursor_;
+    this.previousCursor_ = false;
+  }
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_Offset);
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/Split.js":
+/*!**************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/Split.js ***!
+  \**************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Interaction */ "./node_modules/ol/interaction/Interaction.js");
+/* harmony import */ var ol_style_Style__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/style/Style */ "./node_modules/ol/style/Style.js");
+/* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
+/* harmony import */ var ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/style/Fill */ "./node_modules/ol/style/Fill.js");
+/* harmony import */ var ol_style_Circle__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/style/Circle */ "./node_modules/ol/style/Circle.js");
+/* harmony import */ var ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/layer/Vector */ "./node_modules/ol/layer/Vector.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/geom/Point */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/Feature */ "./node_modules/ol/Feature.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var _geom_GeomUtils__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../geom/GeomUtils */ "./node_modules/ol-ext/geom/GeomUtils.js");
+/* harmony import */ var _geom_LineStringSplitAt__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../geom/LineStringSplitAt */ "./node_modules/ol-ext/geom/LineStringSplitAt.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO, 
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Interaction split interaction for splitting feature geometry
+ * @constructor
+ * @extends {ol_interaction_Interaction}
+ * @fires  beforesplit, aftersplit, pointermove
+ * @param {*} 
+ *  @param {ol.source.Vector|Array<ol.source.Vector>} options.source a list of source to split (configured with useSpatialIndex set to true)
+ *  @param {ol.Collection.<ol.Feature>} options.features collection of feature to split
+ *  @param {integer} options.snapDistance distance (in px) to snap to an object, default 25px
+ *	@param {string|undefined} options.cursor cursor name to display when hovering an objet
+ *  @param {function|undefined} opttion.filter a filter that takes a feature and return true if it can be clipped, default always split.
+ *  @param ol_style_Style | Array<ol_style_Style> | false | undefined} options.featureStyle Style for the selected features, choose false if you don't want feature selection. By default the default edit style is used.
+ *  @param {ol_style_Style | Array<ol_style_Style> | undefined} options.sketchStyle Style for the sektch features. 
+ *  @param {function|undefined} options.tolerance Distance between the calculated intersection and a vertex on the source geometry below which the existing vertex will be used for the split.  Default is 1e-10.
+ */
+var ol_interaction_Split = function(options) {
+  if (!options) options = {};
+
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {
+    handleEvent: function(e) {
+      switch (e.type) {
+        case "singleclick":
+          return this.handleDownEvent(e);
+        case "pointermove":
+          return this.handleMoveEvent(e);
+        default: 
+          return true;
+      }
+      //return true;
+    }
+  });
+
+  // Snap distance (in px)
+  this.snapDistance_ = options.snapDistance || 25;
+  // Split tolerance between the calculated intersection and the geometry
+  this.tolerance_ = options.tolerance || 1e-10;
+  // Cursor
+  this.cursor_ = options.cursor;
+
+  // List of source to split
+  this.sources_ = options.sources ? (options.sources instanceof Array) ? options.sources:[options.sources] : [];
+
+  if (options.features) {
+    this.sources_.push (new ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__["default"]({ features: options.features }));
+  }
+
+  // Get all features candidate
+  this.filterSplit_ = options.filter || function(){ return true; };
+
+  // Default style
+  var white = [255, 255, 255, 1];
+  var blue = [0, 153, 255, 1];
+  var width = 3;
+  var fill = new ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__["default"]({ color: 'rgba(255,255,255,0.4)' });
+  var stroke = new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__["default"]({
+    color: '#3399CC',
+    width: 1.25
+  });
+  var sketchStyle = [
+    new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+      image: new ol_style_Circle__WEBPACK_IMPORTED_MODULE_6__["default"]({
+        fill: fill,
+        stroke: stroke,
+        radius: 5
+      }),
+      fill: fill,
+      stroke: stroke
+    })
+  ];
+  var featureStyle = [
+    new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+      stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__["default"]({
+        color: white,
+        width: width + 2
+      })
+    }),
+    new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+      image: new ol_style_Circle__WEBPACK_IMPORTED_MODULE_6__["default"]({
+        radius: 2*width,
+        fill: new ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__["default"]({
+          color: blue
+        }),
+        stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__["default"]({
+          color: white,
+          width: width/2
+        })
+      }),
+      stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__["default"]({
+          color: blue,
+          width: width
+        })
+    }),
+  ];
+
+  // Custom style
+  if (options.sketchStyle) sketchStyle = options.sketchStyle instanceof Array ? options.sketchStyle : [options.sketchStyle];
+  if (options.featureStyle) featureStyle = options.featureStyle instanceof Array ? options.featureStyle : [options.featureStyle];
+
+  // Create a new overlay for the sketch
+  this.overlayLayer_ = new ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__["default"]({
+    source: new ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__["default"]({
+      useSpatialIndex: false
+    }),
+    name:'Split overlay',
+    displayInLayerSwitcher: false,
+    style: function(f) {
+      if (f._sketch_) return sketchStyle;
+      else return featureStyle;
+    }
+  });
+
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_Split, ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_Split.prototype.setMap = function(map) {
+  if (this.getMap()) this.getMap().removeLayer(this.overlayLayer_);
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.setMap.call (this, map);
+  this.overlayLayer_.setMap(map);
+};
+
+/** Get closest feature at pixel
+ * @param {ol.Pixel} 
+ * @return {ol.feature} 
+ * @private
+ */
+ol_interaction_Split.prototype.getClosestFeature = function(e) {
+  var f, c, g, d = this.snapDistance_+1;
+  for (var i=0; i<this.sources_.length; i++) {
+    var source = this.sources_[i];
+    f = source.getClosestFeatureToCoordinate(e.coordinate);
+    if (f && f.getGeometry().splitAt) {
+      c = f.getGeometry().getClosestPoint(e.coordinate);
+      g = new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__["default"]([e.coordinate,c]);
+      d = g.getLength() / e.frameState.viewState.resolution;
+      break;
+    }
+  }
+  if (d > this.snapDistance_) {
+    return false;
+  } else {
+    // Snap to node
+    var coord = this.getNearestCoord (c, f.getGeometry().getCoordinates());
+    var p = this.getMap().getPixelFromCoordinate(coord);
+    if (Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_11__["ol_coordinate_dist2d"])(e.pixel, p) < this.snapDistance_) {
+      c = coord;
+    }
+    //
+    return { source:source, feature:f, coord: c, link: g };
+  }
+}
+
+/** Get nearest coordinate in a list 
+* @param {ol.coordinate} pt the point to find nearest
+* @param {Array<ol.coordinate>} coords list of coordinates
+* @return {ol.coordinate} the nearest coordinate in the list
+*/
+ol_interaction_Split.prototype.getNearestCoord = function(pt, coords) {
+  var d, dm=Number.MAX_VALUE, p0;
+  for (var i=0; i < coords.length; i++) {
+    d = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_11__["ol_coordinate_dist2d"]) (pt, coords[i]);
+    if (d < dm) {
+      dm = d;
+      p0 = coords[i];
+    }
+  }
+  return p0;
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ */
+ol_interaction_Split.prototype.handleDownEvent = function(evt) {
+  // Something to split ?
+  var current = this.getClosestFeature(evt);
+
+  if (current) {
+    var self = this;
+    self.overlayLayer_.getSource().clear();
+    var split = current.feature.getGeometry().splitAt(current.coord, this.tolerance_);
+    var i;
+    if (split.length > 1) {
+      var tosplit = [];
+      for (i=0; i<split.length; i++) {
+        var f = current.feature.clone();
+        f.setGeometry(split[i]);
+        tosplit.push(f);
+      }
+      self.dispatchEvent({ type:'beforesplit', original: current.feature, features: tosplit });
+      current.source.dispatchEvent({ type:'beforesplit', original: current.feature, features: tosplit });
+      current.source.removeFeature(current.feature);
+      for (i=0; i<tosplit.length; i++) {
+        current.source.addFeature(tosplit[i]);
+      }
+      self.dispatchEvent({ type:'aftersplit', original: current.feature, features: tosplit });
+      current.source.dispatchEvent({ type:'aftersplit', original: current.feature, features: tosplit });
+    }
+  }
+  return false;
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ */
+ol_interaction_Split.prototype.handleMoveEvent = function(e) {
+  var map = e.map;
+  this.overlayLayer_.getSource().clear();
+  var current = this.getClosestFeature(e);
+
+  if (current && this.filterSplit_(current.feature)) {
+    var p, l;
+    // Draw sketch
+    this.overlayLayer_.getSource().addFeature(current.feature);
+    p = new ol_Feature__WEBPACK_IMPORTED_MODULE_9__["default"](new ol_geom_Point__WEBPACK_IMPORTED_MODULE_8__["default"](current.coord));
+    p._sketch_ = true;
+    this.overlayLayer_.getSource().addFeature(p);
+    //
+    l = new ol_Feature__WEBPACK_IMPORTED_MODULE_9__["default"](current.link);
+    l._sketch_ = true;
+    this.overlayLayer_.getSource().addFeature(l);
+    // move event
+    this.dispatchEvent({
+      type: 'pointermove',
+      coordinate: e.coordinate,
+      frameState: e.frameState,
+      originalEvent: e.originalEvent,
+      map: e.map,
+      pixel: e.pixel,
+      feature: current.feature,
+      linkGeometry: current.link
+    });
+  } else {
+    this.dispatchEvent(e);
+  }
+
+  var element = map.getTargetElement();
+  if (this.cursor_) {
+    if (current) {
+      if (element.style.cursor != this.cursor_) {
+        this.previousCursor_ = element.style.cursor;
+        element.style.cursor = this.cursor_;
+      }
+    } else if (this.previousCursor_ !== undefined) {
+      element.style.cursor = this.previousCursor_;
+      this.previousCursor_ = undefined;
+    }
+  }
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_Split);
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/Transform.js":
+/*!******************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/Transform.js ***!
+  \******************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_style_Style__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/style/Style */ "./node_modules/ol/style/Style.js");
+/* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
+/* harmony import */ var ol_style_Fill__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/style/Fill */ "./node_modules/ol/style/Fill.js");
+/* harmony import */ var ol_layer_Vector__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/layer/Vector */ "./node_modules/ol/layer/Vector.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/geom/Point */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/Feature */ "./node_modules/ol/Feature.js");
+/* harmony import */ var ol_Collection__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/Collection */ "./node_modules/ol/Collection.js");
+/* harmony import */ var ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/interaction/Pointer */ "./node_modules/ol/interaction/Pointer.js");
+/* harmony import */ var ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/style/RegularShape */ "./node_modules/ol/style/RegularShape.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/* harmony import */ var ol_extent__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ol/extent */ "./node_modules/ol/extent.js");
+/* harmony import */ var ol_Observable__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ol/Observable */ "./node_modules/ol/Observable.js");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Interaction rotate
+ * @constructor
+ * @extends {ol_interaction_Pointer}
+ * @fires select | rotatestart | rotating | rotateend | translatestart | translating | translateend | scalestart | scaling | scaleend
+ * @param {any} options
+ *  @param {function} options.filter A function that takes a Feature and a Layer and returns true if the feature may be transformed or false otherwise.
+ *  @param {Array<ol.Layer>} options.layers array of layers to transform,
+ *  @param {ol.Collection<ol.Feature>} options.features collection of feature to transform,
+ *	@param {ol.EventsConditionType|undefined} options.condition A function that takes an ol.MapBrowserEvent and a feature collection and returns a boolean to indicate whether that event should be handled. default: ol.events.condition.always.
+ *	@param {ol.EventsConditionType|undefined} options.addCondition A function that takes an ol.MapBrowserEvent and returns a boolean to indicate whether that event should be handled ie. the feature will be added to the transforms features. default: ol.events.condition.never.
+ *	@param {number | undefined} options.hitTolerance Tolerance to select feature in pixel, default 0
+ *	@param {bool} options.translateFeature Translate when click on feature
+ *	@param {bool} options.translate Can translate the feature
+ *	@param {bool} options.stretch can stretch the feature
+ *	@param {bool} options.scale can scale the feature
+ *	@param {bool} options.rotate can rotate the feature
+ *	@param {bool} options.noFlip prevent the feature geometry to flip, default false
+ *	@param {bool} options.selection the intraction handle selection/deselection, if not use the select prototype to add features to transform, default true
+ *	@param {ol.events.ConditionType | undefined} options.keepAspectRatio A function that takes an ol.MapBrowserEvent and returns a boolean to keep aspect ratio, default ol.events.condition.shiftKeyOnly.
+ *	@param {ol.events.ConditionType | undefined} options.modifyCenter A function that takes an ol.MapBrowserEvent and returns a boolean to apply scale & strech from the center, default ol.events.condition.metaKey or ol.events.condition.ctrlKey.
+ *	@param {} options.style list of ol.style for handles
+ *
+ */
+var ol_interaction_Transform = function(options) {
+  if (!options) options = {};
+	var self = this;
+
+  this.selection_ = new ol_Collection__WEBPACK_IMPORTED_MODULE_8__["default"]();
+
+	// Create a new overlay layer for the sketch
+	this.handles_ = new ol_Collection__WEBPACK_IMPORTED_MODULE_8__["default"]();
+	this.overlayLayer_ = new ol_layer_Vector__WEBPACK_IMPORTED_MODULE_5__["default"]({
+    source: new ol_source_Vector__WEBPACK_IMPORTED_MODULE_3__["default"]({
+      features: this.handles_,
+      useSpatialIndex: false,
+      wrapX: false // For vector editing across the -180° and 180° meridians to work properly, this should be set to false
+    }),
+    name:'Transform overlay',
+    displayInLayerSwitcher: false,
+    // Return the style according to the handle type
+    style: function (feature) {
+      return (self.style[(feature.get('handle')||'default')+(feature.get('constraint')||'')+(feature.get('option')||'')]);
+    },
+  });
+
+  // Extend pointer
+  ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_9__["default"].call(this, {
+    handleDownEvent: this.handleDownEvent_,
+    handleDragEvent: this.handleDragEvent_,
+    handleMoveEvent: this.handleMoveEvent_,
+    handleUpEvent: this.handleUpEvent_
+  });
+
+  // Collection of feature to transform
+  this.features_ = options.features;
+  // Filter or list of layers to transform
+  if (typeof(options.filter)==='function') this._filter = options.filter;
+  this.layers_ = options.layers ? (options.layers instanceof Array) ? options.layers:[options.layers] : null;
+
+  this._handleEvent = options.condition || function() { return true; };
+  this.addFn_ = options.addCondition || function() { return false; };
+  /* Translate when click on feature */
+  this.set('translateFeature', (options.translateFeature!==false));
+  /* Can translate the feature */
+  this.set('translate', (options.translate!==false));
+  /* Can stretch the feature */
+  this.set('stretch', (options.stretch!==false));
+  /* Can scale the feature */
+  this.set('scale', (options.scale!==false));
+  /* Can rotate the feature */
+  this.set('rotate', (options.rotate!==false));
+  /* Keep aspect ratio */
+  this.set('keepAspectRatio', (options.keepAspectRatio || function(e){ return e.originalEvent.shiftKey }));
+  /* Modify center */
+  this.set('modifyCenter', (options.modifyCenter || function(e){ return e.originalEvent.metaKey || e.originalEvent.ctrlKey }));
+  /* Prevent flip */
+  this.set('noFlip', (options.noFlip || false));
+  /* Handle selection */
+  this.set('selection', (options.selection !== false));
+  /*  */
+  this.set('hitTolerance', (options.hitTolerance || 0));
+
+
+  // Force redraw when changed
+  this.on ('propertychange', function() {
+    this.drawSketch_();
+  });
+
+  // setstyle
+  this.setDefaultStyle();
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_Transform, ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_9__["default"]);
+
+/** Cursors for transform
+*/
+ol_interaction_Transform.prototype.Cursors = {
+  'default': 'auto',
+  'select': 'pointer',
+  'translate': 'move',
+  'rotate': 'move',
+  'rotate0': 'move',
+  'scale': 'nesw-resize',
+  'scale1': 'nwse-resize',
+  'scale2': 'nesw-resize',
+  'scale3': 'nwse-resize',
+  'scalev': 'ew-resize',
+  'scaleh1': 'ns-resize',
+  'scalev2': 'ew-resize',
+  'scaleh3': 'ns-resize'
+};
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_Transform.prototype.setMap = function(map) {
+  if (this.getMap()) {
+    this.getMap().removeLayer(this.overlayLayer_);
+    if (this.previousCursor_) {
+      this.getMap().getTargetElement().style.cursor = this.previousCursor_;
+      this.previousCursor_ = undefined;
+    }
+  }
+  ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_9__["default"].prototype.setMap.call (this, map);
+  this.overlayLayer_.setMap(map);
+  if (map !== null) {
+    this.isTouch = /touch/.test(map.getViewport().className);
+    this.setDefaultStyle();
+  }
+};
+
+/**
+ * Activate/deactivate interaction
+ * @param {bool}
+ * @api stable
+ */
+ol_interaction_Transform.prototype.setActive = function(b) {
+  this.select(null);
+  this.overlayLayer_.setVisible(b);
+  ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_9__["default"].prototype.setActive.call (this, b);
+};
+
+/** Set efault sketch style
+*/
+ol_interaction_Transform.prototype.setDefaultStyle = function() {
+  // Style
+  var stroke = new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_2__["default"]({ color: [255,0,0,1], width: 1 });
+  var strokedash = new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_2__["default"]({ color: [255,0,0,1], width: 1, lineDash:[4,4] });
+  var fill0 = new ol_style_Fill__WEBPACK_IMPORTED_MODULE_4__["default"]({ color:[255,0,0,0.01] });
+  var fill = new ol_style_Fill__WEBPACK_IMPORTED_MODULE_4__["default"]({ color:[255,255,255,0.8] });
+  var circle = new ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_10__["default"]({
+      fill: fill,
+      stroke: stroke,
+      radius: this.isTouch ? 12 : 6,
+      points: 15
+    });
+  circle.getAnchor()[0] = this.isTouch ? -10 : -5;
+  var bigpt = new ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_10__["default"]({
+      fill: fill,
+      stroke: stroke,
+      radius: this.isTouch ? 16 : 8,
+      points: 4,
+      angle: Math.PI/4
+    });
+  var smallpt = new ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_10__["default"]({
+      fill: fill,
+      stroke: stroke,
+      radius: this.isTouch ? 12 : 6,
+      points: 4,
+      angle: Math.PI/4
+    });
+  function createStyle (img, stroke, fill) {
+    return [ new ol_style_Style__WEBPACK_IMPORTED_MODULE_1__["default"]({image:img, stroke:stroke, fill:fill}) ];
+  }
+  /** Style for handles */
+  this.style = {
+    'default': createStyle (bigpt, strokedash, fill0),
+    'translate': createStyle (bigpt, stroke, fill),
+    'rotate': createStyle (circle, stroke, fill),
+    'rotate0': createStyle (bigpt, stroke, fill),
+    'scale': createStyle (bigpt, stroke, fill),
+    'scale1': createStyle (bigpt, stroke, fill),
+    'scale2': createStyle (bigpt, stroke, fill),
+    'scale3': createStyle (bigpt, stroke, fill),
+    'scalev': createStyle (smallpt, stroke, fill),
+    'scaleh1': createStyle (smallpt, stroke, fill),
+    'scalev2': createStyle (smallpt, stroke, fill),
+    'scaleh3': createStyle (smallpt, stroke, fill),
+  };
+  this.drawSketch_();
+}
+
+/**
+ * Set sketch style.
+ * @param {style} style Style name: 'default','translate','rotate','rotate0','scale','scale1','scale2','scale3','scalev','scaleh1','scalev2','scaleh3'
+ * @param {ol.style.Style|Array<ol.style.Style>} olstyle
+ * @api stable
+ */
+ol_interaction_Transform.prototype.setStyle = function(style, olstyle) {
+  if (!olstyle) return;
+  if (olstyle instanceof Array) this.style[style] = olstyle;
+  else this.style[style] = [ olstyle ];
+  for (var i=0; i<this.style[style].length; i++) {
+    var im = this.style[style][i].getImage();
+    if (im) {
+      if (style == 'rotate') im.getAnchor()[0] = -5;
+      if (this.isTouch) im.setScale(1.8);
+    }
+    var tx = this.style[style][i].getText();
+    if (tx) {
+      if (style == 'rotate') tx.setOffsetX(this.isTouch ? 14 : 7);
+      if (this.isTouch) tx.setScale(1.8);
+    }
+  }
+  this.drawSketch_();
+};
+
+/** Get Feature at pixel
+ * @param {ol.Pixel}
+ * @return {ol.feature}
+ * @private
+ */
+ol_interaction_Transform.prototype.getFeatureAtPixel_ = function(pixel) {
+  var self = this;
+  return this.getMap().forEachFeatureAtPixel(pixel,
+    function(feature, layer) {
+      var found = false;
+      // Overlay ?
+      if (!layer) {
+        if (feature===self.bbox_) return false;
+        self.handles_.forEach (function(f) { if (f===feature) found=true; });
+        if (found) return { feature: feature, handle:feature.get('handle'), constraint:feature.get('constraint'), option:feature.get('option') };
+      }
+      // No seletion
+      if (!self.get('selection')) {
+        // Return the currently selected feature the user is interacting with.
+        if (self.selection_.getArray().some(function(f) { return feature === f; })) {
+          return { feature: feature };
+        }
+        return null;
+      }
+      // filter condition
+      if (self._filter) {
+        if (self._filter(feature,layer)) return { feature: feature };
+        else return null;
+      }
+      // feature belong to a layer
+      else if (self.layers_) {
+        for (var i=0; i<self.layers_.length; i++) {
+          if (self.layers_[i]===layer) return { feature: feature };
+        }
+        return null;
+      }
+      // feature in the collection
+      else if (self.features_) {
+        self.features_.forEach (function(f) { if (f===feature) found=true; });
+        if (found) return { feature: feature };
+        else return null;
+      }
+      // Others
+      else return { feature: feature };
+    },
+    { hitTolerance: this.get('hitTolerance') }
+  ) || {};
+}
+
+/** Draw transform sketch
+* @param {boolean} draw only the center
+*/
+ol_interaction_Transform.prototype.drawSketch_ = function(center) {
+  var i, f, geom;
+  this.overlayLayer_.getSource().clear();
+  if (!this.selection_.getLength()) return;
+  var ext = this.selection_.item(0).getGeometry().getExtent();
+  // Clone and extend
+  ext = Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["buffer"])(ext, 0);
+  this.selection_.forEach(function (f) {
+    Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["extend"])(ext, f.getGeometry().getExtent());
+  });
+  if (center===true) {
+    if (!this.ispt_) {
+      this.overlayLayer_.getSource().addFeature(new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"]( { geometry: new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"](this.center_), handle:'rotate0' }) );
+      geom = Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_11__["fromExtent"])(ext);
+      f = this.bbox_ = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"](geom);
+      this.overlayLayer_.getSource().addFeature (f);
+    }
+  }
+  else {
+    if (this.ispt_) {
+      var p = this.getMap().getPixelFromCoordinate([ext[0], ext[1]]);
+      ext = Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["boundingExtent"])([
+        this.getMap().getCoordinateFromPixel([p[0]-10, p[1]-10]),
+        this.getMap().getCoordinateFromPixel([p[0]+10, p[1]+10])
+      ]);
+    }
+    geom = Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_11__["fromExtent"])(ext);
+    f = this.bbox_ = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"](geom);
+    var features = [];
+    var g = geom.getCoordinates()[0];
+    if (!this.ispt_) {
+      features.push(f);
+      // Middle
+      if (!this.iscircle_ && this.get('stretch') && this.get('scale')) for (i=0; i<g.length-1; i++) {
+        f = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"]( { geometry: new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"]([(g[i][0]+g[i+1][0])/2,(g[i][1]+g[i+1][1])/2]), handle:'scale', constraint:i%2?"h":"v", option:i });
+        features.push(f);
+      }
+      // Handles
+      if (this.get('scale')) for (i=0; i<g.length-1; i++) {
+        f = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"]( { geometry: new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"](g[i]), handle:'scale', option:i });
+        features.push(f);
+      }
+      // Center
+      if (this.get('translate') && !this.get('translateFeature')) {
+        f = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"]( { geometry: new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"]([(g[0][0]+g[2][0])/2, (g[0][1]+g[2][1])/2]), handle:'translate' });
+        features.push(f);
+      }
+    }
+    // Rotate
+    if (!this.iscircle_ && this.get('rotate')) {
+      f = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"]( { geometry: new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"](g[3]), handle:'rotate' });
+      features.push(f);
+    }
+    // Add sketch
+    this.overlayLayer_.getSource().addFeatures(features);
+  }
+
+};
+
+/** Select a feature to transform
+* @param {ol.Feature} feature the feature to transform
+* @param {boolean} add true to add the feature to the selection, default false
+*/
+ol_interaction_Transform.prototype.select = function(feature, add) {
+  if (!feature) {
+    this.selection_.clear();
+    this.drawSketch_();
+    return;
+  }
+  if (!feature.getGeometry || !feature.getGeometry()) return;
+  // Add to selection
+  if (add) {
+    this.selection_.push(feature);
+  } else {
+    this.selection_.clear()
+    this.selection_.push(feature);
+  }
+  this.ispt_ = (this.selection_.getLength()===1 ? (this.selection_.item(0).getGeometry().getType() == "Point") : false);
+  this.iscircle_ = (this.selection_.getLength()===1 ? (this.selection_.item(0).getGeometry().getType() == "Circle") : false);
+  this.drawSketch_();
+  this.watchFeatures_();
+  // select event
+  this.dispatchEvent({ type:'select', feature: feature, features: this.selection_ });
+};
+
+/** Watch selected features
+ * @private
+ */
+ol_interaction_Transform.prototype.watchFeatures_ = function() {
+  // Listen to feature modification
+  if (this._featureListeners) {
+    this._featureListeners.forEach(function (l) {
+      Object(ol_Observable__WEBPACK_IMPORTED_MODULE_13__["unByKey"])(l)
+    });
+  }
+  this._featureListeners = [];
+  this.selection_.forEach(function(f) {
+    this._featureListeners.push(
+      f.on('change', function() {
+        this.drawSketch_();
+      }.bind(this))
+    );
+  }.bind(this));
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ * @private
+ */
+ol_interaction_Transform.prototype.handleDownEvent_ = function(evt) {
+  if (!this._handleEvent(evt, this.selection_)) return;
+  var sel = this.getFeatureAtPixel_(evt.pixel);
+  var feature = sel.feature;
+  if (this.selection_.getLength()
+    && this.selection_.getArray().indexOf(feature) >= 0
+    && ((this.ispt_ && this.get('translate')) || this.get('translateFeature'))
+  ){
+    sel.handle = 'translate';
+  }
+  if (sel.handle) {
+    this.mode_ = sel.handle;
+    this.opt_ = sel.option;
+    this.constraint_ = sel.constraint;
+    // Save info
+    this.coordinate_ = evt.coordinate;
+    this.pixel_ = evt.pixel;
+    this.geoms_ = [];
+    var extent = Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["createEmpty"])();
+    for (var i=0, f; f=this.selection_.item(i); i++) {
+      this.geoms_.push(f.getGeometry().clone());
+      extent = Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["extend"])(extent, f.getGeometry().getExtent());
+    }
+    this.extent_ = (Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_11__["fromExtent"])(extent)).getCoordinates()[0];
+    if (this.mode_==='rotate') {
+      this.center_ = this.getCenter() || Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["getCenter"])(extent);
+
+      // we are now rotating (cursor down on rotate mode), so apply the grabbing cursor
+      var element = evt.map.getTargetElement();
+      element.style.cursor = this.Cursors.rotate0;
+      this.previousCursor_ = element.style.cursor;
+    } else {
+      this.center_ = Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["getCenter"])(extent);
+    }
+    this.angle_ = Math.atan2(this.center_[1]-evt.coordinate[1], this.center_[0]-evt.coordinate[0]);
+
+    this.dispatchEvent({
+      type: this.mode_+'start',
+      feature: this.selection_.item(0), // backward compatibility
+      features: this.selection_,
+      pixel: evt.pixel,
+      coordinate: evt.coordinate
+    });
+    return true;
+  }
+  else if (this.get('selection')) {
+    if (feature){
+      if (!this.addFn_(evt)) this.selection_.clear();
+      var index = this.selection_.getArray().indexOf(feature);
+      if (index < 0) this.selection_.push(feature);
+      else this.selection_.removeAt(index);
+    } else {
+      this.selection_.clear();
+    }
+    this.ispt_ = this.selection_.getLength()===1 ? (this.selection_.item(0).getGeometry().getType() == "Point") : false;
+    this.iscircle_ = (this.selection_.getLength()===1 ? (this.selection_.item(0).getGeometry().getType() == "Circle") : false);
+    this.drawSketch_();
+    this.watchFeatures_();
+    this.dispatchEvent({ type:'select', feature: feature, features: this.selection_, pixel: evt.pixel, coordinate: evt.coordinate });
+    return false;
+  }
+};
+
+
+/**
+ * Get features to transform
+ * @return {ol.Collection<ol.Feature>}
+ */
+ol_interaction_Transform.prototype.getFeatures = function() {
+  return this.selection_;
+};
+
+/**
+ * Get the rotation center
+ * @return {ol.coordinates|undefined}
+ */
+ol_interaction_Transform.prototype.getCenter = function() {
+  return this.get('center');
+};
+
+/**
+ * Set the rotation center
+ * @param {ol.coordinates|undefined} c the center point, default center on the objet
+ */
+ol_interaction_Transform.prototype.setCenter = function(c) {
+  return this.set('center', c);
+}
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @private
+ */
+ol_interaction_Transform.prototype.handleDragEvent_ = function(evt) {
+  if (!this._handleEvent(evt, this.features_)) return;
+  var i, f, geometry;
+  switch (this.mode_) {
+    case 'rotate': {
+      var a = Math.atan2(this.center_[1]-evt.coordinate[1], this.center_[0]-evt.coordinate[0]);
+      if (!this.ispt) {
+        // var geometry = this.geom_.clone();
+        // geometry.rotate(a-this.angle_, this.center_);
+        // this.feature_.setGeometry(geometry);
+        for (i=0, f; f=this.selection_.item(i); i++) {
+          geometry = this.geoms_[i].clone();
+          geometry.rotate(a - this.angle_, this.center_);
+          // bug: ol, bad calculation circle geom extent
+          if (geometry.getType() == 'Circle') geometry.setCenterAndRadius(geometry.getCenter(), geometry.getRadius());
+          f.setGeometry(geometry);
+        }
+      }
+      this.drawSketch_(true);
+      this.dispatchEvent({
+        type:'rotating',
+        feature: this.selection_.item(0),
+        features: this.selection_,
+        angle: a-this.angle_,
+        pixel: evt.pixel,
+        coordinate: evt.coordinate
+      });
+      break;
+    }
+    case 'translate': {
+      var deltaX = evt.coordinate[0] - this.coordinate_[0];
+      var deltaY = evt.coordinate[1] - this.coordinate_[1];
+
+      //this.feature_.getGeometry().translate(deltaX, deltaY);
+      for (i=0, f; f=this.selection_.item(i); i++) {
+        f.getGeometry().translate(deltaX, deltaY);
+      }
+      this.handles_.forEach(function(f) {
+        f.getGeometry().translate(deltaX, deltaY);
+      });
+
+      this.coordinate_ = evt.coordinate;
+      this.dispatchEvent({
+        type:'translating',
+        feature: this.selection_.item(0),
+        features: this.selection_,
+        delta:[deltaX,deltaY],
+        pixel: evt.pixel,
+        coordinate: evt.coordinate
+      });
+      break;
+    }
+    case 'scale': {
+      var center = this.center_;
+      if (this.get('modifyCenter')(evt)) {
+        center = this.extent_[(Number(this.opt_)+2)%4];
+      }
+
+      var scx = (evt.coordinate[0] - center[0]) / (this.coordinate_[0] - center[0]);
+      var scy = (evt.coordinate[1] - center[1]) / (this.coordinate_[1] - center[1]);
+
+      if (this.get('noFlip')) {
+        if (scx<0) scx=-scx;
+        if (scy<0) scy=-scy;
+      }
+
+      if (this.constraint_) {
+        if (this.constraint_=="h") scx=1;
+        else scy=1;
+      } else {
+        if (this.get('keepAspectRatio')(evt)) {
+          scx = scy = Math.min(scx,scy);
+        }
+      }
+
+      for (i=0, f; f=this.selection_.item(i); i++) {
+        geometry = this.geoms_[i].clone();
+        geometry.applyTransform(function(g1, g2, dim) {
+          if (dim<2) return g2;
+
+          for (var j=0; j<g1.length; j+=dim) {
+            if (scx!=1) g2[j] = center[0] + (g1[j]-center[0])*scx;
+            if (scy!=1) g2[j+1] = center[1] + (g1[j+1]-center[1])*scy;
+          }
+          // bug: ol, bad calculation circle geom extent
+          if (geometry.getType() == 'Circle') geometry.setCenterAndRadius(geometry.getCenter(), geometry.getRadius());
+          return g2;
+        });
+        f.setGeometry(geometry);
+      }
+      this.drawSketch_();
+      this.dispatchEvent({
+        type:'scaling',
+        feature: this.selection_.item(0),
+        features: this.selection_,
+        scale:[scx,scy],
+        pixel: evt.pixel,
+        coordinate: evt.coordinate
+      });
+      break;
+    }
+    default: break;
+  }
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ * @private
+ */
+ol_interaction_Transform.prototype.handleMoveEvent_ = function(evt) {
+  if (!this._handleEvent(evt, this.features_)) return;
+  // console.log("handleMoveEvent");
+  if (!this.mode_) {
+    var sel = this.getFeatureAtPixel_(evt.pixel);
+    var element = evt.map.getTargetElement();
+    if (sel.feature) {
+      var c = sel.handle ? this.Cursors[(sel.handle||'default')+(sel.constraint||'')+(sel.option||'')] : this.Cursors.select;
+
+      if (this.previousCursor_===undefined) {
+        this.previousCursor_ = element.style.cursor;
+      }
+      element.style.cursor = c;
+    } else {
+      if (this.previousCursor_!==undefined) element.style.cursor = this.previousCursor_;
+      this.previousCursor_ = undefined;
+    }
+  }
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `false` to stop the drag sequence.
+ */
+ol_interaction_Transform.prototype.handleUpEvent_ = function(evt) {
+  // remove rotate0 cursor on Up event, otherwise it's stuck on grab/grabbing
+  if (this.mode_ === 'rotate') {
+    var element = evt.map.getTargetElement();
+    element.style.cursor = this.Cursors.default;
+    this.previousCursor_ = undefined;
+  }
+
+  //dispatchEvent
+  this.dispatchEvent({
+    type:this.mode_+'end',
+    feature: this.selection_.item(0),
+    features: this.selection_,
+    oldgeom: this.geoms_[0],
+    oldgeoms: this.geoms_
+  });
+
+  this.drawSketch_();
+  this.mode_ = null;
+  return false;
+};
+
+/** Get the features that are selected for transform
+ * @return ol.Collection
+ */
+ol_interaction_Transform.prototype.getFeatures = function() {
+  return this.selection_;
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_Transform);
+
+
+/***/ }),
+
 /***/ "./node_modules/ol-ext/overlay/Popup.js":
 /*!**********************************************!*\
   !*** ./node_modules/ol-ext/overlay/Popup.js ***!
@@ -6963,7 +11115,7 @@ if(false) {}
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var ol_Overlay__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/Overlay */ "./node_modules/ol/Overlay.js");
 /* harmony import */ var _util_element__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../util/element */ "./node_modules/ol-ext/util/element.js");
 /*	Copyright (c) 2016 Jean-Marc VIGLINO, 
@@ -6995,7 +11147,7 @@ popup.hide();
 *	@param {function|undefined} options.onclose: callback function when popup is closed
 *	@param {function|undefined} options.onshow callback function when popup is shown
 *	@param {Number|Array<number>} options.offsetBox an offset box
-*	@param {ol.OverlayPositioning | string | undefined} options.positionning 
+*	@param {ol.OverlayPositioning | string | undefined} options.positioning 
 *		the 'auto' positioning var the popup choose its positioning to stay on the map.
 * @api stable
 */
@@ -7018,7 +11170,7 @@ var ol_Overlay_Popup = function (options) {
   // Content
   this.content = _util_element__WEBPACK_IMPORTED_MODULE_2__["default"].create("div", { 
     html: options.html || '',
-    className: "content",
+    className: "ol-popup-content",
     parent: element
   });
   // Closebox
@@ -7051,7 +11203,7 @@ var ol_Overlay_Popup = function (options) {
     setTimeout(function(){ this.show(options.position); }.bind(this));
   }
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_Overlay_Popup, ol_Overlay__WEBPACK_IMPORTED_MODULE_1__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_Overlay_Popup, ol_Overlay__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 /**
  * Get CSS class of the popup according to its positioning.
@@ -7272,7 +11424,7 @@ ol_Overlay_Popup.prototype.hide = function () {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/style/RegularShape */ "./node_modules/ol/style/RegularShape.js");
 /* harmony import */ var ol_color__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/color */ "./node_modules/ol/color.js");
 /* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
@@ -7356,7 +11508,7 @@ var ol_style_Photo = function(options)
 	if (typeof(options.rotation)=='number') this.setRotation(options.rotation);
 	this.renderPhoto_();
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_style_Photo, ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_1__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_style_Photo, ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 
 /**
@@ -7659,6 +11811,7 @@ ol_ext_element.create = function (tagName, options) {
           this.setStyle(elt, options.style);
           break;
         }
+        case 'change':
         case 'click': {
           ol_ext_element.addListener(elt, attr, options[attr]);
           break;
@@ -7690,6 +11843,14 @@ ol_ext_element.create = function (tagName, options) {
 ol_ext_element.setHTML = function(element, html) {
   if (html instanceof Element) element.appendChild(html)
   else if (html!==undefined) element.innerHTML = html;
+};
+
+/** Append text into an elemnt
+ * @param {Element} element
+ * @param {string} text text content
+ */
+ol_ext_element.appendText = function(element, text) {
+  element.appendChild(document.createTextNode(text||''));
 };
 
 /**
@@ -7924,6 +12085,60 @@ ol_ext_element.scrollDiv = function(elt, options) {
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (ol_ext_element);
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/util/ext.js":
+/*!*****************************************!*\
+  !*** ./node_modules/ol-ext/util/ext.js ***!
+  \*****************************************/
+/*! exports provided: ol_ext_inherits, default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_ext_inherits", function() { return ol_ext_inherits; });
+/** @namespace  ol.ext
+ */
+/*global ol*/
+if (window.ol && !ol.ext) {
+  ol.ext = {};
+}
+
+/** Inherit the prototype methods from one constructor into another.
+ * replace deprecated ol method
+ *
+ * @param {!Function} childCtor Child constructor.
+ * @param {!Function} parentCtor Parent constructor.
+ * @function module:ol.inherits
+ * @api
+ */
+var ol_ext_inherits = function(child,parent) {
+  child.prototype = Object.create(parent.prototype);
+  child.prototype.constructor = child;
+};
+
+// Compatibilty with ol > 5 to be removed when v6 is out
+if (window.ol) {
+  if (!ol.inherits) ol.inherits = ol_ext_inherits;
+}
+
+/* IE Polyfill */
+// NodeList.forEach
+if (window.NodeList && !NodeList.prototype.forEach) {
+  NodeList.prototype.forEach = Array.prototype.forEach;
+}
+// Element.remove
+if (window.Element && !Element.prototype.remove) {
+  Element.prototype.remove = function() {
+    if (this.parentNode) this.parentNode.removeChild(this);
+  }
+}
+/* End Polyfill */
+
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_ext_inherits);
+
 
 /***/ }),
 

@@ -335,7 +335,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	inputChips: null,
 	inputId: null,
 	chipsetsUpdateCallback: null,
-
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			chips: [],
@@ -439,7 +439,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 			$chip = $('<div>').addClass('mdc-chip')
 				.attr('id', chipId)
-				.attr('tabindex', '0');
+				.attr('tabindex','0');
 
 			if (fraction === 'full') {
 				$chip.addClass('mdc-chip-full');
@@ -450,7 +450,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 			if (type_opt) {
 				chipOriType = type_opt;
 			}
-
+			
 			$chip.data('n2Chip', $n2.extend({type: chipOriType }, chipObj));
 		}
 
@@ -1628,7 +1628,7 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 	label: null,
 	initialChipFull: null,
 	chipsetsUpdateCallback: null,
-
+	
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			chips: [],
