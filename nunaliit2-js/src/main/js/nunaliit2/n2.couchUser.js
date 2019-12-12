@@ -268,65 +268,60 @@ var UserEditor = $n2.Class({
 			});
 		};
 
-		var $buttons = $('<div class="n2UserEdit_buttons"></div>')
+		var $buttons = $('<div>')
+			.addClass('n2UserEdit_buttons')
 			.appendTo($editor);
 
 		// Save button
-		$('<input type="button"/>')
-			.addClass('n2UserEdit_saveButton')
-			.val( _loc('Save') )
-			.appendTo($buttons)
-			.click(function(){
+		new $n2.mdc.MDCButton({
+			parentElem: $buttons,
+			mdcClasses: ['n2UserEdit_saveButton'],
+			btnLabel: 'Save',
+			onBtnClick: function() {
 				_this._save();
 				return false;
-			});
+			}
+		});
 
 		// Delete button
-		$('<input type="button"/>')
-			.addClass('n2UserEdit_deleteButton')
-			.val( _loc('Delete') )
-			.appendTo($buttons)
-			.click(function(){
+		new $n2.mdc.MDCButton({
+			parentElem: $buttons,
+			mdcClasses: ['n2UserEdit_deleteButton'],
+			btnLabel: 'Delete',
+			onBtnClick: function() {
 				_this._delete();
 				return false;
-			});
+			}
+		});
 
 		// Roles button
-		$('<input type="button"/>')
-			.addClass('n2UserEdit_rolesButton')
-			.val( _loc('Roles') )
-			.appendTo($buttons)
-			.click(function(e){
+		new $n2.mdc.MDCButton({
+			parentElem: $buttons,
+			mdcClasses: ['n2UserEdit_rolesButton'],
+			btnLabel: 'Roles',
+			onBtnClick: function() {
 				_this._rolesDialog(doc,function(roles){
 					if( roles.length > 0 ){
 						doc.roles = roles;
 					} else if( doc.roles ) {
 						delete doc.roles;
-					};
+					}
 					_this.treeEditor.refresh();
 				});
 				return false;
-			});
+			}
+		});
 
-		// Password button
-		$('<input type="button"/>')
-			.addClass('n2UserEdit_passwordButton')
-			.val( _loc('Set Password') )
-			.appendTo($buttons)
-			.click(function(e){
+		// Set Password button
+		new $n2.mdc.MDCButton({
+			parentElem: $buttons,
+			mdcClasses: ['n2UserEdit_passwordButton'],
+			btnLabel: 'Set Password',
+			onBtnClick: function() {
 				_this._passwordDialog();
 				return false;
-			});
-
-		// Cancel button
-		$('<input type="button"/>')
-			.addClass('n2UserEdit_cancelButton')
-			.val( _loc('Cancel') )
-			.appendTo($buttons)
-			.click(function(e){
-				_this._cancel();
-				return false;
-			});
+			}
+		});
 	}
 	
 	,_refresh: function(){
@@ -334,59 +329,38 @@ var UserEditor = $n2.Class({
 	}
 	
 	,_rolesDialog: function(userDoc, selectedRolesFn){
-		var diagId = $n2.getUniqueId();
-		var $rolesDialog = $('<div id="'+diagId+'" class="n2_roles_dialog"></div>');
+		var selectRolesDialog = new $n2.mdc.MDCDialog({
+			dialogTitle: 'Select Roles',
+			scrollable: true,
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
 
 		$('<div class="n2_roles_list"></div>')
-			.appendTo($rolesDialog)
-			.append( $('<div class="olkit_wait"></div>') )
-			;
+			.appendTo($('#' +selectRolesDialog.getContentId()))
+			.append( $('<div class="olkit_wait"></div>'));
 
-		var $buttons = $('<div class="n2_roles_buttons"></div>')
-			.appendTo($rolesDialog)
-			;
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + selectRolesDialog.getFooterId()),
+			mdcClasses: ['ok', 'mdc-dialog__button'],
+			btnLabel: 'OK',
+			btnRaised: true,
+			onBtnClick: function(){
+				var $dialog = $('#'+selectRolesDialog.getId());
 
-		// OK button
-		$('<input type="button"/>')
-			.val( _loc('OK') )
-			.appendTo($buttons)
-			.click(function(){
-				var $dialog = $('#'+diagId);
-				
 				var roles = [];
 				$dialog.find('input[type=checkbox]:checked').each(function(){
 					var $input = $(this);
-					roles.push( $input.attr('name') );
+					roles.push($input.attr('name'));
 				});
-				
-				selectedRolesFn(roles);
-				
-				$dialog.dialog('close');
-			})
-			;
 
-		// Cancel button
-		$('<input type="button"/>')
-			.val( _loc('Cancel') )
-			.appendTo($buttons)
-			.click(function(){
-				$('#'+diagId).dialog('close');
-			})
-			;
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Select Roles')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
+				selectedRolesFn(roles);
+				selectRolesDialog.closeDialog();
+				$('#' + selectRolesDialog.getId()).remove();
+				return false;
 			}
-		};
-		$rolesDialog.dialog(dialogOptions);
-		
+		});
+
 		if( this.configService
 		 && this.showServerRoles ){
 			this.configService.getNunaliitServerRoles({
@@ -429,87 +403,54 @@ var UserEditor = $n2.Class({
 			};
 			roles.sort();
 			
-			var $list = $('#'+diagId).find('.n2_roles_list');
+			var $list = $('#'+selectRolesDialog.getId()).find('.n2_roles_list');
 			$list.empty();
 			
 			for(var i=0,e=roles.length;i<e;++i){
 				var role = roles[i];
 				
-				var $div = $('<div></div>');
-				
-				var id = $n2.getUniqueId();
-				
-				var $input = $('<input type="checkbox"/>')
-					.attr('name',role)
-					.attr('id',id)
-					.appendTo($div)
-					;
+				var $listItem = $('<li>')
+					.addClass('mdc-list-item')
+					.attr('role', 'checkbox')
+					.appendTo($list);
+
+				var layerChkbox = new $n2.mdc.MDCCheckbox({
+					parentElem: $listItem,
+					chkboxLabel: role,
+					chkboxName: role
+				});
+
 				if( roleMap[role] ){
-					$input.attr('checked',"checked");
+					$('#' + layerChkbox.getId())
+						.find('input')
+						.attr('checked',"checked");
 				};
-				
-				$('<label/>')
-					.attr('for',id)
-					.text(role)
-					.appendTo($div)
-					;
-				
-				$list.append($div);
 			};
 		};
 	}
-	
-	,_passwordDialog: function(){
+
+	,_passwordDialog: function() {
 		var _this = this;
-		
-		var diagId = $n2.getUniqueId();
-		var $passwordDialog = $('<div id="'+diagId+'" class="n2User_setPassword_dialog"></div>');
 
-		var $passwordInputs = $('<div class="n2User_setPassword_inputs"></div>')
-			.appendTo($passwordDialog);
-		
-		// Password
-		var id = $n2.getUniqueId();
-		var $div = $('<div></div>')
-			.appendTo($passwordInputs);
-		$('<label/>')
-			.attr('for',id)
-			.text( _loc('Enter password:') )
-			.appendTo($div);
-		$('<input type="password" name="password"/>')
-			.attr('id',id)
-			.appendTo($div);
+		var passwordDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: ['n2User_setPassword_dialog'],
+			dialogTitle: 'Change Password',
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
 
-		// Confirm
-		var id = $n2.getUniqueId();
-		var $div = $('<div></div>')
-			.appendTo($passwordInputs);
-		$('<label/>')
-			.attr('for',id)
-			.text( _loc('Confirm password:') )
-			.appendTo($div);
-		$('<input type="password" name="confirm"/>')
-			.attr('id',id)
-			.appendTo($div);
-
-		// Buttons
-		var $buttons = $('<div class="n2User_setPassword_buttons"></div>')
-			.appendTo($passwordDialog);
-
-		// OK button
-		$('<input type="button"/>')
-			.val( _loc('OK') )
-			.appendTo($buttons)
-			.click(function(){
-				var $dialog = $('#'+diagId);
-				
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + passwordDialog.getFooterId()),
+			btnLabel: 'OK',
+			onBtnClick: function() {
+				var $dialog = $('#' + passwordDialog.getId());
 				var pw1 = $dialog.find('input[name=password]').val();
 				var pw2 = $dialog.find('input[name=confirm]').val();
-				
-				if( pw1 != pw2 ) {
-					alert( _loc('Passwords do not match') );
-				} else if( pw1.length < 6 ) {
-					alert( _loc('Password is too short') );
+
+				if (pw1 !== pw2) {
+					alert(_loc('Passwords do not match'));
+				} else if (pw1.length < 6) {
+					alert (_loc('Password is too short'));
 				} else {
 					_this.userDb.computeUserPassword({
 						userDoc: _this.userDoc
@@ -517,35 +458,39 @@ var UserEditor = $n2.Class({
 						,onSuccess: function() {
 							_this._refresh();
 							$dialog.dialog('close');
-						} 
-						,onError: function(errMsg){
-							alert( _loc('Unable to set password: ') + errMsg);
+						}
+						,onError: function(errMsg) {
+							alert(_loc('Unable to set password: ') + errMsg);
 						}
 					});
-				};
-			});
-
-		// Cancel button
-		$('<input type="button"/>')
-			.val( _loc('Cancel') )
-			.appendTo($buttons)
-			.click(function(){
-				$('#'+diagId).dialog('close');
-			})
-			;
-		
-		var dialogOptions = {
-			autoOpen: true
-			,title: _loc('Change Password')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
+				}
 			}
-		};
-		$passwordDialog.dialog(dialogOptions);
+		});
+
+		var $passwordInputs = new $n2.mdc.MDCFormField({
+			parentElem: $('#' + passwordDialog.getContentId()),
+			mdcClasses: ['n2User_setPassword_inputs']	
+		});
+
+		var $passwordField = new $n2.mdc.MDCTextField({
+			parentElem: $('#' + $passwordInputs.getId()),
+			txtFldLabel: 'Enter password:',
+			passwordFld: true
+		});
+
+		$('#' + $passwordField.getInputId())
+			.attr('name','password');
+
+		$('<br/><br/>').appendTo($('#' + $passwordInputs.getId()));
+
+		var $confirmField = new $n2.mdc.MDCTextField({
+			parentElem: $('#' + $passwordInputs.getId()),
+			txtFldLabel: 'Confirm password:',
+			passwordFld: true
+		});
+
+		$('#' + $confirmField.getInputId())
+			.attr('name','confirm');
 	}
 	
 	,_save: function(){

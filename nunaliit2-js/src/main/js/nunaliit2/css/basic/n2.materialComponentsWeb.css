@@ -97,6 +97,10 @@
 	max-width: none;
 }
 
+.mdc-chip .mdc-chip__icon {
+	background: transparent url('images/x_icon_naked_15.png') no-repeat 0 0;
+}
+
 /* Nunaliit2 Tool Page Styling */
 .drawer-frame-root {
 	display: -ms-flexbox;
@@ -115,6 +119,11 @@
 .mdc-drawer .mdc-drawer__content .mdc-list .mdc-list-item,
 .mdc-drawer .mdc-drawer__title {
 	font-weight: bold;
+}
+
+.mdc-drawer .mdc-drawer__content .mdc-list .mdc-list-item.nested_list_item {
+	line-height: 25px;
+	min-height: 25px;
 }
 
 .mdc-top-app-bar__navigation-icon {
@@ -222,4 +231,8 @@ section.mdc-top-app-bar__section.mdc-top-app-bar__section--align-end {
 
 .nunaliit_application .nunaliit_login .mdc-button {
 	color: #ffffff;
+}
+
+.n2User_setPassword_inputs.mdc-form-field {
+	display: block;
 }

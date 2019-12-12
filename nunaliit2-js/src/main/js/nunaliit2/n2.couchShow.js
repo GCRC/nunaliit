@@ -969,7 +969,12 @@ var DomStyler = $n2.Class({
 		
 		if( data && data._id === docId ){
 			var $card = $jq.find('.n2_card_content');
-			this.showService._displayDocumentFull($card, data, opt_);
+
+			if ($card.length) {
+				this.showService._displayDocumentFull($card, data, opt_);
+			} else {
+				this.showService._displayDocumentFull($jq, data, opt_);
+			}
 		};
 	},
 	
@@ -2117,7 +2122,8 @@ var DomStyler = $n2.Class({
 			}
 
 			// Store chips list data in chipset
-			$('#' + chipSet.id).data('tags',chipsList);
+			$('#' + chipSet.id).data('tags',chipsList)
+				.trigger('taglist:updated');
 		};
 
 		function generateChip(chipText){
@@ -2138,7 +2144,8 @@ var DomStyler = $n2.Class({
 				.addClass('material-icons mdc-chip__icon mdc-chip__icon--trailing')
 				.attr('tabindex','0')
 				.attr('role','button')
-				.text('x')
+				.attr('width', '15')
+				.attr('height', '15')
 				.appendTo($chip);
 
 			return $chip;
@@ -2242,6 +2249,21 @@ var DomStyler = $n2.Class({
 	_attachMDCSelect: function($jq) {
 		var attachedSelect;
 		var menu = $jq[0];
+
+		// Calculate a minimum width for select menus to prevent floating label
+		// truncation.
+		var _calcMinWidth = function(textWidth) {
+			var leftPadding = 12;
+			var rightPadding = 78;
+
+			return textWidth + leftPadding + rightPadding;
+		};
+
+		// Set min-width on select menu to prevent truncation of select label
+		var $label = $jq.find('.mdc-floating-label');
+		var minWidth = _calcMinWidth($label.innerWidth());
+		$jq.css('min-width', minWidth);
+
 		if (menu) {
 			attachedSelect = $mdc.select.MDCSelect.attachTo(menu);
 			attachedSelect.layout();

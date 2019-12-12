@@ -29,11 +29,11 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-;(function($,$n2){
+;(function($,$n2) {
 "use strict";
 
 var MDCDialogComponent, MDCDialogElement, showService;
-var _loc = function(str,args){
+var _loc = function(str,args) {
 	return $n2.loc(str,'nunaliit2',args);
 };
 
@@ -68,7 +68,7 @@ var MDC = $n2.Class('MDC',{
 	mdcClasses: null,
 	mdcAttributes: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			parentElem: null,
 			mdcId: null,
@@ -86,11 +86,11 @@ var MDC = $n2.Class('MDC',{
 		}
 	},
 
-	getId: function(){
+	getId: function() {
 		return this.mdcId;
 	},
 
-	getElem: function(){
+	getElem: function() {
 		return $('#' + this.mdcId);
 	}
 });
@@ -99,15 +99,17 @@ var MDC = $n2.Class('MDC',{
 // Description: Creates a material design button component
 // Options:
 //  - btnLabel (String): Defines the text label on the button.
-//  - btnRaised (Boolean): Defines if the button should be raised or not (default = false).
-//  - onBtnClick (Function): Defines the function which occurs when the button is clicked.
+//  - btnRaised (Boolean): Defines if the button should be raised or not
+//  (default = false).
+//  - onBtnClick (Function): Defines the function which occurs when the button
+//  is clicked.
 var MDCButton = $n2.Class('MDCButton', MDC, {
 
 	btnLabel: null,
 	btnRaised: null,
 	onBtnClick: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			btnLabel: null,
 			btnRaised: false,
@@ -119,7 +121,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		this.btnLabel = opts.btnLabel;
 		this.btnRaised = opts.btnRaised;
 		this.onBtnClick = opts.onBtnClick;
-		
+
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Button Component');
 		}
@@ -127,8 +129,8 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		this._generateMDCButton();
 	},
 
-	_generateMDCButton: function(){
-		var $btn, $label, keys;
+	_generateMDCButton: function() {
+		var $btn, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-button', 'n2s_attachMDCButton');
@@ -136,12 +138,12 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		if (this.btnRaised) {
 			this.mdcClasses.push('mdc-button--raised');
 		}
-		
+
 		$btn = $('<button>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '));
-	
-		$label = $('<span>')
+
+		$('<span>')
 			.addClass('mdc-button__label')
 			.text(this.btnLabel)
 			.appendTo($btn);
@@ -156,7 +158,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 				$btn.attr(key, _this.mdcAttributes[key]);
 			});
 		}
-		
+
 		// Add button to parent DOM element
 		$btn.appendTo(this.parentElem);
 
@@ -166,14 +168,62 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 	}
 });
 
+// Class MDCCard
+// Description: Creates a material design card component
+var MDCCard = $n2.Class('MDCCard', MDC, {
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			parentElem: null,
+			mdcId: null,
+			mdcClasses: [],
+			mdcAttributes: null,
+			label: undefined,
+			imageGenerator: undefined,
+			infoGenerator: undefined
+		}, opts_);
+		this.onChangeCallBack = opts.onChangeCallBack;
+		this.infoGenerator = opts.infoGenerator;
+		this.imageGenerator = opts.imageGenerator;
+		this.label = opts.label;
+		this.initiallyOn = opts.initiallyOn;
+		MDC.prototype.initialize.call(this, opts);
+		this._generateMDCCard();
+	},
+	_generateMDCCard: function(){
+		
+		var _this = this;
+		var $card, card_info, media_thumb;
+		if ( this.infoGenerator ){
+			card_info = this.infoGenerator();
+		}
+		if ( this.imageGenerator ){
+			media_thumb = this.imageGenerator();
+		}
+		card_info = card_info ? card_info : '';
+		media_thumb = media_thumb ? media_thumb : '';
+		$card = $($.parseHTML('<div class="mdc-card">' // Outside container for mdc-card
+								+ '<div class="mdc-card__primary-action">'// For ripple effects
+									+ media_thumb// For left column thumbnail
+									+ '<div class="n2card__primary">'
+									+ card_info
+									+ '</div>'
+								+ '</div>'
+							+ '</div>'));
+		$card.appendTo(this.parentElem);
+	}
+})
+
 // Class MDCCheckbox
 // Description: Creates a material design checkbox component
 // Options:
 //  - chkboxLabel (String): A string containing the checkbox button label.
 //  - chkboxName (String): A string containing the checkbox button name.
-//  - chkboxChecked (Boolean): If true, the checkbox button is checked (default = false).
-//  - chkboxDisabled (Boolean): If true, the checkbox button is disabled (default = false). 
-//  - chkboxChgFunc (Function): A function which handles the functionality when the checkbox changes.
+//  - chkboxChecked (Boolean): If true, the checkbox button is checked
+//  (default = false).
+//  - chkboxDisabled (Boolean): If true, the checkbox button is disabled
+//  (default = false).
+//  - chkboxChgFunc (Function): A function which handles the functionality when
+//  the checkbox changes.
 var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 
 	chkboxLabel: null,
@@ -182,7 +232,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 	chkboxDisabled: null,
 	chkboxChgFunc: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			chkboxLabel: null,
 			chkboxName: null,
@@ -199,7 +249,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		this.chkboxDisabled = opts.chkboxDisabled;
 		this.chkboxChgFunc = opts.chkboxChgFunc;
 		this.chkboxInputId = $n2.getUniqueId();
-		
+
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Check Box Component');
 		}
@@ -207,7 +257,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		this._generateMDCCheckbox();
 	},
 
-	_generateMDCCheckbox: function(){
+	_generateMDCCheckbox: function() {
 		var $chkbox, $chkboxInput, $chkboxBackground, $chkboxLabel, keys;
 		var _this = this;
 
@@ -255,7 +305,7 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		$chkboxLabel = $('<label>')
 			.attr('for', this.chkboxInputId)
 			.text(_loc(this.chkboxLabel));
-		
+
 		$chkbox.appendTo(this.parentElem);
 		$chkboxLabel.appendTo(this.parentElem);
 
@@ -273,25 +323,28 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 // Description: Creates a material design chips component
 // Options:
 //  - chips (Array): A collection of strings
-//  - choiceChips (Boolean): If true, the chip set is given the choice chips class.
-//  - filterChips (Boolean): If true, the chip set is given the filter chips class.
-//  - inputChips (Boolean): If true, the chip set is given the input chips class.
+//  - choiceChips (Boolean): If true, the chip set includes choice chips class.
+//  - filterChips (Boolean): If true, the chip set includes filter chips class.
+//  - inputChips (Boolean): If true, the chip set includes input chips class.
 //  - inputId (String): Id of the input field
 var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
-	
+
 	chips: null,
 	choiceChips: null,
 	filterChips: null,
 	inputChips: null,
 	inputId: null,
+	chipsetsUpdateCallback: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			chips: [],
 			choiceChips: false,
 			filterChips: false,
 			inputChips: false,
-			inputId: null
+			inputId: null,
+			initialChipFull: false,
+			chipsetsUpdateCallback: undefined
 		}, opts_);
 
 		this.chips = opts.chips;
@@ -299,7 +352,8 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 		this.filterChips = opts.filterChips;
 		this.inputChips = opts.inputChips;
 		this.inputId = opts.inputId;
-
+		this.initialChipFull = opts.initialChipFull;
+		this.chipsetsUpdateCallback = opts.chipsetsUpdateCallback;
 		MDC.prototype.initialize.call(this, opts);
 
 		if (!this.parentElem) {
@@ -309,7 +363,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 		this._generateMDCChips();
 	},
 
-	_generateMDCChips: function(){
+	_generateMDCChips: function() {
 		var $chipSet, $chip, keys;
 		var _this = this;
 
@@ -342,27 +396,64 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 			});
 		}
 
-		if (this.chips) {	
-			this.chips.forEach(function(chip){
-				$chip = _this._generateChip(chip);
+		if (this.chips) {
+			this.chips.forEach(function(chip) {
+				$chip = _this._generateChip(chip, null, _this.initialChipFull);
 				$chip.appendTo($chipSet);
 			});
 		}
 
 		$chipSet.appendTo(this.parentElem);
+		$chipSet.data('chipsetsUpdateCallback', this.chipsetsUpdateCallback);
 
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 	},
 
-	_generateChip: function(chipText){
-		var $chip;
+	_generateChip: function(chipObj, type_opt, initialChipFull) {
+		var $chip, chipText, fraction;
 		var chipId = $n2.getUniqueId();
+		var chipOriType = 'unknown';
+		if (typeof chipObj === 'string') {
+			chipText = chipObj;
 
-		$chip = $('<div>').addClass('mdc-chip')
-			.attr('id', chipId)
-			.attr('tabindex','0');
+			$chip = $('<div>').addClass('mdc-chip')
+				.attr('id', chipId)
+				.attr('tabindex','0');
+
+			if (type_opt) {
+				chipOriType = type_opt;
+			}
+
+			$chip.data('n2Chip', {
+				chipText: chipObj,
+				type: chipOriType,
+				fraction: 'full'
+			});
+
+		} else if (typeof chipObj === 'object') {
+			chipText = chipObj.value;
+			if (typeof chipObj.fraction !== 'undefined') {
+				fraction = chipObj.fraction;
+			}
+
+			$chip = $('<div>').addClass('mdc-chip')
+				.attr('id', chipId)
+				.attr('tabindex', '0');
+
+			if (fraction === 'full') {
+				$chip.addClass('mdc-chip-full');
+			} else {
+				$chip.addClass('mdc-chip-partial');
+			}
+
+			if (type_opt) {
+				chipOriType = type_opt;
+			}
+
+			$chip.data('n2Chip', $n2.extend({type: chipOriType }, chipObj));
+		}
 
 		if (chipText) {
 			$('<div>').addClass('mdc-chip__text')
@@ -372,9 +463,10 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 		$('<i>')
 			.addClass('material-icons mdc-chip__icon mdc-chip__icon--trailing')
-			.attr('tabindex','0')
-			.attr('role','button')
-			.text('x')
+			.attr('tabindex', '0')
+			.attr('role', 'button')
+			.attr('width', '15')
+			.attr('height', '15')
 			.appendTo($chip);
 
 		return $chip;
@@ -559,11 +651,11 @@ var MDCDataTable = $n2.Class('MDCDataTable', MDC, {
 // Class MDCDialog
 // Description: Creates a material design dialog component
 // Options:
-//  - dialogHtmlContent (String): Define text string of HTML content to place in the dialog message.
-//  - dialogTextContent (String): Define text string to place in the dialog window.
+//  - dialogHtmlContent (String): Define text string of HTML content to place in the dialog.
+//  - dialogTextContent (String): Define text string to place in the dialog.
 //  - dialogTitle (String): Text defining the title of the dialog window.
-//  - scrollable (Boolean): Make the dialog scrollable if true (default = false).
-//  - closeBtn (Boolean): Add a close button to the dialog window (default = false).
+//  - scrollable (Boolean): Make the dialog scrollable if true (default = false)
+//  - closeBtn (Boolean): Add a close button to the dialog (default = false).
 //  - closeBtnText (String): Update the close button text (default = "Close").
 var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	dialogHtmlContent: null,
@@ -574,7 +666,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 	closeBtnText: null,
 	$dialogMessage: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			dialogHtmlContent: null,
 			dialogTextContent: null,
@@ -599,7 +691,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		this._generateMDCDialog();
 	},
 
-	_generateMDCDialog: function(){
+	_generateMDCDialog: function() {
 		var $dialogContainer, $dialogSurface, $dialogMessage, keys;
 		var _this = this;
 		var content = "";
@@ -674,7 +766,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		this.openDialog();
 	},
 
-	_attachDialog: function(dialogId){
+	_attachDialog: function() {
 		var dialog = MDCDialogElement[0];
 		if (dialog) {
 			MDCDialogComponent = new $mdc.dialog.MDCDialog(dialog);
@@ -689,7 +781,7 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		return this.footerId;
 	},
 
-	closeDialog: function(){
+	closeDialog: function() {
 		if (MDCDialogComponent && MDCDialogComponent.isOpen) {
 			MDCDialogComponent.close();
 			MDCDialogElement.remove();
@@ -697,17 +789,17 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		}
 	},
 
-	openDialog: function(){
+	openDialog: function() {
 		var _this = this;
 		if (MDCDialogComponent && !MDCDialogComponent.isOpen) {
 			MDCDialogComponent.open();
 
-			MDCDialogComponent.listen('MDCDialog:opened', function(event){
+			MDCDialogComponent.listen('MDCDialog:opened', function(event) {
 				if (event) {
 					// Slight delay before setting the scrollTop position to 0
 					// 1ms delay is required otherwise the scrollTop occurs
 					// before a scroll position is set to the bottom of the page
-					window.setTimeout(function(){
+					window.setTimeout(function() {
 						_this.$dialogMessage.scrollTop(0);
 					}, 1);
 				}
@@ -715,15 +807,15 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 		}
 	},
 
-	addCloseBtn: function(){
+	addCloseBtn: function() {
 		new MDCButton({
 			parentElem: $('#' + this.footerId),
 			btnLabel: this.closeBtnText,
 			onBtnClick: this.closeDialog
 		});
-	}, 
+	},
 
-	addFooterBtn: function(btnOpts){
+	addFooterBtn: function(btnOpts) {
 		new MDCButton(btnOpts);
 	}
 });
@@ -734,10 +826,11 @@ var MDCDialog = $n2.Class('MDCDialog', MDC, {
 //  - anchorBtnId (String): Button Id associated with drawer
 //  - navHeaderTitle (String): Nav-Bar Header Title
 //  - navHeaderSubTitle (String): Nav-Bar Sub-Header Title
-//  - navItems (Array): An array of objects containing link text, href URL, and activated status
-//   - navItems Example: 
+//  - navItems (Array): An array of objects containing link text,
+//  href URL, and activated status
+//   - navItems Example:
 //   [
-//   	{"href":"https://gcrc.carleton.ca", "text":"GCRC", "activated":true}, 
+//   	{"href":"https://gcrc.carleton.ca", "text":"GCRC", "activated":true},
 //   	{"href":"https://nunaliit.org", "text":"Nunaliit"}
 //   ]
 var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
@@ -747,7 +840,7 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 	navHeaderSubTitle: null,
 	navItems: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			anchorBtnId: null,
 			navHeaderTitle: null,
@@ -767,12 +860,12 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 		this._generateMDCDrawer();
 	},
 
-	_generateMDCDrawer: function(){
+	_generateMDCDrawer: function() {
 		var $drawer, $drawerContent, $drawerHeader, $drawerScrim, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-drawer', 'mdc-drawer--modal', 'n2s_attachMDCDrawer');
-		
+
 		$drawer = $('<aside>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '));
@@ -823,17 +916,17 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 			navList: true,
 			listItems: this.navItems
 		});
-		
+
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 	},
 
-	getContentId: function(){
+	getContentId: function() {
 		return this.navContentId;
 	},
 
-	getNavId: function(){
+	getNavId: function() {
 		return this.navId;
 	}
 });
@@ -842,13 +935,13 @@ var MDCDrawer = $n2.Class('MDCDrawer', MDC, {
 // Description: Create a material design form field component
 var MDCFormField = $n2.Class('MDCFormField', MDC, {
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 
 		}, opts_);
 
 		MDC.prototype.initialize.call(this, opts);
-		
+
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Form Field Component');
 		}
@@ -856,7 +949,7 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 		this._generateMDCFormField();
 	},
 
-	_generateMDCFormField: function(){
+	_generateMDCFormField: function() {
 		var $formField, keys;
 		var _this = this;
 
@@ -879,7 +972,7 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
 	}
-}); 
+});
 
 // Class MDCList
 // Description: Create a material design list component
@@ -887,7 +980,7 @@ var MDCFormField = $n2.Class('MDCFormField', MDC, {
 //  - listItems (array): An array of object specifying list item details
 //   - list item attributes: text (string), href (string), activated (boolean), onItemClick (function) 
 //   - Example: [
-//   	{'text': 'foo', 'onItemClick': bar},
+//   	{'text': 'foo', 'onItemClick': bar, 'indent': 10},
 //   	{"href":"https://gcrc.carleton.ca", "text":"GCRC", "activated":true}
 //   	]
 var MDCList = $n2.Class('MDCList', MDC, {
@@ -896,7 +989,7 @@ var MDCList = $n2.Class('MDCList', MDC, {
 
 	navList: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			listItems: null,
 			navList: false,
@@ -906,7 +999,7 @@ var MDCList = $n2.Class('MDCList', MDC, {
 
 		this.listItems = opts.listItems;
 		this.navList = opts.navList;
-		
+
 		if (!this.parentElem) {
 			throw new Error('parentElem  must be provided, to add a Material Design List Component');
 		}
@@ -914,7 +1007,7 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		this._generateMDCList();
 	},
 
-	_generateMDCList: function(){
+	_generateMDCList: function() {
 		var $list, $item, keys;
 		var _this = this;
 
@@ -940,8 +1033,8 @@ var MDCList = $n2.Class('MDCList', MDC, {
 			});
 		}
 
-		if (this.listItems && $n2.isArray(this.listItems)){
-			this.listItems.forEach(function(listItem){
+		if (this.listItems && $n2.isArray(this.listItems)) {
+			this.listItems.forEach(function(listItem) {
 				$item = _this._generateMDCListItem(listItem);
 				$item.appendTo($list);
 			});
@@ -954,11 +1047,15 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		}
 	},
 
-	_generateMDCListItem: function(item){
+	_generateMDCListItem: function(item) {
 		var $listItem, $listItemText;
-		
+
 		if (this.navList) {
 			$listItem = $('<a>');
+			if (item.indent) {
+				$listItem.addClass('nested_list_item');
+			}
+
 		} else {
 			$listItem = $('<li>');
 		}
@@ -966,7 +1063,6 @@ var MDCList = $n2.Class('MDCList', MDC, {
 		$listItem.attr('role', 'menuitem')
 			.attr('tabindex', '-1')
 			.addClass('mdc-list-item');
-			
 
 		if (item.activated) {
 			$listItem.attr('tabIndex', '0')
@@ -983,6 +1079,10 @@ var MDCList = $n2.Class('MDCList', MDC, {
 				.addClass('mdc-list-item__text')
 				.text(item.text);
 
+			if (item.indent) {
+				$listItemText.css('margin-left', item.indent + 'px');
+			}
+
 			if (item.onItemClick) {
 				$listItemText.click(item.onItemClick);
 			}
@@ -992,18 +1092,18 @@ var MDCList = $n2.Class('MDCList', MDC, {
 
 		return $listItem;
 	}
-}); 
+});
 
 // Class MDCMenu
 // Description: Create a material design menu component
 // Options:
 //  - anchorBtnId (string): The id of the button associated with the menu
 var MDCMenu = $n2.Class('MDCMenu', MDC, {
-	
+
 	anchorBtnId: null,
 	anchorBtnText: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			anchorBtnId: null,
 		}, opts_);
@@ -1013,7 +1113,7 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		this.anchorBtnText = opts.anchorBtnText;
 		this.anchorBtnId = $n2.getUniqueId();
 		this.menuId = $n2.getUniqueId();
-		this.$menuSurfaceAnchor = null; 
+		this.$menuSurfaceAnchor = null;
 
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Menu Component');
@@ -1022,7 +1122,7 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		this._generateMDCMenu();
 	},
 
-	_generateMDCMenu: function(){
+	_generateMDCMenu: function() {
 		var $menu, keys;
 		var _this = this;
 
@@ -1031,7 +1131,6 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		this.$menuSurfaceAnchor = $('<div>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '));
-		
 
 		$menu = $('<div>').attr('id', this.menuId)
 			.attr('n2associatedmdc', this.anchorBtnId)
@@ -1054,7 +1153,7 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		}
 	},
 
-	_addAnchorBtn: function(){
+	_addAnchorBtn: function() {
 		new MDCButton({
 			parentElem: this.parentElem.find('#' + this.mdcId),
 			mdcId: this.anchorBtnId,
@@ -1062,14 +1161,14 @@ var MDCMenu = $n2.Class('MDCMenu', MDC, {
 		});
 	},
 
-	getMenuId: function(){
+	getMenuId: function() {
 		return this.menuId;
 	},
 
-	getAnchorBtnId: function(){
+	getAnchorBtnId: function() {
 		return this.anchorBtnId;
 	}
-}); 
+});
 
 // Class MDCRadio
 // Description: Creates a material design radio button component
@@ -1087,7 +1186,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 	radioDisabled: null,
 	onRadioClick: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			radioLabel: null,
 			radioName: null,
@@ -1112,7 +1211,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		this._generateMDCRadio();
 	},
 
-	_generateMDCRadio: function(){
+	_generateMDCRadio: function() {
 		var $rbtn, $rbtnInput, $rbtnBackground, keys;
 		var _this = this;
 
@@ -1134,7 +1233,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		}
 
 		$rbtnInput = $('<input>')
-			.attr('id', this.rbtnInputId) 
+			.attr('id', this.rbtnInputId)
 			.attr('type', 'radio')
 			.attr('name', this.radioName)
 			.addClass('mdc-radio__native-control')
@@ -1172,7 +1271,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 		}
 	},
 
-	getInputId: function(){
+	getInputId: function() {
 		return this.rbtnInputId;
 	}
 });
@@ -1181,7 +1280,7 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 // Description: Creates a material design select menu component
 // Options:
 //  - preSelected (Boolean): Define a select menu as pre-selected (default = false)
-//  - menuChgFunction (Function): Function to occur when 
+//  - menuChgFunction (Function): Function to occur when
 //  - menuLabel (String): Defines the text label on the select menu.
 //  - menuOpts (Array of Objects): Define an array of objects describing each option for the select menu.
 //   - Expected option object keys:
@@ -1196,15 +1295,17 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 	menuLabel: null,
 	menuOpts: null,
 	preSelected: null,
+	nativeClasses: null,
 	select: null,
 	selectId: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			menuChgFunction: null,
 			menuLabel: null,
 			menuOpts: [],
-			preSelected: false
+			preSelected: false,
+			nativeClasses: null
 		}, opts_);
 
 		MDC.prototype.initialize.call(this,opts);
@@ -1214,7 +1315,8 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.menuOpts = opts.menuOpts;
 		this.preSelected = opts.preSelected;
 		this.selectId = $n2.getUniqueId();
-		
+		this.nativeClasses = opts.nativeClasses;
+
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Select Component');
 		}
@@ -1222,8 +1324,9 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this._generateMDCSelectMenu();
 	},
 
-	_generateMDCSelectMenu: function(){
-		var $menu, $menuNotchedOutline, $menuNotchedOutlineNotch,  keys;
+	_generateMDCSelectMenu: function() {
+		var $menu, $menuNotchedOutline, $menuNotchedOutlineNotch, $label, keys;
+		var classesOnSelectTag = '';
 		var _this = this;
 
 		this.mdcClasses.push('mdc-select', 'mdc-select--outlined', 'n2s_attachMDCSelect');
@@ -1242,9 +1345,13 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		$('<i>').addClass('mdc-select__dropdown-icon')
 			.appendTo($menu);
 
+		if (this.nativeClasses) {
+			classesOnSelectTag = this.nativeClasses.join(' ');
+		}
 		this.select = $('<select>')
 			.attr('id', this.selectId)
 			.addClass('mdc-select__native-control')
+			.addClass(classesOnSelectTag)
 			.appendTo($menu)
 			.change(this.menuChgFunction);
 
@@ -1259,27 +1366,27 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			.addClass('mdc-notched-outline__notch')
 			.appendTo($menuNotchedOutline);
 
-		var label = $('<label>')
+		$label = $('<label>')
 			.attr('for', this.selectId)
 			.addClass('mdc-floating-label')
 			.text(_loc(this.menuLabel))
 			.appendTo($menuNotchedOutlineNotch);
 
 		if (this.preSelected) {
-			label.addClass('mdc-floating-label--float-above');
+			$label.addClass('mdc-floating-label--float-above');
 		}
-	
-		$('<div>').addClass('mdc-notched-outline__trailing')
-			.appendTo($menuNotchedOutline);	
 
-		if (this.menuOpts 
-			&& $n2.isArray(this.menuOpts) 
+		$('<div>').addClass('mdc-notched-outline__trailing')
+			.appendTo($menuNotchedOutline);
+
+		if (this.menuOpts
+			&& $n2.isArray(this.menuOpts)
 			&& this.menuOpts.length > 0) {
 			this.menuOpts.forEach(function(menuOpt) {
 				_this._addOptionToSelectMenu(menuOpt);
 			});
 		}
-		
+
 		$menu.appendTo(this.parentElem);
 
 		if (showService) {
@@ -1287,16 +1394,16 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		}
 	},
 
-	_addOptionToSelectMenu: function(menuOpt){
+	_addOptionToSelectMenu: function(menuOpt) {
 		var $opt, value, label;
-	
+
 		if (menuOpt) {
 			if (menuOpt.value) {
 				value = menuOpt.value;
 			} else {
 				value = '';
 			}
-			
+
 			if (menuOpt.label) {
 				label = menuOpt.label;
 			}
@@ -1318,8 +1425,72 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		}
 	},
 
-	getSelectId: function(){
+	getSelectId: function() {
 		return this.selectId;
+	}
+});
+
+// Class MDCSwitch
+// Description: Create a material design switch component
+var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
+	initialize: function(opts_) {
+		var opts = $n2.extend({
+			parentElem: null,
+			mdcId: null,
+			mdcClasses: [],
+			mdcAttributes: null,
+			onChangeCallBack: undefined,
+			label: undefined,
+			initiallyOn: false
+		}, opts_);
+		this.onChangeCallBack = opts.onChangeCallBack;
+		this.label = opts.label;
+		this.initiallyOn = opts.initiallyOn;
+		MDC.prototype.initialize.call(this, opts);
+		this._generateMDCSwitch();
+	},
+	_generateMDCSwitch: function(){
+		var _this = this;
+		var $switch;
+		var label_t = 'off/on';
+		if (this.label){
+			label_t = this.label;
+		}
+		if (this.initiallyOn){
+			$switch = $($.parseHTML('<div class="mdc-switch mdc-switch--checked"><div class="mdc-switch__track">'+
+					'</div><div class="mdc-switch__thumb-underlay">'+
+						'<div class="mdc-switch__thumb">'+
+								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch" checked>'+
+							'</div>'+
+						'</div>'+
+				'</div>'+
+				'<label for="basic-switch">' + 
+				label_t +
+				'</label>'));
+		} else {
+			$switch = $($.parseHTML('<div class="mdc-switch"><div class="mdc-switch__track">'+
+					'</div><div class="mdc-switch__thumb-underlay">'+
+						'<div class="mdc-switch__thumb">'+
+								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch">'+
+							'</div>'+
+						'</div>'+
+				'</div>'+
+				'<label for="basic-switch">off/on</label>'));
+		}
+		$switch.appendTo(this.parentElem);
+
+		//add evt listener for 'change' in mdc way
+		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
+		if (this.onChangeCallBack 
+				&& typeof this.onChangeCallBack === 'function'){
+			vanilla.nativeControl_.addEventListener('change', function(){
+				_this.onChangeCallBack(this.checked);
+			})
+		}
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
 	}
 });
 
@@ -1335,7 +1506,7 @@ var MDCTabBar = $n2.Class('MDCTabBar', MDC, {
 
 	tabIndex: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			tabs: []
 		}, opts_);
@@ -1352,7 +1523,7 @@ var MDCTabBar = $n2.Class('MDCTabBar', MDC, {
 		this._generateMDCTabBar();
 	},
 
-	_generateMDCTabBar: function(){
+	_generateMDCTabBar: function() {
 		var $tabBar, $tabScroller, $tabScrollArea, $tabScrollAreaContent, keys;
 		var _this = this;
 
@@ -1382,7 +1553,7 @@ var MDCTabBar = $n2.Class('MDCTabBar', MDC, {
 			.addClass('mdc-tab-scroller__scroll-content')
 			.appendTo($tabScrollArea);
 
-		this.tabs.forEach(function(tab){
+		this.tabs.forEach(function(tab) {
 			var tabBtn = _this._generateMDCTabButton(tab, _this.tabIndex);
 			tabBtn.appendTo($tabScrollAreaContent);
 		});
@@ -1394,7 +1565,7 @@ var MDCTabBar = $n2.Class('MDCTabBar', MDC, {
 		}
 	},
 
-	_generateMDCTabButton: function(tab, index){
+	_generateMDCTabButton: function(tab, index) {
 		var $tab, $tabContent, $tabIndicator;
 		var btnLabel = "";
 
@@ -1444,29 +1615,34 @@ var MDCTabBar = $n2.Class('MDCTabBar', MDC, {
 
 		return $tab;
 	}
-}); 
+});
 
 // Class MDCTagBox
 // Description: Creates a material design tag box component
 // Options:
-//  - chips (Array): A collection of strings 
+//  - chips (Array): A collection of strings
 //  - label (String): A label used for the outline of the tag box
 var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 
 	$chipInput: null,
 	chips: null,
 	label: null,
+	initialChipFull: null,
+	chipsetsUpdateCallback: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			chips: [],
 			label: '',
+			initialChipFull: false,
+			chipsetsUpdateCallback: undefined
 		}, opts_);
 
 		this.chips = opts.chips;
 		this.label = opts.label;
 		this.inputId = $n2.getUniqueId();
-
+		this.initialChipFull = opts.initialChipFull;
+		this.chipsetsUpdateCallback = opts.chipsetsUpdateCallback;
 		MDC.prototype.initialize.call(this, opts);
 
 		if (!this.parentElem) {
@@ -1476,9 +1652,9 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 		this._generateMDCTagBox();
 	},
 
-	_generateMDCTagBox: function(){
+	_generateMDCTagBox: function() {
 		var $chipSet;
-
+		var _this = this;
 		this.$chipInput = new $n2.mdc.MDCTextField({
 			parentElem: this.parentElem,
 			mdcClasses: ['n2-tag-box'],
@@ -1494,7 +1670,9 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 			parentElem: this.parentElem.find('#' + this.$chipInput.getId()),
 			inputChips: true,
 			inputId: this.$chipInput.getInputId(),
-			chips: this.chips
+			initialChipFull: _this.initialChipFull,
+			chips: this.chips,
+			chipsetsUpdateCallback: this.chipsetsUpdateCallback
 		});
 
 		// Move input form field into chipset component
@@ -1532,7 +1710,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 	prefilled: null,
 	inputRequired: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			txtFldLabel: null,
 			txtFldOutline: true,
@@ -1554,14 +1732,15 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.passwordFld = opts.passwordFld;
 		this.prefilled = opts.prefilled;
 		this.inputRequired = opts.inputRequired;
-		
+
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Text Field Component');
 		}
 
 		this._generateMDCTextField();
 	},
-	_generateMDCTextField: function(){
+
+	_generateMDCTextField: function() {
 		var $txtFld, $txtFldInput, $txtFldLabel, $txtFldOutline, $txtFldOutlineNotch, keys;
 		var _this = this;
 
@@ -1613,21 +1792,21 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		if (this.prefilled) {
 			$txtFldInput.val(this.prefilled);
 		}
-		
+
 		$txtFld.append($txtFldInput);
 
-		if (this.txtFldOutline || this.txtFldArea) {	
+		if (this.txtFldOutline || this.txtFldArea) {
 			$txtFldOutline = $('<div>')
 				.addClass('mdc-notched-outline')
 				.appendTo($txtFld);
-		
+
 			$('<div>').addClass('mdc-notched-outline__leading')
 				.appendTo($txtFldOutline);
-		
+
 			$txtFldOutlineNotch = $('<div>')
 				.addClass('mdc-notched-outline__notch')
 				.appendTo($txtFldOutline);
-			
+
 			$txtFldLabel = $('<label>')
 				.attr('for', this.txtFldInputId)
 				.addClass('mdc-floating-label')
@@ -1635,9 +1814,9 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 				.appendTo($txtFldOutlineNotch);
 
 			if (this.prefilled) {
-				$txtFldLabel.addClass('mdc-floating-label--float-above');	
+				$txtFldLabel.addClass('mdc-floating-label--float-above');
 			}
-		
+
 			$('<div>')
 				.addClass('mdc-notched-outline__trailing')
 				.appendTo($txtFldOutline);
@@ -1664,7 +1843,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		}
 	},
 
-	getInputId: function(){
+	getInputId: function() {
 		return this.txtFldInputId;
 	}
 });
@@ -1675,19 +1854,19 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 
 	barTitle: null,
 
-	initialize: function(opts_){
+	initialize: function(opts_) {
 		var opts = $n2.extend({
 			barTitle: null
 		}, opts_);
 
 		MDC.prototype.initialize.call(this, opts);
-		
+
 		this.barTitle = opts.barTitle;
 		this._generateMDCTopAppBar();
 	},
 
-	_generateMDCTopAppBar: function(){
-		var $topAppBar, $topAppBarRow, $topAppBarRSection, $topAppBarLSection,keys;
+	_generateMDCTopAppBar: function() {
+		var $topAppBar, $topAppBarRow, $topAppBarRSection, $topAppBarLSection, keys;
 		var _this = this;
 
 		this.mdcClasses.push('mdc-top-app-bar', 'n2s_attachMDCTopAppBar');
@@ -1849,6 +2028,7 @@ $n2.mdc = {
 	Service: Service,
 	MDC: MDC,
 	MDCButton: MDCButton,
+	MDCCard: MDCCard,
 	MDCCheckbox: MDCCheckbox,
 	MDCChipSet: MDCChipSet,
 	MDCDataTable: MDCDataTable,
@@ -1859,8 +2039,9 @@ $n2.mdc = {
 	MDCMenu: MDCMenu,
 	MDCRadio: MDCRadio,
 	MDCSelect: MDCSelect,
+	MDCSwitch: MDCSwitch,
 	MDCTabBar: MDCTabBar,
-	MDCTagBox: MDCTagBox, 
+	MDCTagBox: MDCTagBox,
 	MDCTextField: MDCTextField,
 	MDCTopAppBar: MDCTopAppBar,
 	MDCSwitch: MDCSwitch,
