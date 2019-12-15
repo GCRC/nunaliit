@@ -396,8 +396,8 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 			});
 		}
 
-		if (this.chips) {	
-			this.chips.forEach(function(chip){
+		if (this.chips) {
+			this.chips.forEach(function(chip) {
 				$chip = _this._generateChip(chip, null, _this.initialChipFull);
 				$chip.appendTo($chipSet);
 			});
@@ -417,27 +417,26 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 		var chipOriType = 'unknown';
 		if (typeof chipObj === 'string') {
 			chipText = chipObj;
-
 			$chip = $('<div>').addClass('mdc-chip')
 				.attr('id', chipId)
 				.attr('tabindex','0');
-				
-			if (type_opt){
+
+			if (type_opt) {
 				chipOriType = type_opt;
 			}
-			
+
 			$chip.data('n2Chip', {
 				chipText: chipObj,
 				type: chipOriType,
 				fraction: 'full'
 			});
-			
-		} else if ( typeof chipObj === 'object'){
+
+		} else if (typeof chipObj === 'object') {
 			chipText = chipObj.value;
-			if ( typeof chipObj.fraction !== 'undefined'){
+			if (typeof chipObj.fraction !== 'undefined') {
 				fraction = chipObj.fraction;
-			};
-			
+			}
+
 			$chip = $('<div>').addClass('mdc-chip')
 				.attr('id', chipId)
 				.attr('tabindex','0');
@@ -453,8 +452,8 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 			}
 			
 			$chip.data('n2Chip', $n2.extend({type: chipOriType }, chipObj));
-		} 
-		
+		}
+
 		if (chipText) {
 			$('<div>').addClass('mdc-chip__text')
 				.text(chipText)
@@ -1295,7 +1294,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 	menuLabel: null,
 	menuOpts: null,
 	preSelected: null,
-	nativeClasses : null,
+	nativeClasses: null,
 	select: null,
 	selectId: null,
 
@@ -1305,7 +1304,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 			menuLabel: null,
 			menuOpts: [],
 			preSelected: false,
-			nativeClasses : null
+			nativeClasses: null
 		}, opts_);
 
 		MDC.prototype.initialize.call(this,opts);
@@ -1315,7 +1314,6 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		this.menuOpts = opts.menuOpts;
 		this.preSelected = opts.preSelected;
 		this.selectId = $n2.getUniqueId();
-		this.nativeClasses = opts.nativeClasses;
 		this.nativeClasses = opts.nativeClasses;
 
 		if (!this.parentElem) {
@@ -1346,7 +1344,7 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 		$('<i>').addClass('mdc-select__dropdown-icon')
 			.appendTo($menu);
 
-		if ( this.nativeClasses ){
+		if (this.nativeClasses) {
 			classesOnSelectTag = this.nativeClasses.join(' ');
 		}
 		this.select = $('<select>')
@@ -1635,8 +1633,8 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 		var opts = $n2.extend({
 			chips: [],
 			label: '',
-			initialChipFull : false, 
-			chipsetsUpdateCallback : undefined
+			initialChipFull: false,
+			chipsetsUpdateCallback: undefined
 		}, opts_);
 
 		this.chips = opts.chips;
@@ -1671,9 +1669,9 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 			parentElem: this.parentElem.find('#' + this.$chipInput.getId()),
 			inputChips: true,
 			inputId: this.$chipInput.getInputId(),
-			initialChipFull : _this.initialChipFull,
+			initialChipFull: _this.initialChipFull,
 			chips: this.chips,
-			chipsetsUpdateCallback : this.chipsetsUpdateCallback
+			chipsetsUpdateCallback: this.chipsetsUpdateCallback
 		});
 
 		// Move input form field into chipset component
@@ -1917,66 +1915,6 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 		}
 	}
 });
-var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			parentElem: null,
-			mdcId: null,
-			mdcClasses: [],
-			mdcAttributes: null,
-			onChangeCallBack: undefined,
-			label: undefined,
-			initiallyOn : false
-		}, opts_);
-		this.onChangeCallBack = opts.onChangeCallBack;
-		this.label = opts.label;
-		this.initiallyOn = opts.initiallyOn;
-		MDC.prototype.initialize.call(this, opts);
-		this._generateMDCSwitch();
-	},
-	_generateMDCSwitch: function(){
-		var _this = this;
-		var $switch;
-		var label_t = 'off/on';
-		if (this.label){
-			label_t = this.label;
-		}
-		if (this.initiallyOn){
-			$switch = $($.parseHTML('<div class="mdc-switch mdc-switch--checked"><div class="mdc-switch__track">'+
-					'</div><div class="mdc-switch__thumb-underlay">'+
-						'<div class="mdc-switch__thumb">'+
-								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch" checked>'+
-							'</div>'+
-						'</div>'+
-				'</div>'+
-				'<label for="basic-switch">' + 
-				label_t +
-				'</label>'));
-		} else {
-			$switch = $($.parseHTML('<div class="mdc-switch"><div class="mdc-switch__track">'+
-					'</div><div class="mdc-switch__thumb-underlay">'+
-						'<div class="mdc-switch__thumb">'+
-								'<input type="checkbox" id="basic-switch" class="mdc-switch__native-control" role="switch">'+
-							'</div>'+
-						'</div>'+
-				'</div>'+
-				'<label for="basic-switch">off/on</label>'));
-		}
-		$switch.appendTo(this.parentElem);
-		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
-		if (this.onChangeCallBack 
-				&& typeof this.onChangeCallBack === 'function'){
-			vanilla.nativeControl_.addEventListener('change', function(){
-				_this.onChangeCallBack(this.checked);
-			})
-		}
-		
-		if (showService) {
-			showService.fixElementAndChildren($('#' + this.mdcId));
-		}
-	}
-});
-
 
 $n2.mdc = {
 	Service: Service,
