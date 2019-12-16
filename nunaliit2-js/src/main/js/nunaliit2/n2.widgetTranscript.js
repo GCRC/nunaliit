@@ -1094,20 +1094,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			$video[0].play();
 		} else if ('text-oneclick' === origin){
 			var $video = $('#'+this.videoId);
-			$video[0].currentTime = currentTime;
-			$video[0].play();
-			var inid = setInterval(function(){
-				var isPlaying = $video[0].currentTime > 0 && !$video[0].paused && !$video[0].ended 
-					&& $video[0].readyState > 2;
-
-				if(!isPlaying){
-					
-				} else {
-					$video[0].pause();
-					clearInterval(inid);
-				}
-				
-			},100);
+			_this.pauseVideo($video[0], currentTime);
+			
 		} else if('startEditing' === origin){
 			_this._lastCtxTime = currentTime;
 		} else if ( 'savedState' === origin ){
@@ -1131,7 +1119,26 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			},100);
 		} 
 	},
-	
+	pauseVideo: function($video, currentTime){
+		$video.currentTime = currentTime;
+		var volume = $video.getVolume();
+		$video.setMuted(true);
+		$video.play();
+		var inid = setInterval(function(){
+			var isPlaying = $video.currentTime > 0 && !$video.paused && !$video.ended 
+				&& $video.readyState > 2;
+
+			if(!isPlaying){
+				
+			} else {
+				$video.pause();
+				$video.setMuted(false);
+				$video.setVolume(volume);
+				clearInterval(inid);
+			}
+			
+		},100);
+	},
 	_onUserScrollAction: function(evt){
 		this.lastTimeUserScroll = $.now();
 	},
