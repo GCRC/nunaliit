@@ -41,15 +41,15 @@ var
  function findTimeLink(timeLinks, startTime, endTime){
 	 var result = [];
 	 var timeLink;
-	 var target_start = $n2.utils.convertSMPTEtoSeconds(startTime);
-	 var target_end = $n2.utils.convertSMPTEtoSeconds(endTime);
+	 var target_start = startTime.replace(',', '.');
+	 var target_end = endTime.replace(',', '.');
 	 if ( target_start && target_end ){
 
 		 for (var i=0,e=timeLinks.length; i<e; i++){
 			 try{
 				 timeLink =timeLinks[i];
-				 var start_in_ms = $n2.utils.convertSMPTEtoSeconds(timeLink.starttime);
-				 var end_in_ms = $n2.utils.convertSMPTEtoSeconds(timeLink.endtime);
+				 var start_in_ms = timeLink.starttime.replace(',', '.');
+				 var end_in_ms = timeLink.endtime.replace(',', '.');
 				 if(  start_in_ms &&
 						 end_in_ms &&
 						 start_in_ms === target_start &&
@@ -1025,6 +1025,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 
 				new $n2.mdc.MDCTagBox({
 					parentElem : $formFieldSection,
+					autoCompleteViewName : 'tags',
 					label: 'Theme Tags',
 					mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 					chips: lastThemeTags,
@@ -1050,6 +1051,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 
 				new $n2.mdc.MDCTagBox({
 					parentElem : $formFieldSection,
+					autoCompleteViewName: 'tags',
 					label: 'Place Tags',
 					mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
 					chips:lastPlaceTags,
@@ -1109,6 +1111,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		
 		new $n2.mdc.MDCTagBox({
 			parentElem : $formFieldSection,
+			autoCompleteViewName: 'tags',
 			label: 'Theme Tags',
 			mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 			chips: lastThemeTags,
@@ -1134,6 +1137,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		new $n2.mdc.MDCTagBox({
 			parentElem : $formFieldSection,
 			label: 'Place Tags',
+			autoCompleteViewName: 'tags',
 			mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
 			chips:lastPlaceTags,
 			chipsetsUpdateCallback: function(tagList, operation, target){

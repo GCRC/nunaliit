@@ -718,7 +718,8 @@ function Configure(options_){
 		});
 
 		configuration.directory.mdcService = new $n2.mdc.Service({
-			showService: configuration.directory.showService
+			showService: configuration.directory.showService,
+			siteDesign: configuration.siteDesign
 		});
 	 	
 	 	$n2.mapAndControls.DefaultPopupHtmlFunction = function(opt_){

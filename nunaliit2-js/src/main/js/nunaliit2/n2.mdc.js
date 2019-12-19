@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2){
 "use strict";
 
-var MDCDialogComponent, MDCDialogElement, showService;
+var MDCDialogComponent, MDCDialogElement, showService, designDoc, lookAheadService;
 var _loc = function(str,args){
 	return $n2.loc(str,'nunaliit2',args);
 };
@@ -47,10 +47,20 @@ var Service = $n2.Class({
 
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			showService: null
+			showService: null,
+			siteDesign : null
 		}, opts_);
 
 		showService = opts.showService;
+		designDoc = opts.siteDesign;
+		lookAheadService = new LookAheadService({
+			designDoc: designDoc
+			,viewName: null
+			,lookAheadLimit: 5
+			,lookAheadPrefixMin: 3
+			,lookAheadCacheSize: 10
+			,constraint: null
+		});
 	}
 });
 
@@ -1636,13 +1646,14 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 	label: null,
 	initialChipFull : null,
 	chipsetsUpdateCallback : null,
-	
+	autoCompleteViewName : null,
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			chips: [],
 			label: '',
 			initialChipFull : false, 
-			chipsetsUpdateCallback : undefined
+			chipsetsUpdateCallback : undefined,
+			autoCompleteViewName : null
 		}, opts_);
 
 		this.chips = opts.chips;
@@ -1650,6 +1661,7 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 		this.inputId = $n2.getUniqueId();
 		this.initialChipFull = opts.initialChipFull;
 		this.chipsetsUpdateCallback = opts.chipsetsUpdateCallback;
+		this.autoCompleteViewName = opts.autoCompleteViewName;
 		MDC.prototype.initialize.call(this, opts);
 
 		if (!this.parentElem) {
@@ -1666,7 +1678,8 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 			parentElem: this.parentElem,
 			mdcClasses: ['n2-tag-box'],
 			txtFldInputId: this.inputId,
-			txtFldLabel: this.label
+			txtFldLabel: this.label,
+			autoCompleteViewName: this.autoCompleteViewName
 		});
 
 		this.parentElem.find('#' + this.$chipInput.getId())
@@ -1695,6 +1708,258 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 		return this.inputId;
 	}
 });
+//LookaheadService for MDCTextField
+// ============ LookAheadService ========================
+function SplitSearchTerms(line) {
+	if( !line ) return null;
+
+	var map = $n2.couchUtils.extractSearchTerms(line, false);
+
+	var searchTerms = [];
+	for(var term in map){
+		var folded = map[term].folded;
+		if( folded ) {
+			searchTerms.push(folded);
+		};
+	};
+
+	return searchTerms;
+};
+var LookAheadService = $n2.Class({
+
+	designDoc: null,
+
+	lookAheadLimit: null,
+
+	lookAheadPrefixMin: null,
+
+	lookAheadCacheSize: null,
+
+	lookAheadMap: null,
+
+	lookAheadCounter: null,
+
+	constraint: null,
+	
+	viewName: null,
+
+	initialize: function(opts_) {
+		var opts = $n2.extend({
+			designDoc: null
+			,viewName: null
+			,lookAheadLimit: 5
+			,lookAheadPrefixMin: 3
+			,lookAheadCacheSize: 10
+			,constraint: null
+		},opts_);
+
+		this.designDoc = designDoc;
+		this.lookAheadLimit = opts.lookAheadLimit;
+		this.lookAheadPrefixMin = opts.lookAheadPrefixMin;
+		this.lookAheadCacheSize = opts.lookAheadCacheSize;
+		this.constraint = opts.constraint;
+		this.viewName = opts.viewName;
+		this.lookAheadMap = {};
+		this.lookAheadCounter = 0;
+	},
+
+	setConstraint: function(constraint){
+		this.constraint = constraint;
+	},
+
+	getViewName : function(){
+		return this.viewName;
+	},
+	setViewName : function(vn){
+		this.viewName = vn;
+	},
+	queryPrefix: function(prefix,callback) {
+		var _this = this;
+
+		var words = this._retrievePrefix(prefix);
+		if( words ) {
+			callback(prefix,words);
+			return;
+		};
+
+		// Figure out query view
+		var viewName = this.viewName;
+		if ( !viewName ){
+			callback(prefix,null);
+			return;
+		} 
+		/*if( this.constraint ){
+			viewName = 'text-lookahead-constrained';
+		};*/
+
+		// Figure out start and end keys
+		var startKey = prefix;
+		var endKey = prefix + '\u9999';
+		if( this.constraint ){
+			startKey = [this.constraint, prefix, null];
+			endKey = [this.constraint, prefix + '\u9999', {}];
+		};
+
+		// Make request
+		this.designDoc.queryView({
+			viewName: viewName
+			,startkey: startKey
+			,group_level: 1
+			,endkey: endKey
+			,top: this.lookAheadLimit
+			,group: undefined
+			,onlyRows: false
+			,reduce: true
+			,onSuccess: function(response) {
+				var rows = response.rows;
+
+				var words = [];
+				for(var i=0,e=rows.length; i<e; ++i) {
+					words.push(rows[i].key);
+				};
+
+				// Cache these results
+				_this._cachePrefix({
+					prefix: prefix
+					,words: words
+					,full: response.all_rows
+				});
+
+				if( 0 == words.length ) {
+					callback(prefix,null);
+				} else {
+					callback(prefix,words);
+				};
+			}
+			,onError: function(){
+				callback(prefix,null);
+			}
+		});
+	},
+
+	queryTerms: function(terms,callback) {
+
+		if( null === terms
+		 || 0 == terms.length ) {
+			callback(null);
+			return;
+		};
+
+		var index = terms.length - 1;
+		while( index >= 0 ) {
+			var lastTerm = terms[index];
+			if( '' === lastTerm ) {
+				--index;
+			} else {
+				var previousWords = null;
+				if( index > 0 ) {
+					previousWords = terms.slice(0,index);
+				};
+				break;
+			};
+		};
+
+		lastTerm = lastTerm.toLowerCase();
+
+		if( !lastTerm ) {
+			callback(null);
+			return;
+		};
+		if( lastTerm.length < this.lookAheadPrefixMin ) {
+			callback(null);
+			return;
+		};
+
+		var previousWordsString = '';
+		if( previousWords ) {
+			previousWordsString = previousWords.join(' ') + ' ';
+		};
+
+		this.queryPrefix(lastTerm,function(prefix,words){
+
+			if( null === words ) {
+				callback(null);
+			} else {
+				var results = [];
+				for(var i=0,e=words.length; i<e; ++i) {
+					results.push( previousWordsString + words[i] );
+				};
+				callback(results);
+			};
+		});
+	},
+
+	_cachePrefix: function(prefixResult) {
+
+		// Save result under prefix
+		this.lookAheadMap[prefixResult.prefix] = prefixResult;
+
+		// Mark generation
+		prefixResult.counter = this.lookAheadCounter;
+		++(this.lookAheadCounter);
+
+		// Trim cache
+		var keysToDelete = [];
+		var cachedMap = this.lookAheadMap; // faster access
+		var limit = this.lookAheadCounter - this.lookAheadCacheSize;
+		for(var key in cachedMap) {
+			if( cachedMap[key].counter < limit ) {
+				keysToDelete.push(key);
+			};
+		};
+		for(var i=0,e=keysToDelete.length; i<e; ++i) {
+			delete cachedMap[keysToDelete[i]];
+		};
+	},
+
+	_retrievePrefix: function(prefix) {
+
+		// Do we have exact match in cache?
+		if( this.lookAheadMap[prefix] ) {
+			return this.lookAheadMap[prefix].words;
+		};
+
+		// Look for complete results from shorter prefix
+		var sub = prefix.substring(0,prefix.length-1);
+		while( sub.length >= this.lookAheadPrefixMin ) {
+			if( this.lookAheadMap[sub] && this.lookAheadMap[sub].full ) {
+				var cachedWords = this.lookAheadMap[sub].words;
+				var words = [];
+				for(var i=0,e=cachedWords.length; i<e; ++i) {
+					var word = cachedWords[i];
+					if( word.length >= prefix.length ) {
+						if( word.substr(0,prefix.length) === prefix ) {
+							words.push(word);
+						};
+					};
+				};
+				return words;
+			};
+			sub = sub.substring(0,sub.length-1);
+		};
+
+		// Nothing of value found
+		return null;
+	},
+
+	getJqAutoCompleteSource: function() {
+		var _this = this;
+		return function(request, cb) {
+			_this._jqAutoComplete(request, cb);
+		};
+	},
+
+	_jqAutoComplete: function(request, cb) {
+		var terms = SplitSearchTerms(request.term);
+		var callback = cb;
+//		var callback = function(res){
+//			$n2.log('look ahead results',res);
+//			cb(res);
+//		}
+		this.queryTerms(terms, callback);
+	}
+
+});
 
 // Class MDCTextField
 // Description: Creates a material design text-field component
@@ -1717,6 +1982,8 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 	prefilled: null,
 	inputRequired: null,
 
+	autoCompleteViewName: null,
+	
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			txtFldLabel: null,
@@ -1727,6 +1994,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			passwordFld: false,
 			prefilled: null,
 			inputRequired: false,
+			autoCompleteViewName: null
 		}, opts_);
 
 		MDC.prototype.initialize.call(this,opts);
@@ -1739,7 +2007,8 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.passwordFld = opts.passwordFld;
 		this.prefilled = opts.prefilled;
 		this.inputRequired = opts.inputRequired;
-		
+		this._autoCompleteServiceViewName = opts.autoCompleteViewName
+		this.keyPressedSinceLastSearch = true;
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Text Field Component');
 		}
@@ -1789,7 +2058,26 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 				.addClass('mdc-text-field__input')
 				.attr('id', this.txtFldInputId)
 				.attr('type', 'text');
+			if ( $txtFldInput.autocomplete
+				&& this._autoCompleteServiceViewName ){
+				$txtFldInput.autocomplete({
+					source: this._getJqAutoCompleteSource()
+				});
+				
+			}
+/*			$txtFldInput.keydown(function(e){
+				_this._keyDown(e);
+			});
+
+			$txtFldInput.focus(function(e) {
+				_this._focus(e);
+			});
+
+			$txtFldInput.blur(function(e) {
+				_this._blur(e);
+			});*/
 		}
+		
 
 		if (this.passwordFld) {
 			$txtFldInput.attr('type', 'password');
@@ -1847,8 +2135,84 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
-	},
+	}
+	,getTextInput: function() {
+		return $('#'+this.txtFldInputId);
+	}
+	,_focus: function(e) {
+		var $textInput = this.getTextInput();
+		if( this.options.initialSearchText ) {
+			var value = $textInput.val();
+			if(this.options.initialSearchText === value) {
+				$textInput.val('');
+			};
+		};
+		$textInput.select();
+	}
 
+	,_blur: function(e){
+		if( this.options.initialSearchText ) {
+			var $textInput = this.getTextInput();
+
+			var value = $textInput.val();
+			if( '' === value ) {
+				$textInput.val(this.options.initialSearchText);
+			};
+		};
+	}
+
+	,_keyDown: function(e) {
+		var charCode = null;
+		if( null === e ) {
+			e = window.event; // IE
+		};
+		if( null !== e ) {
+			if( e.keyCode ) {
+				charCode = e.keyCode;
+			};
+		};
+
+		this.keyPressedSinceLastSearch = true;
+
+//		$n2.log('_keyDown',charCode,e);
+		if (13 === charCode || null === charCode) {
+			// carriage return or I'm not detecting key codes
+			// and have to submit on each key press - yuck...
+			var line = this.getSearchLine();
+			if( line.length > 0 ) {
+				this._closeLookAhead();
+				this.create(line);
+				this._closeLookAhead();
+			};
+		};
+	},
+	_getJqAutoCompleteSource: function() {
+		var _this = this;
+		return function(request, cb) {
+			_this._jqAutoComplete(request, cb);
+		};
+	},
+	getLookAheadService: function() {
+		lookAheadService.setViewName(
+					this._autoCompleteServiceViewName );
+		return lookAheadService;
+	}, 
+	_jqAutoComplete: function(request, cb) {
+		// Redirect to look ahead service, but intercept
+		// result.
+		var _this = this;
+		var lookAheadService = this.getLookAheadService();
+		lookAheadService._jqAutoComplete(request, function(res){
+			if( _this.keyPressedSinceLastSearch ) {
+				cb(res);
+			} else {
+				// suppress since the result of look ahead service
+				// comes after search was requested
+				cb(null);
+			};
+		});
+	},
+	
 	getInputId: function(){
 		return this.txtFldInputId;
 	}
