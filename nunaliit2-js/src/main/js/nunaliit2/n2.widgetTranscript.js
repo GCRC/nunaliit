@@ -630,9 +630,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		} else {
 			_this._renderError('Can not compute URL for video');
 		};
-		if (typeof _this._lastCtxTime !== 'undefined'){
-			_this._updateCurrentTime(_this._lastCtxTime, 'savedState');
-		}
+//		if (typeof _this._lastCtxTime !== 'undefined'){
+//			_this._updateCurrentTime(_this._lastCtxTime, 'savedState');
+//		}
 
 		function _rightClickCallback (e, $this, contextMenu, selections){
 			var hoveredElem = e.target;
@@ -1137,7 +1137,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				clearInterval(inid);
 			}
 			
-		},100);
+		},50);
 	},
 	_onUserScrollAction: function(evt){
 		this.lastTimeUserScroll = $.now();
