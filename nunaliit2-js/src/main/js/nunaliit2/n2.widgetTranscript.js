@@ -859,11 +859,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				contextMenu.addClass('transcript-context-menu-hide');
 				_this._closeDrawer();
 				
-				for(var i =0;i<_this.transcript_array.length;i++) {
-					var transcriptElem = _this.transcript_array[i];
-					var $transcriptElem = $('#'+transcriptElem.id);
-					$transcriptElem.removeClass('sentence-highlight-pending');
-				}
+//				for(var i =0;i<_this.transcript_array.length;i++) {
+//					var transcriptElem = _this.transcript_array[i];
+//					var $transcriptElem = $('#'+transcriptElem.id);
+//					$transcriptElem.removeClass('sentence-highlight-pending');
+//				}
 			})
 		};
 		function closeCtxMenu(){
