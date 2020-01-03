@@ -859,7 +859,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			$transcript.on('scroll', function(e){
 				
 				$n2.utils.throttle(function(){
-					e.preventDefault();
+					//e.preventDefault();
 					e.stopPropagation();
 					contextMenu.addClass('transcript-context-menu-hide');
 					_this._closeDrawer();
