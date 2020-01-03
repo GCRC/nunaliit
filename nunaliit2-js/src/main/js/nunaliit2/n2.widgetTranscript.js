@@ -840,6 +840,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					e.preventDefault();
 					return true;
 				})
+				.off ('mouseenter mouseleave')
 			}
 			
 			_this.dispatchService.send(DH, {
