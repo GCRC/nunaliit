@@ -857,10 +857,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			});
 			// Deal with scrolling, the scrolling should close the annotationEditor
 			$transcript.on('scroll', function(e){
-				e.preventDefault();
-				e.stopPropagation();
-				contextMenu.addClass('transcript-context-menu-hide');
-				_this._closeDrawer();
+				
+				$n2.utils.throttle(function(){
+					e.preventDefault();
+					e.stopPropagation();
+					contextMenu.addClass('transcript-context-menu-hide');
+					_this._closeDrawer();
+				}, 100);
+				
 				
 //				for(var i =0;i<_this.transcript_array.length;i++) {
 //					var transcriptElem = _this.transcript_array[i];
@@ -868,6 +872,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 //					$transcriptElem.removeClass('sentence-highlight-pending');
 //				}
 			})
+			
+			
 		};
 		function closeCtxMenu(){
 			
