@@ -1221,6 +1221,7 @@ var SubtitleFileParser = {
 							while(++cur < totalLength){
 								curSentence = lines[cur];
 								if( curSentence.replace(/^\s+|\s+$/g,'') === "" ){
+									curEntry.text += ' ';
 									break;
 								};
 								curEntry.text += curSentence;
