@@ -484,16 +484,17 @@ Polar Stereographic Projection Selector
 	height: 55vh;
 }
 
-.n2widgetTranscript_transcript span {
+.n2widgetTranscript_transcript div {
 	cursor: pointer;
 	transition: all 0.1s ease-in;
 	line-height: 1.8;
 	font-family: "Times New Roman", Times, serif;
 	font-size: 1.5em; 
+	display: inline;
 
 }
 
-.n2widgetTranscript_transcript span:hover {
+.n2widgetTranscript_transcript div:hover {
 	text-decoration: underline;
 }
 

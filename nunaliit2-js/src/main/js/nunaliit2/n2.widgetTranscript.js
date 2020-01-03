@@ -653,7 +653,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var ctxdata = [];
 				var idxOfHoverEl = selections
 						.index(
-						$('span#'+ $(hoveredElem).attr('id'))
+						$('div#'+ $(hoveredElem).attr('id'))
 						);
 				if (idxOfHoverEl >= 0){
 					selections.each(function(){
@@ -763,7 +763,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						start:transcriptElem.startTimeCode
 						,end : transcriptElem.finTimeCode
 				}
-				temp = $('<span/>')
+				temp = $('<div>')
 					.attr('id', id)
 					.attr('data-start', transcriptElem.start)
 					.attr('data-fin', transcriptElem.fin)
@@ -773,7 +773,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					.addClass('n2transcript_sentence_' + $n2.utils.stringToHtmlId(id))
 					.html(transcriptElem.text+ " ")
 					.appendTo($transcript)
-					.on('mousedown', function(e){
+					.on('mouseup', function(e){
 						e.preventDefault();
 						var _that = this;
 						if (e.ctrlKey){
