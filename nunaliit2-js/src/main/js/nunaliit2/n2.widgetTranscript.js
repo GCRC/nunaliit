@@ -462,8 +462,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						switch(_this.subtitleFormat){
 							case 'SRT':
 								_this.transcript_array = SubtitleFileParser.srt.parse(srtData);
+								break;
 							case 'WEBVTT':
 								_this.transcript_array = SubtitleFileParser.webvtt.parse(srtData);
+								break;
 						}
 						_this._documentChanged();
 					}
