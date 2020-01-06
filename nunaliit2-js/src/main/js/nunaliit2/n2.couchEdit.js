@@ -2159,7 +2159,7 @@ var CouchDocumentEditor = $n2.Class({
 				featureProjection: proj_feat
 		});
 		
-		$n2.couchGeom.updatedGeometry(geomData);
+		$n2.couchGeom.ol5_updatedGeometry(geomData);
 		this.currentGeometryWkt = geomData.wkt;
 		if( this.schemaEditor ) {
 			this.schemaEditor.refresh();
@@ -2193,7 +2193,33 @@ var CouchDocumentEditor = $n2.Class({
 			this.slideEditor.refresh();
 		};
 	},
-	
+	_ol_addGeometry: function(geom, proj){
+		if( proj.getCode() != this.couchProj.getCode() ) {
+			// Need to convert
+			geom = geom.clone();
+			geom.transform(proj.getCode(),this.couchProj.getCode());
+		};
+    	
+		var geomData = this.editedDocument.nunaliit_geom;
+		if( !geomData ){
+			geomData = {
+				nunaliit_type: 'geometry'
+			};
+			this.editedDocument.nunaliit_geom = geomData;
+		};
+		geomData.wkt = geom.toString();
+		$n2.couchGeom.ol5_updatedGeometry(geomData);
+		this.currentGeometryWkt = geomData.wkt;
+		if( this.schemaEditor ) {
+			this.schemaEditor.refresh();
+		};
+		if( this.treeEditor ) {
+			this.treeEditor.refresh();
+		};
+		if( this.slideEditor ) {
+			this.slideEditor.refresh();
+		};
+	},
 	_addGeometry: function(geom, proj) {
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert

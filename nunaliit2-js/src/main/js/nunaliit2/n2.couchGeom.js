@@ -121,6 +121,21 @@ function updatedGeometry(couchGeom) {
 	};
 };
 
+function ol5_updatedGeometry(couchGeom) {
+	if ( $n2.n2es6.ol_format_WKT ){
+		var WKT = new $n2.n2es6.ol_format_WKT();
+		var geom = WKT.readGeometry(couchGeom.wkt);
+		if( geom ){
+			couchGeom.bbox = geom.getExtent();
+		}
+		
+	}
+	if( couchGeom.simplified ){
+		delete couchGeom.simplified;
+	}
+	
+};
+
 /*
  * Returns a geometry object used in OpenLayers given
  * a geometry obtained from a Couch document.
@@ -362,6 +377,7 @@ $n2.couchGeom = {
 	getCouchGeometry: getCouchGeometry
 	,updateDocumentWithWktGeometry: updateDocumentWithWktGeometry
 	,updatedGeometry: updatedGeometry
+	,ol5_updatedGeometry : ol5_updatedGeometry
 	,getOpenLayersGeometry: getOpenLayersGeometry
 	,selectTileViewFromBounds: selectTileViewFromBounds
 	,queryGeometries: queryGeometries
