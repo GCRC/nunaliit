@@ -2295,8 +2295,14 @@ var CouchDocumentEditor = $n2.Class({
 			};
 			
 		} else if( m.type === 'mapGeometryAdded' ){
-			this._addGeometry(m.geometry, m.projection);
-
+			if( m._origin !== this ){
+				if( m._origin._classname === 'MapAndControls' ){
+					this._addGeometry(m.geometry, m.projection);
+				} else {
+					this._ol_addGeometry( m.docId, m.geom, m.proj);
+				}
+			}
+			
 		} else if( 'historyIsHashChangePermitted' === m.type ) {
 			if( null != this.editedDocument ) {
 				if( confirm( _loc('Do you wish to leave document editor?') ) ) {
