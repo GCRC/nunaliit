@@ -17,6 +17,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import ca.carleton.gcrc.couch.metadata.MetadataServlet;
+import ca.carleton.gcrc.couch.metadata.SitemapBuilder;
+import ca.carleton.gcrc.couch.metadata.SitemapServlet;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -85,7 +88,6 @@ import ca.carleton.gcrc.utils.VersionUtils;
  */
 @SuppressWarnings("serial")
 public class ConfigServlet extends JsonServlet {
-
 	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 	static public String bytesToHex(byte[] bytes) {
 	    char[] hexChars = new char[bytes.length * 2];
@@ -114,6 +116,7 @@ public class ConfigServlet extends JsonServlet {
 	private SubmissionMailNotifier submissionNotifier = null;
 	private MailVetterDailyNotificationTask vetterDailyTask = null;
 	private ConfigServletActions actions = null;
+	private SitemapBuilder sitemapBuilder;
 	private SecureRandom rng = null;
 	
 	public ConfigServlet() {
@@ -251,7 +254,23 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while creating actions",e);
 			throw e;
 		}
-		
+
+		try {
+			initMetadata(servletContext);
+		}
+		catch (ServletException e) {
+			logger.error("Error initializing metadata servlet", e);
+			throw e;
+		}
+
+		try {
+			initSitemap(servletContext);
+		}
+		catch (ServletException e) {
+			logger.error("Error initializing sitemap servlet", e);
+			throw e;
+		}
+
 		logger.info("Completed Couch Configuration");
 	}
 
@@ -839,6 +858,29 @@ public class ConfigServlet extends JsonServlet {
 		}
 	}
 
+	private void initMetadata(ServletContext servletContext) throws ServletException {
+		try {
+			servletContext.setAttribute(MetadataServlet.CONFIG_DOCUMENT_DB, documentDatabase);
+		}
+		catch (Exception e) {
+			logger.error("Error configuring metadata servlet", e);
+			throw new ServletException("Error configuring metadata servlet", e);
+		}
+	}
+
+	private void initSitemap(ServletContext servletContext) throws ServletException {
+		try {
+			sitemapBuilder = new SitemapBuilder(documentDatabase);
+			sitemapBuilder.start();
+
+			servletContext.setAttribute(SitemapServlet.SITEMAP_BUILDER, sitemapBuilder);
+		}
+		catch (Exception e) {
+			logger.error("Error configuring sitemap servlet", e);
+			throw new ServletException("Error configuring sitemap servlet", e);
+		}
+	}
+
 	public void destroy() {
 		try {
 			uploadWorker.stopTimeoutMillis(5*1000); // 5 seconds
@@ -880,6 +922,15 @@ public class ConfigServlet extends JsonServlet {
 			}
 		} catch(Exception e) {
 			logger.error("Unable to shutdown change monitor on submission database", e);
+		}
+
+		try {
+			if (sitemapBuilder != null) {
+				sitemapBuilder.shutdown();
+			}
+		}
+		catch (Exception e) {
+			logger.error("Error occurred while attempting to shutdown sitemap builder", e);
 		}
 	}
 

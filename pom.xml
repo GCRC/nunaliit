@@ -119,5 +119,6 @@
 		<module>nunaliit2-couch-submission</module>
 		<module>nunaliit2-couch-date</module>
 		<module>nunaliit2-couch-simplifiedGeometry</module>
-	</modules>
+        <module>nunaliit2-couch-metadata</module>
+    </modules>
 </project>

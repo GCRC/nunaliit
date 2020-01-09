@@ -1,0 +1,44 @@
+{
+  "_id": "navigation.demo",
+  "_rev": "2-d13d52f53d5c257919516b2126b1d65f",
+  "nunaliit_schema": "navigation",
+  "nunaliit_navigation": {
+    "nunaliit_type": "navigation",
+    "title": {
+      "nunaliit_type": "localized",
+      "en": "Atlas",
+      "fr": "L'Atlas"
+    },
+    "items": [
+      {
+        "title": {
+          "nunaliit_type": "localized",
+          "en": "Default Module",
+          "fr": "Module de Base"
+        },
+        "module": "module.demo"
+      },
+      {
+        "title": {
+          "nunaliit_type": "localized",
+          "en": "Canvas Module",
+          "fr": "Canvas Module"
+        },
+        "module": "module.test2_canvas"
+      },
+      {
+        "title": {
+          "nunaliit_type": "localized",
+          "en": "Tools",
+          "fr": "Outils"
+        },
+        "href": "./tools/index.html"
+      }
+    ]
+  },
+  "nunaliit_manifest": {
+    "attachments": {},
+    "digest": "/KxzdWOcguFvFh7Z6AdlpqHnKqw=",
+    "type": "SHA-1"
+  }
+}
