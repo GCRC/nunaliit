@@ -46,16 +46,16 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.3</version>
+				<version>3.8.1</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>11</source>
+					<target>11</target>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.22.1</version>
+				<version>3.0.0-M4</version>
 				<configuration>
 					<useSystemClassLoader>false</useSystemClassLoader>
 				</configuration>
@@ -64,7 +64,7 @@
 	</build>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<appassembler-maven-plugin.version>1.10</appassembler-maven-plugin.version>
+		<appassembler-maven-plugin.version>2.1.0</appassembler-maven-plugin.version>
 		<buildnumber-maven-plugin.version>1.4</buildnumber-maven-plugin.version>
 		<closure-compiler.version>v20151015</closure-compiler.version>
 		<commons-codec.version>1.10</commons-codec.version>
@@ -76,8 +76,8 @@
 		<junit.version>3.8.2</junit.version>
 		<log4j.version>1.2.17</log4j.version>
 		<mail.version>1.5.4</mail.version>
-		<maven-assembly-plugin.version>2.6</maven-assembly-plugin.version>
-		<maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
+		<maven-assembly-plugin.version>3.2.0</maven-assembly-plugin.version>
+		<maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
 		<mustache.version>0.8.18</mustache.version>
 		<servlet-api.version>2.5</servlet-api.version>
 		<slf4j.version>1.7.13</slf4j.version>

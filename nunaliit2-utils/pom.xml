@@ -6,7 +6,6 @@
 		<groupId>ca.carleton.gcrc</groupId>
 		<version>2.2.9-SNAPSHOT</version>
 	</parent>
-	<groupId>ca.carleton.gcrc</groupId>
 	<artifactId>nunaliit2-utils</artifactId>
 	<name>nunaliit2-utils</name>
 	<version>2.2.9-SNAPSHOT</version>

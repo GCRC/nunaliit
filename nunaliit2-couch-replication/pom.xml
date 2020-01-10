@@ -5,7 +5,6 @@
     <groupId>ca.carleton.gcrc</groupId>
     <version>2.2.9-SNAPSHOT</version>
   </parent>
-  <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-couch-replication</artifactId>
   <name>nunaliit2-couch-replication</name>
   <version>2.2.9-SNAPSHOT</version>
