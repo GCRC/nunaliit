@@ -76,8 +76,8 @@ public class MetadataServlet extends HttpServlet {
 
         // If no referrer found, this servlet path was typed in manually. No really a valid case so we return 204.
         String referrer = request.getHeader(REFERRER);
+        logger.debug(String.format("Received request with referrer %s", referrer));
         if (StringUtils.isNotBlank(referrer)) {
-            logger.debug(String.format("Received request from referrer %s", referrer));
             String moduleDocId = findModuleDocId(referrer);
             if (StringUtils.isNotBlank(moduleDocId)) {
                 logger.debug(String.format("Found module %s in URL", moduleDocId));

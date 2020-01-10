@@ -18,7 +18,6 @@
 		<link rel="stylesheet" href="nunaliit2/css/basic/nunaliit2.css" type="text/css" />
 		<link rel="stylesheet" href="css/atlas.css" type="text/css" />
 
-		<link rel="alternate" href="/servlet/metadata" type="application/ld+json"/>
 	</head>
 	<body class="nunaliit_atlas">
 		
@@ -100,5 +99,11 @@
 		<script type="text/javascript" src="js-external/js/sha1.js"></script>
 
 		<script type="text/javascript" src="js/index.js"></script>
+
+		<script>
+			$.getJSON("/servlet/metadata", function(data) {
+				$("<script/>",{"type":"application/ld+json", html:JSON.stringify(data)}).appendTo("head");
+			});
+		</script>
 	</body>
 </html>
