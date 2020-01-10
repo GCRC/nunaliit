@@ -29,11 +29,10 @@ public class MetadataServlet extends HttpServlet {
     public static final String CONFIG_DOCUMENT_DB = "MetadataServlet_DocumentDatabase";
 
     private static final Logger logger = LoggerFactory.getLogger(MetadataServlet.class);
-    private static final String REFERRER = "Referer";
     /**
-     * Regex to parse module document Id from URL.
+     * Regex to parse module document Id from query string.
      */
-    private static final Pattern URL_PATTERN = Pattern.compile("https?://.+\\?module=([^#]+)#?.*");
+    private static final Pattern URL_PATTERN = Pattern.compile("module=([^#]+)#?.*");
 
     private CouchDb couchDb;
     private Matcher matcher;
@@ -66,21 +65,21 @@ public class MetadataServlet extends HttpServlet {
 
     /**
      * {@inheritDoc}
-     *
-     * Uses referrer to determine whether the request for metadata came from a module page or the base atlas. Reponds
+     * <p>
+     * Uses query string to determine whether the request for metadata came from a module page or the base atlas. Responds
      * with corresponding metadata.
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         JSONObject metadata = null;
 
-        // If no referrer found, this servlet path was typed in manually. No really a valid case so we return 204.
-        String referrer = request.getHeader(REFERRER);
-        logger.debug(String.format("Received request with referrer %s", referrer));
-        if (StringUtils.isNotBlank(referrer)) {
-            String moduleDocId = findModuleDocId(referrer);
+        String queryString = request.getQueryString();
+
+        logger.debug(String.format("Received request with query string %s", queryString));
+        if (StringUtils.isNotBlank(queryString)) {
+            String moduleDocId = findModuleDocId(queryString);
             if (StringUtils.isNotBlank(moduleDocId)) {
-                logger.debug(String.format("Found module %s in URL", moduleDocId));
+                logger.debug(String.format("Found module %s in query string", moduleDocId));
                 try {
                     metadata = findModuleMetadata(moduleDocId);
                 }
@@ -89,13 +88,16 @@ public class MetadataServlet extends HttpServlet {
                 }
             }
             else {
-                logger.debug("Referrer did not contain module Id, outputting atlas metadata.");
-                try {
-                    metadata = findAtlasMetadata();
-                }
-                catch (Exception e) {
-                    logger.info("Failed to access atlas metadata. May not exist.");
-                }
+                logger.debug("Could not find module in query string: {}", queryString);
+            }
+        }
+        else {
+            logger.debug("Query string did not contain module Id, outputting atlas metadata.");
+            try {
+                metadata = findAtlasMetadata();
+            }
+            catch (Exception e) {
+                logger.info("Failed to access atlas metadata. May not exist.");
             }
         }
 
@@ -195,25 +197,27 @@ public class MetadataServlet extends HttpServlet {
     }
 
     /**
-     * Looks for the module document Id in the given URL.
+     * Looks for the module document Id in the given query string.
      * <p>
      * Examples:<br/>
      * <code>
-     * http://localhost:8081/index.html?module=module.test3_canvas finds 'module.test3_canvas'<br/>
-     * https://clyderiveratlas.ca/index.html?module=module.sleepyriver.boundaries#eyJ0ImZmFiMiIsInMiOjE1NzY2OTc5Nzc5MDZ9
+     * ?module=module.test3_canvas finds 'module.test3_canvas'<br/>
+     * ?module=module.sleepyriver.boundaries#eyJ0ImZmFiMiIsInMiOjE1NzY2OTc5Nzc5MDZ9
      * finds 'module.sleepyriver.boundaries'<br/>
-     * https://sleepyriveratlas.ca/index.html does not find a module and returns null;
+     * "" does not find a module and returns null;
      * </code>
      *
-     * @param url The URL to find the module identifier.
+     * @param queryString The URL to find the module identifier.
      * @return The module document Id if it was found in the URL, otherwise null.
      */
-    protected String findModuleDocId(String url) {
+    protected String findModuleDocId(String queryString) {
         String docId = null;
 
-        matcher.reset(url);
-        if (matcher.matches()) {
-            docId = matcher.group(1);
+        if (StringUtils.isNotBlank(queryString)) {
+            matcher.reset(queryString);
+            if (matcher.matches()) {
+                docId = matcher.group(1);
+            }
         }
 
         return docId;
