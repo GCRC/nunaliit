@@ -26,12 +26,12 @@
 		<artifactId>javax.mail</artifactId>
         <version>${mail.version}</version>
     </dependency>
-  	<dependency>
-  		<groupId>javax.servlet</groupId>
-  		<artifactId>servlet-api</artifactId>
-  		<version>${servlet-api.version}</version>
-  		<scope>provided</scope>
-  	</dependency>
+	<dependency>
+		<groupId>javax.servlet</groupId>
+		<artifactId>javax.servlet-api</artifactId>
+		<version>${javax.servlet-api.version}</version>
+		<scope>provided</scope>
+	</dependency>
    	<dependency>
    		<groupId>ca.carleton.gcrc</groupId>
    		<artifactId>nunaliit2-json</artifactId>

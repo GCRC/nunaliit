@@ -10,12 +10,12 @@
   <name>nunaliit2-dbWeb</name>
   <description>Servlet API to access a database via dbSec (nunaliit2-dbSec)</description>
   <dependencies>
-  	<dependency>
-  		<groupId>javax.servlet</groupId>
-  		<artifactId>servlet-api</artifactId>
-  		<version>${servlet-api.version}</version>
-  		<scope>provided</scope>
-  	</dependency>
+	<dependency>
+		<groupId>javax.servlet</groupId>
+		<artifactId>javax.servlet-api</artifactId>
+		<version>${javax.servlet-api.version}</version>
+		<scope>provided</scope>
+	</dependency>
 	<dependency>
 		<groupId>ca.carleton.gcrc</groupId>
 		<artifactId>nunaliit2-json</artifactId>

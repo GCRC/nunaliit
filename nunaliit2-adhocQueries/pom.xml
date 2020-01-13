@@ -11,12 +11,12 @@
   <description>Servlet API that allows to perform database queries 
   previously defined and saved in the database.</description>
   <dependencies>
-  	<dependency>
-  		<groupId>javax.servlet</groupId>
-  		<artifactId>servlet-api</artifactId>
-  		<version>${servlet-api.version}</version>
-  		<scope>provided</scope>
-  	</dependency>
+	<dependency>
+		<groupId>javax.servlet</groupId>
+		<artifactId>javax.servlet-api</artifactId>
+		<version>${javax.servlet-api.version}</version>
+		<scope>provided</scope>
+	</dependency>
   	<dependency>
   		<groupId>org.slf4j</groupId>
   		<artifactId>slf4j-api</artifactId>
