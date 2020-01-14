@@ -173,6 +173,8 @@
 	left: 0;
 	overflow: auto;
 	padding: 15px 20px;
+/* 	transform: translateZ(0); */
+/* 	-webkit-transform: translateZ(0); */
 }
 .n2_content_contains_search .n2_content_text {
 	top: 95px;
