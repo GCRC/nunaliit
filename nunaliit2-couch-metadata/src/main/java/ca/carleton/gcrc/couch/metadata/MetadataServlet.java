@@ -18,6 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.Enumeration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -72,6 +73,8 @@ public class MetadataServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         JSONObject metadata = null;
+
+        printHeaders(request);
 
         String queryString = request.getQueryString();
 
@@ -221,5 +224,18 @@ public class MetadataServlet extends HttpServlet {
         }
 
         return docId;
+    }
+
+    private void printHeaders(HttpServletRequest request) {
+        logger.debug("----- Request Data -----");
+        logger.debug(String.format("Query string: %s", request.getQueryString()));
+        logger.debug("----- Headers -----");
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String name = headerNames.nextElement();
+            logger.debug(String.format("%s: %s", name, request.getHeader(name)));
+        }
+
+        logger.debug("-----  End Headers  -----");
     }
 }
