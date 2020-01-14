@@ -83,13 +83,13 @@ public class CreationToken implements Token {
 		BerString email = factory.createUTF8String();
 		email.setValue(emailAddress);
 		outer.add(email);
-		
+
 		long expiryMs = expiry.getTime();
-		Long expiryLong = new Long(expiryMs);
+		Long expiryLong = expiryMs;
 		BerInteger date = factory.createInteger();
 		date.setValue( expiryLong );
 		outer.add(date);
-		
+
 		byte[] result = BerEncoder.encode(outer);
 		return result;
 	}

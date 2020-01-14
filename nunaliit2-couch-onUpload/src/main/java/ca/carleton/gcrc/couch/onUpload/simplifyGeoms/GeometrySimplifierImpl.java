@@ -47,7 +47,7 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 			if( null != revNumber ){
 				int rev = Integer.parseInt(revNumber);
 				if( rev > 0 ){
-					revision = new Integer(rev+1); // predict next revision
+					revision = rev + 1; // predict next revision
 				}
 			}
 

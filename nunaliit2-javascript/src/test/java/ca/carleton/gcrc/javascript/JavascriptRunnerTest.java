@@ -25,7 +25,7 @@ public class JavascriptRunnerTest extends TestCase {
 				if( null != arr.get(1) ){
 					fail("Expected second argument to be null");
 				}
-				if( (new Integer(1)).equals(arr.get(2)) ){
+				if( (Integer.valueOf(1)).equals(arr.get(2)) ){
 					fail("Expected third argument to be 1");
 				}
 			}

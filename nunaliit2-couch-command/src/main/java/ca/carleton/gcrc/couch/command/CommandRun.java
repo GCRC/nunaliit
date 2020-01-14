@@ -1,24 +1,5 @@
 package ca.carleton.gcrc.couch.command;
 
-import java.io.File;
-import java.io.PrintStream;
-import java.net.URL;
-import java.util.EnumSet;
-
-import javax.servlet.DispatcherType;
-
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.rolling.RollingFileAppender;
-import org.apache.log4j.rolling.TimeBasedRollingPolicy;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.DefaultServlet;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.GzipFilter;
-import org.eclipse.jetty.proxy.ProxyServlet;
-
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.TransparentProxyFixedEscaped;
 import ca.carleton.gcrc.couch.command.impl.TransparentWithRedirectServlet;
@@ -31,6 +12,22 @@ import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.mail.MailServlet;
 import ca.carleton.gcrc.progress.ProgressServlet;
 import ca.carleton.gcrc.upload.UploadServlet;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.rolling.RollingFileAppender;
+import org.apache.log4j.rolling.TimeBasedRollingPolicy;
+import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.proxy.ProxyServlet;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+
+import javax.servlet.DispatcherType;
+import java.io.File;
+import java.io.PrintStream;
+import java.net.URL;
 
 public class CommandRun implements Command {
 
@@ -140,11 +137,19 @@ public class CommandRun implements Command {
 
 		// GZip
 		{
-			GzipFilter gzipFilter = new GzipFilter();
-			FilterHolder gzipFilterHolder = new FilterHolder(gzipFilter);
-			gzipFilterHolder.setInitParameter("methods", "GET,POST");
-			EnumSet<DispatcherType> dispatches = EnumSet.of(DispatcherType.REQUEST);
-			context.addFilter(gzipFilterHolder, "/*", dispatches);
+			//TODO: GzipFilter deprecated, replace with GzipHandler - need to verify (are all request/responses compressed?)
+			GzipHandler gzipHandler = new GzipHandler();
+			gzipHandler.setIncludedMethods(HttpMethod.GET.name(), HttpMethod.POST.name());
+			gzipHandler.setDispatcherTypes(DispatcherType.REQUEST);
+			gzipHandler.addIncludedPaths("/*");
+			context.setGzipHandler(gzipHandler);
+
+
+//			GzipFilter gzipFilter = new GzipFilter();
+//			FilterHolder gzipFilterHolder = new FilterHolder(gzipFilter);
+//			gzipFilterHolder.setInitParameter("methods", "GET,POST");
+//			EnumSet<DispatcherType> dispatches = EnumSet.of(DispatcherType.REQUEST);
+//			context.addFilter(gzipFilterHolder, "/*", dispatches);
 		}
         
 		server.setHandler(context);

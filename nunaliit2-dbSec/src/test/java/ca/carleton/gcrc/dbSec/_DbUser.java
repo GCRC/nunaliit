@@ -44,7 +44,7 @@ public class _DbUser implements DbUser {
 	public _DbUser(int userId, int groupId) {
 		this.userId = userId;
 		this.groupIds = new Vector<Integer>();
-		this.groupIds.add( new Integer(groupId) );
+		this.groupIds.add(groupId);
 	}
 	
 	public List<Integer> getGroups() {
@@ -61,7 +61,7 @@ public class _DbUser implements DbUser {
 	}
 
 	public void addGroup(int groupId) {
-		groupIds.add( new Integer(groupId) );
+		groupIds.add(groupId);
 	}
 
 }

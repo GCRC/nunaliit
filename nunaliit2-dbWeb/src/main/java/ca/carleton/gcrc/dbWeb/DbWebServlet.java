@@ -491,7 +491,7 @@ public class DbWebServlet extends HttpServlet {
 		{
 			if( JSONSupport.containsKey(jsonQuery,"limit") ) {
 				int limit = jsonQuery.getInt("limit");
-				query.setLimit( new Integer(limit) );
+				query.setLimit(limit);
 			}
 		}
 		
@@ -499,7 +499,7 @@ public class DbWebServlet extends HttpServlet {
 		{
 			if( JSONSupport.containsKey(jsonQuery,"offset") ) {
 				int offset = jsonQuery.getInt("offset");
-				query.setOffset( new Integer(offset) );
+				query.setOffset(offset);
 			}
 		}
 
@@ -886,7 +886,7 @@ public class DbWebServlet extends HttpServlet {
 		}
 		
 		int limit = Integer.parseInt(limitStrings[0]);
-		return new Integer(limit);
+		return limit;
 	}
 
 	private Integer getOffsetFromRequest(HttpServletRequest request) throws Exception {
@@ -902,7 +902,7 @@ public class DbWebServlet extends HttpServlet {
 		}
 		
 		int offset = Integer.parseInt(offsetStrings[0]);
-		return new Integer(offset);
+		return offset;
 	}
 	
 	private Map<String,String> getSetParametersMap(HttpServletRequest request) throws Exception {

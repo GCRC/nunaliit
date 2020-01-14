@@ -570,7 +570,7 @@ public class JdbcDataAsJSONArray extends HttpServlet {
 						}
 
 						// Convert contributor id into user info
-						Integer contId = new Integer(contributor_id);
+						Integer contId = contributor_id;
 						JSONObject userInfo = null;
 						if( contributorMap.containsKey(contId) ) {
 							userInfo = contributorMap.get(contId);

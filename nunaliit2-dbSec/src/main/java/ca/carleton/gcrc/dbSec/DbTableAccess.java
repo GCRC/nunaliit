@@ -164,7 +164,7 @@ public class DbTableAccess {
 		List<Integer> autoIncrementIntegerValues = new Vector<Integer>();
 		for( ColumnData autoIncrementIntegerColumn : autoIncrementIntegerColumns ) {
 			int nextValue = ColumnDataUtils.obtainNextIncrementInteger(connection, autoIncrementIntegerColumn);
-			Integer value = new Integer(nextValue);
+			Integer value = nextValue;
 			autoIncrementIntegerValues.add( value );
 			whereClauses.add(
 				new RecordSelectorComparison(

@@ -42,7 +42,7 @@ public class jSONPrettyPrinterTest extends TestCase {
 	public void testInteger() throws Exception {
 		StringWriter sw = new StringWriter();
 		JSONPrettyPrinter pp = new JSONPrettyPrinter(sw);
-		pp.prettyPrint( new Integer(42) );
+		pp.prettyPrint(42);
 		
 		if( false == "42".equals(sw.toString()) ){
 			fail("Unexpected value: "+sw.toString());
@@ -52,7 +52,7 @@ public class jSONPrettyPrinterTest extends TestCase {
 	public void testDouble() throws Exception {
 		StringWriter sw = new StringWriter();
 		JSONPrettyPrinter pp = new JSONPrettyPrinter(sw);
-		pp.prettyPrint( new Double(1.25) );
+		pp.prettyPrint(1.25);
 		
 		if( false == "1.25".equals(sw.toString()) ){
 			fail("Unexpected value: "+sw.toString());

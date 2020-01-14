@@ -129,7 +129,7 @@ public class ExifData {
 			result = result + (sec / 3600.0);
 		}
 		
-		return new Double(result);
+		return result;
 	}
 
 	private Double parseRationalString(String rationalStr) {
@@ -143,7 +143,7 @@ public class ExifData {
 				return null;
 			}
 			
-			return new Double( (double)top/(double)divisor );
+			return (double) top / (double) divisor;
 		}
 
 		return null;

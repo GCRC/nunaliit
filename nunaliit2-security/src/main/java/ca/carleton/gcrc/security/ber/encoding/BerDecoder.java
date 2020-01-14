@@ -102,7 +102,7 @@ public class BerDecoder {
 			value = (value << 8) + byteValue;
 		}
 		
-		Long intValue = new Long(value);
+		Long intValue = value;
 		berInt.setValue(intValue);
 		
 		return berInt;

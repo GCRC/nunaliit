@@ -100,12 +100,12 @@ public class SimplifiedGeometryActions {
 
 		Long sizeLimit = simplifiedGeometryRequest.getSizeLimit();
 		if( null == sizeLimit ){
-			sizeLimit = new Long(RESPONSE_LENGHT_LIMIT);
+			sizeLimit = RESPONSE_LENGHT_LIMIT;
 		}
 
 		Integer timeLimit = simplifiedGeometryRequest.getTimeLimit();
 		if( null == timeLimit ){
-			timeLimit = new Integer(RESPONSE_TIME_LIMIT_MS);
+			timeLimit = RESPONSE_TIME_LIMIT_MS;
 		}	
 		
 		long startMs = System.currentTimeMillis();
@@ -180,12 +180,12 @@ public class SimplifiedGeometryActions {
 		
 		Long sizeLimit = simplifiedGeometryRequest.getSizeLimit();
 		if( null == sizeLimit ){
-			sizeLimit = new Long(RESPONSE_LENGHT_LIMIT);
+			sizeLimit = RESPONSE_LENGHT_LIMIT;
 		}
 
 		Integer timeLimit = simplifiedGeometryRequest.getTimeLimit();
 		if( null == timeLimit ){
-			timeLimit = new Integer(RESPONSE_TIME_LIMIT_MS);
+			timeLimit = RESPONSE_TIME_LIMIT_MS;
 		}	
 		
 		long startMs = System.currentTimeMillis();

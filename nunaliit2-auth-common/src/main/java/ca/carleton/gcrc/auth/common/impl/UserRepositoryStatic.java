@@ -68,7 +68,7 @@ public class UserRepositoryStatic extends UserRepositoryAbstract implements User
 			user.setAdmin(true);
 			user.setDisplayName("Administrator");
 			Vector<Integer> groups = new Vector<Integer>();
-			groups.add( new Integer(1) );
+			groups.add(1);
 			user.setGroups(groups);
 			users.add(user);
 		}
@@ -80,7 +80,7 @@ public class UserRepositoryStatic extends UserRepositoryAbstract implements User
 			user.setPassword("test");
 			user.setDisplayName("Testing User");
 			Vector<Integer> groups = new Vector<Integer>();
-			groups.add( new Integer(2) );
+			groups.add(2);
 			user.setGroups(groups);
 			users.add(user);
 		}
@@ -93,7 +93,7 @@ public class UserRepositoryStatic extends UserRepositoryAbstract implements User
 			user.setAnonymous(true);
 			user.setDisplayName("Guest");
 			Vector<Integer> groups = new Vector<Integer>();
-			groups.add( new Integer(0) );
+			groups.add(0);
 			user.setGroups(groups);
 			users.add(user);
 		}

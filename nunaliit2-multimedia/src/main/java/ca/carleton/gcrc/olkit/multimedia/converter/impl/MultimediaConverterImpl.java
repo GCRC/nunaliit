@@ -265,12 +265,12 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 						,null
 						,null
 						,null
-						,new Long(imageInfo.width)
-						,new Long(imageInfo.height)
+						, (long) imageInfo.width
+						, (long) imageInfo.height
 						);
 				resizeRequired = imageConversionThreshold.isResizeRequired(
-						new Long(imageInfo.width)
-						,new Long(imageInfo.height)
+						(long) imageInfo.width
+						, (long) imageInfo.height
 						);
 				
 				if( imageInfo.orientation == ImageInfo.Orientation.REQUIRES_CONVERSION ) {

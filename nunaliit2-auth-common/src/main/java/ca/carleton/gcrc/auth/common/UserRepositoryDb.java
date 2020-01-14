@@ -160,7 +160,7 @@ public class UserRepositoryDb extends UserRepositoryAbstract implements UserRepo
 				user.setAdmin(true);
 			}
 			Vector<Integer> groups = new Vector<Integer>();
-			groups.add( new Integer(groupId) );
+			groups.add(groupId);
 			user.setGroups(groups);
 			return user;
 			

@@ -11,7 +11,7 @@ public class MultimediaTestingProgress implements MultimediaConversionProgress {
 	
 	@Override
 	public void updateProgress(int percent) {
-		reportedProgress.add( new Integer(percent) );
+		reportedProgress.add(percent);
 	}
 
 	public List<Integer> getReportedProgress() {

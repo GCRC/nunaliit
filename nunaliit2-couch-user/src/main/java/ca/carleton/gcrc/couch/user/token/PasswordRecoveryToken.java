@@ -104,7 +104,7 @@ public class PasswordRecoveryToken implements Token {
 		outer.add(email);
 		
 		long expiryMs = expiry.getTime();
-		Long expiryLong = new Long(expiryMs);
+		Long expiryLong = expiryMs;
 		BerInteger date = factory.createInteger();
 		date.setValue( expiryLong );
 		outer.add(date);

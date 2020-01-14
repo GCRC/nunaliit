@@ -59,7 +59,7 @@ public class MockUserRepository extends UserRepositoryAbstract implements UserRe
 			user.setAdmin(true);
 			user.setDisplayName("Administrator");
 			Vector<Integer> groups = new Vector<Integer>();
-			groups.add( new Integer(1) );
+			groups.add(1);
 			user.setGroups(groups);
 			
 			usersById.put(user.getId(), user);
@@ -73,7 +73,7 @@ public class MockUserRepository extends UserRepositoryAbstract implements UserRe
 			user.setPassword("test");
 			user.setDisplayName("Testing User");
 			Vector<Integer> groups = new Vector<Integer>();
-			groups.add( new Integer(2) );
+			groups.add(2);
 			user.setGroups(groups);
 			
 			usersById.put(user.getId(), user);
@@ -88,7 +88,7 @@ public class MockUserRepository extends UserRepositoryAbstract implements UserRe
 			user.setAnonymous(true);
 			user.setDisplayName("Guest");
 			Vector<Integer> groups = new Vector<Integer>();
-			groups.add( new Integer(0) );
+			groups.add(0);
 			user.setGroups(groups);
 			
 			usersById.put(user.getId(), user);
@@ -102,7 +102,7 @@ public class MockUserRepository extends UserRepositoryAbstract implements UserRe
 			user.setPassword("test");
 			user.setDisplayName("Testing User 2");
 			Vector<Integer> groups = new Vector<Integer>();
-			groups.add( new Integer(2) );
+			groups.add(2);
 			user.setGroups(groups);
 			
 			usersById.put(user.getId(), user);

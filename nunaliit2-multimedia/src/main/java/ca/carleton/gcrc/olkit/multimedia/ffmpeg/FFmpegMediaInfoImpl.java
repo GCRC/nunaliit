@@ -122,7 +122,7 @@ public class FFmpegMediaInfoImpl implements FFmpegMediaInfo {
 						int hours = Integer.parseInt( matcherDuration.group(2) );
 						int mins = Integer.parseInt( matcherDuration.group(3) );
 						float secs = Float.parseFloat( matcherDuration.group(4) );
-						durationInSec = new Float( secs + (60.0*mins) + (3600.0*hours));
+						durationInSec = (float) (secs + (60.0 * mins) + (3600.0 * hours));
 						
 						// On the duration line, there is a "bit rate" value
 						Matcher matcherBitRate = patternDurationBitRate.matcher(line);
@@ -133,7 +133,7 @@ public class FFmpegMediaInfoImpl implements FFmpegMediaInfo {
 							bitRate = convertBitRate(bitRateValue, bitRateUnit);
 						} else {
 							bitRateString = null;
-							bitRate = new Long(0);
+							bitRate = 0L;
 						}
 						
 						// On the duration line, there is an optional "start" value
@@ -143,14 +143,14 @@ public class FFmpegMediaInfoImpl implements FFmpegMediaInfo {
 							startInSec = Float.parseFloat( matcherStart.group(1) );
 						} else {
 							startString = null;
-							startInSec = new Float(0.0);
+							startInSec = (float) 0.0;
 						}
 						
 					
 					} else if( matcherVideo.find() ) {
 						videoCodec = matcherVideo.group(1);
-						width = new Long( Long.parseLong( matcherVideo.group(2) ) );
-						height = new Long( Long.parseLong( matcherVideo.group(3) ) );
+						width = Long.parseLong(matcherVideo.group(2));
+						height = Long.parseLong(matcherVideo.group(3));
 					
 					} else if( matcherAudio.find() ) {
 						audioCodec = matcherAudio.group(1);
@@ -169,11 +169,11 @@ public class FFmpegMediaInfoImpl implements FFmpegMediaInfo {
 		Long result = null;
 		
 		if( "kb/s".equals(bitRateUnit) ) {
-			result = new Long( bitRate * 1000 );
+			result = (long) (bitRate * 1000);
 		} else if( "b/s".equals(bitRateUnit) ) {
-			result = new Long( bitRate );
+			result = (long) bitRate;
 		} else if( "Mb/s".equalsIgnoreCase(bitRateUnit) ) {
-			result = new Long( bitRate * 1000000 );
+			result = (long) (bitRate * 1000000);
 		}
 		
 		return result;

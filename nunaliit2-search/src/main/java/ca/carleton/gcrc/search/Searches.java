@@ -616,7 +616,7 @@ public class Searches {
 		JSONObject userInfo = null;
 		
 		// Convert contributor id into user info
-		Integer contId = new Integer(contributor_id);
+		Integer contId = contributor_id;
 		if( cache.containsKey(contId) ) {
 			userInfo = cache.get(contId);
 		} else {
