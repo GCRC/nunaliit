@@ -775,73 +775,73 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					.addClass('n2transcript_sentence_' + $n2.utils.stringToHtmlId(id))
 					.html(transcriptElem.text+ " ")
 					.appendTo($transcript)
-					.on('mouseup', function(e){
-						e.preventDefault();
-						var _that = this;
-						if (e.ctrlKey){
-							e.preventDefault();
-							return false;
-						}
-						clicks++;
-						if(clicks === 1) {
+			}
+			
+			$('div.n2widgetTranscript_transcript div').on('mouseup', function(e){
+				e.preventDefault();
+				var _that = this;
+				if (e.ctrlKey){
+					e.preventDefault();
+					return false;
+				}
+				clicks++;
+				if(clicks === 1) {
 
-							timer = setTimeout(function() {
-								//perform single-click action  
-								switch(e.which){
-								case 1:
-									contextMenu.addClass('transcript-context-menu-hide');
-									if (e.ctrlKey || e.metaKey || e.shiftKey){
-										
-									} else {
-										$(_that).removeClass('sentence-highlight-pending')
-										var $span = $(_that);
-										var currentTime = $span.attr('data-start');
-										_this._updateCurrentTime(currentTime, 'text-oneclick');
-									}
-									
-									break;
-								case 2:
-									break;
-								case 3:
-									_rightClickCallback(e, $(this), contextMenu, currentSelectSentences);
-
-								}  
-								clicks = 0;             //after action performed, reset counter
-
-							}, DELAY);
-
-						} else {
-
-							clearTimeout(timer);    //prevent single-click action
-							//perform double-click action
-							switch(e.which){
-							case 1:
-								contextMenu.addClass('transcript-context-menu-hide');
+					timer = setTimeout(function() {
+						//perform single-click action  
+						switch(e.which){
+						case 1:
+							contextMenu.addClass('transcript-context-menu-hide');
+							if (e.ctrlKey || e.metaKey || e.shiftKey){
+								
+							} else {
 								$(_that).removeClass('sentence-highlight-pending')
 								var $span = $(_that);
 								var currentTime = $span.attr('data-start');
-								_this._updateCurrentTime(currentTime, 'text');
-								break;
-							case 2:
-								break;
-							case 3:
-								break;
-
+								_this._updateCurrentTime(currentTime, 'text-oneclick');
 							}
-							clicks = 0;             //after action performed, reset counter
-						}
+							
+							break;
+						case 2:
+							break;
+						case 3:
+							_rightClickCallback(e, $(this), contextMenu, currentSelectSentences);
 
-						// close the context menu, if it still exists
-					})
-				.on('dblclick', function(e){
-					e.preventDefault();
-				})
-				.on ('contextmenu', function(e){
-					e.preventDefault();
-					return true;
-				})
-				.off ('mouseenter mouseleave')
-			}
+						}  
+						clicks = 0;             //after action performed, reset counter
+
+					}, DELAY);
+
+				} else {
+
+					clearTimeout(timer);    //prevent single-click action
+					//perform double-click action
+					switch(e.which){
+					case 1:
+						contextMenu.addClass('transcript-context-menu-hide');
+						$(_that).removeClass('sentence-highlight-pending')
+						var $span = $(_that);
+						var currentTime = $span.attr('data-start');
+						_this._updateCurrentTime(currentTime, 'text');
+						break;
+					case 2:
+						break;
+					case 3:
+						break;
+
+					}
+					clicks = 0;             //after action performed, reset counter
+				}
+
+				// close the context menu, if it still exists
+			})
+		.on('dblclick', function(e){
+			e.preventDefault();
+		})
+		.on ('contextmenu', function(e){
+			e.preventDefault();
+			return true;
+		})
 			
 			_this.dispatchService.send(DH, {
 				type: 'resetDisplayedSentences'

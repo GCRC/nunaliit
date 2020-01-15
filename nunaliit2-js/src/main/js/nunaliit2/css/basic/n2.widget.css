@@ -482,14 +482,19 @@ Polar Stereographic Projection Selector
 	overflow-y: scroll;
 	margin-top: 1em;
 	height: 55vh;
+	transform: translateZ(0);
+	-webkit-transform: translateZ(0);
+	-moz-backface-visibility: hidden;
+	-webkit-backface-visibility: hidden;
+	backface-visibility: hidden;
 }
 
 .n2widgetTranscript_transcript div {
 	cursor: pointer;
 	transition: all 0.1s ease-in;
-	line-height: 1.8;
-	font-family: "Times New Roman", Times, serif;
-	font-size: 1.5em; 
+/* 	line-height: 1.8; */
+/* 	font-family: "Times New Roman", Times, serif; */
+	font-size: 1.4em; 
 	display: inline;
 
 }
@@ -507,7 +512,7 @@ Polar Stereographic Projection Selector
 	/*color: white;
 	background-color: darkorange;  */
 	font-weight: bold;
-	font-size: 17px;
+	font-size:  1.4em;
 }
 .n2widgetTranscript_transcript .highlight:not(.selected){
 	text-decoration: underline;
