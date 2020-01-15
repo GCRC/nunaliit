@@ -27,7 +27,7 @@
 	</div>
 	<div>
 		<div class="label n2s_localize">Temporal Coverage</div>
-		<div class="value">{{#:field}}temporalCoverage{{/:field}}</div>
+		<div class="value">{{#:field}}temporalCoverage,placeholder=YYYY-MM-DD/..{{/:field}}</div>
 		<div class="end"></div>
 	</div>
 
@@ -38,7 +38,7 @@
                     {{#geo}}
                     <div style="padding: 5px 0px 0px 0px;">
                         <div class="label n2s_localize">Bounding Box (lon,lat lon,lat)</div>
-                        <div class="value">{{#:field}}box,placeholder=-75.8%2C45.2%20-75.5%2C45.5{{/:field}}</div>
+                        <div class="value">{{#:field}}box,placeholder=-75.8%2C45.2%20-75.5%2C45.5%2C(bottom%2Cleft,%2Ctop%2Cright){{/:field}}</div>
                         <div class="end"></div>
                     </div>
                     {{/geo}}

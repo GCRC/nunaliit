@@ -3,6 +3,7 @@ package ca.carleton.gcrc.couch.metadata;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbChangeListener;
 import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
+import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
 import ca.carleton.gcrc.exception.NunaliitException;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
@@ -33,14 +34,7 @@ import java.util.regex.Pattern;
  */
 public class SitemapDbChangeListener extends Thread implements CouchDbChangeListener {
     private static final Logger logger = LoggerFactory.getLogger(SitemapDbChangeListener.class);
-    /**
-     * The site design document Id.
-     */
-    private static final String SITE_DESIGN_DOC_ID = "_design/site";
-    /**
-     * File where the navigation doc Id is found.
-     */
-    private static final String NUNALIIT_CUSTOM_JS = "nunaliit_custom.js";
+
     /**
      * Regex used to find the navigation doc Id. Group 4 is the navigation doc id.
      */
@@ -59,11 +53,11 @@ public class SitemapDbChangeListener extends Thread implements CouchDbChangeList
      */
     private Set<String> docsToWatch;
     /**
-     * The hash/digest of the {@link #NUNALIIT_CUSTOM_JS} file last time it was processed.
+     * The hash/digest of the {@link ca.carleton.gcrc.couch.utils.CouchNunaliitConstants#NUNALIIT_CUSTOM_JS} file last time it was processed.
      */
     private String currentNunaliitCustomJsHash;
     /**
-     * The navigation document Id found in the {@link #NUNALIIT_CUSTOM_JS} file last time it was processed.
+     * The navigation document Id found in the {@link ca.carleton.gcrc.couch.utils.CouchNunaliitConstants#NUNALIIT_CUSTOM_JS} file last time it was processed.
      */
     private String currentNavigationDocId;
     /**
@@ -81,7 +75,7 @@ public class SitemapDbChangeListener extends Thread implements CouchDbChangeList
         this.sharedNavigationDocIdQueue = sharedNavigationDocIdQueue;
         // Only need to watch the site design doc and navigation document.
         docsToWatch = new HashSet<>(2);
-        docsToWatch.add(SITE_DESIGN_DOC_ID);
+        docsToWatch.add(CouchNunaliitConstants.SITE_DESIGN_DOC_ID);
         changedDocIdQueue = new LinkedBlockingQueue<>();
         matcher = pattern.matcher("");
 
@@ -99,7 +93,7 @@ public class SitemapDbChangeListener extends Thread implements CouchDbChangeList
         running.set(true);
         logger.info("Starting sitemap DB change listener thread");
         // Process design doc at startup to kick off navigation doc processing for sitemap generation.
-        processSiteDesign(SITE_DESIGN_DOC_ID);
+        processSiteDesign(CouchNunaliitConstants.SITE_DESIGN_DOC_ID);
 
         try {
             while (running.get()) {
@@ -155,7 +149,7 @@ public class SitemapDbChangeListener extends Thread implements CouchDbChangeList
         try {
             if (docsToWatch.contains(docId)) {
                 logger.debug("Relevant docId {} changed, processing for updates", docId);
-                if (SITE_DESIGN_DOC_ID.equals(docId)) {
+                if (CouchNunaliitConstants.SITE_DESIGN_DOC_ID.equals(docId)) {
                     processSiteDesign(docId);
                 }
                 else if (docId.equals(currentNavigationDocId)) {
@@ -187,14 +181,14 @@ public class SitemapDbChangeListener extends Thread implements CouchDbChangeList
         if (siteDesignDoc != null) {
             JSONObject attachments = siteDesignDoc.optJSONObject("_attachments");
             if (attachments != null) {
-                JSONObject nunaliitCustomJs = attachments.optJSONObject(NUNALIIT_CUSTOM_JS);
+                JSONObject nunaliitCustomJs = attachments.optJSONObject(CouchNunaliitConstants.NUNALIIT_CUSTOM_JS);
                 if (nunaliitCustomJs != null) {
                     String hash = nunaliitCustomJs.optString("digest");
                     if (StringUtils.isNotBlank(hash) && !hash.equals(currentNunaliitCustomJsHash)) {
                         currentNunaliitCustomJsHash = hash;
-                        logger.debug("{} has changed, checking for navigation document change", NUNALIIT_CUSTOM_JS);
+                        logger.debug("{} has changed, checking for navigation document change", CouchNunaliitConstants.NUNALIIT_CUSTOM_JS);
                         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-                            couchDb.downloadAttachment(SITE_DESIGN_DOC_ID, NUNALIIT_CUSTOM_JS, os);
+                            couchDb.downloadAttachment(CouchNunaliitConstants.SITE_DESIGN_DOC_ID, CouchNunaliitConstants.NUNALIIT_CUSTOM_JS, os);
                             String navigationDocId = findNavigationDocId(os);
                             // Navigation doc Id changed.
                             if (StringUtils.isNotBlank(navigationDocId) && !navigationDocId.equals(currentNavigationDocId)) {
@@ -209,7 +203,7 @@ public class SitemapDbChangeListener extends Thread implements CouchDbChangeList
                             }
                         }
                         catch (Exception e) {
-                            logger.error("Could not read {} from database", NUNALIIT_CUSTOM_JS, e);
+                            logger.error("Could not read {} from database", CouchNunaliitConstants.NUNALIIT_CUSTOM_JS, e);
                         }
                     }
                 }
@@ -227,7 +221,7 @@ public class SitemapDbChangeListener extends Thread implements CouchDbChangeList
     protected String findNavigationDocId(ByteArrayOutputStream os) {
         String navigationDocId = null;
         try (InputStream is = new ByteArrayInputStream(os.toByteArray());
-             BufferedReader reader = new BufferedReader(new InputStreamReader(is));) {
+             BufferedReader reader = new BufferedReader(new InputStreamReader(is))) {
 
             String line;
             while ((line = reader.readLine()) != null) {

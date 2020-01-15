@@ -2,14 +2,26 @@ package ca.carleton.gcrc.couch.utils;
 
 public class CouchNunaliitConstants {
 
-	final public static String DOC_KEY_CREATED = "nunaliit_created";
-	final public static String DOC_KEY_LAST_UPDATED = "nunaliit_last_updated";
-	final public static String DOC_KEY_TYPE = "nunaliit_type";
-	final public static String DOC_KEY_GEOMETRY = "nunaliit_geom";
-	final public static String DOC_KEY_SCHEMA = "nunaliit_schema";
+	private CouchNunaliitConstants(){}
 
-	final public static String TYPE_ACTION_STAMP = "actionstamp";
+	public final static String DOC_KEY_CREATED = "nunaliit_created";
+	public final static String DOC_KEY_LAST_UPDATED = "nunaliit_last_updated";
+	public final static String DOC_KEY_TYPE = "nunaliit_type";
+	public final static String DOC_KEY_GEOMETRY = "nunaliit_geom";
+	public final static String DOC_KEY_SCHEMA = "nunaliit_schema";
 
-	final public static String CREATE_UPDATE_KEY_TIME = "time";
-	final public static String CREATE_UPDATE_KEY_NAME = "name";
+	public final static String TYPE_ACTION_STAMP = "actionstamp";
+
+	public final static String CREATE_UPDATE_KEY_TIME = "time";
+	public final static String CREATE_UPDATE_KEY_NAME = "name";
+
+	/**
+	 * The site design document Id.
+	 */
+	public static final String SITE_DESIGN_DOC_ID = "_design/site";
+	public static final String INDEX_HTML = "index.html";
+	/**
+	 * File where the navigation doc Id is found.
+	 */
+	public static final String NUNALIIT_CUSTOM_JS = "nunaliit_custom.js";
 }

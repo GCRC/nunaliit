@@ -18,6 +18,12 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>ca.carleton.gcrc</groupId>
+            <artifactId>nunaliit2-couch-utils</artifactId>
+            <version>${project.version}</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
