@@ -557,7 +557,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			var mediaDivId = this.mediaDivId;
 			this.videoId = $n2.getUniqueId();
 			this.transcriptId = $n2.getUniqueId();
-			this.transcriptContentId = $n2.getUniqueId();
 
 			var $mediaDiv = $('<div>')
 					.attr('id', mediaDivId)
@@ -594,9 +593,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.attr('id', this.transcriptId)
 				.addClass('n2widgetTranscript_transcript')
 				.appendTo($mediaDiv);
-			var $transcriptContent = $('<div>')
-						.attr( 'id', this.transcriptContentId)
-						.appendTo($transcript);
+			
 			/*this.transcript_array = [
 				{"start": "0.00",
 					"fin": "5.00",
@@ -618,7 +615,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					"text": "Whether a wire comes straight from the ISP hookup outside your house, or it travels over radio waves from your roof, the first stop a wire will make once inside your house, is at your modem."},
 				
 			];*/
-			//genTranscriptDomArr ()
+			
 			prep_transcript($transcript, this.transcript_array);
 
 			// time update function: #highlight on the span to change the color of the text
@@ -758,59 +755,94 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 			//drawing all the sentence and binding event for click and right click
 			var tagsBySentenceSpanIds = {};
-			var transcriptMarkupArray = [];
 			for (var i = 0,e = transcript_array.length; i < e; i++) {
-				var markup = '';
 				var transcriptElem = transcript_array[i];
 				//hack to seperate single click and double click
-				
+				var DELAY = 300, clicks = 0, timer = null;
 				var id = $n2.getUniqueId();
 				transcriptElem.id = id;
 				tagsBySentenceSpanIds [id] = {
 						start:transcriptElem.startTimeCode
 						,end : transcriptElem.finTimeCode
 				}
-				markup = '<div id='
-						+ id
-						+ ' class="n2-transcriptWidget-sentence '
-						+ 'n2transcript_sentence_' + $n2.utils.stringToHtmlId(id)+ '"'
-						+ ' data-start='
-						+ transcriptElem.start
-						+ ' data-fin='
-						+ transcriptElem.fin
-						+ ' data-startcode='
-						+ transcriptElem.startTimeCode
-						+ ' data-fincode='
-						+ transcriptElem.finTimeCode
-						+ '>'
-						+ transcriptElem.text + ' '
-						+ '</div>';
-						
-//				temp = $('<div>')
-//					.attr('id', id)
-//					.attr('data-start', transcriptElem.start)
-//					.attr('data-fin', transcriptElem.fin)
-//					.attr('data-startcode', transcriptElem.startTimeCode)
-//					.attr('data-fincode', transcriptElem.finTimeCode)
-//					.addClass('n2-transcriptWidget-sentence')
-//					.addClass('n2transcript_sentence_' + $n2.utils.stringToHtmlId(id))
-//					.html(transcriptElem.text+ " ")
-//					.appendTo($transcript)
-//					.on('mouseup', _this.onMouseUpCallback)
-//					.on('dblclick', function(e){
-//						e.preventDefault();
-//					})
-//					.on ('contextmenu', function(e){
-//						e.preventDefault();
-//						return true;
-//					})
-				transcriptMarkupArray.push(markup);
+				temp = $('<div>')
+					.attr('id', id)
+					.attr('data-start', transcriptElem.start)
+					.attr('data-fin', transcriptElem.fin)
+					.attr('data-startcode', transcriptElem.startTimeCode)
+					.attr('data-fincode', transcriptElem.finTimeCode)
+					.addClass('n2-transcriptWidget-sentence')
+					.addClass('n2transcript_sentence_' + $n2.utils.stringToHtmlId(id))
+					.html(transcriptElem.text+ " ")
+					.appendTo($transcript)
+					.on('mouseup', function(e){
+						e.preventDefault();
+						var _that = this;
+						if (e.ctrlKey){
+							e.preventDefault();
+							return false;
+						}
+						clicks++;
+						if(clicks === 1) {
+
+							timer = setTimeout(function() {
+								//perform single-click action  
+								switch(e.which){
+								case 1:
+									contextMenu.addClass('transcript-context-menu-hide');
+									if (e.ctrlKey || e.metaKey || e.shiftKey){
+										
+									} else {
+										$(_that).removeClass('sentence-highlight-pending')
+										var $span = $(_that);
+										var currentTime = $span.attr('data-start');
+										_this._updateCurrentTime(currentTime, 'text-oneclick');
+									}
+									
+									break;
+								case 2:
+									break;
+								case 3:
+									_rightClickCallback(e, $(this), contextMenu, currentSelectSentences);
+
+								}  
+								clicks = 0;             //after action performed, reset counter
+
+							}, DELAY);
+
+						} else {
+
+							clearTimeout(timer);    //prevent single-click action
+							//perform double-click action
+							switch(e.which){
+							case 1:
+								contextMenu.addClass('transcript-context-menu-hide');
+								$(_that).removeClass('sentence-highlight-pending')
+								var $span = $(_that);
+								var currentTime = $span.attr('data-start');
+								_this._updateCurrentTime(currentTime, 'text');
+								break;
+							case 2:
+								break;
+							case 3:
+								break;
+
+							}
+							clicks = 0;             //after action performed, reset counter
+						}
+
+						// close the context menu, if it still exists
+					})
+				.on('dblclick', function(e){
+					e.preventDefault();
+				})
+				.on ('contextmenu', function(e){
+					e.preventDefault();
+					return true;
+				})
+				.off ('mouseenter mouseleave')
 			}
-			var clusterize = new Clusterize({
-				rows: transcriptMarkupArray,
-				scrollId: _this.transcriptId,
-				contentId: _this.transcriptContentId
-			});
+			
 			_this.dispatchService.send(DH, {
 				type: 'resetDisplayedSentences'
 				,data: tagsBySentenceSpanIds
@@ -843,67 +875,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		function closeCtxMenu(){
 			
 		}
-	},
-	onMouseUpCallback: function(e){
-		e.preventDefault();
-		var DELAY = 300, clicks = 0, timer = null;
-		
-		var _that = this;
-		if (e.ctrlKey){
-			e.preventDefault();
-			return false;
-		}
-		clicks++;
-		if(clicks === 1) {
-
-			timer = setTimeout(function() {
-				//perform single-click action  
-				switch(e.which){
-				case 1:
-					contextMenu.addClass('transcript-context-menu-hide');
-					if (e.ctrlKey || e.metaKey || e.shiftKey){
-						
-					} else {
-						$(_that).removeClass('sentence-highlight-pending')
-						var $span = $(_that);
-						var currentTime = $span.attr('data-start');
-						_this._updateCurrentTime(currentTime, 'text-oneclick');
-					}
-					
-					break;
-				case 2:
-					break;
-				case 3:
-					_rightClickCallback(e, $(this), contextMenu, currentSelectSentences);
-
-				}  
-				clicks = 0;             //after action performed, reset counter
-
-			}, DELAY);
-
-		} else {
-
-			clearTimeout(timer);    //prevent single-click action
-			//perform double-click action
-			switch(e.which){
-			case 1:
-				contextMenu.addClass('transcript-context-menu-hide');
-				$(_that).removeClass('sentence-highlight-pending')
-				var $span = $(_that);
-				var currentTime = $span.attr('data-start');
-				_this._updateCurrentTime(currentTime, 'text');
-				break;
-			case 2:
-				break;
-			case 3:
-				break;
-
-			}
-			clicks = 0;             //after action performed, reset counter
-		}
-
-		// close the context menu, if it still exists
-	
 	},
 	_color_transcript: function(colorMap){
 		var $set = this._getTranscriptDiv();
@@ -1106,7 +1077,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				
 					this._scrollToView($transcriptElem);
 				}
-				
+
 			};
 
 			//$n2.log('current time: '+ currentTime);
