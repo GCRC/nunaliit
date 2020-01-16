@@ -8,7 +8,6 @@ import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 
 import ca.carleton.gcrc.couch.command.servlet.IndexServlet;
-import ca.carleton.gcrc.couch.metadata.MetadataServlet;
 import ca.carleton.gcrc.couch.metadata.SitemapServlet;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;

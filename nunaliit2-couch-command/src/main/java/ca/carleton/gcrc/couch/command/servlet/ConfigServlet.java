@@ -15,7 +15,6 @@ import ca.carleton.gcrc.couch.date.DateServletConfiguration;
 import ca.carleton.gcrc.couch.export.ExportConfiguration;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
-import ca.carleton.gcrc.couch.metadata.MetadataServlet;
 import ca.carleton.gcrc.couch.metadata.SitemapBuilder;
 import ca.carleton.gcrc.couch.metadata.SitemapServlet;
 import ca.carleton.gcrc.couch.onUpload.UploadListener;
@@ -253,14 +252,6 @@ public class ConfigServlet extends JsonServlet {
 			initActions(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while creating actions",e);
-			throw e;
-		}
-
-		try {
-			initMetadata(servletContext);
-		}
-		catch (ServletException e) {
-			logger.error("Error initializing metadata servlet", e);
 			throw e;
 		}
 
@@ -864,16 +855,6 @@ public class ConfigServlet extends JsonServlet {
 		} catch(Exception e) {
 			logger.error("Error configuring actions",e);
 			throw new ServletException("Error configuring actions",e);
-		}
-	}
-
-	private void initMetadata(ServletContext servletContext) throws ServletException {
-		try {
-			servletContext.setAttribute(MetadataServlet.CONFIG_DOCUMENT_DB, documentDatabase);
-		}
-		catch (Exception e) {
-			logger.error("Error configuring metadata servlet", e);
-			throw new ServletException("Error configuring metadata servlet", e);
 		}
 	}
 
