@@ -4,10 +4,9 @@ import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
-import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
+import ca.carleton.gcrc.couch.client.impl.listener.HtmlAttachmentChangeListener;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
@@ -19,13 +18,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,7 +29,8 @@ import java.util.regex.Pattern;
  * the query string, it will respond with either the atlas metadata, or module specific metadata in a script tag.
  */
 public class IndexServlet extends HttpServlet {
-    public static final String CONFIG_DOCUMENT_DB = "MetadataServlet_DocumentDatabase";
+    public static final String CONFIG_DOCUMENT_DB = "IndexServlet_DocumentDatabase";
+    public static final String INDEX_DB_CHANGE_LISTENER = "IndexServlet_IndexDbChangeListener";
 
     private static final Logger logger = LoggerFactory.getLogger(IndexServlet.class);
 
@@ -46,19 +40,12 @@ public class IndexServlet extends HttpServlet {
     private static final Pattern URL_PATTERN = Pattern.compile("module=([^#]+)#?.*");
 
     /**
-     * Hash from DB from last retrieval of index.html document.
-     */
-    private final AtomicReference<String> currentIndexHtmlHash = new AtomicReference<>();
-    /**
-     * Current index.html document downloaded from DB. Only updated if the hash changes.
-     */
-    private final AtomicReference<Document> currentIndexDoc = new AtomicReference<>();
-    /**
      * Regex matcher used to find module Id in query string.
      */
     private static Matcher matcher = URL_PATTERN.matcher("");
 
     private CouchDb couchDb;
+    private HtmlAttachmentChangeListener indexDbChangeListener;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -79,6 +66,18 @@ public class IndexServlet extends HttpServlet {
             throw new ServletException("Unexpected object type for document database: " + obj.getClass().getName());
         }
 
+        Object dbListener = context.getAttribute(INDEX_DB_CHANGE_LISTENER);
+        if (dbListener == null) {
+            logger.error(String.format("Index DB change listener is not specified (%s)", INDEX_DB_CHANGE_LISTENER));
+            throw new ServletException(String.format("Index DB change listener is not specified (%s)", INDEX_DB_CHANGE_LISTENER));
+        }
+        else if (dbListener instanceof HtmlAttachmentChangeListener) {
+            indexDbChangeListener = (HtmlAttachmentChangeListener) dbListener;
+        }
+        else {
+            throw new ServletException("Unexpected object type for index DB change listener: " + obj.getClass().getName());
+        }
+
         logger.info("Initialization finished");
     }
 
@@ -89,7 +88,7 @@ public class IndexServlet extends HttpServlet {
      * with corresponding metadata.
      */
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         JSONObject metadata = null;
 
         String queryString = request.getQueryString();
@@ -120,8 +119,8 @@ public class IndexServlet extends HttpServlet {
             }
         }
 
-        // Make a copy so we don't alter the cached document.
-        Document indexHtml = findIndexHtml().clone();
+        // Clone the HTML document so we don't modify shared copy.
+        Document indexHtml = indexDbChangeListener.getAttachment().clone();
         if (indexHtml != null) {
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("text/html");
@@ -132,6 +131,9 @@ public class IndexServlet extends HttpServlet {
                 jsonLd.text(metadata.toString());
 
                 indexHtml.head().appendChild(jsonLd);
+            }
+            else {
+                logger.debug("No metadata found for publishing");
             }
 
             try {
@@ -152,49 +154,6 @@ public class IndexServlet extends HttpServlet {
     public void destroy() {
         super.destroy();
         logger.info("Destroyed");
-    }
-
-    /**
-     * Finds the index.html document in the site design document. Caches it in memory, and only downloads and updates the
-     * variable if it isn't already stored, or if the digest of the attachment has changed.
-     *
-     * @return The index.html document.
-     */
-    private Document findIndexHtml() {
-        Document indexDoc = currentIndexDoc.get();
-        JSONObject siteDesignDoc = null;
-        try {
-            siteDesignDoc = couchDb.getDocument(CouchNunaliitConstants.SITE_DESIGN_DOC_ID);
-        }
-        catch (Exception e) {
-            logger.error("Problem fetching docId {} from database", CouchNunaliitConstants.SITE_DESIGN_DOC_ID, e);
-        }
-
-        if (siteDesignDoc != null) {
-            JSONObject attachments = siteDesignDoc.optJSONObject("_attachments");
-            if (attachments != null) {
-                JSONObject indexHtml = attachments.optJSONObject(CouchNunaliitConstants.INDEX_HTML);
-                if (indexHtml != null) {
-                    String hash = indexHtml.optString("digest");
-                    // Get latest index.html if we don't already have it or digest changed.
-                    if (StringUtils.isBlank(currentIndexHtmlHash.get()) || !currentIndexHtmlHash.get().equals(hash)) {
-                        logger.debug("Index document changed or not yet stored, getting from database");
-                        currentIndexHtmlHash.set(hash);
-                        try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
-                            couchDb.downloadAttachment(CouchNunaliitConstants.SITE_DESIGN_DOC_ID, CouchNunaliitConstants.INDEX_HTML, os);
-                            InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
-                            indexDoc = Jsoup.parse(inputStream, StandardCharsets.UTF_8.toString(), "");
-                            currentIndexDoc.set(indexDoc);
-                        }
-                        catch (Exception e) {
-                            logger.error("Could not read {} from database", CouchNunaliitConstants.INDEX_HTML, e);
-                        }
-                    }
-                }
-            }
-        }
-
-        return indexDoc;
     }
 
     /**

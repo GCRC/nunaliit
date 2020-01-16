@@ -82,6 +82,7 @@
 		<mustache.version>0.8.18</mustache.version>
 		<servlet-api.version>2.5</servlet-api.version>
 		<slf4j.version>1.7.13</slf4j.version>
+		<jsoup.version>1.12.1</jsoup.version>
 	</properties>
 	<modules>
 		<module>nunaliit2-jdbc</module>

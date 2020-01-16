@@ -10,6 +10,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.stream.FactoryConfigurationError;
 import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamWriter;
@@ -73,8 +74,8 @@ public class SitemapServlet extends HttpServlet {
             if (StringUtils.isNotBlank(baseUrl)) {
                 logger.debug("Sitemap using base URL: {}", baseUrl);
 
-                XMLOutputFactory outputFactory = XMLOutputFactory.newFactory();
                 try {
+                    XMLOutputFactory outputFactory = XMLOutputFactory.newFactory();
                     XMLStreamWriter stream = outputFactory.createXMLStreamWriter(response.getWriter());
                     stream.writeStartDocument("1.0");
 
@@ -93,7 +94,7 @@ public class SitemapServlet extends HttpServlet {
                     stream.writeEndElement();
                     stream.writeEndDocument();
                 }
-                catch (XMLStreamException | IOException e) {
+                catch (XMLStreamException | IOException | FactoryConfigurationError e) {
                     logger.warn("Problem occurred while building sitemap.xml: {}", e.getMessage());
                 }
             }

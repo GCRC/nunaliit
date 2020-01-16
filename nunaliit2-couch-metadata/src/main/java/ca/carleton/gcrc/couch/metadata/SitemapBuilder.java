@@ -45,12 +45,12 @@ public class SitemapBuilder {
     public void start() throws NunaliitException {
         dbChangeListener = new SitemapDbChangeListener(couchDb, navigationDocIdQueue);
         sitemapBuilderThread = new SitemapBuilderThread(couchDb, navigationDocIdQueue);
-        dbChangeListener.start();
         sitemapBuilderThread.start();
+        dbChangeListener.start();
     }
 
     public void shutdown() {
-        dbChangeListener.terminate();
+        dbChangeListener.shutdown();
         sitemapBuilderThread.terminate();
     }
 

@@ -1,30 +1,5 @@
 package ca.carleton.gcrc.couch.command.servlet;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.ByteBuffer;
-import java.security.SecureRandom;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Properties;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import ca.carleton.gcrc.couch.metadata.MetadataServlet;
-import ca.carleton.gcrc.couch.metadata.SitemapBuilder;
-import ca.carleton.gcrc.couch.metadata.SitemapServlet;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
@@ -33,12 +8,16 @@ import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
+import ca.carleton.gcrc.couch.client.impl.listener.HtmlAttachmentChangeListener;
 import ca.carleton.gcrc.couch.command.AtlasProperties;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.date.DateServletConfiguration;
 import ca.carleton.gcrc.couch.export.ExportConfiguration;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
+import ca.carleton.gcrc.couch.metadata.MetadataServlet;
+import ca.carleton.gcrc.couch.metadata.SitemapBuilder;
+import ca.carleton.gcrc.couch.metadata.SitemapServlet;
 import ca.carleton.gcrc.couch.onUpload.UploadListener;
 import ca.carleton.gcrc.couch.onUpload.UploadWorker;
 import ca.carleton.gcrc.couch.onUpload.UploadWorkerSettings;
@@ -66,6 +45,7 @@ import ca.carleton.gcrc.couch.submission.mail.SubmissionRejectionGenerator;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.couch.utils.CouchDbTemplateMailMessageGenerator;
+import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailDeliveryImpl;
@@ -80,6 +60,26 @@ import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
 import ca.carleton.gcrc.upload.UploadUtils;
 import ca.carleton.gcrc.utils.VersionUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.ByteBuffer;
+import java.security.SecureRandom;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * Configures the properties of the other servlets. Accepts init
@@ -117,6 +117,7 @@ public class ConfigServlet extends JsonServlet {
 	private MailVetterDailyNotificationTask vetterDailyTask = null;
 	private ConfigServletActions actions = null;
 	private SitemapBuilder sitemapBuilder;
+	private HtmlAttachmentChangeListener indexChangeListener;
 	private SecureRandom rng = null;
 	
 	public ConfigServlet() {
@@ -268,6 +269,14 @@ public class ConfigServlet extends JsonServlet {
 		}
 		catch (ServletException e) {
 			logger.error("Error initializing sitemap servlet", e);
+			throw e;
+		}
+
+		try {
+			initIndex(servletContext);
+		}
+		catch (ServletException e) {
+			logger.error("Error initializing index servlet", e);
 			throw e;
 		}
 
@@ -881,6 +890,21 @@ public class ConfigServlet extends JsonServlet {
 		}
 	}
 
+	private void initIndex(ServletContext servletContext) throws ServletException {
+		try {
+			indexChangeListener = new HtmlAttachmentChangeListener(documentDatabase, CouchNunaliitConstants.SITE_DESIGN_DOC_ID,
+					CouchNunaliitConstants.INDEX_HTML);
+			indexChangeListener.start();
+
+			servletContext.setAttribute(IndexServlet.CONFIG_DOCUMENT_DB, documentDatabase);
+			servletContext.setAttribute(IndexServlet.INDEX_DB_CHANGE_LISTENER, indexChangeListener);
+		}
+		catch (Exception e) {
+			logger.error("Error configuring index servlet", e);
+			throw new ServletException("Error configuring index servlet", e);
+		}
+	}
+
 	public void destroy() {
 		try {
 			uploadWorker.stopTimeoutMillis(5*1000); // 5 seconds
@@ -931,6 +955,15 @@ public class ConfigServlet extends JsonServlet {
 		}
 		catch (Exception e) {
 			logger.error("Error occurred while attempting to shutdown sitemap builder", e);
+		}
+
+		try {
+			if (indexChangeListener != null) {
+				indexChangeListener.shutdown();
+			}
+		}
+		catch (Exception e) {
+			logger.error("Error occurred while attempting to shutdown index DB change listener", e);
 		}
 	}
 

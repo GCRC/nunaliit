@@ -262,19 +262,18 @@ public class CommandRun implements Command {
         	context.addServlet(servletHolder,"/*");
         }
 
+        // index.html servlet
         ServletHolder indexServlet = new ServletHolder(new IndexServlet());
         indexServlet.setInitOrder(2);
         context.addServlet(indexServlet, "/index.html");
-
-        // Servlet for serving metadata to crawlers
-		ServletHolder metadataServlet = new ServletHolder(new MetadataServlet());
-		metadataServlet.setInitOrder(2);
-		context.addServlet(metadataServlet, "/servlet/metadata");
 
 		// Servlet for serving sitemap.xml
 		ServletHolder sitemapServlet = new ServletHolder(new SitemapServlet());
 		sitemapServlet.setInitOrder(2);
 		context.addServlet(sitemapServlet, "/sitemap.xml");
+
+		// robots.txt servlet
+		//TODO:
 
 		// Start server
 		server.start();

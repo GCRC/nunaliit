@@ -127,9 +127,12 @@ public class SitemapBuilderThread extends Thread {
 
         // Now build final set of relative URLs.
         Set<String> tempRelativeUrls = new HashSet<>(links.get("href"));
+        // Add root path, in case it's not linked in navigation menu.
+        tempRelativeUrls.add("./index.html");
         for (String module : links.get("module")) {
             tempRelativeUrls.add(String.format("./index.html?module=%s", module));
         }
+
         synchronized (lockObj) {
             relativeUrls.clear();
             relativeUrls.addAll(tempRelativeUrls);
