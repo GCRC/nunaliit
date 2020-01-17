@@ -20,6 +20,7 @@ public class CouchNunaliitConstants {
 	 */
 	public static final String SITE_DESIGN_DOC_ID = "_design/site";
 	public static final String INDEX_HTML = "index.html";
+	public static final String ROBOTS_TXT = "robots.txt";
 	/**
 	 * File where the navigation doc Id is found.
 	 */

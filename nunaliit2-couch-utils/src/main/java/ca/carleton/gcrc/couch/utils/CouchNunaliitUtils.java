@@ -15,6 +15,8 @@ import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 
+import javax.servlet.http.HttpServletRequest;
+
 
 public class CouchNunaliitUtils {
 	
@@ -151,5 +153,25 @@ public class CouchNunaliitUtils {
 				}
 			};
 		}
+	}
+
+	/**
+	 * Build the atlas' base URL using the HTTP request information (scheme, server, port).
+	 *
+	 * @param request The request to get the server info from.
+	 * @return The base URL for the atlas, ending with a '/'.
+	 */
+	public static String buildBaseUrl(HttpServletRequest request) {
+		String scheme = request.getScheme();
+		String serverName = request.getServerName();
+		int port = request.getServerPort();
+		StringBuilder builder = new StringBuilder();
+		builder.append(String.format("%s://%s", scheme, serverName));
+		if (port > 0) {
+			builder.append(":").append(port);
+		}
+		builder.append("/");
+
+		return builder.toString();
 	}
 }

@@ -9,6 +9,7 @@ import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.client.impl.listener.HtmlAttachmentChangeListener;
+import ca.carleton.gcrc.couch.client.impl.listener.TextAttachmentChangeListener;
 import ca.carleton.gcrc.couch.command.AtlasProperties;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.date.DateServletConfiguration;
@@ -117,6 +118,7 @@ public class ConfigServlet extends JsonServlet {
 	private ConfigServletActions actions = null;
 	private SitemapBuilder sitemapBuilder;
 	private HtmlAttachmentChangeListener indexChangeListener;
+	private TextAttachmentChangeListener robotsChangeListener;
 	private SecureRandom rng = null;
 	
 	public ConfigServlet() {
@@ -268,6 +270,14 @@ public class ConfigServlet extends JsonServlet {
 		}
 		catch (ServletException e) {
 			logger.error("Error initializing index servlet", e);
+			throw e;
+		}
+
+		try {
+			initRobots(servletContext);
+		}
+		catch (ServletException e) {
+			logger.error("Error initializing robots servlet", e);
 			throw e;
 		}
 
@@ -886,6 +896,20 @@ public class ConfigServlet extends JsonServlet {
 		}
 	}
 
+	private void initRobots(ServletContext servletContext) throws ServletException {
+		try {
+			robotsChangeListener = new TextAttachmentChangeListener(documentDatabase, CouchNunaliitConstants.SITE_DESIGN_DOC_ID,
+					CouchNunaliitConstants.ROBOTS_TXT);
+			robotsChangeListener.start();
+
+			servletContext.setAttribute(RobotsServlet.ROBOTS_TXT_CHANGE_LISTENER, robotsChangeListener);
+		}
+		catch (Exception e) {
+			logger.error("Error configuring index servlet", e);
+			throw new ServletException("Error configuring index servlet", e);
+		}
+	}
+
 	public void destroy() {
 		try {
 			uploadWorker.stopTimeoutMillis(5*1000); // 5 seconds
@@ -944,7 +968,16 @@ public class ConfigServlet extends JsonServlet {
 			}
 		}
 		catch (Exception e) {
-			logger.error("Error occurred while attempting to shutdown index DB change listener", e);
+			logger.error("Error occurred while attempting to shutdown index.html DB change listener", e);
+		}
+
+		try {
+			if (robotsChangeListener != null) {
+				robotsChangeListener.shutdown();
+			}
+		}
+		catch (Exception e) {
+			logger.error("Error occurred while attempting to shutdown robots.txt DB change listener", e);
 		}
 	}
 

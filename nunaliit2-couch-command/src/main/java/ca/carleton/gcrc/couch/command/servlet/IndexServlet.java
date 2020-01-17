@@ -75,7 +75,7 @@ public class IndexServlet extends HttpServlet {
             indexDbChangeListener = (HtmlAttachmentChangeListener) dbListener;
         }
         else {
-            throw new ServletException("Unexpected object type for index DB change listener: " + obj.getClass().getName());
+            throw new ServletException("Unexpected object type for index DB change listener: " + dbListener.getClass().getName());
         }
 
         logger.info("Initialization finished");

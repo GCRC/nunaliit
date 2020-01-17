@@ -1,5 +1,6 @@
 package ca.carleton.gcrc.couch.metadata;
 
+import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,18 +60,7 @@ public class SitemapServlet extends HttpServlet {
         if (relativeUrls != null && !relativeUrls.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("text/xml");
-            // Build the URLs using the incoming request scheme/serverName/port.
-            String scheme = request.getScheme();
-            String serverName = request.getServerName();
-            int port = request.getServerPort();
-            StringBuilder builder = new StringBuilder();
-            builder.append(String.format("%s://%s", scheme, serverName));
-            if (port > 0) {
-                builder.append(":").append(port);
-            }
-            builder.append("/");
-            String baseUrl = builder.toString();
-
+            String baseUrl = CouchNunaliitUtils.buildBaseUrl(request);
             if (StringUtils.isNotBlank(baseUrl)) {
                 logger.debug("Sitemap using base URL: {}", baseUrl);
 
