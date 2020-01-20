@@ -1288,6 +1288,10 @@ var MDCRadio = $n2.Class('MDCRadio', MDC, {
 			.addClass('mdc-radio__inner-circle')
 			.appendTo($rbtnBackground);
 
+		$('<div>')
+			.addClass('mdc-radio__ripple')
+			.appendTo($rbtn);
+
 		$('<label>')
 			.attr('for', this.rbtnInputId)
 			.text(this.radioLabel)
