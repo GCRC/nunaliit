@@ -305,6 +305,9 @@ var MDCCheckbox = $n2.Class('MDCCheckbox', MDC, {
 		$('<div>').addClass('mdc-checkbox__mixedmark')
 			.appendTo($chkboxBackground);
 
+		$('<div>').addClass('mdc-checkbox__ripple')
+			.appendTo($chkbox);
+
 		$chkboxLabel = $('<label>')
 			.attr('for', this.chkboxInputId)
 			.text(_loc(this.chkboxLabel));

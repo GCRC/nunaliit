@@ -1301,6 +1301,7 @@ public class SchemaAttribute {
 						pw.println("\t\t\t\t\t\t</svg>");
 						pw.println("\t\t\t\t\t\t<div class=\"mdc-checkbox__mixedmark\"></div>");
 						pw.println("\t\t\t\t\t</div>");
+						pw.println("\t\t\t\t\t<div class=\"mdc-checkbox__ripple\"></div>");
 						pw.println("\t\t\t\t</div>");
 
 						if( null == itemLabel ) {
