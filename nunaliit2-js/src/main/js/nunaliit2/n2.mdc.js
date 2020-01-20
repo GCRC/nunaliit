@@ -386,6 +386,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 		$chipSet = $('<div>')
 			.attr('id', this.mdcId)
+			.attr('role', 'grid')
 			.addClass(this.mdcClasses.join(' '));
 
 		if (this.inputId) {
@@ -415,7 +416,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	},
 
 	_generateChip: function(chipObj, type_opt, initialChipFull) {
-		var $chip, chipText, fraction;
+		var $chip, $gridCell, $gridCellIcon, chipText, fraction;
 		var chipId = $n2.getUniqueId();
 		var chipOriType = 'unknown';
 		if (typeof chipObj === 'string') {
@@ -423,6 +424,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 			$chip = $('<div>').addClass('mdc-chip')
 				.attr('id', chipId)
+				.attr('role', 'row')
 				.attr('tabindex','0');
 
 			if (type_opt) {
@@ -443,6 +445,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 
 			$chip = $('<div>').addClass('mdc-chip')
 				.attr('id', chipId)
+				.attr('role', 'row')
 				.attr('tabindex', '0');
 
 			if (fraction === 'full') {
@@ -458,19 +461,29 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 			$chip.data('n2Chip', $n2.extend({type: chipOriType }, chipObj));
 		}
 
+		$('<div>').addClass('mdc-chip__ripple')
+			.appendTo($chip);
+
 		if (chipText) {
-			$('<div>').addClass('mdc-chip__text')
+
+			$gridCell = $('<span>')
+				.attr('role', 'gridcell');
+
+			$('<span>').addClass('mdc-chip__text')
 				.text(chipText)
-				.appendTo($chip);
+				.appendTo($gridCell);
+
+			$gridCell.appendTo($chip);
 		}
 
 		$('<i>')
 			.addClass('material-icons mdc-chip__icon mdc-chip__icon--trailing')
-			.attr('tabindex', '0')
-			.attr('role', 'button')
 			.attr('width', '15')
 			.attr('height', '15')
+			.attr('tabindex', '-1')
+			.attr('role', 'button')
 			.appendTo($chip);
+
 
 		return $chip;
 	}
