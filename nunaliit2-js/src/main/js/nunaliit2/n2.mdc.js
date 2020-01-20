@@ -146,6 +146,9 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '));
 
+		$('<div>').addClass('mdc-button__ripple')
+			.appendTo($btn);
+
 		$('<span>')
 			.addClass('mdc-button__label')
 			.text(this.btnLabel)
