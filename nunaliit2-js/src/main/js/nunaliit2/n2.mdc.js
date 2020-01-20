@@ -470,6 +470,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 				.attr('role', 'gridcell');
 
 			$('<span>').addClass('mdc-chip__text')
+				.attr('role', 'button')
 				.text(chipText)
 				.appendTo($gridCell);
 

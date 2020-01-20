@@ -2127,17 +2127,26 @@ var DomStyler = $n2.Class({
 		};
 
 		function generateChip(chipText){
-			var $chip;
+			var $chip, $gridCell;
 			var chipId = $n2.getUniqueId();
 
 			$chip = $('<div>').addClass('mdc-chip')
+				.attr('role', 'row')
 				.attr('id', chipId)
 				.attr('tabindex','0');
 
+			$('<div>').addClass('mdc-chip__ripple')
+				.appendTo($chip);
+
+			$gridCell = $('<span>')
+				.attr('role', 'gridcell')
+				.appendTo($chip);
+
 			if (chipText) {
-				$('<div>').addClass('mdc-chip__text')
+				$('<span>').addClass('mdc-chip__text')
 					.text(chipText)
-					.appendTo($chip);
+					.attr('role', 'button')
+					.appendTo($gridCell);
 			}
 
 			$('<i>')
