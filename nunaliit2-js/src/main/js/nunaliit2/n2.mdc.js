@@ -422,7 +422,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 	},
 
 	_generateChip: function(chipObj, type_opt, initialChipFull) {
-		var $chip, $gridCell, $gridCellIcon, chipText, fraction;
+		var $chip, $gridCell, chipText, fraction;
 		var chipId = $n2.getUniqueId();
 		var chipOriType = 'unknown';
 		if (typeof chipObj === 'string') {
@@ -431,7 +431,7 @@ var MDCChipSet = $n2.Class('MDCChipSet', MDC, {
 			$chip = $('<div>').addClass('mdc-chip')
 				.attr('id', chipId)
 				.attr('role', 'row')
-				.attr('tabindex','0');
+				.attr('tabindex', '0');
 
 			if (type_opt) {
 				chipOriType = type_opt;
