@@ -2126,23 +2126,67 @@ var DomStyler = $n2.Class({
 				.trigger('taglist:updated');
 		};
 
-		function generateChip(chipText){
+		function generateChip(chipObj, type_opt){
 			var $chip, $gridCell;
-			var chipId = $n2.getUniqueId();
+			var chipText, chipId, chipOriType;
+			if (typeof chipObj === 'string'){
+				chipText = chipObj;
+				chipId = $n2.getUniqueId();
 
-			$chip = $('<div>').addClass('mdc-chip')
-				.attr('role', 'row')
-				.attr('id', chipId)
-				.attr('tabindex','0');
+				$chip = $('<div>').addClass('mdc-chip')
+					.attr('role', 'row')
+					.attr('id', chipId)
+					.attr('tabindex', '0');
 
-			$('<div>').addClass('mdc-chip__ripple')
-				.appendTo($chip);
+				chipOriType = 'unknown';
 
-			$gridCell = $('<span>')
-				.attr('role', 'gridcell')
-				.appendTo($chip);
+				if (type_opt){
+					chipOriType = type_opt;
+				}
+
+				$chip.data('n2Chip', {
+					chipText: chipObj,
+					type: chipOriType,
+					fraction: 'full'
+				})
+
+			} else if ( typeof chipObj === 'object'){
+				chipText = chipObj.value;
+				var fraction = undefined;
+				if ( chipObj.fraction ){
+					fraction = chipObj.fraction;
+				};
+
+				chipId = $n2.getUniqueId();
+
+				$chip = $('<div>').addClass('mdc-chip')
+					.attr('id', chipId)
+					.attr('tabindex','0');
+				
+				if (typeof fraction === 'undefined'){
+					
+				} else if (fraction === 'full'){
+					$chip.addClass('mdc-chip-full');
+				} else {
+					$chip.addClass('mdc-chip-partial');
+				}
+
+				chipOriType = 'unknown';
+				if (type_opt){
+					chipOriType = type_opt;
+				}
+
+				$chip.data('n2Chip', $n2.extend({type: chipOriType }, chipObj));
+			}
 
 			if (chipText) {
+				$('<div>').addClass('mdc-chip__ripple')
+					.appendTo($chip);
+
+				$gridCell = $('<span>')
+					.attr('role', 'gridcell')
+					.appendTo($chip);
+
 				$('<span>').addClass('mdc-chip__text')
 					.text(chipText)
 					.attr('role', 'button')
@@ -2168,27 +2212,50 @@ var DomStyler = $n2.Class({
 			if ($jq.attr('n2associatedmdc')){
 				chipInputId = $jq.attr('n2associatedmdc');
 				$chipInput = $('#' + chipInputId);
+				var chipsetsUpdateCallback = $('#' + chipSet.id).data('chipsetsUpdateCallback');
 				$chipInput.keydown(function(event){
 					if (event.key === 'Enter' || event.keyCode === 13) {
 						if ($chipInput.val()){
+							var newTagText = $chipInput.val()
 							// Get Input Value
-							var chipEl = generateChip($chipInput.val());
+							var chipEl = generateChip({
+								value: $chipInput.val()+'',
+								fraction: 'full',
+								type: 'unknown'
+							});
 
 							// Clear Input Field
 							$chipInput.val('');
 							chipEl.insertBefore($chipInput);
 							attachedChipSet.addChip(chipEl[0]);
 
-							updateTagList();
+							var chiplist = updateTagList();
+							if (typeof chipsetsUpdateCallback === 'function'){
+								chipsetsUpdateCallback(chiplist, "ADD", {
+									chipText: newTagText,
+									type: 'unknown',
+									fraction: 'full'}
+								);
+								
+							}
 						}
 					}
 				});
 
 				attachedChipSet.listen('MDCChip:removal', function(event){
 					if (event.detail && event.detail.chipId) {
-						$('#' + event.detail.chipId).remove();
-
-						updateTagList();
+						var $removedChip = $(event.target);
+						var $removedChipText = $removedChip.find('.mdc-chip__text')[0];
+						var delTagProfile = $removedChip.data('n2Chip');
+						if (!delTagProfile){
+							alert('NO delTagProfile');
+						}
+//						var delTagText = $removedChipText.innerText.slice();
+						$removedChip.remove();
+						var chiplist = updateTagList();
+						if (typeof chipsetsUpdateCallback === 'function'){
+							chipsetsUpdateCallback(chiplist, "DELETE", delTagProfile );
+						}
 					}
 				});
 			}
