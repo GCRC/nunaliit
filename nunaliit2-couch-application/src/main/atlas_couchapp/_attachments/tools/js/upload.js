@@ -18,14 +18,14 @@
 	var currentDocumentsShowing = {};
 	
 	function selectionChanged() {
-		var $select = $(this);
-		currentView = $select.val();
+		var $select = $(this).find('li.mdc-list-item--selected');
+		currentView = $select.attr('data-value');
 		refreshView();
 	};
 	
 	function limitChanged(){
-		var $select = $(this);
-		var limitStr = $select.val();
+		var $select = $(this).find('li.mdc-list-item--selected');
+		var limitStr = $select.attr('data-value');
 		limit = 1 * limitStr;
 		refreshView();
 	}
@@ -194,11 +194,11 @@
 				menuOpts: [
 					{
 						value: "approval",
-						label: "Pending Approval"
+						text: "Pending Approval"
 					}, 
 					{
 						value: "denied",
-						label: "Already Denied"
+						text: "Already Denied"
 					}
 				]
 			});
@@ -216,23 +216,23 @@
 				menuOpts: [
 					{
 						value: "10",
-						label: "Limit 10"
+						text: "Limit 10"
 					},
 					{
 						value: "25",
-						label: "Limit 25"
+						text: "Limit 25"
 					},
 					{
 						value: "50",
-						label: "Limit 50"
+						text: "Limit 50"
 					},
 					{
 						value: "100",
-						label: "Limit 100"
+						text: "Limit 100"
 					},
 					{
 						value: "-1",
-						label: "No Limit"
+						text: "No Limit"
 					}
 				]
 			});

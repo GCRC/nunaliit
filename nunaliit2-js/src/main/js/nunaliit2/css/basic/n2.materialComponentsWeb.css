@@ -91,10 +91,14 @@
 }
 
 .n2-tag-box .mdc-notched-outline .mdc-notched-outline__notch .mdc-floating-label {
-	-webkit-transform: translateY(-136%) scale(0.75);
-	transform: translateY(-136%) scale(0.75);
+	-webkit-transform: scale(0.75);
+	transform: scale(0.75);
+	top: -5px;
 	text-overflow: clip;
 	max-width: none;
+}
+.n2-tag-box.mdc-text-field--focused .mdc-notched-outline .mdc-notched-outline__notch .mdc-floating-label--float-above {
+	top: -7px;
 }
 
 .mdc-chip .mdc-chip__icon {
@@ -152,6 +156,12 @@ section.mdc-top-app-bar__section.mdc-top-app-bar__section--align-end {
 .export_by_script_dialog .mdc-dialog__content > div {
 	width: 100%;
 	margin: 8px 0px;
+}
+
+/* Allow mdc select menus inside mdc dialogs to expand dialog size */
+.mdc-dialog .mdc-select .mdc-menu-surface {
+    position: static !important;
+	width: 100%;
 }
 
 /* Overriding material-components-web.min.css styling */
