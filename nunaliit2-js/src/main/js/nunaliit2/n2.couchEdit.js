@@ -244,7 +244,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		this.editors = opts.editors;
 		this.couchProj = opts.couchProj;
 		
-		this.ol_format_WKT = new $n2.n2es6.ol_format_WKT();
+	//	this.ol_format_WKT = new $n2.n2es6.ol_format_WKT();
 
 		this.editedDocument = {};
 		var clonedDoc = $n2.extend(true,{},opts.doc); // deep copy
@@ -914,7 +914,7 @@ var CouchDocumentEditor = $n2.Class({
 		this.moduleEditInfo = opts.moduleEditInfo;
 		this.relatedDocProcess = opts.relatedDocProcess;
 		
-		this.ol_format_WKT = new $n2.n2es6.ol_format_WKT();
+//		this.ol_format_WKT = new $n2.n2es6.ol_format_WKT();
 		
 		this.userButtons = [];
 		var label = 'button';
