@@ -202,6 +202,1303 @@ function _inherits(subCtor, superClass) {
 
 /***/ }),
 
+/***/ "./dist/n2es6/n2mapModule/EditBar.js":
+/*!*******************************************!*\
+  !*** ./dist/n2es6/n2mapModule/EditBar.js ***!
+  \*******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var ol_ext_util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol-ext/util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_events_condition__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/events/condition */ "./node_modules/ol/events/condition.js");
+/* harmony import */ var ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/interaction/Draw */ "./node_modules/ol/interaction/Draw.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/* harmony import */ var ol_interaction_Select__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/interaction/Select */ "./node_modules/ol/interaction/Select.js");
+/* harmony import */ var _N2Select_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./N2Select.js */ "./dist/n2es6/n2mapModule/N2Select.js");
+/* harmony import */ var ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol-ext/control/Bar */ "./node_modules/ol-ext/control/Bar.js");
+/* harmony import */ var ol_ext_control_Button__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol-ext/control/Button */ "./node_modules/ol-ext/control/Button.js");
+/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
+/* harmony import */ var ol_ext_control_TextButton__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol-ext/control/TextButton */ "./node_modules/ol-ext/control/TextButton.js");
+/* harmony import */ var ol_ext_interaction_Delete__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ol-ext/interaction/Delete */ "./node_modules/ol-ext/interaction/Delete.js");
+/* harmony import */ var ol_ext_util_element__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ol-ext/util/element */ "./node_modules/ol-ext/util/element.js");
+/* harmony import */ var ol_ext_interaction_Offset__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ol-ext/interaction/Offset */ "./node_modules/ol-ext/interaction/Offset.js");
+/* harmony import */ var ol_ext_interaction_Split__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ol-ext/interaction/Split */ "./node_modules/ol-ext/interaction/Split.js");
+/* harmony import */ var ol_ext_interaction_Transform__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ol-ext/interaction/Transform */ "./node_modules/ol-ext/interaction/Transform.js");
+/* harmony import */ var _ModifyFeature__WEBPACK_IMPORTED_MODULE_16__ = __webpack_require__(/*! ./ModifyFeature */ "./dist/n2es6/n2mapModule/ModifyFeature.js");
+/* harmony import */ var ol_ext_interaction_DrawRegular__WEBPACK_IMPORTED_MODULE_17__ = __webpack_require__(/*! ol-ext/interaction/DrawRegular */ "./node_modules/ol-ext/interaction/DrawRegular.js");
+/* harmony import */ var ol_ext_interaction_DrawHole__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ol-ext/interaction/DrawHole */ "./node_modules/ol-ext/interaction/DrawHole.js");
+
+
+/**
+* @module n2es6/n2mapModule/EditBar
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Control bar for editing in a layer
+ * @constructor
+ * @extends {ol_control_Bar}
+ * @fires info
+ * @param {Object=} options Control options.
+ *	@param {String} options.className class of the control
+ *	@param {String} options.target Specify a target if you want the control to be rendered outside of the map's viewport.
+ *	@param {boolean} options.edition false to remove the edition tools, default true
+ *	@param {Object} options.interactions List of interactions to add to the bar 
+ *    ie. Select, Delete, Info, DrawPoint, DrawLine, DrawPolygon
+ *    Each interaction can be an interaction or true (to get the default one) or false to remove it from bar
+ *	@param {ol.source.Vector} options.source Source for the drawn features. 
+ */
+var ol_control_EditBar = function(options) {
+  options = options || {};
+  options.interactions = options.interactions || {};
+
+  // New bar
+	ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_7__["default"].call(this, {
+    className: (options.className ? options.className+' ': '') + 'ol-editbar',
+    toggleOne: true,
+		target: options.target
+  });
+
+  this._source = options.source;
+  // Add buttons / interaction
+  this._interactions = {};
+  this._setSelectInteraction(options);
+  if (options.edition!==false) this._setEditInteraction(options);
+  this.modifyWithSelect = true;
+  this._setModifyInteraction(options);
+};
+Object(ol_ext_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_EditBar, ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_7__["default"]);
+
+/**
+ * Set the map instance the control is associated with
+ * and add its controls associated to this map.
+ * @param {_ol_Map_} map The map instance.
+ */
+ol_control_EditBar.prototype.setMap = function (map) {
+  if (this.getMap()) {
+    if (this._interactions.Delete) this.getMap().removeInteraction(this._interactions.Delete);
+    if (this._interactions.ModifySelect) this.getMap().removeInteraction(this._interactions.ModifySelect);
+  }
+  
+  ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_7__["default"].prototype.setMap.call(this, map);
+
+  if (this.getMap()) {
+    if (this._interactions.Delete) this.getMap().addInteraction(this._interactions.Delete);
+    if (this._interactions.ModifySelect) this.getMap().addInteraction(this._interactions.ModifySelect);
+  }
+};
+
+/** Activate interaction modify 
+ * @param {string} name 
+ */
+ol_control_EditBar.prototype.activateModify = function () {
+	this._interactions['ModifySelect'].setActive(true);
+};
+
+/** Deactivate interaction modify
+ */
+ol_control_EditBar.prototype.deactivateModify = function () {
+	this._interactions['ModifySelect'].setActive(false);
+};
+
+/** Get an interaction associated with the bar
+ * @param {string} name 
+ */
+ol_control_EditBar.prototype.getInteraction = function (name) {
+  return this._interactions[name];
+};
+
+/** Get the option title */
+ol_control_EditBar.prototype._getTitle = function (option) {
+  return (option && option.title) ? option.title : option;
+};
+
+/** Add selection tool:
+ * 1. a toggle control with a select interaction
+ * 2. an option bar to delete / get information on the selected feature
+ * @private
+ */
+ol_control_EditBar.prototype._setSelectInteraction = function (options) {
+  var self = this;
+  
+  // Sub bar
+  var sbar = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_7__["default"]();
+  var selectCtrl;
+
+  // Delete button
+  if (options.interactions.Delete !== false) {
+    if (options.interactions.Delete instanceof ol_ext_interaction_Delete__WEBPACK_IMPORTED_MODULE_11__["default"]) {
+      this._interactions.Delete = options.interactions.Delete; 
+    } else {
+      this._interactions.Delete = new ol_ext_interaction_Delete__WEBPACK_IMPORTED_MODULE_11__["default"]();
+    }
+    var del = this._interactions.Delete;
+    del.setActive(false);
+    if (this.getMap()) this.getMap().addInteraction(del);
+    sbar.addControl (new ol_ext_control_Button__WEBPACK_IMPORTED_MODULE_8__["default"]({
+      className: 'ol-delete',
+      title: this._getTitle(options.interactions.Delete) || "Delete",
+      handleClick: function(e) {
+        // Delete selection
+        del.delete(selectCtrl.getInteraction().getFeatures());
+        console.log('del')
+        var evt = {
+          type: 'select',
+          selected: [],
+          deselected: selectCtrl.getInteraction().getFeatures().getArray().slice(),
+          mapBrowserEvent: e.mapBrowserEvent
+        };
+        selectCtrl.getInteraction().getFeatures().clear();
+        selectCtrl.getInteraction().dispatchEvent(evt);
+      }
+    }));
+  }
+
+  // Info button
+  if (options.interactions.Info !== false) {
+    sbar.addControl (new ol_ext_control_Button__WEBPACK_IMPORTED_MODULE_8__["default"]({
+      className: 'ol-info',
+      title: this._getTitle(options.interactions.Info) || "Show informations",
+      handleClick: function() {
+        self.dispatchEvent({ 
+          type: 'info', 
+          features: selectCtrl.getInteraction().getFeatures() 
+        });
+      }
+    }));
+  }
+
+  // Select button
+  if (options.interactions.Select !== false) {
+    if (options.interactions.Select instanceof ol_interaction_Select__WEBPACK_IMPORTED_MODULE_5__["default"]
+     || options.interactions.Select instanceof _N2Select_js__WEBPACK_IMPORTED_MODULE_6__["default"]) {
+      this._interactions.Select = options.interactions.Select
+    } else {
+      this._interactions.Select = new ol_interaction_Select__WEBPACK_IMPORTED_MODULE_5__["default"]({
+        condition: ol_events_condition__WEBPACK_IMPORTED_MODULE_1__["click"]
+      });
+    }
+    var sel = this._interactions.Select;
+    selectCtrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_9__["default"]({
+      className: 'ol-selection',
+      title: this._getTitle(options.interactions.Select) || "Select",
+      interaction: sel,
+      bar: sbar.getControls().length ? sbar : undefined,
+      autoActivate:true,
+      active:true
+    });
+
+    this.addControl(selectCtrl);
+    sel.on('change:active', function() {
+      sel.getFeatures().clear();
+    });
+  }
+};
+
+
+/** Add editing tools
+ * @private
+ */ 
+ol_control_EditBar.prototype._setEditInteraction = function (options) {
+  if (options.interactions.DrawPoint !== false) {
+    if (options.interactions.DrawPoint instanceof ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"]) {
+      this._interactions.DrawPoint = options.interactions.DrawPoint;
+    } else {
+      this._interactions.DrawPoint = new ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"]({
+        type: 'Point',
+        source: this._source
+      });
+    }
+    var pedit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_9__["default"]({
+      className: 'ol-drawpoint',
+      title: this._getTitle(options.interactions.DrawPoint) || 'Point',
+      interaction: this._interactions.DrawPoint
+    });
+    this.addControl ( pedit );
+  }
+
+  if (options.interactions.DrawLine !== false) {
+    if (options.interactions.DrawLine instanceof ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"]) {
+      this._interactions.DrawLine = options.interactions.DrawLine
+    } else {
+      this._interactions.DrawLine = new ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"] ({
+        type: 'LineString',
+        source: this._source,
+        // Count inserted points
+        geometryFunction: function(coordinates, geometry) {
+          if (geometry) geometry.setCoordinates(coordinates);
+          else geometry = new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_3__["default"](coordinates);
+          this.nbpts = geometry.getCoordinates().length;
+          return geometry;
+        }
+      });
+    }
+    var ledit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_9__["default"]({
+      className: 'ol-drawline',
+      title: this._getTitle(options.interactions.DrawLine) || 'LineString',
+      interaction: this._interactions.DrawLine,
+      // Options bar associated with the control
+      bar: new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_7__["default"] ({
+        controls:[ 
+          new ol_ext_control_TextButton__WEBPACK_IMPORTED_MODULE_10__["default"]({
+            html: this._getTitle(options.interactions.UndoDraw) || 'undo',
+            title: this._getTitle(options.interactions.UndoDraw) || "delete last point",
+            handleClick: function() {
+              if (ledit.getInteraction().nbpts>1) ledit.getInteraction().removeLastPoint();
+            }
+          }),
+          new ol_ext_control_TextButton__WEBPACK_IMPORTED_MODULE_10__["default"] ({
+            html: this._getTitle(options.interactions.FinishDraw) || 'finish',
+            title: this._getTitle(options.interactions.FinishDraw) || "finish",
+            handleClick: function() {
+              // Prevent null objects on finishDrawing
+              if (ledit.getInteraction().nbpts>2) ledit.getInteraction().finishDrawing();
+            }
+          })
+        ]
+      }) 
+    });
+
+    this.addControl ( ledit );
+  }
+
+  if (options.interactions.DrawPolygon !== false) {
+    if (options.interactions.DrawPolygon instanceof ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"]){
+      this._interactions.DrawPolygon = options.interactions.DrawPolygon
+    } else {
+      this._interactions.DrawPolygon = new ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_2__["default"] ({
+        type: 'Polygon',
+        source: this._source,
+        // Count inserted points
+        geometryFunction: function(coordinates, geometry) {
+          this.nbpts = coordinates[0].length;
+          if (geometry) geometry.setCoordinates([coordinates[0].concat([coordinates[0][0]])]);
+          else geometry = new ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_4__["default"](coordinates);
+          return geometry;
+        }
+      });
+    }
+    this._setDrawPolygon(
+      'ol-drawpolygon', 
+      this._interactions.DrawPolygon, 
+      this._getTitle(options.interactions.DrawPolygon) || 'Polygon', 
+      options
+    );
+  }
+
+  // Draw hole
+  if (options.interactions.DrawHole !== false) {
+    if (options.interactions.DrawHole instanceof ol_ext_interaction_DrawHole__WEBPACK_IMPORTED_MODULE_18__["default"]){
+      this._interactions.DrawHole = options.interactions.DrawHole;
+    } else {
+      this._interactions.DrawHole = new ol_ext_interaction_DrawHole__WEBPACK_IMPORTED_MODULE_18__["default"] ();
+    }
+    this._setDrawPolygon(
+      'ol-drawhole', 
+      this._interactions.DrawHole, 
+      this._getTitle(options.interactions.DrawHole) || 'Hole', 
+      options
+    );
+  }
+
+  // Draw regular
+  if (options.interactions.DrawRegular !== false) {
+    if (options.interactions.DrawRegular instanceof ol_ext_interaction_DrawRegular__WEBPACK_IMPORTED_MODULE_17__["default"]) {
+      this._interactions.DrawRegular = options.interactions.DrawRegular
+    } else {
+      this._interactions.DrawRegular = new ol_ext_interaction_DrawRegular__WEBPACK_IMPORTED_MODULE_17__["default"] ({
+        source: this._source,
+        sides: 4
+      });
+    }
+    var regular = this._interactions.DrawRegular;
+
+    var div = document.createElement('DIV');
+
+    var down = ol_ext_util_element__WEBPACK_IMPORTED_MODULE_12__["default"].create('DIV', { parent: div });
+    ol_ext_util_element__WEBPACK_IMPORTED_MODULE_12__["default"].addListener(down, ['click', 'touchstart'], function() {
+      var sides = regular.getSides() -1;
+      if (sides < 2) sides = 2;
+      regular.setSides (sides);
+      text.textContent = sides>2 ? sides+' pts' : 'circle';
+    }.bind(this));
+
+    var text = ol_ext_util_element__WEBPACK_IMPORTED_MODULE_12__["default"].create('TEXT', { html:'4 pts', parent: div });
+    
+    var up = ol_ext_util_element__WEBPACK_IMPORTED_MODULE_12__["default"].create('DIV', { parent: div });
+    ol_ext_util_element__WEBPACK_IMPORTED_MODULE_12__["default"].addListener(up, ['click', 'touchstart'], function() {
+      var sides = regular.getSides() +1;
+      if (sides<3) sides=3;
+      regular.setSides(sides);
+      text.textContent = sides+' pts';
+    }.bind(this));
+
+    var ctrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_9__["default"]({
+      className: 'ol-drawregular',
+      title: this._getTitle(options.interactions.DrawRegular) || 'Regular',
+      interaction: this._interactions.DrawRegular,
+      // Options bar associated with the control
+      bar: new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_7__["default"] ({
+        controls:[ 
+          new ol_ext_control_TextButton__WEBPACK_IMPORTED_MODULE_10__["default"]({
+            html: div
+          })
+        ]
+      }) 
+    });
+    this.addControl (ctrl);
+  }
+
+};
+
+/**
+ * @private
+ */
+ol_control_EditBar.prototype._setDrawPolygon = function (className, interaction, title, options) {
+  var fedit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_9__["default"] ({
+    className: className,
+    title: title,
+    interaction: interaction,
+    // Options bar associated with the control
+    bar: new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_7__["default"]({
+      controls:[ 
+        new ol_ext_control_TextButton__WEBPACK_IMPORTED_MODULE_10__["default"] ({
+          html: this._getTitle(options.interactions.UndoDraw) || 'undo',
+          title: this._getTitle(options.interactions.UndoDraw) || 'undo last point',
+          handleClick: function(){
+            if (fedit.getInteraction().nbpts>1) fedit.getInteraction().removeLastPoint();
+          }
+        }),
+        new ol_ext_control_TextButton__WEBPACK_IMPORTED_MODULE_10__["default"]({
+          html: this._getTitle(options.interactions.FinishDraw) || 'finish',
+          title: this._getTitle(options.interactions.FinishDraw) || 'finish',
+          handleClick: function() {
+            // Prevent null objects on finishDrawing
+            if (fedit.getInteraction().nbpts>3) fedit.getInteraction().finishDrawing();
+          }
+        })
+      ]
+    }) 
+  });
+  this.addControl (fedit);
+};
+
+/** Add modify tools
+ */ 
+ol_control_EditBar.prototype.setModifyWithSelect = function (active) {
+	this.modifyWithSelect = active || false;
+}
+
+/** Add modify tools
+ * @private
+ */ 
+ol_control_EditBar.prototype._setModifyInteraction = function (options) {
+  // Modify on selected features
+  if (options.interactions.ModifySelect !== false && options.interactions.Select !== false) {
+    if (options.interactions.ModifySelect instanceof _ModifyFeature__WEBPACK_IMPORTED_MODULE_16__["default"]) {
+      this._interactions.ModifySelect = options.interactions.ModifySelect;
+    } else {
+      this._interactions.ModifySelect = new _ModifyFeature__WEBPACK_IMPORTED_MODULE_16__["default"]({
+        features: this.getInteraction('Select').getFeatures()
+      });
+    }
+    if (this.getMap()) this.getMap().addInteraction(this._interactions.ModifySelect);
+    // Activate with select
+    this._interactions.ModifySelect.setActive(false);
+    this._interactions.Select.on('change:active', function() {
+    	if (!this._interactions.Select.getActive()){
+    		this._interactions.ModifySelect.setActive(this._interactions.Select.getActive());
+    	} else if (this.modifyWithSelect){
+    		this._interactions.ModifySelect.setActive(this._interactions.Select.getActive());
+    	}
+      
+    }.bind(this));
+  }
+
+  if (options.interactions.Transform !== false) {
+    if (options.interactions.Transform instanceof ol_ext_interaction_Transform__WEBPACK_IMPORTED_MODULE_15__["default"]) {
+      this._interactions.Transform = options.interactions.Transform;
+    } else {
+      this._interactions.Transform = new ol_ext_interaction_Transform__WEBPACK_IMPORTED_MODULE_15__["default"] ({
+        addCondition: ol_events_condition__WEBPACK_IMPORTED_MODULE_1__["shiftKeyOnly"]
+      });
+    }
+    var transform = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_9__["default"] ({
+      html: '<i></i>',
+      className: 'ol-transform',
+      title: this._getTitle(options.interactions.Transform) || 'Transform',
+      interaction: this._interactions.Transform
+    });
+    this.addControl (transform);
+  }
+
+  if (options.interactions.Split !== false) {
+    if (options.interactions.Split instanceof ol_ext_interaction_Split__WEBPACK_IMPORTED_MODULE_14__["default"]) {
+      this._interactions.Split = options.interactions.Split;
+    } else {
+      this._interactions.Split = new ol_ext_interaction_Split__WEBPACK_IMPORTED_MODULE_14__["default"] ({
+          sources: this._source
+      });
+    }
+    var split = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_9__["default"] ({
+      className: 'ol-split',
+      title: this._getTitle(options.interactions.Split) || 'Split',
+      interaction: this._interactions.Split
+    });
+    this.addControl (split);
+  }
+
+  if (options.interactions.Offset !== false) {
+    if (options.interactions.Offset instanceof ol_ext_interaction_Offset__WEBPACK_IMPORTED_MODULE_13__["default"]) {
+      this._interactions.Offset = options.interactions.Offset;
+    } else {
+      this._interactions.Offset = new ol_ext_interaction_Offset__WEBPACK_IMPORTED_MODULE_13__["default"] ({
+          source: this._source
+      });
+    }
+    var offset = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_9__["default"] ({
+      html: '<i></i>',
+      className: 'ol-offset',
+      title: this._getTitle(options.interactions.Offset) || 'Offset',
+      interaction: this._interactions.Offset
+    });
+    this.addControl (offset);
+  }
+
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_control_EditBar);
+
+
+/***/ }),
+
+/***/ "./dist/n2es6/n2mapModule/ModifyFeature.js":
+/*!*************************************************!*\
+  !*** ./dist/n2es6/n2mapModule/ModifyFeature.js ***!
+  \*************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var ol_ext_util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol-ext/util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Pointer */ "./node_modules/ol/interaction/Pointer.js");
+/* harmony import */ var ol_style_Style__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/style/Style */ "./node_modules/ol/style/Style.js");
+/* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
+/* harmony import */ var ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/style/Fill */ "./node_modules/ol/style/Fill.js");
+/* harmony import */ var ol_style_Circle__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/style/Circle */ "./node_modules/ol/style/Circle.js");
+/* harmony import */ var ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/layer/Vector */ "./node_modules/ol/layer/Vector.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/geom/Point */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/Feature */ "./node_modules/ol/Feature.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ol/interaction/Interaction */ "./node_modules/ol/interaction/Interaction.js");
+/* harmony import */ var ol_ext_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ol-ext/geom/GeomUtils */ "./node_modules/ol-ext/geom/GeomUtils.js");
+/* harmony import */ var ol_extent__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ol/extent */ "./node_modules/ol/extent.js");
+/* harmony import */ var ol_events_condition__WEBPACK_IMPORTED_MODULE_14__ = __webpack_require__(/*! ol/events/condition */ "./node_modules/ol/events/condition.js");
+/* harmony import */ var ol_ext_geom_LineStringSplitAt__WEBPACK_IMPORTED_MODULE_15__ = __webpack_require__(/*! ol-ext/geom/LineStringSplitAt */ "./node_modules/ol-ext/geom/LineStringSplitAt.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO, 
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+/**
+* @module n2es6/n2mapModule/ModifyFeature
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+
+
+
+
+
+/** Interaction for modifying feature geometries. Similar to the core ol/interaction/Modify.
+ * The interaction is more suitable to use to handle feature modification: only features concerned 
+ * by the modification are passed to the events (instead of all feature with ol/interaction/Modify)
+ * - the modifystart event is fired before the feature is modified (no points still inserted)
+ * - the modifyend event is fired after the modification
+ * - it fires a modifying event
+ * @constructor
+ * @extends {ol_interaction_Pointer}
+ * @fires modifystart
+ * @fires modifying
+ * @fires modifyend
+ * @param {*} options
+ *	@param {ol.source.Vector|Array<ol.source.Vector>} options.source a list of source to modify (configured with useSpatialIndex set to true)
+ *  @param {ol.Collection.<ol.Feature>} options.features collection of feature to modify
+ *  @param {integer} options.pixelTolerance Pixel tolerance for considering the pointer close enough to a segment or vertex for editing. Default is 10.
+ *  @param {function|undefined} options.filter a filter that takes a feature and return true if it can be modified, default always true.
+ *  @param {ol.style.Style | Array<ol.style.Style> | undefined} options.style Style for the sketch features.
+ *  @param {ol.EventsConditionType | undefined} options.condition A function that takes an ol.MapBrowserEvent and returns a boolean to indicate whether that event will be considered to add or move a vertex to the sketch. Default is ol.events.condition.primaryAction.
+ *  @param {ol.EventsConditionType | undefined} options.deleteCondition A function that takes an ol.MapBrowserEvent and returns a boolean to indicate whether that event should be handled. By default, ol.events.condition.singleClick with ol.events.condition.altKeyOnly results in a vertex deletion.
+ *  @param {ol.EventsConditionType | undefined} options.insertVertexCondition A function that takes an ol.MapBrowserEvent and returns a boolean to indicate whether a new vertex can be added to the sketch features. Default is ol.events.condition.always
+ */
+var ol_interaction_ModifyFeature = function(options){
+  if (!options) options = {};
+
+  var dragging, modifying;
+  ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__["default"].call(this,{
+    /*
+    handleDownEvent: this.handleDownEvent,
+    handleDragEvent: this.handleDragEvent,
+    handleMoveEvent: this.handleMoveEvent,
+    handleUpEvent: this.handleUpEvent,
+    */
+    handleEvent: function(e) {
+      switch(e.type) {
+        case 'pointerdown': {
+          dragging = this.handleDownEvent(e);
+          modifying = dragging || this._deleteCondition(e);
+          return !dragging;
+        }
+        case 'pointerup': {
+          dragging = false;
+          return this.handleUpEvent(e);
+        }
+        case 'pointerdrag': {
+          if (dragging) return this.handleDragEvent(e);
+          else return true;
+        }
+        case 'pointermove': {
+          if (!dragging) return this.handleMoveEvent(e);
+          else return true;
+        }
+        case 'singleclick':
+        case 'click': {
+          // Prevent click when modifying
+          return !modifying;
+        }
+        default: return true;
+      }
+    }
+  });
+
+  // Snap distance (in px)
+  this.snapDistance_ = options.pixelTolerance || 10;
+  // Split tolerance between the calculated intersection and the geometry
+  this.tolerance_ = 1e-10;
+  // Cursor
+  this.cursor_ = options.cursor;
+
+  // List of source to split
+  this.sources_ = options.sources ? (options.sources instanceof Array) ? options.sources:[options.sources] : [];
+
+  if (options.features) {
+    this.sources_.push (new ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__["default"]({ features: options.features }));
+  }
+
+  // Get all features candidate
+  this.filterSplit_ = options.filter || function(){ return true; };
+
+  this._condition = options.condition || ol_events_condition__WEBPACK_IMPORTED_MODULE_14__["primaryAction"];
+  this._deleteCondition = options.deleteCondition || ol_events_condition__WEBPACK_IMPORTED_MODULE_14__["platformModifierKeyOnly"];
+  this._insertVertexCondition = options.insertVertexCondition || ol_events_condition__WEBPACK_IMPORTED_MODULE_14__["always"];
+
+  // Default style
+  var sketchStyle = function() {
+    return [ new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+        image: new ol_style_Circle__WEBPACK_IMPORTED_MODULE_6__["default"]({
+          radius: 6,
+          fill: new ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__["default"]({ color: [0, 153, 255, 1] }),
+          stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__["default"]({ color: '#FFF', width: 1.25 })
+        })
+      })
+    ];
+  }
+
+  // Custom style
+  if (options.style) {
+    if (typeof(options.style) === 'function') {
+      sketchStyle = options.style
+     } else {
+       sketchStyle = function() { return options.style; }
+     }
+  }
+
+  // Create a new overlay for the sketch
+  this.overlayLayer_ = new ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__["default"]({
+    source: new ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__["default"]({
+      useSpatialIndex: false
+    }),
+    name:'Modify overlay',
+    displayInLayerSwitcher: false,
+    style: sketchStyle
+  });
+
+};
+Object(ol_ext_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_ModifyFeature, ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_ModifyFeature.prototype.setMap = function(map) {
+  if (this.getMap()) this.getMap().removeLayer(this.overlayLayer_);
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_11__["default"].prototype.setMap.call (this, map);
+  this.overlayLayer_.setMap(map);
+};
+
+/**
+ * Activate or deactivate the interaction + remove the sketch.
+ * @param {boolean} active.
+ * @api stable
+ */
+ol_interaction_ModifyFeature.prototype.setActive = function(active) {
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_11__["default"].prototype.setActive.call (this, active);
+  if (this.overlayLayer_) this.overlayLayer_.getSource().clear();
+};
+
+/** Get closest feature at pixel
+ * @param {ol.Pixel} 
+ * @return {*} 
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype.getClosestFeature = function(e) {
+  var f, c, d = this.snapDistance_+1;
+  for (var i=0; i<this.sources_.length; i++) {
+    var source = this.sources_[i];
+    f = source.getClosestFeatureToCoordinate(e.coordinate);
+    if (f && this.filterSplit_(f)) {
+      var ci = f.getGeometry().getClosestPoint(e.coordinate);
+      var di = Object(ol_ext_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_dist2d"])(e.coordinate,ci) / e.frameState.viewState.resolution;
+      if (di < d){
+        d = di;
+        c = ci;
+      }
+      break;
+    }
+  }
+  if (d > this.snapDistance_) {
+    return false;
+  } else {
+    // Snap to node
+    var coord = this.getNearestCoord (c, f.getGeometry());
+    if (coord) {
+      coord = coord.coord;
+      var p = this.getMap().getPixelFromCoordinate(coord);
+      if (Object(ol_ext_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_dist2d"])(e.pixel, p) < this.snapDistance_) {
+        c = coord;
+      }
+      //
+      return { source:source, feature:f, coord: c };
+    }
+  }
+}
+
+/** Get nearest coordinate in a list 
+* @param {ol.coordinate} pt the point to find nearest
+* @param {ol.geom} coords list of coordinates
+* @return {*} the nearest point with a coord (projected point), dist (distance to the geom), ring (if Polygon)
+*/
+ol_interaction_ModifyFeature.prototype.getNearestCoord = function(pt, geom) {
+  var i, l, p, p0, dm;
+  switch (geom.getType()) {
+    case 'Point': {
+      return { coord: geom.getCoordinates(), dist: Object(ol_ext_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_dist2d"])(geom.getCoordinates(), pt) };
+    }
+    case 'MultiPoint': {
+      return this.getNearestCoord (pt, new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__["default"](geom.getCoordinates()));
+    }
+    case 'LineString':
+    case 'LinearRing': {
+      var d;
+      dm = Number.MAX_VALUE;
+      var coords = geom.getCoordinates();
+      for (i=0; i < coords.length; i++) {
+        d = Object(ol_ext_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_dist2d"]) (pt, coords[i]);
+        if (d < dm) {
+          dm = d;
+          p0 = coords[i];
+        }
+      }
+      return { coord: p0, dist: dm };
+    }
+    case 'MultiLineString': {
+      var lstring = geom.getLineStrings();
+      p0 = false, dm = Number.MAX_VALUE;
+      for (i=0; l=lstring[i]; i++) {
+        p = this.getNearestCoord(pt, l);
+        if (p && p.dist<dm) {
+          p0 = p;
+          dm = p.dist;
+          p0.ring = i;
+        }
+      }
+      return p0;
+    }
+    case 'Polygon': {
+      var lring = geom.getLinearRings();
+      p0 = false;
+      dm = Number.MAX_VALUE;
+      for (i=0; l=lring[i]; i++) {
+        p = this.getNearestCoord(pt, l);
+        if (p && p.dist<dm) {
+          p0 = p;
+          dm = p.dist;
+          p0.ring = i;
+        }
+      }
+      return p0;
+    }
+    case 'MultiPolygon': {
+      var poly = geom.getPolygons();
+      p0 = false;
+      dm = Number.MAX_VALUE;
+      for (i=0; l=poly[i]; i++) {
+        p = this.getNearestCoord(pt, l);
+        if (p && p.dist<dm) {
+          p0 = p;
+          dm = p.dist;
+          p0.poly = i;
+        }
+      }
+      return p0;
+    }
+    case 'GeometryCollection': {
+      var g = geom.getGeometries();
+      p0 = false;
+      dm = Number.MAX_VALUE;
+      for (i=0; l=g[i]; i++) {
+        p = this.getNearestCoord(pt, l);
+        if (p && p.dist<dm) {
+          p0 = p;
+          dm = p.dist;
+          p0.geom = i;
+        }
+      }
+      return p0;
+    }
+    default: return false;
+  }
+};
+
+/** Get arcs concerned by a modification 
+ * @param {ol.geom} geom the geometry concerned
+ * @param {ol.coordinate} coord pointed coordinates
+ */
+ol_interaction_ModifyFeature.prototype.getArcs = function(geom, coord) {
+  var arcs = false;
+  var coords, i, s, l;
+  switch(geom.getType()) {
+    case 'Point': {
+      if (Object(ol_ext_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_equal"])(coord, geom.getCoordinates())) {
+        arcs = { 
+          geom: geom, 
+          type: geom.getType(),
+          coord1: [],
+          coord2: [],
+          node: true
+        }
+      }
+      break;
+    }
+    case 'MultiPoint': {
+      coords = geom.getCoordinates();
+      for (i=0; i < coords.length; i++) {
+        if (Object(ol_ext_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_equal"])(coord, coords[i])) {
+          arcs = { 
+            geom: geom, 
+            type: geom.getType(),
+            index: i,
+            coord1: [],
+            coord2: [],
+            node: true
+          }
+          break;
+        }
+      }
+      break;
+    }
+    case 'LinearRing': 
+    case 'LineString': {
+      var p = geom.getClosestPoint(coord);
+      if (Object(ol_ext_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_dist2d"])(p,coord) < 1.5*this.tolerance_) {
+        var split;
+        // Split the line in two
+        if (geom.getType() === 'LinearRing') {
+          var g = new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__["default"](geom.getCoordinates());
+          split = g.splitAt(coord, this.tolerance_);
+        } else {
+          split = geom.splitAt(coord, this.tolerance_);
+        }
+        // If more than 2
+        if (split.length>2) {
+          coords = split[1].getCoordinates();
+          for (i=2; s=split[i]; i++) {
+            var c = s.getCoordinates();
+            c.shift();
+            coords = coords.concat(c);
+          }
+          split = [ split[0], new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__["default"](coords) ];
+        }
+        // Split in two
+        if (split.length === 2) {
+          var c0 = split[0].getCoordinates();
+          var c1 = split[1].getCoordinates();
+          var nbpt = c0.length + c1.length -1;
+          c0.pop();
+          c1.shift();
+          arcs = { 
+            geom: geom, 
+            type: geom.getType(),
+            coord1: c0, 
+            coord2: c1,
+            node: (geom.getCoordinates().length === nbpt),
+            closed: false
+          }
+        } else if (split.length === 1) {
+          s = split[0].getCoordinates();
+          var start = Object(ol_ext_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_equal"])(s[0], coord);
+          var end = Object(ol_ext_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_12__["ol_coordinate_equal"])(s[s.length-1], coord);
+          // Move first point
+          if (start) {
+            s.shift();
+            if (end) s.pop();
+            arcs = { 
+              geom: geom, 
+              type: geom.getType(),
+              coord1: [], 
+              coord2: s,
+              node: true,
+              closed: end
+            }
+          } else if (end) {
+            // Move last point
+            s.pop()
+            arcs = { 
+              geom: geom, 
+              type: geom.getType(),
+              coord1: s, 
+              coord2: [],
+              node: true,
+              closed: false
+            }
+          }
+        }
+      }
+      break;
+    }
+    case 'MultiLineString': {
+      var lstring = geom.getLineStrings();
+      for (i=0; l=lstring[i]; i++) {
+        arcs = this.getArcs(l, coord);
+        if (arcs) {
+          arcs.geom = geom;
+          arcs.type = geom.getType();
+          arcs.lstring = i;
+          break;
+        }
+      }
+      break;
+    }
+    case 'Polygon': {
+      var lring = geom.getLinearRings();
+      for (i=0; l=lring[i]; i++) {
+        arcs = this.getArcs(l, coord);
+        if (arcs) {
+          arcs.geom = geom;
+          arcs.type = geom.getType();
+          arcs.index = i;
+          break;
+        }
+      }
+      break;
+    }
+    case 'MultiPolygon': {
+      var poly = geom.getPolygons();
+      for (i=0; l=poly[i]; i++) {
+        arcs = this.getArcs(l, coord);
+        if (arcs) {
+          arcs.geom = geom;
+          arcs.type = geom.getType();
+          arcs.poly = i;
+          break;
+        }
+      }
+      break;
+    }
+    case 'GeometryCollection': {
+      for (i=0; l=g[i]; i++) {
+        arcs = this.getArcs(l, coord);
+        if (arcs) {
+          arcs.geom = geom;
+          arcs.g = i;
+          arcs.typeg = arcs.type;
+          arcs.type = geom.getType();
+          break;
+        }
+      }
+      break;
+    }
+    default: {
+      console.error('ol/interaction/ModifyFeature '+geom.getType()+' not supported!');
+      break;
+    }
+  }
+  return arcs;
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ */
+ol_interaction_ModifyFeature.prototype.handleDownEvent = function(evt) {
+  if (!this.getActive()) return false;
+
+  // Something to split ?
+  var current = this.getClosestFeature(evt);
+
+  if (current && (this._condition(evt) || this._deleteCondition(evt))) {
+    var features = [];
+    this.arcs = [];
+
+    // Get features concerned
+    this.sources_.forEach(function(s) {
+      var extent = Object(ol_extent__WEBPACK_IMPORTED_MODULE_13__["buffer"]) (Object(ol_extent__WEBPACK_IMPORTED_MODULE_13__["boundingExtent"])([current.coord]), this.tolerance_);
+      features = features.concat(features, s.getFeaturesInExtent(extent));
+    }.bind(this));
+
+    // Get arcs concerned
+    this._modifiedFeatures = [];
+    features.forEach(function(f) {
+      var a = this.getArcs(f.getGeometry(), current.coord);
+      if (a) {
+        if (this._insertVertexCondition(evt) || a.node) {
+          a.feature = f;
+          this._modifiedFeatures.push(f);
+          this.arcs.push(a);
+        }
+      }
+    }.bind(this));
+
+    if (this._modifiedFeatures.length) {
+      if (this._deleteCondition(evt)) {
+        return !this._removePoint(current, evt); 
+      } else {
+        this.dispatchEvent({ 
+          type:'modifystart', 
+          coordinate: current.coord,
+          originalEvent: evt.originalEvent,
+          features: this._modifiedFeatures
+        });
+        this.handleDragEvent({ coordinate: current.coord })
+        return true;
+      }
+    } else {
+      return true;
+    }
+  } else {
+    return false;
+  }
+};
+
+/** Get modified features
+ * @return {Array<ol.Feature>} list of modified features
+ */
+ol_interaction_ModifyFeature.prototype.getModifiedFeatures = function() {
+  return this._modifiedFeatures || [];
+};
+
+/** Removes the vertex currently being pointed.
+ */
+ol_interaction_ModifyFeature.prototype.removePoint = function() {
+  this._removePoint({},{});
+};
+
+/**
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype._getModification = function(a) {
+  var coords = a.coord1.concat(a.coord2);
+  switch (a.type) {
+    case 'LineString': {
+      if (a.closed) coords.push(coords[0]);
+      if (coords.length>1) {
+        if (a.geom.getCoordinates().length != coords.length) {
+          a.coords = coords;
+          return true;
+        }
+      }
+      break;
+    }
+    case 'MultiLineString': {
+      if (a.closed) coords.push(coords[0]);
+      if (coords.length>1) {
+        var c = a.geom.getCoordinates();
+        if (c[a.lstring].length != coords.length) {
+          c[a.lstring] = coords;
+          a.coords = c;
+          return true;
+        }
+      }
+      break;
+    }
+    case 'Polygon': {
+      if (a.closed) coords.push(coords[0]);
+      if (coords.length>3) {
+        c = a.geom.getCoordinates();
+        if (c[a.index].length != coords.length) {
+          c[a.index] = coords;
+          a.coords = c;
+          return true;
+        }
+      }
+      break;
+    }
+    case 'MultiPolygon': {
+      if (a.closed) coords.push(coords[0]);
+      if (coords.length>3) {
+        c = a.geom.getCoordinates();
+        if (c[a.poly][a.index].length != coords.length) {
+          c[a.poly][a.index] = coords;
+          a.coords = c;
+          return true;
+        }
+      }
+      break;
+    }
+    case 'GeometryCollection': {
+      a.type = a.typeg;
+      var geom = a.geom;
+      var geoms = geom.getGeometries();
+      a.geom = geoms[a.g];
+      var found = this._getModification(a);
+      // Restore current arc
+      geom.setGeometries(geoms);
+      a.geom = geom;
+      a.type = 'GeometryCollection';
+      return found;
+    }
+    default: {
+      //console.error('ol/interaction/ModifyFeature '+a.type+' not supported!');
+      break;
+    }
+  }
+  return false;
+};
+
+/** Removes the vertex currently being pointed.
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype._removePoint = function(current, evt) {
+  if (!this.arcs) return false;
+
+  this.overlayLayer_.getSource().clear();
+
+  var found = false;
+  // Get all modifications
+  this.arcs.forEach(function(a) {
+    found = found || this._getModification(a);
+  }.bind(this));
+
+  // Almost one point is removed
+  if (found) {
+    this.dispatchEvent({ 
+      type:'modifystart', 
+      coordinate: current.coord,
+      originalEvent: evt.originalEvent,
+      features: this._modifiedFeatures
+    });
+    this.arcs.forEach(function(a) {
+      if (a.geom.getType() === 'GeometryCollection') {
+        if (a.coords) {
+          var geoms = a.geom.getGeometries();
+          geoms[a.g].setCoordinates(a.coords);
+          a.geom.setGeometries(geoms);
+        }
+      } else {
+        if (a.coords) a.geom.setCoordinates(a.coords);
+      }
+    }.bind(this));
+    this.dispatchEvent({ 
+      type:'modifyend', 
+      coordinate: current.coord,
+      originalEvent: evt.originalEvent,
+      features: this._modifiedFeatures
+    });
+  }
+
+  this.arcs = [];
+  return found;
+};
+
+/**
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype.handleUpEvent = function(e) {
+  if (!this.getActive()) return false;
+  if (!this.arcs || !this.arcs.length) return true;
+
+  this.overlayLayer_.getSource().clear();
+  this.dispatchEvent({ 
+    type:'modifyend', 
+    coordinate: e.coordinate,
+    originalEvent: e.originalEvent,
+    features: this._modifiedFeatures
+  });
+
+  return true;
+};
+
+/**
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype.setArcCoordinates = function(a, coords) {
+  var c;
+  switch (a.type) {
+    case 'Point': {
+      a.geom.setCoordinates(coords[0]);
+      break;
+    }
+    case 'MultiPoint': {
+      c = a.geom.getCoordinates();
+      c[a.index] = coords[0];
+      a.geom.setCoordinates(c);
+      break;
+    }
+    case 'LineString': {
+      a.geom.setCoordinates(coords);
+      break;
+    }
+    case 'MultiLineString': {
+      c = a.geom.getCoordinates();
+      c[a.lstring] = coords;
+      a.geom.setCoordinates(c);
+      break;
+    }
+    case 'Polygon': {
+      c = a.geom.getCoordinates();
+      c[a.index] = coords;
+      a.geom.setCoordinates(c);
+      break;
+    }
+    case 'MultiPolygon': {
+      c = a.geom.getCoordinates();
+      c[a.poly][a.index] = coords;
+      a.geom.setCoordinates(c);
+      break;
+    }
+    case 'GeometryCollection': {
+      a.type = a.typeg;
+      var geom = a.geom;
+      var geoms = geom.getGeometries();
+      a.geom = geoms[a.g];
+      this.setArcCoordinates(a, coords);
+      geom.setGeometries(geoms);
+      a.geom = geom;
+      a.type = 'GeometryCollection';
+      break;
+    }
+  }
+};
+/**
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype.handleDragEvent = function(e) {
+  if (!this.getActive()) return false;
+  if (!this.arcs) return true;
+
+  // Show sketch
+  this.overlayLayer_.getSource().clear();
+  var p = new ol_Feature__WEBPACK_IMPORTED_MODULE_9__["default"](new ol_geom_Point__WEBPACK_IMPORTED_MODULE_8__["default"](e.coordinate));
+  this.overlayLayer_.getSource().addFeature(p);
+
+  // Nothing to do
+  if (!this.arcs.length) return true;
+
+  // Move arcs
+  this.arcs.forEach(function(a) {
+    var coords = a.coord1.concat([e.coordinate], a.coord2);
+    if (a.closed) coords.push(e.coordinate);
+    this.setArcCoordinates(a, coords);
+  }.bind(this));
+
+  this.dispatchEvent({ 
+    type:'modifying', 
+    coordinate: e.coordinate,
+    originalEvent: e.originalEvent,
+    features: this._modifiedFeatures
+  });
+
+  return true;
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ * @private
+ */
+ol_interaction_ModifyFeature.prototype.handleMoveEvent = function(e) {
+  if (!this.getActive()) return false;
+
+  this.overlayLayer_.getSource().clear();
+  var current = this.getClosestFeature(e);
+
+  // Draw sketch
+  if (current) {
+    var p = new ol_Feature__WEBPACK_IMPORTED_MODULE_9__["default"](new ol_geom_Point__WEBPACK_IMPORTED_MODULE_8__["default"](current.coord));
+    this.overlayLayer_.getSource().addFeature(p);
+  }
+
+  // Show cursor
+  var element = e.map.getTargetElement();
+  if (this.cursor_) {
+    if (current) {
+      if (element.style.cursor != this.cursor_) {
+        this.previousCursor_ = element.style.cursor;
+        element.style.cursor = this.cursor_;
+      }
+    } else if (this.previousCursor_ !== undefined) {
+      element.style.cursor = this.previousCursor_;
+      this.previousCursor_ = undefined;
+    }
+  }
+  return true;
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_ModifyFeature);
+
+/***/ }),
+
 /***/ "./dist/n2es6/n2mapModule/N2CouchDbSource.js":
 /*!***************************************************!*\
   !*** ./dist/n2es6/n2mapModule/N2CouchDbSource.js ***!
@@ -1453,30 +2750,35 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var ol_layer_Group_js__WEBPACK_IMPORTED_MODULE_18__ = __webpack_require__(/*! ol/layer/Group.js */ "./node_modules/ol/layer/Group.js");
 /* harmony import */ var ol_layer_Image_js__WEBPACK_IMPORTED_MODULE_19__ = __webpack_require__(/*! ol/layer/Image.js */ "./node_modules/ol/layer/Image.js");
 /* harmony import */ var ol_View_js__WEBPACK_IMPORTED_MODULE_20__ = __webpack_require__(/*! ol/View.js */ "./node_modules/ol/View.js");
-/* harmony import */ var _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ../ol5support/N2DonutCluster.js */ "./dist/n2es6/ol5support/N2DonutCluster.js");
+/* harmony import */ var _ol5support_N2Cluster_js__WEBPACK_IMPORTED_MODULE_21__ = __webpack_require__(/*! ../ol5support/N2Cluster.js */ "./dist/n2es6/ol5support/N2Cluster.js");
 /* harmony import */ var ol_extent_js__WEBPACK_IMPORTED_MODULE_22__ = __webpack_require__(/*! ol/extent.js */ "./node_modules/ol/extent.js");
 /* harmony import */ var ol_proj_js__WEBPACK_IMPORTED_MODULE_23__ = __webpack_require__(/*! ol/proj.js */ "./node_modules/ol/proj.js");
 /* harmony import */ var ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__ = __webpack_require__(/*! ol/proj/Projection.js */ "./node_modules/ol/proj/Projection.js");
 /* harmony import */ var ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_25__ = __webpack_require__(/*! ol/layer/Tile.js */ "./node_modules/ol/layer/Tile.js");
 /* harmony import */ var ol_tilegrid_WMTS_js__WEBPACK_IMPORTED_MODULE_26__ = __webpack_require__(/*! ol/tilegrid/WMTS.js */ "./node_modules/ol/tilegrid/WMTS.js");
-/* harmony import */ var ol_events_condition_js__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ol/events/condition.js */ "./node_modules/ol/events/condition.js");
-/* harmony import */ var ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ol/interaction/MouseWheelZoom.js */ "./node_modules/ol/interaction/MouseWheelZoom.js");
-/* harmony import */ var ol_interaction_js__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ol/interaction.js */ "./node_modules/ol/interaction.js");
-/* harmony import */ var ol_Observable__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ol/Observable */ "./node_modules/ol/Observable.js");
-/* harmony import */ var ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ol/interaction/Draw.js */ "./node_modules/ol/interaction/Draw.js");
-/* harmony import */ var ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ol/source/Stamen.js */ "./node_modules/ol/source/Stamen.js");
-/* harmony import */ var ol_source_OSM__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ol/source/OSM */ "./node_modules/ol/source/OSM.js");
-/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ol-layerswitcher */ "./node_modules/ol-layerswitcher/dist/ol-layerswitcher.js");
-/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_34___default = /*#__PURE__*/__webpack_require__.n(ol_layerswitcher__WEBPACK_IMPORTED_MODULE_34__);
-/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ol-ext/dist/ol-ext.css */ "./node_modules/ol-ext/dist/ol-ext.css");
-/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_35___default = /*#__PURE__*/__webpack_require__.n(ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_35__);
-/* harmony import */ var ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ol-ext/control/Bar */ "./node_modules/ol-ext/control/Bar.js");
-/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
-/* harmony import */ var ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_38__ = __webpack_require__(/*! ol-ext/control/Timeline */ "./node_modules/ol-ext/control/Timeline.js");
-/* harmony import */ var ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_39__ = __webpack_require__(/*! ol-ext/overlay/Popup */ "./node_modules/ol-ext/overlay/Popup.js");
+/* harmony import */ var ol_format_WKT__WEBPACK_IMPORTED_MODULE_27__ = __webpack_require__(/*! ol/format/WKT */ "./node_modules/ol/format/WKT.js");
+/* harmony import */ var ol_events_condition_js__WEBPACK_IMPORTED_MODULE_28__ = __webpack_require__(/*! ol/events/condition.js */ "./node_modules/ol/events/condition.js");
+/* harmony import */ var ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_29__ = __webpack_require__(/*! ol/interaction/MouseWheelZoom.js */ "./node_modules/ol/interaction/MouseWheelZoom.js");
+/* harmony import */ var ol_interaction_js__WEBPACK_IMPORTED_MODULE_30__ = __webpack_require__(/*! ol/interaction.js */ "./node_modules/ol/interaction.js");
+/* harmony import */ var _ol5support_ToString__WEBPACK_IMPORTED_MODULE_31__ = __webpack_require__(/*! ../ol5support/ToString */ "./dist/n2es6/ol5support/ToString.js");
+/* harmony import */ var ol_Observable__WEBPACK_IMPORTED_MODULE_32__ = __webpack_require__(/*! ol/Observable */ "./node_modules/ol/Observable.js");
+/* harmony import */ var ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_33__ = __webpack_require__(/*! ol/interaction/Draw.js */ "./node_modules/ol/interaction/Draw.js");
+/* harmony import */ var ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_34__ = __webpack_require__(/*! ol/source/Stamen.js */ "./node_modules/ol/source/Stamen.js");
+/* harmony import */ var ol_source_OSM__WEBPACK_IMPORTED_MODULE_35__ = __webpack_require__(/*! ol/source/OSM */ "./node_modules/ol/source/OSM.js");
+/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_36__ = __webpack_require__(/*! ol-layerswitcher */ "./node_modules/ol-layerswitcher/dist/ol-layerswitcher.js");
+/* harmony import */ var ol_layerswitcher__WEBPACK_IMPORTED_MODULE_36___default = /*#__PURE__*/__webpack_require__.n(ol_layerswitcher__WEBPACK_IMPORTED_MODULE_36__);
+/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_37__ = __webpack_require__(/*! ol-ext/dist/ol-ext.css */ "./node_modules/ol-ext/dist/ol-ext.css");
+/* harmony import */ var ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_37___default = /*#__PURE__*/__webpack_require__.n(ol_ext_dist_ol_ext_css__WEBPACK_IMPORTED_MODULE_37__);
+/* harmony import */ var ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_38__ = __webpack_require__(/*! ol-ext/control/Bar */ "./node_modules/ol-ext/control/Bar.js");
+/* harmony import */ var _EditBar__WEBPACK_IMPORTED_MODULE_39__ = __webpack_require__(/*! ./EditBar */ "./dist/n2es6/n2mapModule/EditBar.js");
+/* harmony import */ var ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_40__ = __webpack_require__(/*! ol-ext/control/Toggle */ "./node_modules/ol-ext/control/Toggle.js");
+/* harmony import */ var ol_ext_control_Timeline__WEBPACK_IMPORTED_MODULE_41__ = __webpack_require__(/*! ol-ext/control/Timeline */ "./node_modules/ol-ext/control/Timeline.js");
+/* harmony import */ var ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_42__ = __webpack_require__(/*! ol-ext/overlay/Popup */ "./node_modules/ol-ext/overlay/Popup.js");
 /**
  * @module n2es6/n2mapModule/N2MapCanvas
  */
+
+
 
 
 
@@ -1589,6 +2891,7 @@ class N2MapCanvas  {
 		},opts_);
 
 		var _this = this;
+		this.options = opts;
 		this._classname = 'N2MapCanvas';
 		this.dispatchService  = null;
 		this._suppressSetHash = false;
@@ -1597,6 +2900,7 @@ class N2MapCanvas  {
 
 		this.canvasId = opts.canvasId;
 		this.sourceModelId = opts.sourceModelId;
+		this.interactionId = opts.interactionId;
 		this.elementGenerator = opts.elementGenerator;
 
 		var config = opts.config;
@@ -1605,6 +2909,7 @@ class N2MapCanvas  {
 				this.dispatchService = config.directory.dispatchService;
 				this.showService = config.directory.showService;
 				this.customService = config.directory.customService;
+				opts.directory = config.directory;
 			};
 		};
 
@@ -1618,7 +2923,8 @@ class N2MapCanvas  {
 
 		this.center = undefined;
 		this.resolution = undefined;
-
+		this.proj = undefined;
+		
 		this.lastTime = null;
 		this.initialTime = null;
 		this.endIdx = 0;
@@ -1634,6 +2940,9 @@ class N2MapCanvas  {
 		this.n2Map = undefined;
 		this.popupOverlay = undefined;
 		this.n2MapStyles = new _N2MapStyles_js__WEBPACK_IMPORTED_MODULE_4__["default"]();
+		this.editbarControl = null;
+		
+		this.editLayerSource = undefined;
 		this.refreshCallback = null;
 
 		if ( this.customService ){
@@ -1645,12 +2954,118 @@ class N2MapCanvas  {
 				}
 		}
 		}
+		
+		
 		this.interactionSet = {
 				selectInteraction : null,
 				drawInteraction : null
 		};
 		this.currentInteract = null;
+		this.n2intentWrapper = null;
 		this._processOverlay(opts.overlays);
+		this.editFeatureInfo = {
+				original: {}
+			};
+		
+		// MODES
+		
+		var addOrEditLabel = _loc('Add or Edit a Map Feature');
+		var cancelLabel = _loc('Cancel Feature Editing');
+		
+		this.modes = {
+			NAVIGATE: {
+				name        : "NAVIGATE"
+				,buttonValue : addOrEditLabel
+				,onStartHover: function(feature, layer) {
+					_this._hoverFeature(feature, layer);
+					_this._hoverFeaturePopup(feature, layer);
+				}
+				,onStartClick: function(feature, mapFeature) {
+					//_this.initAndDisplayClickedPlaceInfo(feature);
+				}
+				,onEndClick: function(feature) {
+				}
+				,featureAdded: function(feature) {
+					
+				}
+			}
+			,ADD_OR_SELECT_FEATURE: {
+				name        : "ADD_OR_SELECT"
+				,buttonValue : cancelLabel
+				,onStartHover: function(feature, layer) {
+					_this._hoverFeature(feature, layer);
+					_this._hoverFeaturePopup(feature, layer);
+				}
+				,onStartClick: function(mapFeature) {
+
+					var editAllowed = true;
+					if( mapFeature.cluster && mapFeature.cluster.length > 1 ) {
+						alert( _loc('This feature is a cluster and can not be edited directly. Please, zoom in to see features within cluster.') );
+						editAllowed = false;
+					};
+					
+					if( editAllowed ) {
+			    		_this._dispatch({
+			    			type: 'editInitiate'
+			    			,doc: mapFeature.data
+			    		});
+					};
+				}
+				,onEndClick: function(feature) {
+				}
+				,featureAdded: function(feature) {
+					_this.editFeatureInfo.original = {};
+					_this.editFeatureInfo.fid = undefined;
+					_this.editFeatureInfo.suppressZoom = true;
+					var geometry = feature.getGeometry();
+					var mapProj = new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__["default"]({code: 'EPSG:3857'});
+
+		    		_this.dispatchService.send(DH, {
+		    			type: 'editCreateFromGeometry'
+		    			,geometry: geometry
+		    			,projection: mapProj
+		    			,_origin: _this
+		    		});
+				}
+			}
+			,ADD_GEOMETRY: {
+				name        : "ADD_GEOMETRY"
+				,buttonValue : cancelLabel
+				,onStartHover: function(feature, layer) {
+					_this._hoverFeature(feature, layer);
+					_this._hoverFeaturePopup(feature, layer);
+				}
+				,featureAdded: function(feature) {
+					var proj = null;
+					if( feature 
+					 && feature.layer 
+					 && feature.layer.map ){
+						proj = feature.layer.map.getProjectionObject();
+					};
+					
+		    		_this._dispatch({
+		    			type: 'mapGeometryAdded'
+		        		,geometry: feature.geometry
+		        		,projection: proj
+		    		});
+				}
+			}
+			,EDIT_FEATURE: {
+				name        : "EDIT_FEATURE"
+				,buttonValue : cancelLabel
+				,featureAdded: function(feature) {
+				}
+			}
+		};
+		this.currentMode = this.modes.NAVIGATE;
+		this.createMapInteractionSwitch();
+		
+		var authService = this._getAuthService();
+	    if( authService ) {
+	    	authService.addListeners(function(currentUser){
+				_this.loginStateChanged(currentUser);
+			});
+	    };
 		
 		// Register to events
 		if( this.dispatchService ){
@@ -1662,6 +3077,11 @@ class N2MapCanvas  {
 			this.dispatchService.register(DH, 'time_interval_change', f);
 			this.dispatchService.register(DH, 'focusOn', f);
 			this.dispatchService.register(DH, 'mapRefreshCallbackRequest', f);
+			this.dispatchService.register(DH, 'resolutionRequest', f);
+			
+			this.dispatchService.register(DH, 'editInitiate', f);
+			this.dispatchService.register(DH, 'editClosed', f);
+			
 		};
 
 		$n2.log(this._classname,this);
@@ -1803,8 +3223,190 @@ class N2MapCanvas  {
 
 
 	};
+	
+    // === LOGIN STUFF START ========================================================
 
+    /*
+     * function: auth module listener for login state changes.  Only called if the auth
+     * module is loaded so checks of that inside this function are not useful.
+     * 
+     * Once installed by the subsequent call to addListener(), this is immediately
+     * called and then whenever a login state change is detected.
+     */
+    loginStateChanged(currentUser) {
+    	var showLogin = false;
 
+		if( null == currentUser ) {
+    		showLogin = true;
+    	};
+    	
+    	if( showLogin ) {
+    		this.hideMapInteractionSwitch();
+			this._switchMapMode(this.modes.NAVIGATE);
+    	} else {
+   			this.showMapInteractionSwitch();
+    	};
+    };
+    	
+    // === LOGIN STUFF END ========================================================
+	_getMapInteractionSwitch(){
+ 		return $("#"+this.interactionId)
+ 			.find('.n2map_map_interaction_switch');
+ 	};
+ 	hideMapInteractionSwitch() {
+ 		this._getMapInteractionSwitch().hide();
+	};
+	
+	showMapInteractionSwitch() {
+ 		this._getMapInteractionSwitch().show();
+	};
+	
+ 	createMapInteractionSwitch() {
+ 		var _this = this;
+ 		var mapInteractionButton = $('<input type="button" class="n2map_map_interaction_switch"/>')
+ 			.val(this.modes.NAVIGATE.buttonValue)
+ 			.click( function(evt) { 
+ 				_this._clickedMapInteractionSwitch(evt);
+ 			})
+ 			;
+		$("#"+this.interactionId)
+			.empty()
+			.append(mapInteractionButton);
+	};
+	
+	_clickedMapInteractionSwitch(e){
+		if( this.currentMode === this.modes.NAVIGATE ) {
+			this.switchToEditMode();
+			
+		} else if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
+			this._switchMapMode(this.modes.NAVIGATE);
+			
+		} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
+			this._switchMapMode(this.modes.NAVIGATE);
+			this.editLayerSource.clear();
+			//this.editLayerSource.clear();
+			this._cancelEditFeatureMode();
+			
+		} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
+			this._switchMapMode(this.modes.NAVIGATE);
+			this.editLayerSource.clear();
+			this._cancelEditFeatureMode();
+		};
+		return false;
+	};
+	
+	//TODO the final function for different mode
+    _switchMapMode(mode, opts) {
+    	if( this.currentMode === mode ) {
+    		// nothing to do
+    		return;
+    	};
+    	
+
+    	// Apply new mode
+    	this.currentMode = mode;
+    	if (this.n2intentWrapper){
+    		this.n2intentWrapper.onInterationModeChanged(mode.name);
+    	}
+    	
+    	this._getMapInteractionSwitch().val(mode.buttonValue);
+    	if( this.currentMode === this.modes.ADD_OR_SELECT_FEATURE ) {
+    		
+    		this.editbarControl.setVisible(true);
+    		this.editbarControl.setModifyWithSelect(true);
+    		this.editbarControl.deactivateControls();
+    		this.editbarControl.setActive(true);
+    		
+            
+    	} else if( this.currentMode === this.modes.ADD_GEOMETRY ) {
+
+            
+    	} else if( this.currentMode === this.modes.EDIT_FEATURE ) {
+    		//var editFeature = opts.feature;
+   			//this._installGeometryEditor(editFeature);
+    		this.editbarControl.deactivateControls();
+    		this.editbarControl.setModifyWithSelect(true);
+    		this.editbarControl.setActive(true);
+    		
+            
+    	} else if( this.currentMode === this.modes.NAVIGATE ) {
+    		this.editbarControl.deactivateControls();
+    		this.editbarControl.setModifyWithSelect(false);
+    		this.editbarControl.setActive(true);
+    		this.editbarControl.deactivateModify();
+    		this.editbarControl.setVisible(false);
+    		this.editLayerSource.clear();
+    		//this.activateSelectFeatureControl();
+    	};
+
+    	// Broadcast mode change
+		var dispatcher = this._getDispatchService();
+		if( dispatcher ) {
+			dispatcher.send(DH,{
+				type: 'mapReportMode'
+				,mapControl: this
+				,mode: this.currentMode.name
+			});
+		};
+    };
+    switchToEditMode () {
+    	var _this = this;
+    	
+    	var authService = this._getAuthService();
+    	if( authService ) {
+    		var logInRequired = true;
+    		
+    		// The auth module is present, check if user logged in
+    		// and is not anonymous
+    		var userNotAnonymous = authService.isLoggedIn();
+    		if( userNotAnonymous ) {
+    			logInRequired = false;
+    		};
+    		
+    		if( logInRequired ) {
+    			// User is not logged in
+    			authService.showLoginForm({
+    				prompt: '<p>You must log in as a registered user to add a point to the map.</p>'
+    				,anonymousLoginAllowed: false
+    				,onSuccess: function(){ _this.switchToEditMode(); }
+    			});
+    		} else {
+    			// Already logged in, just switch
+    	    	this._switchMapMode(this.modes.ADD_OR_SELECT_FEATURE);
+    		};
+    	} else {
+    		alert("Authentication module not installed.");
+    	};
+    };
+    
+    switchToEditFeatureMode(fid, feature) {
+    	this._switchMapMode(this.modes.EDIT_FEATURE,{
+    		fid: fid
+    		,feature: feature
+    	});
+    };
+    
+    switchToAddGeometryMode(docId) {
+    	this._switchMapMode(this.modes.ADD_GEOMETRY,{
+    		fid: docId
+    	});
+    };
+    
+    _cancelEditFeatureMode() {
+   		this._dispatch({
+   			type: 'editCancel'
+   		});
+    };
+	
+	_getAuthService (){
+		var auth = null;
+		
+		if( this.options.directory ) {
+			auth = this.options.directory.authService;
+		};
+		
+		return auth;
+	};
 	_mapBusyStatus(delta){
 		
 		//TODO new version of progressControl
@@ -1840,8 +3442,8 @@ class N2MapCanvas  {
 		});
 		this.n2View = olView;
 		var customMap = new ol_Map_js__WEBPACK_IMPORTED_MODULE_15__["default"]({
-			interactions: Object(ol_interaction_js__WEBPACK_IMPORTED_MODULE_29__["defaults"])({mouseWheelZoom : false}).extend([
-				new ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_28__["default"]({
+			interactions: Object(ol_interaction_js__WEBPACK_IMPORTED_MODULE_30__["defaults"])({mouseWheelZoom : false}).extend([
+				new ol_interaction_MouseWheelZoom_js__WEBPACK_IMPORTED_MODULE_29__["default"]({
 					duration: 200,
 					constrainResolution: false
 				})
@@ -1860,17 +3462,6 @@ class N2MapCanvas  {
 					new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__["default"]({code: 'EPSG:3857'})
 			);
 			customMap.once('postrender', function(evt){
-				customMap.getView().fit(boundInProj, {size:customMap.getSize()});
-			});
-		}
-		//=======================================
-		
-		//Listening on the map move and resolution changes.
-		//Everytime a change is detected. The N2CouchDbSource/N2ModelSource will be update
-		customMap.on('movestart', onMoveStart);
-
-		function onMoveStart(evt){
-			customMap.once('moveend', function(evt){
 				let res = evt.frameState.viewState.resolution;
 				let proj = _this.n2View.getProjection();
 				let zoom = evt.frameState.viewState.zoom;
@@ -1887,12 +3478,47 @@ class N2MapCanvas  {
 					,coordination: coor_string
 					,_suppressSetHash : _this._suppressSetHash
 				});
+				customMap.getView().fit(boundInProj, {size:customMap.getSize()});
+			});
+		}
+		//Getting the resolution whenever a frame finish rendering;
+		customMap.on('postrender', function(evt){
+			let res = evt.frameState.viewState.resolution;
+			let proj = _this.n2View.getProjection();
+			_this.resolution = res;
+			_this.proj = proj;
+		});
+		//=======================================
+		
+		//Listening on the map move and resolution changes.
+		//Everytime a change is detected. The N2CouchDbSource/N2ModelSource will be update
+		customMap.on('movestart', onMoveStart);
+
+		function onMoveStart(evt){
+			customMap.once('moveend', function(evt){
+				let res = evt.frameState.viewState.resolution;
+				let proj = _this.n2View.getProjection();
+				let zoom = evt.frameState.viewState.zoom;
+				let center = evt.frameState.viewState.center;
+				_this.resolution = res;
+				_this.proj = proj;
+				var extent = olView.calculateExtent();
+				_this.sources.forEach(function(source){
+					source.onChangedResolution(res,proj, extent);
+				});
+				
+				var coor_string = center.join(',') + ',' + zoom + 'z';
+				_this.dispatchService.send(DH, {
+					type: 'viewChanged'
+					,coordination: coor_string
+					,_suppressSetHash : _this._suppressSetHash
+				});
 			})
 		}
 		//========================================
 		
 		
-		this.interactionSet.selectInteraction = new _N2Select_js__WEBPACK_IMPORTED_MODULE_13__["default"]({map: customMap});
+		this.interactionSet.selectInteraction = new _N2Select_js__WEBPACK_IMPORTED_MODULE_13__["default"]();
 
 //		------------------------------
 //		------------------------------ create and add layers
@@ -1900,7 +3526,7 @@ class N2MapCanvas  {
 		this.mapLayers = this._genBackgroundMapLayers(this.bgSources);
 
 		
-		var customPopup= new ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_39__["default"]({
+		var customPopup= new ol_ext_overlay_Popup__WEBPACK_IMPORTED_MODULE_42__["default"]({
 			popupClass: "",
 			positioning: 'auto',
 			autoPan: true,
@@ -1929,34 +3555,33 @@ class N2MapCanvas  {
 		);
 
 
-		var customLayerSwitcher = new ol_layerswitcher__WEBPACK_IMPORTED_MODULE_34___default.a({
+		var customLayerSwitcher = new ol_layerswitcher__WEBPACK_IMPORTED_MODULE_36___default.a({
 					tipLabel: 'Legend' // Optional label for button
 				});
 		customMap.addControl(customLayerSwitcher);
 
-		var mainbar = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_36__["default"]();
-		customMap.addControl(mainbar);
-		mainbar.setPosition("top");
-		/* Nested toobar with one control activated at once */
-		var nested = new ol_ext_control_Bar__WEBPACK_IMPORTED_MODULE_36__["default"] ({ toggleOne: true, group:true });
-//		var selectInteraction= new SelectInteraction ();
-		mainbar.addControl (nested);
 
-
-		// Add selection tool (a toggle control with a select interaction)
-		var selectCtrl = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__["default"](
-				{	html: '<i class="fa fa-hand-pointer-o"></i>',
-					className: "select",
-					title: "Select",
-					interaction: this.interactionSet.selectInteraction,
-					active:true,
-					onToggle: function(active)
-					{
-					}
-				});
 		this.interactionSet.selectInteraction.on("clicked", (function(e) {
+
 			if (e.selected) {
-				this._retrivingDocsAndSendSelectedEvent(e.selected);
+				if (_this.currentMode === _this.modes.NAVIGATE ){
+					this._retrivingDocsAndSendSelectedEvent(e.selected);
+					if ( this.currentMode.onStartClick ) {
+						if ( e.selected.length === 1 ){
+							var feature = e.selected[0];
+							this.currentMode.onStartClick(feature);
+						}
+						
+					}
+				} else {
+					if ( this.currentMode.onStartClick ) {
+						if ( e.selected.length === 1 ){
+							var feature = e.selected[0];
+							this.currentMode.onStartClick(feature);
+						}
+					}
+				}
+				
 			}
 		}).bind(this));
 
@@ -1972,61 +3597,99 @@ class N2MapCanvas  {
 			}
 		}).bind(this));
 		
-		nested.addControl(selectCtrl);
 
-		this.interactionSet.drawInteraction = new ol_interaction_Draw_js__WEBPACK_IMPORTED_MODULE_31__["default"]
-		({	type: 'Point',
-			source: this.overlayLayers[0].getSource()
+		//Create editing layer
+		this.editLayerSource = new ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_12__["default"]();
+		var editLayer = new ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_17__["default"]({
+			title: 'Edit',
+			source: this.editLayerSource 
 		});
-		// Add editing tools
-		var pedit = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__["default"](
-				{	html: '<i class="fa fa-map-marker" ></i>',
-					className: "edit",
-					title: 'Point',
-					interaction: this.interactionSet.drawInteraction,
-					onToggle: function(active)
-					{
-					}
-				});
-		//nested.addControl ( pedit );
-		var pcluster = new ol_ext_control_Toggle__WEBPACK_IMPORTED_MODULE_37__["default"]({
-			html: '<i class="fa fa-map-marker" ></i>',
-			className: "cluster_toggle",
-			title: 'Toggle clustering',
-			interaction : undefined,
-			active: _this.isClustering ? true: false,
-			onToggle: function(active)
-			{
-				//TODO toggle cluster button only change the clusting-setting for first overlay-layer
-				if(active && !_this.isClustering){
-					let c_source =  _this.overlayLayers[0].getSource();
-					_this.overlayLayers[0].setSource(null);
-					let a_source = c_source.getSource();
-					let b_source = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_21__["default"]({source: a_source});
-					b_source.setSource(a_source)
-					c_source = new _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_14__["default"]({
-						interaction: _this.interactionSet.selectInteraction,
-						source: b_source,
-						dispatchService: _this.dispatchService
-					});	
-					_this.overlayLayers[0].setSource (c_source);
-					
-					_this.isClustering = true;
-
-				} else if (_this.isClustering && !active) {
-					let c_source =  _this.overlayLayers[0].getSource();
-					let b_source = c_source.getSource();
-					let a_source = b_source.getSource();
-					c_source.setSource(a_source);
-					b_source.setSource(null);
-					a_source.changed();
-					_this.isClustering = false;
-
-				}
+		customMap.addLayer(editLayer);
+		this.overlayLayers.push(editLayer);
+		
+		
+		
+		this.editbarControl = new _EditBar__WEBPACK_IMPORTED_MODULE_39__["default"]({
+			interactions: {
+				Select : this.interactionSet.selectInteraction
+			},
+			source: editLayer.getSource()});
+		customMap.addControl(this.editbarControl);
+		this.editbarControl.setVisible(false);
+		this.editbarControl.getInteraction('Select').on('clicked', function(e){
+			if (_this.currentMode === _this.modes.ADD_OR_SELECT_FEATURE 
+			|| _this.currentMode === _this.modes.EDIT_FEATURE ){
+				return false;
 			}
-		})
-		mainbar.addControl (pcluster);
-
+		});	
+		  this.editbarControl.getInteraction('ModifySelect').on('modifystart', function(e){
+	    	 console.log('modifying features:', e.features);
+	        //if (e.features.length===1) tooltip.setFeature(e.features[0]);
+	      });
+	      this.editbarControl.getInteraction('ModifySelect').on('modifyend', onModifyEnd);
+	      
+	      function onModifyEnd(e){
+	    	  var features = e.features;
+	    	  for (var i=0,e=features.length; i<e; i++){
+	    		  var geometry = features[i].getGeometry();
+	    		  //console.log(geometry.toString('EPSG:3857' , 'EPSG:4326'))
+	          	_this.dispatchService.send(DH,{
+	        		type: 'editGeometryModified'
+	        		,docId: features[i].fid
+	        		,geom: geometry
+	        		,proj: new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__["default"]({code: 'EPSG:3857'})
+	        		,_origin: _this
+	        	});
+	    	  }
+	    	  //  tooltip.setFeature();
+	    	  return false;
+	      };
+	      this.editbarControl.getInteraction('DrawPoint').on('drawend', function(e){
+	    	  _this.editModeAddFeatureCallback( evt ); 
+	      });
+//	      //  tooltip.setInfo(e.oldValue ? '' : 'Click map to place a point...');
+//	      });
+	      this.editbarControl.getInteraction('DrawLine').on('drawend', function(evt){
+	    	  _this.editModeAddFeatureCallback( evt );
+	      });
+	      // tooltip.setFeature();
+//	       // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing line...');
+//	      });
+//	      editbarControl.getInteraction('DrawLine').on('drawstart', function(e){
+//	       // tooltip.setFeature(e.feature);
+//	       // tooltip.setInfo('Click to continue drawing line...');
+//	      });
+//	      this.editbarControl.getInteraction('DrawPolygon').on('drawstart', function(e){
+//	    	  e.stopPropagation();
+//	       // tooltip.setFeature(e.feature);
+//	       // tooltip.setInfo('Click to continue drawing shape...');
+//	      });
+	      this.editbarControl.getInteraction('DrawPolygon').on('drawend', function(evt){
+	       
+	    	_this.editModeAddFeatureCallback( evt );
+	       // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
+	      });
+//	      editbarControl.getInteraction('DrawHole').on('drawstart', function(e){
+//	       // tooltip.setFeature(e.feature);
+//	       // tooltip.setInfo('Click to continue drawing hole...');
+//	      });
+//	      editbarControl.getInteraction('DrawHole').on(['change:active','drawend'], function(e){
+//	       // tooltip.setFeature();
+//	       // tooltip.setInfo(e.oldValue ? '' : 'Click polygon to start drawing hole...');
+//	      });
+//	      editbarControl.getInteraction('DrawRegular').on('drawstart', function(e){
+//	       // tooltip.setFeature(e.feature);
+//	       // tooltip.setInfo('Move and click map to finish drawing...');
+//	      });
+//	      editbarControl.getInteraction('DrawRegular').on(['change:active','drawend'], function(e){
+//	       // tooltip.setFeature();
+//	       // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
+//	      });
+		
+		
+		
+		
+		
 		/* Standard Controls */
 //		mainbar.addControl (new ZoomToExtent({  extent: [ 265971,6243397 , 273148,6250665 ] }));
 //		mainbar.addControl (new Rotate());
@@ -2034,7 +3697,23 @@ class N2MapCanvas  {
 		//_changeToImageRender();
 	}
 
+	onMoveendCallback(evt){
+		
+	}
 
+	editModeAddFeatureCallback(evt){
+		var feature = evt.feature;
+		var previousMode = this.currentMode;
+		this.switchToEditFeatureMode(feature.fid, feature);
+		previousMode.featureAdded(feature);
+		this._centerMapOnFeature(feature);
+	}
+	_dispatch(m){
+		var dispatcher = this._getDispatchService();
+		if( dispatcher ) {
+			dispatcher.send(DH,m);
+		};
+	}
 	_retrivingDocsAndPaintPopup(feature, mapBrowserEvent){
 		var _this = this;
 		if (_this.popupOverlay) {
@@ -2142,13 +3821,14 @@ class N2MapCanvas  {
 					}
 					var clsOpt = Object.assign({}, overlayInfo.clustering
 							,{source: alphasource});
-					betaSource = new _ol5support_N2DonutCluster_js__WEBPACK_IMPORTED_MODULE_21__["default"](clsOpt);
+					betaSource = new _ol5support_N2Cluster_js__WEBPACK_IMPORTED_MODULE_21__["default"](clsOpt);
 				}
 				var charlieSource = new _N2SourceWithN2Intent_js__WEBPACK_IMPORTED_MODULE_14__["default"]({
 					interaction: _this.interactionSet.selectInteraction,
 					source: betaSource,
 					dispatchService: _this.dispatchService
 				});
+				_this.n2intentWrapper = charlieSource;
 				var vectorLayer = new ol_layer_Vector_js__WEBPACK_IMPORTED_MODULE_17__["default"]({
 					title: "CouchDb",
 					renderMode : 'vector',
@@ -2187,52 +3867,7 @@ class N2MapCanvas  {
 	
 		function StyleFn(feature, resolution){
 
-			var DONETESTCACHE = {};
-			var RANDOMNAME = ["EU", "NA", "ASIA", "AF"];
-			var RANDOMCOLOR = ["#ff0","#0ff","#0f0","#f0f","#f00","#00f"];
 			var f = feature;
-
-//			if(f.getGeometry().getType() === "Point"){
-//				
-//				var ldata =[];
-//				let e = Math.round(10*Math.random());
-//				let thisradius = 0;
-//				for(var k =0;k<e;k++){
-//					let dur = Math.round(10*Math.random());
-//					let tyr = {
-//							name: RANDOMNAME[k % 4],
-//							opacity: Math.random(),
-//							strokeColor: RANDOMCOLOR[k % 6]
-//					};
-//					let entry = {
-//							duration : dur,
-//							type : tyr
-//					};
-//					ldata.push(entry);
-//					thisradius += entry.duration;
-//				}
-//				
-//
-//
-//				let donutScaleFactor = 5;
-//				let thisStyle = new Style({
-//					image: new customPointStyle({
-//						type: "treeRing",
-//						radius : thisradius* donutScaleFactor,
-//						data: ldata,
-//						donutScaleFactor: donutScaleFactor,
-//						animation: false,
-//						stroke: new Stroke({
-//							color: "#000",
-//							width: 2
-//						})
-//					})
-//				})
-//	
-//				return [thisStyle];
-//
-//			}
-
 
 			var geomType = f.getGeometry()._n2Type;
 			if ( !geomType ) {
@@ -2252,7 +3887,6 @@ class N2MapCanvas  {
 				}
 			}
 			f.n2_geometry = geomType;
-
 			//Deal with n2_doc tag
 			var data = f.data;
 			if (f
@@ -2444,7 +4078,7 @@ class N2MapCanvas  {
 
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.url ){
-				return new ol_source_OSM__WEBPACK_IMPORTED_MODULE_33__["default"]({
+				return new ol_source_OSM__WEBPACK_IMPORTED_MODULE_35__["default"]({
 					url : sourceOptionsInternal.url
 				});
 			} else {
@@ -2455,7 +4089,7 @@ class N2MapCanvas  {
 		} else if ( sourceTypeInternal == VENDOR.STAMEN) {
 			if (sourceOptionsInternal
 					&& sourceOptionsInternal.layerName ){
-				return new ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_32__["default"]({
+				return new ol_source_Stamen_js__WEBPACK_IMPORTED_MODULE_34__["default"]({
 					layer:  sourceOptionsInternal.layerName
 				});
 			} else {
@@ -2498,7 +4132,10 @@ class N2MapCanvas  {
 
 			_this.n2View.cancelAnimations();
 			if ( extent ){
+				//If projCode for extent is  provided, calculate the transformed 
+				//extent and zoom into that
 				if (extent[0] === extent[2] || extent[1] === extent [3]){
+					//If calculated extent is a point
 					_this.n2View.animate({
 						center: targetCenter,
 						duration: 500
@@ -2510,6 +4147,7 @@ class N2MapCanvas  {
 					_this.n2View.fit(extent,{duration: 1500});
 				}
 			} else {
+				// No projCode provided, just zoom in with targetCenter
 				_this.n2View.animate({
 					center: targetCenter
 					,zoom : zoom
@@ -2537,8 +4175,6 @@ class N2MapCanvas  {
 						overlayLayer.getSource().refresh();
 
 				});
-				//var viewExt = olmap.getView().calculateExtent(olmap.getSize());
-				//olmap.getView().fit(viewExt);
 				}
 		} else if ( 'mapRefreshCallbackRequest' === type ){
 			//This refresh only execute the last invoke,
@@ -2551,6 +4187,144 @@ class N2MapCanvas  {
 				
 			}
 
+		} else if( 'editInitiate' === type ) {
+			
+			var fid = undefined;
+			if( m.doc ){
+				fid = m.doc._id;
+			};
+			
+			var feature = null;
+			var addGeometryMode = true;
+			
+			if( fid ){
+				var feature = this._getMapFeaturesIncludingFid(fid);
+			
+				//TODO: center feature on map;
+				if( feature ) {
+					this._centerMapOnFeature(feature);
+					addGeometryMode = false;
+				}						
+//				} else {
+//					// must center map on feature, if feature contains
+//					// a geometry
+//					if( m.doc 
+//					 && m.doc.nunaliit_geom 
+//					 && m.doc.nunaliit_geom.bbox 
+//					 && m.doc.nunaliit_geom.bbox.length >= 4 ) {
+//						var bbox = m.doc.nunaliit_geom.bbox;
+//						var x = (bbox[0] + bbox[2]) / 2;
+//						var y = (bbox[1] + bbox[3]) / 2;
+//						this._centerMapOnXY(x, y, 'EPSG:4326');
+//
+//						addGeometryMode = false;
+//					};
+//				};
+			};
+			
+			// Remove feature from map
+//			this.infoLayers.forEach(function(layerInfo){
+//				if( layerInfo.featureStrategy ){
+//					layerInfo.featureStrategy.setEditedFeatureIds([fid]);
+//				};
+//			});
+			
+			this.editFeatureInfo = {};
+    		this.editFeatureInfo.fid = fid;
+			this.editFeatureInfo.original = {
+				data: $n2.document.clone(m.doc)
+			};
+	    	var effectiveFeature = null;
+			if( feature ){
+//		    	// Remove feature from current layer
+//		    	var featureLayer = feature.layer;
+//
+//		    	// Compute the actual underlying feature
+//		    	if( fid === feature.fid ){
+//		        	effectiveFeature = feature;
+//		        	
+//		    	} else if( feature.cluster ){
+//		    		for(var i=0,e=feature.cluster.length; i<e; ++i){
+//		    			if( fid === feature.cluster[i].fid ){
+//		    	    		effectiveFeature = feature.cluster[i];
+//		    			};
+//		    		};
+//		    	};
+//		    	
+		    	//this.editFeatureInfo.original.layer = featureLayer;
+		    	//this.editFeatureInfo.original.feature = effectiveFeature;
+			};
+			
+			if( addGeometryMode ){
+				// Edit a document that does not have a geometry.
+				// Allow adding a geometry.
+				this.switchToAddGeometryMode(fid);
+			} else {
+				// Do not provide the effective feature. The event 'editReportOriginalDocument'
+				// will provide the original geometry. The effective feature might have a simplified
+				// version of the geometry
+				this.switchToEditFeatureMode(fid);
+			};
+			
+		} else if( 'editClosed' === type ) {
+
+			var fid = this.editFeatureInfo.fid;
+			if( !fid ){
+				fid = m.docId;
+			};
+			var reloadRequired = true;
+			if( m.cancelled ){
+				reloadRequired = false;
+			};
+			
+			// By switching to the navigate mode, the feature on the
+			// edit layer will be removed.
+			//var editFeature = this._removeGeometryEditor();
+			this.editLayerSource.clear();
+			this._switchMapMode(this.modes.NAVIGATE);
+
+			// Add back feature to map
+//			this.infoLayers.forEach(function(layerInfo){
+//				if( layerInfo.featureStrategy ){
+//					layerInfo.featureStrategy.setEditedFeatureIds(null);
+//				};
+//			});
+			
+			// If feature was deleted, then remove it from map
+			//TODO: feature removal for ol5
+			if( m.deleted && fid ){
+				reloadRequired = false;
+
+				this.forEachVectorLayer(function(layerInfo, layer){
+					var reloadLayer = false;
+					var featuresToAdd = [];
+					layerInfo.forEachFeature(function(f){
+						if( f.fid === fid ){
+							reloadLayer = true;
+						} else {
+							featuresToAdd.push(f);
+						};
+					});
+					
+					if( reloadLayer ){
+						layer.removeAllFeatures({silent:true});
+						layer.addFeatures(featuresToAdd);
+					};
+				});
+			};
+			
+			this.editFeatureInfo = {};
+			this.editFeatureInfo.original = {};
+			
+			// Reload feature
+//			if( reloadRequired ){
+//				var filter = $n2.olFilter.fromFid(fid);
+//				this._reloadFeature(filter);
+//			};
+			
+		} else if ('resolutionRequest' === type){
+			m.resolution = _this.resolution;
+			m.proj = _this.proj;
 		};
 //		else if ('focusOn' === type) {
 //			
@@ -2586,29 +4360,39 @@ class N2MapCanvas  {
 //		}
 
 	}
+	_centerMapOnFeature(feature){
+		var extent = feature.getGeometry().getExtent();
+		var map = this.n2Map;
+		if(extent){
+			map.getView().fit(extent, map.getSize() );
+		}
+	}
 	
-	_getMapFeaturesIncludeingFidMapOl5(fidMap) {
-		
-		var result_features = [];
-		if( this.features_ && this.features_.length > 0 ) {
-			
-			let features = this.features_;
-			for(let loop=0;loop<features.length;++loop) {
-				let feature = features[loop];
-				if( feature.fid && fidMap[feature.fid] ) {
-					result_features.push( feature );
-				} else if( feature.cluster ) {
-					for(var j=0,k=feature.cluster.length; j<k; ++j){
-						var f = feature.cluster[j];
-						if( f.fid && fidMap[f.fid] ){
-							 result_features.push(f);
-						};
-					};
+	_getMapFeaturesIncludingFid(fid) {
+		var result_feature = null;
+		if (fid){
+			if( this.sources ) {
+				
+				let sources = this.sources;
+				for(let loop=0;loop<sources.length;++loop) {
+					var source = sources[loop];
+					result_feature = source.getFeatureById(fid);
+					if (result_feature){
+						break;
+					}
+//					} else if( feature.cluster ) {
+//						for(var j=0,k=feature.cluster.length; j<k; ++j){
+//							var f = feature.cluster[j];
+//							if( f.fid && fidMap[f.fid] ){
+//								 result_features.push(f);
+//							};
+//						};
+//					};
 				};
 			};
-		};
+		}
 		
-		return result_features;
+		return result_feature;
 	}
 	
 	/**
@@ -2635,6 +4419,14 @@ class N2MapCanvas  {
 		}
 
 
+	}
+	_getDispatchService(){
+		var d = null;
+		if( this.options.directory ) {
+			d = this.options.directory.dispatchService;
+		};
+		
+		return d;
 	}
 	_computeFeatureOriginalBboxForMapProjection(f, mapProj) {
 		// Each feature has a projection stored at f.n2GeomProj
@@ -2708,7 +4500,7 @@ function HandleCanvasDisplayRequest(m){
 		options.config = m.config;
 		options.onSuccess = m.onSuccess;
 		options.onError = m.onError;
-
+		options.interactionId = m.interactionId;
 		new N2MapCanvas(options);
 	};
 };
@@ -2718,7 +4510,8 @@ nunaliit2.n2es6 = {
 		ol_proj_Projection : ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_24__["default"],
 		ol_proj_transformExtent : ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["transformExtent"],
 		ol_extent_extend : ol_extent_js__WEBPACK_IMPORTED_MODULE_22__["extend"],
-		ol_extent_isEmpty : ol_extent_js__WEBPACK_IMPORTED_MODULE_22__["isEmpty"]
+		ol_extent_isEmpty : ol_extent_js__WEBPACK_IMPORTED_MODULE_22__["isEmpty"],
+		ol_format_WKT: ol_format_WKT__WEBPACK_IMPORTED_MODULE_27__["default"]
 };
 
 nunaliit2.canvasMap = {
@@ -3465,7 +5258,7 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 
 			//this.dispatchService.register(DH,'modelGetInfo',f);
 			//this.dispatchService.register(DH,'modelStateUpdated',f);
-			//this.dispatchService.register(DH,'simplifiedGeometryReport',f);
+			this.dispatchService.register(DH,'simplifiedGeometryReport',f);
 		};
 		
 //		var isLoading = this.modelObserver.isLoading();
@@ -3487,6 +5280,7 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 	}
 
 	refresh(){
+		this._reloadAllFeatures();
 		//this.changed();
 	}
 	_modelSourceUpdated (state) {
@@ -3535,6 +5329,7 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 			});
 		};
 		
+		this._refreshSimplifiedGeometries();
 		this._reloadAllFeatures();
 		
 	}
@@ -3651,16 +5446,89 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 
 
 
-//		this.dispatchService.send(DH,{
-//			type: 'simplifiedGeometryRequest'
-//				,geometriesRequested: geometriesRequested
-//				,requester: this.sourceId
-//		});
+		this.dispatchService.send(DH,{
+			type: 'simplifiedGeometryRequest'
+				,geometriesRequested: geometriesRequested
+				,requester: this.sourceId
+		});
 
 		this._reloadAllFeatures();
 		
 	}
 
+	_refreshSimplifiedGeometries (){
+		var _this = this;
+		var m = {
+				type: 'resolutionRequest'
+				,proj: undefined
+				,resolution: undefined
+			}
+		this.dispatchService.synchronousCall(DH,m);
+		if( m.resolution ){
+			var targetRes = m.resolution;
+			var proj = m.proj;
+			var res = this._getResolutionInProjection(targetRes, proj);
+		
+			var geometriesRequested = [];
+
+			for(let docId in this.infoByDocId){
+				var docInfo = this.infoByDocId[docId];
+
+				var doc = docInfo.doc;
+				if( doc && doc.nunaliit_geom
+						&& doc.nunaliit_geom.simplified
+						&& doc.nunaliit_geom.simplified.resolutions ){
+					var bestAttName = undefined;
+					var bestResolution = undefined;
+					for(let attName in doc.nunaliit_geom.simplified.resolutions){
+						var attRes = parseFloat(doc.nunaliit_geom.simplified.resolutions[attName]);
+						if( attRes < res ){
+							if( typeof bestResolution === 'undefined' ){
+								bestResolution = attRes;
+								bestAttName = attName;
+							} else if( attRes > bestResolution ){
+								bestResolution = attRes;
+								bestAttName = attName;
+							};
+						};
+					};
+
+					// At this point, if bestResolution is set, then this is the geometry we should
+					// be displaying
+					if( undefined !== bestResolution ){
+						docInfo.simplifiedName = bestAttName;
+						docInfo.simplifiedResolution = bestResolution;
+					};
+
+					if( docInfo.simplifiedName ) {
+						// There is a simplification needed, do I have it already?
+						var wkt = undefined;
+						if( docInfo.simplifications ){
+							wkt = docInfo.simplifications[docInfo.simplifiedName];
+						};
+
+						// If I do not have it, request it
+						if( !wkt ){
+							var geomRequest = {
+									id: docId
+									,attName: docInfo.simplifiedName
+									,doc: doc
+							};
+							geometriesRequested.push(geomRequest);
+						};
+					};
+				};
+			};
+
+
+
+			this.dispatchService.send(DH,{
+				type: 'simplifiedGeometryRequest'
+					,geometriesRequested: geometriesRequested
+					,requester: this.sourceId
+			});
+		}
+	}
 	_getResolutionInProjection(targetResolution, proj){
 
 		if( proj.getCode() !== 'EPSG:4326' ){
@@ -3689,6 +5557,7 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 		//	r =  b.doc._ldata.start || 0;
 		//	return l-r;
 		//});
+		var proj_4326 = new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_4__["default"]({code: 'EPSG:4326'});
 		for(var docId in this.infoByDocId){
 			
 			var docInfo = this.infoByDocId[docId];
@@ -3708,12 +5577,18 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 				var geometry = wktFormat.readGeometryFromText(wkt);
 				geometry.transform('EPSG:4326', _this.mapProjCode);
 				var feature = new ol_Feature_js__WEBPACK_IMPORTED_MODULE_2__["default"]();
-				feature.setGeometry(geometry);
+				try {
+					feature.setGeometry(geometry);
+				}catch (err){
+					$n2.log('Error while setGeometry', err);
+					alert (err);
+				}
+				
 				if (docId && geometry) {
 					feature.setId(docId);
 					feature.data = doc;
 					feature.fid =  docId;
-					feature.n2GeomProj = new ol_proj_Projection_js__WEBPACK_IMPORTED_MODULE_4__["default"]({code: 'EPSG:4326'}) ;
+					feature.n2GeomProj = proj_4326 ;
 					features.push(feature);
 				} else {
 					$n2.log('Invalid feature', doc);
@@ -3751,11 +5626,13 @@ class N2ModelSource extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_0__["de
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var ol_util_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol/util.js */ "./node_modules/ol/util.js");
 /* harmony import */ var ol_interaction_Interaction_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Interaction.js */ "./node_modules/ol/interaction/Interaction.js");
-/* harmony import */ var ol_events_condition_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/events/condition.js */ "./node_modules/ol/events/condition.js");
-/* harmony import */ var ol_events_Event_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/events/Event.js */ "./node_modules/ol/events/Event.js");
+/* harmony import */ var ol_Collection_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/Collection.js */ "./node_modules/ol/Collection.js");
+/* harmony import */ var ol_events_condition_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/events/condition.js */ "./node_modules/ol/events/condition.js");
+/* harmony import */ var ol_events_Event_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/events/Event.js */ "./node_modules/ol/events/Event.js");
 /**
  * @module n2es6/n2mapModule/N2Select
  */
+
 
 
 
@@ -3793,7 +5670,7 @@ const N2SelectEventType = {
  * @classdesc
  * @extends Event
  */
-class N2SelectEvent extends ol_events_Event_js__WEBPACK_IMPORTED_MODULE_3__["default"] {
+class N2SelectEvent extends ol_events_Event_js__WEBPACK_IMPORTED_MODULE_4__["default"] {
 
 	/**
 	 * [constructor description]
@@ -3830,8 +5707,10 @@ class N2Select extends ol_interaction_Interaction_js__WEBPACK_IMPORTED_MODULE_1_
 		 * @type {boolean}
 		 */
 		this.multi_ = options.multi ? options.multi : false;
-
-		this.clickCondition_ = ol_events_condition_js__WEBPACK_IMPORTED_MODULE_2__["click"];
+		
+		this.clickedFeaturesCollection = new ol_Collection_js__WEBPACK_IMPORTED_MODULE_2__["default"]();
+		
+		this.clickCondition_ = ol_events_condition_js__WEBPACK_IMPORTED_MODULE_3__["click"];
 		//clicked can return multiple ones.
 		this.clickedFeatures_ = [];
 
@@ -3859,14 +5738,16 @@ class N2Select extends ol_interaction_Interaction_js__WEBPACK_IMPORTED_MODULE_1_
 	}
 	setActive(b){
 		super.setActive(b)
-		if (b &&
-				this.map_) {
-			super.setMap(this.map_)
-			this.map_.addInteraction(this);
-		} else {
-			super.setMap();
-
-		}
+//		if (b && this.map_) {
+//			super.setMap(this.map_)
+//			this.map_.addInteraction(this);
+//		} else {
+//			super.setMap();
+//
+//		}
+	}
+	getFeatures(){
+		return this.clickedFeaturesCollection;
 	}
 //	setHoverCallback(callbackFn){
 //	this.hoverCallback = callbackFn;
@@ -3883,7 +5764,7 @@ function handleEvent_(mapBrowserEvent) {
 	const map = mapBrowserEvent.map;
 	//** handle hover event **///
 	//TODO make a list of n2.interaction, instead all take care by this interaction object.
-	if (!Object(ol_events_condition_js__WEBPACK_IMPORTED_MODULE_2__["pointerMove"])(mapBrowserEvent) && !Object(ol_events_condition_js__WEBPACK_IMPORTED_MODULE_2__["click"])(mapBrowserEvent) ) {
+	if (!Object(ol_events_condition_js__WEBPACK_IMPORTED_MODULE_3__["pointerMove"])(mapBrowserEvent) && !Object(ol_events_condition_js__WEBPACK_IMPORTED_MODULE_3__["click"])(mapBrowserEvent) ) {
 		//console.log('EVENT type is :' + mapBrowserEvent.type);
 		return true;
 	}
@@ -3928,6 +5809,7 @@ function handleEvent_(mapBrowserEvent) {
 
 		let selected = [];
 		let deselected = [];
+		this.clickedFeaturesCollection.clear();
 		map.forEachFeatureAtPixel(mapBrowserEvent.pixel,
 				(
 						/**
@@ -3941,6 +5823,7 @@ function handleEvent_(mapBrowserEvent) {
 						function(feature, layer) {
 							if (feature) {
 								selected.push(feature);
+								this.clickedFeaturesCollection.push(feature);
 								return true;
 							}
 						}).bind(this), {
@@ -3968,7 +5851,7 @@ function handleEvent_(mapBrowserEvent) {
 	}
 	//keep mapBrowserEvent propagating
 
-	return Object(ol_events_condition_js__WEBPACK_IMPORTED_MODULE_2__["pointerMove"])(mapBrowserEvent);
+	return Object(ol_events_condition_js__WEBPACK_IMPORTED_MODULE_3__["pointerMove"])(mapBrowserEvent);
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (N2Select);
@@ -4054,6 +5937,7 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 		 */
 		this.features_ = [];
 
+		
 		this.fidToFeatureMap = {};
 		
 		this.toggleClick = true;
@@ -4085,6 +5969,7 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 			 +"this custom source");
 		}
 		//-------------------------
+		this.interactionMode = "NAVIGATE"; 
 		this.sourceChangeKey_ = null;
 	    if (options.source){
 	    	this.source = options.source;
@@ -4093,8 +5978,8 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 	    }
 		//listen(this.source, EventType.CHANGE, this.refresh, this);
 	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this, 'sourceRefChanged', this.handleSourceRefChange, this);
-		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "hover",  this.onHover, this);
-		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "clicked",  this.onClicked, this);
+		this.userInputEventKeys = [];
+	    this.bindEventListener();
 
 
 		
@@ -4115,6 +6000,15 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 			this.dispatchService.register(DH,'findIsAvailable',f);
 		};
 	}
+	bindEventListener(){
+		this.userInputEventKeys = [
+			Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "hover",  this.onHover, this)
+			,Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "clicked",  this.onClicked, this)
+			]
+	}
+	unbindEventListener(){
+		this.userInputEventKeys.forEach(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["unlistenByKey"]);
+	}
 	getSource(){
 		return this.source;
 	}
@@ -4130,7 +6024,9 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 		    }
 		    
 	}
-	
+	onInterationModeChanged( modeName ){
+		this.interactionMode = modeName;
+	}
 	setSource(source){
 		if (source){
 			this.source = source;
@@ -4451,30 +6347,58 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 		let clickedAgain = false;
 		clickedAgain = (selected && selected.fid 
 				&& this.clickedInfo.selectedId === selected.fid );
-		if (!this.toggleClick && clickedAgain){
-			return false;
-		}
-		this._endClicked();
 		
-		if (this.toggleClick && clickedAgain ){
-			this._dispatch({type: 'userUnselect',
-							docId: selected.fid
-							});
-			return false;
-		} else if ( selected 
-				&& selected.fid ) {
-			this.clickedInfo.features = [selected];
-
-			this.clickedInfo.fids = {};
-			this.clickedInfo.fids[selected.fid] = { clicked: true };
-			this.clickedInfo.selectedId = selected.fid;
+		if (this.interactionMode === 'NAVIGATE'){
+			if (!this.toggleClick && clickedAgain){
+				return false;
+			}
+			this._endClicked();
 			
-			selected.isClicked = true;
-			if( this.interaction_.onStartClick ) {
-				this.interaction_.onStartClick(selected);
-			};
+			if (this.toggleClick && clickedAgain ){
+				this._dispatch({type: 'userUnselect',
+								docId: selected.fid
+								});
+				return false;
+			} else if ( selected 
+					&& selected.fid ) {
+				
+				//clicked new feature
+				this.clickedInfo.features = [selected];
+
+				this.clickedInfo.fids = {};
+				this.clickedInfo.fids[selected.fid] = { clicked: true };
+				this.clickedInfo.selectedId = selected.fid;
+				
+				selected.isClicked = true;
+
+			}
+			return true;
+		} else {
+			this._endClicked();
+			return true;
 		}
-		return true;
+//		} else {
+//			this._endClicked();
+//			
+//			if ( clickedAgain ){
+//				//this._dispatch({type: 'userUnselect',
+////								docId: selected.fid
+////								});
+//			} else if ( selected 
+//					&& selected.fid ) {
+//				
+//				//clicked new feature
+//				this.clickedInfo.features = [selected];
+//
+//				this.clickedInfo.fids = {};
+//				this.clickedInfo.fids[selected.fid] = { clicked: true };
+//				this.clickedInfo.selectedId = selected.fid;
+//				
+//				selected.isClicked = true;
+//			}
+//			return true;
+//		}
+		
 	}
 	//clear up for click
 	_endClicked() {
@@ -4810,10 +6734,10 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 				this._startFocus(m.docIds);
 			};
 			
-
+			this.refresh();
 		} else if( 'focusOff' === type ) {
 			this._endFocus();
-			
+			this.refresh();
 		} else if( 'focusOnSupplement' === type ) {
 			var fid = m.docId;
 			
@@ -4834,7 +6758,7 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 					,intent: m.intent
 				});
 			};
-
+			this.refresh();
 		} else if( 'selected' === type ) {
 			if( m.docId ) {
 				let fidmap = {};
@@ -4851,6 +6775,7 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 				this._selectedFeatures(features, m.docIds);
 			};
 
+			this.refresh();
 		} else if( 'selectedSupplement' === type ) {
 			let fid = m.docId;
 			if( fid ) {
@@ -4864,10 +6789,10 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 				});
 			};
 
-			
+			this.refresh();
 		} else if( 'unselected' === type ) {
 			this._endClicked();
-
+			this.refresh();
 		} else if( 'find' === type ){
 
 			var doc = m.doc;
@@ -4913,20 +6838,12 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 //					olLayerToTurnOn.setVisibility(true);
 //				};
 //			};
-			
+			this.refresh();
 		
 		} else if ( 'findIsAvailable' === type ){
 			//TODO just a work around.Not for production.
 			m.isAvailable = true;
 		}
-		
-		this.updateN2Label();
-		
-		_this.dispatchService.send(DH, {
-			type: 'n2rerender'
-		})
-		
-		
 	}
 	
 	_dispatch(m){
@@ -5872,6 +7789,63 @@ class N2DonutCluster extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_4__["d
 
 /***/ }),
 
+/***/ "./dist/n2es6/ol5support/ToString.js":
+/*!*******************************************!*\
+  !*** ./dist/n2es6/ol5support/ToString.js ***!
+  \*******************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var ol_geom_Geometry__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol/geom/Geometry */ "./node_modules/ol/geom/Geometry.js");
+/* harmony import */ var ol_format_WKT__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/format/WKT */ "./node_modules/ol/format/WKT.js");
+/* harmony import */ var ol_proj_Projection__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/proj/Projection */ "./node_modules/ol/proj/Projection.js");
+/**
+ * @module n2es6/ol5support/ToString
+ */
+
+
+
+
+
+
+//var toString;
+(function(){
+var WKT = new ol_format_WKT__WEBPACK_IMPORTED_MODULE_1__["default"]();
+var toString = function (geom, srtProjCode, dstProjCode) {
+		if ( typeof srtProjCode === 'undefined' 
+			|| typeof srtProjCode === 'undefined'){
+			return WKT.writeGeometry(geom,{});
+		}
+		var proj_data = new ol_proj_Projection__WEBPACK_IMPORTED_MODULE_2__["default"]({code: dstProjCode });
+		var proj_feature = new ol_proj_Projection__WEBPACK_IMPORTED_MODULE_2__["default"]({code: srtProjCode});
+		
+		return WKT.writeGeometry(geom, {
+			dataProjection: proj_data,
+			featureProjection: proj_feature
+		})
+};
+ol_geom_Geometry__WEBPACK_IMPORTED_MODULE_0__["default"].prototype.toString = function(srtProjCode, dstProjCode){
+	var s_code = srtProjCode; 
+	var d_code = dstProjCode;
+	if (typeof s_code === 'undefined'
+		&& typeof d_code === 'undefined'){
+		return toString(this);
+	} else {
+		s_code = s_code || 'EPSG:3857'
+		d_code = d_code || 'EPSG:4326'
+		return toString (this, s_code, d_code);
+	}
+	return;
+	
+}
+})();
+/* harmony default export */ __webpack_exports__["default"] = (toString);
+//export {to_string}
+
+/***/ }),
+
 /***/ "./node_modules/css-loader/index.js!./node_modules/ol-ext/dist/ol-ext.css":
 /*!***********************************************************************!*\
   !*** ./node_modules/css-loader!./node_modules/ol-ext/dist/ol-ext.css ***!
@@ -6333,6 +8307,47 @@ ol_control_Button.prototype.getButtonElement = function() {
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (ol_control_Button);
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/control/TextButton.js":
+/*!***************************************************!*\
+  !*** ./node_modules/ol-ext/control/TextButton.js ***!
+  \***************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var _Button__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Button */ "./node_modules/ol-ext/control/Button.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO,
+	released under the CeCILL-B license (French BSD license)
+	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+/** A simple push button control drawn as text
+ * @constructor
+ * @extends {ol_control_Button}
+ * @param {Object=} options Control options.
+ *	@param {String} options.className class of the control
+ *	@param {String} options.title title of the control
+ *	@param {String} options.html html to insert in the control
+ *	@param {function} options.handleClick callback when control is clicked (or use change:active event)
+ */
+
+var ol_control_TextButton = function(options)
+{	options = options || {};
+    options.className = (options.className||"") + " ol-text-button";
+    _Button__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, options);
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_TextButton, _Button__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_control_TextButton);
 
 
 /***/ }),
@@ -7143,6 +9158,2324 @@ var update = __webpack_require__(/*! ../../style-loader/lib/addStyles.js */ "./n
 if(content.locals) module.exports = content.locals;
 // Hot Module Replacement
 if(false) {}
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/geom/GeomUtils.js":
+/*!***********************************************!*\
+  !*** ./node_modules/ol-ext/geom/GeomUtils.js ***!
+  \***********************************************/
+/*! exports provided: ol_geom_createFromType, ol_coordinate_dist2d, ol_coordinate_equal, ol_coordinate_findSegment, ol_coordinate_getFeatureCenter, ol_coordinate_getGeomCenter, ol_coordinate_offsetCoords, ol_coordinate_splitH */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_geom_createFromType", function() { return ol_geom_createFromType; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_dist2d", function() { return ol_coordinate_dist2d; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_equal", function() { return ol_coordinate_equal; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_findSegment", function() { return ol_coordinate_findSegment; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_getFeatureCenter", function() { return ol_coordinate_getFeatureCenter; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_getGeomCenter", function() { return ol_coordinate_getGeomCenter; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_offsetCoords", function() { return ol_coordinate_offsetCoords; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_coordinate_splitH", function() { return ol_coordinate_splitH; });
+/* harmony import */ var ol_extent__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol/extent */ "./node_modules/ol/extent.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var ol_geom_LinearRing__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/geom/LinearRing */ "./node_modules/ol/geom/LinearRing.js");
+/* harmony import */ var ol_geom_MultiLineString__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/geom/MultiLineString */ "./node_modules/ol/geom/MultiLineString.js");
+/* harmony import */ var ol_geom_MultiPoint__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/geom/MultiPoint */ "./node_modules/ol/geom/MultiPoint.js");
+/* harmony import */ var ol_geom_MultiPolygon__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/geom/MultiPolygon */ "./node_modules/ol/geom/MultiPolygon.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/geom/Point */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO, 
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+
+  Usefull function to handle geometric operations
+*/
+
+
+
+/** Distance beetween 2 points
+ *	Usefull geometric functions
+ * @param {ol.Coordinate} p1 first point
+ * @param {ol.Coordinate} p2 second point
+ * @return {number} distance
+ */
+var ol_coordinate_dist2d = function(p1, p2) {
+  var dx = p1[0]-p2[0];
+  var dy = p1[1]-p2[1];
+  return Math.sqrt(dx*dx+dy*dy);
+}
+
+/** 2 points are equal
+ *	Usefull geometric functions
+ * @param {ol.Coordinate} p1 first point
+ * @param {ol.Coordinate} p2 second point
+ * @return {boolean}
+ */
+var ol_coordinate_equal = function(p1, p2) {
+  return (p1[0]==p2[0] && p1[1]==p2[1]);
+}
+
+/** Get center coordinate of a feature
+ * @param {ol.Feature} f
+ * @return {ol.coordinate} the center
+ */
+var ol_coordinate_getFeatureCenter = function(f) {
+  return ol_coordinate_getGeomCenter (f.getGeometry());
+};
+
+/** Get center coordinate of a geometry
+* @param {ol.Feature} geom
+* @return {ol.Coordinate} the center
+*/
+var ol_coordinate_getGeomCenter = function(geom) {
+  switch (geom.getType()) {
+    case 'Point': 
+      return geom.getCoordinates();
+    case "MultiPolygon":
+            geom = geom.getPolygon(0);
+            // fallthrough
+    case "Polygon":
+      return geom.getInteriorPoint().getCoordinates();
+    default:
+      return geom.getClosestPoint(Object(ol_extent__WEBPACK_IMPORTED_MODULE_0__["getCenter"])(geom.getExtent()));
+  }
+};
+
+/** Offset a polyline
+ * @param {Array<ol.Coordinate>} coords
+ * @param {number} offset
+ * @return {Array<ol.Coordinate>} resulting coord
+ * @see http://stackoverflow.com/a/11970006/796832
+ * @see https://drive.google.com/viewerng/viewer?a=v&pid=sites&srcid=ZGVmYXVsdGRvbWFpbnxqa2dhZGdldHN0b3JlfGd4OjQ4MzI5M2Y0MjNmNzI2MjY
+ */
+var ol_coordinate_offsetCoords = function (coords, offset) {
+  var path = [];
+  var N = coords.length-1;
+  var max = N;
+  var mi, mi1, li, li1, ri, ri1, si, si1, Xi1, Yi1;
+  var p0, p1, p2;
+  var isClosed = ol_coordinate_equal(coords[0],coords[N]);
+  if (!isClosed) {
+    p0 = coords[0];
+    p1 = coords[1];
+    p2 = [
+      p0[0] + (p1[1] - p0[1]) / ol_coordinate_dist2d(p0,p1) *offset,
+      p0[1] - (p1[0] - p0[0]) / ol_coordinate_dist2d(p0,p1) *offset
+    ];
+    path.push(p2);
+    coords.push(coords[N])
+    N++;
+    max--;
+  }
+  for (var i = 0; i < max; i++) {
+    p0 = coords[i];
+    p1 = coords[(i+1) % N];
+    p2 = coords[(i+2) % N];
+
+    mi = (p1[1] - p0[1])/(p1[0] - p0[0]);
+    mi1 = (p2[1] - p1[1])/(p2[0] - p1[0]);
+    // Prevent alignements
+    if (Math.abs(mi-mi1) > 1e-10) {
+      li = Math.sqrt((p1[0] - p0[0])*(p1[0] - p0[0])+(p1[1] - p0[1])*(p1[1] - p0[1]));
+      li1 = Math.sqrt((p2[0] - p1[0])*(p2[0] - p1[0])+(p2[1] - p1[1])*(p2[1] - p1[1]));
+      ri = p0[0] + offset*(p1[1] - p0[1])/li;
+      ri1 = p1[0] + offset*(p2[1] - p1[1])/li1;
+      si = p0[1] - offset*(p1[0] - p0[0])/li;
+      si1 = p1[1] - offset*(p2[0] - p1[0])/li1;
+      Xi1 = (mi1*ri1-mi*ri+si-si1) / (mi1-mi);
+      Yi1 = (mi*mi1*(ri1-ri)+mi1*si-mi*si1) / (mi1-mi);
+
+      // Correction for vertical lines
+      if(p1[0] - p0[0] == 0) {
+        Xi1 = p1[0] + offset*(p1[1] - p0[1])/Math.abs(p1[1] - p0[1]);
+        Yi1 = mi1*Xi1 - mi1*ri1 + si1;
+      }
+      if (p2[0] - p1[0] == 0 ) {
+        Xi1 = p2[0] + offset*(p2[1] - p1[1])/Math.abs(p2[1] - p1[1]);
+        Yi1 = mi*Xi1 - mi*ri + si;
+      }
+
+      path.push([Xi1, Yi1]);
+    }
+  }
+  if (isClosed) {
+    path.push(path[0]);
+  } else {
+    coords.pop();
+    p0 = coords[coords.length-1];
+    p1 = coords[coords.length-2];
+    p2 = [
+      p0[0] - (p1[1] - p0[1]) / ol_coordinate_dist2d(p0,p1) *offset,
+      p0[1] + (p1[0] - p0[0]) / ol_coordinate_dist2d(p0,p1) *offset
+    ];
+    path.push(p2);
+  }
+  return path;
+}
+
+/** Find the segment a point belongs to
+ * @param {ol.Coordinate} pt
+ * @param {Array<ol.Coordinate>} coords
+ * @return {} the index (-1 if not found) and the segment
+ */
+var ol_coordinate_findSegment = function (pt, coords) {
+  for (var i=0; i<coords.length-1; i++) {
+    var p0 = coords[i];
+    var p1 = coords[i+1];
+    if (ol_coordinate_equal(pt, p0) || ol_coordinate_equal(pt, p1)) {
+      return { index:1, segment: [p0,p1] };
+    } else {
+      var d0 = ol_coordinate_dist2d(p0,p1);
+      var v0 = [ (p1[0] - p0[0]) / d0, (p1[1] - p0[1]) / d0 ];
+      var d1 = ol_coordinate_dist2d(p0,pt);
+      var v1 = [ (pt[0] - p0[0]) / d1, (pt[1] - p0[1]) / d1 ];
+      if (Math.abs(v0[0]*v1[1] - v0[1]*v1[0]) < 1e-10) {
+        return { index:1, segment: [p0,p1] };
+      }
+    }
+  }
+  return { index: -1 };
+};
+
+/**
+ * Split a Polygon geom with horizontal lines
+ * @param {Array<ol.Coordinate>} geom
+ * @param {number} y the y to split
+ * @param {number} n contour index
+ * @return {Array<Array<ol.Coordinate>>}
+ */
+var ol_coordinate_splitH = function (geom, y, n) {
+  var x, abs;
+  var list = [];
+  for (var i=0; i<geom.length-1; i++) {
+    // Hole separator?
+    if (!geom[i].length || !geom[i+1].length) continue;
+    // Intersect
+    if (geom[i][1]<=y && geom[i+1][1]>y || geom[i][1]>=y && geom[i+1][1]<y) {
+      abs = (y-geom[i][1]) / (geom[i+1][1]-geom[i][1]);
+      x = abs * (geom[i+1][0]-geom[i][0]) + geom[i][0];
+      list.push ({ contour: n, index: i, pt: [x,y], abs: abs });
+    }
+  }
+  // Sort x
+  list.sort(function(a,b) { return a.pt[0] - b.pt[0] });
+  // Horizontal segement
+  var result = [];
+  for (var j=0; j<list.length-1; j += 2) {
+    result.push([list[j], list[j+1]])
+  }
+  return result;
+};
+
+
+
+
+
+
+
+
+
+/** Create a geometrie given a type and coordinates */
+var ol_geom_createFromType = function (type, coordinates) {
+  switch (type) {
+    case 'LineString': return new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__["default"](coordinates);
+    case 'LinearRing': return new ol_geom_LinearRing__WEBPACK_IMPORTED_MODULE_2__["default"](coordinates);
+    case 'MultiLineString': return new ol_geom_MultiLineString__WEBPACK_IMPORTED_MODULE_3__["default"](coordinates);
+    case 'MultiPoint': return new ol_geom_MultiPoint__WEBPACK_IMPORTED_MODULE_4__["default"](coordinates);
+    case 'MultiPolygon': return new ol_geom_MultiPolygon__WEBPACK_IMPORTED_MODULE_5__["default"](coordinates);
+    case 'Point': return new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"](coordinates);
+    case 'Polygon': return new ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_7__["default"](coordinates);
+    default:
+      console.error('[createFromType] Unsupported type: '+type);
+      return null;
+  }
+};
+
+
+
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/geom/LineStringSplitAt.js":
+/*!*******************************************************!*\
+  !*** ./node_modules/ol-ext/geom/LineStringSplitAt.js ***!
+  \*******************************************************/
+/*! no exports provided */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _GeomUtils__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./GeomUtils */ "./node_modules/ol-ext/geom/GeomUtils.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+
+
+
+/** Split a lineString by a point or a list of points
+ *	NB: points must be on the line, use getClosestPoint() to get one
+* @param {ol.Coordinate | Array<ol.Coordinate>} pt points to split the line
+* @param {Number} tol distance tolerance for 2 points to be equal
+*/
+ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.splitAt = function(pt, tol) {
+  var i;
+  if (!pt) return [this];
+    if (!tol) tol = 1e-10;
+    // Test if list of points
+    if (pt.length && pt[0].length) {
+      var result = [this];
+      for (i=0; i<pt.length; i++) {
+        var r = [];
+        for (var k=0; k<result.length; k++) {
+          var ri = result[k].splitAt(pt[i], tol);
+          r = r.concat(ri);
+        }
+        result = r;
+      }
+      return result;
+    }
+    // Nothing to do
+    if (Object(_GeomUtils__WEBPACK_IMPORTED_MODULE_0__["ol_coordinate_equal"])(pt,this.getFirstCoordinate())
+    || Object(_GeomUtils__WEBPACK_IMPORTED_MODULE_0__["ol_coordinate_equal"])(pt,this.getLastCoordinate())) {
+      return [this];
+    }
+    // Get
+    var c0 = this.getCoordinates();
+    var ci=[c0[0]];
+    var c = [];
+    for (i=0; i<c0.length-1; i++) {
+      // Filter equal points
+      if (Object(_GeomUtils__WEBPACK_IMPORTED_MODULE_0__["ol_coordinate_equal"])(c0[i],c0[i+1])) continue;
+      // Extremity found
+      if (Object(_GeomUtils__WEBPACK_IMPORTED_MODULE_0__["ol_coordinate_equal"])(pt,c0[i+1])) {
+        ci.push(c0[i+1]);
+        c.push(new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__["default"](ci));
+        ci = [];
+      }
+      // Test alignement
+      else if (!Object(_GeomUtils__WEBPACK_IMPORTED_MODULE_0__["ol_coordinate_equal"])(pt,c0[i])) {
+        var d1, d2, split=false;
+        if (c0[i][0] == c0[i+1][0]) {
+          d1 = (c0[i][1]-pt[1]) / (c0[i][1]-c0[i+1][1]);
+          split = (c0[i][0] == pt[0]) && (0 < d1 && d1 <= 1)
+        } else if (c0[i][1] == c0[i+1][1]) {
+          d1 = (c0[i][0]-pt[0]) / (c0[i][0]-c0[i+1][0]);
+          split = (c0[i][1] == pt[1]) && (0 < d1 && d1 <= 1)
+        } else {
+          d1 = (c0[i][0]-pt[0]) / (c0[i][0]-c0[i+1][0]);
+          d2 = (c0[i][1]-pt[1]) / (c0[i][1]-c0[i+1][1]);
+          split = (Math.abs(d1-d2) <= tol && 0 < d1 && d1 <= 1)
+        }
+        // pt is inside the segment > split
+        if (split) {
+          ci.push(pt);
+          c.push (new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__["default"](ci));
+          ci = [pt];
+        }
+      }
+      ci.push(c0[i+1]);
+    }
+    if (ci.length>1) c.push (new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_1__["default"](ci));
+    if (c.length) return c;
+    else return [this];
+}
+
+// import('ol-ext/geom/LineStringSplitAt')
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/Delete.js":
+/*!***************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/Delete.js ***!
+  \***************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_interaction_Select__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Select */ "./node_modules/ol/interaction/Select.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
+/*	Copyright (c) 2018 Jean-Marc VIGLINO, 
+	released under the CeCILL-B license (French BSD license)
+	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+/** A Select interaction to delete features on click.
+ * @constructor
+ * @extends {ol_interaction_Interaction}
+ * @fires deletestart
+ * @fires deleteend
+ * @param {*} options ol.interaction.Select options
+ */
+var ol_interaction_Delete = function(options) {
+  ol_interaction_Select__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, options);
+  this.on('select', function(e) {
+    this.getFeatures().clear();
+    this.delete(e.selected);
+  }.bind(this));
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_Delete, ol_interaction_Select__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/** Get vector source of the map
+ * @return {Array<ol.source.Vector>}
+ */
+ol_interaction_Delete.prototype._getSources = function(layers) {
+  if (!this.getMap()) return [];
+  if (!layers) layers = this.getMap().getLayers();
+  var sources = [];
+  layers.forEach(function (l) {
+    // LayerGroup
+    if (l.getLayers) {
+      sources = sources.concat(this._getSources(l.getLayers()));
+    } else {
+      if (l.getSource && l.getSource() instanceof ol_source_Vector__WEBPACK_IMPORTED_MODULE_2__["default"]) {
+        sources.push(l.getSource());
+      }
+    }
+  }.bind(this));
+  return sources;
+};
+
+/** Delete features: remove the features from the map (from all layers in the map)
+ * @param {ol.Collection<ol.Feature>|Array<ol.Feature>} features The features to delete
+ * @api
+ */
+ol_interaction_Delete.prototype.delete = function(features) {
+  if (features && (features.length || features.getLength())) {
+    this.dispatchEvent({ type: 'deletestart', features: features });
+    var delFeatures = [];
+    // Get the sources concerned
+    this._getSources().forEach(function (source) {
+      try {
+        // Try to delete features in the source
+        features.forEach(function(f) {
+          source.removeFeature(f);
+          delFeatures.push(f);
+        });
+      } catch(e) { /* ok */ }
+    })
+    this.dispatchEvent({ type: 'deleteend', features: delFeatures });
+  }
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_Delete);
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/DrawHole.js":
+/*!*****************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/DrawHole.js ***!
+  \*****************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/* harmony import */ var ol_geom_MultiPolygon__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/geom/MultiPolygon */ "./node_modules/ol/geom/MultiPolygon.js");
+/* harmony import */ var ol_geom_LinearRing__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/geom/LinearRing */ "./node_modules/ol/geom/LinearRing.js");
+/* harmony import */ var ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/interaction/Draw */ "./node_modules/ol/interaction/Draw.js");
+/* harmony import */ var ol_interaction_Select__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/interaction/Select */ "./node_modules/ol/interaction/Select.js");
+/*	Copyright (c) 2017 Jean-Marc VIGLINO, 
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+
+
+
+/** Interaction to draw holes in a polygon.
+ * It fires a drawstart, drawend event when drawing the hole
+ * and a modifystart, modifyend event before and after inserting the hole in the feature geometry.
+ * @constructor
+ * @extends {ol_interaction_Interaction}
+ * @fires drawstart
+ * @fires drawend
+ * @fires modifystart
+ * @fires modifyend
+ * @param {olx.interaction.DrawHoleOptions} options extend olx.interaction.DrawOptions
+ * 	@param {Array<ol.layer.Vector> | function | undefined} options.layers A list of layers from which polygons should be selected. Alternatively, a filter function can be provided. default: all visible layers
+ * 	@param { ol.style.Style | Array<ol.style.Style> | StyleFunction | undefined }	Style for the selected features, default: default edit style
+ */
+var ol_interaction_DrawHole = function(options) {
+  if (!options) options = {};
+  var self = this;
+
+  // Select interaction for the current feature
+  this._select = new ol_interaction_Select__WEBPACK_IMPORTED_MODULE_5__["default"]({ style: options.style });
+  this._select.setActive(false);
+
+  // Geometry function that test points inside the current
+  var geometryFn, geomFn = options.geometryFunction;
+  if (geomFn) {
+    geometryFn = function(c,g) {
+      g = self._geometryFn (c, g);
+      return geomFn (c,g);
+    }
+  } else {
+    geometryFn = function(c,g) { return self._geometryFn (c, g); }
+  }
+
+  // Create draw interaction
+  options.type = "Polygon";
+  options.geometryFunction = geometryFn;
+  ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__["default"].call(this, options);
+
+  // Layer filter function
+  if (options.layers) {
+    if (typeof (options.layers) === 'function') {
+      this.layers_ = options.layers;
+    } else if (options.layers.indexOf) {
+      this.layers_ = function(l) {
+        return (options.layers.indexOf(l) >= 0); 
+      };
+    }
+  }
+
+  // Start drawing if inside a feature
+  this.on('drawstart', this._startDrawing.bind(this));
+  // End drawing add the hole to the current Polygon
+  this.on('drawend', this._finishDrawing.bind(this));
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_DrawHole, ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__["default"]);
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_DrawHole.prototype.setMap = function(map) {
+  if (this.getMap()) this.getMap().removeInteraction(this._select);
+  if (map) map.addInteraction(this._select);
+  ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__["default"].prototype.setMap.call (this, map);
+};
+
+/**
+ * Activate/deactivate the interaction
+ * @param {boolean}
+ * @api stable
+ */
+ol_interaction_DrawHole.prototype.setActive = function(b) {
+  this._select.getFeatures().clear();
+  ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__["default"].prototype.setActive.call (this, b);
+};
+
+/**
+ * Remove last point of the feature currently being drawn 
+ * (test if points to remove before).
+ */
+ol_interaction_DrawHole.prototype.removeLastPoint = function() {
+  if (this._feature && this._feature.getGeometry().getCoordinates()[0].length>2) {
+    ol_interaction_Draw__WEBPACK_IMPORTED_MODULE_4__["default"].prototype.removeLastPoint.call(this);
+  }
+};
+
+/** 
+ * Get the current polygon to hole
+ * @return {ol.Feature}
+ */
+ol_interaction_DrawHole.prototype.getPolygon = function() {
+  return this._polygon;
+  // return this._select.getFeatures().item(0).getGeometry();
+};
+
+/**
+ * Get current feature to add a hole and start drawing
+ * @param {ol_interaction_Draw.Event} e
+ * @private
+ */
+ol_interaction_DrawHole.prototype._startDrawing = function(e) {
+  var map = this.getMap();
+  var layersFilter = this.layers_;
+  this._feature = e.feature;
+  var coord = e.feature.getGeometry().getCoordinates()[0][0];
+  // Check object under the pointer
+  var features = map.getFeaturesAtPixel(
+    map.getPixelFromCoordinate(coord), {
+      layerFilter: layersFilter
+    }
+  );
+  this._current = null;
+  if (features) {
+    for (var k=0; k<features.length; k++) {
+      var poly = features[k].getGeometry();
+      if (poly.getType() === "Polygon"
+        && poly.intersectsCoordinate(coord)) {
+        this._polygonIndex = false;
+        this._polygon = poly;
+        this._current = features[k];
+      }
+      else if (poly.getType() === "MultiPolygon"
+        && poly.intersectsCoordinate(coord)) {
+        for (var i=0, p; p=poly.getPolygon(i); i++) {
+          if (p.intersectsCoordinate(coord)) {
+            this._polygonIndex = i;
+            this._polygon = p;
+            this._current = features[k];
+            break;
+          }
+        }
+      }
+      if (this._current) break;
+    }
+  }
+  this._select.getFeatures().clear();
+  if (!this._current) {
+    this.setActive(false);
+    this.setActive(true);
+  } else {
+    this._select.getFeatures().push(this._current);
+  }
+};
+
+/**
+ * Stop drawing and add the sketch feature to the target feature. 
+ * @param {ol_interaction_Draw.Event} e
+ * @private
+ */
+ol_interaction_DrawHole.prototype._finishDrawing = function(e) {
+  // The feature is the hole
+  e.hole = e.feature;
+  // Get the current feature
+  e.feature = this._select.getFeatures().item(0);
+  this.dispatchEvent({ type: 'modifystart', features: [ this._current ] });
+  // Create the hole
+  var c = e.hole.getGeometry().getCoordinates()[0];
+  if (c.length > 3) {
+    if (this._polygonIndex!==false) {
+      var geom = e.feature.getGeometry();
+      var newGeom = new ol_geom_MultiPolygon__WEBPACK_IMPORTED_MODULE_2__["default"]([]);
+      for (var i=0, pi; pi=geom.getPolygon(i); i++) {
+        if (i===this._polygonIndex) {
+          pi.appendLinearRing(new ol_geom_LinearRing__WEBPACK_IMPORTED_MODULE_3__["default"](c));
+          newGeom.appendPolygon(pi);
+        } else {
+          newGeom.appendPolygon(pi);
+        }
+      }
+      e.feature.setGeometry(newGeom);
+    } else {
+      this.getPolygon().appendLinearRing(new ol_geom_LinearRing__WEBPACK_IMPORTED_MODULE_3__["default"](c));
+    }
+  }
+  this.dispatchEvent({ type: 'modifyend', features: [ this._current ] });
+  // reset
+  this._feature = null;
+  this._select.getFeatures().clear();
+};
+
+/**
+ * Function that is called when a geometry's coordinates are updated.
+ * @param {Array<ol.coordinate>} coordinates
+ * @param {ol_geom_Polygon} geometry
+ * @return {ol_geom_Polygon}
+ * @private
+ */
+ol_interaction_DrawHole.prototype._geometryFn = function(coordinates, geometry) {
+  var coord = coordinates[0].pop();
+  if (!this.getPolygon() || this.getPolygon().intersectsCoordinate(coord)) {
+    this.lastOKCoord = [coord[0],coord[1]];
+  }
+  coordinates[0].push([this.lastOKCoord[0],this.lastOKCoord[1]]);
+
+  if (geometry) {
+    geometry.setCoordinates([coordinates[0].concat([coordinates[0][0]])]);
+  } else {
+    geometry = new ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_1__["default"](coordinates);
+  }
+  return geometry;
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_DrawHole);
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/DrawRegular.js":
+/*!********************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/DrawRegular.js ***!
+  \********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Interaction */ "./node_modules/ol/interaction/Interaction.js");
+/* harmony import */ var ol_style_Style__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/style/Style */ "./node_modules/ol/style/Style.js");
+/* harmony import */ var ol_style_Circle__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/style/Circle */ "./node_modules/ol/style/Circle.js");
+/* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
+/* harmony import */ var ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/style/Fill */ "./node_modules/ol/style/Fill.js");
+/* harmony import */ var ol_Collection__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/Collection */ "./node_modules/ol/Collection.js");
+/* harmony import */ var ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/layer/Vector */ "./node_modules/ol/layer/Vector.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
+/* harmony import */ var ol_geom_Circle__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/geom/Circle */ "./node_modules/ol/geom/Circle.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ol/geom/Point */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ol/Feature */ "./node_modules/ol/Feature.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO, 
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Interaction rotate
+ * @constructor
+ * @extends {ol_interaction_Interaction}
+ * @fires drawstart, drawing, drawend, drawcancel
+ * @param {olx.interaction.TransformOptions} options
+ *  @param {Array<ol.Layer>} source Destination source for the drawn features
+ *  @param {ol.Collection<ol.Feature>} features Destination collection for the drawn features 
+ *  @param {ol.style.Style | Array.<ol.style.Style> | ol.style.StyleFunction | undefined} style style for the sketch
+ *  @param {integer} sides number of sides, default 0 = circle
+ *  @param { ol.events.ConditionType | undefined } squareCondition A function that takes an ol.MapBrowserEvent and returns a boolean to draw square features.
+ *  @param { ol.events.ConditionType | undefined } centerCondition A function that takes an ol.MapBrowserEvent and returns a boolean to draw centered features.
+ *  @param { bool } canRotate Allow rotation when centered + square, default: true
+ *  @param { number } clickTolerance click tolerance on touch devices, default: 6
+ *  @param { number } maxCircleCoordinates Maximum number of point on a circle, default: 100
+ */
+var ol_interaction_DrawRegular = function(options) {
+  if (!options) options={};
+
+  this.squaredClickTolerance_ = options.clickTolerance ? options.clickTolerance * options.clickTolerance : 36;
+  this.maxCircleCoordinates_ = options.maxCircleCoordinates || 100;
+
+  // Collection of feature to transform 
+  this.features_ = options.features;
+  // List of layers to transform 
+  this.source_ = options.source;
+  // Square condition
+  this.squareFn_ = options.squareCondition;
+  // Centered condition
+  this.centeredFn_ = options.centerCondition;
+  // Allow rotation when centered + square
+  this.canRotate_ = (options.canRotate !== false);
+  // Specify custom geometry name
+  this.geometryName_ = options.geometryName
+
+  // Number of sides (default=0: circle)
+  this.setSides(options.sides);
+
+  // Style
+  var white = [255, 255, 255, 1];
+  var blue = [0, 153, 255, 1];
+  var width = 3;
+  var defaultStyle = [
+    new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+      stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_4__["default"]({ color: white, width: width + 2 })
+    }),
+    new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+      image: new ol_style_Circle__WEBPACK_IMPORTED_MODULE_3__["default"]({
+        radius: width * 2,
+        fill: new ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__["default"]({ color: blue }),
+        stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_4__["default"]({ color: white, width: width / 2 })
+      }),
+      stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_4__["default"]({ color: blue, width: width }),
+      fill: new ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__["default"]({
+        color: [255, 255, 255, 0.5]
+      })
+    })
+  ];
+
+  // Create a new overlay layer for the sketch
+  this.sketch_ = new ol_Collection__WEBPACK_IMPORTED_MODULE_6__["default"]();
+  this.overlayLayer_ = new ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__["default"]({
+    source: new ol_source_Vector__WEBPACK_IMPORTED_MODULE_8__["default"]({
+      features: this.sketch_,
+      useSpatialIndex: false
+    }),
+    name:'DrawRegular overlay',
+    displayInLayerSwitcher: false,
+    style: options.style || defaultStyle
+  });
+
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {	
+      /*
+      handleDownEvent: this.handleDownEvent_,
+      handleMoveEvent: this.handleMoveEvent_,
+      handleUpEvent: this.handleUpEvent_,
+      */
+      handleEvent: this.handleEvent_
+    });
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_DrawRegular, ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.setMap = function(map) {
+  if (this.getMap()) this.getMap().removeLayer(this.overlayLayer_);
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.setMap.call (this, map);
+  this.overlayLayer_.setMap(map);
+};
+
+/**
+ * Activate/deactivate the interaction
+ * @param {boolean}
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.setActive = function(b) {
+  this.reset();
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.setActive.call (this, b);
+}
+
+/**
+ * Reset the interaction
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.reset = function() {
+  this.overlayLayer_.getSource().clear();
+  this.started_ = false;
+}
+
+/**
+ * Set the number of sides.
+ * @param {int} number of sides.
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.setSides = function (nb) {
+  nb = parseInt(nb);
+  this.sides_ = nb>2 ? nb : 0;
+}
+
+/**
+ * Allow rotation when centered + square
+ * @param {bool} 
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.canRotate = function (b) {
+  if (b===true || b===false) this.canRotate_ = b;
+  return this.canRotate_;
+}
+
+/**
+ * Get the number of sides.
+ * @return {int} number of sides.
+ * @api stable
+ */
+ol_interaction_DrawRegular.prototype.getSides = function () {
+  return this.sides_;
+}
+
+/** Default start angle array for each sides
+*/
+ol_interaction_DrawRegular.prototype.startAngle = {
+  'default':Math.PI/2,
+  3: -Math.PI/2,
+  4: Math.PI/4
+};
+
+/** Get geom of the current drawing
+* @return {ol.geom.Polygon | ol.geom.Point}
+*/
+ol_interaction_DrawRegular.prototype.getGeom_ = function () {
+  this.overlayLayer_.getSource().clear();
+  if (!this.center_) return false;
+
+  var g;
+  if (this.coord_) {
+    var center = this.center_;
+    var coord = this.coord_;
+
+    // Specific case: circle
+    var d, dmax, r, circle, centerPx;
+    if (!this.sides_ && this.square_ && !this.centered_) {
+      center = [(coord[0] + center[0])/2, (coord[1] + center[1])/2];
+      d = [coord[0] - center[0], coord[1] - center[1]];
+      r = Math.sqrt(d[0]*d[0]+d[1]*d[1]);
+      circle = new ol_geom_Circle__WEBPACK_IMPORTED_MODULE_9__["default"](center, r, 'XY');
+      // Optimize points on the circle
+      centerPx = this.getMap().getPixelFromCoordinate(center);
+      dmax = Math.max (100, Math.abs(centerPx[0]-this.coordPx_[0]), Math.abs(centerPx[1]-this.coordPx_[1]));
+      dmax = Math.min ( this.maxCircleCoordinates_, Math.round(dmax / 3 ));
+      return Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_10__["fromCircle"]) (circle, dmax, 0);
+    } else {
+      var hasrotation = this.canRotate_ && this.centered_ && this.square_;
+      d = [coord[0] - center[0], coord[1] - center[1]];
+      if (this.square_ && !hasrotation) {
+        //var d = [coord[0] - center[0], coord[1] - center[1]];
+        var dm = Math.max (Math.abs(d[0]), Math.abs(d[1])); 
+        coord = [ 
+          center[0] + (d[0]>0 ? dm:-dm),
+          center[1] + (d[1]>0 ? dm:-dm)
+        ];
+      }
+      r = Math.sqrt(d[0]*d[0]+d[1]*d[1]);
+      if (r>0) {
+        circle = new ol_geom_Circle__WEBPACK_IMPORTED_MODULE_9__["default"](center, r, 'XY');
+        var a;
+        if (hasrotation) a = Math.atan2(d[1], d[0]);
+        else a = this.startAngle[this.sides_] || this.startAngle['default'];
+
+        if (this.sides_) {
+          g = Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_10__["fromCircle"]) (circle, this.sides_, a);
+        } else {
+          // Optimize points on the circle
+          centerPx = this.getMap().getPixelFromCoordinate(this.center_);
+          dmax = Math.max (100, Math.abs(centerPx[0]-this.coordPx_[0]), Math.abs(centerPx[1]-this.coordPx_[1]));
+          dmax = Math.min ( this.maxCircleCoordinates_, Math.round(dmax / (this.centered_ ? 3:5) ));
+          g = Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_10__["fromCircle"]) (circle, dmax, 0);
+        }
+
+        if (hasrotation) return g;
+      
+        // Scale polygon to fit extent
+        var ext = g.getExtent();
+        if (!this.centered_) center = this.center_;
+        else center = [ 2*this.center_[0]-this.coord_[0], 2*this.center_[1]-this.coord_[1] ];
+        var scx = (center[0] - coord[0]) / (ext[0] - ext[2]);
+        var scy = (center[1] - coord[1]) / (ext[1] - ext[3]);
+        if (this.square_) {
+          var sc = Math.min(Math.abs(scx),Math.abs(scy));
+          scx = Math.sign(scx)*sc;
+          scy = Math.sign(scy)*sc;
+        }
+        var t = [ center[0] - ext[0]*scx, center[1] - ext[1]*scy ];
+      
+        g.applyTransform(function(g1, g2, dim) {
+          for (var i=0; i<g1.length; i+=dim) {
+            g2[i] = g1[i]*scx + t[0];
+            g2[i+1] = g1[i+1]*scy + t[1];
+          }
+          return g2;
+        });
+        return g;
+      }
+    }
+  }
+
+  // No geom => return a point
+  return new ol_geom_Point__WEBPACK_IMPORTED_MODULE_11__["default"](this.center_);
+};
+
+/** Draw sketch
+* @return {ol.Feature} The feature being drawn.
+*/
+ol_interaction_DrawRegular.prototype.drawSketch_ = function(evt) {
+  this.overlayLayer_.getSource().clear();
+  if (evt) {
+    this.square_ = this.squareFn_ ? this.squareFn_(evt) : evt.originalEvent.shiftKey;
+    this.centered_ = this.centeredFn_ ? this.centeredFn_(evt) : evt.originalEvent.metaKey || evt.originalEvent.ctrlKey;
+    var g = this.getGeom_();
+    if (g) {
+      var f = this.feature_;
+      if (this.geometryName_) f.setGeometryName(this.geometryName_)
+
+      //f.setGeometry (g);
+      if (g.getType()==='Polygon') f.getGeometry().setCoordinates(g.getCoordinates());
+      this.overlayLayer_.getSource().addFeature(f);
+      if (this.coord_ 
+        && this.square_ 
+        && ((this.canRotate_ && this.centered_ && this.coord_) || (!this.sides_ && !this.centered_))) {
+        this.overlayLayer_.getSource().addFeature(new ol_Feature__WEBPACK_IMPORTED_MODULE_13__["default"](new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_12__["default"]([this.center_,this.coord_])));
+      }
+      return f;
+    }
+  }
+};
+
+/** Draw sketch (Point)
+*/
+ol_interaction_DrawRegular.prototype.drawPoint_ = function(pt, noclear) {
+  if (!noclear) this.overlayLayer_.getSource().clear();
+  this.overlayLayer_.getSource().addFeature(new ol_Feature__WEBPACK_IMPORTED_MODULE_13__["default"](new ol_geom_Point__WEBPACK_IMPORTED_MODULE_11__["default"](pt)));
+};
+
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ */
+ol_interaction_DrawRegular.prototype.handleEvent_ = function(evt) {
+  var dx, dy;
+  // Event date time
+  this._eventTime = new Date();
+  switch (evt.type) {
+    case "pointerdown": {
+      this.downPx_ = evt.pixel;
+      this.start_(evt);
+      // Test long touch
+      var dt = 500;
+      this._longTouch = false;
+      setTimeout(function() {
+        this._longTouch = (new Date() - this._eventTime > .9*dt);
+        if (this._longTouch) this.handleMoveEvent_(evt);
+      }.bind(this), dt);
+      break;
+    }
+    case "pointerup": {
+      // Started and fisrt move
+      if (this.started_ && this.coord_) {
+        dx = this.downPx_[0] - evt.pixel[0];
+        dy = this.downPx_[1] - evt.pixel[1];
+        if (dx*dx + dy*dy <= this.squaredClickTolerance_) {
+          // The pointer has moved
+          if ( this.lastEvent == "pointermove" || this.lastEvent == "keydown" ) {
+            this.end_(evt);
+          }
+          // On touch device there is no move event : terminate = click on the same point
+          else {
+            dx = this.upPx_[0] - evt.pixel[0];
+            dy = this.upPx_[1] - evt.pixel[1];
+            if ( dx*dx + dy*dy <= this.squaredClickTolerance_) {
+              this.end_(evt);
+            } else  {
+              this.handleMoveEvent_(evt);
+              this.drawPoint_(evt.coordinate,true);
+            }
+          }
+        }
+      }
+      this.upPx_ = evt.pixel;	
+      break;
+    }
+    case "pointerdrag": {
+      if (this.started_) {
+        var centerPx = this.getMap().getPixelFromCoordinate(this.center_);
+        dx = centerPx[0] - evt.pixel[0];
+        dy = centerPx[1] - evt.pixel[1];
+        if (dx*dx + dy*dy <= this.squaredClickTolerance_) {
+          this.reset();
+        }
+      }
+      return !this._longTouch;
+      // break;
+    }
+    case "pointermove": {
+      if (this.started_) {
+        dx = this.downPx_[0] - evt.pixel[0];
+        dy = this.downPx_[1] - evt.pixel[1];
+        if (dx*dx + dy*dy > this.squaredClickTolerance_) {
+          this.handleMoveEvent_(evt);
+          this.lastEvent = evt.type;
+        }
+      }
+      break;
+    }
+    default: {
+      this.lastEvent = evt.type;
+      // Prevent zoom in on dblclick
+      if (this.started_ && evt.type==='dblclick') {
+        //evt.stopPropagation();
+        return false;
+      }
+      break;
+    }
+  }
+  return true;
+}
+
+/** Stop drawing.
+ */
+ol_interaction_DrawRegular.prototype.finishDrawing = function() {
+  if (this.started_ && this.coord_) {
+    this.end_({ pixel: this.upPx_, coordinate: this.coord_});
+  }
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ */
+ol_interaction_DrawRegular.prototype.handleMoveEvent_ = function(evt) {
+  if (this.started_) {
+    this.coord_ = evt.coordinate;
+    this.coordPx_ = evt.pixel;
+    var f = this.drawSketch_(evt);
+    this.dispatchEvent({ 
+      type:'drawing', 
+      feature: f, 
+      pixel: evt.pixel, 
+      startCoordinate: this.center_,
+      coordinate: evt.coordinate, 
+      square: this.square_, 
+      centered: this.centered_ 
+    });
+  } else  {
+    this.drawPoint_(evt.coordinate);
+  }
+};
+
+/** Start an new draw
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `false` to stop the drag sequence.
+ */
+ol_interaction_DrawRegular.prototype.start_ = function(evt) {
+  if (!this.started_) {
+    this.started_ = true;
+    this.center_ = evt.coordinate;
+    this.coord_ = null;
+    var geom = new ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_10__["default"]([[evt.coordinate,evt.coordinate,evt.coordinate]]);
+    var f = this.feature_ = new ol_Feature__WEBPACK_IMPORTED_MODULE_13__["default"](geom);
+    this.drawSketch_(evt);
+    this.dispatchEvent({ type:'drawstart', feature: f, pixel: evt.pixel, coordinate: evt.coordinate });
+  } else {
+    this.coord_ = evt.coordinate;
+  }
+};
+
+/** End drawing
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `false` to stop the drag sequence.
+ */
+ol_interaction_DrawRegular.prototype.end_ = function(evt) {
+  this.coord_ = evt.coordinate;
+  this.started_ = false;
+  // Add new feature
+  if (this.coord_ && this.center_[0]!=this.coord_[0] && this.center_[1]!=this.coord_[1]) {
+    var f = this.feature_;
+    if (this.geometryName_) f.setGeometryName(this.geometryName_)
+
+    f.setGeometry(this.getGeom_());
+    if (this.source_) this.source_.addFeature(f);
+    else if (this.features_) this.features_.push(f);
+    this.dispatchEvent({ type:'drawend', feature: f, pixel: evt.pixel, coordinate: evt.coordinate, square: this.square_, centered: this.centered_ });
+  } else {
+    this.dispatchEvent({ type:'drawcancel', feature: null, pixel: evt.pixel, coordinate: evt.coordinate, square: this.square_, centered: this.centered_ });
+  }
+
+  this.center_ = this.coord_ = null;
+  this.drawSketch_();
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_DrawRegular);
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/Offset.js":
+/*!***************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/Offset.js ***!
+  \***************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Pointer */ "./node_modules/ol/interaction/Pointer.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/* harmony import */ var _geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../geom/GeomUtils */ "./node_modules/ol-ext/geom/GeomUtils.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO, 
+	released under the CeCILL-B license (French BSD license)
+	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+
+/** Offset interaction for offseting feature geometry
+ * @constructor
+ * @extends {ol_interaction_Pointer}
+ * @fires offsetstart
+ * @fires offsetting
+ * @fires offsetend
+ * @param {any} options
+ *	@param {ol.layer.Vector | Array<ol.layer.Vector>} options.layers list of feature to transform 
+ *	@param {ol.Collection.<ol.Feature>} options.features collection of feature to transform
+ *	@param {ol.source.Vector | undefined} options.source source to duplicate feature when ctrl key is down
+ *	@param {boolean} options.duplicate force feature to duplicate (source must be set)
+ */
+var ol_interaction_Offset = function(options) {
+  if (!options) options = {};
+
+	// Extend pointer
+	ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {
+    handleDownEvent: this.handleDownEvent_,
+    handleDragEvent: this.handleDragEvent_,
+    handleMoveEvent: this.handleMoveEvent_,
+    handleUpEvent: this.handleUpEvent_
+  });
+    
+	// Collection of feature to transform
+	this.features_ = options.features;
+	// List of layers to transform
+  this.layers_ = options.layers ? (options.layers instanceof Array) ? options.layers:[options.layers] : null;
+  // duplicate
+  this.set('duplicate', options.duplicate);
+  this.source_ = options.source;
+
+  // init
+  this.previousCursor_ = false;
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_Offset, ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_Offset.prototype.setMap = function(map) {
+	ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.setMap.call (this, map);
+};
+
+/** Get Feature at pixel
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {any} a feature and the hit point
+ * @private
+ */
+ol_interaction_Offset.prototype.getFeatureAtPixel_ = function(e) {
+  var self = this;
+	return this.getMap().forEachFeatureAtPixel(e.pixel,
+		function(feature, layer) {
+      var current;
+			// feature belong to a layer
+			if (self.layers_) {
+        for (var i=0; i<self.layers_.length; i++) {
+          if (self.layers_[i]===layer) {
+            current = feature;
+            break;
+          }
+				}
+			}
+			// feature in the collection
+			else if (self.features_) {
+        self.features_.forEach (function(f) {
+          if (f===feature) {
+            current = feature 
+          }
+        });
+			}
+			// Others
+			else {
+        current = feature;
+      }
+
+      // Only poygon or linestring
+      var typeGeom = current.getGeometry().getType();
+      if (current && /Polygon|LineString/.test(typeGeom)) {
+        if (typeGeom==='Polygon' && current.getGeometry().getCoordinates().length>1) return false;
+        // test distance
+        var p = current.getGeometry().getClosestPoint(e.coordinate);
+        var dx = p[0]-e.coordinate[0];
+        var dy = p[1]-e.coordinate[1];
+        var d = Math.sqrt(dx*dx+dy*dy) / e.frameState.viewState.resolution;
+      
+        if (d<5) {
+          return { 
+            feature: current, 
+            hit: p, 
+            coordinates: current.getGeometry().getCoordinates(),
+            geom: current.getGeometry().clone(),
+            geomType: typeGeom
+          }
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+		},  { hitTolerance: 5 });
+};
+
+/**
+ * @param {ol.MapBrowserEvent} e Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ * @private
+ */
+ol_interaction_Offset.prototype.handleDownEvent_ = function(e) {	
+  this.current_ = this.getFeatureAtPixel_(e);
+  if (this.source_ && (this.get('duplicate') || e.originalEvent.ctrlKey)) {
+    this.current_.feature = this.current_.feature.clone();
+    this.source_.addFeature(this.current_.feature);
+  } else {
+    // Modify the current feature
+    if (this.current_) {
+      this.dispatchEvent({ type:'modifystart', features: [ this.current_.feature ] });
+    }
+  }
+	if (this.current_) {
+    this.dispatchEvent({ type:'offsetstart', feature: this.current_.feature, offset: 0 });
+    return true;
+  } else  {
+    return false;
+  }
+};
+
+/**
+ * @param {ol.MapBrowserEvent} e Map browser event.
+ * @private
+ */
+ol_interaction_Offset.prototype.handleDragEvent_ = function(e) {
+  var p = this.current_.geom.getClosestPoint(e.coordinate);
+  var d = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__["ol_coordinate_dist2d"])(p, e.coordinate);
+  var seg, v1, v2, offset;
+  switch (this.current_.geomType) {
+    case  'Polygon': {
+      seg = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__["ol_coordinate_findSegment"])(p, this.current_.coordinates[0]).segment;
+      if (seg) {
+        v1 = [ seg[1][0]-seg[0][0], seg[1][1]-seg[0][1] ];
+        v2 = [ e.coordinate[0]-p[0], e.coordinate[1]-p[1] ];
+        if (v1[0]*v2[1] - v1[1]*v2[0] > 0) {
+          d = -d;
+        }
+
+        offset = [];
+        for (var i=0; i<this.current_.coordinates.length; i++) {
+          offset.push( Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__["ol_coordinate_offsetCoords"])(this.current_.coordinates[i], i==0 ? d : -d) );
+        }
+        this.current_.feature.setGeometry(new ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_3__["default"](offset));
+      }
+      break;
+    }
+    case 'LineString': {
+      seg = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__["ol_coordinate_findSegment"])(p, this.current_.coordinates).segment;
+      if (seg) {
+        v1 = [ seg[1][0]-seg[0][0], seg[1][1]-seg[0][1] ];
+        v2 = [ e.coordinate[0]-p[0], e.coordinate[1]-p[1] ];
+        if (v1[0]*v2[1] - v1[1]*v2[0] > 0) {
+          d = -d;
+        }
+        offset = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_4__["ol_coordinate_offsetCoords"])(this.current_.coordinates, d);
+        this.current_.feature.setGeometry(new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_2__["default"](offset));
+      }
+      break;
+    }
+    default: {
+      break;
+    }
+  }
+  this.dispatchEvent({ type:'offsetting', feature: this.current_.feature, offset: d, segment: [p, e.coordinate], coordinate: e.coordinate });  
+};
+
+/**
+ * @param {ol.MapBrowserEvent} e Map browser event.
+ * @private
+ */
+ol_interaction_Offset.prototype.handleUpEvent_ = function(e) {
+  this.dispatchEvent({ type:'offsetend', feature: this.current_.feature, coordinate: e.coordinate });  
+  this.current_ = false;
+};
+
+/**
+ * @param {ol.MapBrowserEvent} e Event.
+ * @private
+ */
+ol_interaction_Offset.prototype.handleMoveEvent_ = function(e) {	
+  var f = this.getFeatureAtPixel_(e);
+  if (f) {
+    if (this.previousCursor_ === false) {
+      this.previousCursor_ = e.map.getTargetElement().style.cursor;
+    }
+    e.map.getTargetElement().style.cursor = 'pointer';
+  } else {
+    e.map.getTargetElement().style.cursor = this.previousCursor_;
+    this.previousCursor_ = false;
+  }
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_Offset);
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/Split.js":
+/*!**************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/Split.js ***!
+  \**************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/interaction/Interaction */ "./node_modules/ol/interaction/Interaction.js");
+/* harmony import */ var ol_style_Style__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/style/Style */ "./node_modules/ol/style/Style.js");
+/* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
+/* harmony import */ var ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/style/Fill */ "./node_modules/ol/style/Fill.js");
+/* harmony import */ var ol_style_Circle__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/style/Circle */ "./node_modules/ol/style/Circle.js");
+/* harmony import */ var ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/layer/Vector */ "./node_modules/ol/layer/Vector.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/geom/Point */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/Feature */ "./node_modules/ol/Feature.js");
+/* harmony import */ var ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/geom/LineString */ "./node_modules/ol/geom/LineString.js");
+/* harmony import */ var _geom_GeomUtils__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ../geom/GeomUtils */ "./node_modules/ol-ext/geom/GeomUtils.js");
+/* harmony import */ var _geom_LineStringSplitAt__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ../geom/LineStringSplitAt */ "./node_modules/ol-ext/geom/LineStringSplitAt.js");
+/*	Copyright (c) 2016 Jean-Marc VIGLINO, 
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Interaction split interaction for splitting feature geometry
+ * @constructor
+ * @extends {ol_interaction_Interaction}
+ * @fires  beforesplit, aftersplit, pointermove
+ * @param {*} 
+ *  @param {ol.source.Vector|Array<ol.source.Vector>} options.source a list of source to split (configured with useSpatialIndex set to true)
+ *  @param {ol.Collection.<ol.Feature>} options.features collection of feature to split
+ *  @param {integer} options.snapDistance distance (in px) to snap to an object, default 25px
+ *	@param {string|undefined} options.cursor cursor name to display when hovering an objet
+ *  @param {function|undefined} opttion.filter a filter that takes a feature and return true if it can be clipped, default always split.
+ *  @param ol_style_Style | Array<ol_style_Style> | false | undefined} options.featureStyle Style for the selected features, choose false if you don't want feature selection. By default the default edit style is used.
+ *  @param {ol_style_Style | Array<ol_style_Style> | undefined} options.sketchStyle Style for the sektch features. 
+ *  @param {function|undefined} options.tolerance Distance between the calculated intersection and a vertex on the source geometry below which the existing vertex will be used for the split.  Default is 1e-10.
+ */
+var ol_interaction_Split = function(options) {
+  if (!options) options = {};
+
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {
+    handleEvent: function(e) {
+      switch (e.type) {
+        case "singleclick":
+          return this.handleDownEvent(e);
+        case "pointermove":
+          return this.handleMoveEvent(e);
+        default: 
+          return true;
+      }
+      //return true;
+    }
+  });
+
+  // Snap distance (in px)
+  this.snapDistance_ = options.snapDistance || 25;
+  // Split tolerance between the calculated intersection and the geometry
+  this.tolerance_ = options.tolerance || 1e-10;
+  // Cursor
+  this.cursor_ = options.cursor;
+
+  // List of source to split
+  this.sources_ = options.sources ? (options.sources instanceof Array) ? options.sources:[options.sources] : [];
+
+  if (options.features) {
+    this.sources_.push (new ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__["default"]({ features: options.features }));
+  }
+
+  // Get all features candidate
+  this.filterSplit_ = options.filter || function(){ return true; };
+
+  // Default style
+  var white = [255, 255, 255, 1];
+  var blue = [0, 153, 255, 1];
+  var width = 3;
+  var fill = new ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__["default"]({ color: 'rgba(255,255,255,0.4)' });
+  var stroke = new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__["default"]({
+    color: '#3399CC',
+    width: 1.25
+  });
+  var sketchStyle = [
+    new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+      image: new ol_style_Circle__WEBPACK_IMPORTED_MODULE_6__["default"]({
+        fill: fill,
+        stroke: stroke,
+        radius: 5
+      }),
+      fill: fill,
+      stroke: stroke
+    })
+  ];
+  var featureStyle = [
+    new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+      stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__["default"]({
+        color: white,
+        width: width + 2
+      })
+    }),
+    new ol_style_Style__WEBPACK_IMPORTED_MODULE_2__["default"]({
+      image: new ol_style_Circle__WEBPACK_IMPORTED_MODULE_6__["default"]({
+        radius: 2*width,
+        fill: new ol_style_Fill__WEBPACK_IMPORTED_MODULE_5__["default"]({
+          color: blue
+        }),
+        stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__["default"]({
+          color: white,
+          width: width/2
+        })
+      }),
+      stroke: new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__["default"]({
+          color: blue,
+          width: width
+        })
+    }),
+  ];
+
+  // Custom style
+  if (options.sketchStyle) sketchStyle = options.sketchStyle instanceof Array ? options.sketchStyle : [options.sketchStyle];
+  if (options.featureStyle) featureStyle = options.featureStyle instanceof Array ? options.featureStyle : [options.featureStyle];
+
+  // Create a new overlay for the sketch
+  this.overlayLayer_ = new ol_layer_Vector__WEBPACK_IMPORTED_MODULE_7__["default"]({
+    source: new ol_source_Vector__WEBPACK_IMPORTED_MODULE_4__["default"]({
+      useSpatialIndex: false
+    }),
+    name:'Split overlay',
+    displayInLayerSwitcher: false,
+    style: function(f) {
+      if (f._sketch_) return sketchStyle;
+      else return featureStyle;
+    }
+  });
+
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_Split, ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"]);
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_Split.prototype.setMap = function(map) {
+  if (this.getMap()) this.getMap().removeLayer(this.overlayLayer_);
+  ol_interaction_Interaction__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.setMap.call (this, map);
+  this.overlayLayer_.setMap(map);
+};
+
+/** Get closest feature at pixel
+ * @param {ol.Pixel} 
+ * @return {ol.feature} 
+ * @private
+ */
+ol_interaction_Split.prototype.getClosestFeature = function(e) {
+  var f, c, g, d = this.snapDistance_+1;
+  for (var i=0; i<this.sources_.length; i++) {
+    var source = this.sources_[i];
+    f = source.getClosestFeatureToCoordinate(e.coordinate);
+    if (f && f.getGeometry().splitAt) {
+      c = f.getGeometry().getClosestPoint(e.coordinate);
+      g = new ol_geom_LineString__WEBPACK_IMPORTED_MODULE_10__["default"]([e.coordinate,c]);
+      d = g.getLength() / e.frameState.viewState.resolution;
+      break;
+    }
+  }
+  if (d > this.snapDistance_) {
+    return false;
+  } else {
+    // Snap to node
+    var coord = this.getNearestCoord (c, f.getGeometry().getCoordinates());
+    var p = this.getMap().getPixelFromCoordinate(coord);
+    if (Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_11__["ol_coordinate_dist2d"])(e.pixel, p) < this.snapDistance_) {
+      c = coord;
+    }
+    //
+    return { source:source, feature:f, coord: c, link: g };
+  }
+}
+
+/** Get nearest coordinate in a list 
+* @param {ol.coordinate} pt the point to find nearest
+* @param {Array<ol.coordinate>} coords list of coordinates
+* @return {ol.coordinate} the nearest coordinate in the list
+*/
+ol_interaction_Split.prototype.getNearestCoord = function(pt, coords) {
+  var d, dm=Number.MAX_VALUE, p0;
+  for (var i=0; i < coords.length; i++) {
+    d = Object(_geom_GeomUtils__WEBPACK_IMPORTED_MODULE_11__["ol_coordinate_dist2d"]) (pt, coords[i]);
+    if (d < dm) {
+      dm = d;
+      p0 = coords[i];
+    }
+  }
+  return p0;
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ */
+ol_interaction_Split.prototype.handleDownEvent = function(evt) {
+  // Something to split ?
+  var current = this.getClosestFeature(evt);
+
+  if (current) {
+    var self = this;
+    self.overlayLayer_.getSource().clear();
+    var split = current.feature.getGeometry().splitAt(current.coord, this.tolerance_);
+    var i;
+    if (split.length > 1) {
+      var tosplit = [];
+      for (i=0; i<split.length; i++) {
+        var f = current.feature.clone();
+        f.setGeometry(split[i]);
+        tosplit.push(f);
+      }
+      self.dispatchEvent({ type:'beforesplit', original: current.feature, features: tosplit });
+      current.source.dispatchEvent({ type:'beforesplit', original: current.feature, features: tosplit });
+      current.source.removeFeature(current.feature);
+      for (i=0; i<tosplit.length; i++) {
+        current.source.addFeature(tosplit[i]);
+      }
+      self.dispatchEvent({ type:'aftersplit', original: current.feature, features: tosplit });
+      current.source.dispatchEvent({ type:'aftersplit', original: current.feature, features: tosplit });
+    }
+  }
+  return false;
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ */
+ol_interaction_Split.prototype.handleMoveEvent = function(e) {
+  var map = e.map;
+  this.overlayLayer_.getSource().clear();
+  var current = this.getClosestFeature(e);
+
+  if (current && this.filterSplit_(current.feature)) {
+    var p, l;
+    // Draw sketch
+    this.overlayLayer_.getSource().addFeature(current.feature);
+    p = new ol_Feature__WEBPACK_IMPORTED_MODULE_9__["default"](new ol_geom_Point__WEBPACK_IMPORTED_MODULE_8__["default"](current.coord));
+    p._sketch_ = true;
+    this.overlayLayer_.getSource().addFeature(p);
+    //
+    l = new ol_Feature__WEBPACK_IMPORTED_MODULE_9__["default"](current.link);
+    l._sketch_ = true;
+    this.overlayLayer_.getSource().addFeature(l);
+    // move event
+    this.dispatchEvent({
+      type: 'pointermove',
+      coordinate: e.coordinate,
+      frameState: e.frameState,
+      originalEvent: e.originalEvent,
+      map: e.map,
+      pixel: e.pixel,
+      feature: current.feature,
+      linkGeometry: current.link
+    });
+  } else {
+    this.dispatchEvent(e);
+  }
+
+  var element = map.getTargetElement();
+  if (this.cursor_) {
+    if (current) {
+      if (element.style.cursor != this.cursor_) {
+        this.previousCursor_ = element.style.cursor;
+        element.style.cursor = this.cursor_;
+      }
+    } else if (this.previousCursor_ !== undefined) {
+      element.style.cursor = this.previousCursor_;
+      this.previousCursor_ = undefined;
+    }
+  }
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_Split);
+
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/interaction/Transform.js":
+/*!******************************************************!*\
+  !*** ./node_modules/ol-ext/interaction/Transform.js ***!
+  \******************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
+/* harmony import */ var ol_style_Style__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/style/Style */ "./node_modules/ol/style/Style.js");
+/* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
+/* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
+/* harmony import */ var ol_style_Fill__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/style/Fill */ "./node_modules/ol/style/Fill.js");
+/* harmony import */ var ol_layer_Vector__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ol/layer/Vector */ "./node_modules/ol/layer/Vector.js");
+/* harmony import */ var ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ol/geom/Point */ "./node_modules/ol/geom/Point.js");
+/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol/Feature */ "./node_modules/ol/Feature.js");
+/* harmony import */ var ol_Collection__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/Collection */ "./node_modules/ol/Collection.js");
+/* harmony import */ var ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/interaction/Pointer */ "./node_modules/ol/interaction/Pointer.js");
+/* harmony import */ var ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/style/RegularShape */ "./node_modules/ol/style/RegularShape.js");
+/* harmony import */ var ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ol/geom/Polygon */ "./node_modules/ol/geom/Polygon.js");
+/* harmony import */ var ol_extent__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ol/extent */ "./node_modules/ol/extent.js");
+/* harmony import */ var ol_Observable__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ol/Observable */ "./node_modules/ol/Observable.js");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** Interaction rotate
+ * @constructor
+ * @extends {ol_interaction_Pointer}
+ * @fires select | rotatestart | rotating | rotateend | translatestart | translating | translateend | scalestart | scaling | scaleend
+ * @param {any} options
+ *  @param {function} options.filter A function that takes a Feature and a Layer and returns true if the feature may be transformed or false otherwise.
+ *  @param {Array<ol.Layer>} options.layers array of layers to transform,
+ *  @param {ol.Collection<ol.Feature>} options.features collection of feature to transform,
+ *	@param {ol.EventsConditionType|undefined} options.condition A function that takes an ol.MapBrowserEvent and a feature collection and returns a boolean to indicate whether that event should be handled. default: ol.events.condition.always.
+ *	@param {ol.EventsConditionType|undefined} options.addCondition A function that takes an ol.MapBrowserEvent and returns a boolean to indicate whether that event should be handled ie. the feature will be added to the transforms features. default: ol.events.condition.never.
+ *	@param {number | undefined} options.hitTolerance Tolerance to select feature in pixel, default 0
+ *	@param {bool} options.translateFeature Translate when click on feature
+ *	@param {bool} options.translate Can translate the feature
+ *	@param {bool} options.stretch can stretch the feature
+ *	@param {bool} options.scale can scale the feature
+ *	@param {bool} options.rotate can rotate the feature
+ *	@param {bool} options.noFlip prevent the feature geometry to flip, default false
+ *	@param {bool} options.selection the intraction handle selection/deselection, if not use the select prototype to add features to transform, default true
+ *	@param {ol.events.ConditionType | undefined} options.keepAspectRatio A function that takes an ol.MapBrowserEvent and returns a boolean to keep aspect ratio, default ol.events.condition.shiftKeyOnly.
+ *	@param {ol.events.ConditionType | undefined} options.modifyCenter A function that takes an ol.MapBrowserEvent and returns a boolean to apply scale & strech from the center, default ol.events.condition.metaKey or ol.events.condition.ctrlKey.
+ *	@param {} options.style list of ol.style for handles
+ *
+ */
+var ol_interaction_Transform = function(options) {
+  if (!options) options = {};
+	var self = this;
+
+  this.selection_ = new ol_Collection__WEBPACK_IMPORTED_MODULE_8__["default"]();
+
+	// Create a new overlay layer for the sketch
+	this.handles_ = new ol_Collection__WEBPACK_IMPORTED_MODULE_8__["default"]();
+	this.overlayLayer_ = new ol_layer_Vector__WEBPACK_IMPORTED_MODULE_5__["default"]({
+    source: new ol_source_Vector__WEBPACK_IMPORTED_MODULE_3__["default"]({
+      features: this.handles_,
+      useSpatialIndex: false,
+      wrapX: false // For vector editing across the -180° and 180° meridians to work properly, this should be set to false
+    }),
+    name:'Transform overlay',
+    displayInLayerSwitcher: false,
+    // Return the style according to the handle type
+    style: function (feature) {
+      return (self.style[(feature.get('handle')||'default')+(feature.get('constraint')||'')+(feature.get('option')||'')]);
+    },
+  });
+
+  // Extend pointer
+  ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_9__["default"].call(this, {
+    handleDownEvent: this.handleDownEvent_,
+    handleDragEvent: this.handleDragEvent_,
+    handleMoveEvent: this.handleMoveEvent_,
+    handleUpEvent: this.handleUpEvent_
+  });
+
+  // Collection of feature to transform
+  this.features_ = options.features;
+  // Filter or list of layers to transform
+  if (typeof(options.filter)==='function') this._filter = options.filter;
+  this.layers_ = options.layers ? (options.layers instanceof Array) ? options.layers:[options.layers] : null;
+
+  this._handleEvent = options.condition || function() { return true; };
+  this.addFn_ = options.addCondition || function() { return false; };
+  /* Translate when click on feature */
+  this.set('translateFeature', (options.translateFeature!==false));
+  /* Can translate the feature */
+  this.set('translate', (options.translate!==false));
+  /* Can stretch the feature */
+  this.set('stretch', (options.stretch!==false));
+  /* Can scale the feature */
+  this.set('scale', (options.scale!==false));
+  /* Can rotate the feature */
+  this.set('rotate', (options.rotate!==false));
+  /* Keep aspect ratio */
+  this.set('keepAspectRatio', (options.keepAspectRatio || function(e){ return e.originalEvent.shiftKey }));
+  /* Modify center */
+  this.set('modifyCenter', (options.modifyCenter || function(e){ return e.originalEvent.metaKey || e.originalEvent.ctrlKey }));
+  /* Prevent flip */
+  this.set('noFlip', (options.noFlip || false));
+  /* Handle selection */
+  this.set('selection', (options.selection !== false));
+  /*  */
+  this.set('hitTolerance', (options.hitTolerance || 0));
+
+
+  // Force redraw when changed
+  this.on ('propertychange', function() {
+    this.drawSketch_();
+  });
+
+  // setstyle
+  this.setDefaultStyle();
+};
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_interaction_Transform, ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_9__["default"]);
+
+/** Cursors for transform
+*/
+ol_interaction_Transform.prototype.Cursors = {
+  'default': 'auto',
+  'select': 'pointer',
+  'translate': 'move',
+  'rotate': 'move',
+  'rotate0': 'move',
+  'scale': 'nesw-resize',
+  'scale1': 'nwse-resize',
+  'scale2': 'nesw-resize',
+  'scale3': 'nwse-resize',
+  'scalev': 'ew-resize',
+  'scaleh1': 'ns-resize',
+  'scalev2': 'ew-resize',
+  'scaleh3': 'ns-resize'
+};
+
+/**
+ * Remove the interaction from its current map, if any,  and attach it to a new
+ * map, if any. Pass `null` to just remove the interaction from the current map.
+ * @param {ol.Map} map Map.
+ * @api stable
+ */
+ol_interaction_Transform.prototype.setMap = function(map) {
+  if (this.getMap()) {
+    this.getMap().removeLayer(this.overlayLayer_);
+    if (this.previousCursor_) {
+      this.getMap().getTargetElement().style.cursor = this.previousCursor_;
+      this.previousCursor_ = undefined;
+    }
+  }
+  ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_9__["default"].prototype.setMap.call (this, map);
+  this.overlayLayer_.setMap(map);
+  if (map !== null) {
+    this.isTouch = /touch/.test(map.getViewport().className);
+    this.setDefaultStyle();
+  }
+};
+
+/**
+ * Activate/deactivate interaction
+ * @param {bool}
+ * @api stable
+ */
+ol_interaction_Transform.prototype.setActive = function(b) {
+  this.select(null);
+  this.overlayLayer_.setVisible(b);
+  ol_interaction_Pointer__WEBPACK_IMPORTED_MODULE_9__["default"].prototype.setActive.call (this, b);
+};
+
+/** Set efault sketch style
+*/
+ol_interaction_Transform.prototype.setDefaultStyle = function() {
+  // Style
+  var stroke = new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_2__["default"]({ color: [255,0,0,1], width: 1 });
+  var strokedash = new ol_style_Stroke__WEBPACK_IMPORTED_MODULE_2__["default"]({ color: [255,0,0,1], width: 1, lineDash:[4,4] });
+  var fill0 = new ol_style_Fill__WEBPACK_IMPORTED_MODULE_4__["default"]({ color:[255,0,0,0.01] });
+  var fill = new ol_style_Fill__WEBPACK_IMPORTED_MODULE_4__["default"]({ color:[255,255,255,0.8] });
+  var circle = new ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_10__["default"]({
+      fill: fill,
+      stroke: stroke,
+      radius: this.isTouch ? 12 : 6,
+      points: 15
+    });
+  circle.getAnchor()[0] = this.isTouch ? -10 : -5;
+  var bigpt = new ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_10__["default"]({
+      fill: fill,
+      stroke: stroke,
+      radius: this.isTouch ? 16 : 8,
+      points: 4,
+      angle: Math.PI/4
+    });
+  var smallpt = new ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_10__["default"]({
+      fill: fill,
+      stroke: stroke,
+      radius: this.isTouch ? 12 : 6,
+      points: 4,
+      angle: Math.PI/4
+    });
+  function createStyle (img, stroke, fill) {
+    return [ new ol_style_Style__WEBPACK_IMPORTED_MODULE_1__["default"]({image:img, stroke:stroke, fill:fill}) ];
+  }
+  /** Style for handles */
+  this.style = {
+    'default': createStyle (bigpt, strokedash, fill0),
+    'translate': createStyle (bigpt, stroke, fill),
+    'rotate': createStyle (circle, stroke, fill),
+    'rotate0': createStyle (bigpt, stroke, fill),
+    'scale': createStyle (bigpt, stroke, fill),
+    'scale1': createStyle (bigpt, stroke, fill),
+    'scale2': createStyle (bigpt, stroke, fill),
+    'scale3': createStyle (bigpt, stroke, fill),
+    'scalev': createStyle (smallpt, stroke, fill),
+    'scaleh1': createStyle (smallpt, stroke, fill),
+    'scalev2': createStyle (smallpt, stroke, fill),
+    'scaleh3': createStyle (smallpt, stroke, fill),
+  };
+  this.drawSketch_();
+}
+
+/**
+ * Set sketch style.
+ * @param {style} style Style name: 'default','translate','rotate','rotate0','scale','scale1','scale2','scale3','scalev','scaleh1','scalev2','scaleh3'
+ * @param {ol.style.Style|Array<ol.style.Style>} olstyle
+ * @api stable
+ */
+ol_interaction_Transform.prototype.setStyle = function(style, olstyle) {
+  if (!olstyle) return;
+  if (olstyle instanceof Array) this.style[style] = olstyle;
+  else this.style[style] = [ olstyle ];
+  for (var i=0; i<this.style[style].length; i++) {
+    var im = this.style[style][i].getImage();
+    if (im) {
+      if (style == 'rotate') im.getAnchor()[0] = -5;
+      if (this.isTouch) im.setScale(1.8);
+    }
+    var tx = this.style[style][i].getText();
+    if (tx) {
+      if (style == 'rotate') tx.setOffsetX(this.isTouch ? 14 : 7);
+      if (this.isTouch) tx.setScale(1.8);
+    }
+  }
+  this.drawSketch_();
+};
+
+/** Get Feature at pixel
+ * @param {ol.Pixel}
+ * @return {ol.feature}
+ * @private
+ */
+ol_interaction_Transform.prototype.getFeatureAtPixel_ = function(pixel) {
+  var self = this;
+  return this.getMap().forEachFeatureAtPixel(pixel,
+    function(feature, layer) {
+      var found = false;
+      // Overlay ?
+      if (!layer) {
+        if (feature===self.bbox_) return false;
+        self.handles_.forEach (function(f) { if (f===feature) found=true; });
+        if (found) return { feature: feature, handle:feature.get('handle'), constraint:feature.get('constraint'), option:feature.get('option') };
+      }
+      // No seletion
+      if (!self.get('selection')) {
+        // Return the currently selected feature the user is interacting with.
+        if (self.selection_.getArray().some(function(f) { return feature === f; })) {
+          return { feature: feature };
+        }
+        return null;
+      }
+      // filter condition
+      if (self._filter) {
+        if (self._filter(feature,layer)) return { feature: feature };
+        else return null;
+      }
+      // feature belong to a layer
+      else if (self.layers_) {
+        for (var i=0; i<self.layers_.length; i++) {
+          if (self.layers_[i]===layer) return { feature: feature };
+        }
+        return null;
+      }
+      // feature in the collection
+      else if (self.features_) {
+        self.features_.forEach (function(f) { if (f===feature) found=true; });
+        if (found) return { feature: feature };
+        else return null;
+      }
+      // Others
+      else return { feature: feature };
+    },
+    { hitTolerance: this.get('hitTolerance') }
+  ) || {};
+}
+
+/** Draw transform sketch
+* @param {boolean} draw only the center
+*/
+ol_interaction_Transform.prototype.drawSketch_ = function(center) {
+  var i, f, geom;
+  this.overlayLayer_.getSource().clear();
+  if (!this.selection_.getLength()) return;
+  var ext = this.selection_.item(0).getGeometry().getExtent();
+  // Clone and extend
+  ext = Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["buffer"])(ext, 0);
+  this.selection_.forEach(function (f) {
+    Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["extend"])(ext, f.getGeometry().getExtent());
+  });
+  if (center===true) {
+    if (!this.ispt_) {
+      this.overlayLayer_.getSource().addFeature(new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"]( { geometry: new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"](this.center_), handle:'rotate0' }) );
+      geom = Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_11__["fromExtent"])(ext);
+      f = this.bbox_ = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"](geom);
+      this.overlayLayer_.getSource().addFeature (f);
+    }
+  }
+  else {
+    if (this.ispt_) {
+      var p = this.getMap().getPixelFromCoordinate([ext[0], ext[1]]);
+      ext = Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["boundingExtent"])([
+        this.getMap().getCoordinateFromPixel([p[0]-10, p[1]-10]),
+        this.getMap().getCoordinateFromPixel([p[0]+10, p[1]+10])
+      ]);
+    }
+    geom = Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_11__["fromExtent"])(ext);
+    f = this.bbox_ = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"](geom);
+    var features = [];
+    var g = geom.getCoordinates()[0];
+    if (!this.ispt_) {
+      features.push(f);
+      // Middle
+      if (!this.iscircle_ && this.get('stretch') && this.get('scale')) for (i=0; i<g.length-1; i++) {
+        f = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"]( { geometry: new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"]([(g[i][0]+g[i+1][0])/2,(g[i][1]+g[i+1][1])/2]), handle:'scale', constraint:i%2?"h":"v", option:i });
+        features.push(f);
+      }
+      // Handles
+      if (this.get('scale')) for (i=0; i<g.length-1; i++) {
+        f = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"]( { geometry: new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"](g[i]), handle:'scale', option:i });
+        features.push(f);
+      }
+      // Center
+      if (this.get('translate') && !this.get('translateFeature')) {
+        f = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"]( { geometry: new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"]([(g[0][0]+g[2][0])/2, (g[0][1]+g[2][1])/2]), handle:'translate' });
+        features.push(f);
+      }
+    }
+    // Rotate
+    if (!this.iscircle_ && this.get('rotate')) {
+      f = new ol_Feature__WEBPACK_IMPORTED_MODULE_7__["default"]( { geometry: new ol_geom_Point__WEBPACK_IMPORTED_MODULE_6__["default"](g[3]), handle:'rotate' });
+      features.push(f);
+    }
+    // Add sketch
+    this.overlayLayer_.getSource().addFeatures(features);
+  }
+
+};
+
+/** Select a feature to transform
+* @param {ol.Feature} feature the feature to transform
+* @param {boolean} add true to add the feature to the selection, default false
+*/
+ol_interaction_Transform.prototype.select = function(feature, add) {
+  if (!feature) {
+    this.selection_.clear();
+    this.drawSketch_();
+    return;
+  }
+  if (!feature.getGeometry || !feature.getGeometry()) return;
+  // Add to selection
+  if (add) {
+    this.selection_.push(feature);
+  } else {
+    this.selection_.clear()
+    this.selection_.push(feature);
+  }
+  this.ispt_ = (this.selection_.getLength()===1 ? (this.selection_.item(0).getGeometry().getType() == "Point") : false);
+  this.iscircle_ = (this.selection_.getLength()===1 ? (this.selection_.item(0).getGeometry().getType() == "Circle") : false);
+  this.drawSketch_();
+  this.watchFeatures_();
+  // select event
+  this.dispatchEvent({ type:'select', feature: feature, features: this.selection_ });
+};
+
+/** Watch selected features
+ * @private
+ */
+ol_interaction_Transform.prototype.watchFeatures_ = function() {
+  // Listen to feature modification
+  if (this._featureListeners) {
+    this._featureListeners.forEach(function (l) {
+      Object(ol_Observable__WEBPACK_IMPORTED_MODULE_13__["unByKey"])(l)
+    });
+  }
+  this._featureListeners = [];
+  this.selection_.forEach(function(f) {
+    this._featureListeners.push(
+      f.on('change', function() {
+        this.drawSketch_();
+      }.bind(this))
+    );
+  }.bind(this));
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `true` to start the drag sequence.
+ * @private
+ */
+ol_interaction_Transform.prototype.handleDownEvent_ = function(evt) {
+  if (!this._handleEvent(evt, this.selection_)) return;
+  var sel = this.getFeatureAtPixel_(evt.pixel);
+  var feature = sel.feature;
+  if (this.selection_.getLength()
+    && this.selection_.getArray().indexOf(feature) >= 0
+    && ((this.ispt_ && this.get('translate')) || this.get('translateFeature'))
+  ){
+    sel.handle = 'translate';
+  }
+  if (sel.handle) {
+    this.mode_ = sel.handle;
+    this.opt_ = sel.option;
+    this.constraint_ = sel.constraint;
+    // Save info
+    this.coordinate_ = evt.coordinate;
+    this.pixel_ = evt.pixel;
+    this.geoms_ = [];
+    var extent = Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["createEmpty"])();
+    for (var i=0, f; f=this.selection_.item(i); i++) {
+      this.geoms_.push(f.getGeometry().clone());
+      extent = Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["extend"])(extent, f.getGeometry().getExtent());
+    }
+    this.extent_ = (Object(ol_geom_Polygon__WEBPACK_IMPORTED_MODULE_11__["fromExtent"])(extent)).getCoordinates()[0];
+    if (this.mode_==='rotate') {
+      this.center_ = this.getCenter() || Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["getCenter"])(extent);
+
+      // we are now rotating (cursor down on rotate mode), so apply the grabbing cursor
+      var element = evt.map.getTargetElement();
+      element.style.cursor = this.Cursors.rotate0;
+      this.previousCursor_ = element.style.cursor;
+    } else {
+      this.center_ = Object(ol_extent__WEBPACK_IMPORTED_MODULE_12__["getCenter"])(extent);
+    }
+    this.angle_ = Math.atan2(this.center_[1]-evt.coordinate[1], this.center_[0]-evt.coordinate[0]);
+
+    this.dispatchEvent({
+      type: this.mode_+'start',
+      feature: this.selection_.item(0), // backward compatibility
+      features: this.selection_,
+      pixel: evt.pixel,
+      coordinate: evt.coordinate
+    });
+    return true;
+  }
+  else if (this.get('selection')) {
+    if (feature){
+      if (!this.addFn_(evt)) this.selection_.clear();
+      var index = this.selection_.getArray().indexOf(feature);
+      if (index < 0) this.selection_.push(feature);
+      else this.selection_.removeAt(index);
+    } else {
+      this.selection_.clear();
+    }
+    this.ispt_ = this.selection_.getLength()===1 ? (this.selection_.item(0).getGeometry().getType() == "Point") : false;
+    this.iscircle_ = (this.selection_.getLength()===1 ? (this.selection_.item(0).getGeometry().getType() == "Circle") : false);
+    this.drawSketch_();
+    this.watchFeatures_();
+    this.dispatchEvent({ type:'select', feature: feature, features: this.selection_, pixel: evt.pixel, coordinate: evt.coordinate });
+    return false;
+  }
+};
+
+
+/**
+ * Get features to transform
+ * @return {ol.Collection<ol.Feature>}
+ */
+ol_interaction_Transform.prototype.getFeatures = function() {
+  return this.selection_;
+};
+
+/**
+ * Get the rotation center
+ * @return {ol.coordinates|undefined}
+ */
+ol_interaction_Transform.prototype.getCenter = function() {
+  return this.get('center');
+};
+
+/**
+ * Set the rotation center
+ * @param {ol.coordinates|undefined} c the center point, default center on the objet
+ */
+ol_interaction_Transform.prototype.setCenter = function(c) {
+  return this.set('center', c);
+}
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @private
+ */
+ol_interaction_Transform.prototype.handleDragEvent_ = function(evt) {
+  if (!this._handleEvent(evt, this.features_)) return;
+  var i, f, geometry;
+  switch (this.mode_) {
+    case 'rotate': {
+      var a = Math.atan2(this.center_[1]-evt.coordinate[1], this.center_[0]-evt.coordinate[0]);
+      if (!this.ispt) {
+        // var geometry = this.geom_.clone();
+        // geometry.rotate(a-this.angle_, this.center_);
+        // this.feature_.setGeometry(geometry);
+        for (i=0, f; f=this.selection_.item(i); i++) {
+          geometry = this.geoms_[i].clone();
+          geometry.rotate(a - this.angle_, this.center_);
+          // bug: ol, bad calculation circle geom extent
+          if (geometry.getType() == 'Circle') geometry.setCenterAndRadius(geometry.getCenter(), geometry.getRadius());
+          f.setGeometry(geometry);
+        }
+      }
+      this.drawSketch_(true);
+      this.dispatchEvent({
+        type:'rotating',
+        feature: this.selection_.item(0),
+        features: this.selection_,
+        angle: a-this.angle_,
+        pixel: evt.pixel,
+        coordinate: evt.coordinate
+      });
+      break;
+    }
+    case 'translate': {
+      var deltaX = evt.coordinate[0] - this.coordinate_[0];
+      var deltaY = evt.coordinate[1] - this.coordinate_[1];
+
+      //this.feature_.getGeometry().translate(deltaX, deltaY);
+      for (i=0, f; f=this.selection_.item(i); i++) {
+        f.getGeometry().translate(deltaX, deltaY);
+      }
+      this.handles_.forEach(function(f) {
+        f.getGeometry().translate(deltaX, deltaY);
+      });
+
+      this.coordinate_ = evt.coordinate;
+      this.dispatchEvent({
+        type:'translating',
+        feature: this.selection_.item(0),
+        features: this.selection_,
+        delta:[deltaX,deltaY],
+        pixel: evt.pixel,
+        coordinate: evt.coordinate
+      });
+      break;
+    }
+    case 'scale': {
+      var center = this.center_;
+      if (this.get('modifyCenter')(evt)) {
+        center = this.extent_[(Number(this.opt_)+2)%4];
+      }
+
+      var scx = (evt.coordinate[0] - center[0]) / (this.coordinate_[0] - center[0]);
+      var scy = (evt.coordinate[1] - center[1]) / (this.coordinate_[1] - center[1]);
+
+      if (this.get('noFlip')) {
+        if (scx<0) scx=-scx;
+        if (scy<0) scy=-scy;
+      }
+
+      if (this.constraint_) {
+        if (this.constraint_=="h") scx=1;
+        else scy=1;
+      } else {
+        if (this.get('keepAspectRatio')(evt)) {
+          scx = scy = Math.min(scx,scy);
+        }
+      }
+
+      for (i=0, f; f=this.selection_.item(i); i++) {
+        geometry = this.geoms_[i].clone();
+        geometry.applyTransform(function(g1, g2, dim) {
+          if (dim<2) return g2;
+
+          for (var j=0; j<g1.length; j+=dim) {
+            if (scx!=1) g2[j] = center[0] + (g1[j]-center[0])*scx;
+            if (scy!=1) g2[j+1] = center[1] + (g1[j+1]-center[1])*scy;
+          }
+          // bug: ol, bad calculation circle geom extent
+          if (geometry.getType() == 'Circle') geometry.setCenterAndRadius(geometry.getCenter(), geometry.getRadius());
+          return g2;
+        });
+        f.setGeometry(geometry);
+      }
+      this.drawSketch_();
+      this.dispatchEvent({
+        type:'scaling',
+        feature: this.selection_.item(0),
+        features: this.selection_,
+        scale:[scx,scy],
+        pixel: evt.pixel,
+        coordinate: evt.coordinate
+      });
+      break;
+    }
+    default: break;
+  }
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Event.
+ * @private
+ */
+ol_interaction_Transform.prototype.handleMoveEvent_ = function(evt) {
+  if (!this._handleEvent(evt, this.features_)) return;
+  // console.log("handleMoveEvent");
+  if (!this.mode_) {
+    var sel = this.getFeatureAtPixel_(evt.pixel);
+    var element = evt.map.getTargetElement();
+    if (sel.feature) {
+      var c = sel.handle ? this.Cursors[(sel.handle||'default')+(sel.constraint||'')+(sel.option||'')] : this.Cursors.select;
+
+      if (this.previousCursor_===undefined) {
+        this.previousCursor_ = element.style.cursor;
+      }
+      element.style.cursor = c;
+    } else {
+      if (this.previousCursor_!==undefined) element.style.cursor = this.previousCursor_;
+      this.previousCursor_ = undefined;
+    }
+  }
+};
+
+/**
+ * @param {ol.MapBrowserEvent} evt Map browser event.
+ * @return {boolean} `false` to stop the drag sequence.
+ */
+ol_interaction_Transform.prototype.handleUpEvent_ = function(evt) {
+  // remove rotate0 cursor on Up event, otherwise it's stuck on grab/grabbing
+  if (this.mode_ === 'rotate') {
+    var element = evt.map.getTargetElement();
+    element.style.cursor = this.Cursors.default;
+    this.previousCursor_ = undefined;
+  }
+
+  //dispatchEvent
+  this.dispatchEvent({
+    type:this.mode_+'end',
+    feature: this.selection_.item(0),
+    features: this.selection_,
+    oldgeom: this.geoms_[0],
+    oldgeoms: this.geoms_
+  });
+
+  this.drawSketch_();
+  this.mode_ = null;
+  return false;
+};
+
+/** Get the features that are selected for transform
+ * @return ol.Collection
+ */
+ol_interaction_Transform.prototype.getFeatures = function() {
+  return this.selection_;
+};
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_interaction_Transform);
+
 
 /***/ }),
 
