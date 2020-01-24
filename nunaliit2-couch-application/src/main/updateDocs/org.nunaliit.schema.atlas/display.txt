@@ -1,0 +1,13 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+{{#nunaliit_atlas}}
+	<div>
+		<div class="label n2s_localize">Atlas</div>
+		<div class="value">{{#:localize}}title{{/:localize}}</div>
+		<div class="end"></div>
+	</div>
+{{/nunaliit_atlas}}
+
+	<div class="n2nav_insertMenu" nunaliit-document="{{_id}}">
+	</div>
+
+</div></div>

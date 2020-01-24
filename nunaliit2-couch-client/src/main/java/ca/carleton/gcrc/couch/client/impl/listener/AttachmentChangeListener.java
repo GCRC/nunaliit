@@ -132,10 +132,10 @@ public abstract class AttachmentChangeListener<T> extends AbstractCouchDbChangeL
         if (sourceDocument != null) {
             JSONObject attachments = sourceDocument.optJSONObject("_attachments");
             if (attachments != null) {
-                JSONObject indexHtml = attachments.optJSONObject(attachmentFilename);
-                if (indexHtml != null) {
-                    String hash = indexHtml.optString("digest");
-                    // Get latest index.html if we don't already have it or digest changed.
+                JSONObject attachmentDoc = attachments.optJSONObject(attachmentFilename);
+                if (attachmentDoc != null) {
+                    String hash = attachmentDoc.optString("digest");
+                    // Get latest attachment file if we don't already have it or digest changed.
                     if (StringUtils.isBlank(currentAttachmentHash) || !currentAttachmentHash.equals(hash)) {
                         logger.debug("Attachment document {} changed, getting from database", attachmentFilename);
                         currentAttachmentHash = hash;

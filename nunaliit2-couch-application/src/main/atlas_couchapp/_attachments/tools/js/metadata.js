@@ -9,6 +9,38 @@
     var DH = 'metadata.js';
     var HASH_NEW_PREFIX = "new_";
 
+    var defaultMetadata = JSON.parse('{\n' +
+        '        "license": "",\n' +
+        '        "creator": {\n' +
+        '          "contactPoint": {\n' +
+        '            "@type": "ContactPoint",\n' +
+        '            "contactType": "",\n' +
+        '            "telephone": "",\n' +
+        '            "email": ""\n' +
+        '          },\n' +
+        '          "@type": "Organization",\n' +
+        '          "name": "",\n' +
+        '          "url": ""\n' +
+        '        },\n' +
+        '        "dateCreated": "",\n' +
+        '        "keywords": [],\n' +
+        '        "temporalCoverage": "",\n' +
+        '        "@type": "Dataset",\n' +
+        '        "name": "",\n' +
+        '        "description": "",\n' +
+        '        "spatialCoverage": {\n' +
+        '          "geo": {\n' +
+        '            "@type": "GeoShape",\n' +
+        '            "box": ""\n' +
+        '          },\n' +
+        '          "@type": "Place"\n' +
+        '        },\n' +
+        '        "@context": {\n' +
+        '          "@vocab": "http://schema.org"\n' +
+        '        },\n' +
+        '        "url": ""\n' +
+        '      }');
+
     var config = null;
     var authService = null;
     var dispatcher = null;
@@ -58,9 +90,9 @@
                     editDocument(doc);
                     return false;
                 });
-            }
-            , onError: function (err) {
-                //TODO: reportError(err);
+            },
+            onError: function (err) {
+                reportError(err);
                 console.log("Error viewing doc: " + err)
             }
         });
@@ -141,6 +173,14 @@
             var $div = getDocumentDiv();
             $div.empty();
 
+            // Add metadata data if it doesn't already exist.
+        
+            if (doc.hasOwnProperty("nunaliit_module") && !doc.nunaliit_module.hasOwnProperty("nunaliit_metadata")) {
+                doc.nunaliit_module.nunaliit_metadata = defaultMetadata;
+            }
+
+            //TODO: do same for atlas document
+
             couchEditor.cancelDocumentForm({suppressEvents: true});
 
             // Couch Editor
@@ -160,7 +200,7 @@
             });
 
             // References from other objects
-            $div.append($('<h3>Documents referencing this metadata</h3>'));
+            $div.append($('<h3>Documents referencing this module</h3>'));
             $div.append($('<div id="referencesToThis"><div class="olkit_wait"></div></div>'));
             atlasDesign.queryView({
                 viewName: 'link-references',
@@ -234,6 +274,7 @@
         }
     } // initiateEdit
 
+    //TODO: remove
     function addDocument() {
         if (authService && !authService.isLoggedIn()) {
             authService.showLoginForm({
@@ -260,6 +301,7 @@
         });
     } // addDocument
 
+    // TODO: remove
     function createNewDocument(schema) {
         var $docDiv = getDocumentDiv();
         var doc = schema.createObject();
@@ -315,8 +357,6 @@
                 for (var i = 0; i < rows.length; i++) {
                     // id is the module doc Id
                     var docId = rows[i].id;
-                    // val is the linked metadata doc Id
-                    var metadataDocId = rows[i].value;
 
                     var $opt = $('<option>')
                         .text(docId)
@@ -336,28 +376,9 @@
         console.log("nunaliit-document: " + $('option:checked', $select).attr('nunaliit-document'));
 
         if (moduleDocId !== undefined && moduleDocId !== '') {
-            // Get all metadata docs with their module links.
-            var metadataDocId;
-            atlasDesign.queryView({
-                viewName: 'metadata-module-link',
-                onSuccess: function (rows) {
-                    for (var i = 0; i < rows.length; i++) {
-                        if (rows[i].value === moduleDocId) {
-                            console.log("FOUND match");
-                            metadataDocId = rows[i].id;
-                        }
-                    }
-
-                    if (metadataDocId) {
-                        dispatcher.send(DH, {
-                            type: 'userSelect',
-                            docId: metadataDocId
-                        });
-                    }
-                    else {
-                        addDocument();
-                    }
-                }
+            dispatcher.send(DH, {
+                type: 'userSelect',
+                docId: moduleDocId
             });
         } else {
             reportError('Module document Id is undefined');
@@ -397,6 +418,7 @@
         $('#atlasRadio').click();
     }
 
+    // TODO: load atlas document
     function showAtlasMetadata() {
         startRequestWait();
 

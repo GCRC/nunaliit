@@ -1,0 +1,1 @@
+Atlas: {{#nunaliit_atlas}}{{#:localize}}title{{/:localize}}{{/nunaliit_atlas}}

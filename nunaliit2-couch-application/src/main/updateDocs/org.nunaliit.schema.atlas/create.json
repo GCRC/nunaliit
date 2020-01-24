@@ -1,0 +1,42 @@
+{
+  "nunaliit_schema": "atlas",
+  "nunaliit_atlas": {
+    "title": "",
+    "nunaliit_navigation": {
+      "title": null,
+      "items": []
+    },
+    "nunaliit_metadata": {
+      "license": "",
+      "creator": {
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "",
+          "telephone": "",
+          "email": ""
+        },
+        "@type": "Organization",
+        "name": "",
+        "url": ""
+      },
+      "dateCreated": "",
+      "keywords": [
+      ],
+      "temporalCoverage": "",
+      "@type": "Dataset",
+      "name": "",
+      "description": "",
+      "spatialCoverage": {
+        "geo": {
+          "@type": "GeoShape",
+          "box": ""
+        },
+        "@type": "Place"
+      },
+      "@context": {
+        "@vocab": "http://schema.org"
+      },
+      "url": ""
+    }
+  }
+}

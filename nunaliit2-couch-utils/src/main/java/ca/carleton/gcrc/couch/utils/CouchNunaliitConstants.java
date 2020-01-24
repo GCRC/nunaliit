@@ -4,16 +4,17 @@ public class CouchNunaliitConstants {
 
 	private CouchNunaliitConstants(){}
 
-	public final static String DOC_KEY_CREATED = "nunaliit_created";
-	public final static String DOC_KEY_LAST_UPDATED = "nunaliit_last_updated";
-	public final static String DOC_KEY_TYPE = "nunaliit_type";
-	public final static String DOC_KEY_GEOMETRY = "nunaliit_geom";
-	public final static String DOC_KEY_SCHEMA = "nunaliit_schema";
+	public static final String DOC_KEY_CREATED = "nunaliit_created";
+	public static final String DOC_KEY_LAST_UPDATED = "nunaliit_last_updated";
+	public static final String DOC_KEY_TYPE = "nunaliit_type";
+	public static final String DOC_KEY_GEOMETRY = "nunaliit_geom";
+	public static final String DOC_KEY_SCHEMA = "nunaliit_schema";
+	public static final String DOC_KEY_METADATA = "nunaliit_metadata";
 
-	public final static String TYPE_ACTION_STAMP = "actionstamp";
+	public static final String TYPE_ACTION_STAMP = "actionstamp";
 
-	public final static String CREATE_UPDATE_KEY_TIME = "time";
-	public final static String CREATE_UPDATE_KEY_NAME = "name";
+	public static final String CREATE_UPDATE_KEY_TIME = "time";
+	public static final String CREATE_UPDATE_KEY_NAME = "name";
 
 	/**
 	 * The site design document Id.

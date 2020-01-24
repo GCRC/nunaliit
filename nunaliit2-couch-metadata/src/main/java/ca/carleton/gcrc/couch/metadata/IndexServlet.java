@@ -1,10 +1,11 @@
-package ca.carleton.gcrc.couch.command.servlet;
+package ca.carleton.gcrc.couch.metadata;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.impl.listener.HtmlAttachmentChangeListener;
+import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.jsoup.nodes.Document;
@@ -157,41 +158,24 @@ public class IndexServlet extends HttpServlet {
     }
 
     /**
-     * Finds the metadata document associated with the module document Id.
+     * Finds the metadata object associated with the module document.
      *
      * @param moduleDocId Module document Id to find metdata for.
      * @return The JSON-LD document representing the metadata.
      * @throws Exception If the database returns an error on querying the view.
      */
     private JSONObject findModuleMetadata(String moduleDocId) throws Exception {
-        JSONObject moduleMetadata = null;
-        CouchDesignDocument metadataDesignDocument = couchDb.getDesignDocument("atlas");
-        CouchQuery query = new CouchQuery();
-        // View returns {id=metadata-doc-id, value=metadata-doc-id, key=module-id}
-        query.setViewName("metadata-module-link");
-        CouchQueryResults results = null;
-        try {
-            results = metadataDesignDocument.performQuery(query);
-        }
-        catch (Exception e) {
-            logger.warn("Error accessing module metadata: {}", e.getMessage());
-        }
+        JSONObject metadata = null;
 
-        if (results != null) {
-            // Find metadata for given module.
-            for (JSONObject row : results.getRows()) {
-                if (row.has("value") && moduleDocId.equals(row.get("value"))) {
-                    String metadataDocId = row.getString("id");
-                    if (StringUtils.isNotBlank(metadataDocId)) {
-                        JSONObject doc = couchDb.getDocument(metadataDocId);
-                        // The nunaliit_metadata contains the JSON-LD document to publish.
-                        moduleMetadata = doc.getJSONObject("nunaliit_metadata");
-                    }
-                }
+        JSONObject moduleDoc = couchDb.getDocument(moduleDocId);
+        if (moduleDoc != null) {
+            JSONObject module = moduleDoc.getJSONObject("nunaliit_module");
+            if (module.has(CouchNunaliitConstants.DOC_KEY_METADATA)) {
+                metadata = module.getJSONObject(CouchNunaliitConstants.DOC_KEY_METADATA);
             }
         }
 
-        return moduleMetadata;
+        return metadata;
     }
 
     /**

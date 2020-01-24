@@ -1,4 +1,4 @@
-package ca.carleton.gcrc.couch.command.servlet;
+package ca.carleton.gcrc.couch.metadata;
 
 import ca.carleton.gcrc.couch.client.impl.listener.TextAttachmentChangeListener;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;

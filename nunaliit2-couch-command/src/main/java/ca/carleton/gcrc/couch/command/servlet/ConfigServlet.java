@@ -16,6 +16,8 @@ import ca.carleton.gcrc.couch.date.DateServletConfiguration;
 import ca.carleton.gcrc.couch.export.ExportConfiguration;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
+import ca.carleton.gcrc.couch.metadata.IndexServlet;
+import ca.carleton.gcrc.couch.metadata.RobotsServlet;
 import ca.carleton.gcrc.couch.metadata.SitemapBuilder;
 import ca.carleton.gcrc.couch.metadata.SitemapServlet;
 import ca.carleton.gcrc.couch.onUpload.UploadListener;
