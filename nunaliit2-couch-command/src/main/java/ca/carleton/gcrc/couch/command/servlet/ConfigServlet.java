@@ -9,6 +9,7 @@ import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.client.impl.listener.HtmlAttachmentChangeListener;
+import ca.carleton.gcrc.couch.client.impl.listener.ModuleMetadataChangeListener;
 import ca.carleton.gcrc.couch.client.impl.listener.TextAttachmentChangeListener;
 import ca.carleton.gcrc.couch.command.AtlasProperties;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
@@ -121,6 +122,7 @@ public class ConfigServlet extends JsonServlet {
 	private SitemapBuilder sitemapBuilder;
 	private HtmlAttachmentChangeListener indexChangeListener;
 	private TextAttachmentChangeListener robotsChangeListener;
+	private ModuleMetadataChangeListener moduleMetadataChangeListener;
 	private SecureRandom rng = null;
 	
 	public ConfigServlet() {
@@ -885,12 +887,17 @@ public class ConfigServlet extends JsonServlet {
 
 	private void initIndex(ServletContext servletContext) throws ServletException {
 		try {
+			// Watch index.html
 			indexChangeListener = new HtmlAttachmentChangeListener(documentDatabase, CouchNunaliitConstants.SITE_DESIGN_DOC_ID,
 					CouchNunaliitConstants.INDEX_HTML);
 			indexChangeListener.start();
+			// Watch all documents with schema type module
+			moduleMetadataChangeListener = new ModuleMetadataChangeListener(documentDatabase);
+			moduleMetadataChangeListener.start();
 
 			servletContext.setAttribute(IndexServlet.CONFIG_DOCUMENT_DB, documentDatabase);
 			servletContext.setAttribute(IndexServlet.INDEX_DB_CHANGE_LISTENER, indexChangeListener);
+			servletContext.setAttribute(IndexServlet.MODULE_METADATA_CHANGE_LISTENER, moduleMetadataChangeListener);
 		}
 		catch (Exception e) {
 			logger.error("Error configuring index servlet", e);

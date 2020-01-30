@@ -38,7 +38,7 @@ public class SitemapDbChangeListener extends AbstractCouchDbChangeListener {
     /**
      * Regex used to find the navigation doc Id. Group 4 is the navigation doc id.
      */
-    private static final Pattern pattern = Pattern.compile(".*(\"|')defaultNavigationIdentifier(\"|')[ ]*,[ ]*(\"|')([^\"']+)(\"|').*", Pattern.DOTALL);
+    private static final Pattern pattern = Pattern.compile("(?!\\s*//).*(\"|')defaultNavigationIdentifier(\"|')[ ]*,[ ]*(\"|')([^\"']+)(\"|').*", Pattern.DOTALL);
 
     private CouchDb couchDb;
     /**
@@ -54,18 +54,22 @@ public class SitemapDbChangeListener extends AbstractCouchDbChangeListener {
      */
     private String currentNavigationDocId;
     /**
+     * Indicates whether to use the navigation specification in the atlas document, instead of what is in the {@link ca.carleton.gcrc.couch.utils.CouchNunaliitConstants#NUNALIIT_CUSTOM_JS} file.
+     */
+    private boolean useAtlasDocNavigation;//TODO: need to cleanup docsToWatch on switching between two places to get nav
+    /**
      * Regex matching object for finding navigation doc Id.
      */
     private Matcher matcher;
     /**
      * Shared queue used to task {@link SitemapBuilderThread} with work.
      */
-    private BlockingQueue<String> sharedNavigationDocIdQueue;
+    private BlockingQueue<String> sharedDocIdQueue;
 
-    public SitemapDbChangeListener(CouchDb couchDb, BlockingQueue<String> sharedNavigationDocIdQueue) throws NunaliitException {
+    public SitemapDbChangeListener(CouchDb couchDb, BlockingQueue<String> sharedDocIdQueue) throws NunaliitException {
         super(couchDb);
         this.couchDb = couchDb;
-        this.sharedNavigationDocIdQueue = sharedNavigationDocIdQueue;
+        this.sharedDocIdQueue = sharedDocIdQueue;
         // Only need to watch the site design doc and navigation document.
         docsToWatch = new HashSet<>(2);
         docsToWatch.add(CouchNunaliitConstants.SITE_DESIGN_DOC_ID);
@@ -94,7 +98,7 @@ public class SitemapDbChangeListener extends AbstractCouchDbChangeListener {
             else if (docChanged.getKey().equals(currentNavigationDocId)) {
                 try {
                     // Put the doc Id on the shared queue to trigger a rebuild of the sitemap links.
-                    sharedNavigationDocIdQueue.put(currentNavigationDocId);
+                    sharedDocIdQueue.put(currentNavigationDocId);
                 }
                 catch (InterruptedException e) {
                     logger.warn("Couldn't add navigation document Id to work queue: {}", currentNavigationDocId);
@@ -109,14 +113,18 @@ public class SitemapDbChangeListener extends AbstractCouchDbChangeListener {
         // Process design doc at startup to kick off navigation doc processing for sitemap generation.
         processSiteDesign(CouchNunaliitConstants.SITE_DESIGN_DOC_ID);
         // Cause the worker thread to build the sitemap.
-        if (StringUtils.isNotBlank(currentNavigationDocId)) {
-            try {
-                sharedNavigationDocIdQueue.put(currentNavigationDocId);
+        try {//TODO: should sharedDocIdQueue be "put" in processSiteDesign instead?
+            if (StringUtils.isNotBlank(currentNavigationDocId)) {
+                sharedDocIdQueue.put(currentNavigationDocId);
             }
-            catch (InterruptedException e) {
-                logger.warn("Couldn't add navigation document Id to work queue: {}", currentNavigationDocId);
-                Thread.currentThread().interrupt();
+            else {
+                // Didn't find navigation doc Id in nunaliit_custom.js, check the atlas document.
+                sharedDocIdQueue.put(CouchNunaliitConstants.ATLAS_DOC_ID);
             }
+        }
+        catch (InterruptedException e) {
+            logger.warn("Couldn't add navigation document Id to work queue: {}", currentNavigationDocId);
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -135,6 +143,7 @@ public class SitemapDbChangeListener extends AbstractCouchDbChangeListener {
             logger.error("Problem fetching docId {} from database", docId, e);
         }
 
+        //TODO: need to check hash on atlas doc if that's the one we're using
         if (siteDesignDoc != null) {
             JSONObject attachments = siteDesignDoc.optJSONObject("_attachments");
             if (attachments != null) {
@@ -147,15 +156,28 @@ public class SitemapDbChangeListener extends AbstractCouchDbChangeListener {
                         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
                             couchDb.downloadAttachment(CouchNunaliitConstants.SITE_DESIGN_DOC_ID, CouchNunaliitConstants.NUNALIIT_CUSTOM_JS, os);
                             String navigationDocId = findNavigationDocId(os);
-                            // Navigation doc Id changed.
+                            // Navigation doc Id changed or was removed.
                             if (StringUtils.isNotBlank(navigationDocId) && !navigationDocId.equals(currentNavigationDocId)) {
                                 // Remove the old one from the watch list.
                                 if (StringUtils.isNotBlank(currentNavigationDocId)) {
                                     docsToWatch.remove(currentNavigationDocId);
                                 }
+                                // In case the atlas doc is the current source of navigation data.
+                                docsToWatch.remove(CouchNunaliitConstants.ATLAS_DOC_ID);
 
                                 currentNavigationDocId = navigationDocId;
                                 docsToWatch.add(currentNavigationDocId);
+                                //TODO: put on shared queue?
+                            }
+                            else if (StringUtils.isBlank(navigationDocId)) {
+                                // No navigation found in nunaliit_custom.js. Look to atlas doc.
+                                if (StringUtils.isNotBlank(currentNavigationDocId)) {
+                                    docsToWatch.remove(currentNavigationDocId);
+                                }
+
+                                currentNavigationDocId = CouchNunaliitConstants.ATLAS_DOC_ID;
+                                docsToWatch.add(currentNavigationDocId);
+                                //TODO: put on shared queue?
                             }
                         }
                         catch (Exception e) {

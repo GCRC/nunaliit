@@ -41,10 +41,11 @@ function main_init(config) {
 			navigationName = config.directory.customService.getOption('defaultNavigationIdentifier');
 		};
 	};
-	if( !navigationName ){
-		navigationName = 'navigation.demo';
-	};
-	
+	// Try to get it from the atlas document
+	if(!navigationName) {
+		navigationName = 'atlas';
+	}
+
 	// Compute search panel name
 	var searchPanelName = null;
 	var $searchPanel = $('.nunaliit_search_input');

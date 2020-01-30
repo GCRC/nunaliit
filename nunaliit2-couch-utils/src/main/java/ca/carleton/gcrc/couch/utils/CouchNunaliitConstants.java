@@ -10,6 +10,8 @@ public class CouchNunaliitConstants {
 	public static final String DOC_KEY_GEOMETRY = "nunaliit_geom";
 	public static final String DOC_KEY_SCHEMA = "nunaliit_schema";
 	public static final String DOC_KEY_METADATA = "nunaliit_metadata";
+	public static final String DOC_KEY_ATLAS = "nunaliit_atlas";
+	public static final String DOC_KEY_NAVIGATION = "nunaliit_navigation";
 
 	public static final String TYPE_ACTION_STAMP = "actionstamp";
 
@@ -26,4 +28,8 @@ public class CouchNunaliitConstants {
 	 * File where the navigation doc Id is found.
 	 */
 	public static final String NUNALIIT_CUSTOM_JS = "nunaliit_custom.js";
+	/**
+	 * Atlas document Id. Should only be one.
+	 */
+	public static final String ATLAS_DOC_ID = "atlas";
 }

@@ -178,8 +178,9 @@
             if (doc.hasOwnProperty("nunaliit_module") && !doc.nunaliit_module.hasOwnProperty("nunaliit_metadata")) {
                 doc.nunaliit_module.nunaliit_metadata = defaultMetadata;
             }
-
-            //TODO: do same for atlas document
+            else if (doc.hasOwnProperty("nunaliit_atlas") && !doc.nunaliit_atlas.hasOwnProperty("nunaliit_metadata")) {
+                doc.nunaliit_atlas.nunaliit_metadata = defaultMetadata;
+            }
 
             couchEditor.cancelDocumentForm({suppressEvents: true});
 
@@ -274,71 +275,6 @@
         }
     } // initiateEdit
 
-    //TODO: remove
-    function addDocument() {
-        if (authService && !authService.isLoggedIn()) {
-            authService.showLoginForm({
-                onSuccess: addDocument
-            });
-            return;
-        }
-
-        // Create a new metadata document.
-        var hash = HASH_NEW_PREFIX + $n2.utils.stringToHtmlId("metadata");
-        dispatcher.send(DH, {
-            type: 'setHash',
-            hash: hash
-        });
-
-        schemaRepository.getSchema({
-            name: "metadata",
-            onSuccess: function (schema) {
-                createNewDocument(schema);
-            },
-            onError: function (err) {
-                reportError('Unable to get selected schema: ' + err);
-            }
-        });
-    } // addDocument
-
-    // TODO: remove
-    function createNewDocument(schema) {
-        var $docDiv = getDocumentDiv();
-        var doc = schema.createObject();
-        // Add reference to module document.
-        if ($('#moduleRadio').is(':checked')) {
-            var moduleDocId = $('option:checked', $('#moduleSelect')).attr('nunaliit-document');
-            doc.module = {
-                nunaliit_type: 'reference',
-                doc: moduleDocId
-            };
-        }
-
-        $n2.couchDocument.adjustDocument(doc);
-
-        showEdit(doc, schema);
-
-        function showEdit(doc, schema) {
-            $docDiv.empty();
-
-            couchEditor.cancelDocumentForm({suppressEvents: true});
-
-            couchEditor.showDocumentForm(doc, {
-                panelName: 'metadataAppDocument',
-                schema: schema,
-                onFeatureInsertedFn: function (fid, feature) {
-                },
-                onCancelFn: function () {
-                }
-            });
-            $n2.log('schema', schema);
-            $n2.log('couchEditor', couchEditor);
-
-            var $errors = $('<div id="editErrors"></div>');
-            $docDiv.append($errors);
-        }
-    } // createNewDocument
-
     function refreshModuleList() {
         // startRequestWait();
         var $moduleSelect = $("#moduleSelect");
@@ -418,29 +354,29 @@
         $('#atlasRadio').click();
     }
 
-    // TODO: load atlas document
     function showAtlasMetadata() {
         startRequestWait();
 
-        var metadataDesignDoc = atlasDb.getDesignDoc({ddName: 'atlas'});
-        metadataDesignDoc.queryView({
-            viewName: 'metadata-atlas',
+        var atlasDesignDoc = atlasDb.getDesignDoc({ddName: 'atlas'});
+        atlasDesignDoc.queryView({
+            viewName: 'atlas',
             include_docs: false,
             onSuccess: function (rows) {
-                // Should only be one metadata per atlas.
+                // Should only be one atlas document.
                 if (rows.length >= 1) {
                     var docId = rows[0].id;
+                    console.log("SARAH: atlas doc found: " + docId);
 
                     dispatcher.send(DH, {
                         type: 'userSelect',
                         docId: docId
                     });
                 } else {
-                    addDocument();
+                    console.log("SARAH: atlas document not found");
                 }
             }
         });
-    }
+    } // showAtlasMetadata
 
     function handleDispatch(msg) {
         if (msg.type === 'selected') {

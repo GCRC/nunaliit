@@ -23,7 +23,7 @@ public class SitemapBuilder {
      * Id on this queue when it detects a change. The builder thread pulls of the queue and processes the navigation
      * document for sitemap links.
      */
-    private BlockingQueue<String> navigationDocIdQueue;
+    private BlockingQueue<String> sharedDocIdQueue;
     /**
      * Database access, required by worker threads.
      */
@@ -39,12 +39,12 @@ public class SitemapBuilder {
 
     public SitemapBuilder(CouchDb couchDb) {
         this.couchDb = couchDb;
-        navigationDocIdQueue = new LinkedBlockingQueue<>();
+        sharedDocIdQueue = new LinkedBlockingQueue<>();
     }
 
     public void start() throws NunaliitException {
-        dbChangeListener = new SitemapDbChangeListener(couchDb, navigationDocIdQueue);
-        sitemapBuilderThread = new SitemapBuilderThread(couchDb, navigationDocIdQueue);
+        dbChangeListener = new SitemapDbChangeListener(couchDb, sharedDocIdQueue);
+        sitemapBuilderThread = new SitemapBuilderThread(couchDb, sharedDocIdQueue);
         sitemapBuilderThread.start();
         dbChangeListener.start();
     }

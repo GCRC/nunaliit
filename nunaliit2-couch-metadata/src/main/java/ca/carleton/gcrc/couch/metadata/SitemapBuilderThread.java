@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.metadata;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -30,7 +31,7 @@ public class SitemapBuilderThread extends Thread {
     /**
      * Shared queue used to task this thread with work.
      */
-    private BlockingQueue<String> sharedNavigationDocIdQueue;
+    private BlockingQueue<String> sharedDocIdQueue;
     /**
      * The list of relative URLs found in the navigation document.
      */
@@ -40,9 +41,9 @@ public class SitemapBuilderThread extends Thread {
      */
     private final Object lockObj = new Object();
 
-    public SitemapBuilderThread(CouchDb couchDb, BlockingQueue<String> sharedNavigationDocIdQueue) {
+    public SitemapBuilderThread(CouchDb couchDb, BlockingQueue<String> sharedDocIdQueue) {
         this.couchDb = couchDb;
-        this.sharedNavigationDocIdQueue = sharedNavigationDocIdQueue;
+        this.sharedDocIdQueue = sharedDocIdQueue;
         relativeUrls = new ArrayList<>();
     }
 
@@ -59,8 +60,8 @@ public class SitemapBuilderThread extends Thread {
         try {
             while (running.get()) {
                 try {
-                    String navigationDocId = sharedNavigationDocIdQueue.take();
-                    processNavigationDoc(navigationDocId);
+                    String docId = sharedDocIdQueue.take();
+                    processDocId(docId);
                 }
                 catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
@@ -95,34 +96,71 @@ public class SitemapBuilderThread extends Thread {
     }
 
     /**
+     * Document will either be a navigation document or the atlas document. Handles accordingly by checking the
+     * schema associated with the document.
+     *
+     * @param docId The docId to find nunaliit_navigation within. Can be of schema type 'navigation' or 'atlas'.
+     */
+    protected void processDocId(String docId) {
+        if (StringUtils.isNotBlank(docId)) {
+            try {
+                if (couchDb.documentExists(docId)) {
+                    JSONObject document = couchDb.getDocument(docId);
+                    JSONObject navigation = null;
+                    String schemaName = document.optString(CouchNunaliitConstants.DOC_KEY_SCHEMA, null);
+                    if (StringUtils.isNotBlank(schemaName)) {
+                        if (schemaName.equals("atlas") && document.has(CouchNunaliitConstants.DOC_KEY_ATLAS)) {
+                            JSONObject atlasDoc = document.optJSONObject(CouchNunaliitConstants.DOC_KEY_ATLAS);
+                            navigation = atlasDoc.optJSONObject(CouchNunaliitConstants.DOC_KEY_NAVIGATION);
+                            if (navigation != null) {
+                                logger.info("Using atlas document ({}) to generate sitemap", docId);
+                            }
+                        }
+                        else if (schemaName.equals("navigation")) {
+                            navigation = document.optJSONObject(CouchNunaliitConstants.DOC_KEY_NAVIGATION);
+                            if (navigation != null) {
+                                logger.info("Using navigation document ({}) to generate sitemap", docId);
+                            }
+                        }
+                        else {
+                            logger.warn("Cannot get navigation from document '{}' with unsupported schema '{}'", docId, schemaName);
+                        }
+                    }
+                    else {
+                        logger.warn("Document '{}' does not have nunaliit_schema, cannot process for navigation", docId);
+                    }
+
+                    if (navigation != null) {
+                        processNavigationDoc(navigation);
+                    }
+                }
+            }
+            catch (Exception e) {
+                logger.error("Could not access navigation document {} from database: {}", docId, e.getMessage());
+            }
+        }
+    }
+
+    /**
      * Processes the navigation document, extracting "href" and "module" properties to build a map of links that should
      * go in the sitemap.
      *
-     * @param navigationDocId The navigation document Id in the database.
-     * @return A map containing two lists of property values found in the navigation document
-     * {"href" -> [..], "module" -> [..]}.
+     * @param navigation The navigation document (or subsection of atlas document) in the database.
      */
-    protected Map<String, Set<String>> processNavigationDoc(String navigationDocId) {
+    private void processNavigationDoc(JSONObject navigation) {
         logger.debug("Processing the navigation document to build the sitemap");
 
+        // A map containing two lists of property values found in the navigation document {"href" -> [..], "module" -> [..]}.
         Map<String, Set<String>> links = new HashMap<>(2);
         Set<String> hrefSet = new HashSet<>();
         Set<String> moduleSet = new HashSet<>();
         links.put("href", hrefSet);
         links.put("module", moduleSet);
-        if (StringUtils.isNotBlank(navigationDocId)) {
-            try {
-                if (couchDb.documentExists(navigationDocId)) {
-                    JSONObject navDoc = couchDb.getDocument(navigationDocId);
-                    JSONObject navigation = navDoc.optJSONObject("nunaliit_navigation");
-                    if (navigation != null) {
-                        recurseOnItems(navigation.getJSONArray("items"), links);
-                    }
-                }
-            }
-            catch (Exception e) {
-                logger.error("Could not access navigation document {} from database: {}", navigationDocId, e.getMessage());
-            }
+        if (navigation != null) {
+            recurseOnItems(navigation.getJSONArray("items"), links);
+        }
+        else {
+            logger.warn("Navigation JSON object was null, cannot build sitemap");
         }
 
         // Now build final set of relative URLs.
@@ -137,8 +175,6 @@ public class SitemapBuilderThread extends Thread {
             relativeUrls.clear();
             relativeUrls.addAll(tempRelativeUrls);
         }
-
-        return links;
     }
 
     /**

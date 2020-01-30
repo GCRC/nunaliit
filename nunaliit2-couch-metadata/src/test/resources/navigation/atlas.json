@@ -1,0 +1,93 @@
+{
+  "_id": "atlas",
+  "_rev": "7-cfe4bd758d60e4e10cdc099c363768bd",
+  "nunaliit_manifest": {
+    "attachments": {},
+    "digest": "vx1oqqsVrU82GmRPyb+OF2NSEI8=",
+    "type": "SHA-1"
+  },
+  "nunaliit_last_updated": {
+    "nunaliit_type": "actionstamp",
+    "name": "admin",
+    "action": "updated",
+    "time": 1580246898155
+  },
+  "nunaliit_schema": "atlas",
+  "nunaliit_atlas": {
+    "nunaliit_type": "atlas",
+    "title": "Atlas Title",
+    "nunaliit_navigation": {
+      "nunaliit_type": "navigation",
+      "title": {
+        "nunaliit_type": "localized",
+        "en": "Atlas",
+        "fr": "L'Atlas"
+      },
+      "items": [
+        {
+          "module": "module.demo",
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "Demo Module",
+            "fr": "Module de Demo"
+          }
+        },
+        {
+          "module": "module.map",
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "Map Module",
+            "fr": "Module de Map"
+          }
+        },
+        {
+          "module": "module.canvas",
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "Canvas Module",
+            "fr": "Module de Canvas"
+          }
+        },
+        {
+          "href": "./tools/index.html",
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "Tools",
+            "fr": "Outils"
+          }
+        }
+      ]
+    },
+    "nunaliit_metadata": {
+      "license": "Apache 2.0",
+      "creator": {
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "contactType": "Office",
+          "telephone": "+1-555-555-5555",
+          "email": "info@gcrc.carleton.ca"
+        },
+        "@type": "Organization",
+        "name": "GCRC",
+        "url": "https://gcrc.carleton.ca"
+      },
+      "dateCreated": "2020-01-01",
+      "keywords": [],
+      "temporalCoverage": "2020-01-02/2021-01-02",
+      "@type": "Dataset",
+      "name": "My Atlas Title",
+      "description": "A long description about what makes this an intersting atlas",
+      "spatialCoverage": {
+        "geo": {
+          "@type": "GeoShape",
+          "box": "-75.8,45.2 -75.5,45.5"
+        },
+        "@type": "Place"
+      },
+      "@context": {
+        "@vocab": "http://schema.org"
+      },
+      "url": "http://localhost:8081"
+    }
+  }
+}
