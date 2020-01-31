@@ -100,13 +100,5 @@
 
 		<script type="text/javascript" src="js/index.js"></script>
 
-		<script>
-			var servletPath = "/servlet/metadata" + window.location.search;
-			$.getJSON(servletPath, function(data) {
-				if (data !== null) {
-					$("<script/>", {"type":"application/ld+json", html:JSON.stringify(data)}).appendTo("head");
-				}
-			});
-		</script>
 	</body>
 </html>

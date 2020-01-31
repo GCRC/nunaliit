@@ -21,7 +21,8 @@ import java.nio.charset.StandardCharsets;
  * in robots.txt. Currently implementation assumes full access.
  * See https://developers.google.com/search/reference/robots_txt for robots.txt specs.
  */
-public class RobotsServlet extends HttpServlet {
+public class RobotsServlet extends HttpServlet
+{
     public static final String ROBOTS_TXT_CHANGE_LISTENER = "RobotsServlet_RobotsDbChangeListener";
     private static final Logger logger = LoggerFactory.getLogger(RobotsServlet.class);
 
@@ -36,7 +37,7 @@ public class RobotsServlet extends HttpServlet {
 
         Object dbListener = context.getAttribute(ROBOTS_TXT_CHANGE_LISTENER);
         if (dbListener == null) {
-            logger.error(String.format("Robots DB change listener is not specified (%s)", ROBOTS_TXT_CHANGE_LISTENER));
+            logger.error("Robots DB change listener is not specified: {}", ROBOTS_TXT_CHANGE_LISTENER);
             throw new ServletException(String.format("Robots DB change listener is not specified (%s)", ROBOTS_TXT_CHANGE_LISTENER));
         }
         else if (dbListener instanceof TextAttachmentChangeListener) {

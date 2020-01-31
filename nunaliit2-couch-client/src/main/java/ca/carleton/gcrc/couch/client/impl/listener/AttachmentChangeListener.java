@@ -37,14 +37,14 @@ public abstract class AttachmentChangeListener<T> extends AbstractCouchDbChangeL
     /**
      * The database document Id to watch for changes.
      */
-    private String documentIdToWatch;
+    private final String documentIdToWatch;
 
     /**
      * The attachment in the {@link #documentIdToWatch} to keep latest version of in memory. Only updated if attachment
      * digest has changed.
      */
-    private String attachmentFilename;
-    private CouchDb couchDb;
+    private final String attachmentFilename;
+    private final CouchDb couchDb;
 
     /**
      * Create a new DB change listener thread to watch for document changes. If the {@link #documentIdToWatch} changes
@@ -83,6 +83,15 @@ public abstract class AttachmentChangeListener<T> extends AbstractCouchDbChangeL
     }
 
     /**
+     * Returns the filename of the attachment that is being watched.
+     *
+     * @return The attachment filename.
+     */
+    public String getAttachmentFilename() {
+        return attachmentFilename;
+    }
+
+    /**
      * Thread safe method to set the current attachment object.
      *
      * @param attachment The latest attachment document.
@@ -95,15 +104,11 @@ public abstract class AttachmentChangeListener<T> extends AbstractCouchDbChangeL
         }
     }
 
-    public String getAttachmentFilename() {
-        return attachmentFilename;
-    }
-
     @Override
     protected void processDocIdChanged(Pair<String, Type> docChanged) {
         if (docChanged.getKey().equals(documentIdToWatch) &&
                 docChanged.getValue().equals(Type.DOC_UPDATED)) {
-            logger.debug("Document {} change type {}", docChanged.getKey(), docChanged.getValue());
+            logger.debug("Process document {} change type {}", docChanged.getKey(), docChanged.getValue());
             updateDocument();
         }
     }

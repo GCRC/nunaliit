@@ -30,7 +30,7 @@ public abstract class AbstractCouchDbChangeListener extends Thread implements Co
      * All change doc notifications received through the interface are put here and processed on this thread. Pairs of
      * (docId, changeType).
      */
-    private BlockingQueue<Pair<String, Type>> changedDocIdQueue;
+    private final BlockingQueue<Pair<String, Type>> changedDocIdQueue;
 
     private long lastChangeTime = System.currentTimeMillis();
     private Pair<String, Type> lastChangePair;

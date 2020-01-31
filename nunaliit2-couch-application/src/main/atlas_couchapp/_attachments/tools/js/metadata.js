@@ -7,7 +7,6 @@
     };
 
     var DH = 'metadata.js';
-    var HASH_NEW_PREFIX = "new_";
 
     var defaultMetadata = JSON.parse('{\n' +
         '        "license": "",\n' +
@@ -336,13 +335,16 @@
             .append($selectDiv)
             .append($('<div id="metadataAppDocument" class="metadataForm"></div>'));
 
+        var $atlasRadio = $('#atlasRadio');
+        var $moduleRadio = $('#moduleRadio');
+        var $moduleSelect = $('#moduleSelect');
         // Only enable module drop down when module radio is selected.
-        $('#moduleRadio').click(function () {
-            $('#moduleSelect').attr("disabled", false);
+        $moduleRadio.click(function () {
+            $moduleSelect.attr("disabled", false);
             getDocumentDiv().empty();
-            moduleSelectChanged($('#moduleSelect'));
+            moduleSelectChanged($moduleSelect);
         });
-        $('#atlasRadio').click(function () {
+        $atlasRadio.click(function () {
             $('#moduleSelect').attr("disabled", true);
             getDocumentDiv().empty();
             showAtlasMetadata();
@@ -351,30 +353,15 @@
         refreshModuleList();
 
         // Select atlas by default.
-        $('#atlasRadio').click();
+        $atlasRadio.click();
     }
 
     function showAtlasMetadata() {
         startRequestWait();
 
-        var atlasDesignDoc = atlasDb.getDesignDoc({ddName: 'atlas'});
-        atlasDesignDoc.queryView({
-            viewName: 'atlas',
-            include_docs: false,
-            onSuccess: function (rows) {
-                // Should only be one atlas document.
-                if (rows.length >= 1) {
-                    var docId = rows[0].id;
-                    console.log("SARAH: atlas doc found: " + docId);
-
-                    dispatcher.send(DH, {
-                        type: 'userSelect',
-                        docId: docId
-                    });
-                } else {
-                    console.log("SARAH: atlas document not found");
-                }
-            }
+        dispatcher.send(DH, {
+            type: 'userSelect',
+            docId: 'atlas'
         });
     } // showAtlasMetadata
 

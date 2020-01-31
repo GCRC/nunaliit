@@ -15,7 +15,7 @@ import java.nio.charset.StandardCharsets;
  * Attachment change listener for database documents with attachment of type HTML. Stores a {@link Document} as the
  * attachment object.
  */
-public class HtmlAttachmentChangeListener extends AttachmentChangeListener<Document> {
+public final class HtmlAttachmentChangeListener extends AttachmentChangeListener<Document> {
     private static final Logger logger = LoggerFactory.getLogger(HtmlAttachmentChangeListener.class);
 
     /**

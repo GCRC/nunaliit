@@ -1,11 +1,9 @@
 package ca.carleton.gcrc.couch.metadata;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
-import ca.carleton.gcrc.couch.client.CouchDesignDocument;
-import ca.carleton.gcrc.couch.client.CouchQuery;
-import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.client.impl.listener.HtmlAttachmentChangeListener;
 import ca.carleton.gcrc.couch.client.impl.listener.ModuleMetadataChangeListener;
+import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.jsoup.nodes.Document;
@@ -29,7 +27,8 @@ import java.util.regex.Pattern;
  * the servlet uses the local copy.  The Schema.org compliant JSON-LD data is injected on every request. Depending on
  * the query string, it will respond with either the atlas metadata, or module specific metadata in a script tag.
  */
-public class IndexServlet extends HttpServlet {
+public class IndexServlet extends HttpServlet
+{
     public static final String CONFIG_DOCUMENT_DB = "IndexServlet_DocumentDatabase";
     public static final String INDEX_DB_CHANGE_LISTENER = "IndexServlet_IndexDbChangeListener";
     public static final String MODULE_METADATA_CHANGE_LISTENER = "IndexServlet_ModuleMetadataChangeListener";
@@ -44,7 +43,7 @@ public class IndexServlet extends HttpServlet {
     /**
      * Regex matcher used to find module Id in query string.
      */
-    private static Matcher matcher = URL_PATTERN.matcher("");
+    private static final Matcher matcher = URL_PATTERN.matcher("");
 
     private CouchDb couchDb;
     private HtmlAttachmentChangeListener indexDbChangeListener;
@@ -59,7 +58,7 @@ public class IndexServlet extends HttpServlet {
 
         Object obj = context.getAttribute(CONFIG_DOCUMENT_DB);
         if (obj == null) {
-            logger.error(String.format("Document database is not specified (%s)", CONFIG_DOCUMENT_DB));
+            logger.error("Document database is not specified: {}", CONFIG_DOCUMENT_DB);
             throw new ServletException(String.format("Document database is not specified (%s)", CONFIG_DOCUMENT_DB));
         }
         else if (obj instanceof CouchDb) {
@@ -71,7 +70,7 @@ public class IndexServlet extends HttpServlet {
 
         Object dbListener = context.getAttribute(INDEX_DB_CHANGE_LISTENER);
         if (dbListener == null) {
-            logger.error(String.format("Index DB change listener is not specified (%s)", INDEX_DB_CHANGE_LISTENER));
+            logger.error("Index DB change listener is not specified: {}", INDEX_DB_CHANGE_LISTENER);
             throw new ServletException(String.format("Index DB change listener is not specified (%s)", INDEX_DB_CHANGE_LISTENER));
         }
         else if (dbListener instanceof HtmlAttachmentChangeListener) {
@@ -83,7 +82,7 @@ public class IndexServlet extends HttpServlet {
 
         Object metadataListener = context.getAttribute(MODULE_METADATA_CHANGE_LISTENER);
         if (metadataListener == null) {
-            logger.error(String.format("Module metadata change listener is not specified (%s)", MODULE_METADATA_CHANGE_LISTENER));
+            logger.error("Module metadata change listener is not specified: {}", MODULE_METADATA_CHANGE_LISTENER);
             throw new ServletException(String.format("Module metadata change listener is not specified (%s)", MODULE_METADATA_CHANGE_LISTENER));
         }
         else if (metadataListener instanceof ModuleMetadataChangeListener) {
@@ -108,11 +107,11 @@ public class IndexServlet extends HttpServlet {
 
         String queryString = request.getQueryString();
 
-        logger.debug(String.format("Received request with query string %s", queryString));
+        logger.debug("Received request with query string {}", queryString);
         if (StringUtils.isNotBlank(queryString)) {
             String moduleDocId = findModuleDocId(queryString);
             if (StringUtils.isNotBlank(moduleDocId)) {
-                logger.debug(String.format("Found module %s in query string", moduleDocId));
+                logger.debug("Found module {} in query string", moduleDocId);
                 try {
                     metadata = findModuleMetadata(moduleDocId);
                 }
@@ -176,10 +175,8 @@ public class IndexServlet extends HttpServlet {
      *
      * @param moduleDocId Module document Id to find metdata for.
      * @return The JSON-LD document representing the metadata.
-     * @throws Exception If the database returns an error on querying the view.
      */
-    private JSONObject findModuleMetadata(String moduleDocId) throws Exception {
-
+    private JSONObject findModuleMetadata(String moduleDocId) {
         return moduleMetadataChangeListener.findMetadata(moduleDocId);
     }
 
@@ -188,32 +185,26 @@ public class IndexServlet extends HttpServlet {
      * is the only metadata document without a reference to a module.
      *
      * @return The JSON-LD document representing the metadata.
-     * @throws Exception If the database returns an error on querying the view.
      */
-    private JSONObject findAtlasMetadata() throws Exception {
+    private JSONObject findAtlasMetadata() {
+        JSONObject atlasDocument = null;
         JSONObject atlasMetadata = null;
-        CouchDesignDocument atlasDesignDocument = couchDb.getDesignDocument("atlas");
-        CouchQuery query = new CouchQuery();
-        query.setViewName("atlas");
-        CouchQueryResults results = null;
         try {
-            results = atlasDesignDocument.performQuery(query);
+            atlasDocument = couchDb.getDocument(CouchNunaliitConstants.ATLAS_DOC_ID);
         }
         catch (Exception e) {
             logger.warn("Error accessing atlas metadata: {}", e.getMessage());
         }
 
-        if (results != null) {
-            // Only expecting one document.
-            String docId = results.getRows().get(0).optString("id");
-            if (docId != null && !docId.isEmpty()) {
-                JSONObject doc = couchDb.getDocument(docId);
-                JSONObject atlas = doc.optJSONObject("nunaliit_atlas");
-                if (atlas != null) {
-                    // The nunaliit_metadata contains the JSON-LD document to publish.
-                    atlasMetadata = atlas.getJSONObject("nunaliit_metadata");
-                }
+        if (atlasDocument != null) {
+            JSONObject atlas = atlasDocument.optJSONObject("nunaliit_atlas");
+            if (atlas != null) {
+                // nunaliit_metadata contains the JSON-LD document to publish.
+                atlasMetadata = atlas.getJSONObject("nunaliit_metadata");
             }
+        }
+        else {
+            logger.warn("Atlas document '{}' not found in database, cannot output metadata", CouchNunaliitConstants.ATLAS_DOC_ID);
         }
 
         return atlasMetadata;

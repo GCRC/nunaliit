@@ -9,7 +9,6 @@ public class CouchNunaliitConstants {
 	public static final String DOC_KEY_TYPE = "nunaliit_type";
 	public static final String DOC_KEY_GEOMETRY = "nunaliit_geom";
 	public static final String DOC_KEY_SCHEMA = "nunaliit_schema";
-	public static final String DOC_KEY_METADATA = "nunaliit_metadata";
 	public static final String DOC_KEY_ATLAS = "nunaliit_atlas";
 	public static final String DOC_KEY_NAVIGATION = "nunaliit_navigation";
 

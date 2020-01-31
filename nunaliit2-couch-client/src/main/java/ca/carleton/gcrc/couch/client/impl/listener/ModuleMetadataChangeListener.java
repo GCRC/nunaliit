@@ -18,23 +18,21 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Manages module metadata in memory, updates this data if the module is changed in the database.
+ * Stores module metadata in memory, updates this data if the module is changed in the database.
  */
-public class ModuleMetadataChangeListener extends AbstractCouchDbChangeListener {
+public final class ModuleMetadataChangeListener extends AbstractCouchDbChangeListener
+{
     private static final Logger logger = LoggerFactory.getLogger(ModuleMetadataChangeListener.class);
     private static final Object lockObj = new Object();
-    private static final String DOC_KEY_LAST_UPDATED = "nunaliit_last_updated";
-    private CouchDb couchDb;
-    private Set<String> moduleIds;
-    private Map<String, Long> lastUpdatedTimes;
-    private Map<String, JSONObject> moduleMetadata;
+    private final CouchDb couchDb;
+    private final Set<String> moduleIds;
+    private final Map<String, JSONObject> moduleMetadata;
 
     public ModuleMetadataChangeListener(CouchDb couchDb) throws NunaliitException {
         super(couchDb);
 
         this.couchDb = couchDb;
         moduleIds = Collections.synchronizedSet(new HashSet<String>());
-        lastUpdatedTimes = Collections.synchronizedMap(new HashMap<String, Long>());
         moduleMetadata = Collections.synchronizedMap(new HashMap<String, JSONObject>());
     }
 
@@ -51,12 +49,12 @@ public class ModuleMetadataChangeListener extends AbstractCouchDbChangeListener 
 
         // Need to add it
         if (!moduleIds.contains(moduleId)) {
-            logger.info("SARAH: module Id not in list, adding");
+            logger.trace("Module Id not in list to watch, adding and fetching metadata");
             addModuleId(moduleId);
             metadata = updateMetadata(moduleId);
         }
         else {
-            logger.info("SARAH: module Id in list, fetch from memory");
+            logger.trace("Module Id in list, fetching metadata from memory");
             // Get latest in memory
             metadata = moduleMetadata.get(moduleId);
         }
@@ -67,7 +65,7 @@ public class ModuleMetadataChangeListener extends AbstractCouchDbChangeListener 
     @Override
     protected void processDocIdChanged(Pair<String, Type> docChanged) {
         if (moduleIds.contains(docChanged.getKey())) {
-            logger.info("SARAH: processDocIdChanged: {}", docChanged.getKey());
+            logger.debug("Process document {} change type {}", docChanged.getKey(), docChanged.getValue());
             if (docChanged.getValue().equals(Type.DOC_DELETED)) {
                 removeModuleId(docChanged.getKey());
             }
@@ -77,6 +75,10 @@ public class ModuleMetadataChangeListener extends AbstractCouchDbChangeListener 
         }
     }
 
+    /**
+     * Finds all module document Ids in the database and adds them to a list of document Ids to watch for changes. Then
+     * iterates through these module Ids and loads each of their metadata in memory.
+     */
     @Override
     protected void performStartupTasks() {
         findAllModuleIds();
@@ -85,35 +87,29 @@ public class ModuleMetadataChangeListener extends AbstractCouchDbChangeListener 
         }
     }
 
-    private JSONObject updateMetadata(String docId) {
+    /**
+     * Gets the module document from the database and reads the nunaliit_metadata object into memory, if it exists.
+     *
+     * @param moduleDocId The module document Id.
+     * @return The contents of the nunaliit_metadata object.
+     */
+    private JSONObject updateMetadata(String moduleDocId) {
         JSONObject doc = null;
         JSONObject metadata = null;
         try {
-            doc = couchDb.getDocument(docId);
+            if (couchDb.documentExists(moduleDocId)) {
+                doc = couchDb.getDocument(moduleDocId);
+            }
         }
         catch (Exception e) {
-            logger.error("Problem querying database for doc Id {}", docId, e);
+            logger.error("Problem querying database for doc Id {}: {}", moduleDocId, e.getMessage());
         }
         if (doc != null) {
-            // If the module Id isn't tracked, add it.
-            if (!moduleIds.contains(docId)) {
-                addModuleId(docId);
-            }
-
-            JSONObject lastUpdate = doc.optJSONObject(DOC_KEY_LAST_UPDATED);
-            // We update by default, in case nunaliit_last_updated not found.
-            long time = System.currentTimeMillis();
-            if (lastUpdate != null) {
-                lastUpdate.optLong("time", System.currentTimeMillis());
-            }
-
-            if (time > lastUpdatedTimes.get(docId)) {
-                JSONObject module = doc.optJSONObject("nunaliit_module");
-                if (module != null) {
-                    metadata = module.optJSONObject("nunaliit_metadata");
-                    if (metadata != null) {
-                        moduleMetadata.put(docId, metadata);
-                    }
+            JSONObject module = doc.optJSONObject("nunaliit_module");
+            if (module != null) {
+                metadata = module.optJSONObject("nunaliit_metadata");
+                if (metadata != null) {
+                    moduleMetadata.put(moduleDocId, metadata);
                 }
             }
         }
@@ -122,10 +118,11 @@ public class ModuleMetadataChangeListener extends AbstractCouchDbChangeListener 
     }
 
     /**
-     * Only happens at startup.
+     * Only happens once, at startup. Finds all module Ids using the modules view and builds a list of document Ids to
+     * watch for changes.
      */
     private void findAllModuleIds() {
-        logger.info("SARAH: find all module Ids");
+        logger.debug("Finding all module Ids to watch for changes");
         try {
             CouchDesignDocument designDoc = couchDb.getDesignDocument("atlas");
             CouchQuery query = new CouchQuery();
@@ -136,39 +133,32 @@ public class ModuleMetadataChangeListener extends AbstractCouchDbChangeListener 
                 String docId = row.getString("id");
                 addModuleId(docId);
             }
-
-//            // Now cleanup last updated time hashmap.
-//            for (String docId : moduleIds) {
-//                if (!lastUpdatedTimes.containsKey(docId)) {
-//                    lastUpdatedTimes.put(docId, System.currentTimeMillis());
-//                }
-//            }
-//            // Check if any need to be removed.
-//            if (moduleIds.size() != lastUpdatedTimes.size()) {
-//                for (String docId : lastUpdatedTimes.keySet()) {
-//                    if (!moduleIds.contains(docId)) {
-//                        lastUpdatedTimes.remove(docId);
-//                    }
-//                }
-//            }
         }
         catch (Exception e) {
             logger.error("Problem querying atlas design document view 'modules'", e);
         }
     }
 
+    /**
+     * Add a module Id to the list of documents to watch and store metadata.
+     *
+     * @param moduleId The module document Id.
+     */
     private void addModuleId(String moduleId) {
         synchronized (lockObj) {
             moduleIds.add(moduleId);
-            lastUpdatedTimes.put(moduleId, 0L);
             moduleMetadata.put(moduleId, null);
         }
     }
 
+    /**
+     * Remove a module Id to the list of documents to watch and store metadata.
+     *
+     * @param moduleId The module document Id.
+     */
     private void removeModuleId(String moduleId) {
         synchronized (lockObj) {
             moduleIds.remove(moduleId);
-            lastUpdatedTimes.remove(moduleId);
             moduleMetadata.remove(moduleId);
         }
     }

@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -22,19 +23,22 @@ import java.util.Set;
  * Listens for changes to the atlas document. Builds a list of relative URLs found in the navigation content every time
  * the atlas document changes.
  */
-public class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChangeListener
+public final class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChangeListener
 {
     private static final Logger logger = LoggerFactory.getLogger(SitemapBuilderAtlasChangeListener.class);
+    public static final String MODULE = "module";
+    public static final String HREF = "href";
+    public static final String ITEMS = "items";
 
     /**
      * The database document Id to watch for changes.
      */
-    private String docIdToWatch;
-    private CouchDb couchDb;
+    private final String docIdToWatch;
+    private final CouchDb couchDb;
     /**
      * The list of relative URLs found in the navigation document.
      */
-    private List<String> relativeUrls;
+    private final List<String> relativeUrls;
     /**
      * Mutex for accessing and modifying the relative URLs list.
      */
@@ -51,7 +55,7 @@ public class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChangeList
         super(couchDb);
         this.couchDb = couchDb;
         this.docIdToWatch = atlasDocId;
-        relativeUrls = new ArrayList<>();
+        relativeUrls = Collections.synchronizedList(new ArrayList<String>());
     }
 
     /**
@@ -92,7 +96,6 @@ public class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChangeList
      * @param docId The atlas document identifier.
      */
     protected void updateSitemap(String docId) {
-
         JSONObject navigation = null;
         JSONObject document = null;
         try {
@@ -128,20 +131,20 @@ public class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChangeList
         Map<String, Set<String>> links = new HashMap<>(2);
         Set<String> hrefSet = new HashSet<>();
         Set<String> moduleSet = new HashSet<>();
-        links.put("href", hrefSet);
-        links.put("module", moduleSet);
-        if (navigation != null && navigation.has("items")) {
-            recurseOnItems(navigation.getJSONArray("items"), links);
+        links.put(HREF, hrefSet);
+        links.put(MODULE, moduleSet);
+        if (navigation != null && navigation.has(ITEMS)) {
+            recurseOnItems(navigation.getJSONArray(ITEMS), links);
         }
         else {
             logger.debug("Navigation does not have items for sitemap");
         }
 
         // Now build final set of relative URLs.
-        Set<String> tempRelativeUrls = new HashSet<>(links.get("href"));
+        Set<String> tempRelativeUrls = new HashSet<>(links.get(HREF));
         // Add root path, in case it's not linked in navigation menu.
         tempRelativeUrls.add("./index.html");
-        for (String module : links.get("module")) {
+        for (String module : links.get(MODULE)) {
             tempRelativeUrls.add(String.format("./index.html?module=%s", module));
         }
 
@@ -163,15 +166,15 @@ public class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChangeList
             for (Object obj : items) {
                 if (obj instanceof JSONObject) {
                     next = (JSONObject) obj;
-                    if (next.has("module") && StringUtils.isNotBlank(next.optString("module"))) {
-                        links.get("module").add(next.getString("module"));
+                    if (next.has(MODULE) && StringUtils.isNotBlank(next.optString(MODULE))) {
+                        links.get(MODULE).add(next.getString(MODULE));
                     }
-                    else if (next.has("href") && StringUtils.isNotBlank(next.optString("href"))) {
-                        links.get("href").add(next.getString("href"));
+                    else if (next.has(HREF) && StringUtils.isNotBlank(next.optString(HREF))) {
+                        links.get(HREF).add(next.getString(HREF));
                     }
                     // Recurse if this item has sub-items.
-                    if (next.has("items")) {
-                        recurseOnItems(next.getJSONArray("items"), links);
+                    if (next.has(ITEMS)) {
+                        recurseOnItems(next.getJSONArray(ITEMS), links);
                     }
                 }
             }
