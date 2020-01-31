@@ -1,115 +1,130 @@
 {
-  "_id": "navigation.demo",
-  "_rev": "2-d13d52f53d5c257919516b2126b1d65f",
-  "nunaliit_schema": "navigation",
-  "nunaliit_navigation": {
-    "nunaliit_type": "navigation",
-    "title": {
-      "nunaliit_type": "localized",
-      "en": "Sleepy River Atlas",
-      "fr": "L'Atlas"
-    },
-    "items": [
-      {
-        "title": {
-          "nunaliit_type": "localized",
-          "en": "Our Stories"
-        },
-        "href": "./index.html?module=module.sleepyriver",
-        "items": [
-          {
-            "title": {
-              "nunaliit_type": "localized",
-              "en": "Place Names"
-            },
-            "href": "./index.html?module=module.sleepyriver.placenames"
-          },
-          {
-            "title": {
-              "nunaliit_type": "localized",
-              "en": "Boundaries & Adminstrative Areas"
-            },
-            "href": "./index.html?module=module.sleepyriver.boundaries"
-          },
-          {
-            "title": {
-              "nunaliit_type": "localized",
-              "en": "Conservation"
-            },
-            "href": "./index.html?module=module.sleepyriver.conservation"
-          },
-          {
-            "title": {
-              "nunaliit_type": "localized",
-              "en": "Historical Weather"
-            },
-            "href": "./index.html?module=module.sleepyriver.weatherstationdatavisualizer"
-          },
-          {
-            "title": {
-              "nunaliit_type": "localized",
-              "en": "Sea Ice"
-            },
-            "href": "./index.html?module=module.sleepyriver.seaice"
-          },
-          {
-            "title": {
-              "nunaliit_type": "localized",
-              "en": "Old Settlement"
-            },
-            "href": "./index.html?module=module.sleepyriver.oldsettlement"
-          },
-          {
-            "title": {
-              "nunaliit_type": "localized",
-              "en": "Our Ocean"
-            },
-            "href": "./index.html?module=module.sleepyriver.ocean.protecting",
-            "items": [
-              {
-                "module": "module.sleepyriver.ncri.explore"
-              },
-              {
-                "module": "module.sleepyriver.ncri.fish"
-              },
-              {
-                "module": "module.sleepyriver.ncri.marinemammals"
-              },
-              {
-                "module": "module.sleepyriver.ncri.birds"
-              }
-            ]
-          }
-        ]
-      },
-      {
-        "title": {
-          "nunaliit_type": "localized",
-          "en": "About"
-        },
-        "href": "./index.html?module=module.sleepyriver.aboutatlas",
-        "items": [
-          {
-            "title": {
-              "nunaliit_type": "localized",
-              "en": "About the Atlas"
-            },
-            "href": "./index.html?module=module.sleepyriver.aboutatlas"
-          },
-          {
-            "title": {
-              "nunaliit_type": "localized",
-              "en": "Contact Us"
-            },
-            "href": "./index.html?module=module.sleepyriver.contactus"
-          }
-        ]
-      }
-    ]
-  },
+  "_id": "atlas",
+  "_rev": "7-cfe4bd758d60e4e10cdc099c363768bd",
   "nunaliit_manifest": {
     "attachments": {},
-    "digest": "/KxzdWOcguFvFh7Z6AdlpqHnKqw=",
+    "digest": "vx1oqqsVrU82GmRPyb+OF2NSEI8=",
     "type": "SHA-1"
+  },
+  "nunaliit_last_updated": {
+    "nunaliit_type": "actionstamp",
+    "name": "admin",
+    "action": "updated",
+    "time": 1580246898155
+  },
+  "nunaliit_schema": "atlas",
+  "nunaliit_atlas": {
+    "nunaliit_type": "atlas",
+    "title": "Atlas Title",
+    "nunaliit_navigation": {
+      "nunaliit_type": "navigation",
+      "title": {
+        "nunaliit_type": "localized",
+        "en": "Sleepy River Atlas",
+        "fr": "L'Atlas"
+      },
+      "items": [
+        {
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "Our Stories"
+          },
+          "href": "./index.html?module=module.sleepyriver",
+          "items": [
+            {
+              "title": {
+                "nunaliit_type": "localized",
+                "en": "Place Names"
+              },
+              "href": "./index.html?module=module.sleepyriver.placenames"
+            },
+            {
+              "title": {
+                "nunaliit_type": "localized",
+                "en": "Boundaries & Adminstrative Areas"
+              },
+              "href": "./index.html?module=module.sleepyriver.boundaries"
+            },
+            {
+              "title": {
+                "nunaliit_type": "localized",
+                "en": "Conservation"
+              },
+              "href": "./index.html?module=module.sleepyriver.conservation"
+            },
+            {
+              "title": {
+                "nunaliit_type": "localized",
+                "en": "Historical Weather"
+              },
+              "href": "./index.html?module=module.sleepyriver.weatherstationdatavisualizer"
+            },
+            {
+              "title": {
+                "nunaliit_type": "localized",
+                "en": "Sea Ice"
+              },
+              "href": "./index.html?module=module.sleepyriver.seaice"
+            },
+            {
+              "title": {
+                "nunaliit_type": "localized",
+                "en": "Old Settlement"
+              },
+              "href": "./index.html?module=module.sleepyriver.oldsettlement"
+            },
+            {
+              "title": {
+                "nunaliit_type": "localized",
+                "en": "Our Ocean"
+              },
+              "href": "./index.html?module=module.sleepyriver.ocean.protecting",
+              "items": [
+                {
+                  "module": "module.sleepyriver.ncri.explore"
+                },
+                {
+                  "module": "module.sleepyriver.ncri.fish"
+                },
+                {
+                  "module": "module.sleepyriver.ncri.marinemammals"
+                },
+                {
+                  "module": "module.sleepyriver.ncri.birds"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "About"
+          },
+          "href": "./index.html?module=module.sleepyriver.aboutatlas",
+          "items": [
+            {
+              "title": {
+                "nunaliit_type": "localized",
+                "en": "About the Atlas"
+              },
+              "href": "./index.html?module=module.sleepyriver.aboutatlas"
+            },
+            {
+              "title": {
+                "nunaliit_type": "localized",
+                "en": "Contact Us"
+              },
+              "href": "./index.html?module=module.sleepyriver.contactus"
+            }
+          ]
+        }
+      ]
+    },
+    "nunaliit_manifest": {
+      "attachments": {},
+      "digest": "/KxzdWOcguFvFh7Z6AdlpqHnKqw=",
+      "type": "SHA-1"
+    }
   }
 }

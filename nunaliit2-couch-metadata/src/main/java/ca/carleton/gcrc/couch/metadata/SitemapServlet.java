@@ -21,7 +21,8 @@ import java.util.List;
 /**
  * Generates an XML response for sitemap.xml requests.
  */
-public class SitemapServlet extends HttpServlet {
+public class SitemapServlet extends HttpServlet
+{
     public static final String SITEMAP_BUILDER = "SitemapServlet_SitemapBuilder";
     private static final Logger logger = LoggerFactory.getLogger(SitemapServlet.class);
 
@@ -30,7 +31,7 @@ public class SitemapServlet extends HttpServlet {
     /**
      * Provides access to the current list of relative URLs required to create sitemap XML response.
      */
-    private SitemapBuilder sitemapBuilder;
+    private SitemapBuilderAtlasChangeListener sitemapBuilderAtlasChangeListener;
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -43,8 +44,8 @@ public class SitemapServlet extends HttpServlet {
             logger.error(String.format("SitemapBuilder is not specified (%s)", SITEMAP_BUILDER));
             throw new ServletException(String.format("SitemapBuilder is not specified (%s)", SITEMAP_BUILDER));
         }
-        else if (obj instanceof SitemapBuilder) {
-            sitemapBuilder = (SitemapBuilder) obj;
+        else if (obj instanceof SitemapBuilderAtlasChangeListener) {
+            sitemapBuilderAtlasChangeListener = (SitemapBuilderAtlasChangeListener) obj;
         }
         else {
             throw new ServletException("Unexpected object type for SitemapBuilder: " + obj.getClass().getName());
@@ -56,13 +57,13 @@ public class SitemapServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         logger.debug("Sitemap request received");
-        List<String> relativeUrls = sitemapBuilder.getRelativeUrls();
+        List<String> relativeUrls = sitemapBuilderAtlasChangeListener.getRelativeUrls();
         if (relativeUrls != null && !relativeUrls.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("text/xml");
             String baseUrl = CouchNunaliitUtils.buildBaseUrl(request);
             if (StringUtils.isNotBlank(baseUrl)) {
-                logger.debug("Sitemap using base URL: {}", baseUrl);
+                logger.trace("Sitemap using base URL: {}", baseUrl);
 
                 try {
                     XMLOutputFactory outputFactory = XMLOutputFactory.newFactory();

@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.metadata;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.impl.CouchDbChangeMonitorImpl;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
 import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
@@ -9,19 +10,19 @@ import org.mockito.Mockito;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import static org.mockito.Mockito.mock;
 
-public class SitemapBuilderThreadTest extends TestCase {
-
-    private SitemapBuilderThread sitemapBuilderThread;
+public class SitemapBuilderAtlasChangeListenerTest extends TestCase
+{
+    private SitemapBuilderAtlasChangeListener sitemapBuilder;
 
     @Override
     protected void setUp() throws Exception {
         super.setUp();
 
         CouchDb couchDb = mock(CouchDb.class);
+        Mockito.when(couchDb.getChangeMonitor()).thenReturn(mock(CouchDbChangeMonitorImpl.class));
         Mockito.when(couchDb.getDocument("level_1")).thenReturn(new JSONObject(
                 IOUtils.toString(getClass().getResourceAsStream("/navigation/levels_1.json"), StandardCharsets.UTF_8)));
         Mockito.when(couchDb.documentExists("level_1")).thenReturn(true);
@@ -35,12 +36,12 @@ public class SitemapBuilderThreadTest extends TestCase {
                 IOUtils.toString(getClass().getResourceAsStream("/navigation/atlas.json"), StandardCharsets.UTF_8)));
         Mockito.when(couchDb.documentExists("atlas")).thenReturn(true);
 
-        sitemapBuilderThread = new SitemapBuilderThread(couchDb, new LinkedBlockingQueue<String>());
+        sitemapBuilder = new SitemapBuilderAtlasChangeListener(couchDb, CouchNunaliitConstants.ATLAS_DOC_ID);
     }
 
     public void testOneLevelNavigation() {
-        sitemapBuilderThread.processDocId("level_1");
-        List<String> relativeUrls = sitemapBuilderThread.getRelativeUrls();
+        sitemapBuilder.updateSitemap("level_1");
+        List<String> relativeUrls = sitemapBuilder.getRelativeUrls();
 
         assertNotNull(relativeUrls);
         assertEquals(4, relativeUrls.size());
@@ -51,8 +52,8 @@ public class SitemapBuilderThreadTest extends TestCase {
     }
 
     public void testTwoLevelNavigation() {
-        sitemapBuilderThread.processDocId("level_2");
-        List<String> relativeUrls = sitemapBuilderThread.getRelativeUrls();
+        sitemapBuilder.updateSitemap("level_2");
+        List<String> relativeUrls = sitemapBuilder.getRelativeUrls();
 
         assertNotNull(relativeUrls);
         assertEquals(15, relativeUrls.size());
@@ -74,8 +75,8 @@ public class SitemapBuilderThreadTest extends TestCase {
     }
 
     public void testThreeLevelNavigation() {
-        sitemapBuilderThread.processDocId("level_3");
-        List<String> relativeUrls = sitemapBuilderThread.getRelativeUrls();
+        sitemapBuilder.updateSitemap("level_3");
+        List<String> relativeUrls = sitemapBuilder.getRelativeUrls();
 
         assertNotNull(relativeUrls);
         assertEquals(5, relativeUrls.size());
@@ -87,8 +88,8 @@ public class SitemapBuilderThreadTest extends TestCase {
     }
 
     public void testAtlasDocNavigation() {
-        sitemapBuilderThread.processDocId("atlas");
-        List<String> relativeUrls = sitemapBuilderThread.getRelativeUrls();
+        sitemapBuilder.updateSitemap("atlas");
+        List<String> relativeUrls = sitemapBuilder.getRelativeUrls();
 
         assertNotNull(relativeUrls);
         assertEquals(5, relativeUrls.size());

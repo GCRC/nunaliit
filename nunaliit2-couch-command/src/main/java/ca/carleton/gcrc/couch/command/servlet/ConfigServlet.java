@@ -19,7 +19,7 @@ import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.couch.metadata.IndexServlet;
 import ca.carleton.gcrc.couch.metadata.RobotsServlet;
-import ca.carleton.gcrc.couch.metadata.SitemapBuilder;
+import ca.carleton.gcrc.couch.metadata.SitemapBuilderAtlasChangeListener;
 import ca.carleton.gcrc.couch.metadata.SitemapServlet;
 import ca.carleton.gcrc.couch.onUpload.UploadListener;
 import ca.carleton.gcrc.couch.onUpload.UploadWorker;
@@ -119,7 +119,7 @@ public class ConfigServlet extends JsonServlet {
 	private SubmissionMailNotifier submissionNotifier = null;
 	private MailVetterDailyNotificationTask vetterDailyTask = null;
 	private ConfigServletActions actions = null;
-	private SitemapBuilder sitemapBuilder;
+	private SitemapBuilderAtlasChangeListener sitemapBuilder;
 	private HtmlAttachmentChangeListener indexChangeListener;
 	private TextAttachmentChangeListener robotsChangeListener;
 	private ModuleMetadataChangeListener moduleMetadataChangeListener;
@@ -874,7 +874,7 @@ public class ConfigServlet extends JsonServlet {
 
 	private void initSitemap(ServletContext servletContext) throws ServletException {
 		try {
-			sitemapBuilder = new SitemapBuilder(documentDatabase);
+			sitemapBuilder = new SitemapBuilderAtlasChangeListener(documentDatabase, CouchNunaliitConstants.ATLAS_DOC_ID);
 			sitemapBuilder.start();
 
 			servletContext.setAttribute(SitemapServlet.SITEMAP_BUILDER, sitemapBuilder);
@@ -978,6 +978,15 @@ public class ConfigServlet extends JsonServlet {
 		}
 		catch (Exception e) {
 			logger.error("Error occurred while attempting to shutdown index.html DB change listener", e);
+		}
+
+		try {
+			if (moduleMetadataChangeListener != null) {
+				moduleMetadataChangeListener.shutdown();
+			}
+		}
+		catch (Exception e) {
+			logger.error("Error occurred while attempting to shutdown module metadata DB change listener", e);
 		}
 
 		try {

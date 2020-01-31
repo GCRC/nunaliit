@@ -35,6 +35,13 @@ public abstract class AbstractCouchDbChangeListener extends Thread implements Co
     private long lastChangeTime = System.currentTimeMillis();
     private Pair<String, Type> lastChangePair;
 
+    /**
+     * Creates a database change listener. Registers to the {@link CouchDbChangeMonitor} and fires events when the
+     * change monitor notifies that a document has changed.
+     *
+     * @param couchDb The CouchDB client to acces the database.
+     * @throws NunaliitException If an exception occurs while registering to the CouchDB change monitor.
+     */
     public AbstractCouchDbChangeListener(CouchDb couchDb) throws NunaliitException {
         super();
         changedDocIdQueue = new LinkedBlockingQueue<>();
