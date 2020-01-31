@@ -287,10 +287,10 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 					String layerId = nunaliitLayers.optString(i);
 					if( null != layerId ){
 						if( "public".equals(layerId) ){
-							atLeastOneLayer = true;
+							//atLeastOneLayer = true;
 							// Public layer, ignore
 						} else if( layerId.startsWith("public_") ){
-							atLeastOneLayer = true;
+							//atLeastOneLayer = true;
 							// Public layer, ignore
 						} else {
 							atLeastOneLayer = true;
