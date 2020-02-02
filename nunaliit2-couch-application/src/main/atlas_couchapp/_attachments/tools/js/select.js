@@ -437,7 +437,7 @@
 			var searchFilter = SearchFilter.availableSearchFilters[i];
 			menuOptions.push({
 				'value': searchFilter.id,
-				'label': searchFilter.name
+				'text': searchFilter.name
 			});
 		}
 
@@ -451,6 +451,7 @@
 		});
 
 		$('#' + filterSelect.getSelectId()).addClass('searchFilterSelector');
+		
 		$('<div>').addClass('searchFilterOptions').appendTo('#' + selectSearchFilterDialog.getContentId());
 
 		adjustOptions($('#' + selectSearchFilterDialog.getId()));
@@ -458,7 +459,9 @@
 		function okBtnFunc() {
 			var $dialog = $('#'+selectSearchFilterDialog.getId());
 			var $options = $dialog.find('.searchFilterOptions');
-			var filterId = $dialog.find('select.searchFilterSelector').val();
+			var filter = $dialog.find('.searchFilterSelector')
+				.find('li.mdc-list-item--selected');
+			var filterId = filter.attr('data-value');
 
 			selectSearchFilterDialog.closeDialog();
 
@@ -477,9 +480,11 @@
 		}
 
 		function adjustOptions($dialog){
-			var $select = $dialog.find('select.searchFilterSelector');
+			var $select = $dialog
+				.find('.searchFilterSelector')
+				.find('li.mdc-list-item--selected');
 
-			var id = $select.val();
+			var id = $select.attr('data-value');
 			var sf = findSearchFilterFromId(id);
 
 			var $options = $dialog.find('.searchFilterOptions');
@@ -527,7 +532,7 @@
 			var searchFilter = SearchFilter.availableSearchFilters[i];
 			menuOptions.push({
 				'value': searchFilter.id,
-				'label': searchFilter.name
+				'text': searchFilter.name
 			});
 		};
 		
@@ -548,7 +553,10 @@
 		function okBtnFunc(){
 			var $dialog = $('#'+refineListDialog.getId());
 			var $options = $dialog.find('.searchFilterOptions');
-			var filterId = $dialog.find('select.searchFilterSelector').val();
+			var filter = $dialog
+				.find('.searchFilterSelector')
+				.find('li.mdc-list-item--selected');
+			var filterId = filter.attr('data-value');
 			
 			refineListDialog.closeDialog();
 
@@ -569,9 +577,11 @@
 		};
 
 		function adjustOptions($dialog){
-			var $select = $dialog.find('select.searchFilterSelector');
+			var $select = $dialog
+				.find('.searchFilterSelector')
+				.find('li.mdc-list-item--selected');
 
-			var id = $select.val();
+			var id = $select.attr('data-value');
 			var sf = findSearchFilterFromId(id);
 			
 			var $options = $dialog.find('.searchFilterOptions');
@@ -2652,7 +2662,7 @@
 				}
 
 				if (option.name) {
-					transformOpt.label = option.name;
+					transformOpt.text = option.name;
 				}
 
 				transformMenuOpts.push(transformOpt);
@@ -2669,7 +2679,7 @@
 			parentElem: $('#' + transformDialog.getFooterId()),
 			btnLabel: 'Ok',
 			onBtnClick: function(){
-				var transformId = $('#' + transformSelect.getSelectId()).val();
+				var transformId = transformSelect.getSelectedValue();
 				transformDialog.closeDialog();
 				var useTransform = null;
 
@@ -3000,10 +3010,10 @@
 				parentElem: $('#' + exportDialog.getContentId()),
 				menuLabel: 'Filter',
 				menuOpts: [
-					{'label': 'All Documents', 'value': 'all'},
-					{'label': 'All Point Geometries', 'value': 'points'},
-					{'label': 'All LineString Geometries', 'value': 'linestrings'},
-					{'label': 'All Polygon Geometries', 'value': 'polygons'}
+					{'text': 'All Documents', 'value': 'all'},
+					{'text': 'All Point Geometries', 'value': 'points'},
+					{'text': 'All LineString Geometries', 'value': 'linestrings'},
+					{'text': 'All Polygon Geometries', 'value': 'polygons'}
 				]
 			});
 
@@ -3015,8 +3025,8 @@
 				menuLabel: 'Format',
 				menuChgFunction: formatChanged,
 				menuOpts: [
-					{'label': 'geojson', 'value': 'geojson'},
-					{'label': 'csv', 'value': 'csv'}
+					{'text': 'geojson', 'value': 'geojson'},
+					{'text': 'csv', 'value': 'csv'}
 				]
 			});
 
@@ -3036,8 +3046,8 @@
 				parentElem: $('#' + exportDialog.getFooterId()),
 				btnLabel: 'Export',
 				onBtnClick: function(){
-					var filter = $('#'+exportFilter.getSelectId()).val();
-					var format = $('#'+exportFormat.getSelectId()).val();
+					var filter = exportFilter.getSelectedValue();
+					var format = exportFormat.getSelectedValue();
 					
 					var fileName = $('#'+exportFileName.getInputId()).val();
 					if( '' === fileName ) {
@@ -3057,7 +3067,7 @@
 			formatChanged();
 			
 			function formatChanged(){
-				var extension = $('#'+exportFormat.getSelectId()).val();
+				var extension = exportFormat.getSelectedValue();
 				var name = $('#'+exportFileName.getInputId()).val();
 				var i = name.lastIndexOf('.');
 				if( i >= 0 ){
@@ -3385,7 +3395,7 @@
 							if( typeof revInfo.rev === 'string' ){
 								menuOptions.push({
 									'value': revInfo.rev,
-									'label': revInfo.rev
+									'text': revInfo.rev
 								});
 							};
 						});
@@ -3394,7 +3404,9 @@
 					new $n2.mdc.MDCSelect({
 						parentElem: $buttons,
 						menuLabel: 'Select Revision',
-						menuChgFunction: function(){ revisionSelected(this, $revs) },
+						menuChgFunction: function(){
+							revisionSelected(this, $revs)
+						},
 						menuOpts: menuOptions
 					});
 				};
@@ -3404,18 +3416,21 @@
 			}
 		});
 		
-		function revisionSelected($selector, $revs) {
+		function revisionSelected($selection, $revs) {
 			
 			var $displayDiv = $revs.find('.selectAppRevisionDisplay');
 			$displayDiv.empty();
 			
-			var revSelected = $($selector).val();
-			$displayDiv.text(revSelected);
+			var revSelected = $($selection)
+				.find('li.mdc-list-item--selected');
+			var revSelectedValue = revSelected.attr('data-value');
 
-			if( revSelected ){
+			$displayDiv.text(revSelectedValue);
+
+			if( revSelectedValue ){
 				atlasDb.getDocument({
 					docId: docId
-					,rev: revSelected
+					,rev: revSelectedValue
 					,onSuccess: function(doc){
 						$displayDiv.empty();
 						

@@ -569,9 +569,9 @@ Polar Stereographic Projection Selector
   
 }
 
-.n2-tag-box.mdc-text-field.n2s_attachedMDCTextField.mdc-text-field--outlined {
-	width: 260px;
-}
+/* .n2-tag-box.mdc-text-field.n2s_attachedMDCTextField.mdc-text-field--outlined {
+ 	width: 260px;
+*/ }
 
 .input_group_for_customMDC { 
   position:relative;

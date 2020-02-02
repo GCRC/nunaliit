@@ -12,8 +12,8 @@ var currentView = 'l10n-pending';
 var requestPanelName = null;
 
 function selectionChanged() {
-	var $select = $(this);
-	currentView = $select.val();
+	var $select = $(this).find('li.mdc-list-item--selected');
+	currentView = $select.attr('data-value');
 	refreshView();
 };
 
@@ -138,23 +138,26 @@ function displayTranslated() {
 					var selected = false;
 					var r = rows[i];
 					if (!langList.length) {
-						selected = 'selected';
+						selected = true;
 					}
-	
+
 					langList.push({
-						'value':r.key,
-						'label':r.key,
+						'value': r.key,
+						'text': r.key,
 						'selected': selected
 					});
 				}
 
-				new $n2.mdc.MDCSelect({
-					parentElem: $('.translationButtonLine'),
-					mdcClasses: ['translationLangSelect'],
-					menuLabel: 'Language',
-					menuChgFunction: languageChanged,
-					menuOpts: langList
-				});
+				// If translation language select doesn't exist, add it.
+				if (!$('.translationLangSelect').length) {
+					new $n2.mdc.MDCSelect({
+						parentElem: $('.translationButtonLine'),
+						mdcClasses: ['translationLangSelect'],
+						menuLabel: 'Language',
+						menuChgFunction: languageChanged,
+						menuOpts: langList
+					});
+				}
 
 				// Initialize language selection
 				languageChanged();
@@ -163,8 +166,11 @@ function displayTranslated() {
 	};
 	
 	function languageChanged(){
-		var $select = $('.translationButtonLine').find('.translationLangSelect').find('select');
-		var lang = $select.val();
+		var $select = $('.translationButtonLine')
+			.find('.translationLangSelect')
+			.find('li.mdc-list-item--selected');
+
+		var lang = $select.attr('data-value');
 		
 		atlasDesign.queryView({
 			viewName: 'l10n-translated'
@@ -252,16 +258,16 @@ function main() {
 		.addClass('translationButtonLine');
 
 	$('#'+requestPanelName).before($buttonLine);
-	
+
 	new $n2.mdc.MDCSelect({
 		parentElem: $buttonLine,
 		preSelected: true,
 		menuLabel: 'Status',
 		menuChgFunction: selectionChanged,
 		menuOpts: [
-			{'value': 'l10n-pending', 'label': 'Pending', 'selected': 'selected'},
-			{'value': 'l10n-all', 'label': 'All'},
-			{'value': 'translated', 'label': 'Translated'}
+			{'value': 'l10n-pending', 'text': 'Pending', 'selected': true},
+			{'value': 'l10n-all', 'text': 'All'},
+			{'value': 'translated', 'text': 'Translated'}
 		]
 	});
 	refreshView();

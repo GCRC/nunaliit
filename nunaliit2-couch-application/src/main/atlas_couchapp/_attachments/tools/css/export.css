@@ -17,6 +17,7 @@ main {
 
 #export .exportControls .mdc-select {
 	margin-right: 6px;
+	display: inline;
 }
 
 #export .exportError, 

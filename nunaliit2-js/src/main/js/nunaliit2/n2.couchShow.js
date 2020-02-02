@@ -2127,31 +2127,37 @@ var DomStyler = $n2.Class({
 		};
 
 		function generateChip(chipObj, type_opt){
-			var $chip;
-			var chipText;
+			var $chip, $gridCell;
+			var chipText, chipId, chipOriType;
 			if (typeof chipObj === 'string'){
 				chipText = chipObj;
-				var chipId = $n2.getUniqueId();
+				chipId = $n2.getUniqueId();
 
 				$chip = $('<div>').addClass('mdc-chip')
+					.attr('role', 'row')
 					.attr('id', chipId)
-					.attr('tabindex','0');
-				var chipOriType = 'unknown';
+					.attr('tabindex', '0');
+
+				chipOriType = 'unknown';
+
 				if (type_opt){
 					chipOriType = type_opt;
 				}
+
 				$chip.data('n2Chip', {
 					chipText: chipObj,
 					type: chipOriType,
 					fraction: 'full'
 				})
+
 			} else if ( typeof chipObj === 'object'){
 				chipText = chipObj.value;
-				var fraction= undefined;
+				var fraction = undefined;
 				if ( chipObj.fraction ){
 					fraction = chipObj.fraction;
 				};
-				var chipId = $n2.getUniqueId();
+
+				chipId = $n2.getUniqueId();
 
 				$chip = $('<div>').addClass('mdc-chip')
 					.attr('id', chipId)
@@ -2164,24 +2170,35 @@ var DomStyler = $n2.Class({
 				} else {
 					$chip.addClass('mdc-chip-partial');
 				}
-				var chipOriType = 'unknown';
+
+				chipOriType = 'unknown';
 				if (type_opt){
 					chipOriType = type_opt;
 				}
+
 				$chip.data('n2Chip', $n2.extend({type: chipOriType }, chipObj));
 			}
-			
+
 			if (chipText) {
-				$('<div>').addClass('mdc-chip__text')
-					.text(chipText)
+				$('<div>').addClass('mdc-chip__ripple')
 					.appendTo($chip);
+
+				$gridCell = $('<span>')
+					.attr('role', 'gridcell')
+					.appendTo($chip);
+
+				$('<span>').addClass('mdc-chip__text')
+					.text(chipText)
+					.attr('role', 'button')
+					.appendTo($gridCell);
 			}
 
 			$('<i>')
 				.addClass('material-icons mdc-chip__icon mdc-chip__icon--trailing')
 				.attr('tabindex','0')
 				.attr('role','button')
-				.text('x')
+				.attr('width', '15')
+				.attr('height', '15')
 				.appendTo($chip);
 
 			return $chip;
