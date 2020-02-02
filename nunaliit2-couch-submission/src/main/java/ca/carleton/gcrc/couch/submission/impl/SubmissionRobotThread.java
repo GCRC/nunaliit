@@ -251,6 +251,12 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		}
 		
 		JSONObject submittedDoc = submissionInfo.optJSONObject("submitted_doc");
+		String submitterName = submissionInfo.optString("submitter_name");
+		String docOwner = null;
+		if( null != submittedDoc ){
+			JSONObject nunaliitCreated = submittedDoc.optJSONObject("nunaliit_created");
+			docOwner = nunaliitCreated.getString("name");
+		}
 		JSONArray nunaliitLayers = null;
 		if( null != submittedDoc ){
 			nunaliitLayers = submittedDoc.optJSONArray("nunaliit_layers");
@@ -281,6 +287,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		if( !approved ){
 			boolean atLeastOneLayer = false;
 			boolean allLayerRoles = true;
+			boolean onPublicLayerAndIsDocOwner = false;
 			
 			if( null != nunaliitLayers ){
 				for(int i=0;i<nunaliitLayers.length(); ++i){
@@ -289,9 +296,11 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 						if( "public".equals(layerId) ){
 							//atLeastOneLayer = true;
 							// Public layer, ignore
+							onPublicLayerAndIsDocOwner = isDocOwner(submitterName, docOwner);
 						} else if( layerId.startsWith("public_") ){
 							//atLeastOneLayer = true;
 							// Public layer, ignore
+							onPublicLayerAndIsDocOwner = isDocOwner(submitterName, docOwner);
 						} else {
 							atLeastOneLayer = true;
 							
@@ -304,10 +313,10 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 					}
 				}
 			}
-
+			
 			// If the document is on a controlled layer and the user
 			// has access to all those layers, the we can automatically approve
-			if( atLeastOneLayer && allLayerRoles ){
+			if( atLeastOneLayer && allLayerRoles || onPublicLayerAndIsDocOwner){
 				approved = true;
 			};
 		}
@@ -513,7 +522,13 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			this.notifyAll();
 		}
 	}
-	
+	private boolean isDocOwner(String submitterName, String docOwner) {
+		boolean isOwner = false;
+		if ( null != submitterName ) {
+			isOwner = submitterName.equals(docOwner);
+		}
+		return isOwner;
+	}
 	private boolean rolesHaveAccessToLayerId(List<String> roles, String layerId){
 		boolean haveAccess = false;
 		
