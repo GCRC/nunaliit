@@ -255,7 +255,9 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		String docOwner = null;
 		if( null != submittedDoc ){
 			JSONObject nunaliitCreated = submittedDoc.optJSONObject("nunaliit_created");
-			docOwner = nunaliitCreated.getString("name");
+			if (null != nunaliitCreated) {
+				docOwner = nunaliitCreated.getString("name");
+			}
 		}
 		JSONArray nunaliitLayers = null;
 		if( null != submittedDoc ){
@@ -524,7 +526,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 	}
 	private boolean isDocOwner(String submitterName, String docOwner) {
 		boolean isOwner = false;
-		if ( null != submitterName ) {
+		if ( null != submitterName && null != docOwner) {
 			isOwner = submitterName.equals(docOwner);
 		}
 		return isOwner;
