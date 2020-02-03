@@ -2,7 +2,6 @@
   "nunaliit_type": "atlas",
   "title": "Atlas Title",
   "nunaliit_navigation": {
-    "nunaliit_type": "navigation",
     "title": {
       "nunaliit_type": "localized",
       "en": "Atlas",

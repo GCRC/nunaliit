@@ -112,7 +112,7 @@ public final class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChan
         }
 
         if (navigation != null) {
-            logger.info("Regenerating sitemap from atlas document '{}' navigation", docId);
+            logger.debug("Regenerating sitemap from atlas document '{}' navigation", docId);
             processNavigationDoc(navigation);
         }
         else {

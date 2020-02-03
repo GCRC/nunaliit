@@ -107,7 +107,7 @@ public class IndexServlet extends HttpServlet
 
         String queryString = request.getQueryString();
 
-        logger.debug("Received request with query string {}", queryString);
+        logger.trace("Received request with query string {}", queryString);
         if (StringUtils.isNotBlank(queryString)) {
             String moduleDocId = findModuleDocId(queryString);
             if (StringUtils.isNotBlank(moduleDocId)) {
@@ -120,11 +120,11 @@ public class IndexServlet extends HttpServlet
                 }
             }
             else {
-                logger.debug("Could not find module in query string: {}", queryString);
+                logger.warn("Could not find module in query string: {}", queryString);
             }
         }
         else {
-            logger.debug("Query string did not contain module Id, outputting atlas metadata.");
+            logger.trace("Query string did not contain module Id, outputting atlas metadata.");
             try {
                 metadata = findAtlasMetadata();
             }

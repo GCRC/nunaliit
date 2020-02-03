@@ -41,7 +41,7 @@ public class SitemapServlet extends HttpServlet
         ServletContext context = config.getServletContext();
         Object obj = context.getAttribute(SITEMAP_BUILDER);
         if (obj == null) {
-            logger.error(String.format("SitemapBuilder is not specified (%s)", SITEMAP_BUILDER));
+            logger.error("SitemapBuilder is not specified ({})", SITEMAP_BUILDER);
             throw new ServletException(String.format("SitemapBuilder is not specified (%s)", SITEMAP_BUILDER));
         }
         else if (obj instanceof SitemapBuilderAtlasChangeListener) {
@@ -58,7 +58,7 @@ public class SitemapServlet extends HttpServlet
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         logger.debug("Sitemap request received");
         List<String> relativeUrls = sitemapBuilderAtlasChangeListener.getRelativeUrls();
-        if (relativeUrls != null && !relativeUrls.isEmpty()) {
+        if (!relativeUrls.isEmpty()) {
             response.setStatus(HttpServletResponse.SC_OK);
             response.setContentType("text/xml");
             String baseUrl = CouchNunaliitUtils.buildBaseUrl(request);
