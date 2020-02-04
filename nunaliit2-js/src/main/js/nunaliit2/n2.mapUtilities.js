@@ -143,7 +143,7 @@ var MapClusterClickHandler = $n2.Class('MapClusterClickHandler',{
 	}
 });
 //=========================================================================
-var MapAlwaysIncludesExtentsZoom = $n2.Class('MapAlwaysIncludesExtentsZoom',{
+var MapAutoZoom = $n2.Class('MapAutoZoom',{
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			customService: undefined
@@ -174,51 +174,114 @@ var MapAlwaysIncludesExtentsZoom = $n2.Class('MapAlwaysIncludesExtentsZoom',{
 		$n2.log(this._classname, this);
 	},
 	_mapRefreshCallback: function(features, mapAndControls){
-		if (mapAndControls.map
-			&& mapAndControls.map.layers)
-		var map = mapAndControls.map;
-		var target_extent;
-		if (this.alwaysIncludes){
-			this.alwaysIncludes.forEach(function(bound){
-				if (bound.length === 4){
-					var alpha_extent = new OpenLayers.Bounds(bound[0], bound[1], bound[2], bound[3]);
-					var dstProj = new OpenLayers.Projection('EPSG:900913');
-					var srtProj = new OpenLayers.Projection('EPSG:4326');
-					alpha_extent.transform(srtProj, dstProj);
-					if (!target_extent){
-						target_extent = alpha_extent;
-					} else {
-						target_extent.extend (alpha_extent);
-					}
-				}
-			})
-		}
-		var layers = map.layers;
-		for (var i=0,e=layers.length; i<e; i++){
-			if (layers[i].isBaseLayer){
-				
-			} else {
-				var tmp_extent = layers[i].getDataExtent();
-				if (tmp_extent){
-					if (!target_extent){
-						target_extent = tmp_extent;
-					} else {
-						target_extent.extend( tmp_extent );
-					}
-					
-				}
-				
-			}
-		}
-		if (target_extent){
-			mapAndControls.map.zoomToExtent(target_extent, false);
-			//$n2.log('-->>, need to resetExtent', target_extent);
-			//var dstProj = new OpenLayers.Projection('EPSG:900913');
-			//var srtProj = new OpenLayers.Projection('EPSG:4326');
-			//target_extent.transform(dstProj, srtProj);
-			//$n2.log('-->>, need to resetExtent-es4326', target_extent);
-		}
 		
+		
+		if (mapAndControls._classname === 'MapAndControls'){
+			//For Openlayers 2
+			if (mapAndControls.map
+					&& mapAndControls.map.layers){
+					var map = mapAndControls.map;
+					var target_extent;
+					if (this.alwaysIncludes){
+						this.alwaysIncludes.forEach(function(bound){
+							if (bound.length === 4){
+								var alpha_extent = new OpenLayers.Bounds(bound[0], bound[1], bound[2], bound[3]);
+								var dstProj = new OpenLayers.Projection('EPSG:900913');
+								var srtProj = new OpenLayers.Projection('EPSG:4326');
+								alpha_extent.transform(srtProj, dstProj);
+								if (!target_extent){
+									target_extent = alpha_extent;
+								} else {
+									target_extent.extend (alpha_extent);
+								}
+							}
+						})
+					}
+					var layers = map.layers;
+					for (var i=0,e=layers.length; i<e; i++){
+						if (layers[i].isBaseLayer){
+
+						} else {
+							var tmp_extent = layers[i].getDataExtent();
+							if (tmp_extent){
+								if (!target_extent){
+									target_extent = tmp_extent;
+								} else {
+									target_extent.extend( tmp_extent );
+								}
+
+							}
+
+						}
+					}
+					if (target_extent){
+						mapAndControls.map.zoomToExtent(target_extent, false);
+						//$n2.log('-->>, need to resetExtent', target_extent);
+						//var dstProj = new OpenLayers.Projection('EPSG:900913');
+						//var srtProj = new OpenLayers.Projection('EPSG:4326');
+						//target_extent.transform(dstProj, srtProj);
+						//$n2.log('-->>, need to resetExtent-es4326', target_extent);
+					}
+				}
+			
+		} else if (mapAndControls._classname === 'N2MapCanvas') {
+			//For Openlayers 5
+			if ( mapAndControls.n2Map ){
+					var map = mapAndControls.n2Map;
+					var target_extent;
+					if (this.alwaysIncludes){
+						this.alwaysIncludes.forEach(function(bound){
+							if (bound.length === 4){
+								var alpha_extent = bound;
+								var dstProj = new nunaliit2.n2es6.ol_proj_Projection({code: 'EPSG:900913'});
+								var srtProj = new nunaliit2.n2es6.ol_proj_Projection({code: 'EPSG:4326'});
+								nunaliit2.n2es6.ol_proj_transformExtent(alpha_extent, srtProj, dstProj);
+								//alpha_extent.transform(srtProj, dstProj);
+								if (!target_extent){
+									target_extent = alpha_extent;
+								} else {
+									nunaliit2.n2es6.ol_extent_extend (target_extent, alpha_extent);
+								}
+							}
+						})
+					}
+					//layers here is a vanilla array;
+					var layergroups = map.getLayers().getArray();
+					
+					for (var i=0,e=layergroups.length; i<e; i++){
+						if (layergroups[i].get('title') !== 'Overlays'){
+
+						} else {
+							//layergroup overlay;
+							var innerLayers = layergroups[i].get('layers').getArray();
+							if ( innerLayers && Array.isArray(innerLayers) ){
+								for (var j = 0, k=innerLayers.length; j<k ; j++){
+									var layer = innerLayers[j];
+									var tmp_extent = layer.getSource().getExtent();
+									if (tmp_extent){
+										if (!target_extent){
+											target_extent = tmp_extent;
+										} else {
+											nunaliit2.n2es6.ol_extent_extend (target_extent, tmp_extent);
+										}
+									}
+								}
+							}
+						}
+					}
+					if ( target_extent
+						&& !nunaliit2.n2es6.ol_extent_isEmpty(target_extent) ){
+						map.getView().fit(target_extent, map.getSize());
+						//$n2.log('-->>, need to resetExtent', target_extent);
+						//var dstProj = new OpenLayers.Projection('EPSG:900913');
+						//var srtProj = new OpenLayers.Projection('EPSG:4326');
+						//target_extent.transform(dstProj, srtProj);
+						//$n2.log('-->>, need to resetExtent-es4326', target_extent);
+					}
+				}
+			
+		}
+
 	}
 });
 //=========================================================================
@@ -282,7 +345,7 @@ function HandleUtilityCreateRequests(m, addr, dispatcher){
 		new MapClusterClickHandler(options);
 
 		m.created = true;
-	} else if ('mapAlwaysIncludesExtentsZoom' === m.utilityType ){
+	} else if ('mapAutoZoom' === m.utilityType ){
 		var options = {};
 		
 		if( typeof m.utilityOptions === 'object' ){
@@ -298,7 +361,7 @@ function HandleUtilityCreateRequests(m, addr, dispatcher){
 			};
 		};
 		
-		new MapAlwaysIncludesExtentsZoom(options);
+		new MapAutoZoom(options);
 
 		m.created = true;
 	};
@@ -310,7 +373,7 @@ $n2.mapUtilities = {
 	,MapClusterClickToZoom: MapClusterClickToZoom
 	,MapClusterClickToMultiSelect: MapClusterClickToMultiSelect
 	,MapClusterClickHandler: MapClusterClickHandler
-	,MapAlwaysIncludesExtentsZoom : MapAlwaysIncludesExtentsZoom
+	,MapAutoZoom : MapAutoZoom
 };
 
 })(nunaliit2);
