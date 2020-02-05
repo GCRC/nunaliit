@@ -21,3 +21,4 @@ Thumbs.db
 #######################
 *.iml
 .idea/
+/.metadata/
