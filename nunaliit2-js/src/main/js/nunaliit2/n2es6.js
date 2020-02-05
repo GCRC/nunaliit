@@ -2739,7 +2739,7 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var ol_ext_style_Photo__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ol-ext/style/Photo */ "./node_modules/ol-ext/style/Photo.js");
 /* harmony import */ var ol_style_Style_js__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ol/style/Style.js */ "./node_modules/ol/style/Style.js");
 /* harmony import */ var ol_format_GeoJSON__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ol/format/GeoJSON */ "./node_modules/ol/format/GeoJSON.js");
-/* harmony import */ var ol_source_Image_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/source/Image.js */ "./node_modules/ol/source/Image.js");
+/* harmony import */ var ol_source_ImageStatic_js__WEBPACK_IMPORTED_MODULE_10__ = __webpack_require__(/*! ol/source/ImageStatic.js */ "./node_modules/ol/source/ImageStatic.js");
 /* harmony import */ var ol_source_WMTS_js__WEBPACK_IMPORTED_MODULE_11__ = __webpack_require__(/*! ol/source/WMTS.js */ "./node_modules/ol/source/WMTS.js");
 /* harmony import */ var ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_12__ = __webpack_require__(/*! ol/source/Vector.js */ "./node_modules/ol/source/Vector.js");
 /* harmony import */ var _N2Select_js__WEBPACK_IMPORTED_MODULE_13__ = __webpack_require__(/*! ./N2Select.js */ "./dist/n2es6/n2mapModule/N2Select.js");
@@ -2839,7 +2839,6 @@ var DH = 'n2.canvasMap';
 //--------------------------------------------------------------------------
 /*
 This canvas displays a map based on OpenLayers5.
-
  */
 
 //--------------------------------------------------------------------------
@@ -3440,6 +3439,7 @@ class N2MapCanvas  {
 			projection: 'EPSG:3857',
 			zoom: 6
 		});
+		
 		this.n2View = olView;
 		var customMap = new ol_Map_js__WEBPACK_IMPORTED_MODULE_15__["default"]({
 			interactions: Object(ol_interaction_js__WEBPACK_IMPORTED_MODULE_30__["defaults"])({mouseWheelZoom : false}).extend([
@@ -3971,8 +3971,17 @@ class N2MapCanvas  {
 	_createOLLayerFromDefinition(layerDefinition, isDefaultLayer) {
 		var name = _loc(layerDefinition.name);
 		var _this = this;
-
-		if( layerDefinition ) {
+		var _layerType = layerDefinition.type.replace(/\W/g,'').toLowerCase();
+		if ( layerDefinition &&  _layerType === 'image'){
+			var layerOptions = layerDefinition.options;
+			//_this.n2View.setZoom(2);
+			return new ol_layer_Image_js__WEBPACK_IMPORTED_MODULE_19__["default"]({
+				title: layerDefinition.name,
+				type: 'image',
+				visible: isDefaultLayer,
+				source: _this._createBackgroundMapSource(layerDefinition)
+			});
+		} else if ( layerDefinition ) {
 			var ol5layer = new ol_layer_Tile_js__WEBPACK_IMPORTED_MODULE_25__["default"]({
 				title: layerDefinition.name,
 				type: 'base',
@@ -3989,7 +3998,7 @@ class N2MapCanvas  {
 
 	}
 	_createBackgroundMapSource (layerDefinition) {
-
+		var _this = this;
 		var sourceTypeInternal =
 			layerDefinition.type.replace(/\W/g,'').toLowerCase();
 		var sourceOptionsInternal = layerDefinition.options;
@@ -4096,7 +4105,44 @@ class N2MapCanvas  {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
 		} else if ( sourceTypeInternal == VENDOR.IMAGE) {
+			var url, height, width, extent, projection;
+			var options = sourceOptionsInternal;
+			if( options ){
+				for(var optionKey in options){
+					var optionValue = options[optionKey];
+					if ( optionKey === 'attachmentName' ){
+					//Since moduledoc cannot be retrieved in this context,
+					//we decide to holdup on supporting attachmentName
+//						var atlasDb = _this._getAtlasDb();
+//						if ( atlasDb ){
+//							url = atlasDb.getAttachmentUrl(
+//								_this._getModuleDoc(), optionValue
+//							)
+//						}
+					} else if( optionKey === 'url' ){
+						url = optionValue;
+					} else if( optionKey === 'height' ){
+						height = 1 * optionValue;
+					} else if( optionKey === 'width' ){
+						width = 1 * optionValue;
+					} else if( optionKey === 'extent' ){
+						extent = optionValue;
+					} else {
+						//layerOptions[optionKey] = optionValue;
+					};
+				};
 
+				return new ol_source_ImageStatic_js__WEBPACK_IMPORTED_MODULE_10__["default"]({
+					url: url,
+					projection: Object(ol_proj_js__WEBPACK_IMPORTED_MODULE_23__["get"])('EPSG:3857'),
+					imageSize:[width, height],
+					imageExtent: [-14483048.340, 2291674.487,-6775420.041, 6947393.399]
+				})
+			}else{
+				$n2.reportError('Bad configuration for layer: '+name);
+				return null;
+			}
+			
 		} else if ( sourceTypeInternal == VENDOR.COUCHDB) {
 
 		} else {
@@ -4427,6 +4473,17 @@ class N2MapCanvas  {
 		};
 		
 		return d;
+	}
+	_getAtlasDb(){
+		var d = null;
+		d = this.options.config.atlasDb || null;
+		return d;
+	}
+	_getModuleDoc(){
+		var d = null;
+		d = this.options.moduleDisplay.module.moduleDoc || null;
+		return d;
+		
 	}
 	_computeFeatureOriginalBboxForMapProjection(f, mapProj) {
 		// Each feature has a projection stored at f.n2GeomProj
@@ -66147,6 +66204,171 @@ function defaultImageLoadFunction(image, src) {
 /* harmony default export */ __webpack_exports__["default"] = (ImageSource);
 
 //# sourceMappingURL=Image.js.map
+
+/***/ }),
+
+/***/ "./node_modules/ol/source/ImageStatic.js":
+/*!***********************************************!*\
+  !*** ./node_modules/ol/source/ImageStatic.js ***!
+  \***********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _Image_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../Image.js */ "./node_modules/ol/Image.js");
+/* harmony import */ var _ImageState_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../ImageState.js */ "./node_modules/ol/ImageState.js");
+/* harmony import */ var _dom_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../dom.js */ "./node_modules/ol/dom.js");
+/* harmony import */ var _events_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../events.js */ "./node_modules/ol/events.js");
+/* harmony import */ var _events_EventType_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../events/EventType.js */ "./node_modules/ol/events/EventType.js");
+/* harmony import */ var _extent_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../extent.js */ "./node_modules/ol/extent.js");
+/* harmony import */ var _proj_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../proj.js */ "./node_modules/ol/proj.js");
+/* harmony import */ var _Image_js__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./Image.js */ "./node_modules/ol/source/Image.js");
+/**
+ * @module ol/source/ImageStatic
+ */
+
+
+
+
+
+
+
+
+
+
+/**
+ * @typedef {Object} Options
+ * @property {import("./Source.js").AttributionLike} [attributions] Attributions.
+ * @property {null|string} [crossOrigin] The `crossOrigin` attribute for loaded images.  Note that
+ * you must provide a `crossOrigin` value if you are using the WebGL renderer or if you want to
+ * access pixel data with the Canvas renderer.  See
+ * https://developer.mozilla.org/en-US/docs/Web/HTML/CORS_enabled_image for more detail.
+ * @property {import("../extent.js").Extent} [imageExtent] Extent of the image in map coordinates.
+ * This is the [left, bottom, right, top] map coordinates of your image.
+ * @property {import("../Image.js").LoadFunction} [imageLoadFunction] Optional function to load an image given a URL.
+ * @property {import("../proj.js").ProjectionLike} projection Projection.
+ * @property {import("../size.js").Size} [imageSize] Size of the image in pixels. Usually the image size is auto-detected, so this
+ * only needs to be set if auto-detection fails for some reason.
+ * @property {string} url Image URL.
+ */
+
+
+/**
+ * @classdesc
+ * A layer source for displaying a single, static image.
+ * @api
+ */
+var Static = /*@__PURE__*/(function (ImageSource) {
+  function Static(options) {
+    var crossOrigin = options.crossOrigin !== undefined ?
+      options.crossOrigin : null;
+
+    var /** @type {import("../Image.js").LoadFunction} */ imageLoadFunction =
+        options.imageLoadFunction !== undefined ?
+          options.imageLoadFunction : _Image_js__WEBPACK_IMPORTED_MODULE_7__["defaultImageLoadFunction"];
+
+    ImageSource.call(this, {
+      attributions: options.attributions,
+      projection: Object(_proj_js__WEBPACK_IMPORTED_MODULE_6__["get"])(options.projection)
+    });
+
+    /**
+     * @private
+     * @type {string}
+     */
+    this.url_ = options.url;
+
+    /**
+     * @private
+     * @type {import("../extent.js").Extent}
+     */
+    this.imageExtent_ = options.imageExtent;
+
+    /**
+     * @private
+     * @type {import("../Image.js").default}
+     */
+    this.image_ = new _Image_js__WEBPACK_IMPORTED_MODULE_0__["default"](this.imageExtent_, undefined, 1, this.url_, crossOrigin, imageLoadFunction);
+
+    /**
+     * @private
+     * @type {import("../size.js").Size}
+     */
+    this.imageSize_ = options.imageSize ? options.imageSize : null;
+
+    Object(_events_js__WEBPACK_IMPORTED_MODULE_3__["listen"])(this.image_, _events_EventType_js__WEBPACK_IMPORTED_MODULE_4__["default"].CHANGE,
+      this.handleImageChange, this);
+
+  }
+
+  if ( ImageSource ) Static.__proto__ = ImageSource;
+  Static.prototype = Object.create( ImageSource && ImageSource.prototype );
+  Static.prototype.constructor = Static;
+
+  /**
+   * Returns the image extent
+   * @return {import("../extent.js").Extent} image extent.
+   * @api
+   */
+  Static.prototype.getImageExtent = function getImageExtent () {
+    return this.imageExtent_;
+  };
+
+  /**
+   * @inheritDoc
+   */
+  Static.prototype.getImageInternal = function getImageInternal (extent, resolution, pixelRatio, projection) {
+    if (Object(_extent_js__WEBPACK_IMPORTED_MODULE_5__["intersects"])(extent, this.image_.getExtent())) {
+      return this.image_;
+    }
+    return null;
+  };
+
+  /**
+   * Return the URL used for this image source.
+   * @return {string} URL.
+   * @api
+   */
+  Static.prototype.getUrl = function getUrl () {
+    return this.url_;
+  };
+
+  /**
+   * @inheritDoc
+   */
+  Static.prototype.handleImageChange = function handleImageChange (evt) {
+    if (this.image_.getState() == _ImageState_js__WEBPACK_IMPORTED_MODULE_1__["default"].LOADED) {
+      var imageExtent = this.image_.getExtent();
+      var image = this.image_.getImage();
+      var imageWidth, imageHeight;
+      if (this.imageSize_) {
+        imageWidth = this.imageSize_[0];
+        imageHeight = this.imageSize_[1];
+      } else {
+        imageWidth = image.width;
+        imageHeight = image.height;
+      }
+      var resolution = Object(_extent_js__WEBPACK_IMPORTED_MODULE_5__["getHeight"])(imageExtent) / imageHeight;
+      var targetWidth = Math.ceil(Object(_extent_js__WEBPACK_IMPORTED_MODULE_5__["getWidth"])(imageExtent) / resolution);
+      if (targetWidth != imageWidth) {
+        var context = Object(_dom_js__WEBPACK_IMPORTED_MODULE_2__["createCanvasContext2D"])(targetWidth, imageHeight);
+        var canvas = context.canvas;
+        context.drawImage(image, 0, 0, imageWidth, imageHeight,
+          0, 0, canvas.width, canvas.height);
+        this.image_.setImage(canvas);
+      }
+    }
+    ImageSource.prototype.handleImageChange.call(this, evt);
+  };
+
+  return Static;
+}(_Image_js__WEBPACK_IMPORTED_MODULE_7__["default"]));
+
+
+/* harmony default export */ __webpack_exports__["default"] = (Static);
+
+//# sourceMappingURL=ImageStatic.js.map
 
 /***/ }),
 

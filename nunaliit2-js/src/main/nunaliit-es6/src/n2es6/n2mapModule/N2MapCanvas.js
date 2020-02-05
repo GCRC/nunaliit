@@ -13,7 +13,7 @@ import {default as Photo} from'ol-ext/style/Photo';
 import {createDefaultStyle} from 'ol/style/Style.js'
 
 import GeoJSON from 'ol/format/GeoJSON';
-import {default as ImageSource} from 'ol/source/Image.js';
+import Static from 'ol/source/ImageStatic.js';
 import WMTS from 'ol/source/WMTS.js';
 import {default as VectorSource } from 'ol/source/Vector.js';
 import {default as N2Select} from './N2Select.js';
@@ -29,7 +29,7 @@ import {default as ImageLayer} from 'ol/layer/Image.js';
 import {default as View} from 'ol/View.js';
 import {default as N2Cluster} from '../ol5support/N2Cluster.js';
 
-import {extend, isEmpty, getTopLeft, getWidth} from 'ol/extent.js';
+import {extend, isEmpty, getTopLeft, getWidth, getCenter} from 'ol/extent.js';
 import {transform, getTransform, transformExtent, get as getProjection} from 'ol/proj.js';
 import {default as Projection} from 'ol/proj/Projection.js';
 import Tile from 'ol/layer/Tile.js';
@@ -63,7 +63,6 @@ var DH = 'n2.canvasMap';
 //--------------------------------------------------------------------------
 /*
 This canvas displays a map based on OpenLayers5.
-
  */
 
 //--------------------------------------------------------------------------
@@ -664,6 +663,7 @@ class N2MapCanvas  {
 			projection: 'EPSG:3857',
 			zoom: 6
 		});
+		
 		this.n2View = olView;
 		var customMap = new Map({
 			interactions: defaultsInteractionSet({mouseWheelZoom : false}).extend([
@@ -1195,8 +1195,17 @@ class N2MapCanvas  {
 	_createOLLayerFromDefinition(layerDefinition, isDefaultLayer) {
 		var name = _loc(layerDefinition.name);
 		var _this = this;
-
-		if( layerDefinition ) {
+		var _layerType = layerDefinition.type.replace(/\W/g,'').toLowerCase();
+		if ( layerDefinition &&  _layerType === 'image'){
+			var layerOptions = layerDefinition.options;
+			//_this.n2View.setZoom(2);
+			return new ImageLayer({
+				title: layerDefinition.name,
+				type: 'image',
+				visible: isDefaultLayer,
+				source: _this._createBackgroundMapSource(layerDefinition)
+			});
+		} else if ( layerDefinition ) {
 			var ol5layer = new Tile({
 				title: layerDefinition.name,
 				type: 'base',
@@ -1213,7 +1222,7 @@ class N2MapCanvas  {
 
 	}
 	_createBackgroundMapSource (layerDefinition) {
-
+		var _this = this;
 		var sourceTypeInternal =
 			layerDefinition.type.replace(/\W/g,'').toLowerCase();
 		var sourceOptionsInternal = layerDefinition.options;
@@ -1320,7 +1329,44 @@ class N2MapCanvas  {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
 		} else if ( sourceTypeInternal == VENDOR.IMAGE) {
+			var url, height, width, extent, projection;
+			var options = sourceOptionsInternal;
+			if( options ){
+				for(var optionKey in options){
+					var optionValue = options[optionKey];
+					if ( optionKey === 'attachmentName' ){
+					//Since moduledoc cannot be retrieved in this context,
+					//we decide to holdup on supporting attachmentName
+//						var atlasDb = _this._getAtlasDb();
+//						if ( atlasDb ){
+//							url = atlasDb.getAttachmentUrl(
+//								_this._getModuleDoc(), optionValue
+//							)
+//						}
+					} else if( optionKey === 'url' ){
+						url = optionValue;
+					} else if( optionKey === 'height' ){
+						height = 1 * optionValue;
+					} else if( optionKey === 'width' ){
+						width = 1 * optionValue;
+					} else if( optionKey === 'extent' ){
+						extent = optionValue;
+					} else {
+						//layerOptions[optionKey] = optionValue;
+					};
+				};
 
+				return new Static({
+					url: url,
+					projection: getProjection('EPSG:3857'),
+					imageSize:[width, height],
+					imageExtent: [-14483048.340, 2291674.487,-6775420.041, 6947393.399]
+				})
+			}else{
+				$n2.reportError('Bad configuration for layer: '+name);
+				return null;
+			}
+			
 		} else if ( sourceTypeInternal == VENDOR.COUCHDB) {
 
 		} else {
