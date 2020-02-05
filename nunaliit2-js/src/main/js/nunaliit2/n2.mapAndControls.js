@@ -1010,7 +1010,7 @@ var LayerInfo = $n2.Class({
                       atlas after it is created.
  */
 
-var MapAndControls = $n2.Class({
+var MapAndControls = $n2.Class('MapAndControls',{
 	
 	options: null,
 	dbSearchEngine: null,
@@ -1498,7 +1498,6 @@ var MapAndControls = $n2.Class({
 				restrictedExtent.transform(userCoordProjection, mapProjection);
 			};
 		};
-
 		this.map = new OpenLayers.N2Map(this.options.mapIdentifier, {
 			projection: mapProjection
 			,displayProjection: (this.options.mapCoordinateSpecifications.useForMapControls ? userCoordProjection : mapProjection)
@@ -2749,11 +2748,11 @@ var MapAndControls = $n2.Class({
 						var matrixIds = new Array(options["numZoomLevels"]);
 						var srsName = options['srsName'];
 						var numzoom = options["numZoomLevels"];
-					    for (var i=0; i< numzoom; ++i) {
-					        matrixIds[i] = srsName + ":" + i;
-					    }
-					    layerOptions.matrixIds = matrixIds;
-					    layerOptions.numZoomLevels = options[key];
+						for (var i=0; i< numzoom; ++i) {
+							matrixIds[i] = srsName + ":" + i;
+						}
+						layerOptions.matrixIds = matrixIds;
+						layerOptions.numZoomLevels = options[key];
 					} else {
 						layerOptions[key] = options[key];
 					};
@@ -5897,7 +5896,10 @@ var MapAndControls = $n2.Class({
 		} else if ( 'mapRefreshCallbackRequest' === type ){
 			if ( m.cnt + 1 === this.refreshCnt) {
 				var cb = this.refreshCallback;
-				cb(null, this);
+				if (cb && typeof cb === 'function'){
+					cb(null, this);
+				}
+
 			}
 
 		};
