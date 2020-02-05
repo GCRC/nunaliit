@@ -891,7 +891,7 @@ public class ConfigServlet extends JsonServlet {
 			indexChangeListener = new HtmlAttachmentChangeListener(documentDatabase, CouchNunaliitConstants.SITE_DESIGN_DOC_ID,
 					CouchNunaliitConstants.INDEX_HTML);
 			indexChangeListener.start();
-			// Watch all documents with schema type module
+			// Watches all module documents.
 			moduleMetadataChangeListener = new ModuleMetadataChangeListener(documentDatabase);
 			moduleMetadataChangeListener.start();
 

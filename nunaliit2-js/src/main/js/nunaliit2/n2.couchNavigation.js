@@ -377,7 +377,6 @@ var NavigationService = $n2.Class({
 				var contentClass = 'n2show_documentContent_' + $n2.utils.stringToHtmlId(docId);
 				$elem.addClass(contentClass);
 
-				//SARAH: TODO: why is this being called? File wasn't handling documentContent event before I added it...
 				// Request this document
 				this.dispatchService.send(DH,{
 					type: 'requestDocument'
