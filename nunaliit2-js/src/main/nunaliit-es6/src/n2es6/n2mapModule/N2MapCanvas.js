@@ -46,13 +46,16 @@ import {unByKey} from 'ol/Observable';
 import {default as DrawInteraction} from 'ol/interaction/Draw.js';
 import Stamen from 'ol/source/Stamen.js';
 import OSM from 'ol/source/OSM';
-import LayerSwitcher from 'ol-layerswitcher';
+
 
 import 'ol-ext/dist/ol-ext.css';
 import Bar from 'ol-ext/control/Bar';
+
 import EditBar from './EditBar';
 import Toggle from 'ol-ext/control/Toggle';
+
 import Timeline from 'ol-ext/control/Timeline';
+import LayerSwitcher from 'ol-ext/control/LayerSwitcher';
 import Popup from 'ol-ext/overlay/Popup';
 //import timelineData from '!json-loader!../../data/fond_guerre.geojson';
 
@@ -519,7 +522,7 @@ class N2MapCanvas  {
 		return false;
 	};
 	
-	//TODO the final function for different mode
+	// The function for switching between different modes
     _switchMapMode(mode, opts) {
     	if( this.currentMode === mode ) {
     		// nothing to do
@@ -779,10 +782,8 @@ class N2MapCanvas  {
 		);
 
 
-		var customLayerSwitcher = new LayerSwitcher({
-					tipLabel: 'Legend' // Optional label for button
-				});
-		customMap.addControl(customLayerSwitcher);
+		var n2LayerSwitcher = new LayerSwitcher();
+		customMap.addControl(n2LayerSwitcher);
 
 
 		this.interactionSet.selectInteraction.on("clicked", (function(e) {
@@ -826,6 +827,7 @@ class N2MapCanvas  {
 		this.editLayerSource = new VectorSource();
 		var editLayer = new VectorLayer({
 			title: 'Edit',
+			displayInLayerSwitcher: false,
 			source: this.editLayerSource 
 		});
 		customMap.addLayer(editLayer);
@@ -871,15 +873,12 @@ class N2MapCanvas  {
 	      this.editbarControl.getInteraction('DrawPoint').on('drawend', function(e){
 	    	  _this.editModeAddFeatureCallback( evt ); 
 	      });
-//	      //  tooltip.setInfo(e.oldValue ? '' : 'Click map to place a point...');
-//	      });
+
 	      this.editbarControl.getInteraction('DrawLine').on('drawend', function(evt){
 	    	  _this.editModeAddFeatureCallback( evt );
 	      });
-	      // tooltip.setFeature();
-//	       // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing line...');
-//	      });
-//	      editbarControl.getInteraction('DrawLine').on('drawstart', function(e){
+
+//	      this.editbarControl.getInteraction('DrawLine').on('drawstart', function(e){
 //	       // tooltip.setFeature(e.feature);
 //	       // tooltip.setInfo('Click to continue drawing line...');
 //	      });
@@ -905,24 +904,9 @@ class N2MapCanvas  {
 //	       // tooltip.setFeature(e.feature);
 //	       // tooltip.setInfo('Move and click map to finish drawing...');
 //	      });
-//	      editbarControl.getInteraction('DrawRegular').on(['change:active','drawend'], function(e){
-//	       // tooltip.setFeature();
-//	       // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
-//	      });
-		
-		
-		
-		
-		
-		/* Standard Controls */
-//		mainbar.addControl (new ZoomToExtent({  extent: [ 265971,6243397 , 273148,6250665 ] }));
-//		mainbar.addControl (new Rotate());
-//		mainbar.addControl (new FullScreen());
-		//_changeToImageRender();
-	}
-
-	onMoveendCallback(evt){
-		
+	      this.editbarControl.getInteraction('DrawRegular').on('drawend', function(evt){
+	    	  _this.editModeAddFeatureCallback( evt );
+	      });
 	}
 
 	editModeAddFeatureCallback(evt){
@@ -971,7 +955,7 @@ class N2MapCanvas  {
 				};
 
 			} else {
-				//n2es6 does not support multi hover, so does nunaliit2 
+				//n2es6 does not support multi-hover, neither nunaliit2 
 			}
 		
 		}
@@ -1080,9 +1064,6 @@ class N2MapCanvas  {
 						}
 					}
 				});
-//				var layerOptions = _this.overlayInfos.shift();
-//				var layerStyleMap = createStyleMap(layerOptions._layerInfo);
-//				vectorLayer.set('styleMap', layerStyleMap);
 				fg.push(vectorLayer);
 			};
 
@@ -1195,11 +1176,25 @@ class N2MapCanvas  {
 	_createOLLayerFromDefinition(layerDefinition, isDefaultLayer) {
 		var name = _loc(layerDefinition.name);
 		var _this = this;
+<<<<<<< 8b142c765eb81dc14b0413fba8ebf5836776d873
 
 		if( layerDefinition ) {
+=======
+		var _layerType = layerDefinition.type.replace(/\W/g,'').toLowerCase();
+		if ( layerDefinition &&  _layerType === 'image'){
+			var layerOptions = layerDefinition.options;
+			//_this.n2View.setZoom(2);
+			return new ImageLayer({
+				title: layerDefinition.name,
+				baseLayer: true,
+				visible: isDefaultLayer,
+				source: _this._createBackgroundMapSource(layerDefinition)
+			});
+		} else if ( layerDefinition ) {
+>>>>>>> Fix the layerswitcher in ol5 using ol-ext layerswitcher
 			var ol5layer = new Tile({
 				title: layerDefinition.name,
-				type: 'base',
+				baseLayer: true,
 				visible: isDefaultLayer,
 				source: _this._createBackgroundMapSource(layerDefinition)
 			});
@@ -1320,6 +1315,28 @@ class N2MapCanvas  {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
 		} else if ( sourceTypeInternal == VENDOR.IMAGE) {
+<<<<<<< 8b142c765eb81dc14b0413fba8ebf5836776d873
+=======
+			var url, height, width, extent, projection;
+			var options = sourceOptionsInternal;
+			if( options ){
+				for(var optionKey in options){
+					var optionValue = options[optionKey];
+					if ( optionKey === 'attachmentName' ){
+
+					} else if( optionKey === 'url' ){
+						url = optionValue;
+					} else if( optionKey === 'height' ){
+						height = 1 * optionValue;
+					} else if( optionKey === 'width' ){
+						width = 1 * optionValue;
+					} else if( optionKey === 'extent' ){
+						extent = optionValue;
+					} else {
+						//layerOptions[optionKey] = optionValue;
+					};
+				};
+>>>>>>> Fix the layerswitcher in ol5 using ol-ext layerswitcher
 
 		} else if ( sourceTypeInternal == VENDOR.COUCHDB) {
 
@@ -1429,21 +1446,7 @@ class N2MapCanvas  {
 					this._centerMapOnFeature(feature);
 					addGeometryMode = false;
 				}						
-//				} else {
-//					// must center map on feature, if feature contains
-//					// a geometry
-//					if( m.doc 
-//					 && m.doc.nunaliit_geom 
-//					 && m.doc.nunaliit_geom.bbox 
-//					 && m.doc.nunaliit_geom.bbox.length >= 4 ) {
-//						var bbox = m.doc.nunaliit_geom.bbox;
-//						var x = (bbox[0] + bbox[2]) / 2;
-//						var y = (bbox[1] + bbox[3]) / 2;
-//						this._centerMapOnXY(x, y, 'EPSG:4326');
-//
-//						addGeometryMode = false;
-//					};
-//				};
+
 			};
 			
 			// Remove feature from map
@@ -1688,9 +1691,6 @@ class N2MapCanvas  {
 	}
 
 };
-
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
 
 
 //--------------------------------------------------------------------------
