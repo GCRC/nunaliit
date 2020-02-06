@@ -612,7 +612,7 @@ Polar Stereographic Projection Selector
 }
 
 /* active state */
-.input_group_for_customMDC input:focus ~ label, input:valid ~ label 		{
+.input_group_for_customMDC input:focus ~ label,.input_group_for_customMDC input:valid ~ label 		{
   top:-20px;
   font-size:14px;
   color:#5264AE;
