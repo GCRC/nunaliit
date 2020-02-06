@@ -769,10 +769,12 @@ class N2MapCanvas  {
 		 */
 		var overlayGroup = new LayerGroup({
 			title: 'Overlays',
+		    openInLayerSwitcher: true,
 			layers: this.overlayLayers
 		});
 		var bgGroup = new LayerGroup({
 			title: 'Background',
+		    openInLayerSwitcher: true,
 			layers: this.mapLayers
 		});
 
