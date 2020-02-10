@@ -36,6 +36,11 @@ public class IndexServlet extends HttpServlet
     private static final Logger logger = LoggerFactory.getLogger(IndexServlet.class);
 
     /**
+     * An artificial limit to the query string length to prevent overflow. For module= requests, should not be very long.
+     */
+    private static final int MAX_QUERY_STRING_LENGTH = 1024;
+
+    /**
      * Regex to parse module document Id from query string.
      */
     private static final Pattern URL_PATTERN = Pattern.compile("module=([^#]+)#?.*");
@@ -211,7 +216,8 @@ public class IndexServlet extends HttpServlet
     }
 
     /**
-     * Looks for the module document Id in the given query string.
+     * Looks for the module document Id in the given query string. No DB query is made with this data, so we are not
+     * at risk of an injection attack.
      * <p>
      * Examples:<br/>
      * <code>
@@ -227,7 +233,7 @@ public class IndexServlet extends HttpServlet
     protected String findModuleDocId(String queryString) {
         String docId = null;
 
-        if (StringUtils.isNotBlank(queryString)) {
+        if (StringUtils.isNotBlank(queryString) && queryString.length() <= MAX_QUERY_STRING_LENGTH) {
             matcher.reset(queryString);
             if (matcher.matches()) {
                 docId = matcher.group(1);

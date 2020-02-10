@@ -1,11 +1,11 @@
 {
   "nunaliit_schema": "atlas",
   "nunaliit_atlas": {
-    "title": "",
     "nunaliit_navigation": {
       "title": null,
       "items": []
     },
+    "default_module": "",
     "nunaliit_metadata": {
       "license": "",
       "creator": {

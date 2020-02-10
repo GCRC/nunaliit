@@ -18,7 +18,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Adds "Sitemap:" to the robots.txt from the database. Crawlers assume full access to site unless "Disallow" specified
- * in robots.txt. Currently implementation assumes full access.
+ * in robots.txt.
  * See https://developers.google.com/search/reference/robots_txt for robots.txt specs.
  */
 public class RobotsServlet extends HttpServlet

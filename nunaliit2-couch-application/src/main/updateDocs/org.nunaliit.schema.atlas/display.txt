@@ -2,7 +2,7 @@
 {{#nunaliit_atlas}}
 	<div>
 		<div class="label n2s_localize">Atlas</div>
-		<div class="value">{{#:localize}}title{{/:localize}}</div>
+		<div class="value">{{#nunaliit_navigation}}{{#:localize}}title{{/:localize}}{{/nunaliit_navigation}}</div>
 		<div class="end"></div>
 	</div>
 {{/nunaliit_atlas}}

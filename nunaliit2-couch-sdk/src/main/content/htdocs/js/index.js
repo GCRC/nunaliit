@@ -9,9 +9,7 @@ function main_init(config) {
 			moduleName = config.directory.customService.getOption('defaultModuleIdentifier');
 		};
 	};
-	if( !moduleName ){
-		moduleName = 'module.demo';
-	};
+
 	$n2.log('module: '+moduleName);
 
 	// Get module bounding box

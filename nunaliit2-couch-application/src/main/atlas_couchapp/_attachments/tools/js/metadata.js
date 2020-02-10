@@ -307,8 +307,6 @@
 
     function moduleSelectChanged($select) {
         var moduleDocId = $select.val();
-        console.log("SELECTED: " + moduleDocId);
-        console.log("nunaliit-document: " + $('option:checked', $select).attr('nunaliit-document'));
 
         if (moduleDocId !== undefined && moduleDocId !== '') {
             dispatcher.send(DH, {

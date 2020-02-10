@@ -1,6 +1,5 @@
 {
   "nunaliit_type": "atlas",
-  "title": "Atlas Title",
   "nunaliit_navigation": {
     "title": {
       "nunaliit_type": "localized",
@@ -11,8 +10,8 @@
       {
         "title": {
           "nunaliit_type": "localized",
-          "en": "Default Module",
-          "fr": "Module de Base"
+          "en": "Demo Module",
+          "fr": "Module de Demo"
         },
         "module": "module.demo",
         "items": [
@@ -31,6 +30,7 @@
       }
     ]
   },
+  "default_module": "module.demo",
   "nunaliit_metadata": {
     "license": "",
     "creator": {

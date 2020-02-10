@@ -24,17 +24,17 @@ public class SitemapBuilderAtlasChangeListenerTest extends TestCase
         CouchDb couchDb = mock(CouchDb.class);
         Mockito.when(couchDb.getChangeMonitor()).thenReturn(mock(CouchDbChangeMonitorImpl.class));
         Mockito.when(couchDb.getDocument("level_1")).thenReturn(new JSONObject(
-                IOUtils.toString(getClass().getResourceAsStream("/navigation/levels_1.json"), StandardCharsets.UTF_8)));
+                IOUtils.toString(getClass().getResourceAsStream("/atlas/levels_1.json"), StandardCharsets.UTF_8)));
         Mockito.when(couchDb.documentExists("level_1")).thenReturn(true);
         Mockito.when(couchDb.getDocument("level_2")).thenReturn(new JSONObject(
-                IOUtils.toString(getClass().getResourceAsStream("/navigation/levels_2.json"), StandardCharsets.UTF_8)));
+                IOUtils.toString(getClass().getResourceAsStream("/atlas/levels_2.json"), StandardCharsets.UTF_8)));
         Mockito.when(couchDb.documentExists("level_2")).thenReturn(true);
         Mockito.when(couchDb.getDocument("level_3")).thenReturn(new JSONObject(
-                IOUtils.toString(getClass().getResourceAsStream("/navigation/levels_3.json"), StandardCharsets.UTF_8)));
+                IOUtils.toString(getClass().getResourceAsStream("/atlas/levels_3.json"), StandardCharsets.UTF_8)));
         Mockito.when(couchDb.documentExists("level_3")).thenReturn(true);
-        Mockito.when(couchDb.getDocument(CouchNunaliitConstants.ATLAS_DOC_ID)).thenReturn(new JSONObject(
-                IOUtils.toString(getClass().getResourceAsStream("/navigation/atlas.json"), StandardCharsets.UTF_8)));
-        Mockito.when(couchDb.documentExists("atlas")).thenReturn(true);
+        Mockito.when(couchDb.getDocument("with_metadata")).thenReturn(new JSONObject(
+                IOUtils.toString(getClass().getResourceAsStream("/atlas/with_metadata.json"), StandardCharsets.UTF_8)));
+        Mockito.when(couchDb.documentExists("with_metadata")).thenReturn(true);
 
         sitemapBuilder = new SitemapBuilderAtlasChangeListener(couchDb, CouchNunaliitConstants.ATLAS_DOC_ID);
     }
@@ -87,8 +87,8 @@ public class SitemapBuilderAtlasChangeListenerTest extends TestCase
         assertTrue(relativeUrls.contains("./index.html?module=module.test5_anothermodule"));
     }
 
-    public void testAtlasDocNavigation() {
-        sitemapBuilder.updateSitemap("atlas");
+    public void testWithMetadataNavigation() {
+        sitemapBuilder.updateSitemap("with_metadata");
         List<String> relativeUrls = sitemapBuilder.getRelativeUrls();
 
         assertNotNull(relativeUrls);
