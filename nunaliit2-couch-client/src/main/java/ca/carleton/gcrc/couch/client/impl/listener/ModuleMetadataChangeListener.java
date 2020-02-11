@@ -47,16 +47,18 @@ public final class ModuleMetadataChangeListener extends AbstractCouchDbChangeLis
     public JSONObject findMetadata(String moduleId) {
         JSONObject metadata;
 
-        // Need to add it
-        if (!moduleIds.contains(moduleId)) {
-            logger.trace("Module Id not in list to watch, adding and fetching metadata");
-            addModuleId(moduleId);
-            metadata = updateMetadata(moduleId);
-        }
-        else {
-            logger.trace("Module Id in list, fetching metadata from memory");
-            // Get latest in memory
-            metadata = moduleMetadata.get(moduleId);
+        synchronized (lockObj) {
+            // Need to add it
+            if (!moduleIds.contains(moduleId)) {
+                logger.trace("Module Id not in list to watch, adding and fetching metadata");
+                addModuleId(moduleId);
+                metadata = updateMetadata(moduleId);
+            }
+            else {
+                logger.trace("Module Id in list, fetching metadata from memory");
+                // Get latest in memory
+                metadata = moduleMetadata.get(moduleId);
+            }
         }
 
         return metadata;
@@ -131,7 +133,9 @@ public final class ModuleMetadataChangeListener extends AbstractCouchDbChangeLis
             List<JSONObject> rows = results.getRows();
             for (JSONObject row : rows) {
                 String docId = row.getString("id");
-                addModuleId(docId);
+                synchronized (lockObj) {
+                    addModuleId(docId);
+                }
             }
         }
         catch (Exception e) {
@@ -145,10 +149,8 @@ public final class ModuleMetadataChangeListener extends AbstractCouchDbChangeLis
      * @param moduleId The module document Id.
      */
     private void addModuleId(String moduleId) {
-        synchronized (lockObj) {
-            moduleIds.add(moduleId);
-            moduleMetadata.put(moduleId, null);
-        }
+        moduleIds.add(moduleId);
+        moduleMetadata.put(moduleId, null);
     }
 
     /**

@@ -51,9 +51,9 @@
     var $metadataAppDiv = null;
 
     function getDocumentDiv() {
-        var $docDiv = $('#metadataAppDocument');
+        var $docDiv = $('#metadata_app_document');
         if ($docDiv.length < 1) {
-            $docDiv = $('<div id="#metadataAppDocument"></div>');
+            $docDiv = $('<div id="#metadata_app_document"></div>');
             $metadataAppDiv.append($docDiv);
         }
         return $docDiv;
@@ -201,21 +201,21 @@
 
             // References from other objects
             $div.append($('<h3>Documents referencing this module</h3>'));
-            $div.append($('<div id="referencesToThis"><div class="olkit_wait"></div></div>'));
+            $div.append($('<div id="references_to_this"><div class="olkit_wait"></div></div>'));
             atlasDesign.queryView({
                 viewName: 'link-references',
                 startkey: doc._id,
                 endkey: doc._id,
                 onSuccess: function (rows) {
                     var $table = $('<table></table>');
-                    $('#referencesToThis').empty().append($table);
+                    $('#references_to_this').empty().append($table);
                     for (var i = 0, e = rows.length; i < e; ++i) {
                         var docId = rows[i].id;
                         var $tr = $('<tr></tr>');
 
                         $table.append($tr);
 
-                        var $td = $('<td class="docId"></td>');
+                        var $td = $('<td class="doc_id></td>');
                         $tr.append($td);
 
                         var $a = $('<a href="#' + docId + '" id="' + docId + '">' + docId + '</a>');
@@ -269,14 +269,14 @@
                 }
             }
 
-            var $errors = $('<div id="editErrors"></div>');
+            var $errors = $('<div id="edit_errors"></div>');
             $div.append($errors);
         }
     } // initiateEdit
 
     function refreshModuleList() {
         // startRequestWait();
-        var $moduleSelect = $("#moduleSelect");
+        var $moduleSelect = $("#module_select");
         $moduleSelect.empty();
         $moduleSelect.change(function () {
             var $sel = $(this);
@@ -319,23 +319,23 @@
     } // moduleSelectChanged
 
     function display() {
-        $('#metadataEditorTitle').text(_loc('Metadata Editor'));
+        $('#metadata_editor_title').text(_loc('Metadata Editor'));
 
-        var $selectDiv = $('<div id="metadataAppSelection" class="metadataForm"></div>')
-            .append($('<input type="radio" name="metadataType" value="atlas" id="atlasRadio" class="metadataForm"/>'))
-            .append($('<label for="atlasRadio" class="metadataForm">' + _loc('Atlas') + '</label>'))
-            .append($('<input type="radio" name="metadataType" value="module" id="moduleRadio" class="metadataForm"/>'))
-            .append($('<label for="moduleRadio" class="metadataForm">' + _loc('Module') + '</label>'))
-            .append($('<select id="moduleSelect" class="metadataForm"/>'));
+        var $selectDiv = $('<div id="metadata_app_selection" class="metadata_form"></div>')
+            .append($('<input type="radio" name="metadata_type" value="atlas" id="atlas_radio" class="metadata_form"/>'))
+            .append($('<label for="atlas_radio" class="metadata_form">' + _loc('Atlas') + '</label>'))
+            .append($('<input type="radio" name="metadata_type" value="module" id="module_radio" class="metadata_form"/>'))
+            .append($('<label for="module_radio" class="metadata_form">' + _loc('Module') + '</label>'))
+            .append($('<select id="module_select" class="metadata_form"/>'));
 
         $metadataAppDiv
             .empty()
             .append($selectDiv)
-            .append($('<div id="metadataAppDocument" class="metadataForm"></div>'));
+            .append($('<div id="metadata_app_document" class="metadata_form"></div>'));
 
-        var $atlasRadio = $('#atlasRadio');
-        var $moduleRadio = $('#moduleRadio');
-        var $moduleSelect = $('#moduleSelect');
+        var $atlasRadio = $('#atlas_radio');
+        var $moduleRadio = $('#module_radio');
+        var $moduleSelect = $('#module_select');
         // Only enable module drop down when module radio is selected.
         $moduleRadio.click(function () {
             $moduleSelect.attr("disabled", false);
@@ -343,7 +343,7 @@
             moduleSelectChanged($moduleSelect);
         });
         $atlasRadio.click(function () {
-            $('#moduleSelect').attr("disabled", true);
+            $('#module_select').attr("disabled", true);
             getDocumentDiv().empty();
             showAtlasMetadata();
         });

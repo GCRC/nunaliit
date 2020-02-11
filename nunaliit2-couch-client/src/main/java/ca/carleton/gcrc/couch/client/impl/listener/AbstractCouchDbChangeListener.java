@@ -89,23 +89,25 @@ public abstract class AbstractCouchDbChangeListener extends Thread implements Co
      */
     @Override
     public void change(Type type, String docId, String rev, JSONObject rawChange, JSONObject doc) {
-        try {
-            Pair<String, Type> currentChangePair = Pair.of(docId, type);
+        synchronized (this) {
+            try {
+                Pair<String, Type> currentChangePair = Pair.of(docId, type);
 
-            // Watch out for identical events in quick sequence.
-            if (lastChangePair != null &&
-                    !lastChangePair.equals(currentChangePair) || identicalChangeThresholdExceeded()) {
-                lastChangePair = currentChangePair;
-                lastChangeTime = System.currentTimeMillis();
-                changedDocIdQueue.put(currentChangePair);
+                // Watch out for identical events in quick sequence.
+                if (lastChangePair != null &&
+                        !lastChangePair.equals(currentChangePair) || identicalChangeThresholdExceeded()) {
+                    lastChangePair = currentChangePair;
+                    lastChangeTime = System.currentTimeMillis();
+                    changedDocIdQueue.put(currentChangePair);
+                }
+                else {
+                    logger.trace("Skipping change {}:{} because identical changes within {} ms", docId, type, IDENTICAL_CHANGE_THRESHOLD_MILLIS);
+                }
             }
-            else {
-                logger.trace("Skipping change {}:{} because identical changes within {} ms", docId, type, IDENTICAL_CHANGE_THRESHOLD_MILLIS);
+            catch (InterruptedException e) {
+                logger.warn("Couldn't add document Id {} to changed document queue, due to thread interrupted", docId);
+                Thread.currentThread().interrupt();
             }
-        }
-        catch (InterruptedException e) {
-            logger.warn("Couldn't add document Id {} to changed document queue, due to thread interrupted", docId);
-            Thread.currentThread().interrupt();
         }
     }
 
