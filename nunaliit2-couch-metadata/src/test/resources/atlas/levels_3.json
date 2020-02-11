@@ -34,6 +34,13 @@
           "items": [
             {
               "module": "module.test5_map"
+            },
+            {
+              "title": {
+                "nunaliit_type": "localized",
+                "en": "External Module"
+              },
+              "href": "https://www.mywebsite.com/index.html?module.test5_map"
             }
           ]
         },
@@ -72,6 +79,9 @@
                     },
                     {
                       "module": "module.test5_anothermodule"
+                    },
+                    {
+                      "href": "http://www.example.com/index.html?module=externalmodule"
                     }
                   ]
                 }

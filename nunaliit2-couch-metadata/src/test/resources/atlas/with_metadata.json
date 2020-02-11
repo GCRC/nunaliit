@@ -55,6 +55,13 @@
             "en": "Tools",
             "fr": "Outils"
           }
+        },
+        {
+          "href": "https://www.myatlas.com",
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "External Atlas Link"
+          }
         }
       ]
     },

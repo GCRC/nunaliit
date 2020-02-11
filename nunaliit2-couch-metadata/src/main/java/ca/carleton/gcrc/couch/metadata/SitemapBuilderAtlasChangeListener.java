@@ -113,7 +113,7 @@ public final class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChan
 
         if (navigation != null) {
             logger.debug("Regenerating sitemap from atlas document '{}' navigation", docId);
-            processNavigationDoc(navigation);
+            processNavigation(navigation);
         }
         else {
             logger.warn("Cannot get navigation info from document '{}'", docId);
@@ -126,7 +126,7 @@ public final class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChan
      *
      * @param navigation The navigation document (or subsection of atlas document) in the database.
      */
-    private void processNavigationDoc(JSONObject navigation) {
+    private void processNavigation(JSONObject navigation) {
         // A map containing two lists of property values found in the navigation document {"href" -> [..], "module" -> [..]}.
         Map<String, Set<String>> links = new HashMap<>(2);
         Set<String> hrefSet = new HashSet<>();
@@ -156,6 +156,8 @@ public final class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChan
 
     /**
      * Go throw the items array and pull out unique module and href properties. If an item has an items array, recurse.
+     * HREF's that start with "http" are omitted, since we use relative URLs in our atlas navigation. The sitemap
+     * should not contain external links.
      *
      * @param items The array of links, possibly containing items arrays.
      * @param links A hashmap to add href and module properties to. Keys are "href" and "module". Passed recursively.
@@ -169,7 +171,8 @@ public final class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChan
                     if (next.has(MODULE) && StringUtils.isNotBlank(next.optString(MODULE))) {
                         links.get(MODULE).add(next.getString(MODULE));
                     }
-                    else if (next.has(HREF) && StringUtils.isNotBlank(next.optString(HREF))) {
+                    else if (next.has(HREF) && StringUtils.isNotBlank(next.optString(HREF))
+                            && !next.optString(HREF).startsWith("http")) {
                         links.get(HREF).add(next.getString(HREF));
                     }
                     // Recurse if this item has sub-items.

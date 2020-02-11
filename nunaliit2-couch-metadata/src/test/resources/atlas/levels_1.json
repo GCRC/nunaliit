@@ -15,7 +15,6 @@
   "nunaliit_schema": "atlas",
   "nunaliit_atlas": {
     "nunaliit_type": "atlas",
-    "title": "Atlas Title",
     "nunaliit_navigation": {
       "nunaliit_type": "navigation",
       "title": {
@@ -39,6 +38,14 @@
             "fr": "Canvas Module"
           },
           "module": "module.test2_canvas"
+        },
+        {
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "External Link",
+            "fr": "External Link"
+          },
+          "href": "http://www.somerandomlink.com"
         },
         {
           "title": {
