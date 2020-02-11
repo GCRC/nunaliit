@@ -1,6 +1,24 @@
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit_demo',args); };
+var DH = 'index.js';
+var atlasDoc;
 
-function main_init(config) {
+function loadAtlasDocument(config) {
+	config.directory.dispatchService.register(DH, 'documentContent', function (m) {
+		// Wait for the atlas document to load before continuing initialization.
+		if (m.docId === 'atlas' && !atlasDoc) {
+			atlasDoc = m.doc;
+			main_init(config, atlasDoc);
+		}
+	});
+
+	// Fetch the atlas document first, then the callback will run init.
+	config.directory.dispatchService.send(DH, {
+		type: 'requestDocument',
+		docId: 'atlas'
+	});
+}
+
+function main_init(config, atlasDoc) {
 	
 	// Get module name from URL parameters
 	var moduleName = $n2.url.getParamValue('module',null);
@@ -9,6 +27,12 @@ function main_init(config) {
 			moduleName = config.directory.customService.getOption('defaultModuleIdentifier');
 		};
 	};
+
+	if (!moduleName) {
+		if (atlasDoc && atlasDoc.nunaliit_atlas && atlasDoc.nunaliit_atlas.default_module) {
+			moduleName = atlasDoc.nunaliit_atlas.default_module;
+		}
+	}
 
 	$n2.log('module: '+moduleName);
 
@@ -88,6 +112,6 @@ function main_init(config) {
 
 jQuery().ready(function() {
 	nunaliitConfigure({
-		configuredFunction: main_init
+		configuredFunction: loadAtlasDocument
 	});
 });

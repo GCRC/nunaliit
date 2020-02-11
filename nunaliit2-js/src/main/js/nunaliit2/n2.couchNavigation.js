@@ -412,7 +412,7 @@ var NavigationService = $n2.Class({
 			var $elem = m.elem;
 			var doc = m.doc;
 			this._fixElements($elem, doc);
-		} else if ('documentContent' === m.type && m.docId === 'atlas') {
+		} else if (m.type === 'documentContent' && m.docId === 'atlas') {
 			var atlasDoc = m.doc;
 			this.setCurrentNavigation({
 				doc: atlasDoc.nunaliit_atlas,

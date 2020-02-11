@@ -320,8 +320,6 @@ var ModuleDisplay = $n2.Class({
 	
 	module: null,
 
-	defaultModuleId: null,
-
 	mapControl: null,
 	
 	displayControl: null,
@@ -390,11 +388,16 @@ var ModuleDisplay = $n2.Class({
 
 		var _this = this;
 
+		if( !opts.moduleName  && !opts.moduleDoc ) {
+			opts.onError('"moduleName" or "moduleDoc" must be specified');
+			return;
+		};
+
 		this.config = opts.config;
-		if (!this.config) {
+		if( !this.config ) {
 			opts.onError('"config" must be specified');
 			return;
-		}
+		};
 
 		this.contentName = opts.contentName;
 		this.mapName = opts.mapName;
@@ -410,26 +413,26 @@ var ModuleDisplay = $n2.Class({
 		this.helpButtonName = opts.helpButtonName;
 		this.styleMapFn = opts.styleMapFn;
 
-		if (this.config && this.config.directory) {
+		if( this.config && this.config.directory ){
 			this.dispatchService = this.config.directory.dispatchService;
 			this.navigationService = this.config.directory.navigationService;
-		}
+		};
 
 		// Login panels
 		this.loginPanelNames = [];
-		if (opts.loginPanels) {
-			$(opts.loginPanels).each(function () {
+		if( opts.loginPanels ){
+			$(opts.loginPanels).each(function(){
 				var $loginPanel = $(this);
 				var id = $loginPanel.attr('id');
-				if (!id) {
+				if( !id ){
 					id = $n2.getUniqueId();
-					$loginPanel.attr('id', id);
-				}
+					$loginPanel.attr('id',id);
+				};
 				_this.loginPanelNames.push(id);
 			});
-		} else if (opts.loginPanelName) {
+		} else if( opts.loginPanelName ) {
 			this.loginPanelNames.push(opts.loginPanelName);
-		}
+		};
 
 		// Quick access
 		var config = this.config;
@@ -440,103 +443,81 @@ var ModuleDisplay = $n2.Class({
 
 		// dispatcher
 		var d = this.dispatchService;
-		if (d) {
-			d.register(DH, 'unselected', function (m) {
+		if( d ){
+			d.register(DH,'unselected',function(m){
 				_this._initSidePanel();
 			});
-			d.register(DH, 'moduleGetCurrent', function (m) {
+			d.register(DH,'moduleGetCurrent',function(m){
 				m.moduleId = _this.getCurrentModuleId();
 
-				if (_this.module) {
+				if( _this.module ){
 					m.module = _this.module;
 					m.doc = _this.module.moduleDoc;
 					m.moduleDisplay = _this;
-				}
+				};
 			});
-			d.register(DH, 'documentContent', function (m) {
-				// Only set the default module Id if it hasn't been done.
-				if (m.docId === 'atlas' && !_this.defaultModuleId) {
-					if (m.doc.nunaliit_atlas && m.doc.nunaliit_atlas.default_module) {
-						_this.defaultModuleId = m.doc.nunaliit_atlas.default_module;
-					}
-					loadModule();
-				}
-			});
-		}
+		};
 
 		// Set up login widget
-		for (var i = 0, e = this.loginPanelNames.length; i < e; ++i) {
+		for(var i=0,e=this.loginPanelNames.length;i<e;++i){
 			var loginPanelName = this.loginPanelNames[i];
 			config.directory.authService.createAuthWidget({
 				elemId: loginPanelName
 			});
-		}
+		};
 
-		// Fetch the default_module from the atlas document, then load the module.
-		this.dispatchService.send(DH, {
-			type: 'requestDocument',
-			docId: 'atlas'
-		});
-
-		function loadModule() {
-			/*
-			 * Get module document, if required.
-			 *
-			 * Allow for the module document to be passed in along with the moduleName.
-			 * This allows for run-time insertion of layer options (e.g., styling functions).
-			 */
-			if (!$n2.isDefined(opts.moduleDoc)) {
-				// If no module doc or name configured, fetch default from atlas.
-				if (!opts.moduleName) {
-					opts.moduleName = _this.defaultModuleId;
+		/*
+		 * Get module document, if required.
+		 *
+		 * Allow for the module document to be passed in along with the moduleName.
+		 * This allows for run-time insertion of layer options (e.g., styling functions).
+		 */
+		if( ! $n2.isDefined(opts.moduleDoc) ) {
+			this.moduleId = opts.moduleName;
+			atlasDb.getDocument({
+				docId: opts.moduleName
+				,onSuccess: moduleDocumentLoaded
+				,onError: function(err){
+					opts.onError('Unable to load module: '+err);
 				}
+			});
+		} else {
+			moduleDocumentLoaded(opts.moduleDoc);
+		};
 
-				_this.moduleId = opts.moduleName;
-				atlasDb.getDocument({
-					docId: opts.moduleName
-					, onSuccess: moduleDocumentLoaded
-					, onError: function (err) {
-						opts.onError('Unable to load module: ' + err);
-					}
-				});
-			}
-			else {
-				moduleDocumentLoaded(opts.moduleDoc);
-			}
-			/*
-			 * Get navigation document, if required.
-			 */
-			if (_this.navigationDocId) {
+		/*
+		 * Get navigation document, if required.
+		 */
+		if( this.navigationDocId ){
 
-				var $title = $('#' + _this.titleName);
-				if ($title.length > 0) {
-					$title.empty();
+			var $title = $('#'+this.titleName);
+			if( $title.length > 0 ){
+				$title.empty();
 
-					if (_this.navigationService) {
-						_this.navigationService.printTitle({
-							elem: $title
-						});
-					}
-				}
-
-				var $menu = $('#' + _this.navigationName);
-				if ($menu.length > 0) {
-					$menu.empty();
-
-					if (_this.navigationService) {
-						_this.navigationService.printMenu({
-							elem: $menu
-						});
-					}
-				}
-
-				if (_this.navigationService) {
-					_this.navigationService.setCurrentNavigation({
-						docId: _this.navigationDocId
+				if( this.navigationService ){
+					this.navigationService.printTitle({
+						elem: $title
 					});
-				}
-			}
-		}
+				};
+			};
+
+			var $menu = $('#'+this.navigationName);
+			if( $menu.length > 0 ){
+				$menu.empty();
+
+				if( this.navigationService ){
+					this.navigationService.printMenu({
+						elem: $menu
+					});
+				};
+			};
+
+			if( this.navigationService ){
+				this.navigationService.setCurrentNavigation({
+					docId: this.navigationDocId
+				});
+			};
+		};
 
 		function moduleDocumentLoaded(moduleDoc){
 			if( !moduleDoc.nunaliit_module ) {
