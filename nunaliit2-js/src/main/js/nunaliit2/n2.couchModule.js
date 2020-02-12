@@ -319,7 +319,7 @@ var ModuleDisplay = $n2.Class({
 	moduleId: null,
 	
 	module: null,
-	
+
 	mapControl: null,
 	
 	displayControl: null,
@@ -385,20 +385,20 @@ var ModuleDisplay = $n2.Class({
 			,onSuccess: function(moduleDisplay){}
 			,onError: function(err){ $n2.reportErrorForced(errorMsg); }
 		},opts_);
-		
+
 		var _this = this;
-	
+
 		if( !opts.moduleName  && !opts.moduleDoc ) {
 			opts.onError('"moduleName" or "moduleDoc" must be specified');
 			return;
 		};
-		
+
 		this.config = opts.config;
 		if( !this.config ) {
 			opts.onError('"config" must be specified');
 			return;
 		};
-		
+
 		this.contentName = opts.contentName;
 		this.mapName = opts.mapName;
 		this.mapInteractionName = opts.mapInteractionName;
@@ -412,7 +412,7 @@ var ModuleDisplay = $n2.Class({
 		this.languageSwitcherName = opts.languageSwitcherName;
 		this.helpButtonName = opts.helpButtonName;
 		this.styleMapFn = opts.styleMapFn;
-		
+
 		if( this.config && this.config.directory ){
 			this.dispatchService = this.config.directory.dispatchService;
 			this.navigationService = this.config.directory.navigationService;
@@ -433,14 +433,14 @@ var ModuleDisplay = $n2.Class({
 		} else if( opts.loginPanelName ) {
 			this.loginPanelNames.push(opts.loginPanelName);
 		};
-		
+
 		// Quick access
 		var config = this.config;
 		var atlasDb = config.atlasDb;
 		var atlasDesign = config.atlasDesign;
 		var documentSource = config.documentSource;
 		var customService = this._getCustomService();
-		
+
 		// dispatcher
 		var d = this.dispatchService;
 		if( d ){
@@ -449,7 +449,7 @@ var ModuleDisplay = $n2.Class({
 			});
 			d.register(DH,'moduleGetCurrent',function(m){
 				m.moduleId = _this.getCurrentModuleId();
-				
+
 				if( _this.module ){
 					m.module = _this.module;
 					m.doc = _this.module.moduleDoc;
@@ -457,7 +457,7 @@ var ModuleDisplay = $n2.Class({
 				};
 			});
 		};
-		
+
 		// Set up login widget
 		for(var i=0,e=this.loginPanelNames.length;i<e;++i){
 			var loginPanelName = this.loginPanelNames[i];
@@ -465,10 +465,10 @@ var ModuleDisplay = $n2.Class({
 				elemId: loginPanelName
 			});
 		};
-		
+
 		/*
 		 * Get module document, if required.
-		 * 
+		 *
 		 * Allow for the module document to be passed in along with the moduleName.
 		 * This allows for run-time insertion of layer options (e.g., styling functions).
 		 */
@@ -477,19 +477,19 @@ var ModuleDisplay = $n2.Class({
 			atlasDb.getDocument({
 				docId: opts.moduleName
 				,onSuccess: moduleDocumentLoaded
-				,onError: function(err){ 
-					opts.onError('Unable to load module: '+err); 
+				,onError: function(err){
+					opts.onError('Unable to load module: '+err);
 				}
 			});
 		} else {
 			moduleDocumentLoaded(opts.moduleDoc);
 		};
-		
+
 		/*
 		 * Get navigation document, if required.
 		 */
 		if( this.navigationDocId ){
-			
+
 			var $title = $('#'+this.titleName);
 			if( $title.length > 0 ){
 				$title.empty();
@@ -500,7 +500,7 @@ var ModuleDisplay = $n2.Class({
 					});
 				};
 			};
-			
+
 			var $menu = $('#'+this.navigationName);
 			if( $menu.length > 0 ){
 				$menu.empty();
@@ -511,14 +511,14 @@ var ModuleDisplay = $n2.Class({
 					});
 				};
 			};
-			
+
 			if( this.navigationService ){
 				this.navigationService.setCurrentNavigation({
 					docId: this.navigationDocId
 				});
 			};
 		};
-		
+
 		function moduleDocumentLoaded(moduleDoc){
 			if( !moduleDoc.nunaliit_module ) {
 				opts.onError('Loaded document does not include module information');

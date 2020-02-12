@@ -7,6 +7,9 @@ import java.util.EnumSet;
 
 import javax.servlet.DispatcherType;
 
+import ca.carleton.gcrc.couch.metadata.IndexServlet;
+import ca.carleton.gcrc.couch.metadata.RobotsServlet;
+import ca.carleton.gcrc.couch.metadata.SitemapServlet;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.rolling.RollingFileAppender;
@@ -259,9 +262,23 @@ public class CommandRun implements Command {
         	context.addServlet(servletHolder,"/*");
         }
 
+        // index.html servlet
+        ServletHolder indexServlet = new ServletHolder(new IndexServlet());
+        indexServlet.setInitOrder(2);
+        context.addServlet(indexServlet, "/index.html");
+
+        // Servlet for serving sitemap.xml
+        ServletHolder sitemapServlet = new ServletHolder(new SitemapServlet());
+        sitemapServlet.setInitOrder(2);
+        context.addServlet(sitemapServlet, "/sitemap.xml");
+
+        // robots.txt servlet
+        ServletHolder robotsServlet = new ServletHolder(new RobotsServlet());
+        robotsServlet.setInitOrder(2);
+        context.addServlet(robotsServlet, "/robots.txt");
+
 		// Start server
 		server.start();
 		server.join();
 	}
-
 }
