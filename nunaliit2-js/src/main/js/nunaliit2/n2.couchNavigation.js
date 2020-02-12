@@ -198,6 +198,8 @@ var NavigationService = $n2.Class({
 	documentSource: null,
 	
 	currentNavigationDoc: null,
+
+	currentNavigationDocId: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -233,6 +235,7 @@ var NavigationService = $n2.Class({
 		},opts_);
 		
 		var _this = this;
+		this.currentNavigationDocId = opts.docId;
 		
 		if( opts.doc 
 		 && opts.doc.nunaliit_navigation ){
@@ -412,7 +415,7 @@ var NavigationService = $n2.Class({
 			var $elem = m.elem;
 			var doc = m.doc;
 			this._fixElements($elem, doc);
-		} else if (m.type === 'documentContent' && m.docId === 'atlas') {
+		} else if (m.type === 'documentContent' && m.docId === 'atlas' && this.currentNavigationDocId === 'atlas') {
 			var atlasDoc = m.doc;
 			this.setCurrentNavigation({
 				doc: atlasDoc.nunaliit_atlas,
