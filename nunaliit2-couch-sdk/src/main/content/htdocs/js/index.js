@@ -6,11 +6,13 @@ function loadAtlasDocument(config) {
 	config.directory.dispatchService.register(DH, 'documentContent', function (m) {
 		// Wait for the atlas document to load before continuing initialization.
 		if (m.docId === 'atlas' && !atlasDoc) {
+			$n2.log("Received atlas document");
 			atlasDoc = m.doc;
 			main_init(config, atlasDoc);
 		}
 	});
 
+	$n2.log("Requesting atlas document for default module. Waiting on response...");
 	// Fetch the atlas document first, then the callback will run init.
 	config.directory.dispatchService.send(DH, {
 		type: 'requestDocument',
