@@ -8,7 +8,7 @@
   <artifactId>nunaliit2-multimedia</artifactId>
   <name>nunaliit2-multimedia</name>
   <description>Library that converts multimedia files using command
-  line tools such as avconv and ImageMagick</description>
+  line tools such as ffmpeg and ImageMagick</description>
   <dependencies>
   	<dependency>
   		<groupId>org.slf4j</groupId>

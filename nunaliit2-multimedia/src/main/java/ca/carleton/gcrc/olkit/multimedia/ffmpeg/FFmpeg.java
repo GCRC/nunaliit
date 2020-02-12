@@ -48,10 +48,10 @@ public class FFmpeg {
 
 	static final protected Logger logger = LoggerFactory.getLogger(FFmpeg.class);
 	
-	static private Pattern patternVersionLine = Pattern.compile("(avconv|ffmpeg)( version)?\\s+([^,]*)",Pattern.CASE_INSENSITIVE);
+	static private Pattern patternVersionLine = Pattern.compile("(ffmpeg|avconv)( version)?\\s+([^,]*)",Pattern.CASE_INSENSITIVE);
 	static private Pattern patternVersion = Pattern.compile("(\\d+)\\.(\\d+).*");
 	
-	static public String ffmpegVersionCommand = "avconv -version";
+	static public String ffmpegVersionCommand = "ffmpeg -version";
 	
 	static private FFmpegInfo availability;
 	synchronized static public FFmpegInfo getInfo() {
