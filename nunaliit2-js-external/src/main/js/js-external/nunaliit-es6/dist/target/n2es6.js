@@ -4054,6 +4054,7 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 		 */
 		this.features_ = [];
 
+		
 		this.fidToFeatureMap = {};
 		
 		this.toggleClick = true;
@@ -4085,6 +4086,7 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 			 +"this custom source");
 		}
 		//-------------------------
+		this.interactionMode = "NAVIGATE"; 
 		this.sourceChangeKey_ = null;
 	    if (options.source){
 	    	this.source = options.source;
@@ -4093,8 +4095,8 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 	    }
 		//listen(this.source, EventType.CHANGE, this.refresh, this);
 	    Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this, 'sourceRefChanged', this.handleSourceRefChange, this);
-		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "hover",  this.onHover, this);
-		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "clicked",  this.onClicked, this);
+		this.userInputEventKeys = [];
+	    this.bindEventListener();
 
 
 		
@@ -4115,6 +4117,15 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 			this.dispatchService.register(DH,'findIsAvailable',f);
 		};
 	}
+	bindEventListener(){
+		this.userInputEventKeys = [
+			Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "hover",  this.onHover, this)
+			,Object(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["listen"])(this.interaction_,  "clicked",  this.onClicked, this)
+			]
+	}
+	unbindEventListener(){
+		this.userInputEventKeys.forEach(ol_events_js__WEBPACK_IMPORTED_MODULE_1__["unlistenByKey"]);
+	}
 	getSource(){
 		return this.source;
 	}
@@ -4130,7 +4141,9 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 		    }
 		    
 	}
-	
+	onInterationModeChanged( modeName ){
+		this.interactionMode = modeName;
+	}
 	setSource(source){
 		if (source){
 			this.source = source;
@@ -4451,30 +4464,58 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 		let clickedAgain = false;
 		clickedAgain = (selected && selected.fid 
 				&& this.clickedInfo.selectedId === selected.fid );
-		if (!this.toggleClick && clickedAgain){
-			return false;
-		}
-		this._endClicked();
 		
-		if (this.toggleClick && clickedAgain ){
-			this._dispatch({type: 'userUnselect',
-							docId: selected.fid
-							});
-			return false;
-		} else if ( selected 
-				&& selected.fid ) {
-			this.clickedInfo.features = [selected];
-
-			this.clickedInfo.fids = {};
-			this.clickedInfo.fids[selected.fid] = { clicked: true };
-			this.clickedInfo.selectedId = selected.fid;
+		if (this.interactionMode === 'NAVIGATE'){
+			if (!this.toggleClick && clickedAgain){
+				return false;
+			}
+			this._endClicked();
 			
-			selected.isClicked = true;
-			if( this.interaction_.onStartClick ) {
-				this.interaction_.onStartClick(selected);
-			};
+			if (this.toggleClick && clickedAgain ){
+				this._dispatch({type: 'userUnselect',
+								docId: selected.fid
+								});
+				return false;
+			} else if ( selected 
+					&& selected.fid ) {
+				
+				//clicked new feature
+				this.clickedInfo.features = [selected];
+
+				this.clickedInfo.fids = {};
+				this.clickedInfo.fids[selected.fid] = { clicked: true };
+				this.clickedInfo.selectedId = selected.fid;
+				
+				selected.isClicked = true;
+
+			}
+			return true;
+		} else {
+			this._endClicked();
+			return true;
 		}
-		return true;
+//		} else {
+//			this._endClicked();
+//			
+//			if ( clickedAgain ){
+//				//this._dispatch({type: 'userUnselect',
+////								docId: selected.fid
+////								});
+//			} else if ( selected 
+//					&& selected.fid ) {
+//				
+//				//clicked new feature
+//				this.clickedInfo.features = [selected];
+//
+//				this.clickedInfo.fids = {};
+//				this.clickedInfo.fids[selected.fid] = { clicked: true };
+//				this.clickedInfo.selectedId = selected.fid;
+//				
+//				selected.isClicked = true;
+//			}
+//			return true;
+//		}
+		
 	}
 	//clear up for click
 	_endClicked() {
@@ -4810,10 +4851,10 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 				this._startFocus(m.docIds);
 			};
 			
-
+			this.refresh();
 		} else if( 'focusOff' === type ) {
 			this._endFocus();
-			
+			this.refresh();
 		} else if( 'focusOnSupplement' === type ) {
 			var fid = m.docId;
 			
@@ -4834,7 +4875,7 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 					,intent: m.intent
 				});
 			};
-
+			this.refresh();
 		} else if( 'selected' === type ) {
 			if( m.docId ) {
 				let fidmap = {};
@@ -4851,6 +4892,7 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 				this._selectedFeatures(features, m.docIds);
 			};
 
+			this.refresh();
 		} else if( 'selectedSupplement' === type ) {
 			let fid = m.docId;
 			if( fid ) {
@@ -4864,10 +4906,10 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 				});
 			};
 
-			
+			this.refresh();
 		} else if( 'unselected' === type ) {
 			this._endClicked();
-
+			this.refresh();
 		} else if( 'find' === type ){
 
 			var doc = m.doc;
@@ -4913,20 +4955,12 @@ class N2SourceWithN2Intent extends ol_source_Vector_js__WEBPACK_IMPORTED_MODULE_
 //					olLayerToTurnOn.setVisibility(true);
 //				};
 //			};
-			
+			this.refresh();
 		
 		} else if ( 'findIsAvailable' === type ){
 			//TODO just a work around.Not for production.
 			m.isAvailable = true;
 		}
-		
-		this.updateN2Label();
-		
-		_this.dispatchService.send(DH, {
-			type: 'n2rerender'
-		})
-		
-		
 	}
 	
 	_dispatch(m){
@@ -4963,7 +4997,7 @@ __webpack_require__.r(__webpack_exports__);
 
 
 class N2StackingHistory {
-	
+
 	constructor(opt_options){
 		var opts = $n2.extend({
 			map: null,
@@ -4972,14 +5006,14 @@ class N2StackingHistory {
 		this._history = {};
 		this._map = opts.map;
 		this._precision = opts.precision;
-		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_0__["listen"])(this._map, 'postrender', this.clear , this);
+		Object(ol_events_js__WEBPACK_IMPORTED_MODULE_0__["listen"])(this._map, 'postcompose', this.clear , this);
 		//listen(this._map, '', , this);
 	}
 	getStackingHistory(ext){
 		var rst = undefined;
 		var hashkey = undefined;
 		if (Array.isArray(ext) && ext.length === 4){
-			hashkey = object_hash__WEBPACK_IMPORTED_MODULE_1___default()(ext)
+			hashkey = ext[0] + '' + ext[1];
 		}
 		if ( this._history[hashkey] ){
 			rst = this._history[hashkey] ;
@@ -4989,7 +5023,7 @@ class N2StackingHistory {
 	addStackingHistory(ext, extraInfo){
 		var hashkey = undefined;
 		if (Array.isArray(ext) && ext.length === 4){
-			hashkey = object_hash__WEBPACK_IMPORTED_MODULE_1___default()(ext);
+			hashkey =  ext[0] +''+ ext[1];
 		};
 		var pointInfo = {
 			extra: extraInfo
@@ -4999,7 +5033,7 @@ class N2StackingHistory {
 		}
 		this._history[hashkey].push(pointInfo);
 		return this._history[hashkey];
-		
+
 	}
 	_isCloseEnough(f1, f2){
 		var precision = this._precision;
@@ -5014,19 +5048,23 @@ class N2StackingHistory {
 			|| ext2[0] !== ext2[2]){
 			return false;
 		}
-		if ( Math.abs(ext1[0] - ext2[0]) <= precision 
+		if ( Math.abs(ext1[0] - ext2[0]) <= precision
 			&& Math.abs(ext1[1] - ext2[1]) <= precision ){
 			rst = true;
 		}
 		return rst;
 	}
 	clear(){
-		this._history = {};
+		for (var key in this._history) {
+    	delete this._history[key];
+		}
+
 	}
-	
+
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (N2StackingHistory);
+
 
 /***/ }),
 
@@ -5884,7 +5922,7 @@ exports = module.exports = __webpack_require__(/*! ../../css-loader/lib/css-base
 
 
 // module
-exports.push([module.i, ".ol-control i {\n\tcursor: default;\n}\n\n/* Bar style */\n.ol-control.ol-bar {\n  left: 50%;\n\tmin-height: 1em;\n\tmin-width: 1em;\n\tposition: absolute;\n\ttop: 0.5em;\n\ttransform: translate(-50%,0);\n\t-webkit-transform: translate(-50%,0);\n\twhite-space: nowrap;\n}\n\n/* Hide subbar when not inserted in a parent bar */\n.ol-control.ol-toggle .ol-option-bar {\n  display: none;\n}\n\n/* Default position for controls */\n.ol-control.ol-bar .ol-bar {\n  position: static;\n}\n.ol-control.ol-bar .ol-control {\n  position: relative;\n\ttop: auto;\n\tleft:auto;\n\tright:auto;\n\tbottom: auto;\n\tdisplay: inline-block;\n\tvertical-align: middle;\n\tbackground: none;\n\tpadding: 0;\n\tmargin: 0;\n\ttransform: none;\n\t-webkit-transform: none;\n}\n.ol-control.ol-bar .ol-bar {\n  position: static;\n}\n.ol-control.ol-bar .ol-control button {\n  margin:2px 1px;\n}\n\n/* Positionning */\n.ol-control.ol-bar.ol-left {\n  left: 0.5em;\n\ttop: 50%;\n\t-webkit-transform: translate(0px, -50%);\n\t        transform: translate(0px, -50%);\n}\n.ol-control.ol-bar.ol-left .ol-control {\n  display: block;\n}\n\n.ol-control.ol-bar.ol-right {\n  left: auto;\n\tright: 0.5em;\n\ttop: 50%;\n\t-webkit-transform: translate(0px, -50%);\n\t        transform: translate(0px, -50%);\n}\n.ol-control.ol-bar.ol-right .ol-control {\n  display: block;\n}\n\n.ol-control.ol-bar.ol-bottom {\n  top: auto;\n\tbottom: 0.5em;\n}\n\n.ol-control.ol-bar.ol-top.ol-left,\n.ol-control.ol-bar.ol-top.ol-right {\n  top: 4.5em;\n\t-webkit-transform:none;\n\t        transform:none;\n}\n.ol-touch .ol-control.ol-bar.ol-top.ol-left,\n.ol-touch .ol-control.ol-bar.ol-top.ol-right {\n  top: 5.5em; \n}\n.ol-control.ol-bar.ol-bottom.ol-left,\n.ol-control.ol-bar.ol-bottom.ol-right {\n  top: auto;\n\tbottom: 0.5em;\n\t-webkit-transform:none;\n\t        transform:none;\n}\n\n/* Group buttons */\n.ol-control.ol-bar.ol-group {\n  margin: 1px 1px 1px 0;\n}\n.ol-control.ol-bar.ol-right .ol-group,\n.ol-control.ol-bar.ol-left .ol-group {\n  margin: 1px 1px 0 1px;\n}\n\n.ol-control.ol-bar.ol-group button {\n  border-radius:0;\n\tmargin: 0 0 0 1px;\n}\n.ol-control.ol-bar.ol-right.ol-group button,\n.ol-control.ol-bar.ol-left.ol-group button,\n.ol-control.ol-bar.ol-right .ol-group button,\n.ol-control.ol-bar.ol-left .ol-group button {\n  margin: 0 0 1px 0;\n}\n.ol-control.ol-bar.ol-group .ol-control:first-child > button {\n  border-radius: 5px 0 0 5px;\n}\n.ol-control.ol-bar.ol-group .ol-control:last-child > button {\n  border-radius: 0 5px 5px 0;\n}\n.ol-control.ol-bar.ol-left.ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-right.ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-left .ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-right .ol-group .ol-control:first-child > button {\n  border-radius: 5px 5px 0 0;\n}\n.ol-control.ol-bar.ol-left.ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-right.ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-left .ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-right .ol-group .ol-control:last-child > button {\n  border-radius: 0 0 5px 5px;\n}\n\n/* */\n.ol-control.ol-bar .ol-rotate {\n  opacity:1;\n\tvisibility: visible;\n}\n.ol-control.ol-bar .ol-rotate button {\n  display: block\n}\n\n/* Active buttons */\n.ol-control.ol-bar .ol-toggle.ol-active > button {\n  background: rgba(60, 136, 0, 0.7)\n}\n.ol-control.ol-bar .ol-toggle.ol-active button:hover {\n  background: rgba(60, 136, 0, 0.7)\n}\n.ol-control.ol-toggle button:disabled {\n  background: rgba(0,60,136,.3);\n}\n\n/* Subbar toolbar */\n.ol-control.ol-bar .ol-control.ol-option-bar {\n  display: none;\n\tposition:absolute;\n\ttop:100%;\n\tleft:0;\n\tmargin: 5px 0;\n\tborder-radius: 0;\n\tbackground: rgba(255,255,255, 0.8);\n\t/* border: 1px solid rgba(0, 60, 136, 0.5); */\n\t-webkit-box-shadow: 0 0 0 1px rgba(0, 60, 136, 0.5), 1px 1px 2px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 0 0 0 1px rgba(0, 60, 136, 0.5), 1px 1px 2px rgba(0, 0, 0, 0.5);\n}\n\n.ol-control.ol-bar .ol-option-bar:before {\n  content: \"\";\n\tborder: 0.5em solid transparent;\n\tborder-color: transparent transparent rgba(0, 60, 136, 0.5);\n\tposition: absolute;\n\tbottom: 100%;\n\tleft: 0.3em;\n}\n\n.ol-control.ol-bar .ol-option-bar .ol-control {\n  display: table-cell;\n}\n.ol-control.ol-bar .ol-control .ol-bar\n{\tdisplay: none;\n}\n.ol-control.ol-bar .ol-control.ol-active > .ol-option-bar {\n  display: block;\n}\n\n.ol-control.ol-bar .ol-control.ol-collapsed ul {\n  display: none;\n}\n\n.ol-control.ol-bar .ol-control.ol-text-button > div:hover,\n.ol-control.ol-bar .ol-control.ol-text-button > div {\n  background: none;\n\tcolor: rgba(0, 60, 136, 0.5);\n\twidth: auto;\n\tmin-width: 1.375em;\n\tmargin: 0;\n}\n\n.ol-control.ol-bar .ol-control.ol-text-button {\n  font-size:0.9em;\n\tborder-left: 1px solid rgba(0, 60, 136, 0.8);\n\tborder-radius: 0;\n}\n.ol-control.ol-bar .ol-control.ol-text-button:first-child {\n  border-left:0;\n}\n.ol-control.ol-bar .ol-control.ol-text-button > div {\n\tpadding: .11em 0.3em;\n\tfont-weight: normal;\n\tfont-size: 1.14em;\n\tfont-family: Arial,Helvetica,sans-serif;\n}\n.ol-control.ol-bar .ol-control.ol-text-button div:hover {\n  color: rgba(0, 60, 136, 1);\n}\n\n.ol-control.ol-bar.ol-bottom .ol-option-bar {\n  top: auto;\n\tbottom: 100%;\n}\n.ol-control.ol-bar.ol-bottom .ol-option-bar:before {\n  border-color: rgba(0, 60, 136, 0.5) transparent transparent ;\n\tbottom: auto;\n\ttop: 100%;\n}\n\n.ol-control.ol-bar.ol-left .ol-option-bar {\n  left:100%;\n\ttop: 0;\n\tbottom: auto;\n\tmargin: 0 5px;\n}\n.ol-control.ol-bar.ol-left .ol-option-bar:before {\n  border-color: transparent rgba(0, 60, 136, 0.5) transparent transparent;\n\tbottom: auto;\n\tright: 100%;\n\tleft: auto;\n\ttop: 0.3em;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar {\n  right:100%;\n\tleft:auto;\n\ttop: 0;\n\tbottom: auto;\n\tmargin: 0 5px;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar:before {\n  border-color: transparent transparent transparent rgba(0, 60, 136, 0.5);\n\tbottom: auto;\n\tleft: 100%;\n\ttop: 0.3em;\n}\n\n.ol-control.ol-bar.ol-left .ol-option-bar .ol-option-bar,\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar {\n  top: 100%;\n\tbottom: auto;\n\tleft: 0.3em;\n\tright: auto;\n\tmargin: 5px 0;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar {\n  right: 0.3em;\n\tleft: auto;\n}\n.ol-control.ol-bar.ol-left .ol-option-bar .ol-option-bar:before,\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar:before {\n  border-color: transparent transparent rgba(0, 60, 136, 0.5);\n\tbottom: 100%;\n\ttop: auto;\n\tleft: 0.3em;\n\tright: auto;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar:before {\n  right: 0.3em;\n\tleft: auto;\n}\n\n.ol-editbar .ol-button button {\n  position: relative;\n  display: inline-block;\n  font-style: normal;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  vertical-align: middle;\n}\n.ol-editbar .ol-button button:before, \n.ol-editbar .ol-button button:after {\n  content: \"\";\n  border-width: 0;\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  background-color: currentColor;\n}\n.ol-editbar .ol-button button:focus {\n  outline: none;\n}\n\n.ol-editbar .ol-selection > button:before {\n  width: .6em;\n  height: 1em;\n  background-color: transparent;\n  border: .5em solid currentColor;\n  border-width: 0 .25em .65em;\n  border-color: currentColor transparent;\n  -webkit-box-shadow:0 0.6em 0 -0.23em;\n          box-shadow:0 0.6em 0 -0.23em;\n  top: .35em;\n  left: .5em;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n}\n.ol-editbar .ol-selection0 > button:after {\n  width: .28em;\n  height: .6em;\n  background-color: transparent;\n  border: .5em solid currentColor;\n  border-width: 0 .05em .7em;\n  border-color: currentColor transparent;\n  top: .5em;\n  left: .7em;\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n\n.ol-editbar .ol-delete button:after,\n.ol-editbar .ol-delete button:before {\n  width: 1em;\n  height: .2em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(45deg);\n          transform: translate(-50%, -50%) rotate(45deg);\n}\n.ol-editbar .ol-delete button:after {\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-editbar .ol-info button:before {\n  width: .25em;\n  height: .6em;\n  border-radius: .03em;\n  top: .47em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-info button:after {\n  width: .25em;\n  height: .2em;\n  border-radius: .03em;\n  -webkit-box-shadow: -0.1em 0.35em, -0.1em 0.82em, 0.1em 0.82em;\n          box-shadow: -0.1em 0.35em, -0.1em 0.82em, 0.1em 0.82em;\n  top: .12em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n\n.ol-editbar .ol-drawpoint button:before {\n  width: .7em;\n  height: .7em;\n  border-radius: 50%;\n  border: .15em solid currentColor;\n  background-color: transparent;\n  top: .2em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-drawpoint button:after {\n  width: .4em;\n  height: .4em;\n  border: .15em solid currentColor;\n  border-color: currentColor transparent;\n  border-width: .4em .2em 0;\n  background-color: transparent;\n  top: .8em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n\n.ol-editbar .ol-drawline > button:before,\n.ol-editbar .ol-drawpolygon > button:before,\n.ol-editbar .ol-drawhole > button:before {\n  width: .8em;\n  height: .8em;\n  border: .13em solid currentColor;\n  background-color: transparent;\n  border-width: .2em .13em .09em;\n  top: .2em;\n  left: .25em;\n  -webkit-transform: rotate(10deg) perspective(1em) rotateX(40deg);\n          transform: rotate(10deg) perspective(1em) rotateX(40deg);\n}\n.ol-editbar .ol-drawline > button:before {\n  border-bottom: 0;\n}\n.ol-editbar .ol-drawline > button:after,\n.ol-editbar .ol-drawhole > button:after,\n.ol-editbar .ol-drawpolygon > button:after {\n  width: .3em;\n  height: .3em;\n  top: 0.2em;\n  left: .25em;\n  -webkit-box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em;\n          box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em;\n}\n.ol-editbar .ol-drawhole > button:after {\n  -webkit-box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em, 0.25em 0.35em;\n          box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em, 0.25em 0.35em;\n}\n\n\n.ol-editbar .ol-offset > button i,\n.ol-editbar .ol-transform > button i {\n  position: absolute;\n  width: .9em;\n  height: .9em;\n  overflow: hidden;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-editbar .ol-offset > button i{\n  width: .8em;\n  height: .8em;\n}\n\n.ol-editbar .ol-offset > button i:before,\n.ol-editbar .ol-transform > button i:before,\n.ol-editbar .ol-transform > button i:after {\n  content: \"\";\n  height: 1em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(45deg);\n          transform: translate(-50%, -50%) rotate(45deg);\n  -webkit-box-shadow: 0.5em 0 0 0.1em, -0.5em 0 0 0.1em;\n          box-shadow: 0.5em 0 0 0.1em, -0.5em 0 0 0.1em;\n  width: .1em;\n  position: absolute;\n  background-color: currentColor;\n}\n.ol-editbar .ol-offset > button i:before{\n  -webkit-box-shadow: 0.45em 0 0 0.1em, -0.45em 0 0 0.1em;\n          box-shadow: 0.45em 0 0 0.1em, -0.45em 0 0 0.1em;\n}\n.ol-editbar .ol-transform > button i:after {\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-editbar .ol-split > button:before {\n  width: .3em;\n  height: .3em;\n  top: .81em;\n  left: .75em;\n  border-radius: 50%;\n  -webkit-box-shadow: 0.1em -0.4em, -0.15em -0.25em;\n          box-shadow: 0.1em -0.4em, -0.15em -0.25em;\n}\n.ol-editbar .ol-split > button:after {\n  width: .8em;\n  height: .8em;\n  top: .15em;\n  left: -.1em;\n  border: .1em solid currentColor;\n  border-width: 0 .2em .2em 0;\n  background-color: transparent;\n  border-radius: .1em;\n  -webkit-transform: rotate(20deg) scaleY(.6) rotate(-45deg);\n          transform: rotate(20deg) scaleY(.6) rotate(-45deg);\n}\n\n.ol-editbar .ol-drawregular > button:before {\n  width: .9em;\n  height: .9em;\n  top: 50%;\n  left: 50%;\n  border: .1em solid currentColor;\n  background-color: transparent;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div {\n  border: .5em solid currentColor;\n  border-color: transparent currentColor;\n  display: inline-block;\n  cursor: pointer;\n  vertical-align: text-bottom;\n}\n.ol-editbar .ol-drawregular .ol-bar:before,\n.ol-control.ol-bar.ol-editbar .ol-drawregular .ol-bar {\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button {\n  min-width: 6em;\n  text-align: center;\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div:first-child {\n  border-width: .5em .5em .5em 0;\n  margin: 0 .5em 0 0;\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div:last-child {\n  border-width: .5em 0 .5em .5em;\n  margin: 0 0 0 .5em;\n}\n\n.ol-gauge\n{\ttop: 0.5em;\n\tleft: 50%;\n\t-webkit-transform: translateX(-50%);\n\ttransform: translateX(-50%);\n}\n\n.ol-gauge > *\n{\tdisplay: inline-block;\n\tvertical-align: middle;\n}\n.ol-gauge > span\n{\n\tmargin: 0 0.5em;\n}\n.ol-gauge > div\n{\twidth: 200px;\n\tborder: 1px solid rgba(0,60,136,.5);\n\tborder-radius: 3px;\n\tpadding:1px;\n}\n.ol-gauge button\n{\theight: 0.8em;\n\tmargin:0;\n\tmax-width:100%;\n}\n\n.ol-control.ol-bookmark \n{\ttop: 0.5em;\n\tleft: 3em;\n}\n.ol-control.ol-bookmark button\n{\tposition: relative;\n}\n.ol-control.ol-bookmark > button::before\n{\tcontent: \"\";\n\tposition: absolute;\n\tborder-width: 10px 5px 4px;\n\tborder-style: solid;\n\tborder-color: #fff;\n\tborder-bottom-color: transparent;\n\ttop: 50%;\n\tleft: 50%;\n\t-webkit-transform: translate(-50%, -50%);\n\ttransform: translate(-50%, -50%);\n\theight: 0;\n}\n\n.ol-control.ol-bookmark > div\n{\tdisplay: none;\n\tmin-width: 5em;\n}\n.ol-control.ol-bookmark input\n{\tfont-size: 0.9em;\n\tmargin: 0.1em 0 ;\n\tpadding: 0 0.5em;\n}\n.ol-control.ol-bookmark ul\n{\tmargin:0;\n\tpadding: 0;\n\tlist-style: none;\n\tmin-width: 10em;\n}\n.ol-control.ol-bookmark li\n{\tcolor: rgba(0,60,136,0.8);\n\tfont-size: 0.9em;\n\tpadding: 0 0.2em 0 0.5em;\n\tcursor: default;\n\tclear:both;\n}\n\n.ol-control.ol-bookmark li:hover\n{\tbackground-color: rgba(0,60,136,.5);\n\tcolor: #fff;\n}\n\n.ol-control.ol-bookmark > div button\n{\twidth: 1em;\n\theight: 0.8em;\n\tfloat: right;\n\tbackground-color: transparent;\n\tcursor: pointer;\n\tborder-radius: 0;\n}\n.ol-control.ol-bookmark > div button:before\n{\tcontent: \"\\2A2F\";\n    color: #936;\n\tfont-size: 1.2em;\n\tline-height: 1em;\n\tborder-radius: 0;\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    -webkit-transform: translate(-50%, -50%);\n    transform: translate(-50%, -50%);\n}\n\n.ol-bookmark ul li button,\n.ol-bookmark input\n{\tdisplay: none;\n}\n.ol-bookmark.ol-editable ul li button,\n.ol-bookmark.ol-editable input\n{\tdisplay: block;\n}\n\n\n.ol-control.ol-bar.ol-geobar .ol-control {\n\tdisplay: inline-block;\n\tvertical-align: middle;\n}\n\n.ol-control.ol-bar.ol-geobar .ol-bar {\n  display: none;\n}\n.ol-bar.ol-geobar.ol-active .ol-bar {\n  display: inline-block;\n}\n\n.ol-bar.ol-geobar .geolocBt button:before,\n.ol-bar.ol-geobar .geolocBt button:after {\n  content: \"\";\n  display: block;\n  position: absolute;\n  border: 1px solid transparent;\n  border-width: 0.3em 0.8em 0 0.2em;\n  border-color: #fff transparent transparent;\n  -webkit-transform: rotate(-30deg);\n  transform: rotate(-30deg);\n  top: .45em;\n  left: 0.15em;\n  font-size: 1.2em;\n}\n.ol-bar.ol-geobar .geolocBt button:after {\n  border-width: 0 0.8em .3em 0.2em;\n  border-color: transparent transparent #fff;\n\t-webkit-transform: rotate(-61deg);\n\ttransform: rotate(-61deg);\n}\n\n.ol-bar.ol-geobar .startBt button:before {\n  content: \"\";\n  display: block;\n  position: absolute;\n  width: 1em;\n  height: 1em;\n  background-color: #800;\n  border-radius: 50%;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%,-50%);\n  transform: translate(-50%,-50%);\n}\n.ol-bar.ol-geobar .pauseBt button:before,\n.ol-bar.ol-geobar .pauseBt button:after {\n  content: \"\";\n  display: block;\n  position: absolute;\n  width: .25em;\n  height: 1em;\n  background-color: #fff;\n  top: 50%;\n  left: 35%;\n  -webkit-transform: translate(-50%,-50%);\n  transform: translate(-50%,-50%);\n}\n.ol-bar.ol-geobar .pauseBt button:after {\n  left: 65%;\n}\n\n.ol-control.ol-bar.ol-geobar .centerBt,\n.ol-control.ol-bar.ol-geobar .pauseBt,\n.ol-bar.ol-geobar.pauseTrack .startBt,\n.ol-bar.ol-geobar.centerTrack .startBt,\n.ol-bar.ol-geobar.centerTrack.pauseTrack .pauseBt,\n.ol-bar.ol-geobar.centerTrack .pauseBt {\n  display: none;\n}\n.ol-bar.ol-geobar.pauseTrack .pauseBt,\n.ol-bar.ol-geobar.centerTrack .centerBt{\n  display: inline-block;\n}\n\n.ol-control.ol-globe\n{\tposition: absolute;\n\tleft: 0.5em;\n\tbottom: 0.5em;\n\tborder-radius: 50%;\n\topacity: 0.7;\n\ttransform: scale(0.5);\n\ttransform-origin: 0 100%;\n\t-webkit-transform: scale(0.5);\n\t-webkit-transform-origin: 0 100%;\n}\n.ol-control.ol-globe:hover\n{\topacity: 0.9;\n}\n\n.ol-control.ol-globe .panel\n{\tdisplay:block;\n\twidth:170px;\n\theight:170px;\n\tbackground-color:#fff;\n\tcursor: pointer;\n\tborder-radius: 50%;\n\toverflow: hidden;\n\t-webkit-box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);\n\t        box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);\n}\n.ol-control.ol-globe .panel .ol-viewport\n{\tborder-radius: 50%;\n}\n\n.ol-control.ol-globe .ol-pointer\n{\tdisplay: block;\n\tbackground-color: #fff;\n\twidth:10px;\n\theight: 10px;\n\tborder:10px solid red;\n\tposition: absolute;\n\ttop: 50%;\n\tleft:50%;\n\ttransform: translate(-15px, -40px);\n\t-webkit-transform: translate(-15px, -40px);\n\tborder-radius: 50%;\n\tz-index:1;\n\ttransition: opacity 0.15s, top 0s, left 0s;\n\t-webkit-transition: opacity 0.15s, top 0s, left 0s;\n}\n.ol-control.ol-globe .ol-pointer.hidden\n{\topacity:0;\n\ttransition: opacity 0.15s, top 3s, left 5s;\n\t-webkit-transition: opacity 0.15s, top 3s, left 5s;\n}\n\n.ol-control.ol-globe .ol-pointer::before\n{\tborder-radius: 50%;\n\t-webkit-box-shadow: 6px 6px 10px 5px #000;\n\t        box-shadow: 6px 6px 10px 5px #000;\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 0;\n\tleft: 0;\n\tposition: absolute;\n\ttop: 23px;\n\twidth: 0;\n}\n.ol-control.ol-globe .ol-pointer::after\n{\tcontent:\"\";\n\twidth:0;\n\theight:0;\n\tdisplay: block;\n\tposition: absolute;\n\tborder-width: 20px 10px 0;\n\tborder-color: red transparent;\n\tborder-style: solid;\n\tleft: -50%;\n\ttop: 100%;\n}\n\n.ol-control.ol-globe .panel::before {\n  border-radius: 50%;\n  -webkit-box-shadow: -20px -20px 80px 2px rgba(0, 0, 0, 0.7) inset;\n          box-shadow: -20px -20px 80px 2px rgba(0, 0, 0, 0.7) inset;\n  content: \"\";\n  display: block;\n  height: 100%;\n  left: 0;\n  position: absolute;\n  top: 0;\n  width: 100%;\n  z-index: 1;\n}\n.ol-control.ol-globe .panel::after {\n  border-radius: 50%;\n  -webkit-box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n          box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n  content: \"\";\n  display: block;\n  height: 0;\n  left: 23%;\n  position: absolute;\n  top: 20%;\n  -webkit-transform: rotate(-40deg);\n          transform: rotate(-40deg);\n  width: 20%;\n  z-index: 1;\n}\n\n\n.ol-control.ol-globe.ol-collapsed .panel\n{\tdisplay:none;\n}\n\n.ol-control-top.ol-globe\n{\tbottom: auto;\n\ttop: 5em;\n\ttransform-origin: 0 0;\n\t-webkit-transform-origin: 0 0;\n}\n.ol-control-right.ol-globe\n{\tleft: auto;\n\tright: 0.5em;\n\ttransform-origin: 100% 100%;\n\t-webkit-transform-origin: 100% 100%;\n}\n.ol-control-right.ol-control-top.ol-globe\n{\tleft: auto;\n\tright: 0.5em;\n\ttransform-origin: 100% 0;\n\t-webkit-transform-origin: 100% 0;\n}\n\n.ol-gridreference\n{\tbackground: #fff;\n\tborder: 1px solid #000;\n\toverflow: auto;\n\tmax-height: 100%;\n\ttop:0;\n\tright:0;\n}\n.ol-gridreference input\n{\twidth:100%;\n}\n.ol-gridreference ul\n{\tmargin:0;\n\tpadding:0;\n\tlist-style: none;\n} \n.ol-gridreference li\n{\tpadding: 0 0.5em;\n\tcursor: pointer;\n}\n.ol-gridreference ul li:hover \n{\tbackground-color: #ccc;\n}\n.ol-gridreference li.ol-title,\n.ol-gridreference li.ol-title:hover\n{\tbackground:rgba(0,60,136,.5);\n\tcolor:#fff;\n\tcursor:default;\n}\n.ol-gridreference ul li .ol-ref\n{\tmargin-left: 0.5em;\n}\n.ol-gridreference ul li .ol-ref:before\n{\tcontent:\"(\";\n}\n.ol-gridreference ul li .ol-ref:after\n{\tcontent:\")\";\n}\n\n.ol-control.ol-imageline {\n  bottom:0;\n  left: 0;\n  right: 0;\n  padding: 0;\n  overflow: visible;\n  -webkit-transition: .3s;\n  transition: .3s;\n}\n.ol-control.ol-imageline.ol-collapsed {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.ol-imageline > div {\n  height: 4em;\n  position: relative;\n  white-space: nowrap;\n  scroll-behavior: smooth;\n  overflow: hidden;\n  width: 100%;\n}\n.ol-imageline.ol-touch > div {\n  overflow-x: auto;\n}\n.ol-imageline > div.ol-move {\n  scroll-behavior: unset;\n}\n\n.ol-control.ol-imageline button {\n  position: absolute;\n  top: -1em;\n  -webkit-transform: translateY(-100%);\n          transform: translateY(-100%);\n  margin: .65em;\n  -webkit-box-shadow: 0 0 0 0.15em rgba(255,255,255,.4);\n          box-shadow: 0 0 0 0.15em rgba(255,255,255,.4);\n}\n.ol-control.ol-imageline button:before {\n  content: '';\n  position: absolute;\n  -webkit-transform: translate(-50%, -50%) rotate(135deg);\n          transform: translate(-50%, -50%) rotate(135deg);\n  top: 40%;\n  left: 50%;\n  width: .4em;\n  height: .4em;\n  border: .1em solid currentColor;\n  border-width: .15em .15em 0 0;\n}\n.ol-control.ol-imageline.ol-collapsed button:before {\n  top: 60%;\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-imageline,\n.ol-imageline:hover {\n  background-color: rgba(0,0,0,.75);\n}\n\n.ol-imageline.ol-arrow:after,\n.ol-imageline.ol-arrow:before {\n  content: \"\";\n  position: absolute;\n  top: 50%;\n  left: .2em;\n  border-color: #fff #000;\n  border-width: 1em .6em 1em 0;\n  border-style: solid;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n  z-index: 1;\n  opacity: .8;\n  pointer-events: none;\n  -webkit-box-shadow: -0.6em 0 0 1em #fff;\n          box-shadow: -0.6em 0 0 1em #fff;\n}\n.ol-imageline.ol-arrow:after {\n  border-width: 1em 0 1em .6em;\n  left: auto;\n  right: .2em;\n  -webkit-box-shadow: 0.6em 0 0 1em #fff;\n          box-shadow: 0.6em 0 0 1em #fff;\n}\n\n.ol-imageline .ol-image {\n  position: relative;\n  height: 100%;\n  display: inline-block;\n  cursor: pointer;\n}\n.ol-imageline img {\n  max-height: 100%;\n  border: .25em solid transparent;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  opacity: 0;\n  -webkit-transition: 1s;\n  transition: 1s;\n}\n.ol-imageline img.ol-loaded {\n  opacity:1;\n}\n\n.ol-imageline .ol-image.select {\n  background-color: #fff;\n}\n.ol-imageline .ol-image span {\n  position: absolute;\n  width: 125%;\n  max-height: 2.4em;\n  left: 50%;\n  bottom: 0;\n  display: none;\n  color: #fff;\n  background-color: rgba(0,0,0,.5);\n  font-size: .8em;\n  overflow: hidden;\n  white-space: normal;\n  text-align: center;\n  line-height: 1.2em;\n  -webkit-transform: translateX(-50%) scaleX(.8);\n          transform: translateX(-50%) scaleX(.8);\n}\n/*\n.ol-imageline .ol-image.select span,\n*/\n.ol-imageline .ol-image:hover span {\n  display: block;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-method-time,\n.ol-control.ol-routing.ol-isochrone .ol-method-distance,\n.ol-control.ol-routing.ol-isochrone > button {\n  position: relative;\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-time:before,\n.ol-control.ol-routing.ol-isochrone > button:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  border: .1em solid currentColor;\n  width: .8em;\n  height: .8em;\n  border-radius: 50%;\n  -webkit-box-shadow: 0 -0.5em 0 -0.35em, 0.4em -0.35em 0 -0.35em;\n          box-shadow: 0 -0.5em 0 -0.35em, 0.4em -0.35em 0 -0.35em;\n  clip: unset;\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-time:after,\n.ol-control.ol-routing.ol-isochrone > button:after {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-60deg);\n          transform: translate(-50%, -50%) rotate(-60deg);\n  border-radius: 50%;\n  border: .3em solid transparent;\n  border-right-color: currentColor;\n  -webkit-box-shadow: none;\n          box-shadow: none;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  clip: unset;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-method-distance:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n  width: 1em;\n  height: .5em;\n  border: .1em solid currentColor;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-distance:after {\n  content: '';\n  position: absolute;\n  width: .1em;\n  height: .15em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n  -webkit-box-shadow: inset 0 -0.15em, 0 0.1em, 0.25em 0.1em, -0.25em 0.1em;\n          box-shadow: inset 0 -0.15em, 0 0.1em, 0.25em 0.1em, -0.25em 0.1em;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-direction-direct:before,\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 30%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  width: .3em;\n  height: .3em;\n  border-radius: 50%;\n  border: .1em solid currentColor;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-box-shadow: 0.25em 0 0 -0.05em;\n          box-shadow: 0.25em 0 0 -0.05em;\n}\n.ol-control.ol-routing.ol-isochrone .ol-direction-direct:after,\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:after {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 70%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  border: .4em solid transparent;\n  border-width: .4em 0 .4em .4em;\n  border-color: transparent currentColor;\n}\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:after {\n  border-width: .4em .4em .4em 0;\n}\n\n.ol-control.ol-isochrone.ol-collapsed .content {\n  display: none;\n}\n.ol-control.ol-isochrone input[type=\"number\"] {\n  width: 3em;\n  text-align: right;\n  margin: 0 .1em;\n}\n.ol-control.ol-isochrone .ol-distance input[type=\"number\"] {\n  width: 5em;\n}\n\n.ol-isochrone .ol-time,\n.ol-isochrone .ol-distance {\n  display: none;\n}\n.ol-isochrone .ol-time.selected,\n.ol-isochrone .ol-distance.selected {\n  display: block;\n}\n\n.ol-control.ol-layerswitcher-popup\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 3em;\n}\n.ol-control.ol-layerswitcher-popup .panel \n{\tclear:both;\n\tbackground:#fff;\n}\n\n.ol-layerswitcher-popup .panel\n{\tlist-style: none;\n\tpadding: 0.25em;\n\tmargin:0;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-popup .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-popup.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher-popup.ol-forceopen .panel\n{\tdisplay:block;\n}\n\n.ol-layerswitcher-popup button \n{\tbackground-color: white;\n\tbackground-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAACE1BMVEX///8A//8AgICA//8AVVVAQID///8rVVVJtttgv98nTmJ2xNgkW1ttyNsmWWZmzNZYxM4gWGgeU2JmzNNr0N1Rwc0eU2VXxdEhV2JqytQeVmMhVmNoydUfVGUgVGQfVGQfVmVqy9hqy9dWw9AfVWRpydVry9YhVmMgVGNUw9BrytchVWRexdGw294gVWQgVmUhVWPd4N6HoaZsy9cfVmQgVGRrytZsy9cgVWQgVWMgVWRsy9YfVWNsy9YgVWVty9YgVWVry9UgVWRsy9Zsy9UfVWRsy9YgVWVty9YgVWRty9Vsy9aM09sgVWRTws/AzM0gVWRtzNYgVWRuy9Zsy9cgVWRGcHxty9bb5ORbxdEgVWRty9bn6OZTws9mydRfxtLX3Nva5eRix9NFcXxOd4JPeINQeIMiVmVUws9Vws9Vw9BXw9BYxNBaxNBbxNBcxdJexdElWWgmWmhjyNRlx9IqXGtoipNpytVqytVryNNrytZsjZUuX210k5t1y9R2zNR3y9V4lp57zth9zdaAnKOGoaeK0NiNpquV09mesrag1tuitbmj1tuj19uktrqr2d2svcCu2d2xwMO63N+7x8nA3uDC3uDFz9DK4eHL4eLN4eIyYnDX5OM5Z3Tb397e4uDf4uHf5uXi5ePi5+Xj5+Xk5+Xm5+Xm6OY6aHXQ19fT4+NfhI1Ww89gx9Nhx9Nsy9ZWw9Dpj2abAAAAWnRSTlMAAQICAwQEBgcIDQ0ODhQZGiAiIyYpKywvNTs+QklPUlNUWWJjaGt0dnd+hIWFh4mNjZCSm6CpsbW2t7nDzNDT1dje5efr7PHy9PT29/j4+Pn5+vr8/f39/f6DPtKwAAABTklEQVR4Xr3QVWPbMBSAUTVFZmZmhhSXMjNvkhwqMzMzMzPDeD+xASvObKePPa+ffHVl8PlsnE0+qPpBuQjVJjno6pZpSKXYl7/bZyFaQxhf98hHDKEppwdWIW1frFnrxSOWHFfWesSEWC6R/P4zOFrix3TzDFLlXRTR8c0fEEJ1/itpo7SVO9Jdr1DVxZ0USyjZsEY5vZfiiAC0UoTGOrm9PZLuRl8X+Dq1HQtoFbJZbv61i+Poblh/97TC7n0neCcK0ETNUrz1/xPHf+DNAW9Ac6t8O8WH3Vp98f5lCaYKAOFZMLyHL4Y0fe319idMNgMMp+zWVSybUed/+/h7I4wRAG1W6XDy4XmjR9HnzvDRZXUAYDFOhC1S/Hh+fIXxen+eO+AKqbs+wAo30zDTDvDxKoJN88sjUzDFAvBzEUGFsnADoIvAJzoh2BZ8sner+Ke/vwECuQAAAABJRU5ErkJggg==\");\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tfloat: right;\n\theight: 38px;\n\twidth: 38px;\n}\n\n.ol-layerswitcher-popup li\n{\tcolor:#369;\n\tpadding:0.25em 1em;\n\tfont-family:\"Trebuchet MS\",Helvetica,sans-serif;\n\tcursor:pointer;\n}\n.ol-layerswitcher-popup li.ol-header\n{\tdisplay: none;\n}\n.ol-layerswitcher-popup li.select\n{\tbackground:rgba(0, 60, 136, 0.7);\n\tcolor:#fff;\n}\n.ol-layerswitcher-popup li:hover\n{\tbackground:rgba(0, 60, 136, 0.9);\n\tcolor:#fff;\n}\n\n.ol-control.ol-layerswitcher\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 3em;\n\tmax-height: calc(100% - 6em);\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n\toverflow: hidden;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\tdisplay: block\n}\n.ol-control.ol-layerswitcher.ol-collapsed .ol-switchertopdiv,\n.ol-control.ol-layerswitcher.ol-collapsed .ol-switcherbottomdiv\n{\tdisplay: none;\n}\n.ol-layerswitcher.ol-forceopen.ol-collapsed .ol-switchertopdiv,\n.ol-layerswitcher.ol-forceopen.ol-collapsed .ol-switcherbottomdiv\n{\tdisplay: block;\n}\n\n.ol-control.ol-layerswitcher .ol-switchertopdiv,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\tposition: absolute;\n\ttop:0;\n\tleft:0;\n\tright:0;\n\theight: 45px;\n\tbackground: #fff; \n\tz-index:2;\n\topacity:1;\n\tcursor: pointer;\n\tborder-top:2px solid transparent;\n\tborder-bottom:2px solid #369;\n\tmargin:0 2px;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n}\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\ttop: auto;\n\tbottom: 0;\n\theight: 2em;\n\tborder-top:2px solid #369;\n\tborder-bottom:2px solid transparent;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv:before,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:before\n{\tcontent:\"\";\n\tposition: absolute;\n\tleft:50%;\n\ttop:50%;\n\tborder:10px solid transparent;\n\twidth:0;\n\theight:0;\n\ttransform: translate(-50%, -50%);\n\t-webkit-transform: translate(-50%, -50%);\n\topacity:0.8;\n}\n\n.ol-control.ol-layerswitcher .ol-switchertopdiv:hover:before,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:hover:before\n{\topacity:1;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv:before\n{\tborder-bottom-color: #369;\n\tborder-top: 0;\n}\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:before\n{\tborder-top-color: #369;\n\tborder-bottom: 0;\n}\n\n.ol-control.ol-layerswitcher .panel \n{\tbackground-color: #fff;\n\tborder-radius: 0 0 2px 2px;\n\tclear: both;\n\tdisplay: block; /* display:block to show panel on over */\n}\n\n.ol-layerswitcher .panel\n{\tlist-style: none;\n\tpadding: 0.5em 0.5em 0;\n\tmargin:0;\n\toverflow: hidden;\n\tfont-family: Tahoma,Geneva,sans-serif;\n\tfont-size:0.9em;\n\t-webkit-transition: top 0.3s;\n\ttransition: top 0.3s;\n\tposition: relative;\n\ttop:0;\n}\n\n.ol-layerswitcher .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n\tclear: both;\n}\n\n/** Customize checkbox\n*/\n.ol-layerswitcher input[type=\"radio\"],\n.ol-layerswitcher input[type=\"checkbox\"]\n{\tdisplay:none;\n}\n\n.ol-layerswitcher .panel li\n{\t-weblit-transition: -webkit-transform 0.2s linear;\n\t-webkit-transition: -webkit-transform 0.2s linear;\n\ttransition: -webkit-transform 0.2s linear;\n\ttransition: transform 0.2s linear;\n\ttransition: transform 0.2s linear, -webkit-transform 0.2s linear;\n\tclear: both;\n\tdisplay: block;\n\tborder:1px solid transparent;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n}\n/* drag and drop */\n.ol-layerswitcher .panel li.drag\n{\topacity: 0.5;\n\ttransform:scale(0.8);\n\t-webkit-transform:scale(0.8);\n}\n.ol-dragover\n{\tbackground:rgba(51,102,153,0.5);\n\topacity:0.8;\n}\n.ol-layerswitcher .panel li.forbidden,\n.forbidden .ol-layerswitcher-buttons div,\n.forbidden .layerswitcher-opacity div\n{\tbackground:rgba(255,0,0,0.5);\n\tcolor:#f00!important;\n}\n\n/* cursor management */\n.ol-layerswitcher.drag,\n.ol-layerswitcher.drag *\n{\tcursor:not-allowed!important;\n\tcursor:no-drop!important;\n}\n.ol-layerswitcher.drag .panel li.dropover,\n.ol-layerswitcher.drag .panel li.dropover *\n{\tcursor: pointer!important;\n\tcursor: n-resize!important;\n\tcursor: ns-resize!important;\n\tcursor: -webkit-grab!important;\n\tcursor: grab!important;\n\tcursor: -webkit-grabbing!important;\n\tcursor: grabbing!important;\n}\n\n.ol-layerswitcher .panel li.dropover\n{\tbackground: rgba(51, 102, 153, 0.5);\n}\n\n.ol-layerswitcher .panel li label\n{\tdisplay: inline-block;\n\theight: 1.4em;\n\tmax-width: 12em;\n\toverflow: hidden;\n\twhite-space: nowrap;\n\ttext-overflow: ellipsis;\n\tpadding: 0 0.2em 0 1.7em;\n\tposition: relative;\n}\n\n.ol-layerswitcher [type=\"radio\"] + label:before,\n.ol-layerswitcher [type=\"checkbox\"] + label:before,\n.ol-layerswitcher [type=\"radio\"]:checked + label:after,\n.ol-layerswitcher [type=\"checkbox\"]:checked + label:after\n{\tcontent: '';\n\tposition: absolute;\n\tleft: 0.1em; top: 0.1em;\n\twidth: 1.2em; height: 1.2em; \n\tborder: 2px solid #369;\n\tbackground: #fff;\n\t-webkit-box-sizing:border-box;\n\t        box-sizing:border-box;\n}\n\n.ol-layerswitcher [type=\"radio\"] + label:before,\n.ol-layerswitcher [type=\"radio\"] + label:after\n{\tborder-radius: 50%;\n}\n\n.ol-layerswitcher [type=\"radio\"]:checked + label:after\n{\tbackground: #369 none repeat scroll 0 0;\n\tmargin: 0.3em;\n\twidth: 0.6em;\n\theight: 0.6em;\n}\n\n.ol-layerswitcher [type=\"checkbox\"]:checked + label:after\n{\tbackground: transparent;\n    border-width: 0 3px 3px 0;\n\tborder-style: solid;\n\tborder-color: #369;\n    width: 0.7em;\n    height: 1em;\n    -webkit-transform: rotate(45deg);\n    transform: rotate(45deg);\n    left: 0.55em;\n    top: -0.05em;\n    -webkit-box-shadow: 1px 0px 1px 1px #fff;\n            box-shadow: 1px 0px 1px 1px #fff;\n}\n\n.ol-layerswitcher .panel li.ol-layer-hidden\n{\topacity: 0.6;\n}\n\n.ol-layerswitcher.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher.ol-forceopen .panel\n{\tdisplay:block;\n}\n\n.ol-layerswitcher button {\n\tbackground-color: white;\n\tfloat: right;\n\tz-index: 10;\n\tposition: relative;\n\tfont-size: 1.7em;\n}\n.ol-touch .ol-layerswitcher button {\n\tfont-size: 2.5em;\n}\n.ol-layerswitcher button:before,\n.ol-layerswitcher button:after {\n\tcontent: \"\";\n\tposition:absolute;\n\twidth: .75em;\n\theight: .75em;\n\tborder-radius: 0.15em;\n\t-webkit-transform: scaleY(.8) rotate(45deg);\n\ttransform: scaleY(.8) rotate(45deg);\n}\n.ol-layerswitcher button:before {\n\tbackground: #e2e4e1;\n\ttop: .32em;\n    left: .34em;\n\t-webkit-box-shadow: 0.1em 0.1em #325158;\n\tbox-shadow: 0.1em 0.1em #325158;\n}\n.ol-layerswitcher button:after {\n\ttop: .22em;\n    left: .34em;\n\tbackground: #83bcc5;\n\tbackground-image: radial-gradient( circle at .85em .6em, #70b3be 0, #70b3be .65em, #83bcc5 .65em);\n}\n.ol-layerswitcher-buttons \n{\tdisplay:block;\n\tfloat: right;\n\ttext-align:right;\n}\n.ol-layerswitcher-buttons > div\n{\tdisplay: inline-block;\n\tposition: relative;\n\tcursor: pointer;\n\theight:1em;\n\twidth:1em;\n\tmargin:2px;\n\tline-height: 1em;\n    text-align: center;\n    background: #369;\n    vertical-align: middle;\n    color: #fff;\n}\n\n.ol-layerswitcher .panel li > div\n{\tdisplay: inline-block;\n\tposition: relative;\n}\n\n/* line break */\n.ol-layerswitcher .ol-separator\n{\tdisplay:block;\n\twidth:0;\n\theight:0;\n\tpadding:0;\n\tmargin:0;\n}\n\n.ol-layerswitcher .layerup\n{\tfloat: right;\n\theight:2.5em;\n\tbackground-color: #369;\n\topacity: 0.5;\n\tcursor: move;\n\tcursor: ns-resize;\n}\n\n.ol-layerswitcher .layerup:before,\n.ol-layerswitcher .layerup:after\n{\tborder-color: #fff transparent;\n\tborder-style: solid;\n\tborder-width: 0.4em 0.4em 0;\n\tcontent: \"\";\n\theight: 0;\n\tposition: absolute;\n\tbottom: 3px;\n\tleft: 0.1em;\n\twidth: 0;\n}\n.ol-layerswitcher .layerup:after\n{\tborder-width: 0 0.4em 0.4em;\n\ttop:3px;\n\tbottom: auto;\n}\n\n.ol-layerswitcher .layerInfo\n{\tbackground: #369;\n\tborder-radius: 100%;\n}\n.ol-layerswitcher .layerInfo:before\n{\tcolor: #fff;\n\tcontent: \"i\";\n\tdisplay: block;\n\tfont-size: 0.8em;\n\tfont-weight: bold;\n\ttext-align: center;\n\twidth: 1.25em;\n\tposition:absolute;\n\tleft: 0;\n\ttop: 0;\n}\n\n.ol-layerswitcher .layerTrash\n{\tbackground: #369;\n}\n.ol-layerswitcher .layerTrash:before\n{\tcolor: #fff;\n\tcontent: \"\\D7\";\n\tfont-size:1em;\n\ttop: 50%;\n\tleft: 0;\n\tright: 0;\n\ttext-align: center;\n\tline-height: 1em;\n\tmargin: -0.5em 0;\n\tposition: absolute;\n}\n\n.ol-layerswitcher .layerExtent\n{\tbackground: #369;\n}\n.ol-layerswitcher .layerExtent:before\n{\tborder-right: 1px solid #fff;\n\tborder-bottom: 1px solid #fff;\n\tcontent: \"\";\n\tdisplay: block;\n\tposition: absolute;\n\tleft: 6px;\n\tright: 2px;\n\ttop: 6px;\n\tbottom: 3px;\n}\n.ol-layerswitcher .layerExtent:after\n{\tborder-left: 1px solid #fff;\n\tborder-top: 1px solid #fff;\n\tcontent: \"\";\n\tdisplay: block;\n\tposition: absolute;\n\tbottom: 6px;\n\tleft: 2px;\n\tright: 6px;\n\ttop: 3px;\n}\n\n.ol-layerswitcher .expend-layers,\n.ol-layerswitcher .collapse-layers\n{\tmargin: 0 2px;\n\tbackground-color: transparent;\n}\n.ol-layerswitcher .expend-layers:before,\n.ol-layerswitcher .collapse-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\ttop:50%;\n\tleft:0;\n\tmargin-top:-2px;\n\theight:4px;\n\twidth:100%;\n\tbackground:#369;\n}\n.ol-layerswitcher .expend-layers:after\n{\tcontent:\"\";\n\tposition:absolute;\n\tleft:50%;\n\ttop:0;\n\tmargin-left:-2px;\n\twidth:4px;\n\theight:100%;\n\tbackground:#369;\n}\n/*\n.ol-layerswitcher .collapse-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\tborder:0.5em solid #369;\n\tborder-color: #369 transparent transparent;\n\tmargin-top:0.25em;\n}\n.ol-layerswitcher .expend-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\tborder:0.5em solid #369;\n\tborder-color: transparent transparent transparent #369 ;\n\tmargin-left:0.25em;\n}\n*/\n\n.ol-layerswitcher .layerswitcher-opacity\n{\tposition:relative;\n\tborder: 1px solid #369;\n\theight: 3px;\n\twidth: 120px;\n\tmargin:5px 1em 10px 7px;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n\tborder-radius: 3px;\n\tbackground: #69c;\n\tbackground: -webkit-gradient(linear, left top, right top, from(rgba(0,60,136,0)), to(rgba(0,60,136,0.6)));\n\tbackground: linear-gradient(to right, rgba(0,60,136,0), rgba(0,60,136,0.6));\n\tcursor: pointer;\n\t-webkit-box-shadow: 1px 1px 1px rgba(0,0,0,0.5);\n\t        box-shadow: 1px 1px 1px rgba(0,0,0,0.5);\n}\n\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor,\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor:before\n{\tposition: absolute;\n\twidth: 20px;\n\theight: 20px;\n\ttop: 50%;\n\tleft: 50%;\n\tbackground: rgba(0,60,136,0.5);\n\tborder-radius: 50%;\n\t-webkit-transform: translate(-50%, -50%);\n\ttransform: translate(-50%, -50%);\n\tz-index: 1;\n}\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor:before\n{\tcontent: \"\";\n\tposition: absolute;\n\twidth: 50%;\n\theight: 50%;\n}\n.ol-touch .ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor\n{\twidth: 26px;\n\theight: 26px;\n}\n\n.ol-layerswitcher .layerswitcher-opacity-label { \n\tdisplay:none;\n\tposition: absolute;\n    right: -2.5em;\n    bottom: 5px;\n    font-size: 0.8em;\n}\n.ol-layerswitcher .layerswitcher-opacity-label::after {\n\tcontent:\"%\";\n}\n\n.ol-layerswitcher .layerswitcher-progress\n{\tdisplay:block;\n\tmargin:-4px 1em 2px 7px;\n\twidth: 120px;\n}\n.ol-layerswitcher .layerswitcher-progress div\n{\tbackground-color: #369;\n\theight:2px;\n\tdisplay:block;\n\twidth:0;\n}\n\n.ol-control.ol-layerswitcher-image\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 1em;\n\ttransition: all 0.2s ease 0s;\n\t-webkit-transition: all 0.2s ease 0s;\n}\n.ol-control.ol-layerswitcher-image.ol-collapsed\n{\ttop:3em;\n\ttransition: none;\n\t-webkit-transition: none;\n\n}\n\n.ol-layerswitcher-image .panel\n{\tlist-style: none;\n\tpadding: 0.25em;\n\tmargin:0;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-image .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-image.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher-image.ol-forceopen .panel\n{\tdisplay:block;\n\tclear:both;\n}\n\n.ol-layerswitcher-image button \n{\tbackground-color: white;\n\tbackground-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAACE1BMVEX///8A//8AgICA//8AVVVAQID///8rVVVJtttgv98nTmJ2xNgkW1ttyNsmWWZmzNZYxM4gWGgeU2JmzNNr0N1Rwc0eU2VXxdEhV2JqytQeVmMhVmNoydUfVGUgVGQfVGQfVmVqy9hqy9dWw9AfVWRpydVry9YhVmMgVGNUw9BrytchVWRexdGw294gVWQgVmUhVWPd4N6HoaZsy9cfVmQgVGRrytZsy9cgVWQgVWMgVWRsy9YfVWNsy9YgVWVty9YgVWVry9UgVWRsy9Zsy9UfVWRsy9YgVWVty9YgVWRty9Vsy9aM09sgVWRTws/AzM0gVWRtzNYgVWRuy9Zsy9cgVWRGcHxty9bb5ORbxdEgVWRty9bn6OZTws9mydRfxtLX3Nva5eRix9NFcXxOd4JPeINQeIMiVmVUws9Vws9Vw9BXw9BYxNBaxNBbxNBcxdJexdElWWgmWmhjyNRlx9IqXGtoipNpytVqytVryNNrytZsjZUuX210k5t1y9R2zNR3y9V4lp57zth9zdaAnKOGoaeK0NiNpquV09mesrag1tuitbmj1tuj19uktrqr2d2svcCu2d2xwMO63N+7x8nA3uDC3uDFz9DK4eHL4eLN4eIyYnDX5OM5Z3Tb397e4uDf4uHf5uXi5ePi5+Xj5+Xk5+Xm5+Xm6OY6aHXQ19fT4+NfhI1Ww89gx9Nhx9Nsy9ZWw9Dpj2abAAAAWnRSTlMAAQICAwQEBgcIDQ0ODhQZGiAiIyYpKywvNTs+QklPUlNUWWJjaGt0dnd+hIWFh4mNjZCSm6CpsbW2t7nDzNDT1dje5efr7PHy9PT29/j4+Pn5+vr8/f39/f6DPtKwAAABTklEQVR4Xr3QVWPbMBSAUTVFZmZmhhSXMjNvkhwqMzMzMzPDeD+xASvObKePPa+ffHVl8PlsnE0+qPpBuQjVJjno6pZpSKXYl7/bZyFaQxhf98hHDKEppwdWIW1frFnrxSOWHFfWesSEWC6R/P4zOFrix3TzDFLlXRTR8c0fEEJ1/itpo7SVO9Jdr1DVxZ0USyjZsEY5vZfiiAC0UoTGOrm9PZLuRl8X+Dq1HQtoFbJZbv61i+Poblh/97TC7n0neCcK0ETNUrz1/xPHf+DNAW9Ac6t8O8WH3Vp98f5lCaYKAOFZMLyHL4Y0fe319idMNgMMp+zWVSybUed/+/h7I4wRAG1W6XDy4XmjR9HnzvDRZXUAYDFOhC1S/Hh+fIXxen+eO+AKqbs+wAo30zDTDvDxKoJN88sjUzDFAvBzEUGFsnADoIvAJzoh2BZ8sner+Ke/vwECuQAAAABJRU5ErkJggg==\");\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tfloat: right;\n\theight: 38px;\n\twidth: 38px;\n\tdisplay:none;\n}\n\n.ol-layerswitcher-image.ol-collapsed button\n{\tdisplay:block;\n\tposition:relative;\n}\n\n.ol-layerswitcher-image li\n{\tborder-radius: 4px;\n\tborder: 3px solid transparent;\n\t-webkit-box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);\n\tdisplay: inline-block;\n\twidth: 64px;\n\theight: 64px;\n\tmargin:2px;\n\tposition: relative;\n\tbackground-color: #fff;\n\toverflow: hidden;\n\tvertical-align: middle;\n\tcursor:pointer;\n}\n.ol-layerswitcher-image li.ol-layer-hidden\n{\topacity: 0.5;\n\tborder-color:#555;\n}\n.ol-layerswitcher-image li.ol-header\n{\tdisplay: none;\n}\n\n.ol-layerswitcher-image li img\n{\tposition:absolute;\n\tmax-width:100%;\n}\n.ol-layerswitcher-image li.select\n{\tborder: 3px solid red;\n}\n\n.ol-layerswitcher-image li p\n{\tdisplay:none;\n}\n.ol-layerswitcher-image li:hover p\n{\tbackground-color: rgba(0, 0, 0, 0.5);\n\tcolor: #fff;\n\tbottom: 0;\n\tdisplay: block;\n\tleft: 0;\n\tmargin: 0;\n\toverflow: hidden;\n\tposition: absolute;\n\tright: 0;\n\ttext-align: center;\n\theight:1.2em;\n\tfont-family:Verdana, Geneva, sans-serif;\n\tfont-size:0.8em;\n}\n.ol-control.ol-legend {\n  bottom: .5em;\n  left: .5em;\n  z-index: 1;\n  max-height: 90%;\n  max-width: 90%;\n  overflow-x: hidden;\n  overflow-y: auto;\n}\n.ol-control.ol-legend button {\n  position: relative;\n  display: none;\n}\n.ol-control.ol-legend.ol-collapsed button {\n    display: block;\n}\n.ol-control.ol-legend.ol-uncollapsible button {\n  display: none;\n}\n\n.ol-control.ol-legend button.ol-closebox {\n  display: block;\n  position: absolute;\n  top: 0;\n  right: 0;\n  background: none;\n  cursor: pointer;\n  z-index: 1;\n}\n.ol-control.ol-legend.ol-uncollapsible button.ol-closebox,\n.ol-control.ol-legend.ol-collapsed button.ol-closebox {\n  display: none;\n}\n.ol-control.ol-legend button.ol-closebox:before {\n  content: \"\\D7\";\n  background: none;\n  color: rgba(0,60,136,.5);\n  font-size: 1.3em;\n}\n.ol-control.ol-legend button.ol-closebox:hover:before {\n  color: rgba(0,60,136,1);\n}\n.ol-control.ol-legend.ol-uncollapsible .ol-legendImg,\n.ol-control.ol-legend .ol-legendImg {\n  position: absolute;\n  z-index: -1;\n}\n.ol-control.ol-legend.ol-collapsed .ol-legendImg {\n  display: none;\n}\n.ol-control.ol-legend.ol-uncollapsible .ol-legendImg {\n  display: block  ;\n}\n\n.ol-control.ol-legend .ol-legendImg canvas {\n  height: 100%;;\n}\n\n.ol-control.ol-legend > button:first-child:before,\n.ol-control.ol-legend > button:first-child:after {\n  content: \"\";\n  position: absolute;\n  top: .25em;\n  left: .2em;\n  width: .2em;\n  height: .2em;\n  background-color: currentColor;\n  -webkit-box-shadow: 0 0.35em, 0 0.7em;\n          box-shadow: 0 0.35em, 0 0.7em;\n}\n.ol-control.ol-legend button:first-child:after {\n  top: .27em;\n  left: .55em;\n  height: .15em;\n  width: .6em;\n}\n\n.ol-legend ul {\n  min-width: 1.5em;\n  min-height: 1.5em;\n  margin: 0 0 2px;\n  padding: 0;\n  list-style: none;\n  display: inline-block;\n}\n.ol-control.ol-legend.ol-collapsed ul {\n  display: none;\n}\n.ol-control.ol-legend.ol-uncollapsible ul {\n  display: block;\n}\n.ol-legend ul li.ol-title {\n  text-align: center;\n  font-weight: bold;\n}\n.ol-legend ul li {\n  overflow: hidden;\n  padding: 0 .5em;\n}\n.ol-legend ul li div {\n    display: inline-block;\n  vertical-align: middle;\n}\n\n.ol-control.ol-legend .ol-legend {\n  display: inline-block;\n}\n.ol-control.ol-legend.ol-collapsed .ol-legend {\n  display: none;\n}\n.ol-notification {\n  width: 150%;\n  bottom: 0;\n  border: 0;\n  background: none;\n  margin: 0;\n  padding: 0;\n}\n.ol-notification > div,\n.ol-notification > div:hover {\n  position: absolute;\n  background-color: rgba(0,0,0,.8);\n  color: #fff;\n  bottom: 0;\n  left: 33.33%;\n  max-width: calc(66% - 4em);\n  min-width: 5em;\n  max-height: 5em;\n  min-height: 1em;\n  border-radius: 4px 4px 0 0;\n  padding: .2em .5em;\n  text-align: center;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  -webkit-transition: .3s;\n  transition: .3s;\n  opacity: 1;\n}\n.ol-notification.ol-collapsed > div {\n  bottom: -5em;\n  opacity: 0;\n}\n\n.ol-notification a {\n  color: #9cf;\n  cursor: pointer;\n}\n\n.ol-overlay\n{\tposition: absolute;\n\ttop: 0;\n    left: 0;\n\twidth:100%;\n\theight: 100%;\n    background-color: rgba(0,0,0,0.4);\n    padding: 1em;\n    color: #fff;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n\tz-index: 1;\n\topacity: 0;\n\tdisplay: none;\n\tcursor: default;\n\toverflow: hidden;\n\t-webkit-transition: all 0.5s;\n\ttransition: all 0.5s;\n}\n\n.ol-overlay.slide-up\n{\ttransform: translateY(100%);\n\t-webkit-transform: translateY(100%);\n}\n.ol-overlay.slide-down\n{\t-webkit-transform: translateY(-100%);\n\ttransform: translateY(-100%);\n}\n.ol-overlay.slide-left\n{\t-webkit-transform: translateX(-100%);\n\ttransform: translateX(-100%);\n}\n.ol-overlay.slide-right\n{\t-webkit-transform: translateX(100%);\n\ttransform: translateX(100%);\n}\n.ol-overlay.zoom\n{\ttop: 50%;\n    left: 50%;\n\topacity:0.5;\n\t-webkit-transform: translate(-50%,-50%) scale(0);\n\ttransform: translate(-50%,-50%) scale(0);\n}\n.ol-overlay.zoomout\n{\t-webkit-transform: scale(3);\n\ttransform: scale(3);\n}\n.ol-overlay.zoomrotate\n{\ttop: 50%;\n    left: 50%;\n\topacity:0.5;\n\t-webkit-transform: translate(-50%,-50%) scale(0) rotate(360deg);\n\ttransform: translate(-50%,-50%) scale(0) rotate(360deg);\n}\n.ol-overlay.stretch\n{\ttop: 50%;\n    left: 50%;\n\topacity:0.5;\n\t-webkit-transform: translate(-50%,-50%) scaleX(0);\n\ttransform: translate(-50%,-50%) scaleX(0) ;\n}\n.ol-overlay.stretchy\n{\ttop: 50%;\n    left: 50%;\n\topacity:0.5;\n\t-webkit-transform: translate(-50%,-50%) scaleY(0);\n\ttransform: translate(-50%,-50%) scaleY(0) ;\n}\n.ol-overlay.wipe\n{\topacity: 1;\n\t/* clip: must be set programmatically */\n\t/* clip-path: use % but not crossplatform (IE) */\n}\n.ol-overlay.flip\n{\t-webkit-transform: perspective(600px) rotateY(180deg);\n\ttransform: perspective(600px) rotateY(180deg);\n}\n.ol-overlay.card\n{\topacity: 0.5;\n\t-webkit-transform: translate(-80%, 100%) rotate(-0.5turn);\n\ttransform: translate(-80%, 100%) rotate(-0.5turn);\n}\n.ol-overlay.book\n{\t-webkit-transform: perspective(600px) rotateY(-180deg) scaleX(0.6);\n\ttransform: perspective(600px) rotateY(-180deg) scaleX(0.6) ;\n\t-webkit-transform-origin: 10% 50%;\n\ttransform-origin: 10% 50%;\n}\n.ol-overlay.book.visible\n{\t-webkit-transform-origin: 10% 50%;\n\ttransform-origin: 10% 50%;\n}\n\n.ol-overlay.ol-visible\n{\topacity:1;\n\ttop: 0;\n    left: 0;\n    right: 0;\n    bottom: 0;\n\t-webkit-transform: none;\n\ttransform: none;\n}\n\n.ol-overlay .ol-closebox\n{\tposition: absolute;\n\ttop: 1em;\n\tright: 1em;\n\twidth: 1em;\n\theight: 1em;\n\tcursor: pointer;\n\tz-index:1;\n}\n.ol-overlay .ol-closebox:before\n{\tcontent: \"\\274C\";\n\tdisplay: block;\n    text-align: center;\n    vertical-align: middle;\n}\n\n.ol-control.ol-overview\n{\tposition: absolute;\n\tleft: 0.5em;\n\ttext-align: left;\n\tbottom: 0.5em;\n}\n\n.ol-control.ol-overview .panel\n{\tdisplay:block;\n\twidth:150px;\n\theight:150px;\n\tmargin:2px;\n\tbackground-color:#fff;\n\tborder:1px solid #369;\n\tcursor: pointer;\n}\n\n.ol-overview:not(.ol-collapsed) button\n{\tposition:absolute;\n\tbottom:2px;\n\tleft:2px;\n\tz-index:2;\n}\n\n.ol-control.ol-overview.ol-collapsed .panel\n{\tdisplay:none;\n}\n\n.ol-overview.ol-collapsed button:before\n{\tcontent:'\\BB';\n}\n.ol-overview button:before\n{\tcontent:'\\AB';\n}\n\n\n.ol-control-right.ol-overview\n{\tleft: auto;\n\tright: 0.5em;\n}\n.ol-control-right.ol-overview:not(.ol-collapsed) button\n{\tleft:auto;\n\tright:2px;\n}\n.ol-control-right.ol-overview.ol-collapsed button:before\n{\tcontent:'\\AB';\n}\n.ol-control-right.ol-overview button:before\n{\tcontent:'\\BB';\n}\n\n.ol-control-top.ol-overview\n{\tbottom: auto;\n\ttop: 5em;\n}\n.ol-control-top.ol-overview:not(.ol-collapsed) button\n{\tbottom:auto;\n\ttop:2px;\n}\n\n.ol-permalink\n{\tposition: absolute;\n\ttop:0.5em;\n\tright: 2.5em;\n}\n.ol-touch .ol-permalink\n{\tright: 3em;\n}\n\n.ol-permalink button\n{\tbackground-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AcFBjYE1ZK03gAAAUlJREFUOMuVk71KA1EQhc/NaiP+gCRpFHwGBSFlCrFVfAsbwSJCBMv06QIGJOBziI3EYAgkjU8gIloIAasIn4WzMqx34zrN7J6de+6ZmbNSgQDSfADcATPgHbgCyvonSYv8KEzWdofegH3gwmG9Ikq67sAESFzNueHThTyiEIKAmr2OJCUhhO30Aou+5aUQU2Ik65K2JC1KegohPGfUBkmvksqShnntHEcGOs60NXHfjmKz6czZTsNqbhzW+muwY2ATWAWawCOwBgxcTfvnvCPxKx4Cy5bPgBWgauRpdL2ImNlGhp3MabETm8mh94nDk4yCNE5/KTGg7xxbyhYAG0AN2AEqURIDZ0a0Fxn+LXAPXDpzRqMk6cOedz1ubdYl1b6NHgZRJe72nuu/CdSBl+yKi/zZlTnbaeXOJIesClwDU+ATeEhtX5TkCwAWUyAsHH1QAAAAAElFTkSuQmCC');\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n}\n.ol-control.ol-profil {\n  position: absolute;\n\ttop: 0.5em;\n\tright: 3em;\n\ttext-align: right;\n\toverflow: hidden;\n}\n.ol-profil .ol-inner  {\n  position: relative;\n\tpadding: 0.5em;\n\tfont-size: 0.8em;\n}\n.ol-control.ol-profil .ol-inner {\n  display: block;\n\tbackground-color: rgba(255,255,255,0.7);\n\tmargin: 2.3em 2px 2px;\n}\n.ol-control.ol-profil.ol-collapsed .ol-inner {\n  display: none;\n}\n\n.ol-profil canvas {\n  display: block;\n}\n.ol-profil button {\n  display: block;\n\tposition: absolute;\n\tright: 2px;\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tbackground-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAPCAYAAAALWoRrAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgXCR4dn7j9TAAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAz0lEQVQ4y7WTMU4CURRFz0xIpLUBEhdAY2tJYW1jaWlsXYVxDWyBhWCFCYugYgnDFPMOhTMJGf3AwHiqn/uTk5v/3gfAH6b0RH7sMiIe1Ts162z+q2lVVbd1XqijLuJk0zzP1/VxCGyApLgsy+HJphGx8DeFOm6L1bn6eVQaEW+m2amTRqx+1fkqKY2Ie0+zUx/U7WGYfNMsy57PmMMN8A1MWsWeUoPyivV8PWtPOzL7D+lYHfUtBXgHGLTCJfBxodD6k9Dsm8BLE17LobQ39nJC61aLVoVsAAAAAElFTkSuQmCC');\n}\n\n.ol-profil.ol-collapsed button {\n  position: static;\n}\n\n.ol-profil .ol-profilbar,\n.ol-profil .ol-profilcursor {\n  position:absolute;\n\tpointer-events: none;\n\twidth: 1px;\n\tdisplay: none;\n}\n.ol-profil .ol-profilcursor {\n  width: 0;\n\theight: 0;\n}\n.ol-profil .ol-profilcursor:before {\n  content:\"\";\n\tpointer-events: none;\n\tdisplay: block;\n\tmargin: -2px;\n\twidth:5px;\n\theight:5px;\n}\n.ol-profil .ol-profilbar,\n.ol-profil .ol-profilcursor:before {\n  background: red;\n}\n\n.ol-profil table {\n  text-align: center;\n  width: 100%;\n}\n\n.ol-profil table span {\n  display: block;\n}\n\n.ol-profilpopup {\n  background-color: rgba(255, 255, 255, 0.5);\n\tmargin: 0.5em;\n\tpadding: 0 0.5em;\n\tposition: absolute;\n\ttop:-1em;\n\twhite-space: nowrap;\n}\n.ol-profilpopup.ol-left {\n  right:0;\n}\n\n\n.ol-profil table td {\n  padding: 0 2px;\n}\n\n.ol-profil table .track-info {\n  display: table-row;\n}\n.ol-profil table .point-info {\n  display: none;\n}\n.ol-profil .over table .track-info {\n  display: none;\n}\n.ol-profil .over table .point-info {\n  display: table-row;\n}\n\n.ol-profil p {\n  text-align: center;\n\tmargin:0;\n}\n\n.ol-control.ol-routing {\n  top: 0.5em;\n  left: 3em;\n  max-height: 90%;\n  overflow-y: auto;\n}\n.ol-touch .ol-control.ol-routing {\n  left: 3.5em;\n}\n.ol-control.ol-routing.ol-searching {\n  opacity: .5;\n}\n\n.ol-control.ol-routing .ol-car,\n.ol-control.ol-routing > button {\n  position: relative;\n}\n.ol-control.ol-routing .ol-car:after,\n.ol-control.ol-routing > button:after {\n  content: \"\";\n  position: absolute;\n  width: .78em;\n  height: 0.6em;\n  border-radius: 40% 50% 0 0 / 50% 70% 0 0;\n  -webkit-box-shadow: inset 0 0 0 0.065em, -0.35em 0.14em 0 -0.09em, inset 0 -0.37em, inset -0.14em 0.005em;\n          box-shadow: inset 0 0 0 0.065em, -0.35em 0.14em 0 -0.09em, inset 0 -0.37em, inset -0.14em 0.005em;\n  clip: rect(0 1em .5em -1em);\n  top: .35em;\n  left: .4em;\n}\n.ol-control.ol-routing .ol-car:before,\n.ol-control.ol-routing > button:before {\n  content: \"\";\n  position: absolute;\n  width: .28em;\n  height: .28em;\n  border-radius: 50%;\n  -webkit-box-shadow: inset 0 0 0 1em, 0.65em 0;\n          box-shadow: inset 0 0 0 1em, 0.65em 0;\n  top: 0.73em;\n  left: .20em;\n}\n.ol-control.ol-routing .ol-pedestrian:after {\n  content: \"\";\n  position: absolute;\n  width: .3em;\n  height: .4em;\n  top: .25em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  -webkit-box-shadow: inset 0.3em 0, 0.1em 0.5em 0 -0.1em, -0.1em 0.5em 0 -0.1em, 0.25em 0.1em 0 -0.1em, -0.25em 0.1em 0 -0.1em;\n          box-shadow: inset 0.3em 0, 0.1em 0.5em 0 -0.1em, -0.1em 0.5em 0 -0.1em, 0.25em 0.1em 0 -0.1em, -0.25em 0.1em 0 -0.1em;\n  border-top: .2em solid transparent;\n}\n.ol-control.ol-routing .ol-pedestrian:before {\n  content: \"\";\n  position: absolute;\n  width: .3em;\n  height: .3em;\n  top: .1em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  border-radius: 50%;\n  background-color: currentColor;\n}\n\n.ol-control.ol-routing.ol-collapsed .content {\n  display: none;\n}\n\n.ol-routing .ol-search.ol-collapsed ul {\n\tdisplay: none;\n}\n.ol-routing .ol-search ul .copy {\n  display: none;\n}\n.ol-routing .ol-search ul.history {\n  display: none;\n}\n.ol-routing .content > div > * {\n  display: inline-block;\n  vertical-align: top;\n}\n.ol-routing .ol-result ul {\n  list-style: none;\n  display: block;\n}\n.ol-routing .ol-result li {\n  position: relative;\n  min-height: 1.65em;\n}\n.ol-routing .ol-result li i {\n  display: block;\n  font-size: .8em;\n  font-weight: bold;\n}\n\n.ol-routing .ol-result li:before {\n  content: \"\";\n  border: 5px solid transparent;\n  position: absolute;\n  left: -1.75em;\n  border-bottom-color: #369;\n  border-width: .6em .4em .6em;\n  -webkit-transform-origin: 50% 125%;\n          transform-origin: 50% 125%;\n  -webkit-box-shadow: 0 0.65em 0 -0.25em #369;\n          box-shadow: 0 0.65em 0 -0.25em #369;\n  top: -.8em;\n}\n.ol-routing .ol-result li:after {\n  content: \"\";\n  position: absolute;\n  width: 0.3em;\n  height: .6em;\n  left: -1.5em;\n  background: #369;\n  top: .6em;\n}\n.ol-routing .ol-result li.R:before {\n  -webkit-transform: rotate(90deg);\n          transform: rotate(90deg);\n}\n.ol-routing .ol-result li.FR:before {\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n}\n.ol-routing .ol-result li.L:before {\n  -webkit-transform: rotate(-90deg);\n          transform: rotate(-90deg);\n}\n.ol-routing .ol-result li.FL:before {\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n\n.ol-routing .content > i {\n  vertical-align: middle;\n}\n.ol-routing .ol-button,\n.ol-routing .ol-button:focus,\n.ol-routing .ol-pedestrian,\n.ol-routing .ol-car {\n  font-size: 1.1em;\n  position: relative;\n  display: inline-block;\n  width: 1.4em;\n  height: 1.4em;\n  color: rgba(0,60,136,1);\n  background-color: transparent;\n  margin: 0 .1em;\n  opacity: .5;\n  vertical-align: middle;\n  outline: none;\n  cursor: pointer;\n}\n.ol-routing .ol-button:hover,\n.ol-routing .ol-button.selected,\n.ol-routing i.selected {\n  opacity: 1;\n  background: transparent;\n}\n\n.ol-viewport .ol-scale {\n\tleft: .5em;\n\tbottom: 2.5em;\n\ttext-align: center;\n\t-webkit-transform: scaleX(.8);\n\t-webkit-transform-origin: 0 0;\n\ttransform: scaleX(.8);\n\ttransform-origin: 0 0;\n}\n.ol-viewport .ol-scale input {\n\tbackground: none;\n    border: 0;\n    width: 8em;\n    text-align: center;\n}\n\n.ol-search{\n  top: 0.5em;\n  left: 3em;\n}\n.ol-touch .ol-search {\n  left: 3.5em;\n}\n.ol-search button {\n  background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAABPUlEQVQoU41SwXHCQAzUHh58eoUOIBWEDkI6oAToIKkg7iAuwakgpAIowXRACcnrzp6BzchjMx4wE/S6kW5XK60gvQghzJIkmVoqSZI9gJ9+/fINS5Cc1HX9QXIlIr/tpwcRyb33b7cIGnAIYQdg4pxbjcfj0nJ1Xc+Px+PGObdN03Q9RIAQwgpAnqbp7FKmjQGgJLlU1d2V7BjjRkQO3vvXIXarkyxVNbsCm2QR2Q0V7XOMMReRmfd+OQQubN6hYgs22ZtbnRcAtiRfLueqqmpJ8ovko6oeBq0KIWQA3gFkzrlmMafTaUEyI/mpqmbhVTRWWbRdbClPbeobQNES5KPRqOxs7DBn8K1DsAOKMZYApiTXqlrcDe4d0XN7jWeCfzt351tVle2iGalTcBd4gGDvvZ/fDe4RmCOFLe8Pr7mvEP2N9PQAAAAASUVORK5CYII=\");\n  background-repeat: no-repeat;\n  background-position: center center;\n  background-size: 1em;\n  top: 2px;\n  left: 2px;\n  float: left;\n}\n.ol-search input {\n  display: inline-block;\n  border: 0;\n  margin: 1px 1px 1px 2px;\n  font-size: 1.14em;\n  padding-left: 0.3em;\n  height: 1.375em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-transition: all 0.1s;\n  transition: all 0.1s;\n}\n.ol-touch .ol-search input,\n.ol-touch .ol-search ul {\n  font-size: 1.5em;\n}\n.ol-control.ol-search.ol-collapsed > * {\n  display: none;\n}\n.ol-control.ol-search.ol-collapsed > button {\n  display: block;\n}\n\n.ol-search ul {\n  list-style: none;\n  padding: 0;\n  margin: 0;\n  display: block;\n  clear: both;\n  cursor: pointer;\n  max-width: 17em;\n  overflow-x: hidden;\n}\n/*\n.ol-control.ol-search ul {\n  position: absolute;\n  background: #fff;\n  box-shadow: 5px 5px 5px rgba(0,0,0,0.5);\n}\n*/\n.ol-control.ol-search ul li {\n  padding: 0.1em 0.5em;\n}\n.ol-search ul li {\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.ol-search ul li.select,\n.ol-search ul li:hover {\n  background-color: rgba(0,60,136,.5);\n  color: #fff;\n}\n.ol-search ul li img {\n  float: left;\n  max-height: 2em;\n}\n.ol-search li.copy {\n    background: rgba(0,0,0,.5);\n  color: #fff;\n}\n.ol-search li.copy a {\n  color: #fff;\n  text-decoration: none;\n}\n\n.ol-search.searching:before {\n    content: '';\n    position: absolute;\n    height: 3px;\n    left: 0;\n    top: 1.6em;\n    -webkit-animation: pulse .5s infinite alternate linear;\n            animation: pulse .5s infinite alternate linear;\n    background: red;\n}\n\n@-webkit-keyframes pulse {\n  0% { left:0; right: 95%; }\n  50% {\tleft: 30%; right: 30%; }\n  100% {\tleft: 95%; right: 0; }\n}\n\n@keyframes pulse {\n  0% { left:0; right: 95%; }\n  50% {\tleft: 30%; right: 30%; }\n  100% {\tleft: 95%; right: 0; }\n}\n\n\n.ol-search.IGNF-parcelle input {\n  width: 13.5em;\n}\n.ol-search.IGNF-parcelle input:-moz-read-only {\n  background: #ccc;\n  opacity: .8;\n}\n.ol-search.IGNF-parcelle input:read-only {\n  background: #ccc;\n  opacity: .8;\n}\n.ol-search.IGNF-parcelle.ol-collapsed-list > ul.autocomplete {\n  display: none;\n}\n\n.ol-search.IGNF-parcelle label {\n  display: block;\n  clear: both;\n}\n.ol-search.IGNF-parcelle > div * {\n  width: 5em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  display: inline-block;\n  margin: .1em;\n  font-size: 1em;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page {\n  margin-top:.5em;\n  width:100%;\n  text-align: center;\n  display: none;\n}\n.ol-search.IGNF-parcelle.ol-collapsed-list ul.autocomplete-parcelle,\n.ol-search.IGNF-parcelle.ol-collapsed-list ul.autocomplete-page {\n  display: block;\n}\n.ol-search.IGNF-parcelle.ol-collapsed ul.autocomplete-page,\n.ol-search.IGNF-parcelle.ol-collapsed ul.autocomplete-parcelle,\n.ol-search.IGNF-parcelle ul.autocomplete-parcelle {\n  display: none;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page li {\n  display: inline-block;\n  color: #fff;\n  background: rgba(0,60,136,.5);\n  border-radius: 50%;\n  width: 1.3em;\n  height: 1.3em;\n  padding: .1em;\n  margin: 0 .1em;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page li.selected {\n  background: rgba(0,60,136,1);\n}\n\n/* GPS */\n.ol-searchgps input.search {\n  display: none;\n}\n.ol-control.ol-searchgps > button:first-child {\n  background-image: none;\n}\n.ol-control.ol-searchgps > button:first-child:before {\n  content: \"x/y\";\n  display: block;\n  -webkit-transform: scaleX(.8);\n          transform: scaleX(.8);\n}\n.ol-control.ol-searchgps .ol-latitude,\n.ol-control.ol-searchgps .ol-longitude {\n  clear: both;\n}\n.ol-control.ol-searchgps .ol-latitude label,\n.ol-control.ol-searchgps .ol-longitude label {\n  width: 5.5em;\n  display: inline-block;\n  text-align: right;\n  -webkit-transform: scaleX(.8);\n          transform: scaleX(.8);\n  margin: 0 -.8em 0 0;\n  -webkit-transform-origin: 0 0;\n          transform-origin: 0 0;\n}\n.ol-control.ol-searchgps .ol-latitude input,\n.ol-control.ol-searchgps .ol-longitude input {\n  max-width: 10em;\n}\n\n.ol-control.ol-searchgps .ol-switch {\n  cursor: pointer;\n  float: right;\n  margin: .5em;\n  font-size: .9em;\n}\n.ol-control.ol-searchgps .ol-switch input {\n  display: none;\n}\n.ol-control.ol-searchgps .ol-switch span {\n  color: rgba(0,60,136,.5);\n  position: relative;\n  cursor: pointer;\n  background-color: #ccc;\n  -webkit-transition: .4s;\n  transition: .4s;\n  width: 1.6em;\n  height: 1em;\n  display: inline-block;\n  border-radius: 1em;\n  font-size: 1.3em;\n  vertical-align: middle;\n  margin: 0 .2em;\n}\n.ol-control.ol-searchgps .ol-switch span:before {\n  position: absolute;\n  content: \"\";\n  height: 1em;\n  width: 1em;\n  left: 0;\n  top: 50%;\n  background-color: #fff;\n  -webkit-transition: .4s;\n  transition: .4s;\n  border-radius: 1em;\n  display: block;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n  border: 2px solid #ccc;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n.ol-control.ol-searchgps .ol-switch input:checked + span {\n  background-color: currentColor;\n}\n.ol-control.ol-searchgps .ol-switch input:checked + span:before {\n  -webkit-transform: translate(.6em,-50%);\n          transform: translate(.6em,-50%);\n  border-color: currentColor;\n}\n\n.ol-searchgps .ol-decimal{\n  display: inline-block;\n}\n.ol-searchgps .ol-dms,\n.ol-searchgps.ol-dms .ol-decimal {\n  display: none;\n  width: 3em;\n  text-align: right;\n}\n.ol-searchgps.ol-dms .ol-dms {\n  display: inline-block;\n}\n\n.ol-searchgps span.ol-dms {\n  width: auto;\n}\n.ol-searchgps.ol-control.ol-collapsed button.ol-geoloc {\n  display: none;\n}\n.ol-searchgps button.ol-geoloc {\n  top: 0;\n  float: right;\n  margin-right: 3px;\n  background-image: none;\n  position: relative;\n}\n.ol-searchgps button.ol-geoloc:before {\n  content:\"\";\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  width: .6em;\n  height: .6em;\n  border: .1em solid currentColor;\n  border-radius: 50%;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n}\n.ol-searchgps button.ol-geoloc:after {\n  content:\"\";\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  width: .2em;\n  height: .2em;\n  background-color: transparent;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n  -webkit-box-shadow: \n    .45em 0 currentColor, -.45em 0 currentColor, 0 -.45em currentColor, 0 .45em currentColor,\n    .25em 0 currentColor, -.25em 0 currentColor, 0 -.25em currentColor, 0 .25em currentColor;\n          box-shadow: \n    .45em 0 currentColor, -.45em 0 currentColor, 0 -.45em currentColor, 0 .45em currentColor,\n    .25em 0 currentColor, -.25em 0 currentColor, 0 -.25em currentColor, 0 .25em currentColor;\n}\n.ol-control.ol-select {\n  top: .5em;\n  left: 3em;\n}\n.ol-control.ol-select > button:before {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  width: .73em;\n  height: .73em;\n  background-color: transparent;\n  border: .12em solid currentColor;\n  border-radius: 100%;\n  top: .35em;\n  left: .35em;\n}\n.ol-control.ol-select > button:after {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  top: 1.1em;\n  left: 1em;\n  border-width: .08em .23em;\n  border-style: solid;\n  border-radius: .03em;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n  -webkit-box-shadow: -0.18em 0 0 -0.03em;\n          box-shadow: -0.18em 0 0 -0.03em;\n}\n.ol-select > div button {\n    width: auto;\n    padding: 0 .5em;\n    float: right;\n    font-weight: normal;\n}\n.ol-select .ol-delete {\n    width: 1.5em;\n  height: 1em;\n  vertical-align: middle;\n  display: inline-block;\n  position: relative;\n  cursor: pointer;\n}\n.ol-select .ol-delete:before {\n  content:'\\D7';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  width: 100%;\n  text-align: center;\n  font-weight: bold;\n}\n\n.ol-control.ol-select > div {\n  display: block;\n}\n.ol-control.ol-select.ol-collapsed > div {\n  display: none;\n}\n\n.ol-select ul {\n  list-style: none;\n  margin: 0;\n  padding: 0;\n}\n.ol-control.ol-select input[type=\"text\"]  {\n  width: 8em;\n}\n\n.ol-control.ol-select label  {\n  display: block;\n}\n\n.ol-select .ol-autocomplete {\n  display: inline;\n}\n.ol-select .ol-autocomplete ul {\n  position: absolute;\n  display: block;\n  background: #fff;\n  border: 1px solid #999;\n  min-width: 10em;\n  font-size: .85em;\n}\n.ol-select .ol-autocomplete ul li {\n  padding: 0 .5em;\n}\n.ol-select .ol-autocomplete ul li:hover {\n  color: #fff;\n  background: rgba(0,60,136,.5);\n}\n.ol-select ul.ol-hidden {\n  display: none;\n}\n.ol-control.ol-storymap {\n  top: .5em;\n  left: .5em;\n  bottom: .5em;\n  max-width: 35%;\n  border-radius: .5em;\n  position: absolute;\n  height: auto;\n}\n.ol-storymap {\n  overflow: hidden;\n  padding: 0;\n  height: 100%;\n  position: relative;\n  scroll-behavior: smooth;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.ol-storymap.ol-move {\n  scroll-behavior: unset;\n}\n.ol-storymap.ol-touch {\n  overflow-y: auto;\n}\n\n.ol-storymap .ol-scroll-top,\n.ol-storymap .ol-scroll-next {\n  position: relative;\n  min-height: 1em;\n  color: rgba(0,60,136,.5);\n}\n.ol-storymap .ol-scroll-top:before,\n.ol-storymap .ol-scroll-next:before {\n  content: \"\";\n  border: .3em solid currentColor;\n  border-radius: .3em;\n  border-color: transparent currentColor currentColor transparent;\n  width: .8em;\n  height: .8em;\n  display: block;\n  position: absolute;\n  left: 50%;\n  -webkit-transform: translateX(-50%) rotate(45deg);\n          transform: translateX(-50%) rotate(45deg);\n  -webkit-animation: ol-bounce-bottom 0.35s linear infinite alternate;\n          animation: ol-bounce-bottom 0.35s linear infinite alternate;\n  pointer-events: none;\n}\n.ol-storymap .ol-scroll-top:before {\n  border-color: currentColor transparent transparent currentColor;\n  -webkit-animation: ol-bounce-top 0.35s linear infinite alternate;\n          animation: ol-bounce-top 0.35s linear infinite alternate;\n}\n\n@-webkit-keyframes ol-bounce-top{\n  from {top: -.2em;}\n  to   {top: .5em;}\n}\n\n@keyframes ol-bounce-top{\n  from {top: -.2em;}\n  to   {top: .5em;}\n}\n@-webkit-keyframes ol-bounce-bottom{\n  from {bottom: -.2em;}\n  to   {bottom: .5em;}\n}\n@keyframes ol-bounce-bottom{\n  from {bottom: -.2em;}\n  to   {bottom: .5em;}\n}\n.ol-swipe\n{\tposition: absolute;\n\ttop: 50%;\n\tleft: 50%;\n\ttransform: translate(-50%, -50%);\n\t-webkit-transform: translate(-50%, -50%);\n}\n\n.ol-swipe:before\n{\tcontent: \"\";\n\tposition: absolute;\n\ttop: -5000px;\n\tbottom: -5000px;\n\tleft: 50%;\n\twidth: 4px;\n\tbackground: #fff;\n\tz-index:-1;\n\ttransform: translate(-2px, 0);\n\t-webkit-transform: translate(-2px, 0);\n}\n.ol-swipe.horizontal:before\n{\tleft: -5000px;\n\tright: -5000px;\n\ttop: 50%;\n\tbottom: auto;\n\twidth: auto;\n\theight: 4px;\n}\n\n.ol-swipe,\n.ol-swipe button\n{\tcursor: ew-resize;\n}\n.ol-swipe.horizontal,\n.ol-swipe.horizontal button\n{\tcursor: ns-resize;\n}\n\n.ol-swipe:after,\n.ol-swipe button:before,\n.ol-swipe button:after\n{\tcontent: \"\";\n\tposition: absolute;\n\ttop: 25%;\n\tbottom: 25%;\n\tleft: 50%;\n\twidth: 2px;\n\tbackground: rgba(255,255,255,0.8);\n\ttransform: translate(-1px, 0);\n\t-webkit-transform: translate(-1px, 0);\n}\n.ol-swipe button:after\n{\ttransform: translateX(5px);\n\t-webkit-transform: translateX(5px);\n}\n.ol-swipe button:before\n{\ttransform: translateX(-7px);\n\t-webkit-transform: translateX(-7px);\n}\n\n.ol-control.ol-timeline {\n  bottom: 0;\n  left: 0;\n  right: 0;\n  -webkit-transition: .3s;\n  transition: .3s;\n}\n.ol-control.ol-timeline.ol-collapsed {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.ol-timeline {\n  overflow: hidden;\n  padding: 2px 0 0;\n}\n.ol-timeline .ol-scroll {\n  overflow: hidden;\n  padding: 0;\n  scroll-behavior: smooth;\n  line-height: 1em;\n}\n.ol-timeline .ol-scroll.ol-move {\n  scroll-behavior: unset;\n}\n.ol-timeline.ol-touch .ol-scroll{\n  overflow-x: auto;\n}\n\n.ol-timeline .ol-scroll {\n  height: 6em;\n}\n.ol-timeline.ol-hasbutton .ol-scroll {\n  margin-left: 1.5em;\n}\n.ol-timeline .ol-buttons {\n  display: none;\n  position: absolute;\n  top: 0;\n  background: rgba(255,255,255,.5);\n  width: 1.5em;\n  bottom: 0;\n  left: 0;\n  z-index: 10;\n}\n.ol-timeline.ol-hasbutton .ol-buttons {\n  display: block;\n}\n.ol-timeline .ol-buttons button {\n  font-size: 1em;\n  margin: 1px;\n  position: relative;\n}\n.ol-timeline .ol-buttons .ol-zoom-in:before,\n.ol-timeline .ol-buttons .ol-zoom-out:before {\n  content: \"+\";\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-timeline .ol-buttons .ol-zoom-out:before{\n  content: '\\2212';\n}\n\n.ol-timeline .ol-scroll > div {\n  height: 100%;\n  position: relative;\n}\n\n.ol-timeline .ol-scroll .ol-times {\n  background: rgba(255,255,255,.5);\n  height: 1em;\n  bottom: 0;\n  position: absolute;\n  left: -200px;\n  right: -200px;\n}\n.ol-timeline .ol-scroll .ol-time {\n  position: absolute;\n  font-size: .7em;\n  color: #999;\n  bottom: 0;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-timeline .ol-scroll .ol-time.ol-year {\n  color: #666;\n  z-index: 1;\n}\n.ol-timeline .ol-scroll .ol-time:before {\n  content: \"\";\n  position: absolute;\n  bottom: 1.2em;\n  left: 50%;\n  height: 500px;\n  border-left: 1px solid currentColor;\n}\n\n.ol-timeline .ol-scroll .ol-features {\n  position: absolute;\n  top: 0;\n  bottom: 1em;\n  left: -200px;\n  right: -400px;\n  margin: 0 0 0 200px;\n  overflow: hidden;\n}\n\n.ol-timeline .ol-scroll .ol-feature {\n  position: absolute;\n  font-size: .7em;\n  color: #999;\n  top: 0;\n  background: #fff;\n  max-width: 3em;\n  max-height: 2.4em;\n  min-height: 1em;\n  line-height: 1.2em;\n  border: 1px solid #ccc;\n  overflow: hidden;\n  padding: 0 .5em 0 0;\n  -webkit-transition: all .3s;\n  transition: all .3s;\n  cursor: pointer;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n\n.ol-timeline.ol-zoomhover .ol-scroll .ol-feature:hover,\n.ol-timeline.ol-zoomhover .ol-scroll .ol-feature.ol-select {\n  z-index: 1;\n  -webkit-transform: scale(1.2);\n          transform: scale(1.2);\n  background: #eee;\n  /* max-width: 14em!important; */\n}\n\n/* Center */\n.ol-timeline .ol-center-date {\n  display: none;\n  position: absolute;\n  left: 50%;\n  height: 100%;\n  width: 2px;\n  bottom: 0;\n  z-index: 2;\n  pointer-events: none;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  background-color: #f00;\n  opacity: .4;\n}\n.ol-timeline.ol-hasbutton .ol-center-date {\n  left: calc(50% + .75em);\n}\n\n/* Show center */ \n.ol-timeline.ol-pointer .ol-center-date {\n  display: block;\n}\n.ol-timeline.ol-pointer .ol-center-date:before, \n.ol-timeline.ol-pointer .ol-center-date:after {\n  content: '';\n  border: 0.3em solid transparent;\n  border-width: .3em .25em;\n  position: absolute;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-timeline.ol-pointer .ol-center-date:before {\n  border-top-color: #f00;\n  top: 0;\n}\n.ol-timeline.ol-pointer .ol-center-date:after {\n  border-bottom-color: #f00;\n  bottom: 0\n}\n\n/* show interval */\n.ol-timeline.ol-interval .ol-center-date {\n  display: block;\n  background-color: transparent;\n  border: 0 solid #000;\n  border-width: 0 10000px;\n  -webkit-box-sizing: content-box;\n          box-sizing: content-box;\n  opacity: .2;\n}\n.ol-target-overlay .ol-target \n{\tborder: 1px solid transparent;\n\t-webkit-box-shadow: 0 0 1px 1px #fff;\n\t        box-shadow: 0 0 1px 1px #fff;\n\tdisplay: block;\n\theight: 20px;\n\twidth: 0;\n}\n\n.ol-target-overlay .ol-target:after,\n.ol-target-overlay .ol-target:before\n{\tcontent:\"\";\n\tborder: 1px solid #369;\n\t-webkit-box-shadow: 0 0 1px 1px #fff;\n\t        box-shadow: 0 0 1px 1px #fff;\n\tdisplay: block;\n\twidth: 20px;\n\theight: 0;\n\tposition:absolute;\n\ttop:10px;\n\tleft:-10px;\n}\n.ol-target-overlay .ol-target:after\n{\t-webkit-box-shadow: none;\tbox-shadow: none;\n\theight: 20px;\n\twidth: 0;\n\ttop:0px;\n\tleft:0px;\n}\n\n.ol-overlay-container .ol-magnify \n{\tbackground: rgba(0,0,0, 0.5);\n\tborder:3px solid #369;\n\tborder-radius: 50%;\n\theight: 150px;\n\twidth: 150px;\n\toverflow: hidden;\n\t-webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);\n\tposition:relative;\n\tz-index:0;\n}\n\n.ol-overlay-container .ol-magnify:before \n{\tborder-radius: 50%;\n\t-webkit-box-shadow: 0 0 40px 2px rgba(0, 0, 0, 0.25) inset;\n\t        box-shadow: 0 0 40px 2px rgba(0, 0, 0, 0.25) inset;\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 100%;\n\tleft: 0;\n\tposition: absolute;\n\ttop: 0;\n\twidth: 100%;\n\tz-index: 1;\n}\n\n.ol-overlay-container .ol-magnify:after \n{\n\tborder-radius: 50%;\n\t-webkit-box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n\t        box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 0;\n\tleft: 23%;\n\tposition: absolute;\n\ttop: 20%;\n\twidth: 20%;\n\tz-index: 1;\n\ttransform: rotate(-40deg);\n\t-webkit-transform: rotate(-40deg);\n}\n/** popup animation using visible class\n*/\n.ol-popup.anim\n{\tvisibility: hidden;\n}\n\n/** No transform when visible \n*/\n.ol-popup.anim.visible\n{\tvisibility: visible;\n\ttransform: none;\n\t-webkit-transform: none;\n\t-webkit-animation: ol-popup_bounce 0.4s ease 1;\n\t        animation: ol-popup_bounce 0.4s ease 1;\n}\n\n@-webkit-keyframes ol-popup_bounce\n{\tfrom { -webkit-transform: scale(0); transform: scale(0); }\n\t50%  { -webkit-transform: scale(1.1); transform: scale(1.1) }\n\t80%  { -webkit-transform: scale(0.95); transform: scale(0.95) }\n\tto   { -webkit-transform: scale(1); transform: scale(1); }\n}\n\n@keyframes ol-popup_bounce\n{\tfrom { -webkit-transform: scale(0); transform: scale(0); }\n\t50%  { -webkit-transform: scale(1.1); transform: scale(1.1) }\n\t80%  { -webkit-transform: scale(0.95); transform: scale(0.95) }\n\tto   { -webkit-transform: scale(1); transform: scale(1); }\n}\n\n/* Hide to prevent flickering on animate */\n.ol-popup.anim.visible .anchor\n{\t/* animation: ol-popup_opacity 0.4s ease 1; */\n}\n@-webkit-keyframes ol-popup_opacity\n{\tfrom { visibility:hidden }\n\tto   { visibility:hidden }\n}\n@keyframes ol-popup_opacity\n{\tfrom { visibility:hidden }\n\tto   { visibility:hidden }\n}\n\n/** Transform Origin */\n.ol-popup.anim.ol-popup-bottom.ol-popup-left \n{\ttransform-origin:0 100%;\n\t-webkit-transform-origin:0 100%;\n}\n.ol-popup.anim.ol-popup-bottom.ol-popup-right \n{\ttransform-origin:100% 100%;\n\t-webkit-transform-origin:100% 100%;\n}\n.ol-popup.anim.ol-popup-bottom.ol-popup-center \n{\ttransform-origin:50% 100%;\n\t-webkit-transform-origin:50% 100%;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-left \n{\ttransform-origin:0 0;\n\t-webkit-transform-origin:0 0;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-right \n{\ttransform-origin:100% 0;\n\t-webkit-transform-origin:100% 0;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-center \n{\ttransform-origin:50% 0;\n\t-webkit-transform-origin:50% 0;\n}\n.ol-popup.anim.ol-popup-middle.ol-popup-left\n{\ttransform-origin:0 50%;\n\t-webkit-transform-origin:0 50%;\n}\n.ol-popup.anim.ol-popup-middle.ol-popup-right\n{\ttransform-origin:100% 50%;\n\t-webkit-transform-origin:100% 50%;\n}\n\n/** ol.popup */\n.ol-popup {\n  font-size:0.9em;\n  -webkit-user-select: none;  \n  -moz-user-select: none;    \n  -ms-user-select: none;      \n  user-select: none;\n}\n.ol-popup .content {\n  overflow:hidden;\n  cursor: default;\n  padding: 0.25em 0.5em;\n}\n.ol-popup.hasclosebox .content {\n  margin-right: 1.7em;\n}\n.ol-popup .content:after {\n  clear: both;\n  content: \"\";\n  display: block;\n  font-size: 0;\n  height: 0;\n}\n\n/** Anchor position */\n.ol-popup .anchor {\n  display:block;\n  width:0px;\n  height:0px;\n  background:red;\n  position:absolute;\n  margin: -11px 21px;\n    pointer-events: none;\n}\n.ol-popup .anchor:after,\n.ol-popup .anchor:before {\n  position:absolute;\n}\n.ol-popup-right .anchor:after,\n.ol-popup-right .anchor:before {\n  right:0;\n}\n.ol-popup-top .anchor { top:0; }\n.ol-popup-bottom .anchor { bottom:0; }\n.ol-popup-right .anchor { right:0; }\n.ol-popup-left .anchor { left:0; }\n.ol-popup-center .anchor { \n  left:50%; \n  margin-left: 0!important;\n}\n.ol-popup-middle .anchor { \n  top:50%; \n  margin-top: 0!important;\n}\n.ol-popup-center.ol-popup-middle .anchor { \n  display:none; \n}\n\n/** Fixed popup */\n.ol-popup.ol-fixed {\n  margin: 0!important;\n  top: .5em!important;\n  right: .5em!important;\n  left: auto!important;\n  bottom: auto!important;\n}\n.ol-popup.ol-fixed .anchor {\n  display: none;\n}\n.ol-popup.ol-fixed.anim {\n  -webkit-animation: none;\n  animation: none;\n}\n\n.ol-popup .ol-fix {\n  width: 1em;\n  height: .9em;\n  background: #fff;\n  position: relative;\n  float: right;\n  margin: .2em;\n  cursor: pointer;\n}\n.ol-popup .ol-fix:before {\n  content: \"\";\n  width: .8em;\n  height: .7em;\n  display: block;\n  border: .1em solid #666;\n      border-right-width: 0.1em;\n  border-right-width: .3em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  margin: .1em;\n}\n\n/** Add a shadow to the popup */\n.ol-popup.shadow {\n  -webkit-box-shadow: 2px 2px 2px 2px rgba(0,0,0,0.5);\n          box-shadow: 2px 2px 2px 2px rgba(0,0,0,0.5);\n}\n\n/** Close box */\n.ol-popup .closeBox {\n  background-color: rgba(0, 60, 136, 0.5);\n  color: #fff;\n  border: 0;\n  border-radius: 2px;\n  cursor: pointer;\n  float: right;\n  font-size: 0.9em;\n  font-weight: 700;\n  width: 1.4em;\n  height: 1.4em;\n  margin: 5px 5px 0 0;\n  padding: 0;\n  position: relative;\n  display:none;\n}\n.ol-popup.hasclosebox .closeBox {\n  display:block;\n}\n\n.ol-popup .closeBox:hover {\n  background-color: rgba(0, 60, 136, 0.7);\n}\n/* the X */\n.ol-popup .closeBox:after {\n  content: \"\\D7\";\n  font-size:1.5em;\n  top: 50%;\n  left: 0;\n  right: 0;\n  width: 100%;\n  text-align: center;\n  line-height: 1em;\n  margin: -0.5em 0;\n  position: absolute;\n}\n\n/** Modify touch poup */\n.ol-popup.modifytouch {\n  background-color: #eee;\n}\n.ol-popup.modifytouch .content {\t\n  padding: 0 0.25em;\n  font-size: 0.85em;\n  white-space: nowrap;\n}\n.ol-popup.modifytouch .content a {\n  text-decoration: none;\n}\n\n/** Tool tips popup*/\n.ol-popup.tooltips {\n  background-color: #ffa;\n}\n.ol-popup.tooltips .content{\n  padding: 0 0.25em;\n  font-size: 0.85em;\n  white-space: nowrap;\n}\n\n/** Default popup */\n.ol-popup.default {\n  background-color: #fff;\n  border:1px solid #69f;\n  border-radius: 5px;\n  margin:11px 0;\n}\n.ol-popup-left.default {\n  margin:11px 10px 11px -22px;\n}\n.ol-popup-right.default {\n  margin:11px -22px 11px 10px;\n}\n.ol-popup-middle.default {\n  margin:0 10px;\n}\n\n.ol-popup.default .anchor:after,\n.ol-popup.default .anchor:before {\n  content:\"\";\n  border-color: #69f transparent;\n  border-style: solid;\n  border-width: 11px;\n  margin: 0 -11px;\n}\n.ol-popup.default .anchor:after {\n  border-color: #fff transparent;\n  border-width: 9px;\n  margin: 3px -9px;\n}\n\n.ol-popup-top.default .anchor:before,\n.ol-popup-top.default .anchor:after {\n  border-top:0;\n  top:0;\n}\n\n.ol-popup-bottom.default .anchor:before,\n.ol-popup-bottom.default .anchor:after {\n  border-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-middle.default .anchor:before {\n  margin: -11px -33px;\n  border-color: transparent #69f;\n}\n.ol-popup-middle.default .anchor:after {\n  margin: -9px -30px;\n  border-color: transparent #fff;\n}\n.ol-popup-middle.ol-popup-left.default .anchor:before,\n.ol-popup-middle.ol-popup-left.default .anchor:after\n{\tborder-left:0;\n}\n.ol-popup-middle.ol-popup-right.default .anchor:before,\n.ol-popup-middle.ol-popup-right.default .anchor:after\n{\tborder-right:0;\n}\n\n/** Placemark popup */\n.ol-popup.placemark {\n  font-size: 15px;\t\n    color: #c00;\n    background-color: #fff;\n    border: .45em solid currentColor;\n    margin: .65em 0;\n    width: 2em;\n    height: 2em;\n    border-radius: 50%;\n    min-width: unset;\n    -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  -webkit-transform-origin: 50% 150%!important;\n          transform-origin: 50% 150%!important;\n}\n\n.ol-popup.placemark .content {\n  overflow: hidden;\n    cursor: default;\n    padding: 0;\n    text-align: center;\n    margin: -.1em;\n}\n.ol-popup.placemark .anchor {\n  margin: -.4em;\n}\n\n.ol-popup.placemark .anchor:before {\n    content: \"\";\n    margin: -.5em -.5em;\n    background: transparent;\n    width: 1em;\n    height: .5em;\n    border-radius: 50%;\n    -webkit-box-shadow: 0 1em 0.5em rgba(0,0,0,.5);\n            box-shadow: 0 1em 0.5em rgba(0,0,0,.5);\n}\n.ol-popup.placemark .anchor:after {\n    content: \"\";\n    border-color: currentColor transparent;\n    border-style: solid;\n    border-width: 1em .7em 0;\n    margin: -.75em -.7em;\n  bottom:0;\n}\n\n/** Placemark Shield */\n.ol-popup.placemark.shield {\n  border-radius: .2em;\n}\n\n.ol-popup.placemark.shield .anchor:after {\n    border-width: .8em 1em 0;\n    margin: -.7em -1em;\n}\n\n/** Placemark Blazon */\n.ol-popup.placemark.blazon {\n  border-radius: .2em;\n}\n\n/** Placemark Needle/Pushpin */\n.ol-popup.placemark.pushpin {\t\n  margin: 1.5em 0;\n  border-radius: 0;\n  border-color: currentColor transparent;\n  background: transparent!important;\n  -webkit-box-shadow: inset 2em 0 currentColor;\n          box-shadow: inset 2em 0 currentColor;\n  border-width: .3em .5em .5em;\n}\n.ol-popup.placemark.needle {\t\n  margin: 1.5em 0;\n}\n.ol-popup.placemark.pushpin .anchor,\n.ol-popup.placemark.needle .anchor {\n  margin: -1.5em;\n}\n.ol-popup.placemark.pushpin .anchor:after,\n.ol-popup.placemark.needle .anchor:after {\n  border-style: solid;\n    border-width: 2em .15em 0;\n    margin: -.55em -0.2em;\n    width: .1em;\n}\n.ol-popup.placemark.pushpin .anchor:before,\n.ol-popup.placemark.needle .anchor:before {\n    margin: -.75em -.5em;\n}\n\n/** Placemark Flag */\n.ol-popup.placemark.flagv {\n  border-radius: 0;\n  margin: 0 0 1.5em 1em;\n  border-color: transparent transparent transparent currentColor;\n  border-width: 1em 0 1em 2em;\n  width: 0;\n  height: 0;\n  background-color: transparent;\n  -webkit-transform-origin: 0% 150%!important;\n          transform-origin: 0% 150%!important;\n}\n.ol-popup.placemark.flagv .anchor {\n  margin: -2em;\n  margin-left: -1em !important;\n}\n\n.ol-popup.placemark.flag {\t\n  margin: 0 0 1.5em 1em;\n  border-radius: 0;\n  -webkit-transform-origin: 0% 150%!important;\n          transform-origin: 0% 150%!important;\n}\n.ol-popup.placemark.flag .anchor {\n  margin: -1.5em;\n}\n.ol-popup.placemark.flagv .anchor:after, \n.ol-popup.placemark.flag .anchor:after {\n  border-style: solid;\n  border-width: 2em .15em 0;\n  margin: -.55em -1em;\n  width: .1em;\n}\n.ol-popup.placemark.flagv .anchor:before,\n.ol-popup.placemark.flag .anchor:before {\n  margin: -.75em -1.25em;\n}\n\n.ol-popup.placemark.flag.finish {\n  background-image: \n    linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor), \n    linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor);\n  background-size: 1em 1em;\n  background-position: .5em 0, 0 .5em;\n  border-width: .25em;\n  margin: 0 0 1.7em .8em;\n}\n\n/** Black popup */\n.ol-popup.black .closeBox \n{\tbackground-color: rgba(0,0,0, 0.5);\n  border-radius: 5px;\n  color: #f80;\n}\n.ol-popup.black .closeBox:hover\n{\tbackground-color: rgba(0,0,0, 0.7);\n  color:#da2;\n}\n\n.ol-popup.black \n{\tbackground-color: rgba(0,0,0,0.6);\n  border-radius: 5px;\n  margin:20px 0;\n  color:#fff;\n}\n.ol-popup-left.black\n{\tmargin:20px 10px 20px -22px;\n}\n.ol-popup-right.black\n{\tmargin:20px -22px 20px 10px;\n}\n.ol-popup-middle.black \n{\tmargin:0 11px;\n}\n\n.ol-popup.black .anchor {\n  margin: -20px 11px;\n} \n.ol-popup.black .anchor:before \n{\tcontent:\"\";\n  border-color: rgba(0,0,0,0.6) transparent;\n  border-style: solid;\n  border-width: 20px 11px;\n}\n\n.ol-popup-top.black .anchor:before\n{\tborder-top:0;\n  top:0;\n}\n\n.ol-popup-bottom.black .anchor:before\n{\tborder-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-middle.black .anchor:before\n{\tmargin: -20px -22px;\n  border-color: transparent rgba(0,0,0,0.6);\n}\n.ol-popup-middle.ol-popup-left.black .anchor:before\n{\tborder-left:0;\n}\n.ol-popup-middle.ol-popup-right.black .anchor:before {\n  border-right:0;\n}\n\n.ol-popup-center.black .anchor:before {\n  margin: 0 -10px;\n}\n\n\n/** Green tips popup */\n.ol-popup.tips .closeBox {\n  background-color: #f00;\n  border-radius: 50%;\n  color: #fff;\n  width:1.2em;\n  height:1.2em;\n}\n.ol-popup.tips .closeBox:hover {\n  background-color: #f40;\n}\n\n.ol-popup.tips {\n  background-color: #cea;\n  border: 5px solid #ad7;\n  border-radius: 5px;\n  margin:20px 0;\n  color:#333;\n}\n.ol-popup-left.tips {\n  margin:20px 10px 20px -22px;\n}\n.ol-popup-right.tips {\n  margin:20px -22px 20px 10px;\n}\n.ol-popup-middle.tips {\n  margin:0 20px;\n}\n\n.ol-popup.tips .anchor {\n  margin: -25px 16px;\n} \n.ol-popup.tips .anchor:before {\n  content:\"\";\n  border-color: #ad7 transparent;\n  border-style: solid;\n  border-width: 20px 11px;\n}\n\n.ol-popup-top.tips .anchor:before {\n  border-top:0;\n  top:0;\n}\n.ol-popup-bottom.tips .anchor:before {\n  border-bottom:0;\n  bottom:0;\n}\n.ol-popup-center.tips .anchor:before {\n  border-width: 20px 6px;\n  margin: 0 -6px;\n}\n.ol-popup-left.tips .anchor:before {\n  border-left:0;\n  margin-left:0;\n}\n.ol-popup-right.tips .anchor:before {\n  border-right:0;\n  margin-right:0;\n}\n\n.ol-popup-middle.tips .anchor:before {\n  margin: -6px -41px;\n  border-color: transparent #ad7;\n  border-width:6px 20px;\n}\n.ol-popup-middle.ol-popup-left.tips .anchor:before {\n  border-left:0;\n}\n.ol-popup-middle.ol-popup-right.tips .anchor:before {\n  border-right:0;\n}\n\n/** Warning popup */\n.ol-popup.warning .closeBox {\n  background-color: #f00;\n  border-radius: 50%;\n  color: #fff;\n  font-size: 0.83em;\n}\n.ol-popup.warning .closeBox:hover {\n  background-color: #f40;\n}\n\n.ol-popup.warning {\n  background-color: #fd0;\n  border-radius: 3px;\n  border:4px dashed #f00;\n  margin:20px 0;\n  color:#900;\n  margin:28px 10px;\n}\n.ol-popup-left.warning {\n  margin-left:-22px;\n  margin-right:10px;\n}\n.ol-popup-right.warning {\n  margin-right:-22px;\n  margin-left:10px;\n}\n.ol-popup-middle.warning {\n  margin:0 22px;\n}\n\n.ol-popup.warning .anchor {\n  margin: -33px 7px;\n} \n.ol-popup.warning .anchor:before {\n  content:\"\";\n  border-color: #f00 transparent;\n  border-style: solid;\n  border-width: 30px 11px;\n}\n\n.ol-popup-top.warning .anchor:before {\n  border-top:0;\n  top:0;\n}\n.ol-popup-bottom.warning .anchor:before {\n  border-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-center.warning .anchor:before {\n  margin: 0 -21px;\n}\n.ol-popup-middle.warning .anchor:before {\n  margin: -10px -33px;\n  border-color: transparent #f00;\n  border-width:10px 22px;\n}\n.ol-popup-middle.ol-popup-left.warning .anchor:before {\n  border-left:0;\n}\n.ol-popup-middle.ol-popup-right.warning .anchor:before {\n  border-right:0;\n}\n\n.ol-popup .ol-popupfeature table {\n  width: 100%;\n}\n.ol-popup .ol-popupfeature tr:nth-child(2n+1) {\n  background-color: #eee;\n}\n.ol-popup .ol-popupfeature .ol-zoombt {\n  border: 0;\n  width: 2em;\n  height: 2em;\n  display: inline-block;\n  color: rgba(0,60,136,.5);\n  position: relative;\n  background: transparent;\n  outline: none;\n}\n.ol-popup .ol-popupfeature .ol-zoombt:before {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  width: 1em;\n  height: 1em;\n  background-color: transparent;\n  border: .17em solid currentColor;\n  border-radius: 100%;\n  top: .3em;\n  left: .3em;\n}\n.ol-popup .ol-popupfeature .ol-zoombt:after {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  top: 1.35em;\n  left: 1.15em;\n  border-width: .1em .3em;\n  border-style: solid;\n  border-radius: .03em;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n  -webkit-box-shadow: -0.2em 0 0 -0.04em;\n          box-shadow: -0.2em 0 0 -0.04em;\n}\n\n.ol-popup .ol-popupfeature .ol-count{\n  float: right;\n  margin: .25em 0;\n}\n.ol-popup .ol-popupfeature .ol-prev,\n.ol-popup .ol-popupfeature .ol-next {\n  border-style: solid;\n  border-color: transparent rgba(0,60,136,.5);\n  border-width: .5em 0 .5em .5em;\n  display: inline-block;\n  vertical-align: bottom;\n  margin: 0 .5em;\n  cursor: pointer;\n}\n.ol-popup .ol-popupfeature .ol-prev{\n  border-width: .5em .5em .5em 0;\n}\n\n.ol-popup.tooltips.black {\n  -webkit-transform: scaleY(1.3);\n          transform: scaleY(1.3);\n  padding: .2em .5em;\n  background-color: rgba(0,0,0, 0.5);\n}\n.ol-popup-middle.tooltips.black .anchor:before {\n  border-width: 5px 10px;\n  margin: -5px -21px;\n}", ""]);
+exports.push([module.i, ".ol-control i {\n\tcursor: default;\n}\n\n/* Bar style */\n.ol-control.ol-bar {\n  left: 50%;\n\tmin-height: 1em;\n\tmin-width: 1em;\n\tposition: absolute;\n\ttop: 0.5em;\n\ttransform: translate(-50%,0);\n\t-webkit-transform: translate(-50%,0);\n\twhite-space: nowrap;\n}\n\n/* Hide subbar when not inserted in a parent bar */\n.ol-control.ol-toggle .ol-option-bar {\n  display: none;\n}\n\n/* Default position for controls */\n.ol-control.ol-bar .ol-bar {\n  position: static;\n}\n.ol-control.ol-bar .ol-control {\n  position: relative;\n\ttop: auto;\n\tleft:auto;\n\tright:auto;\n\tbottom: auto;\n\tdisplay: inline-block;\n\tvertical-align: middle;\n\tbackground: none;\n\tpadding: 0;\n\tmargin: 0;\n\ttransform: none;\n\t-webkit-transform: none;\n}\n.ol-control.ol-bar .ol-bar {\n  position: static;\n}\n.ol-control.ol-bar .ol-control button {\n  margin:2px 1px;\n}\n\n/* Positionning */\n.ol-control.ol-bar.ol-left {\n  left: 0.5em;\n\ttop: 50%;\n\t-webkit-transform: translate(0px, -50%);\n\t        transform: translate(0px, -50%);\n}\n.ol-control.ol-bar.ol-left .ol-control {\n  display: block;\n}\n\n.ol-control.ol-bar.ol-right {\n  left: auto;\n\tright: 0.5em;\n\ttop: 50%;\n\t-webkit-transform: translate(0px, -50%);\n\t        transform: translate(0px, -50%);\n}\n.ol-control.ol-bar.ol-right .ol-control {\n  display: block;\n}\n\n.ol-control.ol-bar.ol-bottom {\n  top: auto;\n\tbottom: 0.5em;\n}\n\n.ol-control.ol-bar.ol-top.ol-left,\n.ol-control.ol-bar.ol-top.ol-right {\n  top: 4.5em;\n\t-webkit-transform:none;\n\t        transform:none;\n}\n.ol-touch .ol-control.ol-bar.ol-top.ol-left,\n.ol-touch .ol-control.ol-bar.ol-top.ol-right {\n  top: 5.5em; \n}\n.ol-control.ol-bar.ol-bottom.ol-left,\n.ol-control.ol-bar.ol-bottom.ol-right {\n  top: auto;\n\tbottom: 0.5em;\n\t-webkit-transform:none;\n\t        transform:none;\n}\n\n/* Group buttons */\n.ol-control.ol-bar.ol-group {\n  margin: 1px 1px 1px 0;\n}\n.ol-control.ol-bar.ol-right .ol-group,\n.ol-control.ol-bar.ol-left .ol-group {\n  margin: 1px 1px 0 1px;\n}\n\n.ol-control.ol-bar.ol-group button {\n  border-radius:0;\n\tmargin: 0 0 0 1px;\n}\n.ol-control.ol-bar.ol-right.ol-group button,\n.ol-control.ol-bar.ol-left.ol-group button,\n.ol-control.ol-bar.ol-right .ol-group button,\n.ol-control.ol-bar.ol-left .ol-group button {\n  margin: 0 0 1px 0;\n}\n.ol-control.ol-bar.ol-group .ol-control:first-child > button {\n  border-radius: 5px 0 0 5px;\n}\n.ol-control.ol-bar.ol-group .ol-control:last-child > button {\n  border-radius: 0 5px 5px 0;\n}\n.ol-control.ol-bar.ol-left.ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-right.ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-left .ol-group .ol-control:first-child > button,\n.ol-control.ol-bar.ol-right .ol-group .ol-control:first-child > button {\n  border-radius: 5px 5px 0 0;\n}\n.ol-control.ol-bar.ol-left.ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-right.ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-left .ol-group .ol-control:last-child > button,\n.ol-control.ol-bar.ol-right .ol-group .ol-control:last-child > button {\n  border-radius: 0 0 5px 5px;\n}\n\n/* */\n.ol-control.ol-bar .ol-rotate {\n  opacity:1;\n\tvisibility: visible;\n}\n.ol-control.ol-bar .ol-rotate button {\n  display: block\n}\n\n/* Active buttons */\n.ol-control.ol-bar .ol-toggle.ol-active > button {\n  background: rgba(60, 136, 0, 0.7)\n}\n.ol-control.ol-bar .ol-toggle.ol-active button:hover {\n  background: rgba(60, 136, 0, 0.7)\n}\n.ol-control.ol-toggle button:disabled {\n  background: rgba(0,60,136,.3);\n}\n\n/* Subbar toolbar */\n.ol-control.ol-bar .ol-control.ol-option-bar {\n  display: none;\n\tposition:absolute;\n\ttop:100%;\n\tleft:0;\n\tmargin: 5px 0;\n\tborder-radius: 0;\n\tbackground: rgba(255,255,255, 0.8);\n\t/* border: 1px solid rgba(0, 60, 136, 0.5); */\n\t-webkit-box-shadow: 0 0 0 1px rgba(0, 60, 136, 0.5), 1px 1px 2px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 0 0 0 1px rgba(0, 60, 136, 0.5), 1px 1px 2px rgba(0, 0, 0, 0.5);\n}\n\n.ol-control.ol-bar .ol-option-bar:before {\n  content: \"\";\n\tborder: 0.5em solid transparent;\n\tborder-color: transparent transparent rgba(0, 60, 136, 0.5);\n\tposition: absolute;\n\tbottom: 100%;\n\tleft: 0.3em;\n}\n\n.ol-control.ol-bar .ol-option-bar .ol-control {\n  display: table-cell;\n}\n.ol-control.ol-bar .ol-control .ol-bar\n{\tdisplay: none;\n}\n.ol-control.ol-bar .ol-control.ol-active > .ol-option-bar {\n  display: block;\n}\n\n.ol-control.ol-bar .ol-control.ol-collapsed ul {\n  display: none;\n}\n\n.ol-control.ol-bar .ol-control.ol-text-button > div:hover,\n.ol-control.ol-bar .ol-control.ol-text-button > div {\n  background: none;\n\tcolor: rgba(0, 60, 136, 0.5);\n\twidth: auto;\n\tmin-width: 1.375em;\n\tmargin: 0;\n}\n\n.ol-control.ol-bar .ol-control.ol-text-button {\n  font-size:0.9em;\n\tborder-left: 1px solid rgba(0, 60, 136, 0.8);\n\tborder-radius: 0;\n}\n.ol-control.ol-bar .ol-control.ol-text-button:first-child {\n  border-left:0;\n}\n.ol-control.ol-bar .ol-control.ol-text-button > div {\n\tpadding: .11em 0.3em;\n\tfont-weight: normal;\n\tfont-size: 1.14em;\n\tfont-family: Arial,Helvetica,sans-serif;\n}\n.ol-control.ol-bar .ol-control.ol-text-button div:hover {\n  color: rgba(0, 60, 136, 1);\n}\n\n.ol-control.ol-bar.ol-bottom .ol-option-bar {\n  top: auto;\n\tbottom: 100%;\n}\n.ol-control.ol-bar.ol-bottom .ol-option-bar:before {\n  border-color: rgba(0, 60, 136, 0.5) transparent transparent ;\n\tbottom: auto;\n\ttop: 100%;\n}\n\n.ol-control.ol-bar.ol-left .ol-option-bar {\n  left:100%;\n\ttop: 0;\n\tbottom: auto;\n\tmargin: 0 5px;\n}\n.ol-control.ol-bar.ol-left .ol-option-bar:before {\n  border-color: transparent rgba(0, 60, 136, 0.5) transparent transparent;\n\tbottom: auto;\n\tright: 100%;\n\tleft: auto;\n\ttop: 0.3em;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar {\n  right:100%;\n\tleft:auto;\n\ttop: 0;\n\tbottom: auto;\n\tmargin: 0 5px;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar:before {\n  border-color: transparent transparent transparent rgba(0, 60, 136, 0.5);\n\tbottom: auto;\n\tleft: 100%;\n\ttop: 0.3em;\n}\n\n.ol-control.ol-bar.ol-left .ol-option-bar .ol-option-bar,\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar {\n  top: 100%;\n\tbottom: auto;\n\tleft: 0.3em;\n\tright: auto;\n\tmargin: 5px 0;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar {\n  right: 0.3em;\n\tleft: auto;\n}\n.ol-control.ol-bar.ol-left .ol-option-bar .ol-option-bar:before,\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar:before {\n  border-color: transparent transparent rgba(0, 60, 136, 0.5);\n\tbottom: 100%;\n\ttop: auto;\n\tleft: 0.3em;\n\tright: auto;\n}\n.ol-control.ol-bar.ol-right .ol-option-bar .ol-option-bar:before {\n  right: 0.3em;\n\tleft: auto;\n}\n\n.ol-control-title {\n  position: absolute;\n  top: 0;\n  left: 0;\n  right: 0;\n}\n\n.ol-center-position {\n  position: absolute;\n  bottom: 0;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  background-color: rgba(255,255,255,.8);\n  padding: .1em 1em;\n}\n\n.ol-ext-dialog {\n  position: fixed;\n  top: -100%;\n  left: 0;\n  width: 150%;\n  height: 100%;\n  opacity: 0;\n  background-color: rgba(0,0,0,.5);\n  z-index: 1000;\n  pointer-events: none;\n  -webkit-transition: opacity .2s, top 0s .2s;\n  transition: opacity .2s, top 0s .2s;\n}\n.ol-ext-dialog.ol-visible {\n  opacity: 1;\n  top: 0;\n  pointer-events: unset;\n  -webkit-transition: opacity .2s, top 0s;\n  transition: opacity .2s, top 0s;\n}\n\n.ol-viewport .ol-ext-dialog {\n  position: absolute;\n}\n.ol-ext-dialog h2 {\n  margin: 0 .5em .5em 0;\n  display: none;\n}\n.ol-ext-dialog > form.ol-title h2 {\n  display: block;;\n}\n.ol-ext-dialog > form {\n  position: absolute;\n  top: 0;\n  left: 33.33%;\n  min-width: 5em;\n  max-width: 60%;\n  min-height: 3em;\n  max-height: 100%;\n  background-color: #fff;\n  border: 1px solid #333;\n  -webkit-box-shadow: 3px 3px 4px rgba(0,0,0, 0.5);\n          box-shadow: 3px 3px 4px rgba(0,0,0, 0.5);\n  -webkit-transform: translate(-50%, -30%);\n          transform: translate(-50%, -30%);\n  -webkit-transition: top .2s, -webkit-transform .2s;\n  transition: top .2s, -webkit-transform .2s;\n  transition: top .2s, transform .2s;\n  transition: top .2s, transform .2s, -webkit-transform .2s;\n  padding: 1em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n.ol-ext-dialog > form.ol-closebox {\n  padding-top: 1.5em;\n}\n.ol-ext-dialog > form.ol-title {\n  padding-top: 1em;\n}\n.ol-ext-dialog > form.ol-button {\n  padding-bottom: .5em;\n}\n\n.ol-ext-dialog.ol-zoom > form {\n  top: 30%;\n  -webkit-transform: translate(-30%, -50%) scale(0);\n          transform: translate(-30%, -50%) scale(0);\n}\n.ol-ext-dialog.ol-visible > form {\n  top: 30%;\n}\n.ol-ext-dialog.ol-zoom.ol-visible > form {\n  -webkit-transform: translate(-30%, -50%) scale(1);\n          transform: translate(-30%, -50%) scale(1);\n}\n\n.ol-ext-dialog > form .ol-content {\n  overflow-x: hidden;\n}\n\n.ol-ext-dialog > form .ol-closebox {\n  position: absolute;\n  top: .5em;\n  right: .5em;\n  width: 1em;\n  height: 1em;\n  cursor: pointer;\n  display: none;\n}\n.ol-ext-dialog > form.ol-closebox .ol-closebox {\n  display: block;\n}\n.ol-ext-dialog > form .ol-closebox:before,\n.ol-ext-dialog > form .ol-closebox:after {\n  content: \"\";\n  position: absolute;\n  background-color: currentColor;\n  top: 50%;\n  left: 50%;\n  width: 1em;\n  height: .1em;\n  border-radius: .1em;\n  -webkit-transform: translate(-50%, -50%) rotate(45deg);\n          transform: translate(-50%, -50%) rotate(45deg);\n}\n.ol-ext-dialog > form .ol-closebox:before {\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-ext-dialog > form .ol-buttons {\n  text-align: right;\n}\n.ol-ext-dialog > form .ol-buttons input {\n  margin-top: .5em;\n  padding: .5em;\n  background: none;\n  border: 0;\n  font-size: 1em;\n  color: rgba(0,60,136,1);\n  cursor: pointer;\n}\n.ol-ext-dialog > form .ol-buttons input:hover {\n  background-color:  rgba(0,60,136,.1);\n}\n.ol-ext-dialog > form .ol-buttons input[type=submit] {\n  font-weight: bold;\n}\n.ol-editbar .ol-button button {\n  position: relative;\n  display: inline-block;\n  font-style: normal;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  vertical-align: middle;\n}\n.ol-editbar .ol-button button:before, \n.ol-editbar .ol-button button:after {\n  content: \"\";\n  border-width: 0;\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  background-color: currentColor;\n}\n.ol-editbar .ol-button button:focus {\n  outline: none;\n}\n\n.ol-editbar .ol-selection > button:before {\n  width: .6em;\n  height: 1em;\n  background-color: transparent;\n  border: .5em solid currentColor;\n  border-width: 0 .25em .65em;\n  border-color: currentColor transparent;\n  -webkit-box-shadow:0 0.6em 0 -0.23em;\n          box-shadow:0 0.6em 0 -0.23em;\n  top: .35em;\n  left: .5em;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n}\n.ol-editbar .ol-selection0 > button:after {\n  width: .28em;\n  height: .6em;\n  background-color: transparent;\n  border: .5em solid currentColor;\n  border-width: 0 .05em .7em;\n  border-color: currentColor transparent;\n  top: .5em;\n  left: .7em;\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n\n.ol-editbar .ol-delete button:after,\n.ol-editbar .ol-delete button:before {\n  width: 1em;\n  height: .2em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(45deg);\n          transform: translate(-50%, -50%) rotate(45deg);\n}\n.ol-editbar .ol-delete button:after {\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-editbar .ol-info button:before {\n  width: .25em;\n  height: .6em;\n  border-radius: .03em;\n  top: .47em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-info button:after {\n  width: .25em;\n  height: .2em;\n  border-radius: .03em;\n  -webkit-box-shadow: -0.1em 0.35em, -0.1em 0.82em, 0.1em 0.82em;\n          box-shadow: -0.1em 0.35em, -0.1em 0.82em, 0.1em 0.82em;\n  top: .12em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n\n.ol-editbar .ol-drawpoint button:before {\n  width: .7em;\n  height: .7em;\n  border-radius: 50%;\n  border: .15em solid currentColor;\n  background-color: transparent;\n  top: .2em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-drawpoint button:after {\n  width: .4em;\n  height: .4em;\n  border: .15em solid currentColor;\n  border-color: currentColor transparent;\n  border-width: .4em .2em 0;\n  background-color: transparent;\n  top: .8em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n\n.ol-editbar .ol-drawline > button:before,\n.ol-editbar .ol-drawpolygon > button:before,\n.ol-editbar .ol-drawhole > button:before {\n  width: .8em;\n  height: .8em;\n  border: .13em solid currentColor;\n  background-color: transparent;\n  border-width: .2em .13em .09em;\n  top: .2em;\n  left: .25em;\n  -webkit-transform: rotate(10deg) perspective(1em) rotateX(40deg);\n          transform: rotate(10deg) perspective(1em) rotateX(40deg);\n}\n.ol-editbar .ol-drawline > button:before {\n  border-bottom: 0;\n}\n.ol-editbar .ol-drawline > button:after,\n.ol-editbar .ol-drawhole > button:after,\n.ol-editbar .ol-drawpolygon > button:after {\n  width: .3em;\n  height: .3em;\n  top: 0.2em;\n  left: .25em;\n  -webkit-box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em;\n          box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em;\n}\n.ol-editbar .ol-drawhole > button:after {\n  -webkit-box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em, 0.25em 0.35em;\n          box-shadow: -0.2em 0.55em, 0.6em 0.1em, 0.65em 0.7em, 0.25em 0.35em;\n}\n\n\n.ol-editbar .ol-offset > button i,\n.ol-editbar .ol-transform > button i {\n  position: absolute;\n  width: .9em;\n  height: .9em;\n  overflow: hidden;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-editbar .ol-offset > button i{\n  width: .8em;\n  height: .8em;\n}\n\n.ol-editbar .ol-offset > button i:before,\n.ol-editbar .ol-transform > button i:before,\n.ol-editbar .ol-transform > button i:after {\n  content: \"\";\n  height: 1em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(45deg);\n          transform: translate(-50%, -50%) rotate(45deg);\n  -webkit-box-shadow: 0.5em 0 0 0.1em, -0.5em 0 0 0.1em;\n          box-shadow: 0.5em 0 0 0.1em, -0.5em 0 0 0.1em;\n  width: .1em;\n  position: absolute;\n  background-color: currentColor;\n}\n.ol-editbar .ol-offset > button i:before{\n  -webkit-box-shadow: 0.45em 0 0 0.1em, -0.45em 0 0 0.1em;\n          box-shadow: 0.45em 0 0 0.1em, -0.45em 0 0 0.1em;\n}\n.ol-editbar .ol-transform > button i:after {\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-editbar .ol-split > button:before {\n  width: .3em;\n  height: .3em;\n  top: .81em;\n  left: .75em;\n  border-radius: 50%;\n  -webkit-box-shadow: 0.1em -0.4em, -0.15em -0.25em;\n          box-shadow: 0.1em -0.4em, -0.15em -0.25em;\n}\n.ol-editbar .ol-split > button:after {\n  width: .8em;\n  height: .8em;\n  top: .15em;\n  left: -.1em;\n  border: .1em solid currentColor;\n  border-width: 0 .2em .2em 0;\n  background-color: transparent;\n  border-radius: .1em;\n  -webkit-transform: rotate(20deg) scaleY(.6) rotate(-45deg);\n          transform: rotate(20deg) scaleY(.6) rotate(-45deg);\n}\n\n.ol-editbar .ol-drawregular > button:before {\n  width: .9em;\n  height: .9em;\n  top: 50%;\n  left: 50%;\n  border: .1em solid currentColor;\n  background-color: transparent;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div {\n  border: .5em solid currentColor;\n  border-color: transparent currentColor;\n  display: inline-block;\n  cursor: pointer;\n  vertical-align: text-bottom;\n}\n.ol-editbar .ol-drawregular .ol-bar:before,\n.ol-control.ol-bar.ol-editbar .ol-drawregular .ol-bar {\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button {\n  min-width: 6em;\n  text-align: center;\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div:first-child {\n  border-width: .5em .5em .5em 0;\n  margin: 0 .5em 0 0;\n}\n.ol-editbar .ol-drawregular .ol-bar .ol-text-button > div > div > div:last-child {\n  border-width: .5em 0 .5em .5em;\n  margin: 0 0 0 .5em;\n}\n\n.ol-gauge\n{\ttop: 0.5em;\n\tleft: 50%;\n\t-webkit-transform: translateX(-50%);\n\ttransform: translateX(-50%);\n}\n\n.ol-gauge > *\n{\tdisplay: inline-block;\n\tvertical-align: middle;\n}\n.ol-gauge > span\n{\n\tmargin: 0 0.5em;\n}\n.ol-gauge > div\n{\twidth: 200px;\n\tborder: 1px solid rgba(0,60,136,.5);\n\tborder-radius: 3px;\n\tpadding:1px;\n}\n.ol-gauge button\n{\theight: 0.8em;\n\tmargin:0;\n\tmax-width:100%;\n}\n\n.ol-control.ol-bookmark \n{\ttop: 0.5em;\n\tleft: 3em;\n}\n.ol-control.ol-bookmark button\n{\tposition: relative;\n}\n.ol-control.ol-bookmark > button::before\n{\tcontent: \"\";\n\tposition: absolute;\n\tborder-width: 10px 5px 4px;\n\tborder-style: solid;\n\tborder-color: #fff;\n\tborder-bottom-color: transparent;\n\ttop: 50%;\n\tleft: 50%;\n\t-webkit-transform: translate(-50%, -50%);\n\ttransform: translate(-50%, -50%);\n\theight: 0;\n}\n\n.ol-control.ol-bookmark > div\n{\tdisplay: none;\n\tmin-width: 5em;\n}\n.ol-control.ol-bookmark input\n{\tfont-size: 0.9em;\n\tmargin: 0.1em 0 ;\n\tpadding: 0 0.5em;\n}\n.ol-control.ol-bookmark ul\n{\tmargin:0;\n\tpadding: 0;\n\tlist-style: none;\n\tmin-width: 10em;\n}\n.ol-control.ol-bookmark li\n{\tcolor: rgba(0,60,136,0.8);\n\tfont-size: 0.9em;\n\tpadding: 0 0.2em 0 0.5em;\n\tcursor: default;\n\tclear:both;\n}\n\n.ol-control.ol-bookmark li:hover\n{\tbackground-color: rgba(0,60,136,.5);\n\tcolor: #fff;\n}\n\n.ol-control.ol-bookmark > div button\n{\twidth: 1em;\n\theight: 0.8em;\n\tfloat: right;\n\tbackground-color: transparent;\n\tcursor: pointer;\n\tborder-radius: 0;\n}\n.ol-control.ol-bookmark > div button:before\n{\tcontent: \"\\2A2F\";\n    color: #936;\n\tfont-size: 1.2em;\n\tline-height: 1em;\n\tborder-radius: 0;\n    position: absolute;\n    top: 50%;\n    left: 50%;\n    -webkit-transform: translate(-50%, -50%);\n    transform: translate(-50%, -50%);\n}\n\n.ol-bookmark ul li button,\n.ol-bookmark input\n{\tdisplay: none;\n}\n.ol-bookmark.ol-editable ul li button,\n.ol-bookmark.ol-editable input\n{\tdisplay: block;\n}\n\n\n.ol-control.ol-bar.ol-geobar .ol-control {\n\tdisplay: inline-block;\n\tvertical-align: middle;\n}\n\n.ol-control.ol-bar.ol-geobar .ol-bar {\n  display: none;\n}\n.ol-bar.ol-geobar.ol-active .ol-bar {\n  display: inline-block;\n}\n\n.ol-bar.ol-geobar .geolocBt button:before,\n.ol-bar.ol-geobar .geolocBt button:after {\n  content: \"\";\n  display: block;\n  position: absolute;\n  border: 1px solid transparent;\n  border-width: 0.3em 0.8em 0 0.2em;\n  border-color: #fff transparent transparent;\n  -webkit-transform: rotate(-30deg);\n  transform: rotate(-30deg);\n  top: .45em;\n  left: 0.15em;\n  font-size: 1.2em;\n}\n.ol-bar.ol-geobar .geolocBt button:after {\n  border-width: 0 0.8em .3em 0.2em;\n  border-color: transparent transparent #fff;\n\t-webkit-transform: rotate(-61deg);\n\ttransform: rotate(-61deg);\n}\n\n.ol-bar.ol-geobar .startBt button:before {\n  content: \"\";\n  display: block;\n  position: absolute;\n  width: 1em;\n  height: 1em;\n  background-color: #800;\n  border-radius: 50%;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%,-50%);\n  transform: translate(-50%,-50%);\n}\n.ol-bar.ol-geobar .pauseBt button:before,\n.ol-bar.ol-geobar .pauseBt button:after {\n  content: \"\";\n  display: block;\n  position: absolute;\n  width: .25em;\n  height: 1em;\n  background-color: #fff;\n  top: 50%;\n  left: 35%;\n  -webkit-transform: translate(-50%,-50%);\n  transform: translate(-50%,-50%);\n}\n.ol-bar.ol-geobar .pauseBt button:after {\n  left: 65%;\n}\n\n.ol-control.ol-bar.ol-geobar .centerBt,\n.ol-control.ol-bar.ol-geobar .pauseBt,\n.ol-bar.ol-geobar.pauseTrack .startBt,\n.ol-bar.ol-geobar.centerTrack .startBt,\n.ol-bar.ol-geobar.centerTrack.pauseTrack .pauseBt,\n.ol-bar.ol-geobar.centerTrack .pauseBt {\n  display: none;\n}\n.ol-bar.ol-geobar.pauseTrack .pauseBt,\n.ol-bar.ol-geobar.centerTrack .centerBt{\n  display: inline-block;\n}\n\n.ol-control.ol-globe\n{\tposition: absolute;\n\tleft: 0.5em;\n\tbottom: 0.5em;\n\tborder-radius: 50%;\n\topacity: 0.7;\n\ttransform: scale(0.5);\n\ttransform-origin: 0 100%;\n\t-webkit-transform: scale(0.5);\n\t-webkit-transform-origin: 0 100%;\n}\n.ol-control.ol-globe:hover\n{\topacity: 0.9;\n}\n\n.ol-control.ol-globe .panel\n{\tdisplay:block;\n\twidth:170px;\n\theight:170px;\n\tbackground-color:#fff;\n\tcursor: pointer;\n\tborder-radius: 50%;\n\toverflow: hidden;\n\t-webkit-box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);\n\t        box-shadow: 0 0 10px 5px rgba(255, 255, 255, 0.5);\n}\n.ol-control.ol-globe .panel .ol-viewport\n{\tborder-radius: 50%;\n}\n\n.ol-control.ol-globe .ol-pointer\n{\tdisplay: block;\n\tbackground-color: #fff;\n\twidth:10px;\n\theight: 10px;\n\tborder:10px solid red;\n\tposition: absolute;\n\ttop: 50%;\n\tleft:50%;\n\ttransform: translate(-15px, -40px);\n\t-webkit-transform: translate(-15px, -40px);\n\tborder-radius: 50%;\n\tz-index:1;\n\ttransition: opacity 0.15s, top 0s, left 0s;\n\t-webkit-transition: opacity 0.15s, top 0s, left 0s;\n}\n.ol-control.ol-globe .ol-pointer.hidden\n{\topacity:0;\n\ttransition: opacity 0.15s, top 3s, left 5s;\n\t-webkit-transition: opacity 0.15s, top 3s, left 5s;\n}\n\n.ol-control.ol-globe .ol-pointer::before\n{\tborder-radius: 50%;\n\t-webkit-box-shadow: 6px 6px 10px 5px #000;\n\t        box-shadow: 6px 6px 10px 5px #000;\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 0;\n\tleft: 0;\n\tposition: absolute;\n\ttop: 23px;\n\twidth: 0;\n}\n.ol-control.ol-globe .ol-pointer::after\n{\tcontent:\"\";\n\twidth:0;\n\theight:0;\n\tdisplay: block;\n\tposition: absolute;\n\tborder-width: 20px 10px 0;\n\tborder-color: red transparent;\n\tborder-style: solid;\n\tleft: -50%;\n\ttop: 100%;\n}\n\n.ol-control.ol-globe .panel::before {\n  border-radius: 50%;\n  -webkit-box-shadow: -20px -20px 80px 2px rgba(0, 0, 0, 0.7) inset;\n          box-shadow: -20px -20px 80px 2px rgba(0, 0, 0, 0.7) inset;\n  content: \"\";\n  display: block;\n  height: 100%;\n  left: 0;\n  position: absolute;\n  top: 0;\n  width: 100%;\n  z-index: 1;\n}\n.ol-control.ol-globe .panel::after {\n  border-radius: 50%;\n  -webkit-box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n          box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n  content: \"\";\n  display: block;\n  height: 0;\n  left: 23%;\n  position: absolute;\n  top: 20%;\n  -webkit-transform: rotate(-40deg);\n          transform: rotate(-40deg);\n  width: 20%;\n  z-index: 1;\n}\n\n\n.ol-control.ol-globe.ol-collapsed .panel\n{\tdisplay:none;\n}\n\n.ol-control-top.ol-globe\n{\tbottom: auto;\n\ttop: 5em;\n\ttransform-origin: 0 0;\n\t-webkit-transform-origin: 0 0;\n}\n.ol-control-right.ol-globe\n{\tleft: auto;\n\tright: 0.5em;\n\ttransform-origin: 100% 100%;\n\t-webkit-transform-origin: 100% 100%;\n}\n.ol-control-right.ol-control-top.ol-globe\n{\tleft: auto;\n\tright: 0.5em;\n\ttransform-origin: 100% 0;\n\t-webkit-transform-origin: 100% 0;\n}\n\n.ol-gridreference\n{\tbackground: #fff;\n\tborder: 1px solid #000;\n\toverflow: auto;\n\tmax-height: 100%;\n\ttop:0;\n\tright:0;\n}\n.ol-gridreference input\n{\twidth:100%;\n}\n.ol-gridreference ul\n{\tmargin:0;\n\tpadding:0;\n\tlist-style: none;\n} \n.ol-gridreference li\n{\tpadding: 0 0.5em;\n\tcursor: pointer;\n}\n.ol-gridreference ul li:hover \n{\tbackground-color: #ccc;\n}\n.ol-gridreference li.ol-title,\n.ol-gridreference li.ol-title:hover\n{\tbackground:rgba(0,60,136,.5);\n\tcolor:#fff;\n\tcursor:default;\n}\n.ol-gridreference ul li .ol-ref\n{\tmargin-left: 0.5em;\n}\n.ol-gridreference ul li .ol-ref:before\n{\tcontent:\"(\";\n}\n.ol-gridreference ul li .ol-ref:after\n{\tcontent:\")\";\n}\n\n.ol-control.ol-imageline {\n  bottom:0;\n  left: 0;\n  right: 0;\n  padding: 0;\n  overflow: visible;\n  -webkit-transition: .3s;\n  transition: .3s;\n}\n.ol-control.ol-imageline.ol-collapsed {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.ol-imageline > div {\n  height: 4em;\n  position: relative;\n  white-space: nowrap;\n  scroll-behavior: smooth;\n  overflow: hidden;\n  width: 100%;\n}\n.ol-imageline.ol-touch > div {\n  overflow-x: auto;\n}\n.ol-imageline > div.ol-move {\n  scroll-behavior: unset;\n}\n\n.ol-control.ol-imageline button {\n  position: absolute;\n  top: -1em;\n  -webkit-transform: translateY(-100%);\n          transform: translateY(-100%);\n  margin: .65em;\n  -webkit-box-shadow: 0 0 0 0.15em rgba(255,255,255,.4);\n          box-shadow: 0 0 0 0.15em rgba(255,255,255,.4);\n}\n.ol-control.ol-imageline button:before {\n  content: '';\n  position: absolute;\n  -webkit-transform: translate(-50%, -50%) rotate(135deg);\n          transform: translate(-50%, -50%) rotate(135deg);\n  top: 40%;\n  left: 50%;\n  width: .4em;\n  height: .4em;\n  border: .1em solid currentColor;\n  border-width: .15em .15em 0 0;\n}\n.ol-control.ol-imageline.ol-collapsed button:before {\n  top: 60%;\n  -webkit-transform: translate(-50%, -50%) rotate(-45deg);\n          transform: translate(-50%, -50%) rotate(-45deg);\n}\n\n.ol-imageline,\n.ol-imageline:hover {\n  background-color: rgba(0,0,0,.75);\n}\n\n.ol-imageline.ol-arrow:after,\n.ol-imageline.ol-arrow:before {\n  content: \"\";\n  position: absolute;\n  top: 50%;\n  left: .2em;\n  border-color: #fff #000;\n  border-width: 1em .6em 1em 0;\n  border-style: solid;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n  z-index: 1;\n  opacity: .8;\n  pointer-events: none;\n  -webkit-box-shadow: -0.6em 0 0 1em #fff;\n          box-shadow: -0.6em 0 0 1em #fff;\n}\n.ol-imageline.ol-arrow:after {\n  border-width: 1em 0 1em .6em;\n  left: auto;\n  right: .2em;\n  -webkit-box-shadow: 0.6em 0 0 1em #fff;\n          box-shadow: 0.6em 0 0 1em #fff;\n}\n\n.ol-imageline .ol-image {\n  position: relative;\n  height: 100%;\n  display: inline-block;\n  cursor: pointer;\n}\n.ol-imageline img {\n  max-height: 100%;\n  border: .25em solid transparent;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  opacity: 0;\n  -webkit-transition: 1s;\n  transition: 1s;\n}\n.ol-imageline img.ol-loaded {\n  opacity:1;\n}\n\n.ol-imageline .ol-image.select {\n  background-color: #fff;\n}\n.ol-imageline .ol-image span {\n  position: absolute;\n  width: 125%;\n  max-height: 2.4em;\n  left: 50%;\n  bottom: 0;\n  display: none;\n  color: #fff;\n  background-color: rgba(0,0,0,.5);\n  font-size: .8em;\n  overflow: hidden;\n  white-space: normal;\n  text-align: center;\n  line-height: 1.2em;\n  -webkit-transform: translateX(-50%) scaleX(.8);\n          transform: translateX(-50%) scaleX(.8);\n}\n/*\n.ol-imageline .ol-image.select span,\n*/\n.ol-imageline .ol-image:hover span {\n  display: block;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-method-time,\n.ol-control.ol-routing.ol-isochrone .ol-method-distance,\n.ol-control.ol-routing.ol-isochrone > button {\n  position: relative;\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-time:before,\n.ol-control.ol-routing.ol-isochrone > button:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  border: .1em solid currentColor;\n  width: .8em;\n  height: .8em;\n  border-radius: 50%;\n  -webkit-box-shadow: 0 -0.5em 0 -0.35em, 0.4em -0.35em 0 -0.35em;\n          box-shadow: 0 -0.5em 0 -0.35em, 0.4em -0.35em 0 -0.35em;\n  clip: unset;\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-time:after,\n.ol-control.ol-routing.ol-isochrone > button:after {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-60deg);\n          transform: translate(-50%, -50%) rotate(-60deg);\n  border-radius: 50%;\n  border: .3em solid transparent;\n  border-right-color: currentColor;\n  -webkit-box-shadow: none;\n          box-shadow: none;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  clip: unset;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-method-distance:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n  width: 1em;\n  height: .5em;\n  border: .1em solid currentColor;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box\n}\n.ol-control.ol-routing.ol-isochrone .ol-method-distance:after {\n  content: '';\n  position: absolute;\n  width: .1em;\n  height: .15em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%) rotate(-30deg);\n          transform: translate(-50%, -50%) rotate(-30deg);\n  -webkit-box-shadow: inset 0 -0.15em, 0 0.1em, 0.25em 0.1em, -0.25em 0.1em;\n          box-shadow: inset 0 -0.15em, 0 0.1em, 0.25em 0.1em, -0.25em 0.1em;\n}\n\n.ol-control.ol-routing.ol-isochrone .ol-direction-direct:before,\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:before {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 30%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  width: .3em;\n  height: .3em;\n  border-radius: 50%;\n  border: .1em solid currentColor;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-box-shadow: 0.25em 0 0 -0.05em;\n          box-shadow: 0.25em 0 0 -0.05em;\n}\n.ol-control.ol-routing.ol-isochrone .ol-direction-direct:after,\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:after {\n  content: '';\n  position: absolute;\n  top: 50%;\n  left: 70%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  border: .4em solid transparent;\n  border-width: .4em 0 .4em .4em;\n  border-color: transparent currentColor;\n}\n.ol-control.ol-routing.ol-isochrone .ol-direction-reverse:after {\n  border-width: .4em .4em .4em 0;\n}\n\n.ol-control.ol-isochrone.ol-collapsed .content {\n  display: none;\n}\n.ol-control.ol-isochrone input[type=\"number\"] {\n  width: 3em;\n  text-align: right;\n  margin: 0 .1em;\n}\n.ol-control.ol-isochrone .ol-distance input[type=\"number\"] {\n  width: 5em;\n}\n\n.ol-isochrone .ol-time,\n.ol-isochrone .ol-distance {\n  display: none;\n}\n.ol-isochrone .ol-time.selected,\n.ol-isochrone .ol-distance.selected {\n  display: block;\n}\n\n.ol-control.ol-layerswitcher-popup\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 3em;\n}\n.ol-control.ol-layerswitcher-popup .panel \n{\tclear:both;\n\tbackground:#fff;\n}\n\n.ol-layerswitcher-popup .panel\n{\tlist-style: none;\n\tpadding: 0.25em;\n\tmargin:0;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-popup .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-popup.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher-popup.ol-forceopen .panel\n{\tdisplay:block;\n}\n\n.ol-layerswitcher-popup button \n{\tbackground-color: white;\n\tbackground-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAACE1BMVEX///8A//8AgICA//8AVVVAQID///8rVVVJtttgv98nTmJ2xNgkW1ttyNsmWWZmzNZYxM4gWGgeU2JmzNNr0N1Rwc0eU2VXxdEhV2JqytQeVmMhVmNoydUfVGUgVGQfVGQfVmVqy9hqy9dWw9AfVWRpydVry9YhVmMgVGNUw9BrytchVWRexdGw294gVWQgVmUhVWPd4N6HoaZsy9cfVmQgVGRrytZsy9cgVWQgVWMgVWRsy9YfVWNsy9YgVWVty9YgVWVry9UgVWRsy9Zsy9UfVWRsy9YgVWVty9YgVWRty9Vsy9aM09sgVWRTws/AzM0gVWRtzNYgVWRuy9Zsy9cgVWRGcHxty9bb5ORbxdEgVWRty9bn6OZTws9mydRfxtLX3Nva5eRix9NFcXxOd4JPeINQeIMiVmVUws9Vws9Vw9BXw9BYxNBaxNBbxNBcxdJexdElWWgmWmhjyNRlx9IqXGtoipNpytVqytVryNNrytZsjZUuX210k5t1y9R2zNR3y9V4lp57zth9zdaAnKOGoaeK0NiNpquV09mesrag1tuitbmj1tuj19uktrqr2d2svcCu2d2xwMO63N+7x8nA3uDC3uDFz9DK4eHL4eLN4eIyYnDX5OM5Z3Tb397e4uDf4uHf5uXi5ePi5+Xj5+Xk5+Xm5+Xm6OY6aHXQ19fT4+NfhI1Ww89gx9Nhx9Nsy9ZWw9Dpj2abAAAAWnRSTlMAAQICAwQEBgcIDQ0ODhQZGiAiIyYpKywvNTs+QklPUlNUWWJjaGt0dnd+hIWFh4mNjZCSm6CpsbW2t7nDzNDT1dje5efr7PHy9PT29/j4+Pn5+vr8/f39/f6DPtKwAAABTklEQVR4Xr3QVWPbMBSAUTVFZmZmhhSXMjNvkhwqMzMzMzPDeD+xASvObKePPa+ffHVl8PlsnE0+qPpBuQjVJjno6pZpSKXYl7/bZyFaQxhf98hHDKEppwdWIW1frFnrxSOWHFfWesSEWC6R/P4zOFrix3TzDFLlXRTR8c0fEEJ1/itpo7SVO9Jdr1DVxZ0USyjZsEY5vZfiiAC0UoTGOrm9PZLuRl8X+Dq1HQtoFbJZbv61i+Poblh/97TC7n0neCcK0ETNUrz1/xPHf+DNAW9Ac6t8O8WH3Vp98f5lCaYKAOFZMLyHL4Y0fe319idMNgMMp+zWVSybUed/+/h7I4wRAG1W6XDy4XmjR9HnzvDRZXUAYDFOhC1S/Hh+fIXxen+eO+AKqbs+wAo30zDTDvDxKoJN88sjUzDFAvBzEUGFsnADoIvAJzoh2BZ8sner+Ke/vwECuQAAAABJRU5ErkJggg==\");\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tfloat: right;\n\theight: 38px;\n\twidth: 38px;\n}\n\n.ol-layerswitcher-popup li\n{\tcolor:#369;\n\tpadding:0.25em 1em;\n\tfont-family:\"Trebuchet MS\",Helvetica,sans-serif;\n\tcursor:pointer;\n}\n.ol-layerswitcher-popup li.ol-header\n{\tdisplay: none;\n}\n.ol-layerswitcher-popup li.select\n{\tbackground:rgba(0, 60, 136, 0.7);\n\tcolor:#fff;\n}\n.ol-layerswitcher-popup li:hover\n{\tbackground:rgba(0, 60, 136, 0.9);\n\tcolor:#fff;\n}\n\n.ol-control.ol-layerswitcher\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 3em;\n\tmax-height: calc(100% - 6em);\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n\toverflow: hidden;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\tdisplay: block\n}\n.ol-control.ol-layerswitcher.ol-collapsed .ol-switchertopdiv,\n.ol-control.ol-layerswitcher.ol-collapsed .ol-switcherbottomdiv\n{\tdisplay: none;\n}\n.ol-layerswitcher.ol-forceopen.ol-collapsed .ol-switchertopdiv,\n.ol-layerswitcher.ol-forceopen.ol-collapsed .ol-switcherbottomdiv\n{\tdisplay: block;\n}\n\n.ol-control.ol-layerswitcher .ol-switchertopdiv,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\tposition: absolute;\n\ttop:0;\n\tleft:0;\n\tright:0;\n\theight: 45px;\n\tbackground: #fff; \n\tz-index:2;\n\topacity:1;\n\tcursor: pointer;\n\tborder-top:2px solid transparent;\n\tborder-bottom:2px solid #369;\n\tmargin:0 2px;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n}\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv\n{\ttop: auto;\n\tbottom: 0;\n\theight: 2em;\n\tborder-top:2px solid #369;\n\tborder-bottom:2px solid transparent;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv:before,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:before\n{\tcontent:\"\";\n\tposition: absolute;\n\tleft:50%;\n\ttop:50%;\n\tborder:10px solid transparent;\n\twidth:0;\n\theight:0;\n\ttransform: translate(-50%, -50%);\n\t-webkit-transform: translate(-50%, -50%);\n\topacity:0.8;\n}\n\n.ol-control.ol-layerswitcher .ol-switchertopdiv:hover:before,\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:hover:before\n{\topacity:1;\n}\n.ol-control.ol-layerswitcher .ol-switchertopdiv:before\n{\tborder-bottom-color: #369;\n\tborder-top: 0;\n}\n.ol-control.ol-layerswitcher .ol-switcherbottomdiv:before\n{\tborder-top-color: #369;\n\tborder-bottom: 0;\n}\n\n.ol-control.ol-layerswitcher .panel \n{\tbackground-color: #fff;\n\tborder-radius: 0 0 2px 2px;\n\tclear: both;\n\tdisplay: block; /* display:block to show panel on over */\n}\n\n.ol-layerswitcher .panel\n{\tlist-style: none;\n\tpadding: 0.5em 0.5em 0;\n\tmargin:0;\n\toverflow: hidden;\n\tfont-family: Tahoma,Geneva,sans-serif;\n\tfont-size:0.9em;\n\t-webkit-transition: top 0.3s;\n\ttransition: top 0.3s;\n\tposition: relative;\n\ttop:0;\n}\n\n.ol-layerswitcher .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n\tclear: both;\n}\n\n/** Customize checkbox\n*/\n.ol-layerswitcher input[type=\"radio\"],\n.ol-layerswitcher input[type=\"checkbox\"]\n{\tdisplay:none;\n}\n\n.ol-layerswitcher .panel li\n{\t-weblit-transition: -webkit-transform 0.2s linear;\n\t-webkit-transition: -webkit-transform 0.2s linear;\n\ttransition: -webkit-transform 0.2s linear;\n\ttransition: transform 0.2s linear;\n\ttransition: transform 0.2s linear, -webkit-transform 0.2s linear;\n\tclear: both;\n\tdisplay: block;\n\tborder:1px solid transparent;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n}\n/* drag and drop */\n.ol-layerswitcher .panel li.drag\n{\topacity: 0.5;\n\ttransform:scale(0.8);\n\t-webkit-transform:scale(0.8);\n}\n.ol-dragover\n{\tbackground:rgba(51,102,153,0.5);\n\topacity:0.8;\n}\n.ol-layerswitcher .panel li.forbidden,\n.forbidden .ol-layerswitcher-buttons div,\n.forbidden .layerswitcher-opacity div\n{\tbackground:rgba(255,0,0,0.5);\n\tcolor:#f00!important;\n}\n\n/* cursor management */\n.ol-layerswitcher.drag,\n.ol-layerswitcher.drag *\n{\tcursor:not-allowed!important;\n\tcursor:no-drop!important;\n}\n.ol-layerswitcher.drag .panel li.dropover,\n.ol-layerswitcher.drag .panel li.dropover *\n{\tcursor: pointer!important;\n\tcursor: n-resize!important;\n\tcursor: ns-resize!important;\n\tcursor: -webkit-grab!important;\n\tcursor: grab!important;\n\tcursor: -webkit-grabbing!important;\n\tcursor: grabbing!important;\n}\n\n.ol-layerswitcher .panel li.dropover\n{\tbackground: rgba(51, 102, 153, 0.5);\n}\n\n.ol-layerswitcher .panel li label\n{\tdisplay: inline-block;\n\theight: 1.4em;\n\tmax-width: 12em;\n\toverflow: hidden;\n\twhite-space: nowrap;\n\ttext-overflow: ellipsis;\n\tpadding: 0 0.2em 0 1.7em;\n\tposition: relative;\n}\n\n.ol-layerswitcher [type=\"radio\"] + label:before,\n.ol-layerswitcher [type=\"checkbox\"] + label:before,\n.ol-layerswitcher [type=\"radio\"]:checked + label:after,\n.ol-layerswitcher [type=\"checkbox\"]:checked + label:after\n{\tcontent: '';\n\tposition: absolute;\n\tleft: 0.1em; top: 0.1em;\n\twidth: 1.2em; height: 1.2em; \n\tborder: 2px solid #369;\n\tbackground: #fff;\n\t-webkit-box-sizing:border-box;\n\t        box-sizing:border-box;\n}\n\n.ol-layerswitcher [type=\"radio\"] + label:before,\n.ol-layerswitcher [type=\"radio\"] + label:after\n{\tborder-radius: 50%;\n}\n\n.ol-layerswitcher [type=\"radio\"]:checked + label:after\n{\tbackground: #369 none repeat scroll 0 0;\n\tmargin: 0.3em;\n\twidth: 0.6em;\n\theight: 0.6em;\n}\n\n.ol-layerswitcher [type=\"checkbox\"]:checked + label:after\n{\tbackground: transparent;\n    border-width: 0 3px 3px 0;\n\tborder-style: solid;\n\tborder-color: #369;\n    width: 0.7em;\n    height: 1em;\n    -webkit-transform: rotate(45deg);\n    transform: rotate(45deg);\n    left: 0.55em;\n    top: -0.05em;\n    -webkit-box-shadow: 1px 0px 1px 1px #fff;\n            box-shadow: 1px 0px 1px 1px #fff;\n}\n\n.ol-layerswitcher .panel li.ol-layer-hidden\n{\topacity: 0.6;\n}\n\n.ol-layerswitcher.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher.ol-forceopen .panel\n{\tdisplay:block;\n}\n\n.ol-layerswitcher > button {\n\tbackground-color: white;\n\tfloat: right;\n\tz-index: 10;\n\tposition: relative;\n\tfont-size: 1.7em;\n}\n.ol-touch .ol-layerswitcher > button {\n\tfont-size: 2.5em;\n}\n.ol-layerswitcher > button:before,\n.ol-layerswitcher > button:after {\n\tcontent: \"\";\n\tposition:absolute;\n\twidth: .75em;\n\theight: .75em;\n\tborder-radius: 0.15em;\n\t-webkit-transform: scaleY(.8) rotate(45deg);\n\ttransform: scaleY(.8) rotate(45deg);\n}\n.ol-layerswitcher > button:before {\n\tbackground: #e2e4e1;\n\ttop: .32em;\n    left: .34em;\n\t-webkit-box-shadow: 0.1em 0.1em #325158;\n\tbox-shadow: 0.1em 0.1em #325158;\n}\n.ol-layerswitcher > button:after {\n\ttop: .22em;\n    left: .34em;\n\tbackground: #83bcc5;\n\tbackground-image: radial-gradient( circle at .85em .6em, #70b3be 0, #70b3be .65em, #83bcc5 .65em);\n}\n.ol-layerswitcher-buttons \n{\tdisplay:block;\n\tfloat: right;\n\ttext-align:right;\n}\n.ol-layerswitcher-buttons > div\n{\tdisplay: inline-block;\n\tposition: relative;\n\tcursor: pointer;\n\theight:1em;\n\twidth:1em;\n\tmargin:2px;\n\tline-height: 1em;\n    text-align: center;\n    background: #369;\n    vertical-align: middle;\n    color: #fff;\n}\n\n.ol-layerswitcher .panel li > div\n{\tdisplay: inline-block;\n\tposition: relative;\n}\n\n/* line break */\n.ol-layerswitcher .ol-separator\n{\tdisplay:block;\n\twidth:0;\n\theight:0;\n\tpadding:0;\n\tmargin:0;\n}\n\n.ol-layerswitcher .layerup\n{\tfloat: right;\n\theight:2.5em;\n\tbackground-color: #369;\n\topacity: 0.5;\n\tcursor: move;\n\tcursor: ns-resize;\n}\n\n.ol-layerswitcher .layerup:before,\n.ol-layerswitcher .layerup:after\n{\tborder-color: #fff transparent;\n\tborder-style: solid;\n\tborder-width: 0.4em 0.4em 0;\n\tcontent: \"\";\n\theight: 0;\n\tposition: absolute;\n\tbottom: 3px;\n\tleft: 0.1em;\n\twidth: 0;\n}\n.ol-layerswitcher .layerup:after\n{\tborder-width: 0 0.4em 0.4em;\n\ttop:3px;\n\tbottom: auto;\n}\n\n.ol-layerswitcher .layerInfo\n{\tbackground: #369;\n\tborder-radius: 100%;\n}\n.ol-layerswitcher .layerInfo:before\n{\tcolor: #fff;\n\tcontent: \"i\";\n\tdisplay: block;\n\tfont-size: 0.8em;\n\tfont-weight: bold;\n\ttext-align: center;\n\twidth: 1.25em;\n\tposition:absolute;\n\tleft: 0;\n\ttop: 0;\n}\n\n.ol-layerswitcher .layerTrash\n{\tbackground: #369;\n}\n.ol-layerswitcher .layerTrash:before\n{\tcolor: #fff;\n\tcontent: \"\\D7\";\n\tfont-size:1em;\n\ttop: 50%;\n\tleft: 0;\n\tright: 0;\n\ttext-align: center;\n\tline-height: 1em;\n\tmargin: -0.5em 0;\n\tposition: absolute;\n}\n\n.ol-layerswitcher .layerExtent\n{\tbackground: #369;\n}\n.ol-layerswitcher .layerExtent:before\n{\tborder-right: 1px solid #fff;\n\tborder-bottom: 1px solid #fff;\n\tcontent: \"\";\n\tdisplay: block;\n\tposition: absolute;\n\tleft: 6px;\n\tright: 2px;\n\ttop: 6px;\n\tbottom: 3px;\n}\n.ol-layerswitcher .layerExtent:after\n{\tborder-left: 1px solid #fff;\n\tborder-top: 1px solid #fff;\n\tcontent: \"\";\n\tdisplay: block;\n\tposition: absolute;\n\tbottom: 6px;\n\tleft: 2px;\n\tright: 6px;\n\ttop: 3px;\n}\n\n.ol-layerswitcher .expend-layers,\n.ol-layerswitcher .collapse-layers\n{\tmargin: 0 2px;\n\tbackground-color: transparent;\n}\n.ol-layerswitcher .expend-layers:before,\n.ol-layerswitcher .collapse-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\ttop:50%;\n\tleft:0;\n\tmargin-top:-2px;\n\theight:4px;\n\twidth:100%;\n\tbackground:#369;\n}\n.ol-layerswitcher .expend-layers:after\n{\tcontent:\"\";\n\tposition:absolute;\n\tleft:50%;\n\ttop:0;\n\tmargin-left:-2px;\n\twidth:4px;\n\theight:100%;\n\tbackground:#369;\n}\n/*\n.ol-layerswitcher .collapse-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\tborder:0.5em solid #369;\n\tborder-color: #369 transparent transparent;\n\tmargin-top:0.25em;\n}\n.ol-layerswitcher .expend-layers:before\n{\tcontent:\"\";\n\tposition:absolute;\n\tborder:0.5em solid #369;\n\tborder-color: transparent transparent transparent #369 ;\n\tmargin-left:0.25em;\n}\n*/\n\n.ol-layerswitcher .layerswitcher-opacity\n{\tposition:relative;\n\tborder: 1px solid #369;\n\theight: 3px;\n\twidth: 120px;\n\tmargin:5px 1em 10px 7px;\n\t-webkit-box-sizing: border-box;\n\t        box-sizing: border-box;\n\tborder-radius: 3px;\n\tbackground: #69c;\n\tbackground: -webkit-gradient(linear, left top, right top, from(rgba(0,60,136,0)), to(rgba(0,60,136,0.6)));\n\tbackground: linear-gradient(to right, rgba(0,60,136,0), rgba(0,60,136,0.6));\n\tcursor: pointer;\n\t-webkit-box-shadow: 1px 1px 1px rgba(0,0,0,0.5);\n\t        box-shadow: 1px 1px 1px rgba(0,0,0,0.5);\n}\n\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor,\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor:before\n{\tposition: absolute;\n\twidth: 20px;\n\theight: 20px;\n\ttop: 50%;\n\tleft: 50%;\n\tbackground: rgba(0,60,136,0.5);\n\tborder-radius: 50%;\n\t-webkit-transform: translate(-50%, -50%);\n\ttransform: translate(-50%, -50%);\n\tz-index: 1;\n}\n.ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor:before\n{\tcontent: \"\";\n\tposition: absolute;\n\twidth: 50%;\n\theight: 50%;\n}\n.ol-touch .ol-layerswitcher .layerswitcher-opacity .layerswitcher-opacity-cursor\n{\twidth: 26px;\n\theight: 26px;\n}\n\n.ol-layerswitcher .layerswitcher-opacity-label { \n\tdisplay:none;\n\tposition: absolute;\n    right: -2.5em;\n    bottom: 5px;\n    font-size: 0.8em;\n}\n.ol-layerswitcher .layerswitcher-opacity-label::after {\n\tcontent:\"%\";\n}\n\n.ol-layerswitcher .layerswitcher-progress\n{\tdisplay:block;\n\tmargin:-4px 1em 2px 7px;\n\twidth: 120px;\n}\n.ol-layerswitcher .layerswitcher-progress div\n{\tbackground-color: #369;\n\theight:2px;\n\tdisplay:block;\n\twidth:0;\n}\n\n.ol-control.ol-layerswitcher-image\n{\tposition: absolute;\n\tright: 0.5em;\n\ttext-align: left;\n\ttop: 1em;\n\ttransition: all 0.2s ease 0s;\n\t-webkit-transition: all 0.2s ease 0s;\n}\n.ol-control.ol-layerswitcher-image.ol-collapsed\n{\ttop:3em;\n\ttransition: none;\n\t-webkit-transition: none;\n\n}\n\n.ol-layerswitcher-image .panel\n{\tlist-style: none;\n\tpadding: 0.25em;\n\tmargin:0;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-image .panel ul\n{\tlist-style: none;\n\tpadding: 0 0 0 20px;\n\toverflow: hidden;\n}\n\n.ol-layerswitcher-image.ol-collapsed .panel\n{\tdisplay:none;\n}\n.ol-layerswitcher-image.ol-forceopen .panel\n{\tdisplay:block;\n\tclear:both;\n}\n\n.ol-layerswitcher-image button \n{\tbackground-color: white;\n\tbackground-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAACE1BMVEX///8A//8AgICA//8AVVVAQID///8rVVVJtttgv98nTmJ2xNgkW1ttyNsmWWZmzNZYxM4gWGgeU2JmzNNr0N1Rwc0eU2VXxdEhV2JqytQeVmMhVmNoydUfVGUgVGQfVGQfVmVqy9hqy9dWw9AfVWRpydVry9YhVmMgVGNUw9BrytchVWRexdGw294gVWQgVmUhVWPd4N6HoaZsy9cfVmQgVGRrytZsy9cgVWQgVWMgVWRsy9YfVWNsy9YgVWVty9YgVWVry9UgVWRsy9Zsy9UfVWRsy9YgVWVty9YgVWRty9Vsy9aM09sgVWRTws/AzM0gVWRtzNYgVWRuy9Zsy9cgVWRGcHxty9bb5ORbxdEgVWRty9bn6OZTws9mydRfxtLX3Nva5eRix9NFcXxOd4JPeINQeIMiVmVUws9Vws9Vw9BXw9BYxNBaxNBbxNBcxdJexdElWWgmWmhjyNRlx9IqXGtoipNpytVqytVryNNrytZsjZUuX210k5t1y9R2zNR3y9V4lp57zth9zdaAnKOGoaeK0NiNpquV09mesrag1tuitbmj1tuj19uktrqr2d2svcCu2d2xwMO63N+7x8nA3uDC3uDFz9DK4eHL4eLN4eIyYnDX5OM5Z3Tb397e4uDf4uHf5uXi5ePi5+Xj5+Xk5+Xm5+Xm6OY6aHXQ19fT4+NfhI1Ww89gx9Nhx9Nsy9ZWw9Dpj2abAAAAWnRSTlMAAQICAwQEBgcIDQ0ODhQZGiAiIyYpKywvNTs+QklPUlNUWWJjaGt0dnd+hIWFh4mNjZCSm6CpsbW2t7nDzNDT1dje5efr7PHy9PT29/j4+Pn5+vr8/f39/f6DPtKwAAABTklEQVR4Xr3QVWPbMBSAUTVFZmZmhhSXMjNvkhwqMzMzMzPDeD+xASvObKePPa+ffHVl8PlsnE0+qPpBuQjVJjno6pZpSKXYl7/bZyFaQxhf98hHDKEppwdWIW1frFnrxSOWHFfWesSEWC6R/P4zOFrix3TzDFLlXRTR8c0fEEJ1/itpo7SVO9Jdr1DVxZ0USyjZsEY5vZfiiAC0UoTGOrm9PZLuRl8X+Dq1HQtoFbJZbv61i+Poblh/97TC7n0neCcK0ETNUrz1/xPHf+DNAW9Ac6t8O8WH3Vp98f5lCaYKAOFZMLyHL4Y0fe319idMNgMMp+zWVSybUed/+/h7I4wRAG1W6XDy4XmjR9HnzvDRZXUAYDFOhC1S/Hh+fIXxen+eO+AKqbs+wAo30zDTDvDxKoJN88sjUzDFAvBzEUGFsnADoIvAJzoh2BZ8sner+Ke/vwECuQAAAABJRU5ErkJggg==\");\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tfloat: right;\n\theight: 38px;\n\twidth: 38px;\n\tdisplay:none;\n}\n\n.ol-layerswitcher-image.ol-collapsed button\n{\tdisplay:block;\n\tposition:relative;\n}\n\n.ol-layerswitcher-image li\n{\tborder-radius: 4px;\n\tborder: 3px solid transparent;\n\t-webkit-box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);\n\tdisplay: inline-block;\n\twidth: 64px;\n\theight: 64px;\n\tmargin:2px;\n\tposition: relative;\n\tbackground-color: #fff;\n\toverflow: hidden;\n\tvertical-align: middle;\n\tcursor:pointer;\n}\n.ol-layerswitcher-image li.ol-layer-hidden\n{\topacity: 0.5;\n\tborder-color:#555;\n}\n.ol-layerswitcher-image li.ol-header\n{\tdisplay: none;\n}\n\n.ol-layerswitcher-image li img\n{\tposition:absolute;\n\tmax-width:100%;\n}\n.ol-layerswitcher-image li.select\n{\tborder: 3px solid red;\n}\n\n.ol-layerswitcher-image li p\n{\tdisplay:none;\n}\n.ol-layerswitcher-image li:hover p\n{\tbackground-color: rgba(0, 0, 0, 0.5);\n\tcolor: #fff;\n\tbottom: 0;\n\tdisplay: block;\n\tleft: 0;\n\tmargin: 0;\n\toverflow: hidden;\n\tposition: absolute;\n\tright: 0;\n\ttext-align: center;\n\theight:1.2em;\n\tfont-family:Verdana, Geneva, sans-serif;\n\tfont-size:0.8em;\n}\n.ol-control.ol-legend {\n  bottom: .5em;\n  left: .5em;\n  z-index: 1;\n  max-height: 90%;\n  max-width: 90%;\n  overflow-x: hidden;\n  overflow-y: auto;\n}\n.ol-control.ol-legend button {\n  position: relative;\n  display: none;\n}\n.ol-control.ol-legend.ol-collapsed button {\n    display: block;\n}\n.ol-control.ol-legend.ol-uncollapsible button {\n  display: none;\n}\n\n.ol-control.ol-legend button.ol-closebox {\n  display: block;\n  position: absolute;\n  top: 0;\n  right: 0;\n  background: none;\n  cursor: pointer;\n  z-index: 1;\n}\n.ol-control.ol-legend.ol-uncollapsible button.ol-closebox,\n.ol-control.ol-legend.ol-collapsed button.ol-closebox {\n  display: none;\n}\n.ol-control.ol-legend button.ol-closebox:before {\n  content: \"\\D7\";\n  background: none;\n  color: rgba(0,60,136,.5);\n  font-size: 1.3em;\n}\n.ol-control.ol-legend button.ol-closebox:hover:before {\n  color: rgba(0,60,136,1);\n}\n.ol-control.ol-legend.ol-uncollapsible .ol-legendImg,\n.ol-control.ol-legend .ol-legendImg {\n  position: absolute;\n  z-index: -1;\n}\n.ol-control.ol-legend.ol-collapsed .ol-legendImg {\n  display: none;\n}\n.ol-control.ol-legend.ol-uncollapsible .ol-legendImg {\n  display: block  ;\n}\n\n.ol-control.ol-legend .ol-legendImg canvas {\n  height: 100%;;\n}\n\n.ol-control.ol-legend > button:first-child:before,\n.ol-control.ol-legend > button:first-child:after {\n  content: \"\";\n  position: absolute;\n  top: .25em;\n  left: .2em;\n  width: .2em;\n  height: .2em;\n  background-color: currentColor;\n  -webkit-box-shadow: 0 0.35em, 0 0.7em;\n          box-shadow: 0 0.35em, 0 0.7em;\n}\n.ol-control.ol-legend button:first-child:after {\n  top: .27em;\n  left: .55em;\n  height: .15em;\n  width: .6em;\n}\n\n.ol-legend ul {\n  min-width: 1.5em;\n  min-height: 1.5em;\n  margin: 0 0 2px;\n  padding: 0;\n  list-style: none;\n  display: inline-block;\n}\n.ol-control.ol-legend.ol-collapsed ul {\n  display: none;\n}\n.ol-control.ol-legend.ol-uncollapsible ul {\n  display: block;\n}\n.ol-legend ul li.ol-title {\n  text-align: center;\n  font-weight: bold;\n}\n.ol-legend ul li {\n  overflow: hidden;\n  padding: 0 .5em;\n}\n.ol-legend ul li div {\n    display: inline-block;\n  vertical-align: middle;\n}\n\n.ol-control.ol-legend .ol-legend {\n  display: inline-block;\n}\n.ol-control.ol-legend.ol-collapsed .ol-legend {\n  display: none;\n}\n.ol-control.ol-mapzone {\n  position: absolute;\n  right: 0.5em;\n  text-align: left;\n  top: .5em;\n  max-height: calc(100% - 6em);\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  overflow: hidden;\n}\n\n.ol-control.ol-mapzone.ol-collapsed {\n  top: 3em;\n}\n\n.ol-control.ol-mapzone button {\n  position: relative;\n  float: right;\n  margin-top: 2.2em;\n}\n.ol-touch .ol-control.ol-mapzone button {\n  margin-top: 1.67em;\n}\n.ol-control.ol-mapzone.ol-collapsed button {\n  margin-top: 0;\n}\n\n.ol-control.ol-mapzone button i {\n  border: .1em solid currentColor;\n  border-radius: 50%;\n  width: .9em;\n  height: .9em; \n  overflow: hidden;\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-control.ol-mapzone button i:before {\n  content: \"\";\n  background-color: currentColor;\n  width: 0.4em;\n  height: .4em;\n  position: absolute;\n  left: .5em;\n  top: 0.3em;\n  border-radius: 50%;\n  -webkit-box-shadow: .05em .3em 0 -.051em currentColor,\n  \t-.05em -.35em 0 -.1em currentColor,\n  \t-.5em -.35em 0 0em currentColor,\n  \t-.65em .1em 0 -.03em currentColor,\n  \t-.65em -.05em 0 -.05em currentColor;\n          box-shadow: .05em .3em 0 -.051em currentColor,\n  \t-.05em -.35em 0 -.1em currentColor,\n  \t-.5em -.35em 0 0em currentColor,\n  \t-.65em .1em 0 -.03em currentColor,\n  \t-.65em -.05em 0 -.05em currentColor\n}\n\n.ol-mapzone > div {\n  position: relative;\n  display: inline-block;\n  width: 5em;\n  height: 5em;\n  margin: 0 .2em 0 0;\n}\n.ol-control.ol-mapzone.ol-collapsed > div {\n  display: none;\n}\n.ol-mapzone > div p {\n  margin: 0;\n  position: absolute;\n  bottom: 0;\n  /* background: rgba(255,255,255,.5); */\n  color: #fff;\n  font-weight: bold;\n  text-align: center;\n  width: 160%;\n  overflow: hidden;\n  font-family: 'Lucida Grande',Verdana,Geneva,Lucida,Arial,Helvetica,sans-serif;\n  -webkit-transform: scaleX(.625);\n          transform: scaleX(.625);\n  -webkit-transform-origin: 0 0;\n          transform-origin: 0 0;\n  cursor: default;\n}\n\n.ol-notification {\n  width: 150%;\n  bottom: 0;\n  border: 0;\n  background: none;\n  margin: 0;\n  padding: 0;\n}\n.ol-notification > div,\n.ol-notification > div:hover {\n  position: absolute;\n  background-color: rgba(0,0,0,.8);\n  color: #fff;\n  bottom: 0;\n  left: 33.33%;\n  max-width: calc(66% - 4em);\n  min-width: 5em;\n  max-height: 5em;\n  min-height: 1em;\n  border-radius: 4px 4px 0 0;\n  padding: .2em .5em;\n  text-align: center;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  -webkit-transition: .3s;\n  transition: .3s;\n  opacity: 1;\n}\n.ol-notification.ol-collapsed > div {\n  bottom: -5em;\n  opacity: 0;\n}\n\n.ol-notification a {\n  color: #9cf;\n  cursor: pointer;\n}\n\n.ol-overlay {\n  position: absolute;\n  top: 0;\n  left: 0;\n  width:100%;\n  height: 100%;\n  background-color: rgba(0,0,0,0.4);\n  padding: 1em;\n  color: #fff;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  z-index: 1;\n  opacity: 0;\n  display: none;\n  cursor: default;\n  overflow: hidden;\n  -webkit-transition: all 0.5s;\n  transition: all 0.5s;\n  pointer-events: none;\n}\n\n.ol-overlay.slide-up {\n  transform: translateY(100%);\n  -webkit-transform: translateY(100%);\n}\n.ol-overlay.slide-down {\n  -webkit-transform: translateY(-100%);\n  transform: translateY(-100%);\n}\n.ol-overlay.slide-left\n{\t-webkit-transform: translateX(-100%);\n  transform: translateX(-100%);\n}\n.ol-overlay.slide-right {\n  -webkit-transform: translateX(100%);\n  transform: translateX(100%);\n}\n.ol-overlay.zoom {\n  top: 50%;\n  left: 50%;\n  opacity:0.5;\n  -webkit-transform: translate(-50%,-50%) scale(0);\n  transform: translate(-50%,-50%) scale(0);\n}\n.ol-overlay.zoomout {\n  -webkit-transform: scale(3);\n  transform: scale(3);\n}\n.ol-overlay.zoomrotate {\n  top: 50%;\n  left: 50%;\n  opacity:0.5;\n  -webkit-transform: translate(-50%,-50%) scale(0) rotate(360deg);\n  transform: translate(-50%,-50%) scale(0) rotate(360deg);\n}\n.ol-overlay.stretch {\n  top: 50%;\n  left: 50%;\n  opacity:0.5;\n  -webkit-transform: translate(-50%,-50%) scaleX(0);\n  transform: translate(-50%,-50%) scaleX(0) ;\n}\n.ol-overlay.stretchy {\n  top: 50%;\n  left: 50%;\n  opacity:0.5;\n  -webkit-transform: translate(-50%,-50%) scaleY(0);\n  transform: translate(-50%,-50%) scaleY(0) ;\n}\n.ol-overlay.wipe {\n  opacity: 1;\n  /* clip: must be set programmatically */\n  /* clip-path: use % but not crossplatform (IE) */\n}\n.ol-overlay.flip {\n  -webkit-transform: perspective(600px) rotateY(180deg);\n  transform: perspective(600px) rotateY(180deg);\n}\n.ol-overlay.card {\n  opacity: 0.5;\n  -webkit-transform: translate(-80%, 100%) rotate(-0.5turn);\n  transform: translate(-80%, 100%) rotate(-0.5turn);\n}\n.ol-overlay.book {\n  -webkit-transform: perspective(600px) rotateY(-180deg) scaleX(0.6);\n  transform: perspective(600px) rotateY(-180deg) scaleX(0.6) ;\n  -webkit-transform-origin: 10% 50%;\n  transform-origin: 10% 50%;\n}\n.ol-overlay.book.visible {\n  -webkit-transform-origin: 10% 50%;\n  transform-origin: 10% 50%;\n}\n\n.ol-overlay.ol-visible {\n  opacity:1;\n  top: 0;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  -webkit-transform: none;\n  transform: none;\n  pointer-events: all;  \n}\n\n.ol-overlay .ol-closebox {\n  position: absolute;\n  top: 1em;\n  right: 1em;\n  width: 1em;\n  height: 1em;\n  cursor: pointer;\n  z-index:1;\n}\n.ol-overlay .ol-closebox:before {\n  content: \"\\274C\";\n  display: block;\n  text-align: center;\n  vertical-align: middle;\n}\n\n.ol-overlay .ol-fullscreen-image {\n  position: absolute;\n  top: 0;\n  left: 0;\n  bottom: 0;\n  right: 0;\n}\n.ol-overlay .ol-fullscreen-image img {\n  position: absolute;\n  max-width: 100%;\n  max-height: 100%;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  padding: 1em;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n  transform: translate(-50%, -50%);\n}\n.ol-overlay .ol-fullscreen-image.ol-has-title img {\n  padding-bottom: 3em;\n}\n.ol-overlay .ol-fullscreen-image p {\n  background-color: rgba(0,0,0,.5);\n  padding: .5em;\n  position: absolute;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  margin: 0;\n  text-align: center;\n}\n.ol-control.ol-overview\n{\tposition: absolute;\n\tleft: 0.5em;\n\ttext-align: left;\n\tbottom: 0.5em;\n}\n\n.ol-control.ol-overview .panel\n{\tdisplay:block;\n\twidth:150px;\n\theight:150px;\n\tmargin:2px;\n\tbackground-color:#fff;\n\tborder:1px solid #369;\n\tcursor: pointer;\n}\n\n.ol-overview:not(.ol-collapsed) button\n{\tposition:absolute;\n\tbottom:2px;\n\tleft:2px;\n\tz-index:2;\n}\n\n.ol-control.ol-overview.ol-collapsed .panel\n{\tdisplay:none;\n}\n\n.ol-overview.ol-collapsed button:before\n{\tcontent:'\\BB';\n}\n.ol-overview button:before\n{\tcontent:'\\AB';\n}\n\n\n.ol-control-right.ol-overview\n{\tleft: auto;\n\tright: 0.5em;\n}\n.ol-control-right.ol-overview:not(.ol-collapsed) button\n{\tleft:auto;\n\tright:2px;\n}\n.ol-control-right.ol-overview.ol-collapsed button:before\n{\tcontent:'\\AB';\n}\n.ol-control-right.ol-overview button:before\n{\tcontent:'\\BB';\n}\n\n.ol-control-top.ol-overview\n{\tbottom: auto;\n\ttop: 5em;\n}\n.ol-control-top.ol-overview:not(.ol-collapsed) button\n{\tbottom:auto;\n\ttop:2px;\n}\n\n.ol-permalink\n{\tposition: absolute;\n\ttop:0.5em;\n\tright: 2.5em;\n}\n.ol-touch .ol-permalink\n{\tright: 3em;\n}\n\n.ol-permalink button\n{\tbackground-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AcFBjYE1ZK03gAAAUlJREFUOMuVk71KA1EQhc/NaiP+gCRpFHwGBSFlCrFVfAsbwSJCBMv06QIGJOBziI3EYAgkjU8gIloIAasIn4WzMqx34zrN7J6de+6ZmbNSgQDSfADcATPgHbgCyvonSYv8KEzWdofegH3gwmG9Ikq67sAESFzNueHThTyiEIKAmr2OJCUhhO30Aou+5aUQU2Ik65K2JC1KegohPGfUBkmvksqShnntHEcGOs60NXHfjmKz6czZTsNqbhzW+muwY2ATWAWawCOwBgxcTfvnvCPxKx4Cy5bPgBWgauRpdL2ImNlGhp3MabETm8mh94nDk4yCNE5/KTGg7xxbyhYAG0AN2AEqURIDZ0a0Fxn+LXAPXDpzRqMk6cOedz1ubdYl1b6NHgZRJe72nuu/CdSBl+yKi/zZlTnbaeXOJIesClwDU+ATeEhtX5TkCwAWUyAsHH1QAAAAAElFTkSuQmCC');\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n}\n.ol-control.ol-print {\n\ttop:.5em;\n\tleft: 3em;\n}\n.ol-control.ol-print button:before {\n\tcontent: \"\";\n\twidth: .9em;\n\theight: .35em;\n\tposition: absolute;\n\tleft: 50%;\n\ttop: 50%;\n\t-webkit-transform: translateX(-50%);\n\t        transform: translateX(-50%);\n\t-webkit-box-shadow: inset 0 0 0 0.1em, inset 0.55em 0, 0 0.2em 0 -0.1em;\n\t        box-shadow: inset 0 0 0 0.1em, inset 0.55em 0, 0 0.2em 0 -0.1em;\n}\n.ol-control.ol-print button:after {\n\tcontent: \"\";\n\twidth: .7em;\n\theight: .6em;\n\tposition: absolute;\n\tleft: 50%;\n\ttop: 25%;\n\t-webkit-transform: translateX(-50%);\n\t        transform: translateX(-50%);\n\t-webkit-box-shadow: inset 0 0 0 0.15em;\n\t        box-shadow: inset 0 0 0 0.15em;\n}\n.ol-control.ol-profil {\n  position: absolute;\n\ttop: 0.5em;\n\tright: 3em;\n\ttext-align: right;\n\toverflow: hidden;\n}\n.ol-profil .ol-inner  {\n  position: relative;\n\tpadding: 0.5em;\n\tfont-size: 0.8em;\n}\n.ol-control.ol-profil .ol-inner {\n  display: block;\n\tbackground-color: rgba(255,255,255,0.7);\n\tmargin: 2.3em 2px 2px;\n}\n.ol-control.ol-profil.ol-collapsed .ol-inner {\n  display: none;\n}\n\n.ol-profil canvas {\n  display: block;\n}\n.ol-profil button {\n  display: block;\n\tposition: absolute;\n\tright: 2px;\n\tbackground-position: center;\n\tbackground-repeat: no-repeat;\n\tbackground-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABUAAAAPCAYAAAALWoRrAAAABmJLR0QAAAAAAAD5Q7t/AAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH4AgXCR4dn7j9TAAAAB1pVFh0Q29tbWVudAAAAAAAQ3JlYXRlZCB3aXRoIEdJTVBkLmUHAAAAz0lEQVQ4y7WTMU4CURRFz0xIpLUBEhdAY2tJYW1jaWlsXYVxDWyBhWCFCYugYgnDFPMOhTMJGf3AwHiqn/uTk5v/3gfAH6b0RH7sMiIe1Ts162z+q2lVVbd1XqijLuJk0zzP1/VxCGyApLgsy+HJphGx8DeFOm6L1bn6eVQaEW+m2amTRqx+1fkqKY2Ie0+zUx/U7WGYfNMsy57PmMMN8A1MWsWeUoPyivV8PWtPOzL7D+lYHfUtBXgHGLTCJfBxodD6k9Dsm8BLE17LobQ39nJC61aLVoVsAAAAAElFTkSuQmCC');\n}\n\n.ol-profil.ol-collapsed button {\n  position: static;\n}\n\n.ol-profil .ol-profilbar,\n.ol-profil .ol-profilcursor {\n  position:absolute;\n\tpointer-events: none;\n\twidth: 1px;\n\tdisplay: none;\n}\n.ol-profil .ol-profilcursor {\n  width: 0;\n\theight: 0;\n}\n.ol-profil .ol-profilcursor:before {\n  content:\"\";\n\tpointer-events: none;\n\tdisplay: block;\n\tmargin: -2px;\n\twidth:5px;\n\theight:5px;\n}\n.ol-profil .ol-profilbar,\n.ol-profil .ol-profilcursor:before {\n  background: red;\n}\n\n.ol-profil table {\n  text-align: center;\n  width: 100%;\n}\n\n.ol-profil table span {\n  display: block;\n}\n\n.ol-profilpopup {\n  background-color: rgba(255, 255, 255, 0.5);\n\tmargin: 0.5em;\n\tpadding: 0 0.5em;\n\tposition: absolute;\n\ttop:-1em;\n\twhite-space: nowrap;\n}\n.ol-profilpopup.ol-left {\n  right:0;\n}\n\n\n.ol-profil table td {\n  padding: 0 2px;\n}\n\n.ol-profil table .track-info {\n  display: table-row;\n}\n.ol-profil table .point-info {\n  display: none;\n}\n.ol-profil .over table .track-info {\n  display: none;\n}\n.ol-profil .over table .point-info {\n  display: table-row;\n}\n\n.ol-profil p {\n  text-align: center;\n\tmargin:0;\n}\n\n.ol-control.ol-routing {\n  top: 0.5em;\n  left: 3em;\n  max-height: 90%;\n  overflow-y: auto;\n}\n.ol-touch .ol-control.ol-routing {\n  left: 3.5em;\n}\n.ol-control.ol-routing.ol-searching {\n  opacity: .5;\n}\n\n.ol-control.ol-routing .ol-car,\n.ol-control.ol-routing > button {\n  position: relative;\n}\n.ol-control.ol-routing .ol-car:after,\n.ol-control.ol-routing > button:after {\n  content: \"\";\n  position: absolute;\n  width: .78em;\n  height: 0.6em;\n  border-radius: 40% 50% 0 0 / 50% 70% 0 0;\n  -webkit-box-shadow: inset 0 0 0 0.065em, -0.35em 0.14em 0 -0.09em, inset 0 -0.37em, inset -0.14em 0.005em;\n          box-shadow: inset 0 0 0 0.065em, -0.35em 0.14em 0 -0.09em, inset 0 -0.37em, inset -0.14em 0.005em;\n  clip: rect(0 1em .5em -1em);\n  top: .35em;\n  left: .4em;\n}\n.ol-control.ol-routing .ol-car:before,\n.ol-control.ol-routing > button:before {\n  content: \"\";\n  position: absolute;\n  width: .28em;\n  height: .28em;\n  border-radius: 50%;\n  -webkit-box-shadow: inset 0 0 0 1em, 0.65em 0;\n          box-shadow: inset 0 0 0 1em, 0.65em 0;\n  top: 0.73em;\n  left: .20em;\n}\n.ol-control.ol-routing .ol-pedestrian:after {\n  content: \"\";\n  position: absolute;\n  width: .3em;\n  height: .4em;\n  top: .25em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  -webkit-box-shadow: inset 0.3em 0, 0.1em 0.5em 0 -0.1em, -0.1em 0.5em 0 -0.1em, 0.25em 0.1em 0 -0.1em, -0.25em 0.1em 0 -0.1em;\n          box-shadow: inset 0.3em 0, 0.1em 0.5em 0 -0.1em, -0.1em 0.5em 0 -0.1em, 0.25em 0.1em 0 -0.1em, -0.25em 0.1em 0 -0.1em;\n  border-top: .2em solid transparent;\n}\n.ol-control.ol-routing .ol-pedestrian:before {\n  content: \"\";\n  position: absolute;\n  width: .3em;\n  height: .3em;\n  top: .1em;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  border-radius: 50%;\n  background-color: currentColor;\n}\n\n.ol-control.ol-routing.ol-collapsed .content {\n  display: none;\n}\n\n.ol-routing .ol-search.ol-collapsed ul {\n\tdisplay: none;\n}\n.ol-routing .ol-search ul .copy {\n  display: none;\n}\n.ol-routing .ol-search ul.history {\n  /* display: none; */\n}\n.ol-routing .content .search-input > div > * {\n  display: inline-block;\n  vertical-align: top;\n}\n.ol-routing .ol-result ul {\n  list-style: none;\n  display: block;\n}\n.ol-routing .ol-result li {\n  position: relative;\n  min-height: 1.65em;\n}\n.ol-routing .ol-result li i {\n  display: block;\n  font-size: .8em;\n  font-weight: bold;\n}\n\n.ol-routing .ol-result li:before {\n  content: \"\";\n  border: 5px solid transparent;\n  position: absolute;\n  left: -1.75em;\n  border-bottom-color: #369;\n  border-width: .6em .4em .6em;\n  -webkit-transform-origin: 50% 125%;\n          transform-origin: 50% 125%;\n  -webkit-box-shadow: 0 0.65em 0 -0.25em #369;\n          box-shadow: 0 0.65em 0 -0.25em #369;\n  top: -.8em;\n}\n.ol-routing .ol-result li:after {\n  content: \"\";\n  position: absolute;\n  width: 0.3em;\n  height: .6em;\n  left: -1.5em;\n  background: #369;\n  top: .6em;\n}\n.ol-routing .ol-result li.R:before {\n  -webkit-transform: rotate(90deg);\n          transform: rotate(90deg);\n}\n.ol-routing .ol-result li.FR:before {\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n}\n.ol-routing .ol-result li.L:before {\n  -webkit-transform: rotate(-90deg);\n          transform: rotate(-90deg);\n}\n.ol-routing .ol-result li.FL:before {\n  -webkit-transform: rotate(-45deg);\n          transform: rotate(-45deg);\n}\n\n.ol-routing .content > i {\n  vertical-align: middle;\n  margin: 0 .3em 0 .1em;\n  font-style: normal;\n}\n.ol-routing .ol-button,\n.ol-routing .ol-button:focus,\n.ol-routing .ol-pedestrian,\n.ol-routing .ol-car {\n  font-size: 1.1em;\n  position: relative;\n  display: inline-block;\n  width: 1.4em;\n  height: 1.4em;\n  color: rgba(0,60,136,1);\n  background-color: transparent;\n  margin: 0 .1em;\n  opacity: .5;\n  vertical-align: middle;\n  outline: none;\n  cursor: pointer;\n}\n.ol-routing .ol-button:hover,\n.ol-routing .ol-button.selected,\n.ol-routing i.selected {\n  opacity: 1;\n  background: transparent;\n}\n\n.ol-control.ol-routing:hover {\n  background-color: rgba(255,255,255,.85);\n}\n\n.search-input > div > button:before {\n  content: '\\B1';\n}\n.ol-viewport .ol-scale {\n\tleft: .5em;\n\tbottom: 2.5em;\n\ttext-align: center;\n\t-webkit-transform: scaleX(.8);\n\t-webkit-transform-origin: 0 0;\n\ttransform: scaleX(.8);\n\ttransform-origin: 0 0;\n}\n.ol-viewport .ol-scale input {\n\tbackground: none;\n    border: 0;\n    width: 8em;\n    text-align: center;\n}\n\n.ol-search{\n  top: 0.5em;\n  left: 3em;\n}\n.ol-touch .ol-search {\n  left: 3.5em;\n}\n.ol-search button {\n  background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAABPUlEQVQoU41SwXHCQAzUHh58eoUOIBWEDkI6oAToIKkg7iAuwakgpAIowXRACcnrzp6BzchjMx4wE/S6kW5XK60gvQghzJIkmVoqSZI9gJ9+/fINS5Cc1HX9QXIlIr/tpwcRyb33b7cIGnAIYQdg4pxbjcfj0nJ1Xc+Px+PGObdN03Q9RIAQwgpAnqbp7FKmjQGgJLlU1d2V7BjjRkQO3vvXIXarkyxVNbsCm2QR2Q0V7XOMMReRmfd+OQQubN6hYgs22ZtbnRcAtiRfLueqqmpJ8ovko6oeBq0KIWQA3gFkzrlmMafTaUEyI/mpqmbhVTRWWbRdbClPbeobQNES5KPRqOxs7DBn8K1DsAOKMZYApiTXqlrcDe4d0XN7jWeCfzt351tVle2iGalTcBd4gGDvvZ/fDe4RmCOFLe8Pr7mvEP2N9PQAAAAASUVORK5CYII=\");\n  background-repeat: no-repeat;\n  background-position: center center;\n  background-size: 1em;\n  top: 2px;\n  left: 2px;\n  float: left;\n}\n\n.ol-search button.ol-revers {\n  float: none;\n  background-image: none;\n  display: inline-block;\n  vertical-align: bottom;\n  position: relative;\n  top: 0;\n  left: 0;\n}\n.ol-search.ol-revers button.ol-revers {\n  background-color: rgba(0,136,60,.5)\n}\n\n.ol-control.ol-search.ol-collapsed button.ol-revers {\n  display: none;\n}\n.ol-search button.ol-revers:before {\n  content: \"\";\n  border: .1em solid currentColor;\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n  border-radius: 50%;\n  width: .55em;\n  height: .55em;\n}\n.ol-search button.ol-revers:after {\n  content: \"\";\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n  width: .2em;\n  height: .2em;\n  background-color: transparent;\n  -webkit-box-shadow: .4em 0 currentColor, 0 .4em currentColor, -.4em 0 currentColor, 0 -.4em currentColor;\n          box-shadow: .4em 0 currentColor, 0 .4em currentColor, -.4em 0 currentColor, 0 -.4em currentColor;\n}\n\n.ol-search input {\n  display: inline-block;\n  border: 0;\n  margin: 1px 1px 1px 2px;\n  font-size: 1.14em;\n  padding-left: 0.3em;\n  height: 1.375em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  -webkit-transition: all 0.1s;\n  transition: all 0.1s;\n}\n.ol-touch .ol-search input,\n.ol-touch .ol-search ul {\n  font-size: 1.5em;\n}\n.ol-search.ol-revers > ul,\n.ol-control.ol-search.ol-collapsed > * {\n  display: none;\n}\n.ol-control.ol-search.ol-collapsed > button {\n  display: block;\n}\n\n.ol-search ul {\n  list-style: none;\n  padding: 0;\n  margin: 0;\n  display: block;\n  clear: both;\n  cursor: pointer;\n  max-width: 17em;\n  overflow-x: hidden;\n  z-index: 1;\n  background: #fff;\n}\n/*\n.ol-control.ol-search ul {\n  position: absolute;\n  box-shadow: 5px 5px 5px rgba(0,0,0,0.5);\n}\n*/\n.ol-search ul li {\n  padding: 0.1em 0.5em;\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.ol-search ul li.select,\n.ol-search ul li:hover {\n  background-color: rgba(0,60,136,.5);\n  color: #fff;\n}\n.ol-search ul li img {\n  float: left;\n  max-height: 2em;\n}\n.ol-search li.copy {\n    background: rgba(0,0,0,.5);\n  color: #fff;\n}\n.ol-search li.copy a {\n  color: #fff;\n  text-decoration: none;\n}\n\n.ol-search.searching:before {\n  content: '';\n  position: absolute;\n  height: 3px;\n  left: 0;\n  top: 1.6em;\n  -webkit-animation: pulse .5s infinite alternate linear;\n          animation: pulse .5s infinite alternate linear;\n  background: red;\n  z-index: 2;\n}\n\n@-webkit-keyframes pulse {\n  0% { left:0; right: 95%; }\n  50% {\tleft: 30%; right: 30%; }\n  100% {\tleft: 95%; right: 0; }\n}\n\n@keyframes pulse {\n  0% { left:0; right: 95%; }\n  50% {\tleft: 30%; right: 30%; }\n  100% {\tleft: 95%; right: 0; }\n}\n\n\n.ol-search.IGNF-parcelle input {\n  width: 13.5em;\n}\n.ol-search.IGNF-parcelle input:-moz-read-only {\n  background: #ccc;\n  opacity: .8;\n}\n.ol-search.IGNF-parcelle input:read-only {\n  background: #ccc;\n  opacity: .8;\n}\n.ol-search.IGNF-parcelle.ol-collapsed-list > ul.autocomplete {\n  display: none;\n}\n\n.ol-search.IGNF-parcelle label {\n  display: block;\n  clear: both;\n}\n.ol-search.IGNF-parcelle > div input,\n.ol-search.IGNF-parcelle > div label {\n  width: 5em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  display: inline-block;\n  margin: .1em;\n  font-size: 1em;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page {\n  margin-top:.5em;\n  width:100%;\n  text-align: center;\n  display: none;\n}\n.ol-search.IGNF-parcelle.ol-collapsed-list ul.autocomplete-parcelle,\n.ol-search.IGNF-parcelle.ol-collapsed-list ul.autocomplete-page {\n  display: block;\n}\n.ol-search.IGNF-parcelle.ol-collapsed ul.autocomplete-page,\n.ol-search.IGNF-parcelle.ol-collapsed ul.autocomplete-parcelle,\n.ol-search.IGNF-parcelle ul.autocomplete-parcelle {\n  display: none;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page li {\n  display: inline-block;\n  color: #fff;\n  background: rgba(0,60,136,.5);\n  border-radius: 50%;\n  width: 1.3em;\n  height: 1.3em;\n  padding: .1em;\n  margin: 0 .1em;\n}\n.ol-search.IGNF-parcelle ul.autocomplete-page li.selected {\n  background: rgba(0,60,136,1);\n}\n\n/* GPS */\n.ol-searchgps input.search {\n  display: none;\n}\n.ol-control.ol-searchgps > button:first-child {\n  background-image: none;\n}\n.ol-control.ol-searchgps > button:first-child:before {\n  content: \"x/y\";\n  display: block;\n  -webkit-transform: scaleX(.8);\n          transform: scaleX(.8);\n}\n.ol-control.ol-searchgps .ol-latitude,\n.ol-control.ol-searchgps .ol-longitude {\n  clear: both;\n}\n.ol-control.ol-searchgps .ol-latitude label,\n.ol-control.ol-searchgps .ol-longitude label {\n  width: 5.5em;\n  display: inline-block;\n  text-align: right;\n  -webkit-transform: scaleX(.8);\n          transform: scaleX(.8);\n  margin: 0 -.8em 0 0;\n  -webkit-transform-origin: 0 0;\n          transform-origin: 0 0;\n}\n.ol-control.ol-searchgps .ol-latitude input,\n.ol-control.ol-searchgps .ol-longitude input {\n  max-width: 10em;\n}\n\n.ol-control.ol-searchgps .ol-switch {\n  cursor: pointer;\n  float: right;\n  margin: .5em;\n  font-size: .9em;\n}\n.ol-control.ol-searchgps .ol-switch input {\n  display: none;\n}\n.ol-control.ol-searchgps .ol-switch span {\n  color: rgba(0,60,136,.5);\n  position: relative;\n  cursor: pointer;\n  background-color: #ccc;\n  -webkit-transition: .4s;\n  transition: .4s;\n  width: 1.6em;\n  height: 1em;\n  display: inline-block;\n  border-radius: 1em;\n  font-size: 1.3em;\n  vertical-align: middle;\n  margin: 0 .2em;\n}\n.ol-control.ol-searchgps .ol-switch span:before {\n  position: absolute;\n  content: \"\";\n  height: 1em;\n  width: 1em;\n  left: 0;\n  top: 50%;\n  background-color: #fff;\n  -webkit-transition: .4s;\n  transition: .4s;\n  border-radius: 1em;\n  display: block;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n  border: 2px solid #ccc;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n.ol-control.ol-searchgps .ol-switch input:checked + span {\n  background-color: currentColor;\n}\n.ol-control.ol-searchgps .ol-switch input:checked + span:before {\n  -webkit-transform: translate(.6em,-50%);\n          transform: translate(.6em,-50%);\n  border-color: currentColor;\n}\n\n.ol-searchgps .ol-decimal{\n  display: inline-block;\n}\n.ol-searchgps .ol-dms,\n.ol-searchgps.ol-dms .ol-decimal {\n  display: none;\n  width: 3em;\n  text-align: right;\n}\n.ol-searchgps.ol-dms .ol-dms {\n  display: inline-block;\n}\n\n.ol-searchgps span.ol-dms {\n  width: auto;\n}\n.ol-searchgps.ol-control.ol-collapsed button.ol-geoloc {\n  display: none;\n}\n.ol-searchgps button.ol-geoloc {\n  top: 0;\n  float: right;\n  margin-right: 3px;\n  background-image: none;\n  position: relative;\n}\n.ol-searchgps button.ol-geoloc:before {\n  content:\"\";\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  width: .6em;\n  height: .6em;\n  border: .1em solid currentColor;\n  border-radius: 50%;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n}\n.ol-searchgps button.ol-geoloc:after {\n  content:\"\";\n  position: absolute;\n  left: 50%;\n  right: 50%;\n  width: .2em;\n  height: .2em;\n  background-color: transparent;\n  -webkit-transform: translate(-50%,-50%);\n          transform: translate(-50%,-50%);\n  -webkit-box-shadow: \n    .45em 0 currentColor, -.45em 0 currentColor, 0 -.45em currentColor, 0 .45em currentColor,\n    .25em 0 currentColor, -.25em 0 currentColor, 0 -.25em currentColor, 0 .25em currentColor;\n          box-shadow: \n    .45em 0 currentColor, -.45em 0 currentColor, 0 -.45em currentColor, 0 .45em currentColor,\n    .25em 0 currentColor, -.25em 0 currentColor, 0 -.25em currentColor, 0 .25em currentColor;\n}\n.ol-control.ol-select {\n  top: .5em;\n  left: 3em;\n}\n.ol-control.ol-select > button:before {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  width: .73em;\n  height: .73em;\n  background-color: transparent;\n  border: .12em solid currentColor;\n  border-radius: 100%;\n  top: .35em;\n  left: .35em;\n}\n.ol-control.ol-select > button:after {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  top: 1.1em;\n  left: 1em;\n  border-width: .08em .23em;\n  border-style: solid;\n  border-radius: .03em;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n  -webkit-box-shadow: -0.18em 0 0 -0.03em;\n          box-shadow: -0.18em 0 0 -0.03em;\n}\n.ol-select > div button {\n    width: auto;\n    padding: 0 .5em;\n    float: right;\n    font-weight: normal;\n}\n.ol-select .ol-delete {\n    width: 1.5em;\n  height: 1em;\n  vertical-align: middle;\n  display: inline-block;\n  position: relative;\n  cursor: pointer;\n}\n.ol-select .ol-delete:before {\n  content:'\\D7';\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n  width: 100%;\n  text-align: center;\n  font-weight: bold;\n}\n.ol-control.ol-select input {\n  font-size: 1em;\n}\n.ol-control.ol-select select {\n  font-size: 1em;\n  max-width: 10em;\n}\n.ol-control.ol-select select option.ol-default {\n  color: #999;\n  font-style: italic;\n}\n.ol-control.ol-select > div {\n  display: block;\n}\n.ol-control.ol-select.ol-collapsed > div {\n  display: none;\n}\n.ol-control.ol-select.ol-select-check {\n  max-width: 20em;\n}\n.ol-control.ol-select.ol-select-check label,\n.ol-control.ol-select-check div {\n  position: relative;\n  display: inline-block;\n}\n.ol-control.ol-select.ol-select-condition input,\n.ol-control.ol-select.ol-select-check input {\n  position: absolute;\n  opacity: 0;\n  cursor: pointer;\n  height: 0;\n  width: 0;\n}\n.ol-control.ol-select.ol-select-condition label div {\n  position: relative;\n  padding: 0 1em 0 2em;\n}\n.ol-control.ol-select.ol-select-condition label div:before {\n  content: \"\";\n  position: absolute;\n  left: 0;\n  height: 1.1em;\n  width: 1.8em;\n  background-color: rgba(192,192,192,.7);\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  border-radius: 1em;\n}\n.ol-control.ol-select.ol-select-condition label div:after {\n  content: \"\";\n  position: absolute;\n  left: .1em;\n  top: .1em;\n  height: .9em;\n  width: .9em;\n  background-color: #fff;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  border-radius: 1em;\n  -webkit-transition: .3s;\n  transition: .3s;\n}\n.ol-control.ol-select.ol-select-condition input:checked ~ div:after {\n  left: .7em;\n}\n\n.ol-control.ol-select.ol-select-check label > div {\n  padding: 0 1em 0 1.5em;\n}\n.ol-control.ol-select.ol-select-check label > div:before {\n  content: \"\";\n  position: absolute;\n  width: 1.1em;\n  height: 1.1em;\n  left: .2em;\n  background-color: rgba(192,192,192,.7);\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n.ol-control.ol-select.ol-select-check label.ol-radio > div:before {\n  border-radius: 50%;\n}\n.ol-control.ol-select.ol-select-condition label > div:hover:before,\n.ol-control.ol-select.ol-select-check label > div:hover:before {\n  background-color: rgba(128,128,128,.7);\n}\n.ol-control.ol-select.ol-select-condition input:checked ~ div:before,\n.ol-control.ol-select.ol-select-check input:checked ~ div:before {\n  background-color: rgba(0,60,136,.7);\n}\n.ol-control.ol-select.ol-select-check label.ol-checkbox input:checked ~ div:after {\n  content: \"\";\n  position: absolute;\n  width: .5em;\n  height: .8em;\n  top: .05em;\n  left: .5em;\n  border: 2px solid #fff;\n  border-width: 0 3px 3px 0;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n.ol-control.ol-select.ol-select-check label.ol-radio input:checked ~ div:before {\n  border: .3em solid rgba(0,60,136,.7);\n  background-color: #fff;\n}\n\n.ol-select ul {\n  list-style: none;\n  margin: 0;\n  padding: 0;\n}\n.ol-control.ol-select input[type=\"text\"]  {\n  width: 8em;\n}\n\n.ol-select .ol-autocomplete {\n  display: inline;\n}\n.ol-select .ol-autocomplete ul {\n  position: absolute;\n  display: block;\n  background: #fff;\n  border: 1px solid #999;\n  min-width: 10em;\n  font-size: .85em;\n}\n.ol-select .ol-autocomplete ul li {\n  padding: 0 .5em;\n}\n.ol-select .ol-autocomplete ul li:hover {\n  color: #fff;\n  background: rgba(0,60,136,.5);\n}\n.ol-select ul.ol-hidden {\n  display: none;\n}\n\n.ol-select-multi li > div:hover,\n.ol-select-multi li > div.ol-control.ol-select {\n  position: relative;\n  top: unset;\n  left: unset;\n  background: transparent;\n}\n.ol-select-multi li > div  > button,\n.ol-select-multi li > div  .ol-ok {\n  display: none;\n}\n.ol-select-multi li .ol-control.ol-select.ol-collapsed > div,\n.ol-select-multi li > div  > div {\n  display: block;\n}\n\n.ol-control.ol-status {\n  top: 0;\n  left: 0;\n  background: rgba(0,0,0,.2);\n  color: #fff;\n  font-size: .9em;\n  padding: .3em 3em;\n  border-radius: 0;\n  width: 100%;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  pointer-events: none;\n}\n.ol-control.ol-status.ol-bottom {\n  top: auto;\n  bottom: 0;\n}\n.ol-control.ol-status.ol-left {\n  top: 0;\n  bottom: 0;\n  padding: .3em .5em .3em 3em;\n  width: auto;\n}\n.ol-control.ol-status.ol-right {\n  top: 0;\n  bottom: 0;\n  left: auto;\n  right: 0;\n  padding: .3em 3em .3em .5em;\n  width: auto;\n}\n.ol-control.ol-status.ol-center {\n  top: 50%;\n  -webkit-transform: translateY(-50%);\n          transform: translateY(-50%);\n}\n\n.ol-control.ol-storymap {\n  top: .5em;\n  left: .5em;\n  bottom: .5em;\n  max-width: 35%;\n  border-radius: .5em;\n  position: absolute;\n  height: auto;\n}\n.ol-storymap {\n  overflow: hidden;\n  padding: 0;\n  height: 100%;\n  position: relative;\n  scroll-behavior: smooth;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.ol-storymap.ol-move {\n  scroll-behavior: unset;\n}\n.ol-storymap.ol-touch {\n  overflow-y: auto;\n}\n\n.ol-control.ol-storymap .chapter {\n  padding: .5em;\n}\n.ol-storymap .chapter {\n  cursor: pointer;\n  opacity: .4;\n}\n.ol-storymap .chapter.select {\n  cursor: default;\n  opacity: 1;\n}\n\n.ol-storymap .ol-scroll-top,\n.ol-storymap .ol-scroll-next {\n  position: relative;\n  min-height: 1.7em;\n  color: rgba(0,60,136,.5);\n  text-align: center;\n  cursor: pointer;\n}\n.ol-storymap .ol-scroll-next span {\n  padding-bottom: 1.4em;\n  display: block;\n}\n.ol-storymap .ol-scroll-top span {\n  padding-top: 1.4em;\n  display: block;\n}\n\n.ol-storymap .ol-scroll-top:before,\n.ol-storymap .ol-scroll-next:before {\n  content: \"\";\n  border: .3em solid currentColor;\n  border-radius: .3em;\n  border-color: transparent currentColor currentColor transparent;\n  width: .8em;\n  height: .8em;\n  display: block;\n  position: absolute;\n  left: 50%;\n  -webkit-transform: translateX(-50%) rotate(45deg);\n          transform: translateX(-50%) rotate(45deg);\n  -webkit-animation: ol-bounce-bottom 0.35s linear infinite alternate;\n          animation: ol-bounce-bottom 0.35s linear infinite alternate;\n  pointer-events: none;\n}\n.ol-storymap .ol-scroll-top:before {\n  border-color: currentColor transparent transparent currentColor;\n  -webkit-animation: ol-bounce-top 0.35s linear infinite alternate;\n          animation: ol-bounce-top 0.35s linear infinite alternate;\n}\n\n@-webkit-keyframes ol-bounce-top{\n  from {top: -.2em;}\n  to   {top: .5em;}\n}\n\n@keyframes ol-bounce-top{\n  from {top: -.2em;}\n  to   {top: .5em;}\n}\n@-webkit-keyframes ol-bounce-bottom{\n  from {bottom: -.2em;}\n  to   {bottom: .5em;}\n}\n@keyframes ol-bounce-bottom{\n  from {bottom: -.2em;}\n  to   {bottom: .5em;}\n}\n\n.ol-storymap img[data-title] {\n  cursor: pointer;\n}\n\n.ol-swipe\n{\tposition: absolute;\n\ttop: 50%;\n\tleft: 50%;\n\ttransform: translate(-50%, -50%);\n\t-webkit-transform: translate(-50%, -50%);\n}\n\n.ol-swipe:before\n{\tcontent: \"\";\n\tposition: absolute;\n\ttop: -5000px;\n\tbottom: -5000px;\n\tleft: 50%;\n\twidth: 4px;\n\tbackground: #fff;\n\tz-index:-1;\n\ttransform: translate(-2px, 0);\n\t-webkit-transform: translate(-2px, 0);\n}\n.ol-swipe.horizontal:before\n{\tleft: -5000px;\n\tright: -5000px;\n\ttop: 50%;\n\tbottom: auto;\n\twidth: auto;\n\theight: 4px;\n}\n\n.ol-swipe,\n.ol-swipe button\n{\tcursor: ew-resize;\n}\n.ol-swipe.horizontal,\n.ol-swipe.horizontal button\n{\tcursor: ns-resize;\n}\n\n.ol-swipe:after,\n.ol-swipe button:before,\n.ol-swipe button:after\n{\tcontent: \"\";\n\tposition: absolute;\n\ttop: 25%;\n\tbottom: 25%;\n\tleft: 50%;\n\twidth: 2px;\n\tbackground: rgba(255,255,255,0.8);\n\ttransform: translate(-1px, 0);\n\t-webkit-transform: translate(-1px, 0);\n}\n.ol-swipe button:after\n{\ttransform: translateX(5px);\n\t-webkit-transform: translateX(5px);\n}\n.ol-swipe button:before\n{\ttransform: translateX(-7px);\n\t-webkit-transform: translateX(-7px);\n}\n\n.ol-control.ol-timeline {\n  bottom: 0;\n  left: 0;\n  right: 0;\n  -webkit-transition: .3s;\n  transition: .3s;\n}\n.ol-control.ol-timeline.ol-collapsed {\n  -webkit-transform: translateY(100%);\n          transform: translateY(100%);\n}\n.ol-timeline {\n  overflow: hidden;\n  padding: 2px 0 0;\n}\n.ol-timeline .ol-scroll {\n  overflow: hidden;\n  padding: 0;\n  scroll-behavior: smooth;\n  line-height: 1em;\n  height: 6em;\n  padding: 0 50%;\n}\n.ol-timeline .ol-scroll.ol-move {\n  scroll-behavior: unset;\n}\n.ol-timeline.ol-touch .ol-scroll{\n  overflow-x: auto;\n}\n\n.ol-timeline.ol-hasbutton .ol-scroll {\n  margin-left: 1.5em;\n  padding: 0 calc(50% - .75em);\n}\n.ol-timeline .ol-buttons {\n  display: none;\n  position: absolute;\n  top: 0;\n  background: rgba(255,255,255,.5);\n  width: 1.5em;\n  bottom: 0;\n  left: 0;\n  z-index: 10;\n}\n.ol-timeline.ol-hasbutton .ol-buttons {\n  display: block;\n}\n.ol-timeline .ol-buttons button {\n  font-size: 1em;\n  margin: 1px;\n  position: relative;\n}\n.ol-timeline .ol-buttons .ol-zoom-in:before,\n.ol-timeline .ol-buttons .ol-zoom-out:before {\n  content: \"+\";\n  position: absolute;\n  top: 50%;\n  left: 50%;\n  -webkit-transform: translate(-50%, -50%);\n          transform: translate(-50%, -50%);\n}\n.ol-timeline .ol-buttons .ol-zoom-out:before{\n  content: '\\2212';\n}\n\n.ol-timeline .ol-scroll > div {\n  height: 100%;\n  position: relative;\n}\n\n.ol-timeline .ol-scroll .ol-times {\n  background: rgba(255,255,255,.5);\n  height: 1em;\n  bottom: 0;\n  position: absolute;\n  left: -1000px;\n  right: -1000px;\n}\n.ol-timeline .ol-scroll .ol-time {\n  position: absolute;\n  font-size: .7em;\n  color: #999;\n  bottom: 0;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-timeline .ol-scroll .ol-time.ol-year {\n  color: #666;\n  z-index: 1;\n}\n.ol-timeline .ol-scroll .ol-time:before {\n  content: \"\";\n  position: absolute;\n  bottom: 1.2em;\n  left: 50%;\n  height: 500px;\n  border-left: 1px solid currentColor;\n}\n\n.ol-timeline .ol-scroll .ol-features {\n  position: absolute;\n  top: 0;\n  bottom: 1em;\n  left: -200px;\n  right: -1000px;\n  margin: 0 0 0 200px;\n  overflow: hidden;\n}\n\n.ol-timeline .ol-scroll .ol-feature {\n  position: absolute;\n  font-size: .7em;\n  color: #999;\n  top: 0;\n  background: #fff;\n  max-width: 3em;\n  max-height: 2.4em;\n  min-height: 1em;\n  line-height: 1.2em;\n  border: 1px solid #ccc;\n  overflow: hidden;\n  padding: 0 .5em 0 0;\n  -webkit-transition: all .3s;\n  transition: all .3s;\n  cursor: pointer;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n}\n\n.ol-timeline.ol-zoomhover .ol-scroll .ol-feature:hover,\n.ol-timeline.ol-zoomhover .ol-scroll .ol-feature.ol-select {\n  z-index: 1;\n  -webkit-transform: scale(1.2);\n          transform: scale(1.2);\n  background: #eee;\n  /* max-width: 14em!important; */\n}\n\n/* Center */\n.ol-timeline .ol-center-date {\n  display: none;\n  position: absolute;\n  left: 50%;\n  height: 100%;\n  width: 2px;\n  bottom: 0;\n  z-index: 2;\n  pointer-events: none;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n  background-color: #f00;\n  opacity: .4;\n}\n.ol-timeline.ol-hasbutton .ol-center-date {\n  left: calc(50% + .75em);\n}\n\n/* Show center */ \n.ol-timeline.ol-pointer .ol-center-date {\n  display: block;\n}\n.ol-timeline.ol-pointer .ol-center-date:before, \n.ol-timeline.ol-pointer .ol-center-date:after {\n  content: '';\n  border: 0.3em solid transparent;\n  border-width: .3em .25em;\n  position: absolute;\n  left: 50%;\n  -webkit-transform: translateX(-50%);\n          transform: translateX(-50%);\n}\n.ol-timeline.ol-pointer .ol-center-date:before {\n  border-top-color: #f00;\n  top: 0;\n}\n.ol-timeline.ol-pointer .ol-center-date:after {\n  border-bottom-color: #f00;\n  bottom: 0\n}\n\n/* show interval */\n.ol-timeline.ol-interval .ol-center-date {\n  display: block;\n  background-color: transparent;\n  border: 0 solid #000;\n  border-width: 0 10000px;\n  -webkit-box-sizing: content-box;\n          box-sizing: content-box;\n  opacity: .2;\n}\n.ol-target-overlay .ol-target \n{\tborder: 1px solid transparent;\n\t-webkit-box-shadow: 0 0 1px 1px #fff;\n\t        box-shadow: 0 0 1px 1px #fff;\n\tdisplay: block;\n\theight: 20px;\n\twidth: 0;\n}\n\n.ol-target-overlay .ol-target:after,\n.ol-target-overlay .ol-target:before\n{\tcontent:\"\";\n\tborder: 1px solid #369;\n\t-webkit-box-shadow: 0 0 1px 1px #fff;\n\t        box-shadow: 0 0 1px 1px #fff;\n\tdisplay: block;\n\twidth: 20px;\n\theight: 0;\n\tposition:absolute;\n\ttop:10px;\n\tleft:-10px;\n}\n.ol-target-overlay .ol-target:after\n{\t-webkit-box-shadow: none;\tbox-shadow: none;\n\theight: 20px;\n\twidth: 0;\n\ttop:0px;\n\tleft:0px;\n}\n\n.ol-overlay-container .ol-magnify \n{\tbackground: rgba(0,0,0, 0.5);\n\tborder:3px solid #369;\n\tborder-radius: 50%;\n\theight: 150px;\n\twidth: 150px;\n\toverflow: hidden;\n\t-webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);\n\t        box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.5);\n\tposition:relative;\n\tz-index:0;\n}\n\n.ol-overlay-container .ol-magnify:before \n{\tborder-radius: 50%;\n\t-webkit-box-shadow: 0 0 40px 2px rgba(0, 0, 0, 0.25) inset;\n\t        box-shadow: 0 0 40px 2px rgba(0, 0, 0, 0.25) inset;\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 100%;\n\tleft: 0;\n\tposition: absolute;\n\ttop: 0;\n\twidth: 100%;\n\tz-index: 1;\n}\n\n.ol-overlay-container .ol-magnify:after \n{\n\tborder-radius: 50%;\n\t-webkit-box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n\t        box-shadow: 0 0 20px 7px rgba(255, 255, 255, 1);\n\tcontent: \"\";\n\tdisplay: block;\n\theight: 0;\n\tleft: 23%;\n\tposition: absolute;\n\ttop: 20%;\n\twidth: 20%;\n\tz-index: 1;\n\ttransform: rotate(-40deg);\n\t-webkit-transform: rotate(-40deg);\n}\n/** popup animation using visible class\n*/\n.ol-popup.anim\n{\tvisibility: hidden;\n}\n\n/** No transform when visible \n*/\n.ol-popup.anim.visible\n{\tvisibility: visible;\n\ttransform: none;\n\t-webkit-transform: none;\n\t-webkit-animation: ol-popup_bounce 0.4s ease 1;\n\t        animation: ol-popup_bounce 0.4s ease 1;\n}\n\n@-webkit-keyframes ol-popup_bounce\n{\tfrom { -webkit-transform: scale(0); transform: scale(0); }\n\t50%  { -webkit-transform: scale(1.1); transform: scale(1.1) }\n\t80%  { -webkit-transform: scale(0.95); transform: scale(0.95) }\n\tto   { -webkit-transform: scale(1); transform: scale(1); }\n}\n\n@keyframes ol-popup_bounce\n{\tfrom { -webkit-transform: scale(0); transform: scale(0); }\n\t50%  { -webkit-transform: scale(1.1); transform: scale(1.1) }\n\t80%  { -webkit-transform: scale(0.95); transform: scale(0.95) }\n\tto   { -webkit-transform: scale(1); transform: scale(1); }\n}\n\n/* Hide to prevent flickering on animate */\n.ol-popup.anim.visible .anchor\n{\t/* animation: ol-popup_opacity 0.4s ease 1; */\n}\n@-webkit-keyframes ol-popup_opacity\n{\tfrom { visibility:hidden }\n\tto   { visibility:hidden }\n}\n@keyframes ol-popup_opacity\n{\tfrom { visibility:hidden }\n\tto   { visibility:hidden }\n}\n\n/** Transform Origin */\n.ol-popup.anim.ol-popup-bottom.ol-popup-left \n{\ttransform-origin:0 100%;\n\t-webkit-transform-origin:0 100%;\n}\n.ol-popup.anim.ol-popup-bottom.ol-popup-right \n{\ttransform-origin:100% 100%;\n\t-webkit-transform-origin:100% 100%;\n}\n.ol-popup.anim.ol-popup-bottom.ol-popup-center \n{\ttransform-origin:50% 100%;\n\t-webkit-transform-origin:50% 100%;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-left \n{\ttransform-origin:0 0;\n\t-webkit-transform-origin:0 0;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-right \n{\ttransform-origin:100% 0;\n\t-webkit-transform-origin:100% 0;\n}\n.ol-popup.anim.ol-popup-top.ol-popup-center \n{\ttransform-origin:50% 0;\n\t-webkit-transform-origin:50% 0;\n}\n.ol-popup.anim.ol-popup-middle.ol-popup-left\n{\ttransform-origin:0 50%;\n\t-webkit-transform-origin:0 50%;\n}\n.ol-popup.anim.ol-popup-middle.ol-popup-right\n{\ttransform-origin:100% 50%;\n\t-webkit-transform-origin:100% 50%;\n}\n\n.ol-overlaycontainer-stopevent {\n  /* BOUG OL6 to enable DragOverlay interaction */\n  position: initial!important;\n}\n\n/** ol.popup */\n.ol-popup {\n  font-size:0.9em;\n  -webkit-user-select: none;  \n  -moz-user-select: none;    \n  -ms-user-select: none;      \n  user-select: none;\n}\n.ol-popup .ol-popup-content {\n  overflow:hidden;\n  cursor: default;\n  padding: 0.25em 0.5em;\n}\n.ol-popup.hasclosebox .ol-popup-content {\n  margin-right: 1.7em;\n}\n.ol-popup .ol-popup-content:after {\n  clear: both;\n  content: \"\";\n  display: block;\n  font-size: 0;\n  height: 0;\n}\n\n/** Anchor position */\n.ol-popup .anchor {\n  display:block;\n  width:0px;\n  height:0px;\n  background:red;\n  position:absolute;\n  margin: -11px 21px;\n    pointer-events: none;\n}\n.ol-popup .anchor:after,\n.ol-popup .anchor:before {\n  position:absolute;\n}\n.ol-popup-right .anchor:after,\n.ol-popup-right .anchor:before {\n  right:0;\n}\n.ol-popup-top .anchor { top:0; }\n.ol-popup-bottom .anchor { bottom:0; }\n.ol-popup-right .anchor { right:0; }\n.ol-popup-left .anchor { left:0; }\n.ol-popup-center .anchor { \n  left:50%; \n  margin-left: 0!important;\n}\n.ol-popup-middle .anchor { \n  top:50%; \n  margin-top: 0!important;\n}\n.ol-popup-center.ol-popup-middle .anchor { \n  display:none; \n}\n\n/** Fixed popup */\n.ol-popup.ol-fixed {\n  margin: 0!important;\n  top: .5em!important;\n  right: .5em!important;\n  left: auto!important;\n  bottom: auto!important;\n}\n.ol-popup.ol-fixed .anchor {\n  display: none;\n}\n.ol-popup.ol-fixed.anim {\n  -webkit-animation: none;\n  animation: none;\n}\n\n.ol-popup .ol-fix {\n  width: 1em;\n  height: .9em;\n  background: #fff;\n  position: relative;\n  float: right;\n  margin: .2em;\n  cursor: pointer;\n}\n.ol-popup .ol-fix:before {\n  content: \"\";\n  width: .8em;\n  height: .7em;\n  display: block;\n  border: .1em solid #666;\n      border-right-width: 0.1em;\n  border-right-width: .3em;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  margin: .1em;\n}\n\n/** Add a shadow to the popup */\n.ol-popup.shadow {\n  -webkit-box-shadow: 2px 2px 2px 2px rgba(0,0,0,0.5);\n          box-shadow: 2px 2px 2px 2px rgba(0,0,0,0.5);\n}\n\n/** Close box */\n.ol-popup .closeBox {\n  background-color: rgba(0, 60, 136, 0.5);\n  color: #fff;\n  border: 0;\n  border-radius: 2px;\n  cursor: pointer;\n  float: right;\n  font-size: 0.9em;\n  font-weight: 700;\n  width: 1.4em;\n  height: 1.4em;\n  margin: 5px 5px 0 0;\n  padding: 0;\n  position: relative;\n  display:none;\n}\n.ol-popup.hasclosebox .closeBox {\n  display:block;\n}\n\n.ol-popup .closeBox:hover {\n  background-color: rgba(0, 60, 136, 0.7);\n}\n/* the X */\n.ol-popup .closeBox:after {\n  content: \"\\D7\";\n  font-size:1.5em;\n  top: 50%;\n  left: 0;\n  right: 0;\n  width: 100%;\n  text-align: center;\n  line-height: 1em;\n  margin: -0.5em 0;\n  position: absolute;\n}\n\n/** Modify touch poup */\n.ol-popup.modifytouch {\n  background-color: #eee;\n}\n.ol-popup.modifytouch .ol-popup-content {\t\n  padding: 0 0.25em;\n  font-size: 0.85em;\n  white-space: nowrap;\n}\n.ol-popup.modifytouch .ol-popup-content a {\n  text-decoration: none;\n}\n\n/** Tool tips popup*/\n.ol-popup.tooltips {\n  background-color: #ffa;\n}\n.ol-popup.tooltips .ol-popup-content{\n  padding: 0 0.25em;\n  font-size: 0.85em;\n  white-space: nowrap;\n}\n\n/** Default popup */\n.ol-popup.default {\n  background-color: #fff;\n  border:1px solid #69f;\n  border-radius: 5px;\n  margin:11px 0;\n}\n.ol-popup-left.default {\n  margin:11px 10px 11px -22px;\n}\n.ol-popup-right.default {\n  margin:11px -22px 11px 10px;\n}\n.ol-popup-middle.default {\n  margin:0 10px;\n}\n\n.ol-popup.default .anchor:after,\n.ol-popup.default .anchor:before {\n  content:\"\";\n  border-color: #69f transparent;\n  border-style: solid;\n  border-width: 11px;\n  margin: 0 -11px;\n}\n.ol-popup.default .anchor:after {\n  border-color: #fff transparent;\n  border-width: 9px;\n  margin: 3px -9px;\n}\n\n.ol-popup-top.default .anchor:before,\n.ol-popup-top.default .anchor:after {\n  border-top:0;\n  top:0;\n}\n\n.ol-popup-bottom.default .anchor:before,\n.ol-popup-bottom.default .anchor:after {\n  border-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-middle.default .anchor:before {\n  margin: -11px -33px;\n  border-color: transparent #69f;\n}\n.ol-popup-middle.default .anchor:after {\n  margin: -9px -30px;\n  border-color: transparent #fff;\n}\n.ol-popup-middle.ol-popup-left.default .anchor:before,\n.ol-popup-middle.ol-popup-left.default .anchor:after\n{\tborder-left:0;\n}\n.ol-popup-middle.ol-popup-right.default .anchor:before,\n.ol-popup-middle.ol-popup-right.default .anchor:after\n{\tborder-right:0;\n}\n\n/** Placemark popup */\n.ol-popup.placemark {\n  font-size: 15px;\t\n    color: #c00;\n    background-color: #fff;\n    border: .45em solid currentColor;\n    margin: .65em 0;\n    width: 2em;\n    height: 2em;\n    border-radius: 50%;\n    min-width: unset;\n    -webkit-box-sizing: border-box;\n  box-sizing: border-box;\n  -webkit-transform-origin: 50% 150%!important;\n          transform-origin: 50% 150%!important;\n}\n\n.ol-popup.placemark .ol-popup-content {\n  overflow: hidden;\n    cursor: default;\n    padding: 0;\n    text-align: center;\n    margin: -.1em;\n}\n.ol-popup.placemark .anchor {\n  margin: -.4em;\n}\n\n.ol-popup.placemark .anchor:before {\n    content: \"\";\n    margin: -.5em -.5em;\n    background: transparent;\n    width: 1em;\n    height: .5em;\n    border-radius: 50%;\n    -webkit-box-shadow: 0 1em 0.5em rgba(0,0,0,.5);\n            box-shadow: 0 1em 0.5em rgba(0,0,0,.5);\n}\n.ol-popup.placemark .anchor:after {\n    content: \"\";\n    border-color: currentColor transparent;\n    border-style: solid;\n    border-width: 1em .7em 0;\n    margin: -.75em -.7em;\n  bottom:0;\n}\n\n/** Placemark Shield */\n.ol-popup.placemark.shield {\n  border-radius: .2em;\n}\n\n.ol-popup.placemark.shield .anchor:after {\n    border-width: .8em 1em 0;\n    margin: -.7em -1em;\n}\n\n/** Placemark Blazon */\n.ol-popup.placemark.blazon {\n  border-radius: .2em;\n}\n\n/** Placemark Needle/Pushpin */\n.ol-popup.placemark.pushpin {\t\n  margin: 1.5em 0;\n  border-radius: 0;\n  border-color: currentColor transparent;\n  background: transparent!important;\n  -webkit-box-shadow: inset 2em 0 currentColor;\n          box-shadow: inset 2em 0 currentColor;\n  border-width: .3em .5em .5em;\n}\n.ol-popup.placemark.needle {\t\n  margin: 1.5em 0;\n}\n.ol-popup.placemark.pushpin .anchor,\n.ol-popup.placemark.needle .anchor {\n  margin: -1.5em;\n}\n.ol-popup.placemark.pushpin .anchor:after,\n.ol-popup.placemark.needle .anchor:after {\n  border-style: solid;\n    border-width: 2em .15em 0;\n    margin: -.55em -0.2em;\n    width: .1em;\n}\n.ol-popup.placemark.pushpin .anchor:before,\n.ol-popup.placemark.needle .anchor:before {\n    margin: -.75em -.5em;\n}\n\n/** Placemark Flag */\n.ol-popup.placemark.flagv {\n  border-radius: 0;\n  margin: 0 0 1.5em 1em;\n  border-color: transparent transparent transparent currentColor;\n  border-width: 1em 0 1em 2em;\n  width: 0;\n  height: 0;\n  background-color: transparent;\n  -webkit-transform-origin: 0% 150%!important;\n          transform-origin: 0% 150%!important;\n}\n.ol-popup.placemark.flagv .anchor {\n  margin: -2em;\n  margin-left: -1em !important;\n}\n\n.ol-popup.placemark.flag {\t\n  margin: 0 0 1.5em 1em;\n  border-radius: 0;\n  -webkit-transform-origin: 0% 150%!important;\n          transform-origin: 0% 150%!important;\n}\n.ol-popup.placemark.flag .anchor {\n  margin: -1.5em;\n}\n.ol-popup.placemark.flagv .anchor:after, \n.ol-popup.placemark.flag .anchor:after {\n  border-style: solid;\n  border-width: 2em .15em 0;\n  margin: -.55em -1em;\n  width: .1em;\n}\n.ol-popup.placemark.flagv .anchor:before,\n.ol-popup.placemark.flag .anchor:before {\n  margin: -.75em -1.25em;\n}\n\n.ol-popup.placemark.flag.finish {\n  background-image: \n    linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor), \n    linear-gradient(45deg, currentColor 25%, transparent 25%, transparent 75%, currentColor 75%, currentColor);\n  background-size: 1em 1em;\n  background-position: .5em 0, 0 .5em;\n  border-width: .25em;\n  margin: 0 0 1.7em .8em;\n}\n\n/** Black popup */\n.ol-popup.black .closeBox \n{\tbackground-color: rgba(0,0,0, 0.5);\n  border-radius: 5px;\n  color: #f80;\n}\n.ol-popup.black .closeBox:hover\n{\tbackground-color: rgba(0,0,0, 0.7);\n  color:#da2;\n}\n\n.ol-popup.black \n{\tbackground-color: rgba(0,0,0,0.6);\n  border-radius: 5px;\n  margin:20px 0;\n  color:#fff;\n}\n.ol-popup-left.black\n{\tmargin:20px 10px 20px -22px;\n}\n.ol-popup-right.black\n{\tmargin:20px -22px 20px 10px;\n}\n.ol-popup-middle.black \n{\tmargin:0 11px;\n}\n\n.ol-popup.black .anchor {\n  margin: -20px 11px;\n} \n.ol-popup.black .anchor:before \n{\tcontent:\"\";\n  border-color: rgba(0,0,0,0.6) transparent;\n  border-style: solid;\n  border-width: 20px 11px;\n}\n\n.ol-popup-top.black .anchor:before\n{\tborder-top:0;\n  top:0;\n}\n\n.ol-popup-bottom.black .anchor:before\n{\tborder-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-middle.black .anchor:before\n{\tmargin: -20px -22px;\n  border-color: transparent rgba(0,0,0,0.6);\n}\n.ol-popup-middle.ol-popup-left.black .anchor:before\n{\tborder-left:0;\n}\n.ol-popup-middle.ol-popup-right.black .anchor:before {\n  border-right:0;\n}\n\n.ol-popup-center.black .anchor:before {\n  margin: 0 -10px;\n}\n\n\n/** Green tips popup */\n.ol-popup.tips .closeBox {\n  background-color: #f00;\n  border-radius: 50%;\n  color: #fff;\n  width:1.2em;\n  height:1.2em;\n}\n.ol-popup.tips .closeBox:hover {\n  background-color: #f40;\n}\n\n.ol-popup.tips {\n  background-color: #cea;\n  border: 5px solid #ad7;\n  border-radius: 5px;\n  margin:20px 0;\n  color:#333;\n}\n.ol-popup-left.tips {\n  margin:20px 10px 20px -22px;\n}\n.ol-popup-right.tips {\n  margin:20px -22px 20px 10px;\n}\n.ol-popup-middle.tips {\n  margin:0 20px;\n}\n\n.ol-popup.tips .anchor {\n  margin: -25px 16px;\n} \n.ol-popup.tips .anchor:before {\n  content:\"\";\n  border-color: #ad7 transparent;\n  border-style: solid;\n  border-width: 20px 11px;\n}\n\n.ol-popup-top.tips .anchor:before {\n  border-top:0;\n  top:0;\n}\n.ol-popup-bottom.tips .anchor:before {\n  border-bottom:0;\n  bottom:0;\n}\n.ol-popup-center.tips .anchor:before {\n  border-width: 20px 6px;\n  margin: 0 -6px;\n}\n.ol-popup-left.tips .anchor:before {\n  border-left:0;\n  margin-left:0;\n}\n.ol-popup-right.tips .anchor:before {\n  border-right:0;\n  margin-right:0;\n}\n\n.ol-popup-middle.tips .anchor:before {\n  margin: -6px -41px;\n  border-color: transparent #ad7;\n  border-width:6px 20px;\n}\n.ol-popup-middle.ol-popup-left.tips .anchor:before {\n  border-left:0;\n}\n.ol-popup-middle.ol-popup-right.tips .anchor:before {\n  border-right:0;\n}\n\n/** Warning popup */\n.ol-popup.warning .closeBox {\n  background-color: #f00;\n  border-radius: 50%;\n  color: #fff;\n  font-size: 0.83em;\n}\n.ol-popup.warning .closeBox:hover {\n  background-color: #f40;\n}\n\n.ol-popup.warning {\n  background-color: #fd0;\n  border-radius: 3px;\n  border:4px dashed #f00;\n  margin:20px 0;\n  color:#900;\n  margin:28px 10px;\n}\n.ol-popup-left.warning {\n  margin-left:-22px;\n  margin-right:10px;\n}\n.ol-popup-right.warning {\n  margin-right:-22px;\n  margin-left:10px;\n}\n.ol-popup-middle.warning {\n  margin:0 22px;\n}\n\n.ol-popup.warning .anchor {\n  margin: -33px 7px;\n} \n.ol-popup.warning .anchor:before {\n  content:\"\";\n  border-color: #f00 transparent;\n  border-style: solid;\n  border-width: 30px 11px;\n}\n\n.ol-popup-top.warning .anchor:before {\n  border-top:0;\n  top:0;\n}\n.ol-popup-bottom.warning .anchor:before {\n  border-bottom:0;\n  bottom:0;\n}\n\n.ol-popup-center.warning .anchor:before {\n  margin: 0 -21px;\n}\n.ol-popup-middle.warning .anchor:before {\n  margin: -10px -33px;\n  border-color: transparent #f00;\n  border-width:10px 22px;\n}\n.ol-popup-middle.ol-popup-left.warning .anchor:before {\n  border-left:0;\n}\n.ol-popup-middle.ol-popup-right.warning .anchor:before {\n  border-right:0;\n}\n\n.ol-popup .ol-popupfeature table {\n  width: 100%;\n}\n.ol-popup .ol-popupfeature table td {\n  max-width: 25em;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.ol-popup .ol-popupfeature table td img {\n  max-width: 100px;\n  max-height: 100px;\n}\n.ol-popup .ol-popupfeature tr:nth-child(2n+1) {\n  background-color: #eee;\n}\n.ol-popup .ol-popupfeature .ol-zoombt {\n  border: 0;\n  width: 2em;\n  height: 2em;\n  display: inline-block;\n  color: rgba(0,60,136,.5);\n  position: relative;\n  background: transparent;\n  outline: none;\n}\n.ol-popup .ol-popupfeature .ol-zoombt:before {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  width: 1em;\n  height: 1em;\n  background-color: transparent;\n  border: .17em solid currentColor;\n  border-radius: 100%;\n  top: .3em;\n  left: .3em;\n}\n.ol-popup .ol-popupfeature .ol-zoombt:after {\n  content: \"\";\n  position: absolute;\n  -webkit-box-sizing: border-box;\n          box-sizing: border-box;\n  top: 1.35em;\n  left: 1.15em;\n  border-width: .1em .3em;\n  border-style: solid;\n  border-radius: .03em;\n  -webkit-transform: rotate(45deg);\n          transform: rotate(45deg);\n  -webkit-box-shadow: -0.2em 0 0 -0.04em;\n          box-shadow: -0.2em 0 0 -0.04em;\n}\n\n.ol-popup .ol-popupfeature .ol-count{\n  float: right;\n  margin: .25em 0;\n}\n.ol-popup .ol-popupfeature .ol-prev,\n.ol-popup .ol-popupfeature .ol-next {\n  border-style: solid;\n  border-color: transparent rgba(0,60,136,.5);\n  border-width: .5em 0 .5em .5em;\n  display: inline-block;\n  vertical-align: bottom;\n  margin: 0 .5em;\n  cursor: pointer;\n}\n.ol-popup .ol-popupfeature .ol-prev{\n  border-width: .5em .5em .5em 0;\n}\n\n.ol-popup.tooltips.black {\n  -webkit-transform: scaleY(1.3);\n          transform: scaleY(1.3);\n  padding: .2em .5em;\n  background-color: rgba(0,0,0, 0.5);\n}\n.ol-popup-middle.tooltips.black .anchor:before {\n  border-width: 5px 10px;\n  margin: -5px -21px;\n}\n.ol-fixedoverlay {\n    position: absolute;\n    top: 0;\n    left: 0;\n    width: 100%;\n    height: 100%;\n  }\n  ", ""]);
 
 // exports
 
@@ -6018,11 +6056,11 @@ var require;var require;!function(e){if(true)module.exports=e();else { var t; }}
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var ol_control_Control__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/control/Control */ "./node_modules/ol/control/Control.js");
 /*	Copyright (c) 2016 Jean-Marc VIGLINO,
-	released under the CeCILL-B license (French BSD license)
-	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
 */
 
 
@@ -6035,52 +6073,52 @@ __webpack_require__.r(__webpack_exports__);
  * @constructor
  * @extends {ol_control_Control}
  * @param {Object=} options Control options.
- *	@param {String} options.className class of the control
- *	@param {bool} options.group is a group, default false
- *	@param {bool} options.toggleOne only one toggle control is active at a time, default false
- *	@param {bool} options.autoDeactivate used with subbar to deactivate all control when top level control deactivate, default false
- *	@param {Array<_ol_control_>} options.controls a list of control to add to the bar
+ *  @param {String} options.className class of the control
+ *  @param {bool} options.group is a group, default false
+ *  @param {bool} options.toggleOne only one toggle control is active at a time, default false
+ *  @param {bool} options.autoDeactivate used with subbar to deactivate all control when top level control deactivate, default false
+ *  @param {Array<_ol_control_>} options.controls a list of control to add to the bar
  */
 var ol_control_Bar = function(options) {
   if (!options) options={};
-	var element = document.createElement("div");
+  var element = document.createElement("div");
       element.classList.add('ol-unselectable', 'ol-control', 'ol-bar');
-	if (options.className) {
-		var classes = options.className.split(' ').filter(function(className) {
-			return className.length > 0;
-		});
-		element.classList.add.apply(element.classList, classes)
-	}
-	if (options.group) element.classList.add('ol-group');
+  if (options.className) {
+    var classes = options.className.split(' ').filter(function(className) {
+      return className.length > 0;
+    });
+    element.classList.add.apply(element.classList, classes)
+  }
+  if (options.group) element.classList.add('ol-group');
 
-	ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {
+  ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {
     element: element,
-		target: options.target
-	});
+    target: options.target
+  });
 
-	this.set('toggleOne', options.toggleOne);
-	this.set('autoDeactivate', options.autoDeactivate);
+  this.set('toggleOne', options.toggleOne);
+  this.set('autoDeactivate', options.autoDeactivate);
 
-	this.controls_ = [];
-	if (options.controls instanceof Array) {
+  this.controls_ = [];
+  if (options.controls instanceof Array) {
     for (var i=0; i<options.controls.length; i++) {
       this.addControl(options.controls[i]);
-		}
-	}
+    }
+  }
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Bar, ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_Bar, ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 /** Set the control visibility
-* @param {boolean} b
-*/
+ * @param {boolean} b
+ */
 ol_control_Bar.prototype.setVisible = function (val) {
-	if (val) this.element.style.display = '';
-	else this.element.style.display = 'none';
+  if (val) this.element.style.display = '';
+  else this.element.style.display = 'none';
 }
 
 /** Get the control visibility
-* @return {boolean} b
-*/
+ * @return {boolean} b
+ */
 ol_control_Bar.prototype.getVisible = function () {
   return this.element.style.display != 'none';
 }
@@ -6093,116 +6131,130 @@ ol_control_Bar.prototype.getVisible = function () {
 ol_control_Bar.prototype.setMap = function (map) {
   ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"].prototype.setMap.call(this, map);
 
-	for (var i=0; i<this.controls_.length; i++) {
+  for (var i=0; i<this.controls_.length; i++) {
     var c = this.controls_[i];
-		// map.addControl(c);
-		c.setMap(map);
-	}
+    // map.addControl(c);
+    c.setMap(map);
+  }
 };
 
 /** Get controls in the panel
-*	@param {Array<_ol_control_>}
-*/
+ *	@param {Array<_ol_control_>}
+ */
 ol_control_Bar.prototype.getControls = function () {
   return this.controls_;
 };
 
 /** Set tool bar position
-*	@param {top|left|bottom|right} pos
-*/
+ *	@param {top|left|bottom|right} pos
+ */
 ol_control_Bar.prototype.setPosition = function (pos) {
   this.element.classList.remove('ol-left', 'ol-top', 'ol-bottom', 'ol-right');
-	pos=pos.split ('-');
-	for (var i=0; i<pos.length; i++) {
+  pos=pos.split ('-');
+  for (var i=0; i<pos.length; i++) {
     switch (pos[i]) {
       case 'top':
-			case 'left':
-			case 'bottom':
-			case 'right':
-				this.element.classList.add("ol-"+pos[i]);
-				break;
-			default: break;
-		}
-	}
+      case 'left':
+      case 'bottom':
+      case 'right':
+        this.element.classList.add("ol-"+pos[i]);
+        break;
+      default: break;
+    }
+  }
 };
 
 /** Add a control to the bar
-*	@param {_ol_control_} c control to add
-*/
+ *	@param {_ol_control_} c control to add
+ */
 ol_control_Bar.prototype.addControl = function (c) {
   this.controls_.push(c);
-	c.setTarget(this.element);
-	if (this.getMap()) {
+  c.setTarget(this.element);
+  if (this.getMap()) {
     this.getMap().addControl(c);
-	}
-	// Activate and toogleOne
-	c.on ('change:active', this.onActivateControl_.bind(this));
-	if (c.getActive && c.getActive()) {
-    c.dispatchEvent({ type:'change:active', key:'active', oldValue:false, active:true });
-	}
+  }
+  // Activate and toogleOne
+  c.on ('change:active', function(e) { this.onActivateControl_(e, c); }.bind(this));
+  if (c.getActive) {
+    // c.dispatchEvent({ type:'change:active', key:'active', oldValue:false, active:true });
+    this.onActivateControl_({ target: c, active: c.getActive() }, c);
+  }
 };
 
 /** Deativate all controls in a bar
-* @param {_ol_control_} except a control
-*/
+ * @param {_ol_control_} except a control
+ */
 ol_control_Bar.prototype.deactivateControls = function (except) {
   for (var i=0; i<this.controls_.length; i++) {
   if (this.controls_[i] !== except && this.controls_[i].setActive) {
     this.controls_[i].setActive(false);
-		}
-	}
+    }
+  }
 };
 
 
 ol_control_Bar.prototype.getActiveControls = function () {
   var active = [];
-	for (var i=0, c; c=this.controls_[i]; i++) {
+  for (var i=0, c; c=this.controls_[i]; i++) {
     if (c.getActive && c.getActive()) active.push(c);
-	}
-	return active;
+  }
+  return active;
 }
 
 /** Auto activate/deactivate controls in the bar
-* @param {boolean} b activate/deactivate
-*/
+ * @param {boolean} b activate/deactivate
+ */
 ol_control_Bar.prototype.setActive = function (b) {
   if (!b && this.get("autoDeactivate")) {
     this.deactivateControls();
-	}
-	if (b) {
+  }
+  if (b) {
     var ctrls = this.getControls();
-		for (var i=0, sb; (sb = ctrls[i]); i++) {
+    for (var i=0, sb; (sb = ctrls[i]); i++) {
       if (sb.get("autoActivate")) sb.setActive(true);
-		}
-	}
+    }
+  }
 }
 
 /** Post-process an activated/deactivated control
-*	@param {ol.event} e :an object with a target {_ol_control_} and active flag {bool}
-*/
-ol_control_Bar.prototype.onActivateControl_ = function (e) {
-	if (this.get('toggleOne')) {
+ *	@param {ol.event} e :an object with a target {_ol_control_} and active flag {bool}
+ */
+ol_control_Bar.prototype.onActivateControl_ = function (e, ctrl) {
+  if (this.get('toggleOne')) {
     if (e.active) {
       var n;
-			var ctrl = e.target;
-			for (n=0; n<this.controls_.length; n++) {
+      //var ctrl = e.target;
+      for (n=0; n<this.controls_.length; n++) {
         if (this.controls_[n]===ctrl) break;
-			}
-			// Not here!
-			if (n==this.controls_.length) return;
-			this.deactivateControls (this.controls_[n]);
-		} else {
+      }
+      // Not here!
+      if (n==this.controls_.length) return;
+      this.deactivateControls (this.controls_[n]);
+    } else {
       // No one active > test auto activate
-			if (!this.getActiveControls().length) {
+      if (!this.getActiveControls().length) {
         for (var i=0, c; c=this.controls_[i]; i++) {
           if (c.get("autoActivate")) {
             c.setActive(true);
-						break;
-					}
-				}
-			}
-		}
-	}
+            break;
+          }
+        }
+      }
+    }
+  }
+};
+
+/**
+ * @param {string} name of the control to search
+ * @return {ol.control.Control}
+ */
+ol_control_Bar.prototype.getControlsByName = function(name) {
+  var controls = this.getControls();
+  return controls.filter(
+    function(control) {
+      return (control.get('name') === name);
+    }
+  );
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (ol_control_Bar);
@@ -6219,66 +6271,104 @@ ol_control_Bar.prototype.onActivateControl_ = function (e) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var ol_control_Control__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/control/Control */ "./node_modules/ol/control/Control.js");
+/* harmony import */ var _util_element__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../util/element */ "./node_modules/ol-ext/util/element.js");
 /*	Copyright (c) 2016 Jean-Marc VIGLINO,
-	released under the CeCILL-B license (French BSD license)
-	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
 */
+
+
 
 
 
 /** A simple push button control
-* @constructor
-* @extends {ol_control_Control}
-* @param {Object=} options Control options.
-*	@param {String} options.className class of the control
-*	@param {String} options.title title of the control
-*	@param {String} options.html html to insert in the control
-*	@param {function} options.handleClick callback when control is clicked (or use change:active event)
-*/
-var ol_control_Button = function(options)
-{	options = options || {};
+ * @constructor
+ * @extends {ol_control_Control}
+ * @param {Object=} options Control options.
+ *  @param {String} options.className class of the control
+ *  @param {String} options.title title of the control
+ *  @param {String} options.name an optional name, default none
+ *  @param {String} options.html html to insert in the control
+ *  @param {function} options.handleClick callback when control is clicked (or use change:active event)
+ */
+var ol_control_Button = function(options){
+  options = options || {};
 
-	var element = document.createElement("div");
-	element.className = (options.className || '') + " ol-button ol-unselectable ol-control";
-	var self = this;
+  var element = document.createElement("div");
+  element.className = (options.className || '') + " ol-button ol-unselectable ol-control";
+  var self = this;
 
-	var bt = document.createElement(/ol-text-button/.test(options.className) ? "div": "button");
-	bt.type = "button";
-	if (options.title) bt.title = options.title;
-	if (options.html instanceof Element) bt.appendChild(options.html)
-	else bt.innerHTML = options.html || "";
-	var evtFunction = function(e) {
-		if (e && e.preventDefault) {
-			e.preventDefault();
-			e.stopPropagation();
-		}
-		if (options.handleClick) {
-			options.handleClick.call(self, e);
-		}
-	};
-	bt.addEventListener("click", evtFunction);
-	bt.addEventListener("touchstart", evtFunction);
-	element.appendChild(bt);
+  var bt = this.button_ = document.createElement(/ol-text-button/.test(options.className) ? "div": "button");
+  bt.type = "button";
+  if (options.title) bt.title = options.title;
+  if (options.html instanceof Element) bt.appendChild(options.html)
+  else bt.innerHTML = options.html || "";
+  var evtFunction = function(e) {
+    if (e && e.preventDefault) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (options.handleClick) {
+      options.handleClick.call(self, e);
+    }
+  };
+  bt.addEventListener("click", evtFunction);
+  bt.addEventListener("touchstart", evtFunction);
+  element.appendChild(bt);
 
-	// Try to get a title in the button content
-	if (!options.title && bt.firstElementChild) {
-		bt.title = bt.firstElementChild.title;
-	}
+  // Try to get a title in the button content
+  if (!options.title && bt.firstElementChild) {
+    bt.title = bt.firstElementChild.title;
+  }
 
-	ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"].call(this,
-	{	element: element,
-		target: options.target
-	});
+  ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, {
+    element: element,
+    target: options.target
+  });
 
-	if (options.title) {
-		this.set("title", options.title);
-	}
-	if (options.title) this.set("title", options.title);
+  if (options.title) {
+    this.set("title", options.title);
+  }
+  if (options.title) this.set("title", options.title);
+  if (options.name) this.set("name", options.name);
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Button, ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_Button, ol_control_Control__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
+/** Set the control visibility
+* @param {boolean} b 
+*/
+ol_control_Button.prototype.setVisible = function (val) {
+  if (val) _util_element__WEBPACK_IMPORTED_MODULE_2__["default"].show(this.element);
+  else _util_element__WEBPACK_IMPORTED_MODULE_2__["default"].hide(this.element);
+};
+
+/**
+ * Set the button title
+ * @param {string} title
+ * @returns {undefined}
+ */
+ol_control_Button.prototype.setTitle = function(title) {
+  this.button_.setAttribute('title', title);
+};
+
+/**
+ * Set the button html
+ * @param {string} html
+ * @returns {undefined}
+ */
+ol_control_Button.prototype.setHtml = function(html) {
+  _util_element__WEBPACK_IMPORTED_MODULE_2__["default"].setHTML (this.button_, html);
+};
+
+/**
+ * Get the button element
+ * @returns {undefined}
+ */
+ol_control_Button.prototype.getButtonElement = function() {
+  return this.button_;
+};
 
 /* harmony default export */ __webpack_exports__["default"] = (ol_control_Button);
 
@@ -6294,15 +6384,11 @@ Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Button, ol_contro
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var ol_source_Vector__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/source/Vector */ "./node_modules/ol/source/Vector.js");
-/* harmony import */ var ol_Feature__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/Feature */ "./node_modules/ol/Feature.js");
-/* harmony import */ var ol_control_Control__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/control/Control */ "./node_modules/ol/control/Control.js");
-/* harmony import */ var ol_has__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ol/has */ "./node_modules/ol/has.js");
-/* harmony import */ var _util_element__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../util/element */ "./node_modules/ol-ext/util/element.js");
+/* harmony import */ var ol_control_Control__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/control/Control */ "./node_modules/ol/control/Control.js");
+/* harmony import */ var _util_element__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../util/element */ "./node_modules/ol-ext/util/element.js");
 /*eslint no-constant-condition: ["error", { "checkLoops": false }]*/
-
-
 
 
 
@@ -6334,27 +6420,27 @@ __webpack_require__.r(__webpack_exports__);
  */
 var ol_control_Timeline = function(options) {
 
-  var element = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  var element = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     className: (options.className || '') + ' ol-timeline'
       + (options.target ? '': ' ol-unselectable ol-control')
       + (options.zoomButton ? ' ol-hasbutton':'')
-      + (ol_has__WEBPACK_IMPORTED_MODULE_4__["default"] ? ' ol-touch' : '')
+      + ('ontouchstart' in window ? ' ol-touch' : '')
   });
 
   // Initialize
-  ol_control_Control__WEBPACK_IMPORTED_MODULE_3__["default"].call(this, {
+  ol_control_Control__WEBPACK_IMPORTED_MODULE_2__["default"].call(this, {
     element: element,
     target: options.target
   });
 
   // Scroll div
-  this._scrollDiv = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  this._scrollDiv = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     className: 'ol-scroll',
     parent: this.element
   });
 
   // Add a button bar
-  this._buttons = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  this._buttons = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     className: 'ol-buttons',
     parent: this.element
   });
@@ -6391,7 +6477,7 @@ var ol_control_Timeline = function(options) {
   }
 
   // Draw center date
-  this._intervalDiv = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  this._intervalDiv = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     className: 'ol-center-date',
     parent: this.element
   });
@@ -6417,9 +6503,11 @@ var ol_control_Timeline = function(options) {
       });
     }.bind(this), options.scrollTimeout || 15);
   }.bind(this));
+  // Magic to give "live" scroll events on touch devices
+  this._scrollDiv.addEventListener('gesturechange', function() {});
 
   // Scroll timeline
-  _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].scrollDiv(this._scrollDiv, {
+  _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].scrollDiv(this._scrollDiv, {
     onmove: function(b) {
       // Prevent selection on moving
       this._moving = b; 
@@ -6443,7 +6531,7 @@ var ol_control_Timeline = function(options) {
   // Feature source 
   this.setFeatures(options.features || options.source, options.zoom);
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Timeline, ol_control_Control__WEBPACK_IMPORTED_MODULE_3__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_Timeline, ol_control_Control__WEBPACK_IMPORTED_MODULE_2__["default"]);
 
 /**
  * Set the map instance the control is associated with
@@ -6451,8 +6539,8 @@ Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Timeline, ol_cont
  * @param {_ol_Map_} map The map instance.
  */
 ol_control_Timeline.prototype.setMap = function(map) {
-  ol_control_Control__WEBPACK_IMPORTED_MODULE_3__["default"].prototype.setMap.call(this, map);
-  this.refresh();
+  ol_control_Control__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.setMap.call(this, map);
+  this.refresh(this.get('zoom')||1, true);
 };
 
 /** Add a button on the timeline
@@ -6464,7 +6552,7 @@ ol_control_Timeline.prototype.setMap = function(map) {
  */
 ol_control_Timeline.prototype.addButton = function(button) {
   this.element.classList.add('ol-hasbutton');
-  _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('BUTTON', {
+  _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('BUTTON', {
     className: button.className || undefined,
     title: button.title,
     html : button.html,
@@ -6513,7 +6601,7 @@ ol_control_Timeline.prototype._getHTML = function(feature) {
  * @private
  */
 ol_control_Timeline.prototype._getFeatureDate = function(feature) {
-  return feature.get('date');
+  return (feature && feature.get) ? feature.get('date') : null;
 };
 
 /** Default function to get the end date of a feature, return undefined
@@ -6572,7 +6660,7 @@ ol_control_Timeline.prototype.getFeatures = function() {
  * Refresh the timeline with new data
  * @param {Number} zoom Zoom factor from 0.25 to 10, default 1
  */
-ol_control_Timeline.prototype.refresh = function(zoom) {
+ol_control_Timeline.prototype.refresh = function(zoom, first) {
   if (!this.getMap()) return;
   if (!zoom) zoom = this.get('zoom');
   zoom = Math.min(this.get('maxZoom'), Math.max(this.get('minZoom'), zoom || 1));
@@ -6609,7 +6697,7 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
   });
 
   // Draw
-  var div = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  var div = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     parent: this._scrollDiv
   });
 
@@ -6624,7 +6712,7 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
   // Leave 10px on right
   min = this._minDate = this._minDate - 10/scale;
   delta = (max-min) * scale;
-  _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].setStyle(div, {
+  _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].setStyle(div, {
     width: delta,
     maxWidth: 'unset'
   });
@@ -6634,17 +6722,17 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
 
   // Set interval
   if (this.get('interval')) {
-    _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].setStyle (this._intervalDiv, { width: this.get('interval') * scale });
+    _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].setStyle (this._intervalDiv, { width: this.get('interval') * scale });
   } else {
-    _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].setStyle (this._intervalDiv, { width: '' });
+    _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].setStyle (this._intervalDiv, { width: '' });
   }
 
   // Draw features
   var line = [];
-  var lineHeight = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'lineHeight');
+  var lineHeight = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'lineHeight');
   
   // Wrapper
-  var fdiv = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  var fdiv = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
       className: 'ol-features',
       parent: div
   });
@@ -6652,7 +6740,7 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
   // Add features on the line
   tline.forEach(function(f) {
     var d = f.date;
-    var t = f.elt = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+    var t = f.elt = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
       className: 'ol-feature',
       style: {
         left: Math.round((d-min)*scale),
@@ -6668,13 +6756,13 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
 
     // Calculate image width
     if (f.end) {
-      _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].setStyle(t, { 
+      _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].setStyle(t, { 
         minWidth: (f.end-d) * scale, 
         width: (f.end-d) * scale, 
         maxWidth: 'unset'
       });
     }
-    var left = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(t, 'left');
+    var left = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(t, 'left');
     // Select on click
     t.addEventListener('click', function(){
       if (!this._moving) {
@@ -6689,11 +6777,12 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
         break;
       }
     }
-    line[pos] = left + _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(t, 'width');
-    _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].setStyle(t, { top: pos*lineHeight });
+    line[pos] = left + _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(t, 'width');
+    _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].setStyle(t, { top: pos*lineHeight });
   }.bind(this));
   this._nbline = line.length;
 
+  if (first) this.setDate(this._minDate, { anim: false, position: 'start' });
   // Dispatch scroll event
   this.dispatchEvent({ 
     type: 'scroll', 
@@ -6709,19 +6798,21 @@ ol_control_Timeline.prototype.refresh = function(zoom) {
  */
 ol_control_Timeline.prototype._drawTime = function(div, min, max, scale) {
   // Times div
-  var tdiv = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+  var tdiv = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
     className: 'ol-times',
     parent: div
   });
   var d, dt, month, dmonth;
-  var dx = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(tdiv, 'left');
-  var heigth = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(tdiv, 'height');
+  var dx = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(tdiv, 'left');
+  var heigth = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(tdiv, 'height');
   // Year
   var year = (new Date(this._minDate)).getFullYear();
+  dt = ((new Date(0)).setFullYear(String(year)) - new Date(0).setFullYear(String(year-1))) * scale;
+  var dyear = Math.round(2*heigth/dt)+1;
   while(true) {
-    d = new Date(String(year));
+    d = new Date(0).setFullYear(year);
     if (d > this._maxDate) break;
-    _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+    _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
       className: 'ol-time ol-year',
       style: {
         left: Math.round((d-this._minDate)*scale) - dx
@@ -6729,19 +6820,21 @@ ol_control_Timeline.prototype._drawTime = function(div, min, max, scale) {
       html: year,
       parent: tdiv
     });
-    year++;
+    year += dyear;
   }
   // Month
   if (/day|month/.test(this.get('graduation'))) {
-    dt = (new Date(String(year)) - new Date(String(year-1))) * scale;
+    dt = ((new Date(0)).setFullYear(String(year)) - new Date(0).setFullYear(String(year-1))) * scale;
     dmonth = Math.max(1, Math.round(12 / Math.round(dt/heigth/2)));
     if (dmonth < 12) {
       year = (new Date(this._minDate)).getFullYear();
       month = dmonth+1;
       while(true) {
-        d = new Date(year+'/'+month+'/01');
+        d = new Date('0/01/01');
+        d.setFullYear(year);
+        d.setMonth(month-1);
         if (d > this._maxDate) break;
-        _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+        _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
           className: 'ol-time ol-month',
           style: {
             left: Math.round((d-this._minDate)*scale) - dx
@@ -6759,24 +6852,27 @@ ol_control_Timeline.prototype._drawTime = function(div, min, max, scale) {
   }
   // Day
   if (this.get('graduation')==='day') {
-    dt = (new Date(year+'/02/01') - new Date(year+'/01/01')) * scale;
+    dt = (new Date('2000/02/01') - new Date('2000/01/01')) * scale;
     var dday = Math.max(1, Math.round(31 / Math.round(dt/heigth/2)));
     if (dday < 31) {
       year = (new Date(this._minDate)).getFullYear();
-      month = 1;
+      month = 0;
       var day = dday;
       while(true) {
-        d = new Date(year+'/'+month+'/'+day);
+        d = new Date(0);
+        d.setFullYear(year);
+        d.setMonth(month);
+        d.setDate(day);
         if (isNaN(d)) {
           month++;
           if (month>12) {
             month = 1;
             year++;
           }
-          day=dday;
+          day = dday;
         } else {
           if (d > this._maxDate) break;
-          _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].create('DIV', {
+          _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].create('DIV', {
             className: 'ol-time ol-day',
             style: {
               left: Math.round((d-this._minDate)*scale) - dx
@@ -6784,8 +6880,13 @@ ol_control_Timeline.prototype._drawTime = function(div, min, max, scale) {
             html: day,
             parent: tdiv
           });
-          day += dday;
-          if (day+dday/2>31) day=32;
+          year = d.getFullYear();
+          month = d.getMonth();
+          day = d.getDate() + dday;
+          if (day+dday/2>31) {
+            month++;
+            day = dday;
+          }
         }
       }
     }
@@ -6794,25 +6895,38 @@ ol_control_Timeline.prototype._drawTime = function(div, min, max, scale) {
 
 /** Center timeline on a date
  * @param {Date|String|ol.feature} feature a date or a feature with a date
- * @param {boolean} anim animate scroll
+ * @param {Object} options
+ *  @param {boolean} options.anim animate scroll
+ *  @param {string} options.position start, end or middle, default middle
  */
-ol_control_Timeline.prototype.setDate = function(feature, anim) {
+ol_control_Timeline.prototype.setDate = function(feature, options) {
   var date;
-  // Get date from Feature
-  if (feature instanceof ol_Feature__WEBPACK_IMPORTED_MODULE_2__["ol_Feature"]) {
-    date = this._getFeatureDate(feature);
-    if (!(date instanceof Date)) {
-      date = new Date(date);
-    }
-  } else if (feature instanceof Date) {
+  options = options || {};
+  // It's a date
+  if (feature instanceof Date) {
     date = feature;
   } else {
-    date = new Date(String(feature));
+    // Get date from Feature
+    if (this.getFeatures().indexOf(feature) >= 0) {
+      date = this._getFeatureDate(feature);
+    }
+    if (date && !(date instanceof Date)) {
+      date = new Date(date);
+    }
+    if (!date || isNaN(date)) {
+      date = new Date(String(feature));
+    }
   }
   if (!isNaN(date)) {
-    if (anim === false) this._scrollDiv.classList.add('ol-move');
-    this._scrollDiv.scrollLeft = (date-this._minDate)*this._scale - _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'width')/2;
-    if (anim === false) this._scrollDiv.classList.remove('ol-move');
+    if (options.anim === false) this._scrollDiv.classList.add('ol-move');
+    var scrollLeft = (date-this._minDate)*this._scale;
+    if (options.position==='start') {
+      scrollLeft += _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].outerWidth(this._scrollDiv)/2 - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
+    } else if (options.position==='end') {
+      scrollLeft -= _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].outerWidth(this._scrollDiv)/2 - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
+    }
+    this._scrollDiv.scrollLeft = scrollLeft;
+    if (options.anim === false) this._scrollDiv.classList.remove('ol-move');
     if (feature) {
       for (var i=0, f; f = this._tline[i]; i++) {
         if (f.feature === feature) {
@@ -6835,28 +6949,42 @@ ol_control_Timeline.prototype.getDate = function(position) {
   switch (position) {
     case 'start': {
       if (this.get('interval')) {
-        pos = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'width')/2 - _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._intervalDiv, 'width')/2;
+        pos = - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._intervalDiv, 'width')/2 + _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
       } else {
-        pos = 0;
+        pos = - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].outerWidth(this._scrollDiv)/2 + _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
       }
       break;
     }
     case 'end': {
       if (this.get('interval')) {
-        pos = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'width')/2 + _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._intervalDiv, 'width')/2;
+        pos = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._intervalDiv, 'width')/2 - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
       } else {
-        pos = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'width');
+        pos = _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].outerWidth(this._scrollDiv)/2 - _util_element__WEBPACK_IMPORTED_MODULE_3__["default"].getStyle(this._scrollDiv, 'marginLeft')/2;
       }
       break;
     }
     default: {
-      pos = _util_element__WEBPACK_IMPORTED_MODULE_5__["default"].getStyle(this._scrollDiv, 'width')/2;
+      pos = 0;
       break;
     }
   }
   var d = (this._scrollDiv.scrollLeft + pos)/this._scale + this._minDate;
   return new Date(d);
 };
+
+/** Get the start date of the control
+ * @return {Date}
+ */
+ol_control_Timeline.prototype.getStartDate = function() {
+  return new Date(this.get('minDate'));
+}
+
+/** Get the end date of the control
+ * @return {Date}
+ */
+ol_control_Timeline.prototype.getEndDate = function() {
+  return new Date(this.get('maxDate'));
+}
 
 /* harmony default export */ __webpack_exports__["default"] = (ol_control_Timeline);
 
@@ -6871,12 +6999,12 @@ ol_control_Timeline.prototype.getDate = function(position) {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var _Button__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./Button */ "./node_modules/ol-ext/control/Button.js");
 /* harmony import */ var ol_control_Control__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/control/Control */ "./node_modules/ol/control/Control.js");
 /*	Copyright (c) 2016 Jean-Marc VIGLINO,
-	released under the CeCILL-B license (French BSD license)
-	(http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
+  released under the CeCILL-B license (French BSD license)
+  (http://www.cecill.info/licences/Licence_CeCILL-B_V1-en.txt).
 */
 
 
@@ -6890,75 +7018,76 @@ __webpack_require__.r(__webpack_exports__);
  * @extends {ol_control_Control}
  * @fires change:active, change:disable
  * @param {Object=} options Control options.
- *	@param {String} options.className class of the control
- *	@param {String} options.title title of the control
- *	@param {String} options.html html to insert in the control
- *	@param {ol.interaction} options.interaction interaction associated with the control
- *	@param {bool} options.active the control is created active, default false
- *	@param {bool} options.disable the control is created disabled, default false
- *	@param {ol.control.Bar} options.bar a subbar associated with the control (drawn when active if control is nested in a ol.control.Bar)
- *	@param {bool} options.autoActive the control will activate when shown in an ol.control.Bar, default false
- *	@param {function} options.onToggle callback when control is clicked (or use change:active event)
+ *  @param {String} options.className class of the control
+ *  @param {String} options.title title of the control
+ *  @param {String} options.html html to insert in the control
+ *  @param {ol.interaction} options.interaction interaction associated with the control
+ *  @param {bool} options.active the control is created active, default false
+ *  @param {bool} options.disable the control is created disabled, default false
+ *  @param {ol.control.Bar} options.bar a subbar associated with the control (drawn when active if control is nested in a ol.control.Bar)
+ *  @param {bool} options.autoActive the control will activate when shown in an ol.control.Bar, default false
+ *  @param {function} options.onToggle callback when control is clicked (or use change:active event)
  */
-var ol_control_Toggle = function(options)
-{	options = options || {};
-	var self = this;
+var ol_control_Toggle = function(options) {
+  options = options || {};
+  var self = this;
 
-	this.interaction_ = options.interaction;
-	if (this.interaction_)
-	{	this.interaction_.on("change:active", function(e)
-		{	self.setActive(!e.oldValue);
-		});
-	}
+  this.interaction_ = options.interaction;
+  if (this.interaction_) {
+    this.interaction_.setActive(options.active);
+    this.interaction_.on("change:active", function() {
+      self.setActive(self.interaction_.getActive());
+    });
+  }
 
-	if (options.toggleFn) options.onToggle = options.toggleFn; // compat old version
-	options.handleClick = function()
-		{	self.toggle();
-			if (options.onToggle) options.onToggle.call(self, self.getActive());
-		};
-	options.className = (options.className||"") + " ol-toggle";
-	_Button__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, options);
+  if (options.toggleFn) options.onToggle = options.toggleFn; // compat old version
+  options.handleClick = function() {
+    self.toggle();
+    if (options.onToggle) options.onToggle.call(self, self.getActive());
+  };
+  options.className = (options.className||"") + " ol-toggle";
+  _Button__WEBPACK_IMPORTED_MODULE_1__["default"].call(this, options);
 
-	this.set("title", options.title);
+  this.set("title", options.title);
 
-	this.set ("autoActivate", options.autoActivate);
-	if (options.bar)
-	{	this.subbar_ = options.bar;
-		this.subbar_.setTarget(this.element);
-		this.subbar_.element.classList.add("ol-option-bar");
-	}
+  this.set ("autoActivate", options.autoActivate);
+  if (options.bar) {
+    this.subbar_ = options.bar;
+    this.subbar_.setTarget(this.element);
+    this.subbar_.element.classList.add("ol-option-bar");
+  }
 
-	this.setActive (options.active);
-	this.setDisable (options.disable);
+  this.setActive (options.active);
+  this.setDisable (options.disable);
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_control_Toggle, _Button__WEBPACK_IMPORTED_MODULE_1__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_control_Toggle, _Button__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 /**
  * Set the map instance the control is associated with
  * and add interaction attached to it to this map.
  * @param {_ol_Map_} map The map instance.
  */
-ol_control_Toggle.prototype.setMap = function(map)
-{	if (!map && this.getMap())
-	{	if (this.interaction_)
-		{	this.getMap().removeInteraction (this.interaction_);
-		}
-		if (this.subbar_) this.getMap().removeControl (this.subbar_);
-	}
+ol_control_Toggle.prototype.setMap = function(map) {
+  if (!map && this.getMap()) {
+    if (this.interaction_) {
+      this.getMap().removeInteraction (this.interaction_);
+    }
+    if (this.subbar_) this.getMap().removeControl (this.subbar_);
+  }
 
-	ol_control_Control__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.setMap.call(this, map);
+  ol_control_Control__WEBPACK_IMPORTED_MODULE_2__["default"].prototype.setMap.call(this, map);
 
-	if (map)
-	{	if (this.interaction_) map.addInteraction (this.interaction_);
-		if (this.subbar_) map.addControl (this.subbar_);
-	}
+  if (map) {
+    if (this.interaction_) map.addInteraction (this.interaction_);
+    if (this.subbar_) map.addControl (this.subbar_);
+  }
 };
 
 /** Get the subbar associated with a control
-* @return {ol_control_Bar}
-*/
-ol_control_Toggle.prototype.getSubBar = function ()
-{	return this.subbar_;
+ * @return {ol_control_Bar}
+ */
+ol_control_Toggle.prototype.getSubBar = function () {
+  return this.subbar_;
 };
 
 /**
@@ -6966,20 +7095,20 @@ ol_control_Toggle.prototype.getSubBar = function ()
  * @return {bool}.
  * @api stable
  */
-ol_control_Toggle.prototype.getDisable = function()
-{	var button = this.element.querySelector("button");
-	return button && button.disabled;
+ol_control_Toggle.prototype.getDisable = function() {
+  var button = this.element.querySelector("button");
+  return button && button.disabled;
 };
 
 /** Disable the control. If disable, the control will be deactivated too.
 * @param {bool} b disable (or enable) the control, default false (enable)
 */
-ol_control_Toggle.prototype.setDisable = function(b)
-{	if (this.getDisable()==b) return;
-	this.element.querySelector("button").disabled = b;
-	if (b && this.getActive()) this.setActive(false);
+ol_control_Toggle.prototype.setDisable = function(b) {
+  if (this.getDisable()==b) return;
+  this.element.querySelector("button").disabled = b;
+  if (b && this.getActive()) this.setActive(false);
 
-	this.dispatchEvent({ type:'change:disable', key:'disable', oldValue:!b, disable:b });
+  this.dispatchEvent({ type:'change:disable', key:'disable', oldValue:!b, disable:b });
 };
 
 /**
@@ -6987,42 +7116,42 @@ ol_control_Toggle.prototype.setDisable = function(b)
  * @return {bool}.
  * @api stable
  */
-ol_control_Toggle.prototype.getActive = function()
-{	return this.element.classList.contains("ol-active");
+ol_control_Toggle.prototype.getActive = function() {
+  return this.element.classList.contains("ol-active");
 };
 
 /** Toggle control state active/deactive
-*/
-ol_control_Toggle.prototype.toggle = function()
-{	if (this.getActive()) this.setActive(false);
-	else this.setActive(true);
+ */
+ol_control_Toggle.prototype.toggle = function() {
+  if (this.getActive()) this.setActive(false);
+  else this.setActive(true);
 };
 
 /** Change control state
-* @param {bool} b activate or deactivate the control, default false
-*/
-ol_control_Toggle.prototype.setActive = function(b)
-{	if (this.getActive()==b) return;
-	if (b) this.element.classList.add("ol-active");
-	else this.element.classList.remove("ol-active");
-	if (this.interaction_) this.interaction_.setActive (b);
-	if (this.subbar_) this.subbar_.setActive(b);
+ * @param {bool} b activate or deactivate the control, default false
+ */
+ol_control_Toggle.prototype.setActive = function(b) {	
+  if (this.interaction_) this.interaction_.setActive (b);
+  if (this.subbar_) this.subbar_.setActive(b);
+  if (this.getActive()===b) return;
+  if (b) this.element.classList.add("ol-active");
+  else this.element.classList.remove("ol-active");
 
-	this.dispatchEvent({ type:'change:active', key:'active', oldValue:!b, active:b });
+  this.dispatchEvent({ type:'change:active', key:'active', oldValue:!b, active:b });
 };
 
 /** Set the control interaction
 * @param {_ol_interaction_} i interaction to associate with the control
 */
-ol_control_Toggle.prototype.setInteraction = function(i)
-{	this.interaction_ = i;
+ol_control_Toggle.prototype.setInteraction = function(i) {
+  this.interaction_ = i;
 };
 
 /** Get the control interaction
 * @return {_ol_interaction_} interaction associated with the control
 */
-ol_control_Toggle.prototype.getInteraction = function()
-{	return this.interaction_;
+ol_control_Toggle.prototype.getInteraction = function() {
+  return this.interaction_;
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (ol_control_Toggle);
@@ -7064,7 +7193,7 @@ if(false) {}
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var ol_Overlay__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/Overlay */ "./node_modules/ol/Overlay.js");
 /* harmony import */ var _util_element__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../util/element */ "./node_modules/ol-ext/util/element.js");
 /*	Copyright (c) 2016 Jean-Marc VIGLINO, 
@@ -7096,7 +7225,7 @@ popup.hide();
 *	@param {function|undefined} options.onclose: callback function when popup is closed
 *	@param {function|undefined} options.onshow callback function when popup is shown
 *	@param {Number|Array<number>} options.offsetBox an offset box
-*	@param {ol.OverlayPositioning | string | undefined} options.positionning 
+*	@param {ol.OverlayPositioning | string | undefined} options.positioning 
 *		the 'auto' positioning var the popup choose its positioning to stay on the map.
 * @api stable
 */
@@ -7119,7 +7248,7 @@ var ol_Overlay_Popup = function (options) {
   // Content
   this.content = _util_element__WEBPACK_IMPORTED_MODULE_2__["default"].create("div", { 
     html: options.html || '',
-    className: "content",
+    className: "ol-popup-content",
     parent: element
   });
   // Closebox
@@ -7152,7 +7281,7 @@ var ol_Overlay_Popup = function (options) {
     setTimeout(function(){ this.show(options.position); }.bind(this));
   }
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_Overlay_Popup, ol_Overlay__WEBPACK_IMPORTED_MODULE_1__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_Overlay_Popup, ol_Overlay__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 /**
  * Get CSS class of the popup according to its positioning.
@@ -7373,7 +7502,7 @@ ol_Overlay_Popup.prototype.hide = function () {
 
 "use strict";
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var ol__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ol */ "./node_modules/ol/index.js");
+/* harmony import */ var _util_ext__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../util/ext */ "./node_modules/ol-ext/util/ext.js");
 /* harmony import */ var ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ol/style/RegularShape */ "./node_modules/ol/style/RegularShape.js");
 /* harmony import */ var ol_color__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ol/color */ "./node_modules/ol/color.js");
 /* harmony import */ var ol_style_Stroke__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ol/style/Stroke */ "./node_modules/ol/style/Stroke.js");
@@ -7457,7 +7586,7 @@ var ol_style_Photo = function(options)
 	if (typeof(options.rotation)=='number') this.setRotation(options.rotation);
 	this.renderPhoto_();
 };
-Object(ol__WEBPACK_IMPORTED_MODULE_0__["inherits"])(ol_style_Photo, ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_1__["default"]);
+Object(_util_ext__WEBPACK_IMPORTED_MODULE_0__["default"])(ol_style_Photo, ol_style_RegularShape__WEBPACK_IMPORTED_MODULE_1__["default"]);
 
 
 /**
@@ -7760,6 +7889,7 @@ ol_ext_element.create = function (tagName, options) {
           this.setStyle(elt, options.style);
           break;
         }
+        case 'change':
         case 'click': {
           ol_ext_element.addListener(elt, attr, options[attr]);
           break;
@@ -7791,6 +7921,14 @@ ol_ext_element.create = function (tagName, options) {
 ol_ext_element.setHTML = function(element, html) {
   if (html instanceof Element) element.appendChild(html)
   else if (html!==undefined) element.innerHTML = html;
+};
+
+/** Append text into an elemnt
+ * @param {Element} element
+ * @param {string} text text content
+ */
+ol_ext_element.appendText = function(element, text) {
+  element.appendChild(document.createTextNode(text||''));
 };
 
 /**
@@ -8025,6 +8163,60 @@ ol_ext_element.scrollDiv = function(elt, options) {
 };
 
 /* harmony default export */ __webpack_exports__["default"] = (ol_ext_element);
+
+/***/ }),
+
+/***/ "./node_modules/ol-ext/util/ext.js":
+/*!*****************************************!*\
+  !*** ./node_modules/ol-ext/util/ext.js ***!
+  \*****************************************/
+/*! exports provided: ol_ext_inherits, default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ol_ext_inherits", function() { return ol_ext_inherits; });
+/** @namespace  ol.ext
+ */
+/*global ol*/
+if (window.ol && !ol.ext) {
+  ol.ext = {};
+}
+
+/** Inherit the prototype methods from one constructor into another.
+ * replace deprecated ol method
+ *
+ * @param {!Function} childCtor Child constructor.
+ * @param {!Function} parentCtor Parent constructor.
+ * @function module:ol.inherits
+ * @api
+ */
+var ol_ext_inherits = function(child,parent) {
+  child.prototype = Object.create(parent.prototype);
+  child.prototype.constructor = child;
+};
+
+// Compatibilty with ol > 5 to be removed when v6 is out
+if (window.ol) {
+  if (!ol.inherits) ol.inherits = ol_ext_inherits;
+}
+
+/* IE Polyfill */
+// NodeList.forEach
+if (window.NodeList && !NodeList.prototype.forEach) {
+  NodeList.prototype.forEach = Array.prototype.forEach;
+}
+// Element.remove
+if (window.Element && !Element.prototype.remove) {
+  Element.prototype.remove = function() {
+    if (this.parentNode) this.parentNode.removeChild(this);
+  }
+}
+/* End Polyfill */
+
+
+/* harmony default export */ __webpack_exports__["default"] = (ol_ext_inherits);
+
 
 /***/ }),
 
