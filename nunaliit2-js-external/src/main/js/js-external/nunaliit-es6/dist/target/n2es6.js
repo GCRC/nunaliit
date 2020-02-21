@@ -1623,11 +1623,7 @@ class N2MapCanvas  {
 		this.initialTime = null;
 		this.endIdx = 0;
 		this.refreshCnt = undefined;
-		
-		var t = new $n2.N2Editor.Base();
-		//==============
-
-		
+	        this._retrivingDocsAndPaintPopupthrottled = $n2.utils.debounce(this._retrivingDocsAndPaintPopup, 50);
 
 		this.isClustering = undefined;
 		this.n2View = undefined;
@@ -1968,7 +1964,7 @@ class N2MapCanvas  {
 				popup.hide();
 			}
 			if (e.selected) {
-				this._retrivingDocsAndPaintPopup(e.selected, mapBrowserEvent);
+				this._retrivingDocsAndPaintPopupthrottled(e.selected, mapBrowserEvent);
 			}
 		}).bind(this));
 		
