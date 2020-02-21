@@ -1347,6 +1347,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 	    this._registerDispatch('mapSwitchToEditMode');
 	    this._registerDispatch('simplifiedGeometryReport');
 	    this._registerDispatch('canvasGetStylesInUse');
+	    this._registerDispatch('canvasGetStylesCustomDefined');
 	    this._registerDispatch('mapRefreshCallbackRequest');
 	    
 		// Layers
@@ -5080,6 +5081,9 @@ var MapAndControls = $n2.Class('MapAndControls',{
 
     // === START -- MAP STYLES IN USE ===================================================
 
+    _getCustomDefinedMapStyles: function(){
+    	return this.options.canvasStyles || {};
+    },
     _getMapStylesInUse: function(){
     	var mapStylesInUse = {};
 
@@ -5899,9 +5903,9 @@ var MapAndControls = $n2.Class('MapAndControls',{
 				if (cb && typeof cb === 'function'){
 					cb(null, this);
 				}
-
 			}
-
+		} else if ( 'canvasGetStylesCustomDefined' === type ){
+			m.stylesDefined = this._getCustomDefinedMapStyles();
 		};
 	},
 	

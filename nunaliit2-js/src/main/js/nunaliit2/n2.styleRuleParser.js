@@ -475,6 +475,38 @@ var global = {
 		};
 		return false;
 	}
+	,hasProperty: function(propName){
+		if (propName &&
+				typeof propName === "string"){
+			var arr = propName.split('.');
+			var _this = this;
+			for(var i =0, e= arr.length; i<e; ++i){
+				if (arr[i] === 'doc'){
+					arr[i] = 'n2_doc';
+				}
+				if (typeof _this === 'function'){
+					_this = undefined;
+					break;
+				} else if (_this.hasOwnProperty(arr[i])){
+					_this = _this[arr[i]];
+					continue;
+				} else {
+					_this = undefined;
+					break;
+				}
+			}
+		}
+		return (typeof _this !== 'undefined') && (_this !== null) && (_this !== '');
+	}
+	,inModel: function(modelId){
+		if( modelId 
+			&& typeof modelId === 'string'
+			&& this.n2_doc
+			&& this.n2_doc.__n2Models ){
+			return this.n2_doc.__n2Models[modelId] || false;
+		}
+		return false;
+	}
 	,Math: Math
 };
 parser.global = global;

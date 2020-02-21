@@ -1329,6 +1329,10 @@ var ModuleDisplay = $n2.Class({
 					mapOptions.mapCoordinateSpecifications.initialBounds;
 			};
 			
+			if( mapInfo
+			 && mapInfo.styles ){
+				mapOptions.canvasStyles = mapInfo.styles;
+			}
 			// Create map control
 			try {
 				_this.mapControl = nunaliit2.mapAndControls(mapOptions);

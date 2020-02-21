@@ -251,6 +251,10 @@ var ModelFilter = $n2.Class('ModelFilter',{
 				var doc = sourceState.added[i];
 				var docId = doc._id;
 	
+				// Adding modelId into each doc
+				doc.__n2Models = doc.__n2Models || {};
+				doc.__n2Models[_this.modelId] = true;
+				
 				var docInfo = this.docInfosByDocId[docId];
 				if( !docInfo ){
 					docInfo = {
@@ -1011,6 +1015,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				var doc = sourceState.added[i];
 				var docId = doc._id;
 	
+				// Adding modelId into each doc
+				doc.__n2Models = doc.__n2Models || {};
+				doc.__n2Models[_this.modelId] = true;
+				
 				var docInfo = this.docInfosByDocId[docId];
 				if( !docInfo ){
 					docInfo = {
@@ -1097,7 +1105,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				var docInfo = this.docInfosByDocId[docId];
 				if( docInfo ){
 					delete this.docInfosByDocId[docId];
-					
+	
 					if( docInfo.visible ){
 						// Has been removed, but used to be visible: remove
 						removed.push(doc);
