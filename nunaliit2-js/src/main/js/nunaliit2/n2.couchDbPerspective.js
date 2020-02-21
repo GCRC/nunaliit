@@ -669,7 +669,7 @@ var DbPerspective = $n2.Class({
 //--------------------------------------------------------------------------
 /**
  * This class is a document source (document model that fetches documents
- * remoetly) that loads documents given a specified view.
+ * remotely) that loads documents given a specified view.
  */
 var ModelCouchDbView = $n2.Class({
 	dispatchService: null,
