@@ -541,6 +541,11 @@ POSSIBILITY OF SUCH DAMAGE.
 		}
 	});
 
+var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter', $n2.modelFilter.SelectableDocumentFilter, {
+
+
+
+})
 	var LegendWidget2 = $n2.Class('LegendWidget2', {
 //		_throttledRefresh: null,
 //
@@ -652,6 +657,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.selectedChoices = [];
 				this.selectedChoiceIdMap = {};
 				this.allSelected = false;
+				this.availableChoicesChangeEventName = 'canvasReportStylesInUse';
 				this._throttledAvailableChoicesUpdated = $n2.utils.throttle(this._availableChoicesUpdated, 1500);
 				
 				// Set up model listener
@@ -663,56 +669,33 @@ POSSIBILITY OF SUCH DAMAGE.
 					};
 					this.dispatchService.synchronousCall(DH,msg);
 					this.stylesDefined = msg.stylesDefined;
-					
-					
-					// Get model info
-					var modelInfoRequest = {
-						type: 'modelGetInfo'
-						,modelId: this.sourceModelId
-						,modelInfo: null
-					};
-					this.dispatchService.synchronousCall(DH, modelInfoRequest);
-					var sourceModelInfo = modelInfoRequest.modelInfo;
-					
-					if( sourceModelInfo 
-					 && sourceModelInfo.parameters 
-					 && sourceModelInfo.parameters.availableChoices ){
-						var paramInfo = sourceModelInfo.parameters.availableChoices;
-						this.availableChoicesChangeEventName = paramInfo.changeEvent;
 
-						if( paramInfo.value ){
-							this.availableChoices = paramInfo.value;
-						};
-					};
+
+                    for (var sr in this.stylesDefined){
+                        sr.label
+
+                    }
+				this.availableChoices =
+
 					
-					if( sourceModelInfo 
-					 && sourceModelInfo.parameters ){
-						if( sourceModelInfo.parameters.selectedChoices ){
-							var paramInfo = sourceModelInfo.parameters.selectedChoices;
-							this.selectedChoicesChangeEventName = paramInfo.changeEvent;
-							this.selectedChoicesSetEventName = paramInfo.setEvent;
-			
-							if( paramInfo.value ){
-								this.selectedChoices = paramInfo.value;
+
+				this.selectedChoices = paramInfo.value;
 								
-								this.selectedChoiceIdMap = {};
-								this.selectedChoices.forEach(function(choiceId){
-									_this.selectedChoiceIdMap[choiceId] = true;
-								});
-							};
-						};
+				this.selectedChoiceIdMap = {};
+				this.selectedChoices.forEach(function(choiceId){
+						_this.selectedChoiceIdMap[choiceId] = true;
+					});
 
-						if( sourceModelInfo.parameters.allSelected ){
-							var paramInfo = sourceModelInfo.parameters.allSelected;
-							this.allSelectedChangeEventName = paramInfo.changeEvent;
-							this.allSelectedSetEventName = paramInfo.setEvent;
+
+
+				var paramInfo = sourceModelInfo.parameters.allSelected;
+				this.allSelectedChangeEventName = paramInfo.changeEvent;
+				this.allSelectedSetEventName = paramInfo.setEvent;
 			
-							if( typeof paramInfo.value === 'boolean' ){
-								this.allSelected = paramInfo.value;
-							};
-						};
-					};
-					
+
+				this.allSelected = paramInfo.value;
+
+
 					var fn = function(m, addr, dispatcher){
 						_this._handle(m, addr, dispatcher);
 					};
@@ -958,6 +941,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			var widgetOptions = m.widgetOptions;
 			var containerId = m.containerId;
 			var config = m.config;
+			var styleRules = m.styleRules;
 			
 			var options = {};
 			
