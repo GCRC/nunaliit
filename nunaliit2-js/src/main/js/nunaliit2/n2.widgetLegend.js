@@ -653,6 +653,7 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 					this.tooltip = opts.tooltip;
 				}
 				
+				this.completeDefinedChoices = [];
 				this.availableChoices = [];
 				this.selectedChoices = [];
 				this.selectedChoiceIdMap = {};
@@ -672,11 +673,16 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 
 
                     for (var sr in this.stylesDefined){
-                        sr.label
-
+                    	var choice = {
+                    		label : sr.label
+                    		,condition: sr.condition
+                    		
+                    	} 
+                    	
+                    	this.completeDefinedChoices.push(choice);
                     }
-				this.availableChoices =
 
+						
 					
 
 				this.selectedChoices = paramInfo.value;
@@ -735,6 +741,137 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 				this._throttledAvailableChoicesUpdated();
 				
 				$n2.log(this._classname, this);
+			},
+			
+			refresh: function(){
+				var _this = this;
+
+				var $elem = this._getElem();
+				$elem.empty();
+				this.refreshCount = this.refreshCount ? this.refreshCount + 1 : 1;
+
+				// Make a map of styles by label
+				var stylesByLabel = {};
+				var atLeastOne = false;
+				for(var styleId in this.stylesDefined){
+					var styleInfo = _this.stylesDefined[styleId];
+					var style = styleInfo.style;
+					if( style.label ){
+						var effectiveLabel = _loc( style.label );
+						var labelInfo = stylesByLabel[effectiveLabel];
+						if( !labelInfo ){
+							labelInfo = {};
+							stylesByLabel[effectiveLabel] = labelInfo;
+						};
+						labelInfo[styleId] = styleInfo;
+						atLeastOne = true;
+					};
+				};
+
+				// If at least one style with label, then must display
+				if( atLeastOne ){
+					var $outer = $('<div>')
+					.addClass('n2widgetLegend_outer')
+					.appendTo($elem);
+
+					var labelNames = [];
+
+					if( this.labels ){
+						this.labels.forEach(function(label){
+							var effectiveLabel = _loc(label);
+							if( stylesByLabel[effectiveLabel] ){
+								labelNames.push(effectiveLabel);
+							};
+						});
+
+					} else {
+						for (var labelName in stylesByLabel){
+							labelNames.push(labelName);
+						};
+
+						labelNames.sort();
+					};
+
+					labelNames.forEach(function(labelName){
+						var labelInfo = stylesByLabel[labelName];
+
+						var $div = $('<div>')
+						.addClass('n2widgetLegend_legendEntry')
+						.appendTo($outer);
+
+						var $symbolColumn = $('<div>')
+						.addClass('n2widgetLegend_symbolColumn')
+						.appendTo($div);
+
+						var $symbolColumnPoint = $('<div>')
+						.addClass('n2widgetLegend_symbolColumn_point')
+						.appendTo($symbolColumn);				
+
+						var $symbolColumnLine = $('<div>')
+						.addClass('n2widgetLegend_symbolColumn_line')
+						.appendTo($symbolColumn);				
+
+						var $symbolColumnPolygon = $('<div>')
+						.addClass('n2widgetLegend_symbolColumn_polygon')
+						.appendTo($symbolColumn);
+
+						var $symbolColumnCluster = $('<div>')
+						.addClass('n2widgetLegend_symbolColumn_cluster')
+						.appendTo($symbolColumn);
+
+						var $labelColumn = $('<div>')
+						.addClass('n2widgetLegend_labelColumn')
+						.appendTo($div);
+
+						$('<div>')
+						.addClass('n2widgetLegend_labelEntry')
+						.text(labelName)
+						.appendTo($labelColumn);
+
+//						var styleIds = [];
+//						for(var styleId in labelInfo){
+//							styleIds.push(styleId);
+//						};
+//						styleIds.sort();
+//
+//						styleIds.forEach(function(styleId){
+//							var styleInfo = labelInfo[styleId];
+//							var style = styleInfo.style;
+//
+//							// Check if point is a cluster and create either a point or
+//							// cluster symbol
+//							if( styleInfo.point && styleInfo.point.cluster && styleInfo.point.cluster.length > 1 ){
+//								var $preview = $('<div>')
+//								.addClass('n2widgetLegend_preview n2widgetLegend_previewCluster')
+//								.attr('n2-style-id',style.id)
+//								.appendTo($symbolColumnCluster);
+//								_this._insertSvgPreviewPoint($preview, style, styleInfo.point);
+//							} else if( styleInfo.point ){
+//								var $preview = $('<div>')
+//								.addClass('n2widgetLegend_preview n2widgetLegend_previewPoint')
+//								.attr('n2-style-id',style.id)
+//								.appendTo($symbolColumnPoint);
+//								_this._insertSvgPreviewPoint($preview, style, styleInfo.point);
+//							};
+//
+//							if( styleInfo.line ){
+//								var $preview = $('<div>')
+//								.addClass('n2widgetLegend_preview n2widgetLegend_previewLine')
+//								.attr('n2-style-id',style.id)
+//								.appendTo($symbolColumnLine);
+//								_this._insertSvgPreviewLine($preview, style, styleInfo.line);
+//							};
+//
+//							if( styleInfo.polygon ){
+//								var $preview = $('<div>')
+//								.addClass('n2widgetLegend_preview n2widgetLegend_previewPolygon')
+//								.attr('n2-style-id',style.id)
+//								.appendTo($symbolColumnPolygon);
+//								_this._insertSvgPreviewPolygon($preview, style, styleInfo.polygon);
+//							};
+//						});
+					});
+				};
 			},
 			
 			_getElem: function(){
