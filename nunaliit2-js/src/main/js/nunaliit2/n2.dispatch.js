@@ -51,7 +51,7 @@ var HANDLEMARKER = {}
  * the event will be completely processed. Therefore, an event sender can not expect
  * a reply unless it comes in the form of a separate event.
  * 
- * A synchronous message is sent using the syncrhonousCall() function. Unlike events,
+ * A synchronous message is sent using the synchronousCall() function. Unlike events,
  * synchronous messages are delivered immediately, before any events if any are in queue.
  * All recipients of a synchronous message are called before the function synchronousCall()
  * returns. Therefore, the reply to a synchronous call can be saved on the message to be
