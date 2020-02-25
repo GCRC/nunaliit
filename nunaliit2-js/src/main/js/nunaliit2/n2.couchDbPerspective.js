@@ -821,7 +821,7 @@ var ModelCouchDbView = $n2.Class({
 						};
 					});
 
-					--this.loadingCount;
+					--_this.loadingCount;
 
 					_this._docInfoMapLoaded(docInfoByDocId);
 				}
