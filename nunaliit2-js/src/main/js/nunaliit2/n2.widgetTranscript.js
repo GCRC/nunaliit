@@ -776,6 +776,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					.html(transcriptElem.text+ " ")
 					.appendTo($transcript)
 			}
+			$('div#'+ _this.transcriptId).multiSelect({
+				unselectOn: 'head',
+				keepSelection: false,
+				stop: function($sel, $elem) {
+					currentSelectSentences = undefined;
+						currentSelectSentences = $sel;
+					
+				}
+			});
 			
 			$('div.n2widgetTranscript_transcript div').on('mouseup', function(e){
 				e.preventDefault();
@@ -847,15 +856,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				type: 'resetDisplayedSentences'
 				,data: tagsBySentenceSpanIds
 			})
-			$('div#'+ _this.transcriptId).multiSelect({
-				unselectOn: 'head',
-				keepSelection: false,
-				stop: function($sel, $elem) {
-					currentSelectSentences = undefined;
-						currentSelectSentences = $sel;
-					
-				}
-			});
+			
 			// Deal with scrolling, the scrolling should close the annotationEditor
 			$transcript.on('scroll', function(e){
 			

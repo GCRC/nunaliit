@@ -22,7 +22,7 @@
 			var options = $.extend({}, defaults, o || {});
 			// selector - parent, assign listener to children only
 			$(document).on('mousedown', options.list+options.filter, function(e) {
-				if (e.which == 1){
+				if (e.which == 1 || e.which == 3){
 					if (options.handle != undefined && !$(e.target).is(options.handle)) {
 						// TODO:
 						// keep propagation?
