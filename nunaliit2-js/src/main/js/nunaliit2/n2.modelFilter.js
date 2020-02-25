@@ -766,6 +766,8 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			};
 		});
 		
+		// ModelParamter is the messenger between model and externalEntity (Yes, widgets )
+		// Define set~Choices get~Choices function in this model to passing the choices. 	
 		this.selectedChoicesParameter = new $n2.model.ModelParameter({
 			model: this
 			,modelId: this.modelId
@@ -1840,7 +1842,79 @@ var MultiDocumentFilter = $n2.Class('MultiDocumentFilter', SelectableDocumentFil
 		return false;
 	}
 });
+//-=------------------------------------------------------------------------
+var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', $n2.modelFilter.SelectableDocumentFilter, {
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			sourceModelId: undefined
+			,dispatchService: undefined
+			,rules: null
+		},opts_);
+		var _this = this;
+		$n2.modelFilter.SelectableDocumentFilter.prototype.initialize.call(this,opts);
+		
+		//Because widgetLegend needs a complete list of choices, we defined a new parameter
+		//The complete choice list is passing-in from constructor so it is never been changed.
+		this.completeChoicesParameter = new $n2.model.ModelParameter({
+			model: this
+			,modelId: this.modelId
+			,type: 'strings'
+			,name: 'completeChoices'
+			,label: _loc('Complete Choices')
+			,setFn: this._setCompleteChoices
+			,getFn: this.getCompleteChoices
+			,dispatchService: this.dispatchService
+		});
+		
+		this.conditionByLabel = {};
+		if ( $n2.isArray(opts.rules) ){
+			opts.rules.forEach(function(rule){
+				var condition = null;
+				if ( rule.condition ){
+					condition = $n2.styleRuleParserForLegend.parse(rule.condition);
+				}
+				_this.conditionByLabel[styleRule.label] = condition; 
+			})
+		};	
+	},
 
+	_addModelInfoParameters: function(info){
+		info.parameters.completeChoices = this.completeChoicesParameter.getInfo();
+		info.parameters.selectedChoices = this.selectedChoicesParameter.getInfo();
+		info.parameters.allSelected = this.allSelectedParameter.getInfo();
+		info.parameters.availableChoices = this.availableChoicesParameter.getInfo();
+	},
+	getCompleteChoices: function(){
+		var selectedChoices = [];
+		for(var choiceId in this.conditionByLabel){
+			selectedChoices.push(choiceId);
+		};
+		selectedChoices.sort();
+		return selectedChoices;
+	},
+	_setCompleteChoices: function(){
+		throw new Error('Complete Choice list cannot be changed by outside')
+	},
+	_isDocVisible: function(doc, selectedChoiceIdMap){
+		if( doc ){
+			var result = false;
+			try {
+				
+				for (var choice in selectedChoiceIdMap){
+					var condition = choice.condition;
+					result = condition.getValue(doc);
+					if ( result ){
+						return result;
+					}
+				}
+			} catch (e){
+				return false;
+			}
+			return false;
+		}
+	}
+	
+})
 //--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'filter' ){
@@ -2030,6 +2104,28 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		m.model = new MultiDocumentFilter(options);
+		
+		m.created = true;
+	} else if( m.modelType === 'conditionalModelFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+		options.rules = m.styleRules;
+		
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		m.model = new ConditionalModelFilter(options);
 		
 		m.created = true;
 	};

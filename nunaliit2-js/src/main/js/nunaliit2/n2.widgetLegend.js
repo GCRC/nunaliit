@@ -541,58 +541,9 @@ POSSIBILITY OF SUCH DAMAGE.
 		}
 	});
 
-var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter', $n2.modelFilter.SelectableDocumentFilter, {
 
-
-
-})
 	var LegendWidget2 = $n2.Class('LegendWidget2', {
-//		_throttledRefresh: null,
-//
-//		initialize: function(opts_){
-//			
-//			var opts = $n2.extend({
-//				containerId: null
-//				,dispatchService: null
-//				,sourceCanvasName: null
-//				,labels: null
-//			},opts_);
-//
-//			var _this = this;
-//
-//			this.dispatchService = opts.dispatchService;
-//			this.sourceCanvasName = opts.sourceCanvasName;
-//			this.labels = opts.labels;
-//
-//			this.stylesInUse = null;
-//			if( this.dispatchService ){
-//				var f = function(m, addr, dispatcher){
-//					_this._handle(m, addr, dispatcher);
-//				};
-//
-//				this.dispatchService.register(DH,'canvasReportStylesInUse',f);
-//
-//				// Obtain current styles in use
-//				var msg = {
-//						type: 'canvasGetStylesInUse'
-//							,canvasName: this.sourceCanvasName
-//				};
-//				this.dispatchService.synchronousCall(DH,msg);
-//				this.stylesInUse = msg.stylesInUse;
-//			};
-//			//$n2.log("Legend2 stylesInUse ", this.stylesInUse);
-//	
-//		},
-//		_handle: function(m, addr, dispatcher){
-//			var _this = this;
-//			if( 'canvasReportStylesInUse' === m.type ){
-//				if( m.canvasName === this.sourceCanvasName ){
-//					this.stylesInUse = m.stylesInUse;
-//					//this._throttledRefresh();
-//				};
-//			};
-//		},
-		
+
 			dispatchService: null,
 			
 			showService: null,
@@ -638,6 +589,8 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 					,sourceModelId: null
 					,allChoicesLabel: null
 					,tooltip: null
+					,moduleDisplay: null
+					,styleRules: null
 				},opts_);
 				
 				var _this = this;
@@ -653,59 +606,60 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 					this.tooltip = opts.tooltip;
 				}
 				
-				this.completeDefinedChoices = [];
+				
+				this.styleRules = opts.styleRules;
+				this.completeChoices = [];
 				this.availableChoices = [];
 				this.selectedChoices = [];
 				this.selectedChoiceIdMap = {};
 				this.allSelected = false;
 				this.availableChoicesChangeEventName = 'canvasReportStylesInUse';
 				this._throttledAvailableChoicesUpdated = $n2.utils.throttle(this._availableChoicesUpdated, 1500);
+
 				
 				// Set up model listener
 				if( this.dispatchService ){
+
+					var modelInfoRequest = {
+							type: 'modelGetInfo'
+							,modelId: this.sourceModelId
+							,modelInfo: null
+						};
+					this.dispatchService.synchronousCall(DH, modelInfoRequest);
+					var sourceModelInfo = modelInfoRequest.modelInfo;
 					
-					// Get Custom defined styleRules
-					var msg = {
-							type: 'canvasGetStylesCustomDefined'
+					//
+					if( sourceModelInfo 
+					 && sourceModelInfo.parameters 
+					 && sourceModelInfo.parameters.completeChoices ){
+						var paramInfo = sourceModelInfo.parameters.completeChoices;
+						this.completeChoicesChangeEventName = paramInfo.changeEvent;
+
+						if( paramInfo.value ){
+							this.completeChoices = (paramInfo.value);
+						};
 					};
-					this.dispatchService.synchronousCall(DH,msg);
-					this.stylesDefined = msg.stylesDefined;
-
-
-                    for (var sr in this.stylesDefined){
-                    	var choice = {
-                    		label : sr.label
-                    		,condition: sr.condition
-                    		
-                    	} 
-                    	
-                    	this.completeDefinedChoices.push(choice);
-                    }
-
 						
-					
+					this.selectedChoices = paramInfo.value;
 
-				this.selectedChoices = paramInfo.value;
-								
-				this.selectedChoiceIdMap = {};
-				this.selectedChoices.forEach(function(choiceId){
+					this.selectedChoiceIdMap = {};
+					this.selectedChoices.forEach(function(choiceId){
 						_this.selectedChoiceIdMap[choiceId] = true;
 					});
 
+					var paramInfo = sourceModelInfo.parameters.allSelected;
+					this.allSelectedChangeEventName = paramInfo.changeEvent;
+					this.allSelectedSetEventName = paramInfo.setEvent;
 
+				
+					this.allSelected = paramInfo.value;
 
-				var paramInfo = sourceModelInfo.parameters.allSelected;
-				this.allSelectedChangeEventName = paramInfo.changeEvent;
-				this.allSelectedSetEventName = paramInfo.setEvent;
-			
-
-				this.allSelected = paramInfo.value;
-
-
+						
+					
 					var fn = function(m, addr, dispatcher){
 						_this._handle(m, addr, dispatcher);
 					};
-					
+
 					if( this.availableChoicesChangeEventName ){
 						this.dispatchService.register(DH, this.availableChoicesChangeEventName, fn);
 					};
@@ -738,9 +692,10 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 					$selector.attr('title', this.tooltip);
 				}
 
-				this._throttledAvailableChoicesUpdated();
-				
+				//this._throttledAvailableChoicesUpdated();
+				this.refresh();
 				$n2.log(this._classname, this);
+				
 			},
 			
 			refresh: function(){
@@ -828,48 +783,6 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 						.text(labelName)
 						.appendTo($labelColumn);
 
-//						var styleIds = [];
-//						for(var styleId in labelInfo){
-//							styleIds.push(styleId);
-//						};
-//						styleIds.sort();
-//
-//						styleIds.forEach(function(styleId){
-//							var styleInfo = labelInfo[styleId];
-//							var style = styleInfo.style;
-//
-//							// Check if point is a cluster and create either a point or
-//							// cluster symbol
-//							if( styleInfo.point && styleInfo.point.cluster && styleInfo.point.cluster.length > 1 ){
-//								var $preview = $('<div>')
-//								.addClass('n2widgetLegend_preview n2widgetLegend_previewCluster')
-//								.attr('n2-style-id',style.id)
-//								.appendTo($symbolColumnCluster);
-//								_this._insertSvgPreviewPoint($preview, style, styleInfo.point);
-//							} else if( styleInfo.point ){
-//								var $preview = $('<div>')
-//								.addClass('n2widgetLegend_preview n2widgetLegend_previewPoint')
-//								.attr('n2-style-id',style.id)
-//								.appendTo($symbolColumnPoint);
-//								_this._insertSvgPreviewPoint($preview, style, styleInfo.point);
-//							};
-//
-//							if( styleInfo.line ){
-//								var $preview = $('<div>')
-//								.addClass('n2widgetLegend_preview n2widgetLegend_previewLine')
-//								.attr('n2-style-id',style.id)
-//								.appendTo($symbolColumnLine);
-//								_this._insertSvgPreviewLine($preview, style, styleInfo.line);
-//							};
-//
-//							if( styleInfo.polygon ){
-//								var $preview = $('<div>')
-//								.addClass('n2widgetLegend_preview n2widgetLegend_previewPolygon')
-//								.attr('n2-style-id',style.id)
-//								.appendTo($symbolColumnPolygon);
-//								_this._insertSvgPreviewPolygon($preview, style, styleInfo.polygon);
-//							};
-//						});
 					});
 				};
 			},
@@ -890,7 +803,7 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 					allChoicesLabel = _loc(this.allChoicesLabel);
 				};
 				var $a = $('<a>')
-					.addClass('n2widget_multiFilterSelection_optionAllChoices n2widget_multiFilterSelection_option')
+					.addClass('n2widget_legend2_optionAllChoices n2widget_legend2_option')
 					.attr('href','#')
 					.attr('n2-choice-id',ALL_CHOICES)
 					.appendTo($elem)
@@ -913,7 +826,7 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 					};
 					
 					var $a = $('<a>')
-						.addClass('n2widget_multiFilterSelection_option')
+						.addClass('n2widget_legend2_option')
 						.attr('href',choice.id)
 						.attr('n2-choice-id',choice.id)
 						.appendTo($elem)
@@ -935,7 +848,7 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 				var _this = this;
 				
 				var $elem = this._getElem();
-				$elem.find('.n2widget_multiFilterSelection_option').each(function(){
+				$elem.find('.n2widget_legend2_option').each(function(){
 					var $option = $(this);
 					var choiceId = $option.attr('n2-choice-id');
 					
@@ -951,11 +864,11 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 					};
 					
 					if( selected ){
-						$option.removeClass('n2widget_multiFilterSelection_notSelected');
-						$option.addClass('n2widget_multiFilterSelection_selected');
+						$option.removeClass('n2widget_legend2_notSelected');
+						$option.addClass('n2widget_legend2_selected');
 					} else {
-						$option.removeClass('n2widget_multiFilterSelection_selected');
-						$option.addClass('n2widget_multiFilterSelection_notSelected');
+						$option.removeClass('n2widget_legend2_selected');
+						$option.addClass('n2widget_legend2_notSelected');
 					};
 				});
 			},
@@ -1042,12 +955,7 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 				m.isAvailable = true;
 			};
 		} else if ( m.widgetType === 'legendWidget2' ){
-			if( window && window.d3 ) {
 				m.isAvailable = true;
-			} else {
-				$n2.log('LegendWidget2  requires d3 library');
-			};
-			
 		}
 	};
 
@@ -1136,6 +1044,7 @@ var LegendWidget2HiddenModelFilter = $n2.Class('LegendWidget2HiddenModelFilter',
 //	--------------------------------------------------------------------------
 	$n2.widgetLegend = {
 			LegendWidget: LegendWidget
+			,LegendWidget2: LegendWidget2
 			,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 			,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
 	};
