@@ -581,10 +581,10 @@ public class SchemaDefinition {
 
 		if( null != label ){
 			pw.println("\t<span class=\"n2s_localize "+schemaClass+"_brief_decoration\">");
-			pw.println("\t"+label);
+			pw.println("\t\t"+label);
 		} else {
 			pw.println("\t<span class=\""+schemaClass+"_brief_decoration\">");
-			pw.println( getSchemaName() );
+			pw.println("\t\t"+getSchemaName() );
 		}
 
 		pw.println("\t(</span>");
@@ -606,29 +606,33 @@ public class SchemaDefinition {
 		String schemaClass = getSchemaClass();
 		String schemaStructure = getSchemaStructure();
 		
-		pw.println("<div class=\"n2_documentDisplay\"><div class=\"n2_layoutFloat\">");
-		pw.println("<div class=\""+schemaClass+"\">");
+		pw.println("<div class=\"n2_documentDisplay\">");
+		pw.println("\t<div class=\"n2_layoutFloat\">");
+		pw.println("\t\t<div class=\""+schemaClass+"\">");
 
 		for(SchemaAttribute attribute : attributes){
 			attribute.printDisplay(pw,schemaStructure,schemaClass);
 		}
 		
+		pw.println("\t\t</div>");
+		pw.println("\t</div>");
 		pw.println("</div>");
-		pw.println("</div></div>");
 	}
 	
 	public void printForm(PrintWriter pw) throws Exception {
 		String schemaClass = getSchemaClass();
 		String schemaStructure = getSchemaStructure();
 		
-		pw.println("<div class=\"n2_documentForm\"><div class=\"n2_layoutFloat\">");
-		pw.println("<div class=\""+schemaClass+"\">");
+		pw.println("<div class=\"n2_documentForm\">");
+		pw.println("\t<div class=\"n2_layoutFloat\">");
+		pw.println("\t\t<div class=\""+schemaClass+"\">");
 
 		for(SchemaAttribute attribute : attributes){
 			attribute.printForm(pw,schemaStructure,schemaClass);
 		}
 		
+		pw.println("\t\t</div>");
+		pw.println("\t</div>");
 		pw.println("</div>");
-		pw.println("</div></div>");
 	}
 }
