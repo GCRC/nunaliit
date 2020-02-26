@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016, Geomatics and Cartographic Research Centre, Carleton 
+Copyright (c) 2020, Geomatics and Cartographic Research Centre, Carleton 
 University
 All rights reserved.
 
@@ -613,7 +613,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.selectedChoices = [];
 				this.selectedChoiceIdMap = {};
 				this.allSelected = false;
-				this.availableChoicesChangeEventName = 'canvasReportStylesInUse';
+				//this.availableChoicesChangeEventName = 'canvasReportStylesInUse';
 				this._throttledAvailableChoicesUpdated = $n2.utils.throttle(this._availableChoicesUpdated, 1500);
 
 				
@@ -624,10 +624,9 @@ POSSIBILITY OF SUCH DAMAGE.
 							type: 'modelGetInfo'
 							,modelId: this.sourceModelId
 							,modelInfo: null
-						};
+					};
 					this.dispatchService.synchronousCall(DH, modelInfoRequest);
 					var sourceModelInfo = modelInfoRequest.modelInfo;
-					
 					//
 					if( sourceModelInfo 
 					 && sourceModelInfo.parameters 
@@ -635,6 +634,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						var paramInfo = sourceModelInfo.parameters.completeChoices;
 						this.completeChoicesChangeEventName = paramInfo.changeEvent;
 
+						//The value of this parameter is an array of string
 						if( paramInfo.value ){
 							this.completeChoices = (paramInfo.value);
 						};
@@ -660,17 +660,17 @@ POSSIBILITY OF SUCH DAMAGE.
 						_this._handle(m, addr, dispatcher);
 					};
 
-					if( this.availableChoicesChangeEventName ){
-						this.dispatchService.register(DH, this.availableChoicesChangeEventName, fn);
-					};
-
-					if( this.selectedChoicesChangeEventName ){
-						this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
-					};
-
-					if( this.allSelectedChangeEventName ){
-						this.dispatchService.register(DH, this.allSelectedChangeEventName, fn);
-					};
+//					if( this.availableChoicesChangeEventName ){
+//						this.dispatchService.register(DH, this.availableChoicesChangeEventName, fn);
+//					};
+//
+//					if( this.selectedChoicesChangeEventName ){
+//						this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
+//					};
+//
+//					if( this.allSelectedChangeEventName ){
+//						this.dispatchService.register(DH, this.allSelectedChangeEventName, fn);
+//					};
 				};
 
 				// Get container

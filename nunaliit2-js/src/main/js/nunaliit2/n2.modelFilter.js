@@ -1858,7 +1858,7 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', $n2.modelFilter
 		this.completeChoicesParameter = new $n2.model.ModelParameter({
 			model: this
 			,modelId: this.modelId
-			,type: 'strings'
+			,type: 'array'
 			,name: 'completeChoices'
 			,label: _loc('Complete Choices')
 			,setFn: this._setCompleteChoices
@@ -1899,7 +1899,7 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', $n2.modelFilter
 		if( doc ){
 			var result = false;
 			try {
-				
+				//Greedy approach to filtering documents
 				for (var choice in selectedChoiceIdMap){
 					var condition = choice.condition;
 					result = condition.getValue(doc);
