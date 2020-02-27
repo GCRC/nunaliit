@@ -1,7 +1,7 @@
 {
-   "demo_doc": {
-      "description": "",
-      "title": ""
-   },
-   "nunaliit_schema": "demo_doc"
+	"demo_doc": {
+		"description": "",
+		"title": ""
+	},
+	"nunaliit_schema": "demo_doc"
 }

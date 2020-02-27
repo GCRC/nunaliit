@@ -1,46 +1,48 @@
-<div class="n2_documentForm"><div class="n2_layoutFloat">
-<div class="demo_doc">
-<div class="title">
-	<div class="label n2s_localize">Demo Document</div>
-	<div class="end"></div>
-</div>
-{{#demo_doc}}
-	<div class="demo_doc_title">
-		<div class="label n2s_localize">Title</div>
-		<div class="value">{{#:field}}title,placeholder=Title{{/:field}}</div>
-		<div class="end"></div>
+<div class="n2_documentForm">
+	<div class="n2_layoutFloat">
+		<div class="demo_doc">
+			<div class="title">
+				<div class="label n2s_localize">Demo Document</div>
+				<div class="end"></div>
+			</div>
+			{{#demo_doc}}
+				<div class="demo_doc_title">
+					<div class="label n2s_localize">Title</div>
+					<div class="value">{{#:field}}title,placeholder=Title{{/:field}}</div>
+					<div class="end"></div>
+				</div>
+			{{/demo_doc}}
+			{{#demo_doc}}
+				<div class="demo_doc_description">
+					<div class="label n2s_localize">Description</div>
+					<div class="value">{{#:field}}description,textarea,placeholder=Description{{/:field}}</div>
+					<div class="end"></div>
+				</div>
+			{{/demo_doc}}
+			{{#demo_doc}}
+				<div class="demo_doc_date">
+					<div class="label n2s_localize">Date</div>
+					<div class="value">{{#:field}}date,date{{/:field}}</div>
+					<div class="end"></div>
+				</div>
+			{{/demo_doc}}
+			{{#demo_doc}}
+				<div class="demo_doc_reference">
+					<div class="label n2s_localize">Reference</div>
+					<div class="value">{{#:field}}reference,reference{{/:field}}</div>
+					<div class="end"></div>
+				</div>
+			{{/demo_doc}}
+			<div class="nunaliit_hoverSound">
+				<div class="label n2s_localize">Hover Sound</div>
+				<div class="value">{{#:field}}nunaliit_hoverSound,reference,search=getHoverSound{{/:field}}</div>
+				<div class="end"></div>
+			</div>
+			<div class="nunaliit_geom">
+				<div class="label n2s_localize">Geometry</div>
+				<div class="value">{{#:field}}nunaliit_geom,geometry{{/:field}}</div>
+				<div class="end"></div>
+			</div>
+		</div>
 	</div>
-{{/demo_doc}}
-{{#demo_doc}}
-	<div class="demo_doc_description">
-		<div class="label n2s_localize">Description</div>
-		<div class="value">{{#:field}}description,textarea,placeholder=Description{{/:field}}</div>
-		<div class="end"></div>
-	</div>
-{{/demo_doc}}
-{{#demo_doc}}
-	<div class="demo_doc_date">
-		<div class="label n2s_localize">Date</div>
-		<div class="value">{{#:field}}date,date{{/:field}}</div>
-		<div class="end"></div>
-	</div>
-{{/demo_doc}}
-{{#demo_doc}}
-	<div class="demo_doc_reference">
-		<div class="label n2s_localize">Reference</div>
-		<div class="value">{{#:field}}reference,reference{{/:field}}</div>
-		<div class="end"></div>
-	</div>
-{{/demo_doc}}
-<div class="nunaliit_hoverSound">
-	<div class="label n2s_localize">Hover Sound</div>
-	<div class="value">{{#:field}}nunaliit_hoverSound,reference,search=getHoverSound{{/:field}}</div>
-	<div class="end"></div>
 </div>
-<div class="nunaliit_geom">
-	<div class="label n2s_localize">Geometry</div>
-	<div class="value">{{#:field}}nunaliit_geom,geometry{{/:field}}</div>
-	<div class="end"></div>
-</div>
-</div>
-</div></div>
