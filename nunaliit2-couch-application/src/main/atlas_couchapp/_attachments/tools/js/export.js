@@ -61,7 +61,7 @@ function showDocs(opts_){
 				$('.exportResult').append($textarea);
 				$textarea.text(csv);
 			}
-			,onError: function(errStr) {
+			,onError: function(errStr, error) {
 				$('.exportResult').empty();
 				if( error ){
 					reportError(error);
