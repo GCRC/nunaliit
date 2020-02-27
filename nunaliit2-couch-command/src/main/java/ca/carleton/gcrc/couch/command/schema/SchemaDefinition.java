@@ -197,7 +197,7 @@ public class SchemaDefinition {
 			FileOutputStream fos = new FileOutputStream(file);
 			OutputStreamWriter osw = new OutputStreamWriter(fos);
 			JSONObject obj = toJson();
-			osw.write( obj.toString(3) );
+			osw.write( obj.toString(4).replace("    ", "\t") );
 			osw.flush();
 			fos.flush();
 			fos.close();
@@ -290,7 +290,7 @@ public class SchemaDefinition {
 				for(String schemaName : relatedSchemas){
 					arr.put(schemaName);
 				}
-				osw.write( arr.toString(3) );
+				osw.write( arr.toString(4).replace("    ", "\t") );
 				osw.flush();
 				fos.flush();
 				fos.close();
@@ -329,7 +329,7 @@ public class SchemaDefinition {
 				fos = new FileOutputStream(file);
 				OutputStreamWriter osw = new OutputStreamWriter(fos);
 				JSONObject jsonCreate = computeCreateField();
-				osw.write( jsonCreate.toString(3) );
+				osw.write( jsonCreate.toString(4).replace("    ", "\t") );
 				osw.flush();
 				fos.flush();
 				fos.close();
@@ -407,7 +407,7 @@ public class SchemaDefinition {
 				fos = new FileOutputStream(file);
 				OutputStreamWriter osw = new OutputStreamWriter(fos);
 				JSONArray jsonExport = computeExportField();
-				osw.write( jsonExport.toString(3) );
+				osw.write( jsonExport.toString(4).replace("    ", "\t") );
 				osw.flush();
 				fos.flush();
 				fos.close();
@@ -446,7 +446,7 @@ public class SchemaDefinition {
 				fos = new FileOutputStream(file);
 				OutputStreamWriter osw = new OutputStreamWriter(fos);
 				JSONArray jsonExport = computeExportField();
-				osw.write( jsonExport.toString(3) );
+				osw.write( jsonExport.toString(4).replace("    ", "\t") );
 				osw.flush();
 				fos.flush();
 				fos.close();
