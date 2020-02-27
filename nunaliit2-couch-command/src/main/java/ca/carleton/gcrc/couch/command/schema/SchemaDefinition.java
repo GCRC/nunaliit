@@ -580,14 +580,14 @@ public class SchemaDefinition {
 		pw.println("<span class=\""+schemaClass+"_brief\">");
 
 		if( null != label ){
-			pw.println("\t<span class=\"n2s_localize "+schemaClass+"_brief_decoration\">");
-			pw.println("\t\t"+label);
+			pw.print("\t<span class=\"n2s_localize "+schemaClass+"_brief_decoration\">");
+			pw.print( label );
 		} else {
-			pw.println("\t<span class=\""+schemaClass+"_brief_decoration\">");
-			pw.println("\t\t"+getSchemaName() );
+			pw.print("\t<span class=\""+schemaClass+"_brief_decoration\">");
+			pw.print( getSchemaName() );
 		}
 
-		pw.println("\t(</span>");
+		pw.println(" (</span>");
 		
 		boolean first = true;
 		for(SchemaAttribute attribute : attributes){

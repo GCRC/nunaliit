@@ -592,7 +592,7 @@ public class SchemaAttribute {
 							label = option.getValue();
 						}
 						pw.print(label);
-						pw.print("</span>");
+						pw.println("</span>");
 					}
 					pw.println("\t\t\t</span>");
 					pw.println("\t\t{{/if}}");
@@ -732,22 +732,22 @@ public class SchemaAttribute {
 			}
 
 			if( "title".equals(type) ) {
-				pw.println("<div class=\"title\">");
+				pw.println("\t\t\t<div class=\"title\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t<div class=\"end\"></div>");
 				
-				pw.println("</div>");
+				pw.println("\t\t\t</div>");
 				
 			} else if( "string".equals(type)
 			 || "localized".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 
 					String fixUrlClass = "";
 					String fixMaxHeight = "";
@@ -766,97 +766,97 @@ public class SchemaAttribute {
 					}
 					
 					if( "string".equals(type) ){
-						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+id+"}}</div>");
+						pw.println("\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+id+"}}</div>");
 
 					} else if( "localized".equals(type) ){
-						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+id+"{{/:localize}}</div>");
+						pw.println("\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+id+"{{/:localize}}</div>");
 					}
 					
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
 					
-					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "date".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#"+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value\">{{date}}</div>");
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"value\">{{date}}</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
 					
 					
-					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/"+id+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "reference".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#"+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					
 					if( "thumbnail".equals(referenceType) ){
-						pw.println("\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{doc}}\"></div>");
+						pw.println("\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{doc}}\"></div>");
 					} else {
-						pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+						pw.println("\t\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
 					}
 
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
 					
 					
-					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/"+id+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					
-					pw.println("\t\t\t<div class=\"value n2s_custom\""
+					pw.println("\t\t\t\t\t\t<div class=\"value n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
 							+ " nunaliit-selector=\"{{#:selector}}"+id+"{{/:selector}}\">"
 							+ "</div>");
 
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
 					
 					
-					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "array".equals(type) ){
 				if( null != id ){
 
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
 
-					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">");
-					pw.println("\t\t{{#"+id+"}}");
-					pw.print("\t\t\t<div class=\"array_element");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t{{#"+id+"}}");
+					pw.print("\t\t\t\t\t\t\t<div class=\"array_element");
 					if( urlsToLinks ){
 						pw.print(" n2s_convertTextUrlToLink");
 					}
@@ -869,41 +869,41 @@ public class SchemaAttribute {
 					pw.println("\">");
 					
 					if( "string".equals(elementType) ){
-						pw.println("{{.}}");
+						pw.println("\t\t\t\t\t\t\t\t{{.}}");
 					} else if( "localized".equals(elementType) ){
-						pw.println("{{#:localize}}.{{/:localize}}");
+						pw.println("\t\t\t\t\t\t\t\t{{#:localize}}.{{/:localize}}");
 					} else if( "date".equals(elementType) ){
-						pw.println("{{date}}");
+						pw.println("\t\t\t\t\t\t\t\t{{date}}");
 					} else if( "reference".equals(elementType) ){
-						pw.println("\t\t\t\t<a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a>");
+						pw.println("\t\t\t\t\t\t\t\t<a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a>");
 					} else if( "custom".equals(elementType) ){
 						if( null != customType ){
-							pw.println("\t\t\t\t<span class=\"n2s_custom\""
+							pw.println("\t\t\t\t\t\t\t\t<span class=\"n2s_custom\""
 								+ " nunaliit-custom=\""+customType+"\""
 								+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
 						}
 					}
 					
-					pw.println("\t\t\t</div>");
-					pw.println("\t\t{{/"+id+"}}");
-					pw.println("\t\t</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t{{/"+id+"}}");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t</div>");
+					pw.println("\t\t\t\t</div>");
 					
-					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
 	
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 	
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					
 					for(SelectionOption option : options){
 						String value = option.getValue();
@@ -912,115 +912,115 @@ public class SchemaAttribute {
 							optLabel = value;
 						}
 						
-						pw.println("\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
+						pw.println("\t\t\t\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
 					}
 
-					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+id+"}}</span>");
+					pw.println("\t\t\t\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+id+"}}</span>");
 					
-					pw.println("\t\t\t</div>");
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
 					
 					
-					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "checkbox".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value\">");
-					pw.println("\t\t\t\t{{#if "+id+"}}");
-					pw.println("\t\t\t\t\t<span class=\"n2s_localize\">Yes</span>");
-					pw.println("\t\t\t\t{{else}}");
-					pw.println("\t\t\t\t\t<span class=\"n2s_localize\">No</span>");
-					pw.println("\t\t\t\t{{/if}}");
-					pw.println("\t\t\t</div>");
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t{{#if "+id+"}}");
+					pw.println("\t\t\t\t\t\t\t<span class=\"n2s_localize\">Yes</span>");
+					pw.println("\t\t\t\t\t\t{{else}}");
+					pw.println("\t\t\t\t\t\t\t<span class=\"n2s_localize\">No</span>");
+					pw.println("\t\t\t\t\t\t{{/if}}");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "checkbox_group".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
 					for(CheckboxGroupItem item : checkboxes){
 						String itemId = item.getId();
 						String itemLabel = item.getLabel();
-						pw.println("\t\t\t\t{{#"+itemId+"}}");
+						pw.println("\t\t\t\t\t\t{{#"+itemId+"}}");
 						if( null == itemLabel ){
-							pw.println("\t\t\t\t\t<div>"+itemId+"</div>");
+							pw.println("\t\t\t\t\t\t\t<div>"+itemId+"</div>");
 						} else {
-							pw.println("\t\t\t\t\t<div class=\"n2s_localize\">"+itemLabel+"</div>");
+							pw.println("\t\t\t\t\t\t\t<div class=\"n2s_localize\">"+itemLabel+"</div>");
 						}
-						pw.println("\t\t\t\t{{/"+itemId+"}}");
+						pw.println("\t\t\t\t\t\t{{/"+itemId+"}}");
 					}
-					pw.println("\t\t\t</div>");
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "file".equals(type) ){
-				pw.println("{{#nunaliit_attachments}}");
-				pw.println("{{#files}}");
-				pw.println("\t{{#:iterate}}");
-				pw.println("\t\t{{#value}}");
-				pw.println("\t\t\t{{^source}}");
+				pw.println("\t\t\t{{#nunaliit_attachments}}");
+				pw.println("\t\t\t\t{{#files}}");
+				pw.println("\t\t\t\t\t{{#:iterate}}");
+				pw.println("\t\t\t\t\t\t{{#value}}");
+				pw.println("\t\t\t\t\t\t\t{{^source}}");
 
-				pw.println("\t\t\t\t{{#attachmentName}}");
-				pw.println("\t\t\t\t\t<div class=\"n2_mediaView\">");
-				pw.println("\t\t\t\t\t\t<div class=\"n2s_insertMediaView\" nunaliit-attachment=\"{{.}}\"> </div>");
-				pw.println("\t\t\t\t\t</div>");
-				pw.println("\t\t\t\t{{/attachmentName}}");
+				pw.println("\t\t\t\t\t\t\t\t{{#attachmentName}}");
+				pw.println("\t\t\t\t\t\t\t\t\t<div class=\"n2_mediaView\">");
+				pw.println("\t\t\t\t\t\t\t\t\t\t<div class=\"n2s_insertMediaView\" nunaliit-attachment=\"{{.}}\"></div>");
+				pw.println("\t\t\t\t\t\t\t\t\t</div>");
+				pw.println("\t\t\t\t\t\t\t\t{{/attachmentName}}");
 
-				pw.println("\t\t\t{{/source}}");
-				pw.println("\t\t{{/value}}");
-				pw.println("\t{{/:iterate}}");
-				pw.println("{{/files}}");
-				pw.println("{{/nunaliit_attachments}}");
+				pw.println("\t\t\t\t\t\t\t{{/source}}");
+				pw.println("\t\t\t\t\t\t{{/value}}");
+				pw.println("\t\t\t\t\t{{/:iterate}}");
+				pw.println("\t\t\t\t{{/files}}");
+				pw.println("\t\t\t{{/nunaliit_attachments}}");
 
 			} else if( "geometry".equals(type) ){
 				if( null != id ){
 					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
 				}
 
-				pw.println("{{#nunaliit_geom}}");
-				pw.println("\t\t<div class=\"nunaliit_geom\">");
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t\t\t<div class=\"value\">{{wkt}}</div>");
-				pw.println("\t\t\t<div class=\"end\"></div>");
-				pw.println("\t\t</div>");
-				pw.println("{{/nunaliit_geom}}");
+				pw.println("\t\t\t{{#nunaliit_geom}}");
+				pw.println("\t\t\t\t<div class=\"nunaliit_geom\">");
+				pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t\t<div class=\"value\">{{wkt}}</div>");
+				pw.println("\t\t\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t</div>");
+				pw.println("\t\t\t{{/nunaliit_geom}}");
 
 			} else if( "hover_sound".equals(type) ){
 				if( null != id ){
 					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
 				}
 
-				pw.println("{{#nunaliit_hoverSound}}");
-				pw.println("\t\t<div class=\"nunaliit_hoverSound\">");
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
-				pw.println("\t\t\t<div class=\"end\"></div>");
-				pw.println("\t\t</div>");
-				pw.println("{{/nunaliit_hoverSound}}");
+				pw.println("\t\t\t{{#nunaliit_hoverSound}}");
+				pw.println("\t\t\t\t<div class=\"nunaliit_hoverSound\">");
+				pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+				pw.println("\t\t\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t</div>");
+				pw.println("\t\t\t{{/nunaliit_hoverSound}}");
 
 			} else if( "createdBy".equals(type) ){
 				if( null == label ){
@@ -1028,21 +1028,21 @@ public class SchemaAttribute {
 					labelLocalizeClass = " n2s_localize";
 				}
 
-				pw.println("{{#nunaliit_created}}");
-				pw.println("\t{{#if name}}");
+				pw.println("\t\t\t{{#nunaliit_created}}");
+				pw.println("\t\t\t\t{{#if name}}");
 
-				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created\">");
+				pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_nunaliit_created\">");
 
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 
-				pw.println("\t\t\t<div class=\"value n2s_insertUserName\">{{name}}</div>");
+				pw.println("\t\t\t\t\t\t<div class=\"value n2s_insertUserName\">{{name}}</div>");
 				
-				pw.println("\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 				
-				pw.println("\t\t</div>");
+				pw.println("\t\t\t\t\t</div>");
 				
-				pw.println("\t{{/if}}");
-				pw.println("{{/nunaliit_created}}");
+				pw.println("\t\t\t\t{{/if}}");
+				pw.println("\t\t\t{{/nunaliit_created}}");
 
 			} else if( "createdTime".equals(type) ){
 				if( null == label ){
@@ -1050,21 +1050,21 @@ public class SchemaAttribute {
 					labelLocalizeClass = " n2s_localize";
 				}
 
-				pw.println("{{#nunaliit_created}}");
-				pw.println("\t{{#if time}}");
+				pw.println("\t\t\t{{#nunaliit_created}}");
+				pw.println("\t\t\t\t{{#if time}}");
 
-				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created_time\">");
+				pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_nunaliit_created_time\">");
 
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 
-				pw.println("\t\t\t<div class=\"value n2s_insertTime\">{{time}}</div>");
+				pw.println("\t\t\t\t\t\t<div class=\"value n2s_insertTime\">{{time}}</div>");
 				
-				pw.println("\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 				
-				pw.println("\t\t</div>");
+				pw.println("\t\t\t\t\t</div>");
 				
-				pw.println("\t{{/if}}");
-				pw.println("{{/nunaliit_created}}");
+				pw.println("\t\t\t\t{{/if}}");
+				pw.println("\t\t\t{{/nunaliit_created}}");
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
@@ -1082,12 +1082,12 @@ public class SchemaAttribute {
 			}
 
 			if( "title".equals(type) ){
-				pw.println("<div class=\"title\">");
+				pw.println("\t\t\t<div class=\"title\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t<div class=\"end\"></div>");
 				
-				pw.println("</div>");
+				pw.println("\t\t\t</div>");
 
 			} else if( "string".equals(type) 
 			 || "localized".equals(type) 
@@ -1125,32 +1125,32 @@ public class SchemaAttribute {
 						fieldType += ",search="+encodeFieldParameter(searchFunction);
 					}
 					
-					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t</div>");
+					pw.println("\t\t\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">");
-					pw.println("\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}}\">");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}}\">");
 					
 					for(SelectionOption option : options){
-						pw.print("\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
+						pw.print("\t\t\t\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
 						String optLabel = option.getLabel();
 						if( null == optLabel ){
 							optLabel = option.getValue();
@@ -1159,14 +1159,14 @@ public class SchemaAttribute {
 						pw.println("</option>");
 					}
 					
-					pw.println("\t\t\t</select>");
-					pw.println("\t\t</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t</select>");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t</div>");
+					pw.println("\t\t\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "array".equals(type) ){
@@ -1200,56 +1200,56 @@ public class SchemaAttribute {
 					}
 					
 					if( null != fieldType ){
-						pw.println("{{#"+schemaStructure+"}}");
+						pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-						pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
+						pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-						pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-						pw.println("\t\t<div class=\"value\">");
-						pw.println("\t\t\t{{#:array "+id+arrayType+"}}");
-						pw.println("\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
-						pw.println("\t\t\t{{/:array}}");
-						pw.println("\t\t</div>");
-						pw.println("\t\t<div class=\"end\"></div>");
+						pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+						pw.println("\t\t\t\t\t<div class=\"value\">");
+						pw.println("\t\t\t\t\t\t{{#:array "+id+arrayType+"}}");
+						pw.println("\t\t\t\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
+						pw.println("\t\t\t\t\t\t{{/:array}}");
+						pw.println("\t\t\t\t\t</div>");
+						pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 						
-						pw.println("\t</div>");
+						pw.println("\t\t\t\t</div>");
 						
 						
-						pw.println("{{/"+schemaStructure+"}}");
+						pw.println("\t\t\t{{/"+schemaStructure+"}}");
 					}
 				}
 
 			} else if( "checkbox_group".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
 					
 					for(CheckboxGroupItem item : checkboxes){
 						String itemId = item.getId();
 						String itemLabel = item.getLabel();
 						String forId = id+"_"+itemId;
 						
-						pw.println("\t\t\t\t<div>");
-						pw.print("\t\t\t\t\t<input type=\"checkbox\" class=\"{{#:input}}"+itemId+"{{/:input}}\" id=\""+forId+"\"/>");
+						pw.println("\t\t\t\t\t\t<div>");
+						pw.println("\t\t\t\t\t\t\t<input type=\"checkbox\" class=\"{{#:input}}"+itemId+"{{/:input}}\" id=\""+forId+"\"/>");
 						if( null == itemLabel ) {
-							pw.println(" <label for=\""+forId+"\">"+itemId+"</label>");
+							pw.println("\t\t\t\t\t\t\t\t<label for=\""+forId+"\">"+itemId+"</label>");
 						} else {
-							pw.println(" <label for=\""+forId+"\" class=\"n2s_localize\">"+itemLabel+"</label>");
+							pw.println("\t\t\t\t\t\t\t\t<label for=\""+forId+"\" class=\"n2s_localize\">"+itemLabel+"</label>");
 						}
-						pw.println("\t\t\t\t</div>");
+						pw.println("\t\t\t\t\t\t</div>");
 					}
 
-					pw.println("\t\t</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t</div>");
+					pw.println("\t\t\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "file".equals(type) ){
@@ -1260,13 +1260,13 @@ public class SchemaAttribute {
 					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
 				}
 
-				pw.println("<div class=\"nunaliit_geom\">");
+				pw.println("\t\t\t<div class=\"nunaliit_geom\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_geom,geometry{{/:field}}</div>");
-				pw.println("\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t<div class=\"value\">{{#:field}}nunaliit_geom,geometry{{/:field}}</div>");
+				pw.println("\t\t\t\t<div class=\"end\"></div>");
 				
-				pw.println("</div>");
+				pw.println("\t\t\t</div>");
 
 			} else if( "hover_sound".equals(type) ){
 				if( null != id ){
@@ -1278,13 +1278,13 @@ public class SchemaAttribute {
 					searchFunctionString = ",search="+encodeFieldParameter(searchFunction);
 				}
 
-				pw.println("<div class=\"nunaliit_hoverSound\">");
+				pw.println("\t\t\t<div class=\"nunaliit_hoverSound\">");
 
-				pw.println("\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_hoverSound,reference"+searchFunctionString+"{{/:field}}</div>");
-				pw.println("\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t<div class=\"value\">{{#:field}}nunaliit_hoverSound,reference"+searchFunctionString+"{{/:field}}</div>");
+				pw.println("\t\t\t\t<div class=\"end\"></div>");
 				
-				pw.println("</div>");
+				pw.println("\t\t\t</div>");
 
 			} else if( "createdBy".equals(type) ){
 				// nothing to do
