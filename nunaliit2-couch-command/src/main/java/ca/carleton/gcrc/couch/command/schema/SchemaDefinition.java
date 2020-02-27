@@ -197,7 +197,7 @@ public class SchemaDefinition {
 			FileOutputStream fos = new FileOutputStream(file);
 			OutputStreamWriter osw = new OutputStreamWriter(fos);
 			JSONObject obj = toJson();
-			osw.write( obj.toString(3) );
+			osw.write( obj.toString(4).replace("    ", "\t") );
 			osw.flush();
 			fos.flush();
 			fos.close();
@@ -290,7 +290,7 @@ public class SchemaDefinition {
 				for(String schemaName : relatedSchemas){
 					arr.put(schemaName);
 				}
-				osw.write( arr.toString(3) );
+				osw.write( arr.toString(4).replace("    ", "\t") );
 				osw.flush();
 				fos.flush();
 				fos.close();
@@ -329,7 +329,7 @@ public class SchemaDefinition {
 				fos = new FileOutputStream(file);
 				OutputStreamWriter osw = new OutputStreamWriter(fos);
 				JSONObject jsonCreate = computeCreateField();
-				osw.write( jsonCreate.toString(3) );
+				osw.write( jsonCreate.toString(4).replace("    ", "\t") );
 				osw.flush();
 				fos.flush();
 				fos.close();
@@ -407,7 +407,7 @@ public class SchemaDefinition {
 				fos = new FileOutputStream(file);
 				OutputStreamWriter osw = new OutputStreamWriter(fos);
 				JSONArray jsonExport = computeExportField();
-				osw.write( jsonExport.toString(3) );
+				osw.write( jsonExport.toString(4).replace("    ", "\t") );
 				osw.flush();
 				fos.flush();
 				fos.close();
@@ -446,7 +446,7 @@ public class SchemaDefinition {
 				fos = new FileOutputStream(file);
 				OutputStreamWriter osw = new OutputStreamWriter(fos);
 				JSONArray jsonExport = computeExportField();
-				osw.write( jsonExport.toString(3) );
+				osw.write( jsonExport.toString(4).replace("    ", "\t") );
 				osw.flush();
 				fos.flush();
 				fos.close();
@@ -580,14 +580,14 @@ public class SchemaDefinition {
 		pw.println("<span class=\""+schemaClass+"_brief\">");
 
 		if( null != label ){
-			pw.println("\t<span class=\"n2s_localize "+schemaClass+"_brief_decoration\">");
-			pw.println("\t"+label);
+			pw.print("\t<span class=\"n2s_localize "+schemaClass+"_brief_decoration\">");
+			pw.print( label );
 		} else {
-			pw.println("\t<span class=\""+schemaClass+"_brief_decoration\">");
-			pw.println( getSchemaName() );
+			pw.print("\t<span class=\""+schemaClass+"_brief_decoration\">");
+			pw.print( getSchemaName() );
 		}
 
-		pw.println("\t(</span>");
+		pw.println(" (</span>");
 		
 		boolean first = true;
 		for(SchemaAttribute attribute : attributes){
@@ -606,29 +606,33 @@ public class SchemaDefinition {
 		String schemaClass = getSchemaClass();
 		String schemaStructure = getSchemaStructure();
 		
-		pw.println("<div class=\"n2_documentDisplay\"><div class=\"n2_layoutFloat\">");
-		pw.println("<div class=\""+schemaClass+"\">");
+		pw.println("<div class=\"n2_documentDisplay\">");
+		pw.println("\t<div class=\"n2_layoutFloat\">");
+		pw.println("\t\t<div class=\""+schemaClass+"\">");
 
 		for(SchemaAttribute attribute : attributes){
 			attribute.printDisplay(pw,schemaStructure,schemaClass);
 		}
 		
+		pw.println("\t\t</div>");
+		pw.println("\t</div>");
 		pw.println("</div>");
-		pw.println("</div></div>");
 	}
 	
 	public void printForm(PrintWriter pw) throws Exception {
 		String schemaClass = getSchemaClass();
 		String schemaStructure = getSchemaStructure();
 		
-		pw.println("<div class=\"n2_documentForm\"><div class=\"n2_layoutFloat\">");
-		pw.println("<div class=\""+schemaClass+"\">");
+		pw.println("<div class=\"n2_documentForm\">");
+		pw.println("\t<div class=\"n2_layoutFloat\">");
+		pw.println("\t\t<div class=\""+schemaClass+"\">");
 
 		for(SchemaAttribute attribute : attributes){
 			attribute.printForm(pw,schemaStructure,schemaClass);
 		}
 		
+		pw.println("\t\t</div>");
+		pw.println("\t</div>");
 		pw.println("</div>");
-		pw.println("</div></div>");
 	}
 }
