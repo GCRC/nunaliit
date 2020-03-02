@@ -846,22 +846,23 @@ var ModelCouchDbView = $n2.Class({
 	},
 
 	_docInfoMapLoaded: function(docInfoMap){
+		var oldDoc, newDoc, docId;
 		var added = [];
 		var updated = [];
 		var removed = [];
 		
 		// Detect updated and removed documents
-		for(var docId in this.docsById){
-			var oldDoc;
+		for(docId in this.docsById){
+			oldDoc = null;
+			newDoc = null;
 			if( this.docsById[docId] ){
 				oldDoc = this.docsById[docId].clone;
 			};
-			var newDoc;
 			if( docInfoMap[docId] ){
 				newDoc = docInfoMap[docId].clone;
 			};
 
-			if( newDoc ){
+			if( newDoc && oldDoc ){
 				// This document persists. Check if revision changed
 				if( newDoc._rev === oldDoc._rev ){
 					// Nothing changed
@@ -871,25 +872,29 @@ var ModelCouchDbView = $n2.Class({
 				};
 				
 			} else {
-				// This is a removed document
-				removed.push(oldDoc);
+				if( oldDoc ){
+					// This is a removed document
+					removed.push(oldDoc);
+				};
 			};
 		};
 		
 		// Detect added documents
-		for(var docId in docInfoMap){
-			var oldDoc;
+		for(docId in docInfoMap){
+			oldDoc = null;
+			newDoc = null;
 			if( this.docsById[docId] ){
 				oldDoc = this.docsById[docId].clone;
 			};
-			var newDoc;
 			if( docInfoMap[docId] ){
 				newDoc = docInfoMap[docId].clone;
 			};
 
 			if( !oldDoc ){
-				// This was added
-				added.push(newDoc);
+				if( newDoc ){
+					// This was added
+					added.push(newDoc);
+				};
 			};
 		};
 		
