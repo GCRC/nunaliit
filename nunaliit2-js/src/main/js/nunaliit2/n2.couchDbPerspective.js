@@ -855,14 +855,16 @@ var ModelCouchDbView = $n2.Class({
 		for(docId in this.docsById){
 			oldDoc = null;
 			newDoc = null;
-			if( this.docsById[docId] ){
+
+			if( Object.hasOwnProperty.call(this.docsById, docId) ){
 				oldDoc = this.docsById[docId].clone;
 			};
-			if( docInfoMap[docId] ){
+
+			if( Object.hasOwnProperty.call(docInfoMap, docId) ){
 				newDoc = docInfoMap[docId].clone;
 			};
 
-			if( newDoc && oldDoc ){
+			if( oldDoc && newDoc ){
 				// This document persists. Check if revision changed
 				if( newDoc._rev === oldDoc._rev ){
 					// Nothing changed
@@ -871,30 +873,27 @@ var ModelCouchDbView = $n2.Class({
 					updated.push(newDoc);
 				};
 				
-			} else {
-				if( oldDoc ){
-					// This is a removed document
-					removed.push(oldDoc);
-				};
+			} else if( oldDoc ){
+				// This is a removed document
+				removed.push(oldDoc);
 			};
 		};
 		
-		// Detect added documents
+		// Detect added documents and adds initial view results.
 		for(docId in docInfoMap){
 			oldDoc = null;
 			newDoc = null;
-			if( this.docsById[docId] ){
+			if( Object.hasOwnProperty.call(this.docsById, docId) ){
 				oldDoc = this.docsById[docId].clone;
 			};
-			if( docInfoMap[docId] ){
+
+			if( Object.hasOwnProperty.call(docInfoMap, docId) ){
 				newDoc = docInfoMap[docId].clone;
 			};
 
-			if( !oldDoc ){
-				if( newDoc ){
-					// This was added
-					added.push(newDoc);
-				};
+			if( !oldDoc && newDoc ){
+				// This was added
+				added.push(newDoc);
 			};
 		};
 		
