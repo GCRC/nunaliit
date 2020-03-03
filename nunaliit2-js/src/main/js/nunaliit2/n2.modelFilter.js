@@ -938,7 +938,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				_this.selectedChoiceIdMap[choice.id] = true;
 			});
 
-			this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
+			this._selectionChanged(this.k, this.allSelected);
 			this._filterChanged();
 
 			this.selectedChoicesParameter.sendUpdate();
@@ -1133,6 +1133,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			receiveChoices(availableChoices);
 		};
 		
+		// Support Async calling by tracking the version(generation) of response
 		function receiveChoices(choices){
 			if( _this.currentChoiceGeneration === currentChoiceGeneration ){
 				_this._updateAvailableChoices(choices);
@@ -1843,7 +1844,7 @@ var MultiDocumentFilter = $n2.Class('MultiDocumentFilter', SelectableDocumentFil
 	}
 });
 //-=------------------------------------------------------------------------
-var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', $n2.modelFilter.SelectableDocumentFilter, {
+var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocumentFilter, {
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			sourceModelId: undefined
@@ -1854,11 +1855,11 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', $n2.modelFilter
 		$n2.modelFilter.SelectableDocumentFilter.prototype.initialize.call(this,opts);
 		
 		//Because widgetLegend needs a complete list of choices, we defined a new parameter
-		//The complete choice list is passing-in from constructor so it is never been changed.
+		//The complete choice list is passing-in from constructor so it is never changed.
 		this.completeChoicesParameter = new $n2.model.ModelParameter({
 			model: this
 			,modelId: this.modelId
-			,type: 'array'
+			,type: 'strings'
 			,name: 'completeChoices'
 			,label: _loc('Complete Choices')
 			,setFn: this._setCompleteChoices
@@ -1869,20 +1870,35 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', $n2.modelFilter
 		this.conditionByLabel = {};
 		if ( $n2.isArray(opts.rules) ){
 			opts.rules.forEach(function(rule){
-				var condition = null;
-				if ( rule.condition ){
-					condition = $n2.styleRuleParserForLegend.parse(rule.condition);
+				if (rule.label){
+					var condition = null;
+					if ( rule.condition ){
+						condition = $n2.styleRuleParserForLegend.parse(rule.condition);
+					}
+					_this.conditionByLabel[rule.label] = condition; 
 				}
-				_this.conditionByLabel[styleRule.label] = condition; 
+
 			})
-		};	
+		};
+		
+		this.selectedChoiceIdMap = {};
+		var completedChoices = this.getCompleteChoices();
+		completedChoices.forEach(function(choiceId){
+			_this.selectedChoiceIdMap[choiceId] = true;
+		});
+		this.selectedChoicesParameter.sendUpdate();
 	},
 
+	_computeAvailableChoicesFromDocs: function(docs, callbackFn){
+		return null;
+	},
+	
+	// Invoke by superclass._getModelInfo to collect all the parameters
 	_addModelInfoParameters: function(info){
 		info.parameters.completeChoices = this.completeChoicesParameter.getInfo();
 		info.parameters.selectedChoices = this.selectedChoicesParameter.getInfo();
-		info.parameters.allSelected = this.allSelectedParameter.getInfo();
-		info.parameters.availableChoices = this.availableChoicesParameter.getInfo();
+		//info.parameters.allSelected = this.allSelectedParameter.getInfo();
+		//info.parameters.availableChoices = this.availableChoicesParameter.getInfo();
 	},
 	getCompleteChoices: function(){
 		var selectedChoices = [];
@@ -1892,6 +1908,7 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', $n2.modelFilter
 		selectedChoices.sort();
 		return selectedChoices;
 	},
+	
 	_setCompleteChoices: function(){
 		throw new Error('Complete Choice list cannot be changed by outside')
 	},
@@ -2117,7 +2134,12 @@ function handleModelCreate(m, addr, dispatcher){
 		
 		options.modelId = m.modelId;
 		options.modelType = m.modelType;
-		options.rules = m.styleRules;
+		
+		var module = m.moduleDisplay.module;
+		
+		var mapInfo = module.getMapInfo();
+		
+		options.rules = mapInfo.styles;
 		
 		if( m && m.config ){
 			if( m.config.directory ){

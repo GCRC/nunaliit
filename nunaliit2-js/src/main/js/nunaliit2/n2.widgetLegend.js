@@ -590,7 +590,6 @@ POSSIBILITY OF SUCH DAMAGE.
 					,allChoicesLabel: null
 					,tooltip: null
 					,moduleDisplay: null
-					,styleRules: null
 				},opts_);
 				
 				var _this = this;
@@ -607,7 +606,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 				
 				
-				this.styleRules = opts.styleRules;
 				this.completeChoices = [];
 				this.availableChoices = [];
 				this.selectedChoices = [];
@@ -632,29 +630,28 @@ POSSIBILITY OF SUCH DAMAGE.
 					 && sourceModelInfo.parameters 
 					 && sourceModelInfo.parameters.completeChoices ){
 						var paramInfo = sourceModelInfo.parameters.completeChoices;
-						this.completeChoicesChangeEventName = paramInfo.changeEvent;
+						//this.completeChoicesChangeEventName = paramInfo.changeEvent;
 
 						//The value of this parameter is an array of string
 						if( paramInfo.value ){
 							this.completeChoices = (paramInfo.value);
 						};
 					};
-						
-					this.selectedChoices = paramInfo.value;
-
-					this.selectedChoiceIdMap = {};
-					this.selectedChoices.forEach(function(choiceId){
+					if( sourceModelInfo 
+					&& sourceModelInfo.parameters 
+					&& sourceModelInfo.parameters.selectedChoices ){
+						var paramInfo = sourceModelInfo.parameters.selectedChoices;
+						this.selectedChoicesChangeEventName = paramInfo.changeEvent;
+						this.selectedChoicesSetEventName = paramInfo.setEvent;
+						if( paramInfo.value ){
+							this.selectedChoices = (paramInfo.value);
+						};
+					}
+					//For conditionalModelWidget, initially, all choices will be selecteed
+					 
+					this.completeChoices.forEach(function(choiceId){
 						_this.selectedChoiceIdMap[choiceId] = true;
 					});
-
-					var paramInfo = sourceModelInfo.parameters.allSelected;
-					this.allSelectedChangeEventName = paramInfo.changeEvent;
-					this.allSelectedSetEventName = paramInfo.setEvent;
-
-				
-					this.allSelected = paramInfo.value;
-
-						
 					
 					var fn = function(m, addr, dispatcher){
 						_this._handle(m, addr, dispatcher);
@@ -664,9 +661,9 @@ POSSIBILITY OF SUCH DAMAGE.
 //						this.dispatchService.register(DH, this.availableChoicesChangeEventName, fn);
 //					};
 //
-//					if( this.selectedChoicesChangeEventName ){
-//						this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
-//					};
+					if( this.selectedChoicesChangeEventName ){
+						this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
+					};
 //
 //					if( this.allSelectedChangeEventName ){
 //						this.dispatchService.register(DH, this.allSelectedChangeEventName, fn);
@@ -694,6 +691,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				//this._throttledAvailableChoicesUpdated();
 				this.refresh();
+				this._adjustSelectedItem();
 				$n2.log(this._classname, this);
 				
 			},
@@ -703,24 +701,19 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				var $elem = this._getElem();
 				$elem.empty();
-				this.refreshCount = this.refreshCount ? this.refreshCount + 1 : 1;
 
 				// Make a map of styles by label
 				var stylesByLabel = {};
 				var atLeastOne = false;
-				for(var styleId in this.stylesDefined){
-					var styleInfo = _this.stylesDefined[styleId];
-					var style = styleInfo.style;
-					if( style.label ){
-						var effectiveLabel = _loc( style.label );
+				for(var i=0,e=_this.completeChoices.length; i < e; i++){
+						var styleId = _this.completeChoices[i];
+						var effectiveLabel = _loc( styleId );
 						var labelInfo = stylesByLabel[effectiveLabel];
 						if( !labelInfo ){
 							labelInfo = {};
 							stylesByLabel[effectiveLabel] = labelInfo;
 						};
-						labelInfo[styleId] = styleInfo;
 						atLeastOne = true;
-					};
 				};
 
 				// If at least one style with label, then must display
@@ -731,21 +724,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 					var labelNames = [];
 
-					if( this.labels ){
-						this.labels.forEach(function(label){
-							var effectiveLabel = _loc(label);
-							if( stylesByLabel[effectiveLabel] ){
-								labelNames.push(effectiveLabel);
-							};
-						});
 
-					} else {
-						for (var labelName in stylesByLabel){
-							labelNames.push(labelName);
-						};
-
-						labelNames.sort();
+					for (var labelName in stylesByLabel){
+						labelNames.push(labelName);
 					};
+
+					labelNames.sort();
+				
 
 					labelNames.forEach(function(labelName){
 						var labelInfo = stylesByLabel[labelName];
@@ -753,125 +738,197 @@ POSSIBILITY OF SUCH DAMAGE.
 						var $div = $('<div>')
 						.addClass('n2widgetLegend_legendEntry')
 						.appendTo($outer);
-
-						var $symbolColumn = $('<div>')
-						.addClass('n2widgetLegend_symbolColumn')
+						
+						var $checkboxColumn = $('<div>')
+						.addClass('n2widgetLegend_checkboxColumn')
 						.appendTo($div);
+						
+						addCheckbox($checkboxColumn, labelName);
+						
+//						var $symbolColumn = $('<div>')
+//						.addClass('n2widgetLegend_symbolColumn')
+//						.appendTo($div);
+//
+//						var $symbolColumnPoint = $('<div>')
+//						.addClass('n2widgetLegend_symbolColumn_point')
+//						.appendTo($symbolColumn);				
+//
+//						var $symbolColumnLine = $('<div>')
+//						.addClass('n2widgetLegend_symbolColumn_line')
+//						.appendTo($symbolColumn);				
+//
+//						var $symbolColumnPolygon = $('<div>')
+//						.addClass('n2widgetLegend_symbolColumn_polygon')
+//						.appendTo($symbolColumn);
+//
+//						var $symbolColumnCluster = $('<div>')
+//						.addClass('n2widgetLegend_symbolColumn_cluster')
+//						.appendTo($symbolColumn);
 
-						var $symbolColumnPoint = $('<div>')
-						.addClass('n2widgetLegend_symbolColumn_point')
-						.appendTo($symbolColumn);				
-
-						var $symbolColumnLine = $('<div>')
-						.addClass('n2widgetLegend_symbolColumn_line')
-						.appendTo($symbolColumn);				
-
-						var $symbolColumnPolygon = $('<div>')
-						.addClass('n2widgetLegend_symbolColumn_polygon')
-						.appendTo($symbolColumn);
-
-						var $symbolColumnCluster = $('<div>')
-						.addClass('n2widgetLegend_symbolColumn_cluster')
-						.appendTo($symbolColumn);
-
-						var $labelColumn = $('<div>')
-						.addClass('n2widgetLegend_labelColumn')
-						.appendTo($div);
-
-						$('<div>')
-						.addClass('n2widgetLegend_labelEntry')
-						.text(labelName)
-						.appendTo($labelColumn);
+//						var $labelColumn = $('<div>')
+//						.addClass('n2widgetLegend_labelColumn')
+//						.appendTo($div);
+//
+//						$('<div>')
+//						.addClass('n2widgetLegend_labelEntry')
+//						.text(labelName)
+//						.appendTo($labelColumn);
 
 					});
 				};
-			},
-			
-			_getElem: function(){
-				return $('#'+this.elemId);
-			},
+				
+				function addCheckbox($container, label){
+					var $div = $('<div>')
+					.addClass('n2widgetLegend_option')
+					.attr('data-n2-choiceId',label)
+					.appendTo($container);
 
-			_availableChoicesUpdated: function(){
-				var _this = this;
-
-				var $elem = this._getElem();
-				$elem.empty();
-
-				// All Choices
-				var allChoicesLabel = _loc('All');
-				if( this.allChoicesLabel ){
-					allChoicesLabel = _loc(this.allChoicesLabel);
-				};
-				var $a = $('<a>')
-					.addClass('n2widget_legend2_optionAllChoices n2widget_legend2_option')
-					.attr('href','#')
-					.attr('n2-choice-id',ALL_CHOICES)
-					.appendTo($elem)
+				$('<a>')
+					.text(label)
+					.attr('data-n2-choiceId',label)
+					.appendTo($div)
 					.click(function(){
 						var $a = $(this);
-						var choiceId = $a.attr('n2-choice-id');
-						_this._selectionClicked(choiceId, $a);
+						var choiceId = $a.attr('data-n2-choiceId');
+						_this._selectionChanged(choiceId);
 						return false;
 					});
-				$('<span>')
-					.text(allChoicesLabel)
-					.appendTo($a);
-				
-				for(var i=0,e=this.availableChoices.length; i<e; ++i){
-					var choice = this.availableChoices[i];
-					
-					var label = choice.label;
-					if( !label ){
-						label = choice.id;
+				}
+				this._adjustSelectedItem();
+			},
+			
+			// This is called when the selected changed
+			_selectionChanged: function(choiceId){
+
+				var selectedChoiceIds = [];
+
+				var removed = false;
+				this.selectedChoices.forEach(function(selectedChoiceId){
+					if( selectedChoiceId === choiceId ){
+						removed = true;
+					} else {
+						selectedChoiceIds.push(selectedChoiceId);
 					};
-					
-					var $a = $('<a>')
-						.addClass('n2widget_legend2_option')
-						.attr('href',choice.id)
-						.attr('n2-choice-id',choice.id)
-						.appendTo($elem)
-						.click(function(){
-							var $a = $(this);
-							var choiceId = $a.attr('n2-choice-id');
-							_this._selectionClicked(choiceId, $a);
-							return false;
-						});
-					$('<span>')
-						.text(label)
-						.appendTo($a);
+				});
+				
+				if( !removed ){
+					selectedChoiceIds.push(choiceId);
 				};
 				
-				this._adjustSelectedItem();
+				this.dispatchService.send(DH,{
+					type: this.selectedChoicesSetEventName
+					,value: selectedChoiceIds
+				});	
 			},
 			
 			_adjustSelectedItem: function(){
 				var _this = this;
+
+				var selectedChoiceIdMap = {};
+				this.selectedChoices.forEach(function(selectedChoice){
+					selectedChoiceIdMap[selectedChoice] = true;
+				});
 				
 				var $elem = this._getElem();
-				$elem.find('.n2widget_legend2_option').each(function(){
-					var $option = $(this);
-					var choiceId = $option.attr('n2-choice-id');
-					
-					var selected = false;
-					if( ALL_CHOICES === choiceId ){
-						if( _this.allSelected ){
-							selected = true;
-						};
+				$elem.find('.n2widgetLegend_option').each(function(){
+					var $a = $(this);
+					var value = $a.attr('data-n2-choiceId');
+					if( selectedChoiceIdMap[value] ){
+						$a
+							.removeClass('n2widgetLegend_optionUnselected')
+							.addClass('n2widgetLegend_optionSelected');
 					} else {
-						if( _this.selectedChoiceIdMap[choiceId] ){
-							selected = true;
-						};
-					};
-					
-					if( selected ){
-						$option.removeClass('n2widget_legend2_notSelected');
-						$option.addClass('n2widget_legend2_selected');
-					} else {
-						$option.removeClass('n2widget_legend2_selected');
-						$option.addClass('n2widget_legend2_notSelected');
+						$a
+							.removeClass('n2widgetLegend_optionSelected')
+							.addClass('n2widgetLegend_optionUnselected');
 					};
 				});
 			},
+			_getElem: function(){
+				return $('#'+this.elemId);
+			},
+
+//			_availableChoicesUpdated: function(){
+//				var _this = this;
+//
+//				var $elem = this._getElem();
+//				$elem.empty();
+//
+//				// All Choices
+//				var allChoicesLabel = _loc('All');
+//				if( this.allChoicesLabel ){
+//					allChoicesLabel = _loc(this.allChoicesLabel);
+//				};
+//				var $a = $('<a>')
+//					.addClass('n2widget_legend2_optionAllChoices n2widget_legend2_option')
+//					.attr('href','#')
+//					.attr('n2-choice-id',ALL_CHOICES)
+//					.appendTo($elem)
+//					.click(function(){
+//						var $a = $(this);
+//						var choiceId = $a.attr('n2-choice-id');
+//						_this._selectionClicked(choiceId, $a);
+//						return false;
+//					});
+//				$('<span>')
+//					.text(allChoicesLabel)
+//					.appendTo($a);
+//				
+//				for(var i=0,e=this.availableChoices.length; i<e; ++i){
+//					var choice = this.availableChoices[i];
+//					
+//					var label = choice.label;
+//					if( !label ){
+//						label = choice.id;
+//					};
+//					
+//					var $a = $('<a>')
+//						.addClass('n2widget_legend2_option')
+//						.attr('href',choice.id)
+//						.attr('n2-choice-id',choice.id)
+//						.appendTo($elem)
+//						.click(function(){
+//							var $a = $(this);
+//							var choiceId = $a.attr('n2-choice-id');
+//							_this._selectionClicked(choiceId, $a);
+//							return false;
+//						});
+//					$('<span>')
+//						.text(label)
+//						.appendTo($a);
+//				};
+//				
+//				this._adjustSelectedItem();
+//			},
+//			
+//			_adjustSelectedItem: function(){
+//				var _this = this;
+//				
+//				var $elem = this._getElem();
+//				$elem.find('.n2widget_legend2_option').each(function(){
+//					var $option = $(this);
+//					var choiceId = $option.attr('n2-choice-id');
+//					
+//					var selected = false;
+//					if( ALL_CHOICES === choiceId ){
+//						if( _this.allSelected ){
+//							selected = true;
+//						};
+//					} else {
+//						if( _this.selectedChoiceIdMap[choiceId] ){
+//							selected = true;
+//						};
+//					};
+//					
+//					if( selected ){
+//						$option.removeClass('n2widget_legend2_notSelected');
+//						$option.addClass('n2widget_legend2_selected');
+//					} else {
+//						$option.removeClass('n2widget_legend2_selected');
+//						$option.addClass('n2widget_legend2_notSelected');
+//					};
+//				});
+//			},
 			
 			// This is called when one of the selection is clicked
 			_selectionClicked: function(choiceId, $a){
@@ -986,48 +1043,27 @@ POSSIBILITY OF SUCH DAMAGE.
 			var widgetOptions = m.widgetOptions;
 			var containerId = m.containerId;
 			var config = m.config;
-			var styleRules = m.styleRules;
 			
 			var options = {};
 			
 			if( widgetOptions ){
-				var sourceModelIds = undefined;
+				var sourceModelId = undefined;
 				
 				for(var key in widgetOptions){
 					var value = widgetOptions[key];
 
 					if( 'sourceModelId' === key ){
 						if( typeof value === 'string' ){
-							if( !sourceModelIds ){
-								sourceModelIds = [];
-							};
-							sourceModelIds.push(value);
+							sourceModelId = value;
 						} else {
 							throw new Error('In LegendWidget2 configuration, sourceModelId must be a string');
 						};
-						
-					} else if( 'sourceModelIds' === key ){
-						if( $n2.isArray(value) ){
-							value.forEach(function(sourceModelId){
-								if( typeof sourceModelId === 'string' ){
-									if( !sourceModelIds ){
-										sourceModelIds = [];
-									};
-									sourceModelIds.push(sourceModelId);
-								} else {
-									throw new Error('In LegendWidget2 configuration, sourceModelIds must be an array of strings');
-								};
-							});
-						} else {
-							throw new Error('In modelBrowserWidget configuration, sourceModelIds must be an array of strings');
-						};
-						
 					} else {
 						options[key] = value;
 					};
 				};
 				
-				options.sourceModelIds = sourceModelIds;
+				options.sourceModelId = sourceModelId;
 			};
 
 			options.containerId = containerId;

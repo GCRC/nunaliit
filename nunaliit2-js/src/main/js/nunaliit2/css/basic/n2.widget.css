@@ -806,6 +806,25 @@ Model Browser Widget
 	background-color: #ccc;
 }
 
+/*
+===============================
+WidgetLegend2
+===============================
+*/
+.n2widgetLegend_option.n2widgetLegend_optionUnselected a::before {
+	content: "\2610";
+	padding-right: 5px;
+}
+
+.n2widgetLegend_option.n2widgetLegend_optionSelected a::before {
+	content: "\2611";
+	padding-right: 5px;
+	font-weight: bold;
+}
+
+
+
+
 /* 
 ==============================
 Sound 
