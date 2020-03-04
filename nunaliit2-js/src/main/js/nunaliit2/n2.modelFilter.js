@@ -1200,6 +1200,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	 */
 	_filterChanged: function(){
 		
+		var _this = this;
 		var added = []
 			,updated = []
 			,removed = []
