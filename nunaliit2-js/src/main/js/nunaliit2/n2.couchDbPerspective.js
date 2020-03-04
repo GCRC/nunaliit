@@ -685,6 +685,10 @@ var ModelCouchDbView = $n2.Class({
 	isSiteView: null,
 
 	includeValues: null,
+
+	startKey: null,
+
+	endKey: null,
 	
 	designDoc: null,
 	
@@ -715,6 +719,8 @@ var ModelCouchDbView = $n2.Class({
 		this.viewName = opts.view;
 		this.isSiteView = opts.isSiteView;
 		this.includeValues = opts.includeValues;
+		this.startKey = opts.startKey;
+		this.endKey = opts.endKey;
 		
 		if( typeof this.viewName !== 'string' ){
 			throw new Error('Model "couchDbView" requires a string parameter "view"');
@@ -773,6 +779,8 @@ var ModelCouchDbView = $n2.Class({
 		
 		this.designDoc.queryView({
 			viewName: this.viewName
+			,startkey: this.startKey
+			,endkey: this.endKey
 			,include_docs: false
 			,onSuccess: function(rows){
 				var docMap = {};
