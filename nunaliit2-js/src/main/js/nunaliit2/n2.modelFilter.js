@@ -1950,8 +1950,13 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 		return selectedChoices;
 	},
 	
-	_setCompleteChoices: function(){
-		throw new Error('Complete Choice list cannot be changed by outside')
+	_setCompleteChoices: function(choiceIdArray){
+		var _this = this;
+		_this.selectedChoiceIdMap = {};
+		choiceIdArray.forEach(function(choiceId){
+			_this.selectedChoiceIdMap[choiceId] = true;
+		});
+		_this.selectedChoicesParameter.sendUpdate();
 	},
 
 

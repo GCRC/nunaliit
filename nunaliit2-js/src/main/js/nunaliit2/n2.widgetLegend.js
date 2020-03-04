@@ -590,6 +590,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					,allChoicesLabel: null
 					,tooltip: null
 					,moduleDisplay: null
+					,labels:null
 				},opts_);
 				
 				var _this = this;
@@ -606,6 +607,10 @@ POSSIBILITY OF SUCH DAMAGE.
 					this.tooltip = opts.tooltip;
 				}
 				
+				this.labels = opts.labels;
+				if( this.labels && !$n2.isArray(this.labels) ){
+					throw new Error('labels must be an array');
+				};
 				
 				this.completeChoices = [];
 				this.availableChoices = [];
@@ -631,13 +636,27 @@ POSSIBILITY OF SUCH DAMAGE.
 					 && sourceModelInfo.parameters 
 					 && sourceModelInfo.parameters.completeChoices ){
 						var paramInfo = sourceModelInfo.parameters.completeChoices;
-						//this.completeChoicesChangeEventName = paramInfo.changeEvent;
+						this.completeChoicesSetEventName = paramInfo.setEvent;
 
 						//The value of this parameter is an array of string
 						if( paramInfo.value ){
 							this.completeChoices = (paramInfo.value);
-						};
-					};
+							var enforcedChoices = [];
+							if ( _this.labels ){
+							_this.labels.forEach(function(l){
+								if (_this.completeChoices.indexOf(l) >= 0){
+										enforcedChoices.push(l);
+								}
+							});
+							this.completeChoices  = enforcedChoices;
+							
+							this.dispatchService.send(DH,{
+								type: _this.completeChoicesSetEventName
+								,value: _this.completeChoices
+							});
+							};
+						}
+					}
 					if( sourceModelInfo 
 					&& sourceModelInfo.parameters 
 					&& sourceModelInfo.parameters.selectedChoices ){
@@ -666,6 +685,9 @@ POSSIBILITY OF SUCH DAMAGE.
 						this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
 					};
 //
+//					if (this.completeChoicesChangeEventName){
+//						this.dispatchService.register(DH, this.completeChoicesChangeEventName, fn);
+//					}
 //					if( this.allSelectedChangeEventName ){
 //						this.dispatchService.register(DH, this.allSelectedChangeEventName, fn);
 //					};
@@ -715,11 +737,13 @@ POSSIBILITY OF SUCH DAMAGE.
 				// Make a map of styles by label
 				var stylesByLabel = {};
 				var atLeastOne = false;
-				var labelNames = [];
+
 				for(var i=0,e=_this.completeChoices.length; i < e; i++){
 						var styleId = _this.completeChoices[i];
 						var effectiveLabel = _loc( styleId );
-						labelNames.push(effectiveLabel);
+						stylesByLabel[effectiveLabel] = true;
+						
+						
 						atLeastOne = true;
 				};
 
@@ -729,7 +753,25 @@ POSSIBILITY OF SUCH DAMAGE.
 					.addClass('n2widgetLegend_outer')
 					.appendTo($elem);
 
-					labelNames.sort();
+					var labelNames = [];
+
+					
+					//When user provides a list of label, enforce that list to be rendered;
+					if( this.labels ){
+						this.labels.forEach(function(label){
+							var effectiveLabel = _loc(label);
+							if( stylesByLabel[effectiveLabel] ){
+								labelNames.push(effectiveLabel);
+							};
+						});
+
+					} else {
+						for (var labelName in stylesByLabel){
+							labelNames.push(labelName);
+						};
+
+						labelNames.sort();
+					};
 		
 					labelNames.forEach(function(labelName){
 					
@@ -901,7 +943,9 @@ POSSIBILITY OF SUCH DAMAGE.
 						this._throttledAvailableChoicesUpdated();
 					};
 					
-				} else if( this.selectedChoicesChangeEventName === m.type ){
+				} else if (this.completeChoicesChangeEventName === m.type){
+					
+				}else if( this.selectedChoicesChangeEventName === m.type ){
 					if( m.value ){
 						this.selectedChoices = m.value;
 						
