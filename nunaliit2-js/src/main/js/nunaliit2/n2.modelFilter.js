@@ -235,6 +235,7 @@ var ModelFilter = $n2.Class('ModelFilter',{
 	
 	_sourceModelUpdated: function(sourceState){
 		
+		var _this = this;
 		var added = []
 			,updated = []
 			,removed = []
@@ -251,9 +252,7 @@ var ModelFilter = $n2.Class('ModelFilter',{
 				var doc = sourceState.added[i];
 				var docId = doc._id;
 	
-				// Adding modelId into each doc
-				doc.__n2Models = doc.__n2Models || {};
-				doc.__n2Models[_this.modelId] = true;
+
 				
 				var docInfo = this.docInfosByDocId[docId];
 				if( !docInfo ){
@@ -270,6 +269,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 				if( visible ){
 					docInfo.visible = visible;
 					added.push(doc);
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					doc.__n2Models[_this.modelId] = true;
 				};
 			};
 		};
@@ -304,6 +306,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 						// Is visible and did not used to be visible: added
 						added.push(doc);
 					};
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					doc.__n2Models[_this.modelId] = true;
 				} else {
 					if( docInfo.visible ){
 						// Is not visible and used to be visible: remove
@@ -311,6 +316,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 					} else {
 						// Is not visible and did not used to be visible: nothing
 					};
+					// Removing modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					delete doc.__n2Models[_this.modelId] ;
 				};
 				
 				// Update visibility
@@ -330,6 +338,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 					if( docInfo.visible ){
 						// Has been removed, but used to be visible: remove
 						removed.push(doc);
+						// Removing modelId into each doc
+						doc.__n2Models = doc.__n2Models || {};
+						delete doc.__n2Models[_this.modelId] ;
 					};
 				};
 			};
@@ -364,6 +375,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 					// Is visible and did not used to be visible: added
 					added.push(doc);
 				};
+				// Adding modelId into each doc
+				doc.__n2Models = doc.__n2Models || {};
+				doc.__n2Models[_this.modelId] = true;
 			} else {
 				if( docInfo.visible ){
 					// Is not visible and used to be visible: remove
@@ -371,6 +385,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 				} else {
 					// Is not visible and did not used to be visible: nothing
 				};
+				// Removing modelId into each doc
+				doc.__n2Models = doc.__n2Models || {};
+				delete doc.__n2Models[_this.modelId];
 			};
 			
 			// Update visibility
@@ -1020,10 +1037,6 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			for(var i=0,e=sourceState.added.length; i<e; ++i){
 				var doc = sourceState.added[i];
 				var docId = doc._id;
-	
-				// Adding modelId into each doc
-				doc.__n2Models = doc.__n2Models || {};
-				doc.__n2Models[_this.modelId] = true;
 				
 				var docInfo = this.docInfosByDocId[docId];
 				if( !docInfo ){
@@ -1045,6 +1058,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 						// Is visible and did not used to be visible: added
 						added.push(doc);
 					};
+					
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					doc.__n2Models[_this.modelId] = true;
 				} else {
 					if( docInfo.visible ){
 						// Is not visible and used to be visible: remove
@@ -1052,6 +1069,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 					} else {
 						// Is not visible and did not used to be visible: nothing
 					};
+					
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					delete doc.__n2Models[_this.modelId];
 				};
 				
 				// Update visibility
@@ -1089,6 +1110,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 						// Is visible and did not used to be visible: added
 						added.push(doc);
 					};
+					
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					doc.__n2Models[_this.modelId] = true;
 				} else {
 					if( docInfo.visible ){
 						// Is not visible and used to be visible: remove
@@ -1096,6 +1121,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 					} else {
 						// Is not visible and did not used to be visible: nothing
 					};
+					
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					delete doc.__n2Models[_this.modelId];
 				};
 				
 				// Update visibility
@@ -1114,6 +1143,8 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	
 					if( docInfo.visible ){
 						// Has been removed, but used to be visible: remove
+						doc.__n2Models = doc.__n2Models || {};
+						delete doc.__n2Models[_this.modelId];
 						removed.push(doc);
 					};
 				};
@@ -1189,6 +1220,9 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 					// Is visible and did not used to be visible: added
 					added.push(doc);
 				};
+				// Adding modelId into each doc
+				doc.__n2Models = doc.__n2Models || {};
+				doc.__n2Models[_this.modelId] = true;
 			} else {
 				if( docInfo.visible ){
 					// Is not visible and used to be visible: remove
@@ -1196,6 +1230,9 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				} else {
 					// Is not visible and did not used to be visible: nothing
 				};
+				// Removing modelId into each doc
+				doc.__n2Models = doc.__n2Models || {};
+				delete doc.__n2Models[_this.modelId];
 			};
 			
 			// Update visibility
