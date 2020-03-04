@@ -600,17 +600,25 @@ var stringStyles = {
 
 var featureStyleFunctions = {
 	getDocuments: function(){
-		// this is the feature
+		
 
 		var documents = [];
 
-		if( $n2.isArray(this.cluster) ) {
-			this.cluster.forEach(function(f){
-				documents.push(f.data);
-			});
+		if ( this._id
+			&& this._rev
+			&& this.nunaliit_created ){
+			// (this) is the document
+			documents.push(this)
 		} else {
-			documents.push(this.data);
-		};
+			// (this) is the feature
+			if( $n2.isArray(this.cluster) ) {
+				this.cluster.forEach(function(f){
+					documents.push(f.data);
+				});
+			} else {
+				documents.push(this.data);
+			};
+		}
 
 		return documents;
 	}

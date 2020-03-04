@@ -843,6 +843,8 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		};
 		
 		this.allSelected = false;
+		
+		//Rule of Thumb: this.selectedChoiceIdMap is always sync with the selectedChoice
 		this.selectedChoiceIdMap = {};
 		choiceIdArray.forEach(function(choiceId){
 			if( typeof choiceId !== 'string' ){
@@ -858,8 +860,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			localStorage.setItem(this.saveSelectionName,jsonSelection);
 		};
 
-		this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
+		// Adjust the order of selectionChanged and filterChanged;
+		// Because filterChanged can also affect selectedChoiceMap;
 		this._filterChanged();
+		this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
 		
 		this.allSelectedParameter.sendUpdate();
 		this.selectedChoicesParameter.sendUpdate();
@@ -1833,7 +1837,6 @@ var MultiDocumentFilter = $n2.Class('MultiDocumentFilter', SelectableDocumentFil
 	},
 
 	_isDocVisible: function(doc, selectedChoiceIdMap){
-		var i, e;
 			
 		if (doc && doc._id) {
 			if (selectedChoiceIdMap[doc._id]) {
@@ -1880,7 +1883,7 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 
 			})
 		};
-		
+
 		this.selectedChoiceIdMap = {};
 		var completedChoices = this.getCompleteChoices();
 		completedChoices.forEach(function(choiceId){
@@ -1912,14 +1915,23 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 	_setCompleteChoices: function(){
 		throw new Error('Complete Choice list cannot be changed by outside')
 	},
+
+
 	_isDocVisible: function(doc, selectedChoiceIdMap){
+		
+		var _this = this;
 		if( doc ){
 			var result = false;
 			try {
 				//Greedy approach to filtering documents
 				for (var choice in selectedChoiceIdMap){
-					var condition = choice.condition;
-					result = condition.getValue(doc);
+					var condition = _this.conditionByLabel[choice];
+					if ( !condition ){
+						result = false;
+					} else {
+						result = condition.getValue(doc);
+					}
+					
 					if ( result ){
 						return result;
 					}

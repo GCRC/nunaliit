@@ -745,25 +745,25 @@ POSSIBILITY OF SUCH DAMAGE.
 						
 						addCheckbox($checkboxColumn, labelName);
 						
-//						var $symbolColumn = $('<div>')
-//						.addClass('n2widgetLegend_symbolColumn')
-//						.appendTo($div);
-//
-//						var $symbolColumnPoint = $('<div>')
-//						.addClass('n2widgetLegend_symbolColumn_point')
-//						.appendTo($symbolColumn);				
-//
-//						var $symbolColumnLine = $('<div>')
-//						.addClass('n2widgetLegend_symbolColumn_line')
-//						.appendTo($symbolColumn);				
-//
-//						var $symbolColumnPolygon = $('<div>')
-//						.addClass('n2widgetLegend_symbolColumn_polygon')
-//						.appendTo($symbolColumn);
-//
-//						var $symbolColumnCluster = $('<div>')
-//						.addClass('n2widgetLegend_symbolColumn_cluster')
-//						.appendTo($symbolColumn);
+						var $symbolColumn = $('<div>')
+						.addClass('n2widgetLegend_symbolColumn')
+						.appendTo($div);
+
+						var $symbolColumnPoint = $('<div>')
+						.addClass('n2widgetLegend_symbolColumn_point')
+						.appendTo($symbolColumn);				
+
+						var $symbolColumnLine = $('<div>')
+						.addClass('n2widgetLegend_symbolColumn_line')
+						.appendTo($symbolColumn);				
+
+						var $symbolColumnPolygon = $('<div>')
+						.addClass('n2widgetLegend_symbolColumn_polygon')
+						.appendTo($symbolColumn);
+
+						var $symbolColumnCluster = $('<div>')
+						.addClass('n2widgetLegend_symbolColumn_cluster')
+						.appendTo($symbolColumn);
 
 //						var $labelColumn = $('<div>')
 //						.addClass('n2widgetLegend_labelColumn')
@@ -847,88 +847,6 @@ POSSIBILITY OF SUCH DAMAGE.
 			_getElem: function(){
 				return $('#'+this.elemId);
 			},
-
-//			_availableChoicesUpdated: function(){
-//				var _this = this;
-//
-//				var $elem = this._getElem();
-//				$elem.empty();
-//
-//				// All Choices
-//				var allChoicesLabel = _loc('All');
-//				if( this.allChoicesLabel ){
-//					allChoicesLabel = _loc(this.allChoicesLabel);
-//				};
-//				var $a = $('<a>')
-//					.addClass('n2widget_legend2_optionAllChoices n2widget_legend2_option')
-//					.attr('href','#')
-//					.attr('n2-choice-id',ALL_CHOICES)
-//					.appendTo($elem)
-//					.click(function(){
-//						var $a = $(this);
-//						var choiceId = $a.attr('n2-choice-id');
-//						_this._selectionClicked(choiceId, $a);
-//						return false;
-//					});
-//				$('<span>')
-//					.text(allChoicesLabel)
-//					.appendTo($a);
-//				
-//				for(var i=0,e=this.availableChoices.length; i<e; ++i){
-//					var choice = this.availableChoices[i];
-//					
-//					var label = choice.label;
-//					if( !label ){
-//						label = choice.id;
-//					};
-//					
-//					var $a = $('<a>')
-//						.addClass('n2widget_legend2_option')
-//						.attr('href',choice.id)
-//						.attr('n2-choice-id',choice.id)
-//						.appendTo($elem)
-//						.click(function(){
-//							var $a = $(this);
-//							var choiceId = $a.attr('n2-choice-id');
-//							_this._selectionClicked(choiceId, $a);
-//							return false;
-//						});
-//					$('<span>')
-//						.text(label)
-//						.appendTo($a);
-//				};
-//				
-//				this._adjustSelectedItem();
-//			},
-//			
-//			_adjustSelectedItem: function(){
-//				var _this = this;
-//				
-//				var $elem = this._getElem();
-//				$elem.find('.n2widget_legend2_option').each(function(){
-//					var $option = $(this);
-//					var choiceId = $option.attr('n2-choice-id');
-//					
-//					var selected = false;
-//					if( ALL_CHOICES === choiceId ){
-//						if( _this.allSelected ){
-//							selected = true;
-//						};
-//					} else {
-//						if( _this.selectedChoiceIdMap[choiceId] ){
-//							selected = true;
-//						};
-//					};
-//					
-//					if( selected ){
-//						$option.removeClass('n2widget_legend2_notSelected');
-//						$option.addClass('n2widget_legend2_selected');
-//					} else {
-//						$option.removeClass('n2widget_legend2_selected');
-//						$option.addClass('n2widget_legend2_notSelected');
-//					};
-//				});
-//			},
 			
 			// This is called when one of the selection is clicked
 			_selectionClicked: function(choiceId, $a){
