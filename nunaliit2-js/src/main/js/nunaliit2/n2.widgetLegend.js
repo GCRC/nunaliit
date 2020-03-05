@@ -541,7 +541,16 @@ POSSIBILITY OF SUCH DAMAGE.
 		}
 	});
 
-
+	// LegendWidget2 The widget draws a legendWidget based on the styleRules defined inside map.json
+	// Also, this widget has a checkbox before each entry, which allows users to filter in/out the documents based on the style condition.
+	// This widget connects with a conditionalModelFilter to do the model filtering. 
+	// Two model parameters: completeChoiceParameter and selectedChoiceParameter is the messenger
+	// between this widget and the conditionalModelFilter mentioned above
+	// @Param containerId {string}
+	// @Param sourceModelId {string} sourceModelId of the conditionalModelFilter
+	// @Param labels {array} Optional parameter: if provided, only the label inside this list (must also defined valid condition inside map.json)
+	// will be rendered inside widgetLegend.
+	
 	var LegendWidget2 = $n2.Class('LegendWidget2', {
 
 			dispatchService: null,
@@ -556,31 +565,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			selectedChoicesSetEventName: null,
 
-			allSelectedChangeEventName: null,
-
-			allSelectedSetEventName: null,
-
-			availableChoicesChangeEventName: null,
-
-			availableChoices: null,
-			
 			selectedChoices: null,
 			
 			selectedChoiceIdMap: null,
-			
-			allSelected: null,
-			
-			allChoicesLabel: null,
 
-			tooltip: null,
-
-			/* 
-			 * These are versions of functions that are throttled. These
-			 * functions touch the DOM structure and should not be called too.
-			 * often as they affect performance.
-			 */
-			_throttledAvailableChoicesUpdated: null,
-			
 			initialize: function(opts_){
 				var opts = $n2.extend({
 					containerId: null
@@ -600,12 +588,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.showService = opts.showService;
 				this.sourceModelId = opts.sourceModelId;
 				this.allChoicesLabel = opts.allChoicesLabel;
-
-				if (opts.tooltip
-					&& typeof opts.tooltip === 'string'
-					&& opts.tooltip.length) {
-					this.tooltip = opts.tooltip;
-				}
 				
 				this.labels = opts.labels;
 				if( this.labels && !$n2.isArray(this.labels) ){
@@ -617,10 +599,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.selectedChoices = [];
 				this.selectedChoiceIdMap = {};
 				this.allSelected = false;
-				//this.availableChoicesChangeEventName = 'canvasReportStylesInUse';
-				this._throttledAvailableChoicesUpdated = $n2.utils.throttle(this._availableChoicesUpdated, 1500);
 
-				
 				// Set up model listener
 				if( this.dispatchService ){
 
@@ -643,17 +622,21 @@ POSSIBILITY OF SUCH DAMAGE.
 							this.completeChoices = (paramInfo.value);
 							var enforcedChoices = [];
 							if ( _this.labels ){
-							_this.labels.forEach(function(l){
-								if (_this.completeChoices.indexOf(l) >= 0){
+								//If atlas builder provided a "labels" attribute
+								//Only the choice/label inside this list will be drawn.
+								//And the conditionalModelFilter will only filtering based
+								//on the conditions associated with these label.
+								_this.labels.forEach(function(l){
+									if (_this.completeChoices.indexOf(l) >= 0){
 										enforcedChoices.push(l);
-								}
-							});
-							this.completeChoices  = enforcedChoices;
-							
-							this.dispatchService.send(DH,{
-								type: _this.completeChoicesSetEventName
-								,value: _this.completeChoices
-							});
+									}
+								});
+
+								this.completeChoices  = enforcedChoices;
+								this.dispatchService.send(DH,{
+									type: _this.completeChoicesSetEventName
+									,value: _this.completeChoices
+								});
 							};
 						}
 					}
@@ -667,8 +650,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							this.selectedChoices = (paramInfo.value);
 						};
 					}
-					//For conditionalModelWidget, initially, all choices will be selecteed
-					 
+					//For conditionalModelWidget, initially, all valid choices will be selected
 					this.completeChoices.forEach(function(choiceId){
 						_this.selectedChoiceIdMap[choiceId] = true;
 					});
@@ -677,20 +659,10 @@ POSSIBILITY OF SUCH DAMAGE.
 						_this._handle(m, addr, dispatcher);
 					};
 
-//					if( this.availableChoicesChangeEventName ){
-//						this.dispatchService.register(DH, this.availableChoicesChangeEventName, fn);
-//					};
-//
 					if( this.selectedChoicesChangeEventName ){
 						this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
 					};
-//
-//					if (this.completeChoicesChangeEventName){
-//						this.dispatchService.register(DH, this.completeChoicesChangeEventName, fn);
-//					}
-//					if( this.allSelectedChangeEventName ){
-//						this.dispatchService.register(DH, this.allSelectedChangeEventName, fn);
-//					};
+
 					this.dispatchService.register(DH,'canvasReportStylesInUse',fn);
 
 					// Obtain current styles in use
@@ -721,13 +693,14 @@ POSSIBILITY OF SUCH DAMAGE.
 					$selector.attr('title', this.tooltip);
 				}
 
-				//this._throttledAvailableChoicesUpdated();
 				this.draw();
 				this._adjustSelectedItem();
 				$n2.log(this._classname, this);
-				
 			},
 			
+			//Drawing the widgetLegend2, each valid label is drawn as well as
+			// the symbolColumn div. The symbolColumn div is filled by stylesInUse which
+			// provided by canvas
 			draw: function(){
 				var _this = this;
 
@@ -742,8 +715,6 @@ POSSIBILITY OF SUCH DAMAGE.
 						var styleId = _this.completeChoices[i];
 						var effectiveLabel = _loc( styleId );
 						stylesByLabel[effectiveLabel] = true;
-						
-						
 						atLeastOne = true;
 				};
 
@@ -756,7 +727,8 @@ POSSIBILITY OF SUCH DAMAGE.
 					var labelNames = [];
 
 					
-					//When user provides a list of label, enforce that list to be rendered;
+					//When user provides a list of label, enforce that list to be rendered,
+					//otherwise, all the conditions defined inside map.json will be drawn;
 					if( this.labels ){
 						this.labels.forEach(function(label){
 							var effectiveLabel = _loc(label);
@@ -764,7 +736,6 @@ POSSIBILITY OF SUCH DAMAGE.
 								labelNames.push(effectiveLabel);
 							};
 						});
-
 					} else {
 						for (var labelName in stylesByLabel){
 							labelNames.push(labelName);
@@ -806,15 +777,6 @@ POSSIBILITY OF SUCH DAMAGE.
 						.addClass('n2widgetLegend_symbolColumn_cluster')
 						.appendTo($symbolColumn);
 
-//						var $labelColumn = $('<div>')
-//						.addClass('n2widgetLegend_labelColumn')
-//						.appendTo($div);
-//
-//						$('<div>')
-//						.addClass('n2widgetLegend_labelEntry')
-//						.text(labelName)
-//						.appendTo($labelColumn);
-
 					});
 				};
 				
@@ -838,7 +800,9 @@ POSSIBILITY OF SUCH DAMAGE.
 				this._adjustSelectedItem();
 			},
 			
-			// This is called when the selected changed
+			// This is called when the selection changed
+			// @Param choiceId {string} the choiceId selected/clicked by user.
+			// Sending event to reset the choices in selectedChoiceParameter
 			_selectionChanged: function(choiceId){
 
 				var selectedChoiceIds = [];
@@ -862,6 +826,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				});	
 			},
 			
+			//Change the look for each entry based on computed selectedChoices
 			_adjustSelectedItem: function(){
 				var _this = this;
 
@@ -889,63 +854,13 @@ POSSIBILITY OF SUCH DAMAGE.
 				return $('#'+this.elemId);
 			},
 			
-			// This is called when one of the selection is clicked
-			_selectionClicked: function(choiceId, $a){
-				var _this = this;
-
-				if( ALL_CHOICES === choiceId ){
-					if( this.allSelected ){
-						// If already all selected, select none
-						this.dispatchService.send(DH,{
-							type: this.selectedChoicesSetEventName
-							,value: []
-						});
-
-					} else {
-						// Select all
-						this.dispatchService.send(DH,{
-							type: this.allSelectedSetEventName
-							,value: true
-						});
-					};
-
-				} else {
-					var selectedChoiceIds = [];
-
-					var removed = false;
-					this.selectedChoices.forEach(function(selectedChoiceId){
-						if( selectedChoiceId === choiceId ){
-							removed = true;
-						} else {
-							selectedChoiceIds.push(selectedChoiceId);
-						};
-					});
-					
-					if( !removed ){
-						selectedChoiceIds.push(choiceId);
-					};
-					
-					this.dispatchService.send(DH,{
-						type: this.selectedChoicesSetEventName
-						,value: selectedChoiceIds
-					});
-				};
-			},
-			
+			// Event handler for registered events/
 			_handle: function(m, addr, dispatcher){
 				var _this = this;
 
-				if( this.availableChoicesChangeEventName === m.type ){
-					if( m.value ){
-						this.availableChoices = m.value;
-						
-						//this._availableChoicesUpdated();
-						this._throttledAvailableChoicesUpdated();
-					};
+				if (this.completeChoicesChangeEventName === m.type){
 					
-				} else if (this.completeChoicesChangeEventName === m.type){
-					
-				}else if( this.selectedChoicesChangeEventName === m.type ){
+				} else if( this.selectedChoicesChangeEventName === m.type ){
 					if( m.value ){
 						this.selectedChoices = m.value;
 						
@@ -957,12 +872,6 @@ POSSIBILITY OF SUCH DAMAGE.
 						this._adjustSelectedItem();
 					};
 
-				} else if( this.allSelectedChangeEventName === m.type ){
-					if( typeof m.value === 'boolean' ){
-						this.allSelected = m.value;
-						
-						this._adjustSelectedItem();
-					};
 				} else if( 'canvasReportStylesInUse' === m.type ){
 					if( m.canvasName === this.sourceCanvasName ){
 						this.stylesInUse = m.stylesInUse;
@@ -971,7 +880,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				};
 			},
 			
-			
+			// Refresh the div.symbolColumn whenever a new stylesInUse is reported
 			refresh: function(){
 				var _this = this;
 
@@ -1064,6 +973,8 @@ POSSIBILITY OF SUCH DAMAGE.
 				
 			},
 			
+			//=================================================================
+			//Working horses for drawing the previous SVG, copied from original legendWidget
 			_insertSvgPreviewPoint: function($parent, style, context_){
 				var _this = this;
 
@@ -1335,6 +1246,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				return path.join('');
 			}
+			//=================================================================
 			
 			
 	})

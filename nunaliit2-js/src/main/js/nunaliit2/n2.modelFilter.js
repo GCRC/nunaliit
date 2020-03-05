@@ -783,7 +783,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			};
 		});
 		
-		// ModelParamter is the messenger between model and externalEntity (Yes, widgets )
+		// ModelParamter is the messenger between model and externalEntity (Widgets)
 		// Define set~Choices get~Choices function in this model to passing the choices. 	
 		this.selectedChoicesParameter = new $n2.model.ModelParameter({
 			model: this
@@ -861,7 +861,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		
 		this.allSelected = false;
 		
-		//Rule of Thumb: this.selectedChoiceIdMap is always sync with the selectedChoice
+		//Rule of Thumb: this.selectedChoiceIdMap is always sync with the selectedChoice Paramter
 		this.selectedChoiceIdMap = {};
 		choiceIdArray.forEach(function(choiceId){
 			if( typeof choiceId !== 'string' ){
@@ -877,10 +877,9 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			localStorage.setItem(this.saveSelectionName,jsonSelection);
 		};
 
-		// Adjust the order of selectionChanged and filterChanged;
-		// Because filterChanged can also affect selectedChoiceMap;
-		this._filterChanged();
 		this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
+		this._filterChanged();
+		
 		
 		this.allSelectedParameter.sendUpdate();
 		this.selectedChoicesParameter.sendUpdate();
@@ -959,7 +958,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				_this.selectedChoiceIdMap[choice.id] = true;
 			});
 
-			this._selectionChanged(this.k, this.allSelected);
+			this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
 			this._filterChanged();
 
 			this.selectedChoicesParameter.sendUpdate();
@@ -1885,6 +1884,16 @@ var MultiDocumentFilter = $n2.Class('MultiDocumentFilter', SelectableDocumentFil
 	}
 });
 //-=------------------------------------------------------------------------
+/*
+* Filter: a Document Model that filters out certain documents based on styles(SytleRules)
+* defined inside map.json. The stylesRules are injected, during module initializing 
+* process, so there is no need to ask it from atlas builder.
+* Options:
+* - modelId: String. Identifier for this model
+* - sourceModelId: String. Identifier for the model where documents are obtained
+* - initialSelection: Optional array of strings. If specified, the choices specified in the
+*                     array are initially selected. The strings in the array are choice identifiers.
+*/
 var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocumentFilter, {
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -1892,11 +1901,12 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 			,dispatchService: undefined
 			,rules: null
 		},opts_);
+		
 		var _this = this;
 		$n2.modelFilter.SelectableDocumentFilter.prototype.initialize.call(this,opts);
 		
 		//Because widgetLegend needs a complete list of choices, we defined a new parameter
-		//The complete choice list is passing-in from constructor so it is never changed.
+		//Initially, value of completeChoices is computed from stylesRules
 		this.completeChoicesParameter = new $n2.model.ModelParameter({
 			model: this
 			,modelId: this.modelId
@@ -1908,6 +1918,7 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 			,dispatchService: this.dispatchService
 		});
 		
+		//This is the store for all the conditions defined inside map.json
 		this.conditionByLabel = {};
 		if ( $n2.isArray(opts.rules) ){
 			opts.rules.forEach(function(rule){
@@ -1938,9 +1949,8 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 	_addModelInfoParameters: function(info){
 		info.parameters.completeChoices = this.completeChoicesParameter.getInfo();
 		info.parameters.selectedChoices = this.selectedChoicesParameter.getInfo();
-		//info.parameters.allSelected = this.allSelectedParameter.getInfo();
-		//info.parameters.availableChoices = this.availableChoicesParameter.getInfo();
 	},
+	
 	getCompleteChoices: function(){
 		var selectedChoices = [];
 		for(var choiceId in this.conditionByLabel){
@@ -1958,8 +1968,8 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 		});
 		_this.selectedChoicesParameter.sendUpdate();
 	},
-
-
+	
+	//@Override the document visibility is computed by all the valid conditions. 
 	_isDocVisible: function(doc, selectedChoiceIdMap){
 		
 		var _this = this;
