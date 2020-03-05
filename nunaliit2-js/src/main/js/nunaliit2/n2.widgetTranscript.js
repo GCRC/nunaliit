@@ -350,13 +350,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 				if( doc.atlascine2_cinemap ){
 					var media_doc_ref = doc.atlascine2_cinemap.media_doc_ref;
-					var mediaDocId = media_doc_ref.doc;
-					if (mediaDocId
-						&& mediaDocId !== _this.docId) {
-						_this.docId = mediaDocId;
-						cineIsUpdated = true;
+					if (media_doc_ref){
+						var mediaDocId = media_doc_ref.doc;
+						if (mediaDocId
+							&& mediaDocId !== _this.docId) {
+							_this.docId = mediaDocId;
+							cineIsUpdated = true;
+						}
 					}
-
 				};
 			};
 		};
