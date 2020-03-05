@@ -1255,6 +1255,7 @@ function HandleWidgetDisplayRequests(m){
 //--------------------------------------------------------------------------
 $n2.couchDbPerspective = {
 	DbPerspective: DbPerspective
+	,ModelCouchDbView: ModelCouchDbView
 	,DbSelector: DbSelector
 	,CouchLayerDbSelector: CouchLayerDbSelector
 	,handleModelCreate: handleModelCreate
