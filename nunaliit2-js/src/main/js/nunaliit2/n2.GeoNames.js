@@ -160,7 +160,7 @@ var GeoNameService = $n2.Class({
 	
 	initialize: function(opts_){
 		this.options = $n2.extend({
-			geoNamesUrl: 'http://api.geonames.org/'
+			geoNamesUrl: 'https://secure.geonames.org/'
 			,username: 'nunaliit'
 		},opts_);
 	},
