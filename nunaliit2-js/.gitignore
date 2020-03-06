@@ -4,3 +4,6 @@
 /.project
 **/node_modules
 **/nunaliit-es6/dist
+/src/main/js/nunaliit2/n2es6.js
+/src/main/js/nunaliit2/n2es6.js.map
+/tools/node
