@@ -2,3 +2,5 @@
 /target
 /.classpath
 /.project
+**/node_modules
+**/nunaliit-es6/dist
