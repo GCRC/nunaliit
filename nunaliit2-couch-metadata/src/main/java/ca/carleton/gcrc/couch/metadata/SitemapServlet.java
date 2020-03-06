@@ -56,6 +56,7 @@ public class SitemapServlet extends HttpServlet
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+        CouchNunaliitUtils.logRequestData(request);
         logger.debug("Sitemap request received");
         List<String> relativeUrls = sitemapBuilderAtlasChangeListener.getRelativeUrls();
         if (!relativeUrls.isEmpty()) {

@@ -1,26 +1,31 @@
 package ca.carleton.gcrc.couch.utils;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.Vector;
-
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
-
 import javax.servlet.http.HttpServletRequest;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class CouchNunaliitUtils {
 	
-	static final protected Logger logger = LoggerFactory.getLogger(CouchNunaliitUtils.class);
+	private static final Logger logger = LoggerFactory.getLogger(CouchNunaliitUtils.class);
+
+	private static final Pattern URL_PATTERN = Pattern.compile("^([a-z][a-z0-9+\\-.]*:(//[^/?#]+)?)?([a-z0-9\\-._~%!$&'()*+,;=:@/]*)");
+	private static final Matcher MATCHER = URL_PATTERN.matcher("");
 
 	static public void adjustDocumentForStorage(
 			JSONObject doc
@@ -156,22 +161,101 @@ public class CouchNunaliitUtils {
 	}
 
 	/**
-	 * Build the atlas' base URL using the HTTP request information (scheme, server, port).
+	 * Build the atlas' base URL using the HTTP request information (scheme, server, port). Servers behind a proxy will
+	 * have to setup custom headers because if we are behind a proxy we won't get the original scheme or server.
 	 *
 	 * @param request The request to get the server info from.
 	 * @return The base URL for the atlas, ending with a '/'.
 	 */
 	public static String buildBaseUrl(HttpServletRequest request) {
+		logRequestData(request);
 		String scheme = request.getScheme();
 		String serverName = request.getServerName();
-		int port = request.getServerPort();
+		String port = Integer.toString(request.getServerPort());
+		logger.trace("SARAH: port is " + port);
+
+		boolean useProxyValues = false;
+		String xForwardedHost = request.getHeader(RequestHeaderConstants.X_FORWARDED_HOST);
+		// The request was forwarded via a proxy, use the original host/port/scheme info.
+		if (StringUtils.isNotBlank(xForwardedHost)) {
+			serverName = xForwardedHost;
+			useProxyValues = true;
+		}
+
+		if (useProxyValues) {
+			logger.trace("Using proxy headers to build sitemap base URL");
+			if (StringUtils.isNotBlank(request.getHeader(RequestHeaderConstants.REQUEST_SCHEME))) {
+				scheme = request.getHeader(RequestHeaderConstants.REQUEST_SCHEME);
+			}
+			port = request.getHeader(RequestHeaderConstants.SERVER_PORT);
+		}
+
+		String customRequestUri = request.getHeader(RequestHeaderConstants.REQUEST_URI);
+		String path = getFolderPath(customRequestUri);
+
 		StringBuilder builder = new StringBuilder();
 		builder.append(String.format("%s://%s", scheme, serverName));
-		if (port > 0) {
-			builder.append(":").append(port);
+		// Only include port in URL string if it's non-standard.
+		logger.trace("SARAH: port is " + port);
+		if (StringUtils.isNotBlank(port)) {
+			if (("https".equals(scheme) && !"443".equals(port)) ||
+					("http".equals(scheme) && !"80".equals(port))) {
+				builder.append(":").append(port);
+			}
 		}
+		else {
+			logger.trace("SARAH: port is not available");
+		}
+
 		builder.append("/");
+		if (StringUtils.isNotBlank(path)) {
+			builder.append(path);
+			builder.append("/");
+		}
 
 		return builder.toString();
+	}
+
+	public static String getFolderPath(String url) {
+		// Get folder path for base URL. Could be http://www.domain.com or possibly http://www.domain.com/atlas1 or
+		// http://www.domain.com/atlases/atlas1. Find the 'atlases/atlas1' path.
+		String path = null;
+		int lastSlash = url.lastIndexOf("/");
+		url = url.substring(0, lastSlash);
+		MATCHER.reset(url);
+		if (MATCHER.matches()) {
+			path = MATCHER.group(3);
+		}
+		if (StringUtils.isNotBlank(path)) {
+			logger.trace("SARAH: path found: " + path);
+			path = StringUtils.stripEnd(path, "/");
+			path = StringUtils.stripStart(path, "/");
+		}
+
+		return path;
+	}
+
+	//TODO: change back to trace and add "if loglevel==trace"
+	public static void logRequestData(HttpServletRequest request) {
+		logger.info("----- HttpServletRequest Start -----");
+		logger.info("- Scheme: " + request.getScheme());
+		logger.info("- Server: " + request.getServerName());
+		logger.info("- Port: " + request.getServerPort());
+		logger.info("- URL: " + request.getRequestURL().toString());
+		Enumeration<String> headerNames = request.getHeaderNames();
+		logger.info("- Headers:");
+		while (headerNames.hasMoreElements()) {
+			String headerName = headerNames.nextElement();
+			logger.info("   " + headerName + ": " + request.getHeader(headerName));
+		}
+
+		Enumeration<String> params = request.getParameterNames();
+		logger.info("- Parameters:");
+		while (params.hasMoreElements()) {
+			String paramName = params.nextElement();
+			System.out.println("   " + paramName + ": " + request.getParameter(paramName));
+		}
+
+		logger.info("----- HttpServletRequest End -----");
 	}
 }

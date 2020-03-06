@@ -143,9 +143,9 @@ public final class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChan
         // Now build final set of relative URLs.
         Set<String> tempRelativeUrls = new HashSet<>(links.get(HREF));
         // Add root path, in case it's not linked in navigation menu.
-        tempRelativeUrls.add("./index.html");
+        tempRelativeUrls.add("index.html");
         for (String module : links.get(MODULE)) {
-            tempRelativeUrls.add(String.format("./index.html?module=%s", module));
+            tempRelativeUrls.add(String.format("index.html?module=%s", module));
         }
 
         synchronized (lockObj) {
@@ -173,7 +173,15 @@ public final class SitemapBuilderAtlasChangeListener extends AbstractCouchDbChan
                     }
                     else if (next.has(HREF) && StringUtils.isNotBlank(next.optString(HREF))
                             && !next.optString(HREF).startsWith("http")) {
-                        links.get(HREF).add(next.getString(HREF));
+                        // Remove ./ or / at the beginning of the HREF.
+                        String href = next.getString(HREF);
+                        if (href.startsWith("./")) {
+                            href = href.substring(2);
+                        }
+                        else if (href.startsWith("/")) {
+                            href = href.substring(1);
+                        }
+                        links.get(HREF).add(href);
                     }
                     // Recurse if this item has sub-items.
                     if (next.has(ITEMS)) {
