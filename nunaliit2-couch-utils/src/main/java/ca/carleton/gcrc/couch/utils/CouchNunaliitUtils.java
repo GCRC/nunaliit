@@ -27,10 +27,12 @@ public class CouchNunaliitUtils {
 	private static final Pattern URL_PATTERN = Pattern.compile("^([a-z][a-z0-9+\\-.]*:(//[^/?#]+)?)?([a-z0-9\\-._~%!$&'()*+,;=:@/]*)");
 	private static final Matcher MATCHER = URL_PATTERN.matcher("");
 
-	static public void adjustDocumentForStorage(
+	private CouchNunaliitUtils() {}
+
+	public static void adjustDocumentForStorage(
 			JSONObject doc
 			,CouchAuthenticationContext userContext
-		) throws Exception {
+		) {
 	
 		long now = (new Date()).getTime();
 
@@ -63,8 +65,8 @@ public class CouchNunaliitUtils {
 			doc.put(CouchNunaliitConstants.DOC_KEY_LAST_UPDATED, updated);
 		}
 	}
-	
-	static public boolean hasAdministratorRole(CouchAuthenticationContext userContext, String atlasName){
+
+	public static boolean hasAdministratorRole(CouchAuthenticationContext userContext, String atlasName){
 		if( null == userContext ) {
 			return false;
 		}
@@ -75,7 +77,7 @@ public class CouchNunaliitUtils {
 		}
 		
 		// Figure out acceptable administrator roles
-		Set<String> adminRoles = new HashSet<String>();
+		Set<String> adminRoles = new HashSet<>();
 		adminRoles.add("_admin");
 		adminRoles.add("administrator");
 		if( null != atlasName ) {
@@ -90,8 +92,8 @@ public class CouchNunaliitUtils {
 		
 		return false;
 	}
-	
-	static public boolean hasVetterRole(CouchAuthenticationContext userContext, String atlasName){
+
+	public static boolean hasVetterRole(CouchAuthenticationContext userContext, String atlasName){
 		if( null == userContext ) {
 			return false;
 		}
@@ -102,7 +104,7 @@ public class CouchNunaliitUtils {
 		}
 		
 		// Figure out acceptable vetter roles
-		Set<String> vetterRoles = new HashSet<String>();
+		Set<String> vetterRoles = new HashSet<>();
 		vetterRoles.add("vetter");
 		if( null != atlasName ) {
 			vetterRoles.add(atlasName + "_vetter");
@@ -117,16 +119,16 @@ public class CouchNunaliitUtils {
 		// Administrators are automatically vetters
 		return hasAdministratorRole(userContext, atlasName);
 	}
-	
-	static public List<JSONObject> findStructuresOfType(String type, JSONObject doc){
-		List<JSONObject> structures = new Vector<JSONObject>();
+
+	public static List<JSONObject> findStructuresOfType(String type, JSONObject doc){
+		List<JSONObject> structures = new Vector<>();
 		
 		findStructuresOfType(doc, type, structures);
 		
 		return structures;
 	}
-	
-	static private void findStructuresOfType(Object obj, String type, List<JSONObject> structures){
+
+	private static void findStructuresOfType(Object obj, String type, List<JSONObject> structures){
 		if( obj instanceof JSONObject ){
 			JSONObject jsonObj = (JSONObject)obj;
 			
@@ -156,7 +158,7 @@ public class CouchNunaliitUtils {
 				if( null != value ){
 					findStructuresOfType(value, type, structures);
 				}
-			};
+			}
 		}
 	}
 
@@ -172,7 +174,6 @@ public class CouchNunaliitUtils {
 		String scheme = request.getScheme();
 		String serverName = request.getServerName();
 		String port = Integer.toString(request.getServerPort());
-		logger.trace("SARAH: port is " + port);
 
 		boolean useProxyValues = false;
 		String xForwardedHost = request.getHeader(RequestHeaderConstants.X_FORWARDED_HOST);
@@ -196,7 +197,6 @@ public class CouchNunaliitUtils {
 		StringBuilder builder = new StringBuilder();
 		builder.append(String.format("%s://%s", scheme, serverName));
 		// Only include port in URL string if it's non-standard.
-		logger.trace("SARAH: port is " + port);
 		if (StringUtils.isNotBlank(port)) {
 			if (("https".equals(scheme) && !"443".equals(port)) ||
 					("http".equals(scheme) && !"80".equals(port))) {
@@ -204,7 +204,7 @@ public class CouchNunaliitUtils {
 			}
 		}
 		else {
-			logger.trace("SARAH: port is not available");
+			logger.trace("Port is not available");
 		}
 
 		builder.append("/");
@@ -216,46 +216,60 @@ public class CouchNunaliitUtils {
 		return builder.toString();
 	}
 
+	/**
+	 * Get folder path for base URL. Could be http://www.domain.com or possibly http://www.domain.com/atlas1 or
+	 * http://www.domain.com/atlases/atlas1?module=module.map. Finds the 'atlases/atlas1' path.
+	 *
+	 * @param url The full URL to search.
+	 * @return The path between the first / to the query string. Returns null if no path found.
+	 */
 	public static String getFolderPath(String url) {
-		// Get folder path for base URL. Could be http://www.domain.com or possibly http://www.domain.com/atlas1 or
-		// http://www.domain.com/atlases/atlas1. Find the 'atlases/atlas1' path.
 		String path = null;
-		int lastSlash = url.lastIndexOf("/");
-		url = url.substring(0, lastSlash);
-		MATCHER.reset(url);
-		if (MATCHER.matches()) {
-			path = MATCHER.group(3);
-		}
-		if (StringUtils.isNotBlank(path)) {
-			logger.trace("SARAH: path found: " + path);
-			path = StringUtils.stripEnd(path, "/");
-			path = StringUtils.stripStart(path, "/");
+
+		if (StringUtils.isNotBlank(url)) {
+			int lastSlash = url.lastIndexOf('/');
+			url = url.substring(0, lastSlash);
+			MATCHER.reset(url);
+			if (MATCHER.matches()) {
+				path = MATCHER.group(3);
+			}
+			if (StringUtils.isNotBlank(path)) {
+				path = StringUtils.stripEnd(path, "/");
+				path = StringUtils.stripStart(path, "/");
+			}
 		}
 
 		return path;
 	}
 
-	//TODO: change back to trace and add "if loglevel==trace"
+	/**
+	 * Helper method that prints out all request headers and parameters, as well as the scheme, server, port and URL
+	 * provided in the request object.
+	 *
+	 * @param request The request object to print out values.
+	 */
 	public static void logRequestData(HttpServletRequest request) {
-		logger.info("----- HttpServletRequest Start -----");
-		logger.info("- Scheme: " + request.getScheme());
-		logger.info("- Server: " + request.getServerName());
-		logger.info("- Port: " + request.getServerPort());
-		logger.info("- URL: " + request.getRequestURL().toString());
-		Enumeration<String> headerNames = request.getHeaderNames();
-		logger.info("- Headers:");
-		while (headerNames.hasMoreElements()) {
-			String headerName = headerNames.nextElement();
-			logger.info("   " + headerName + ": " + request.getHeader(headerName));
-		}
+		if (logger.isTraceEnabled()) {
+			logger.trace("----- HttpServletRequest Start -----");
+			logger.trace(String.format("- Scheme: %s", request.getScheme()));
+			logger.trace(String.format("- Server: %s", request.getServerName()));
+			logger.trace(String.format("- Port: %d", request.getServerPort()));
+			logger.trace(String.format("- URL: %s", request.getRequestURL().toString()));
+			Enumeration<String> headerNames = request.getHeaderNames();
+			logger.trace("- Headers:");
+			while (headerNames.hasMoreElements()) {
+				String headerName = headerNames.nextElement();
+				logger.trace(String.format("   %s: %s", headerName, request.getHeader(headerName)));
+			}
 
-		Enumeration<String> params = request.getParameterNames();
-		logger.info("- Parameters:");
-		while (params.hasMoreElements()) {
-			String paramName = params.nextElement();
-			System.out.println("   " + paramName + ": " + request.getParameter(paramName));
-		}
+			Enumeration<String> params = request.getParameterNames();
+			logger.trace("- Parameters:");
+			while (params.hasMoreElements()) {
+				String paramName = params.nextElement();
+				logger.trace(String.format("   %s: %s", paramName, request.getParameter(paramName)));
+			}
 
-		logger.info("----- HttpServletRequest End -----");
+			logger.trace("----- HttpServletRequest End -----");
+		}
 	}
 }

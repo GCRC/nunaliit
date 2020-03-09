@@ -80,7 +80,7 @@
 		<maven-assembly-plugin.version>2.6</maven-assembly-plugin.version>
 		<maven-dependency-plugin.version>2.10</maven-dependency-plugin.version>
 		<mustache.version>0.8.18</mustache.version>
-		<servlet-api.version>2.5</servlet-api.version>
+		<servlet-api.version>3.1.0</servlet-api.version>
 		<slf4j.version>1.7.13</slf4j.version>
 		<jsoup.version>1.12.1</jsoup.version>
 	</properties>

@@ -1,8 +1,9 @@
 package ca.carleton.gcrc.couch.utils;
 
 /**
- * HTTP request header constants that aren't availble elsewhere. Also incluses headers setup on the Apache server manually. Should be used when an atlas is hosted behind a proxy, since the
- * servlet won't get the originating scheme, URI, query string or port in the request headers.
+ * HTTP request header constants that aren't available elsewhere. Also includes headers setup on the Apache server
+ * manually. Should be used when an atlas is hosted behind a proxy, since the servlet won't get the original scheme,
+ * URI, query string or port in the request headers.
  */
 public class RequestHeaderConstants {
     private RequestHeaderConstants() {
@@ -20,8 +21,8 @@ public class RequestHeaderConstants {
      * http or https
      */
     public static final String REQUEST_SCHEME = "REQUEST_SCHEME";
+    /** Originaal request port. */
     public static final String SERVER_PORT = "SERVER_PORT";
-
-    /** Standard header for proxies, represents originating host. */
+    /** Standard header for proxies, represents original request host. */
     public static final String X_FORWARDED_HOST = "X-Forwarded-Host";
 }
