@@ -13,7 +13,7 @@ import {default as Photo} from'ol-ext/style/Photo';
 import {createDefaultStyle} from 'ol/style/Style.js'
 
 import GeoJSON from 'ol/format/GeoJSON';
-import {default as ImageSource} from 'ol/source/Image.js';
+import Static from 'ol/source/ImageStatic.js';
 import WMTS from 'ol/source/WMTS.js';
 import {default as VectorSource } from 'ol/source/Vector.js';
 import {default as N2Select} from './N2Select.js';
@@ -29,7 +29,7 @@ import {default as ImageLayer} from 'ol/layer/Image.js';
 import {default as View} from 'ol/View.js';
 import {default as N2Cluster} from '../ol5support/N2Cluster.js';
 
-import {extend, isEmpty, getTopLeft, getWidth} from 'ol/extent.js';
+import {extend, isEmpty, getTopLeft, getWidth, getCenter} from 'ol/extent.js';
 import {transform, getTransform, transformExtent, get as getProjection} from 'ol/proj.js';
 import {default as Projection} from 'ol/proj/Projection.js';
 import Tile from 'ol/layer/Tile.js';
@@ -1178,10 +1178,7 @@ class N2MapCanvas  {
 	_createOLLayerFromDefinition(layerDefinition, isDefaultLayer) {
 		var name = _loc(layerDefinition.name);
 		var _this = this;
-<<<<<<< 8b142c765eb81dc14b0413fba8ebf5836776d873
-
-		if( layerDefinition ) {
-=======
+		
 		var _layerType = layerDefinition.type.replace(/\W/g,'').toLowerCase();
 		if ( layerDefinition &&  _layerType === 'image'){
 			var layerOptions = layerDefinition.options;
@@ -1193,7 +1190,6 @@ class N2MapCanvas  {
 				source: _this._createBackgroundMapSource(layerDefinition)
 			});
 		} else if ( layerDefinition ) {
->>>>>>> Fix the layerswitcher in ol5 using ol-ext layerswitcher
 			var ol5layer = new Tile({
 				title: layerDefinition.name,
 				baseLayer: true,
@@ -1317,8 +1313,6 @@ class N2MapCanvas  {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
 		} else if ( sourceTypeInternal == VENDOR.IMAGE) {
-<<<<<<< 8b142c765eb81dc14b0413fba8ebf5836776d873
-=======
 			var url, height, width, extent, projection;
 			var options = sourceOptionsInternal;
 			if( options ){
@@ -1338,8 +1332,16 @@ class N2MapCanvas  {
 						//layerOptions[optionKey] = optionValue;
 					};
 				};
->>>>>>> Fix the layerswitcher in ol5 using ol-ext layerswitcher
-
+				return new Static({
+					url: url,
+					projection: getProjection('EPSG:3857'),
+					imageSize:[width, height],
+					imageExtent: [-14483048.340, 2291674.487,-6775420.041, 6947393.399]
+				})
+			}else{
+				$n2.reportError('Bad configuration for layer: '+name);
+				return null;
+			}
 		} else if ( sourceTypeInternal == VENDOR.COUCHDB) {
 
 		} else {
