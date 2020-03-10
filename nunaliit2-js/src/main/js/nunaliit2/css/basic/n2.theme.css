@@ -508,7 +508,7 @@ CreateDocument widget
 
 .n2Display_attProgress_waiting .n2Display_attProgress_icon {
 	display: block;
-	background: transparent url(images/consensus_icon.png) no-repeat 0 0;
+	background: transparent url(images/consensus_icon.svg) no-repeat 0 0;
 	background-size: cover;
 }
 
