@@ -1910,7 +1910,7 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 		this.completeChoicesParameter = new $n2.model.ModelParameter({
 			model: this
 			,modelId: this.modelId
-			,type: 'strings'
+			,type: 'objects'
 			,name: 'completeChoices'
 			,label: _loc('Complete Choices')
 			,setFn: this._setCompleteChoices
@@ -1924,10 +1924,34 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 			opts.rules.forEach(function(rule){
 				if (rule.label){
 					var condition = null;
+					var effectivelabel = null;
+					var labelType = '';
+					if ( typeof rule.label === 'object' ){
+						if ( rule.label.nunaliit_type
+							&& rule.label.nunaliit_type === 'localized'
+							&& rule.label.en ){
+							effectivelabel = rule.label.en;
+							labelType = 'localized';
+						} else {
+							$n2.log('ConditionalModelFilter: one of the localized label misses en field for indexing', rule.label);
+							return;
+						}
+					} else if ( typeof rule.label === 'string'){
+						effectivelabel = rule.label;
+						labelType = 'string';
+					} else {
+						$n2.log('ConditionalModelFilter: one of the condition has invalid label', rule.label)
+						return;
+					}
 					if ( rule.condition ){
 						condition = $n2.styleRuleParserForLegend.parse(rule.condition);
 					}
-					_this.conditionByLabel[rule.label] = condition; 
+					_this.conditionByLabel[effectivelabel] = {
+							labelId: effectivelabel
+							,condition: condition
+							,label: rule.label
+							,labelType : labelType
+					}
 				}
 
 			})
@@ -1935,8 +1959,9 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 
 		this.selectedChoiceIdMap = {};
 		var completedChoices = this.getCompleteChoices();
-		completedChoices.forEach(function(choiceId){
-			_this.selectedChoiceIdMap[choiceId] = true;
+		completedChoices.forEach(function(choiceinfo){
+			var effectLabel = choiceinfo.labelId;
+			_this.selectedChoiceIdMap[effectLabel] = true;
 		});
 		this.selectedChoicesParameter.sendUpdate();
 	},
@@ -1952,19 +1977,20 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 	},
 	
 	getCompleteChoices: function(){
-		var selectedChoices = [];
+		var completeChoices = [];
 		for(var choiceId in this.conditionByLabel){
-			selectedChoices.push(choiceId);
+			var choiceInfo = this.conditionByLabel[choiceId];
+			completeChoices.push(choiceInfo);
 		};
-		selectedChoices.sort();
-		return selectedChoices;
+		completeChoices.sort();
+		return completeChoices;
 	},
 	
 	_setCompleteChoices: function(choiceIdArray){
 		var _this = this;
 		_this.selectedChoiceIdMap = {};
 		choiceIdArray.forEach(function(choiceId){
-			_this.selectedChoiceIdMap[choiceId] = true;
+			_this.selectedChoiceIdMap[choiceId.labelId] = true;
 		});
 		_this.selectedChoicesParameter.sendUpdate();
 	},
@@ -1978,10 +2004,11 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 			try {
 				//Greedy approach to filtering documents
 				for (var choice in selectedChoiceIdMap){
-					var condition = _this.conditionByLabel[choice];
-					if ( !condition ){
+					var conditionInfo = _this.conditionByLabel[choice];
+					if ( !conditionInfo ){
 						result = false;
 					} else {
+						var condition = conditionInfo.condition;
 						result = condition.getValue(doc);
 					}
 					

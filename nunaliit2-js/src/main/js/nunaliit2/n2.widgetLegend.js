@@ -627,9 +627,14 @@ POSSIBILITY OF SUCH DAMAGE.
 								//And the conditionalModelFilter will only filtering based
 								//on the conditions associated with these label.
 								_this.labels.forEach(function(l){
-									if (_this.completeChoices.indexOf(l) >= 0){
-										enforcedChoices.push(l);
+									var isExisted = false;
+									for (var i=0,e=_this.completeChoices.length; i<e; i++){
+										if ( _this.completeChoices[i].labelId === l){
+											enforcedChoices.push(_this.completeChoices[i]);
+											break;
+										}
 									}
+	
 								});
 
 								this.completeChoices  = enforcedChoices;
@@ -651,7 +656,8 @@ POSSIBILITY OF SUCH DAMAGE.
 						};
 					}
 					//For conditionalModelWidget, initially, all valid choices will be selected
-					this.completeChoices.forEach(function(choiceId){
+					this.completeChoices.forEach(function(choiceInfo){
+						var choiceId = choiceInfo.labelId;
 						_this.selectedChoiceIdMap[choiceId] = true;
 					});
 					
@@ -712,9 +718,12 @@ POSSIBILITY OF SUCH DAMAGE.
 				var atLeastOne = false;
 
 				for(var i=0,e=_this.completeChoices.length; i < e; i++){
-						var styleId = _this.completeChoices[i];
-						var effectiveLabel = _loc( styleId );
-						stylesByLabel[effectiveLabel] = true;
+						var labelId = _this.completeChoices[i].labelId;
+						var effectiveLabel = _loc( _this.completeChoices[i].label );
+						stylesByLabel[labelId] = {
+								effectivelabel: effectiveLabel
+								,labelId : labelId
+						};
 						atLeastOne = true;
 				};
 
@@ -724,7 +733,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					.addClass('n2widgetLegend_outer')
 					.appendTo($elem);
 
-					var labelNames = [];
+					var labelInfos = [];
 
 					
 					//When user provides a list of label, enforce that list to be rendered,
@@ -733,29 +742,32 @@ POSSIBILITY OF SUCH DAMAGE.
 						this.labels.forEach(function(label){
 							var effectiveLabel = _loc(label);
 							if( stylesByLabel[effectiveLabel] ){
-								labelNames.push(effectiveLabel);
+								labelInfos.push(stylesByLabel[effectiveLabel]);
 							};
 						});
 					} else {
 						for (var labelName in stylesByLabel){
-							labelNames.push(labelName);
+							labelInfos.push(stylesByLabel[labelName]);
 						};
 
-						labelNames.sort();
+						labelInfos.sort();
 					};
 		
-					labelNames.forEach(function(labelName){
+					labelInfos.forEach(function(labelInfo){
 					
+						
+						var labelId = labelInfo.labelId;
+						var labelName = labelInfo.effectivelabel
 						var $div = $('<div>')
 						.addClass('n2widgetLegend_legendEntry')
-						.addClass($n2.utils.stringToHtmlId('n2widgetLegend_labelName'+ labelName))
+						.addClass($n2.utils.stringToHtmlId('n2widgetLegend_labelName'+ labelId))
 						.appendTo($outer);
 						
 						var $checkboxColumn = $('<div>')
 						.addClass('n2widgetLegend_checkboxColumn')
 						.appendTo($div);
 						
-						addCheckbox($checkboxColumn, labelName);
+						addCheckbox($checkboxColumn, labelId, labelName);
 						
 						var $symbolColumn = $('<div>')
 						.addClass('n2widgetLegend_symbolColumn')
@@ -780,15 +792,15 @@ POSSIBILITY OF SUCH DAMAGE.
 					});
 				};
 				
-				function addCheckbox($container, label){
+				function addCheckbox($container, labelId, labelName){
 					var $div = $('<div>')
 					.addClass('n2widgetLegend_option')
-					.attr('data-n2-choiceId',label)
+					.attr('data-n2-choiceId',labelId)
 					.appendTo($container);
 
 				$('<a>')
-					.text(label)
-					.attr('data-n2-choiceId',label)
+					.text(labelName)
+					.attr('data-n2-choiceId',labelId)
 					.appendTo($div)
 					.click(function(){
 						var $a = $(this);
