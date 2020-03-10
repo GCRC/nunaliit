@@ -218,7 +218,8 @@ public class CouchNunaliitUtils {
 
 	/**
 	 * Get folder path for base URL. Could be http://www.domain.com or possibly http://www.domain.com/atlas1 or
-	 * http://www.domain.com/atlases/atlas1?module=module.map. Finds the 'atlases/atlas1' path.
+	 * http://www.domain.com/atlases/atlas1?module=module.map. Finds the 'atlases/atlas1' path. Also will properly
+	 * find path /atlas/ in "/atlas/index.html".  The REQUEST_URI custom header passes this in, omitting the domain.
 	 *
 	 * @param url The full URL to search.
 	 * @return The path between the first / to the query string. Returns null if no path found.
