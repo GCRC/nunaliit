@@ -958,10 +958,10 @@ var SearchOnLayerDialogFactory = $n2.Class('SearchOnLayerDialogFactory', SearchB
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 	/**
-	 * Search for documents based on model identifier
-	 * @class
+	 * @class SearchOnModelDialogFactory
+	 * @classdesc A dialog factory class for document searching based on a specified source model id.
 	 */
 	var SearchOnModelDialogFactory = $n2.Class('SearchOnModelDialogFactory', SearchBriefDialogFactory, {
 
@@ -990,6 +990,11 @@ var SearchOnLayerDialogFactory = $n2.Class('SearchOnLayerDialogFactory', SearchB
 			this.dispatchService = opts.dispatchService;
 		},
 
+		/**
+		 * @function getDocuments
+		 * @param opts_
+		 * @description Get all documents associated with the provided source model id.
+		 */
 		getDocuments: function(opts_){
 			var _this = this;
 			var state;
