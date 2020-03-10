@@ -1795,8 +1795,6 @@ var DialogService = $n2.Class({
 	
 	atlasDesign: null,
 
-	siteDesign: null,
-
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			dispatchService: null
@@ -1806,7 +1804,6 @@ var DialogService = $n2.Class({
 			,schemaRepository: null
 			,funcMap: null
 			,atlasDesign: null
-			,siteDesign: null
 		},opts_);
 	
 		var _this = this;
@@ -1817,7 +1814,6 @@ var DialogService = $n2.Class({
 		this.showService = opts.showService;
 		this.schemaRepository = opts.schemaRepository;
 		this.atlasDesign = opts.atlasDesign;
-		this.siteDesign = opts.siteDesign;
 
 		this.funcMap = {};
 		for(var key in opts.funcMap){
