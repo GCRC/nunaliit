@@ -959,6 +959,84 @@ var SearchOnLayerDialogFactory = $n2.Class('SearchOnLayerDialogFactory', SearchB
 });
 
 //++++++++++++++++++++++++++++++++++++++++++++++
+	/**
+	 * Search for documents based on model identifier
+	 * @class
+	 */
+	var SearchOnModelDialogFactory = $n2.Class('SearchOnModelDialogFactory', SearchBriefDialogFactory, {
+
+		dispatchService: null,
+
+		showService: null,
+
+		dialogPrompt: null,
+
+		sourceModelId: null,
+
+		/**
+		 * @constructor
+		 */
+		initialize: function(opts_){
+			var opts = $n2.extend({
+				dispatchService: undefined
+				,showService: undefined
+				,sourceModelId: undefined
+				,sortOnBrief: true
+				,dialogPrompt: _loc('Select a Document')
+			},opts_);
+
+			$n2.couchDialogs.SearchBriefDialogFactory.prototype.initialize.call(this, opts);
+
+			this.dispatchService = opts.dispatchService;
+		},
+
+		getDocuments: function(opts_){
+			var _this = this;
+			var state;
+			var docs = [];
+			var opts = $n2.extend({
+				args: []
+				,onSuccess: function(docs){}
+				,onError: function(err){}
+			},opts_);
+
+			var errorEncountered = true;
+
+			if( $n2.isArray(opts.args)
+				&& opts.args.length > 0 ){
+				errorEncountered = false;
+
+				if (opts.args.length === 1
+					&& typeof opts.args[0] === 'string') {
+					_this.sourceModelId = opts.args[0];
+
+				} else {
+					errorEncountered = true;
+				}
+			}
+
+			if( errorEncountered ){
+				$n2.logError('Unable to search for documents based on model', opts.args);
+				opts.onError( _loc('Unable to search for documents based on model') );
+
+			} else {
+				// Get current state of the specified model
+				if (this.sourceModelId && this.dispatchService) {
+					state = $n2.model.getModelState({
+						dispatchService: this.dispatchService
+						, modelId: _this.sourceModelId
+					});
+
+					if (state && state.added) {
+						docs = state.added;
+						opts.onSuccess(docs);
+					}
+				}
+			}
+		}
+	});
+
+//++++++++++++++++++++++++++++++++++++++++++++++
 /**
  * Search for a related media file
  * @class
@@ -1711,7 +1789,9 @@ var DialogService = $n2.Class({
 	funcMap: null,
 	
 	atlasDesign: null,
-	
+
+	siteDesign: null,
+
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			dispatchService: null
@@ -1721,6 +1801,7 @@ var DialogService = $n2.Class({
 			,schemaRepository: null
 			,funcMap: null
 			,atlasDesign: null
+			,siteDesign: null
 		},opts_);
 	
 		var _this = this;
@@ -1731,7 +1812,8 @@ var DialogService = $n2.Class({
 		this.showService = opts.showService;
 		this.schemaRepository = opts.schemaRepository;
 		this.atlasDesign = opts.atlasDesign;
-		
+		this.siteDesign = opts.siteDesign;
+
 		this.funcMap = {};
 		for(var key in opts.funcMap){
 			var fn = opts.funcMap[key];
@@ -1812,6 +1894,14 @@ var DialogService = $n2.Class({
 				,showService: this.showService
 			});
 			this.funcMap['getDocumentFromLayer'] = factory.getDialogFunction();
+		};
+
+		if( !this.funcMap['getDocumentFromModel'] ){
+			var factory = new SearchOnModelDialogFactory({
+				dispatchService: this.dispatchService
+				,showService: this.showService
+			});
+			this.funcMap['getDocumentFromModel'] = factory.getDialogFunction();
 		};
 	},
 	
