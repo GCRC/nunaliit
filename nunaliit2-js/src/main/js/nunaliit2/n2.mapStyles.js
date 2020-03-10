@@ -609,16 +609,16 @@ var featureStyleFunctions = {
 			&& this.nunaliit_created ){
 			// (this) is the document
 			documents.push(this)
+		} else if ($n2.isArray(this.cluster)){
+			// (this) is the feature cluster
+			this.cluster.forEach(function(f){
+				documents.push(f.data);
+			});
 		} else {
 			// (this) is the feature
-			if( $n2.isArray(this.cluster) ) {
-				this.cluster.forEach(function(f){
-					documents.push(f.data);
-				});
-			} else {
-				documents.push(this.data);
-			};
-		}
+			documents.push(this.data);
+		};
+		
 
 		return documents;
 	}

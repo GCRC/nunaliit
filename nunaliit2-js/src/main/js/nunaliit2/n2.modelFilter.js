@@ -1891,13 +1891,14 @@ var MultiDocumentFilter = $n2.Class('MultiDocumentFilter', SelectableDocumentFil
 * Options:
 * - modelId: String. Identifier for this model
 * - sourceModelId: String. Identifier for the model where documents are obtained
-* - initialSelection: Optional array of strings. If specified, the choices specified in the
-*                     array are initially selected. The strings in the array are choice identifiers.
+* - dispatchService: Service:Dispatcher
+* - rules: Array. style rule defined inside map.json
 */
 var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocumentFilter, {
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			sourceModelId: undefined
+			modelId: undefined
+			,sourceModelId: undefined
 			,dispatchService: undefined
 			,rules: null
 		},opts_);

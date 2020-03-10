@@ -823,7 +823,7 @@ WidgetLegend2
 }
 
 .nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_checkboxColumn {
-	width: 150px; /* width needed to contain four legend symbols */
+	min-width: 100px; /* width needed to contain four legend symbols */
 	display: inline-block;
 	vertical-align: top;
 }

@@ -5079,10 +5079,6 @@ var MapAndControls = $n2.Class('MapAndControls',{
 	// === END -- SIMPLIFIED GEOMETRIES ===================================================
 
     // === START -- MAP STYLES IN USE ===================================================
-
-    _getCustomDefinedMapStyles: function(){
-    	return this.options.canvasStyles || {};
-    },
     _getMapStylesInUse: function(){
     	var mapStylesInUse = {};
 

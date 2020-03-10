@@ -903,29 +903,26 @@ var ModuleDisplay = $n2.Class({
 				widgetInfo = availableWidgets[i];
 				var widgetDisplayMsg;
 				if ( _this.mapInfo && 'LegendWidget2' === widgetInfo.widgetType ){
-				       var styleRules = _this.mapInfo.styles || {};
-				       widgetDisplayMsg = {
-                		 type: 'widgetDisplay'
-                		,widgetType: widgetInfo.widgetType
-                	    ,widgetOptions: widgetInfo
-                		,contentId: _this.contentName
-                		,config: config
-                		,styleRules : styleRules
-                		,moduleDisplay: _this
-                	    };
-
+					var styleRules = _this.mapInfo.styles || {};
+					widgetDisplayMsg = {
+							type: 'widgetDisplay'
+							,widgetType: widgetInfo.widgetType
+							,widgetOptions: widgetInfo
+							,contentId: _this.contentName
+							,config: config
+							,styleRules : styleRules
+							,moduleDisplay: _this
+					};
 				} else {
-                    widgetDisplayMsg = {
-					    type: 'widgetDisplay'
-				    	,widgetType: widgetInfo.widgetType
-				    	,widgetOptions: widgetInfo
-				    	,contentId: _this.contentName
-				    	,config: config
-				    	,moduleDisplay: _this
-			    	};
-
+					widgetDisplayMsg = {
+							type: 'widgetDisplay'
+							,widgetType: widgetInfo.widgetType
+							,widgetOptions: widgetInfo
+							,contentId: _this.contentName
+							,config: config
+							,moduleDisplay: _this
+					};
 				}
-
 
 				var widgetDisplayed = false;
 				
