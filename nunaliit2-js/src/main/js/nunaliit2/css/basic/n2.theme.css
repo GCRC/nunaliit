@@ -500,15 +500,15 @@ CreateDocument widget
 .n2Display_attProgress_icon {
 	display: none;
 	float: left;
-	width: 32px;
-	height: 32px;
-	margin: 0;
-	padding: 0 5px 0 0;
+	width: 50px;
+	height: 50px;
+	margin: 0 5px 0 0;
 }
 
 .n2Display_attProgress_waiting .n2Display_attProgress_icon {
 	display: block;
-	background: transparent url(images/fbi_dude.png) no-repeat 0 0; 
+	background: transparent url(images/consensus_icon.svg) no-repeat 0 0;
+	background-size: cover;
 }
 
 .n2Display_attProgress_busy .n2Display_attProgress_icon {
@@ -522,7 +522,7 @@ CreateDocument widget
 }
 
 .n2Display_attProgress_message {
-	padding-top: 5px;
+	line-height: 50px;
 }
 
 .n2Display_attProgress_outer_end {
