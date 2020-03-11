@@ -165,6 +165,12 @@
             "needExtra": true
           },
           {
+            "value": "getDocumentFromModel",
+            "label": "getDocumentFromModel",
+            "selected": false,
+            "needExtra": true
+          },
+          {
             "value": "getLayers",
             "label": "getLayers",
             "selected": false

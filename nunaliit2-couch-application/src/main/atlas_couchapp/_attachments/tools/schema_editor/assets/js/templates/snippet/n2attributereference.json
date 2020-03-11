@@ -1,3 +1,3 @@
     "type" : "<%- type %>"
     ,"id" : "<%- id %>"
-    ,"label": "<%= label %>"<% var tempSearFun=""; if( searchFunction !== "customSearchFunction") { tempSearFun +=  searchFunction ; if( searchFunction === "getDocumentFromSchema" || searchFunction === "getDocumentFromLayer") { tempSearFun +=  "('" +customField + "')" }  } else {tempSearFun +=  customField  } %>,"searchFunction" : "<%= tempSearFun %>"
+    ,"label": "<%= label %>"<% var tempSearFun=""; if( searchFunction !== "customSearchFunction") { tempSearFun +=  searchFunction ; if( searchFunction === "getDocumentFromSchema" || searchFunction === "getDocumentFromLayer" || searchFunction === "getDocumentFromModel") { tempSearFun +=  "('" +customField + "')" }  } else {tempSearFun +=  customField  } %>,"searchFunction" : "<%= tempSearFun %>"
