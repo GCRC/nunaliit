@@ -142,7 +142,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			var $elem = this._getElem();
 			$elem.empty();
-			this.refreshCount = this.refreshCount ? this.refreshCount + 1 : 1;
 
 			// Make a map of styles by label
 			var stylesByLabel = {};
