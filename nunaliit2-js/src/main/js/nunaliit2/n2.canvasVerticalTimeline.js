@@ -31,807 +31,837 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2) {
-"use strict";
+	"use strict";
 
-var $l;
-var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
-	DH = 'n2.canvasVerticalTimeline';
- 
-// Required library: luxon
-if (window.luxon) {
-	$l = window.luxon;
-} else {
-	return;
-}
+	var $l;
+	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
+		DH = 'n2.canvasVerticalTimeline';
 
-function getDateFromDoc(object){
-	var date, key, currentProp;
-	
-	for (key in object) {
-		if (object.hasOwnProperty(key)) {
-			currentProp = object[key];
-			if (typeof currentProp === 'object') {
-				if (currentProp.nunaliit_type === 'date') {
-					date = currentProp;
-					return date;
-				} else {
-					return getDateFromDoc(currentProp);
+	// Required library: luxon
+	if (window.luxon) {
+		$l = window.luxon;
+	} else {
+		return;
+	}
+
+	/**
+	 * Walk-thru document and return the first Nunaliit date object it finds
+	 * @param object
+	 * @returns {object} Nunaliit date object
+	 */
+	function getDateFromDoc(object){
+		var date, key, currentProp;
+
+		for (key in object) {
+			if (object.hasOwnProperty(key)) {
+				currentProp = object[key];
+				if (typeof currentProp === 'object') {
+					if (currentProp.nunaliit_type === 'date') {
+						// if the current object property contains nunaliit date object, return it.
+						date = currentProp;
+						return date;
+					} else {
+						// If the current object property isn't a nunaliit date object
+						// recursively search through object property to see if it contains a nunaliit date object.
+						return getDateFromDoc(currentProp);
+					}
 				}
 			}
 		}
 	}
-}
 
-function getCanvasHeight(canvasId){
-	var canvasHeight = $('#' + canvasId).height();
+	/**
+	 * Get the current height of the canvas.
+	 * @param canvasId
+	 * @returns {number} canvas height in pixels
+	 */
+	function getCanvasHeight(canvasId){
+		var canvasHeight = $('#' + canvasId).height();
 
-	if (canvasHeight <= 0) {
-		canvasHeight = 0;
+		if (canvasHeight <= 0) {
+			canvasHeight = 0;
+		}
+
+		return canvasHeight;
 	}
 
-	return canvasHeight;
-}
+	// --------------------------------------------------------------------------
+	/**
+	 * @class
+	 * The vertical timeline canvas displays an ordered list of elements.
+	 *
+	 * The attribute for each timeline element is described here:
+	 * - id: String. Unique identifier for this element
+	 * - n2_doc: Document used to create the element item
+	 * - sort: Optional String. Used to sort the cells in the vertical timeline.
+	 * If no sort value is provided, sort by element date values will be attempted.
+	 * - fragments: Map map of fragments that make this element. Gives a list of
+	 * documents used to make up this element.
+	 *
+	 * @param {string} canvasId - Unique identified for the canvas
+	 * @param {string} sourceModelId - Unique identified of the model used by the canvas
+	 * @param {string} [elementGeneratorType] Name of element generator type
+	 * @param {object} [elementGeneratorOptions] Element generator options
+	 * @param {string} [labelDateFormat] Date format string for canvas label
+	 * @param {boolean} [ascendingSortOrder=true] Defines if ascending sort order should be used or not.
+	 * @param {boolean} [displayIndex=true] Defines if the side index should be shown or not
+	*/
+	var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
-// --------------------------------------------------------------------------
-/* 
-The vertical timeline canvas displays an ordered list of elements.
+		canvasId: null,
 
-The attribute for each timeline element is described here:
-	- id: String. Unique identifier for this element
-	- n2_doc: Document used to create the element item 
-	- sort: Optional String. Used to sort the cells in the vertical timeline.
-	If no sort value is provided, sort by element date values will be attempted.
- 	- fragments: Map map of fragments that make this element. Gives a list of
-	documents used to make up this element.
+		canvasContainerId: null,
 
-Canvas options: 
-	- canvasId: String. Unique identified for the canvas
-	- sourceModelId: String. Unique identified of the model used by the canvas
-	- elementGeneratorType: Optional String. Name of element generator type
-	- elementGeneratorOptions: Optional Object. Element generator options
-	- labelDateFormat: Optional String. Date format string for canvas label.
-	- ascendingSortOrder: Boolean. Default value of true 
-	- displayIndex: Boolean. Default value of true
-*/
-var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
+		indexElemId: null,
 
-	canvasId: null,
+		canvasListElemId: null,
 
-	canvasContainerId: null,
+		itemWidth: null,
 
-	indexElemId: null,
+		timelineIndex: null,
 
-	canvasListElemId: null,
+		sortedIndex: null,
 
-	itemWidth: null,
+		indexElements: null,
 
-	timelineIndex: null,
+		sortedElements: null,
 
-	sortedIndex: null,
+		timelineList: null,
 
-	indexElements: null,
+		dispatchService: null,
 
-	sortedElements: null,
+		showService: null,
 
-	timelineList: null,
+		dateRange: null,
 
-	dispatchService: null,
+		elementGenerator: null,
 
-	showService: null,
+		sourceModelId: null,
 
-	dateRange: null,
+		labelDateFormat: null,
 
-	elementGenerator: null,
+		ascendingSortOrder: null,
 
-	sourceModelId: null,
+		displayIndex: null,
 
-	labelDateFormat: null,
+		initialize: function(opts_){
+			var opts = $n2.extend({
+				canvasId: null,
+				displayIndex: true,
+				ascendingSortOrder: true,
+				labelDateFormat: null,
+				sourceModelId: null,
+				elementGenerator: null,
+				config: null,
+				moduleDisplay: null,
+				onSuccess: function(){},
+				onError: function(err){}
+			},opts_);
 
-	ascendingSortOrder: null,
+			var _this = this;
+			this.canvasId = opts.canvasId;
+			this.displayIndex = opts.displayIndex;
+			this.ascendingSortOrder = opts.ascendingSortOrder;
+			this.labelDateFormat = opts.labelDateFormat;
+			this.sourceModelId = opts.sourceModelId;
+			this.elementGenerator = opts.elementGenerator;
+			this.elementsById = {};
+			this.sortedElements = [];
+			this.canvasContainerId = $n2.getUniqueId();
+			this.canvasIndexId = $n2.getUniqueId();
+			this.canvasListId = $n2.getUniqueId();
 
-	displayIndex: null,
-
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			canvasId: null,
-			displayIndex: true,
-			ascendingSortOrder: true,
-			labelDateFormat: null,
-			sourceModelId: null,
-			elementGenerator: null,
-			config: null,
-			moduleDisplay: null,
-			onSuccess: function(){},
-			onError: function(err){}
-		},opts_);
-		
-		var _this = this;
-		this.canvasId = opts.canvasId;
-		this.displayIndex = opts.displayIndex;
-		this.ascendingSortOrder = opts.ascendingSortOrder;
-		this.labelDateFormat = opts.labelDateFormat;
-		this.sourceModelId = opts.sourceModelId;
-		this.elementGenerator = opts.elementGenerator;
-		this.elementsById = {};
-		this.sortedElements = [];
-		this.canvasContainerId = $n2.getUniqueId();
-		this.canvasIndexId = $n2.getUniqueId();
-		this.canvasListId = $n2.getUniqueId();
-
-		var config = opts.config;
-		if (config) {
-			if (config.directory) {
-				this.dispatchService = config.directory.dispatchService;
-				this.showService = config.directory.showService;
-			}
-		}
-
-		// Register to events
-		if (this.dispatchService) {
-			var f = function(m){
-				_this._handleDispatch(m);
-			};
-			
-			this.dispatchService.register(DH,'modelGetInfo',f);
-			this.dispatchService.register(DH,'modelStateUpdated',f);
-			this.dispatchService.register(DH,'windowResized',f);
-			this.dispatchService.register(DH,'userUnselect',f);
-		}
-		
-		// Element generator
-		if (this.elementGenerator) {
-			this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
-				_this._elementsChanged(added, updated, removed);
-			});
-		}
-
-		this._createTimeline();
-		opts.onSuccess();
-
-		$n2.log(this._classname,this);
-	},
-
-	_backgroundClicked: function(){
-		if (this.dispatchService) {
-			this.dispatchService.send(DH,{
-				type: 'userUnselect'
-			});
-		}
-	},
-
-	_calcListItemWidth: function(){
-		var width;
-		var itemPadding = 30;
-
-		width = ($('#' + this.canvasListId).width()/2) - itemPadding;
-		this.itemWidth = width;
-	},
-
-	_linkIdExists: function(id){
-		var currentlyExists = false; 
-		if ($('#' + id).length > 0) {
-			currentlyExists = true;
-		}
-		return currentlyExists;
-	},
-
-	_linkIndexToListItems: function(){
-		var i, e, arrayItem, indexItemId, indexItemSortValue, sortValue, index;
-		var itemsArray = $('#' + this.canvasId + ' .n2_vertical_timeline_item_label');
-
-		if (!this.ascendingSortOrder) {
-			for (i = 0, e = itemsArray.length-1; i <= e; e -= 1) {
-				arrayItem = itemsArray[e];
-				if (arrayItem.attributes
-					&& arrayItem.attributes.n2_sortvalue
-					&& arrayItem.attributes.n2_sortvalue.value){
-					sortValue = arrayItem.attributes.n2_sortvalue.value;
+			var config = opts.config;
+			if (config) {
+				if (config.directory) {
+					this.dispatchService = config.directory.dispatchService;
+					this.showService = config.directory.showService;
 				}
-	
-				for (index in this.indexElements) {
-					if (this.indexElements.hasOwnProperty(index)) {
-						if (this.indexElements[index].id && this.indexElements[index].sort) {
-							indexItemId = this.indexElements[index].id;
-							indexItemSortValue = this.indexElements[index].sort;
+			}
 
-							if (sortValue >= indexItemSortValue && !this._linkIdExists(indexItemId)) {
-								arrayItem.id = indexItemId;
+			// Register to events
+			if (this.dispatchService) {
+				var f = function(m){
+					_this._handleDispatch(m);
+				};
+
+				this.dispatchService.register(DH,'modelGetInfo',f);
+				this.dispatchService.register(DH,'modelStateUpdated',f);
+				this.dispatchService.register(DH,'windowResized',f);
+				this.dispatchService.register(DH,'userUnselect',f);
+			}
+
+			// Element generator
+			if (this.elementGenerator) {
+				this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
+					_this._elementsChanged(added, updated, removed);
+				});
+			}
+
+			this._createTimeline();
+			opts.onSuccess();
+
+			$n2.log(this._classname,this);
+		},
+
+		_backgroundClicked: function(){
+			if (this.dispatchService) {
+				this.dispatchService.send(DH,{
+					type: 'userUnselect'
+				});
+			}
+		},
+
+		_calcListItemWidth: function(){
+			var width;
+			var itemPadding = 30;
+
+			width = ($('#' + this.canvasListId).width()/2) - itemPadding;
+			this.itemWidth = width;
+		},
+
+		_linkIdExists: function(id){
+			var currentlyExists = false;
+			if ($('#' + id).length > 0) {
+				currentlyExists = true;
+			}
+			return currentlyExists;
+		},
+
+		_linkIndexToListItems: function(){
+			var i, e, arrayItem, indexItemId, indexItemSortValue, sortValue, index;
+			var itemsArray = $('#' + this.canvasId + ' .n2_vertical_timeline_item_label');
+
+			if (!this.ascendingSortOrder) {
+				for (i = 0, e = itemsArray.length-1; i <= e; e -= 1) {
+					arrayItem = itemsArray[e];
+					if (arrayItem.attributes
+						&& arrayItem.attributes.n2_sortvalue
+						&& arrayItem.attributes.n2_sortvalue.value){
+						sortValue = arrayItem.attributes.n2_sortvalue.value;
+					}
+
+					for (index in this.indexElements) {
+						if (this.indexElements.hasOwnProperty(index)) {
+							if (this.indexElements[index].id && this.indexElements[index].sort) {
+								indexItemId = this.indexElements[index].id;
+								indexItemSortValue = this.indexElements[index].sort;
+
+								if (sortValue >= indexItemSortValue && !this._linkIdExists(indexItemId)) {
+									arrayItem.id = indexItemId;
+								}
+							}
+						}
+					}
+				}
+			} else {
+				for (i = 0, e = itemsArray.length; i < e; i += 1) {
+					arrayItem = itemsArray[i];
+					if (arrayItem.attributes
+						&& arrayItem.attributes.n2_sortvalue
+						&& arrayItem.attributes.n2_sortvalue.value){
+						sortValue = arrayItem.attributes.n2_sortvalue.value;
+					}
+
+					for (index in this.indexElements) {
+						if (this.indexElements.hasOwnProperty(index)) {
+							if (this.indexElements[index].id && this.indexElements[index].sort) {
+								indexItemId = this.indexElements[index].id;
+								indexItemSortValue = this.indexElements[index].sort;
+
+								if (sortValue >= indexItemSortValue && !this._linkIdExists(indexItemId)) {
+									arrayItem.id = indexItemId;
+								}
 							}
 						}
 					}
 				}
 			}
-		} else {
-			for (i = 0, e = itemsArray.length; i < e; i += 1) {
-				arrayItem = itemsArray[i];
-				if (arrayItem.attributes
-					&& arrayItem.attributes.n2_sortvalue
-					&& arrayItem.attributes.n2_sortvalue.value){
-					sortValue = arrayItem.attributes.n2_sortvalue.value;
-				}
+		},
 
-				for (index in this.indexElements) {
-					if (this.indexElements.hasOwnProperty(index)) {
-						if (this.indexElements[index].id && this.indexElements[index].sort) {
-							indexItemId = this.indexElements[index].id;
-							indexItemSortValue = this.indexElements[index].sort;
+		_createTimeline: function(){
+			var $target, $canvas, $canvasList;
+			var _this = this;
 
-							if (sortValue >= indexItemSortValue && !this._linkIdExists(indexItemId)) {
-								arrayItem.id = indexItemId;
-							}
-						}
+			// Remove old canvas container if it already exists
+			$canvas = $('#' + this.canvasId).find('#' + this.canvasContainerId);
+			$canvas.remove();
+
+			// Add container for timeline canvas
+			$('<div>')
+				.attr('class','n2_vertical_timeline')
+				.attr('id', this.canvasContainerId)
+				.click(function(e){
+					$target = $(e.target);
+					if ($target.hasClass('n2_vertical_timeline_item')) {
+						// Ignore
+					} else if ($target.parents('.n2_vertical_timeline_item').length > 0) {
+					   	// Ignore
+					}	else {
+						_this._backgroundClicked();
 					}
-				}
-			}
-		}
-	},
+				})
+				.appendTo($('#' + this.canvasId));
 
-	_createTimeline: function(){
-		var $target, $canvas, $canvasIndex, $canvasList;
-		var _this = this;
-
-		// Remove old canvas container if it already exists
-		$canvas = $('#' + this.canvasId).find('#' + this.canvasContainerId);
-		$canvas.remove();
-
-		// Add container for timeline canvas
-		$('<div>')
-			.attr('class','n2_vertical_timeline')
-			.attr('id', this.canvasContainerId)
-			.click(function(e){
-				$target = $(e.target);
-				if ($target.hasClass('n2_vertical_timeline_item')) {
-					// Ignore
-				} else if ($target.parents('.n2_vertical_timeline_item').length > 0) {
-				   	// Ignore
-				}	else {
-					_this._backgroundClicked();
-				}
-			})
-			.appendTo($('#' + this.canvasId));
-
-		// Add container for timeline index
-		if (this.displayIndex) {
-			$canvasIndex = $('<div>')
-				.attr('class','n2_vertical_timeline_index')
-				.attr('id',this.canvasIndexId)
-				.appendTo('#' + this.canvasContainerId);
-		}
-
-		// Add container for timeline list
-		$canvasList = $('<div>')
-			.attr('class','n2_vertical_timeline_list')
-			.appendTo($('#' + this.canvasContainerId))
-			.on('scroll', function(){
-				_this._handleScrollEvent();
-			});
-
-		if (!this.displayIndex) {
-			$canvasList.css('width','100%');
-		}
-
-		$('<ul>')
-			.attr('id', this.canvasListId)
-			.appendTo($canvasList);
-
-		// Add canvas padding to bottom 
-		// Needed for index active status updating when scrolling canvas
-		$('<div>')
-			.addClass('n2_vertical_timeline_padding')
-			.css('height', getCanvasHeight(this.canvasId))
-			.appendTo($canvasList);
-
-		this._refresh();
-	},
-
-	_updateTimelinePadding: function(){
-		
-		$('#' + this.canvasContainerId + ' .n2_vertical_timeline_list').find('.n2_vertical_timeline_padding')
-			.css('height', getCanvasHeight(this.canvasId));
-	},
-
-	_refresh: function(){
-		var i, e, timelineItemOptions, timelineIndexOptions, $timelineList, $index;
-
-		$timelineList = $('#' + this.canvasContainerId).find('#' + this.canvasListId);
-		$timelineList.empty();
-
-		$index = $('#' + this.canvasContainerId).find('#' + this.canvasIndexId);
-		$index.empty();
-
-		if (this.sortedElements.length > 0) {
-			timelineIndexOptions = {
-				'canvasId': this.canvasId,
-				'canvasIndexId': this.canvasIndexId,
-				'sortedElements': this.sortedElements,
-				'ascendingSortOrder': this.ascendingSortOrder,
-			};
-
-			this.timelineIndex = new TimelineIndex(timelineIndexOptions);
-			this.sortedIndex = this.timelineIndex.getSortedIndex();
-			this.indexElements = this.timelineIndex.getIndexElements();
-			this._updateTimelinePadding();
-
-			// Re-Calculate Item Width based on available space
-			this._calcListItemWidth();
-
-			for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
-				// Exclude link elements if produced by the generic element generator
-				if (this.elementGenerator._classname === 'GenericElementGenerator' 
-					&& this.sortedElements[i].isLink) {
-					// Do nothing
-				} else {
-					timelineItemOptions = {
-						element: this.sortedElements[i],
-						timelineList: this.canvasListId,
-						itemWidth: this.itemWidth
-					};
-					new TimelineItem(timelineItemOptions);
-				}
+			// Add container for timeline index
+			if (this.displayIndex) {
+				$('<div>')
+					.attr('class','n2_vertical_timeline_index')
+					.attr('id',this.canvasIndexId)
+					.appendTo('#' + this.canvasContainerId);
 			}
 
-			this._linkIndexToListItems();
-			this.showService.fixElementAndChildren($timelineList);
-		}
-	},
+			// Add container for timeline list
+			$canvasList = $('<div>')
+				.attr('class','n2_vertical_timeline_list')
+				.appendTo($('#' + this.canvasContainerId))
+				.on('scroll', function(){
+					_this._handleScrollEvent();
+				});
 
-	_handleScrollEvent: function(){
-		var i, e, index, elem;
-		var headerHeight = 100;
-		if (this.sortedIndex && this.indexElements) {
-			for (i = 0, e = this.sortedIndex.length; i < e; i += 1){
-				index = this.sortedIndex[i];
-				if (this.indexElements.hasOwnProperty(index)) {
-					if (this.indexElements[index].id) {
-						elem = document.getElementById(this.indexElements[index].id);
-						if (elem && elem.getBoundingClientRect().top > headerHeight) {
-							this.timelineIndex.setActiveIndexItem(this.indexElements[index].label);
-							break;
-						}
-					}
-				}
-			}
-		}
-	},
-
-	_sortElements: function(){
-		var elementId, element, date, luxonDate;
-		var defaultDateFormat = "yyyy-LL-dd";
-		this.sortedElements = [];
-
-		for (elementId in this.elementsById) {
-			if (this.elementsById.hasOwnProperty(elementId)) {
-				element = this.elementsById[elementId];
-				date = getDateFromDoc(element);
-
-				// If element doesn't provide a label value, base it on a document date value
-				if (typeof element.label === 'undefined') {
-					if (date) {
-						luxonDate = $l.DateTime.fromMillis(date.min);
-						if (this.labelDateFormat) {
-							element.label = _loc(luxonDate.toFormat(this.labelDateFormat));
-						} else {
-							// If no specified label date format is provided, use default format.
-							element.label = luxonDate.toFormat(defaultDateFormat);
-						}
-					}
-				}
-
-				// If element doesn't provide a sorted value, try to base it on a document date value
-				if (typeof element.sort === 'undefined') {
-					if (date) {
-						element.sort = date.min;
-					}
-				}
-
-				if (element.sort) {
-					this.sortedElements.push(element);
-				}
-			}
-		}
-
-		this.sortedElements.sort(function(a,b){
-			if (a.sort < b.sort) {
-				return -1;
-			}
-			if (a.sort > b.sort) {
-				return 1;
-			}
-			if (a.sort === b.sort) {
-				if (!a.label && b.label) {
-					return -1;
-				} else if (a.label && !b.label) {
-					return 1;
-				}
-			}
-			return 0;
-		});
-
-		if (!this.ascendingSortOrder) {
-			this.sortedElements.reverse();
-		}
-	},
-
-	_elementsChanged: function(addedElements, updatedElements, removedElements){
-		var i,e,removed,added,updated;	
-		
-		// Remove elements that are no longer there
-		for (i=0,e=removedElements.length; i<e; i += 1) {
-			removed = removedElements[i];
-			delete this.elementsById[removed.id];
-		}
-		
-		// Add elements
-		for (i=0,e=addedElements.length; i<e; i += 1) {
-			added = addedElements[i];
-			this.elementsById[added.id] = added;
-		}
-		
-		// Update elements
-		for (i=0,e=updatedElements.length; i<e; i += 1) {
-			updated = updatedElements[i];
-			this.elementsById[ updated.id ] = updated;
-		}
-
-		this._sortElements();
-
-		this._refresh();
-	},
-	
-	_sourceModelUpdated: function(state){
-		this.elementGenerator.sourceModelUpdated(state);
-	},
-
-	_handleDispatch: function(m){
-		if ('modelStateUpdated' === m.type) {
-			if (this.sourceModelId === m.modelId) {
-				if (m.state) {
-					this._sourceModelUpdated(m.state);
-				}
+			if (!this.displayIndex) {
+				$canvasList.css('width','100%');
 			}
 
-		} else if ('windowResized' === m.type) {
+			$('<ul>')
+				.attr('id', this.canvasListId)
+				.appendTo($canvasList);
+
+			// Add canvas padding to bottom
+			// Needed for index active status updating when scrolling canvas
+			$('<div>')
+				.addClass('n2_vertical_timeline_padding')
+				.css('height', getCanvasHeight(this.canvasId))
+				.appendTo($canvasList);
+
 			this._refresh();
-		}
-	}
-});
+		},
 
-var TimelineIndex = $n2.Class('TimelineIndex', {
+		_updateTimelinePadding: function(){
 
-	canvasId: null,
+			$('#' + this.canvasContainerId + ' .n2_vertical_timeline_list').find('.n2_vertical_timeline_padding')
+				.css('height', getCanvasHeight(this.canvasId));
+		},
 
-	canvasIndexId: null,
+		_refresh: function(){
+			var i, e, timelineItemOptions, timelineIndexOptions, $timelineList, $index;
 
-	dispatchService: null,
+			$timelineList = $('#' + this.canvasContainerId).find('#' + this.canvasListId);
+			$timelineList.empty();
 
-	indexRange: null,
+			$index = $('#' + this.canvasContainerId).find('#' + this.canvasIndexId);
+			$index.empty();
 
-	sortedElements: null,
+			if (this.sortedElements.length > 0) {
+				timelineIndexOptions = {
+					'canvasId': this.canvasId,
+					'canvasIndexId': this.canvasIndexId,
+					'sortedElements': this.sortedElements,
+					'ascendingSortOrder': this.ascendingSortOrder
+				};
 
-	ascendingSortOrder: null,
+				this.timelineIndex = new TimelineIndex(timelineIndexOptions);
+				this.sortedIndex = this.timelineIndex.getSortedIndex();
+				this.indexElements = this.timelineIndex.getIndexElements();
+				this._updateTimelinePadding();
 
-	sortedIndex: null,
+				// Re-Calculate Item Width based on available space
+				this._calcListItemWidth();
 
-	indexElements: null,
-
-	uniqueIndexValues: null,
-
-	itemHeight: null,
-
-	itemMagin: null,
-
-	itemPadding: null,
-
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			canvasId: null,
-			canvasIndexId: null,
-			ascendingSortOrder: null,
-			timelineItems: null,
-			onSuccess: function(){},
-			onError: function(err){}
-		},opts_);
-
-		this.canvasId = opts.canvasId;
-		this.canvasIndexId = opts.canvasIndexId;
-		this.ascendingSortOrder = opts.ascendingSortOrder;
-		this.sortedElements = opts.sortedElements;
-		this.indexRange = {'startIndex': null, 'endIndex': null};
-		this.sortedIndex = [];
-		this.indexElements = {};
-		this.itemHeight = 15;
-		this.itemPadding = 1;
-		this.itemMargin = 4;
-
-		this._generateIndex();
-
-		this._addTimelineIndexToCanvas();
-
-		opts.onSuccess();
-	},
-
-	_generateIndex: function(){
-		var i, e, sortValue, labelValue, uniqueId;
-		this.uniqueIndexValues = [];
-		var uniqueIndexObjects = {};
-
-		for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
-			sortValue = this.sortedElements[i].sort;
-			labelValue = this.sortedElements[i].label;
-
-			if (sortValue) {
-				this._updateIndexRange(sortValue);
-
-				if (this.uniqueIndexValues.indexOf(sortValue) < 0) {
-					this.uniqueIndexValues.push(sortValue);
-
-					if (!uniqueIndexObjects.hasOwnProperty(sortValue)) {
-						uniqueId = $n2.getUniqueId();
-
-						uniqueIndexObjects[sortValue] = {
-							sort: sortValue,
-							label: labelValue,
-							id: uniqueId
+				for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
+					// Exclude link elements if produced by the generic element generator
+					if (this.elementGenerator._classname === 'GenericElementGenerator'
+						&& this.sortedElements[i].isLink) {
+						// Do nothing
+					} else {
+						timelineItemOptions = {
+							element: this.sortedElements[i],
+							timelineList: this.canvasListId,
+							itemWidth: this.itemWidth
 						};
+						new TimelineItem(timelineItemOptions);
+					}
+				}
+
+				this._linkIndexToListItems();
+				this.showService.fixElementAndChildren($timelineList);
+			}
+		},
+
+		_handleScrollEvent: function() {
+			var i, e, index, elem;
+			var headerHeight = 100;
+			if (this.sortedIndex && this.indexElements) {
+				for (i = 0, e = this.sortedIndex.length; i < e; i += 1) {
+					index = this.sortedIndex[i];
+					if (this.indexElements.hasOwnProperty(index)) {
+						if (this.indexElements[index].id) {
+							elem = document.getElementById(this.indexElements[index].id);
+							if (elem && elem.getBoundingClientRect().top > headerHeight) {
+								this.timelineIndex.setActiveIndexItem(this.indexElements[index].label);
+								break;
+							}
+						}
 					}
 				}
 			}
-		}
+		},
 
-		if (this.uniqueIndexValues.length > 1) {
-			this.uniqueIndexValues.sort(function(a,b){
-				if (a < b) {
+		_sortElements: function(){
+			var elementId, element, date, luxonDate;
+			var defaultDateFormat = "yyyy-LL-dd";
+			this.sortedElements = [];
+
+			for (elementId in this.elementsById) {
+				if (this.elementsById.hasOwnProperty(elementId)) {
+					element = this.elementsById[elementId];
+					date = getDateFromDoc(element);
+
+					// If element doesn't provide a label value, base it on a document date value
+					if (typeof element.label === 'undefined') {
+						if (date) {
+							luxonDate = $l.DateTime.fromMillis(date.min);
+							if (this.labelDateFormat) {
+								element.label = _loc(luxonDate.toFormat(this.labelDateFormat));
+							} else {
+								// If no specified label date format is provided, use default format.
+								element.label = luxonDate.toFormat(defaultDateFormat);
+							}
+						}
+					}
+
+					// If element doesn't provide a sorted value, try to base it on a document date value
+					if (typeof element.sort === 'undefined') {
+						if (date) {
+							element.sort = date.min;
+						}
+					}
+
+					if (element.sort) {
+						this.sortedElements.push(element);
+					}
+				}
+			}
+
+			this.sortedElements.sort(function(a,b){
+				if (a.sort < b.sort) {
 					return -1;
 				}
-				if (a > b) {
+				if (a.sort > b.sort) {
 					return 1;
+				}
+				if (a.sort === b.sort) {
+					if (!a.label && b.label) {
+						return -1;
+					} else if (a.label && !b.label) {
+						return 1;
+					}
 				}
 				return 0;
 			});
 
-			// Set index with uniqueIndexValues
-			this._setIndex(this.uniqueIndexValues, uniqueIndexObjects);
-
-			// Update index with reversed order
 			if (!this.ascendingSortOrder) {
-				this._setIndex(this.uniqueIndexValues.reverse(), uniqueIndexObjects);
+				this.sortedElements.reverse();
+			}
+		},
+
+		_elementsChanged: function(addedElements, updatedElements, removedElements){
+			var i,e,removed,added,updated;
+
+			// Remove elements that are no longer there
+			for (i=0,e=removedElements.length; i<e; i += 1) {
+				removed = removedElements[i];
+				delete this.elementsById[removed.id];
+			}
+
+			// Add elements
+			for (i=0,e=addedElements.length; i<e; i += 1) {
+				added = addedElements[i];
+				this.elementsById[added.id] = added;
+			}
+
+			// Update elements
+			for (i=0,e=updatedElements.length; i<e; i += 1) {
+				updated = updatedElements[i];
+				this.elementsById[ updated.id ] = updated;
+			}
+
+			this._sortElements();
+
+			this._refresh();
+		},
+
+		_sourceModelUpdated: function(state){
+			this.elementGenerator.sourceModelUpdated(state);
+		},
+
+		_handleDispatch: function(m){
+			if ('modelStateUpdated' === m.type) {
+				if (this.sourceModelId === m.modelId) {
+					if (m.state) {
+						this._sourceModelUpdated(m.state);
+					}
+				}
+
+			} else if ('windowResized' === m.type) {
+				this._refresh();
 			}
 		}
-	},
+	});
 
-	_addTimelineIndexToCanvas: function(){
-		var i, e, indexList, indexItem, indexElements, itemId, itemLabel, sortedIndex, sortedIndexItem;
+	/**
+	 * Creates an vertical timeline index
+	 * @class
+	 *
+	 * @param {string} canvasId
+	 * @param {string} canvasIndexId
+	 * @param {boolean} ascendingSortOrder
+	 * @param {array} sortedElements
+	 */
+	var TimelineIndex = $n2.Class('TimelineIndex', {
 
-		indexList = $('<ul>')
-			.appendTo('#' + this.canvasIndexId);
-		
-		sortedIndex = this.getSortedIndex();
-		indexElements = this.getIndexElements();
+		canvasId: null,
 
-		for (i = 0, e = sortedIndex.length; i < e; i += 1) {
-			sortedIndexItem = sortedIndex[i];
-			itemId = indexElements[sortedIndexItem].id;
-			itemLabel = indexElements[sortedIndexItem].label;
-			indexItem = $('<li>')
-				.css('min-height', this.itemHeight + "px")
-				.css('padding', this.itemPadding)
-				.css('margin', "0px auto " + this.itemMargin + "px auto")
-				.appendTo(indexList);
-			
-			// If first item make it active
-			if (i === 0) {
-				indexItem.addClass('active');
-			}
-			
-			$('<a>')
-				.text(itemLabel)
-				.attr('href', '#' + itemId)
-				.appendTo(indexItem);
-		}
-	},
+		canvasIndexId: null,
 
-	getSortedIndex: function(){
-		return this.sortedIndex;
-	},
+		dispatchService: null,
 
-	getIndexElements: function(){
-		return this.indexElements;
-	},
+		indexRange: null,
 
-	_setIndex: function(sortedIndex, indexElements){
-		this.sortedIndex = sortedIndex;
-		this.indexElements = indexElements;
-	},
+		sortedElements: null,
 
-	_getIndexRange: function(){
-		return this.indexRange;
-	},
+		ascendingSortOrder: null,
 
-	_setIndexRange: function(startIndex, endIndex){
-		this.indexRange.startIndex = startIndex;
-		this.indexRange.endIndex = endIndex;
-	},
-	
-	_updateIndexRange: function(sortValue){
-		var currentIndexRange = this._getIndexRange();
-		
-		if (!currentIndexRange.startIndex && !currentIndexRange.endIndex) {
-			currentIndexRange.startIndex = sortValue; 
-			currentIndexRange.endIndex = sortValue;
-		} else if (sortValue < currentIndexRange.startIndex) {
-			currentIndexRange.startIndex = sortValue;
-		} else if (sortValue > currentIndexRange.endIndex) {
-			currentIndexRange.endIndex = sortValue;
-		}
-		
-		if (currentIndexRange.startIndex && currentIndexRange.endIndex) {
-			this._setIndexRange(currentIndexRange.startIndex, currentIndexRange.endIndex);
-		}
-	},
+		sortedIndex: null,
 
-	setActiveIndexItem: function(itemLabel){
-		var i, e, indexItem, indexItems, indexItemText;
-		
-		// Update item with active class
-		indexItems = $('#' + this.canvasIndexId + ' li');
+		indexElements: null,
 
-		for (i = 0, e = indexItems.length; i < e; i += 1) {
-			indexItem = indexItems.eq(i);
-			indexItemText = indexItem.text();
-			if (indexItemText  === String(itemLabel)) {
-				indexItem.addClass('active');	
-			} else {
-				indexItem.removeClass('active');
-			}
-		}
-	}
-});
+		uniqueIndexValues: null,
 
-var TimelineItem = $n2.Class('TimelineItem', {
-	
-	element: null,
+		itemHeight: null,
 
-	itemWidth: null,
+		itemMargin: null,
 
-	timelineList: null,
+		itemPadding: null,
 
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			element: null,
-			itemWidth: null,
-			timelineList: null,
-			onSuccess: function(){},
-			onError: function(err){}
-		},opts_);
-	
-		this.element = opts.element;
-		this.itemWidth = opts.itemWidth;
-		this.timelineList = opts.timelineList;
+		initialize: function(opts_){
+			var opts = $n2.extend({
+				canvasId: null,
+				canvasIndexId: null,
+				ascendingSortOrder: null,
+				timelineItems: null,
+				onSuccess: function(){},
+				onError: function(err){}
+			},opts_);
 
-		this._addItemToList();
+			this.canvasId = opts.canvasId;
+			this.canvasIndexId = opts.canvasIndexId;
+			this.ascendingSortOrder = opts.ascendingSortOrder;
+			this.sortedElements = opts.sortedElements;
+			this.indexRange = {'startIndex': null, 'endIndex': null};
+			this.sortedIndex = [];
+			this.indexElements = {};
+			this.itemHeight = 15;
+			this.itemPadding = 1;
+			this.itemMargin = 4;
 
-		opts.onSuccess();
-	},
-	
-	_getDocIdFromDoc: function(doc){
-		if (doc && doc._id) {
-			return doc._id;
-		}
-	},
+			this._generateIndex();
 
-	_getAttachment: function(doc){
-		var file;
-		if (doc && doc.nunaliit_attachments && doc.nunaliit_attachments.files) {
-			for (file in doc.nunaliit_attachments.files) {
-				if (doc.nunaliit_attachments.files.hasOwnProperty(file)){
-					if (doc.nunaliit_attachments.files[file].originalName) {
-						return doc.nunaliit_attachments.files[file].originalName;
+			this._addTimelineIndexToCanvas();
+
+			opts.onSuccess();
+		},
+
+		_generateIndex: function(){
+			var i, e, sortValue, labelValue, uniqueId;
+			this.uniqueIndexValues = [];
+			var uniqueIndexObjects = {};
+
+			for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
+				sortValue = this.sortedElements[i].sort;
+				labelValue = this.sortedElements[i].label;
+
+				if (sortValue) {
+					this._updateIndexRange(sortValue);
+
+					if (this.uniqueIndexValues.indexOf(sortValue) < 0) {
+						this.uniqueIndexValues.push(sortValue);
+
+						if (!uniqueIndexObjects.hasOwnProperty(sortValue)) {
+							uniqueId = $n2.getUniqueId();
+
+							uniqueIndexObjects[sortValue] = {
+								sort: sortValue,
+								label: labelValue,
+								id: uniqueId
+							};
+						}
 					}
 				}
 			}
-		}
-	},
 
-	_addItemToList: function(){
-		var $timelineItem, $timelineItemContent, $timelineItemContentText;
-		var sortValue = this.element.sort;
-		var itemLabel = this.element.label;
-		var docId = this._getDocIdFromDoc(this.element.n2_doc);
-		var attachmentName = this._getAttachment(this.element.n2_doc);
+			if (this.uniqueIndexValues.length > 1) {
+				this.uniqueIndexValues.sort(function(a,b){
+					if (a < b) {
+						return -1;
+					}
+					if (a > b) {
+						return 1;
+					}
+					return 0;
+				});
 
-		if (sortValue) {
-			
-			$timelineItem = $('<li>')
-				.attr('class','n2_vertical_timeline_item n2s_userEvents')
-				.attr('nunaliit-document', docId);
+				// Set index with uniqueIndexValues
+				this._setIndex(this.uniqueIndexValues, uniqueIndexObjects);
 
-			if (itemLabel) {
-				$('<div>')
-					.attr('class','n2_vertical_timeline_item_label')
-					.attr('n2_sortvalue',sortValue)
+				// Update index with reversed order
+				if (!this.ascendingSortOrder) {
+					this._setIndex(this.uniqueIndexValues.reverse(), uniqueIndexObjects);
+				}
+			}
+		},
+
+		_addTimelineIndexToCanvas: function(){
+			var i, e, indexList, indexItem, indexElements, itemId, itemLabel, sortedIndex, sortedIndexItem;
+
+			indexList = $('<ul>')
+				.appendTo('#' + this.canvasIndexId);
+
+			sortedIndex = this.getSortedIndex();
+			indexElements = this.getIndexElements();
+
+			for (i = 0, e = sortedIndex.length; i < e; i += 1) {
+				sortedIndexItem = sortedIndex[i];
+				itemId = indexElements[sortedIndexItem].id;
+				itemLabel = indexElements[sortedIndexItem].label;
+				indexItem = $('<li>')
+					.css('min-height', this.itemHeight + "px")
+					.css('padding', this.itemPadding)
+					.css('margin', "0px auto " + this.itemMargin + "px auto")
+					.appendTo(indexList);
+
+				// If first item make it active
+				if (i === 0) {
+					indexItem.addClass('active');
+				}
+
+				$('<a>')
 					.text(itemLabel)
-					.appendTo($timelineItem);
+					.attr('href', '#' + itemId)
+					.appendTo(indexItem);
+			}
+		},
+
+		getSortedIndex: function(){
+			return this.sortedIndex;
+		},
+
+		getIndexElements: function(){
+			return this.indexElements;
+		},
+
+		_setIndex: function(sortedIndex, indexElements){
+			this.sortedIndex = sortedIndex;
+			this.indexElements = indexElements;
+		},
+
+		_getIndexRange: function(){
+			return this.indexRange;
+		},
+
+		_setIndexRange: function(startIndex, endIndex){
+			this.indexRange.startIndex = startIndex;
+			this.indexRange.endIndex = endIndex;
+		},
+
+		_updateIndexRange: function(sortValue){
+			var currentIndexRange = this._getIndexRange();
+
+			if (!currentIndexRange.startIndex && !currentIndexRange.endIndex) {
+				currentIndexRange.startIndex = sortValue;
+				currentIndexRange.endIndex = sortValue;
+			} else if (sortValue < currentIndexRange.startIndex) {
+				currentIndexRange.startIndex = sortValue;
+			} else if (sortValue > currentIndexRange.endIndex) {
+				currentIndexRange.endIndex = sortValue;
 			}
 
-			$('<div>')
-				.attr('class','n2_vertical_timeline_item_node')
-				.appendTo($timelineItem);
-
-			$timelineItemContent = $('<div>')
-				.attr('class','n2_vertical_timeline_item_content')
-				.css('width',this.itemWidth+'px')
-				.css('transform','translateX(-' + this.itemWidth + 'px)')
-				.appendTo($timelineItem);
-
-			if (attachmentName) {
-				$('<div>')
-					.attr('class', 'n2s_insertMediaView')
-					.attr('nunaliit-document', docId)
-					.attr('nunaliit-attachment', attachmentName)
-					.appendTo($timelineItemContent); 
+			if (currentIndexRange.startIndex && currentIndexRange.endIndex) {
+				this._setIndexRange(currentIndexRange.startIndex, currentIndexRange.endIndex);
 			}
+		},
 
-			$timelineItemContentText = $('<div>')
-				.attr('class','n2_vertical_timeline_item_content_text')
-				.appendTo($timelineItemContent);
+		setActiveIndexItem: function(itemLabel){
+			var i, e, indexItem, indexItems, indexItemText;
 
-			$('<div>')
-				.attr('class', 'n2s_briefDisplay')
-				.attr('nunaliit-document', docId)
-				.appendTo($timelineItemContentText);
+			// Update item with active class
+			indexItems = $('#' + this.canvasIndexId + ' li');
 
-			$timelineItem.appendTo('#' + this.timelineList);
-		}
-	}
-});
-
-//--------------------------------------------------------------------------
-function HandleCanvasAvailableRequest(m){
-	if (m.canvasType === 'vertical_timeline') {
-		m.isAvailable = true;
-	}
-}
-
-//--------------------------------------------------------------------------
-function HandleCanvasDisplayRequest(m){
-	var key, options;
-
-	if (m.canvasType === 'vertical_timeline') {
-		
-		options = {};
-		if (m.canvasOptions) {
-			for (key in m.canvasOptions) {
-				if (m.canvasOptions.hasOwnProperty(key)) {
-					options[key] = m.canvasOptions[key];
+			for (i = 0, e = indexItems.length; i < e; i += 1) {
+				indexItem = indexItems.eq(i);
+				indexItemText = indexItem.text();
+				if (indexItemText  === String(itemLabel)) {
+					indexItem.addClass('active');
+				} else {
+					indexItem.removeClass('active');
 				}
 			}
 		}
-		
-		if (!options.elementGenerator) {
-			// If not defined, use the one specified by type
-				options.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
-				type: options.elementGeneratorType,
-				options: options.elementGeneratorOptions,
-				config: m.config
-			});
-		}
-		
-		options.canvasId = m.canvasId;
-		options.config = m.config;
-		options.onSuccess = m.onSuccess;
-		options.onError = m.onError;
-		
-		new VerticalTimelineCanvas(options);
-	}
-}
+	});
 
-//--------------------------------------------------------------------------
-$n2.canvasVerticalTimeline = {
-	TimelineIndex: TimelineIndex,
-	TimelineItem: TimelineItem,	
-	VerticalTimelineCanvas: VerticalTimelineCanvas,
-	HandleCanvasAvailableRequest: HandleCanvasAvailableRequest,
-	HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
-};
+	/**
+	 * @class
+	 * Class used for creating Timeline items for the Vertical Timeline Canvas.
+	 *
+	 * @param element
+	 * @param itemWidth
+	 * @param timelineList
+	 */
+	var TimelineItem = $n2.Class('TimelineItem', {
+
+		element: null,
+
+		itemWidth: null,
+
+		timelineList: null,
+
+		initialize: function(opts_){
+			var opts = $n2.extend({
+				element: null,
+				itemWidth: null,
+				timelineList: null,
+				onSuccess: function(){},
+				onError: function(err){}
+			},opts_);
+
+			this.element = opts.element;
+			this.itemWidth = opts.itemWidth;
+			this.timelineList = opts.timelineList;
+
+			this._addItemToList();
+
+			opts.onSuccess();
+		},
+
+		_getDocIdFromDoc: function(doc){
+			if (doc && doc._id) {
+				return doc._id;
+			}
+		},
+
+		_getAttachment: function(doc){
+			var file;
+			if (doc && doc.nunaliit_attachments && doc.nunaliit_attachments.files) {
+				for (file in doc.nunaliit_attachments.files) {
+					if (doc.nunaliit_attachments.files.hasOwnProperty(file)){
+						if (doc.nunaliit_attachments.files[file].originalName) {
+							return doc.nunaliit_attachments.files[file].originalName;
+						}
+					}
+				}
+			}
+		},
+
+		_addItemToList: function(){
+			var $timelineItem, $timelineItemContent, $timelineItemContentText;
+			var sortValue = this.element.sort;
+			var itemLabel = this.element.label;
+			var docId = this._getDocIdFromDoc(this.element.n2_doc);
+			var attachmentName = this._getAttachment(this.element.n2_doc);
+
+			if (sortValue) {
+
+				$timelineItem = $('<li>')
+					.attr('class','n2_vertical_timeline_item n2s_userEvents')
+					.attr('nunaliit-document', docId);
+
+				if (itemLabel) {
+					$('<div>')
+						.attr('class','n2_vertical_timeline_item_label')
+						.attr('n2_sortvalue',sortValue)
+						.text(itemLabel)
+						.appendTo($timelineItem);
+				}
+
+				$('<div>')
+					.attr('class','n2_vertical_timeline_item_node')
+					.appendTo($timelineItem);
+
+				$timelineItemContent = $('<div>')
+					.attr('class','n2_vertical_timeline_item_content')
+					.css('width',this.itemWidth+'px')
+					.css('transform','translateX(-' + this.itemWidth + 'px)')
+					.appendTo($timelineItem);
+
+				if (attachmentName) {
+					$('<div>')
+						.attr('class', 'n2s_insertMediaView')
+						.attr('nunaliit-document', docId)
+						.attr('nunaliit-attachment', attachmentName)
+						.appendTo($timelineItemContent);
+				}
+
+				$timelineItemContentText = $('<div>')
+					.attr('class','n2_vertical_timeline_item_content_text')
+					.appendTo($timelineItemContent);
+
+				$('<div>')
+					.attr('class', 'n2s_briefDisplay')
+					.attr('nunaliit-document', docId)
+					.appendTo($timelineItemContentText);
+
+				$timelineItem.appendTo('#' + this.timelineList);
+			}
+		}
+	});
+
+	// --------------------------------------------------------------------------
+	function HandleCanvasAvailableRequest(m){
+		if (m.canvasType === 'vertical_timeline') {
+			m.isAvailable = true;
+		}
+	}
+
+	// --------------------------------------------------------------------------
+	function HandleCanvasDisplayRequest(m){
+		var key, options;
+
+		if (m.canvasType === 'vertical_timeline') {
+
+			options = {};
+			if (m.canvasOptions) {
+				for (key in m.canvasOptions) {
+					if (m.canvasOptions.hasOwnProperty(key)) {
+						options[key] = m.canvasOptions[key];
+					}
+				}
+			}
+
+			if (!options.elementGenerator) {
+				// If not defined, use the one specified by type
+					options.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
+					type: options.elementGeneratorType,
+					options: options.elementGeneratorOptions,
+					config: m.config
+				});
+			}
+
+			options.canvasId = m.canvasId;
+			options.config = m.config;
+			options.onSuccess = m.onSuccess;
+			options.onError = m.onError;
+
+			new VerticalTimelineCanvas(options);
+		}
+	}
+
+	//--------------------------------------------------------------------------
+	$n2.canvasVerticalTimeline = {
+		TimelineIndex: TimelineIndex,
+		TimelineItem: TimelineItem,
+		VerticalTimelineCanvas: VerticalTimelineCanvas,
+		HandleCanvasAvailableRequest: HandleCanvasAvailableRequest,
+		HandleCanvasDisplayRequest: HandleCanvasDisplayRequest
+	};
 
 }(jQuery,nunaliit2));
