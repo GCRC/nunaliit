@@ -45,10 +45,10 @@ public class SitemapBuilderAtlasChangeListenerTest extends TestCase
 
         assertNotNull(relativeUrls);
         assertEquals(4, relativeUrls.size());
-        assertTrue(relativeUrls.contains("./index.html"));
-        assertTrue(relativeUrls.contains("./tools/index.html"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.test2_canvas"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.demo"));
+        assertTrue(relativeUrls.contains("index.html"));
+        assertTrue(relativeUrls.contains("tools/index.html"));
+        assertTrue(relativeUrls.contains("index.html?module=module.test2_canvas"));
+        assertTrue(relativeUrls.contains("index.html?module=module.demo"));
     }
 
     public void testTwoLevelNavigation() {
@@ -57,21 +57,21 @@ public class SitemapBuilderAtlasChangeListenerTest extends TestCase
 
         assertNotNull(relativeUrls);
         assertEquals(15, relativeUrls.size());
-        assertTrue(relativeUrls.contains("./index.html"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.seaice"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.conservation"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.aboutatlas"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.ncri.explore"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.boundaries"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.weatherstationdatavisualizer"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.placenames"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.oldsettlement"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.ocean.protecting"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.ncri.birds"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.ncri.fish"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.contactus"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.sleepyriver.ncri.marinemammals"));
+        assertTrue(relativeUrls.contains("index.html"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.seaice"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.conservation"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.aboutatlas"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.ncri.explore"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.boundaries"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.weatherstationdatavisualizer"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.placenames"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.oldsettlement"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.ocean.protecting"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.ncri.birds"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.ncri.fish"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.contactus"));
+        assertTrue(relativeUrls.contains("index.html?module=module.sleepyriver.ncri.marinemammals"));
     }
 
     public void testThreeLevelNavigation() {
@@ -80,11 +80,11 @@ public class SitemapBuilderAtlasChangeListenerTest extends TestCase
 
         assertNotNull(relativeUrls);
         assertEquals(5, relativeUrls.size());
-        assertTrue(relativeUrls.contains("./index.html"));
-        assertTrue(relativeUrls.contains("./tools/index.html"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.test5_map"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.test5_canvas"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.test5_anothermodule"));
+        assertTrue(relativeUrls.contains("index.html"));
+        assertTrue(relativeUrls.contains("tools/index.html"));
+        assertTrue(relativeUrls.contains("index.html?module=module.test5_map"));
+        assertTrue(relativeUrls.contains("index.html?module=module.test5_canvas"));
+        assertTrue(relativeUrls.contains("index.html?module=module.test5_anothermodule"));
     }
 
     public void testWithMetadataNavigation() {
@@ -93,10 +93,10 @@ public class SitemapBuilderAtlasChangeListenerTest extends TestCase
 
         assertNotNull(relativeUrls);
         assertEquals(5, relativeUrls.size());
-        assertTrue(relativeUrls.contains("./index.html"));
-        assertTrue(relativeUrls.contains("./tools/index.html"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.canvas"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.demo"));
-        assertTrue(relativeUrls.contains("./index.html?module=module.map"));
+        assertTrue(relativeUrls.contains("index.html"));
+        assertTrue(relativeUrls.contains("tools/index.html"));
+        assertTrue(relativeUrls.contains("index.html?module=module.canvas"));
+        assertTrue(relativeUrls.contains("index.html?module=module.demo"));
+        assertTrue(relativeUrls.contains("index.html?module=module.map"));
     }
 }

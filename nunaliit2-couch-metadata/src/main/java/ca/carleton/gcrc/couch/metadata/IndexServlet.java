@@ -4,6 +4,8 @@ import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.impl.listener.HtmlAttachmentChangeListener;
 import ca.carleton.gcrc.couch.client.impl.listener.ModuleMetadataChangeListener;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
+import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
+import ca.carleton.gcrc.couch.utils.RequestHeaderConstants;
 import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.jsoup.nodes.Document;
@@ -108,9 +110,14 @@ public class IndexServlet extends HttpServlet
      */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+        CouchNunaliitUtils.logRequestData(request);
         JSONObject metadata = null;
 
         String queryString = request.getQueryString();
+        // Check for custom header in case we are behind a proxy.
+        if (StringUtils.isNotBlank(request.getHeader(RequestHeaderConstants.QUERY_STRING))) {
+            queryString = request.getHeader(RequestHeaderConstants.QUERY_STRING);
+        }
 
         logger.trace("Received request with query string {}", queryString);
         if (StringUtils.isNotBlank(queryString)) {
