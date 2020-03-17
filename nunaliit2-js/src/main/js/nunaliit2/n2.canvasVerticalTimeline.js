@@ -104,12 +104,15 @@ POSSIBILITY OF SUCH DAMAGE.
 	 * documents used to make up this element.
 	 *
 	 * @param {string} canvasId - Unique identified for the canvas
-	 * @param {string} sourceModelId - Unique identified of the model used by the canvas
+	 * @param {string} sourceModelId - Unique identified of the model used by
+	 * the canvas
 	 * @param {string} [elementGeneratorType] Name of element generator type
 	 * @param {object} [elementGeneratorOptions] Element generator options
 	 * @param {string} [labelDateFormat] Date format string for canvas label
-	 * @param {boolean} [ascendingSortOrder=true] Defines if ascending sort order should be used or not.
-	 * @param {boolean} [displayIndex=true] Defines if the side index should be shown or not
+	 * @param {boolean} [ascendingSortOrder=true] Defines if ascending sort
+	 * order should be used or not.
+	 * @param {boolean} [displayIndex=true] Defines if the side index should be
+	 * shown or not
 	*/
 	var VerticalTimelineCanvas = $n2.Class('VerticalTimelineCanvas',{
 
@@ -149,7 +152,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		displayIndex: null,
 
-		initialize: function(opts_){
+		initialize: function(opts_) {
 			var opts = $n2.extend({
 				canvasId: null,
 				displayIndex: true,
@@ -174,7 +177,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			this.sortedElements = [];
 			this.canvasContainerId = $n2.getUniqueId();
 			this.canvasIndexId = $n2.getUniqueId();
-			this.canvasListId = $n2.getUniqueId();
+			this.canvasTimelineId = $n2.getUniqueId();
 
 			var config = opts.config;
 			if (config) {
@@ -209,7 +212,8 @@ POSSIBILITY OF SUCH DAMAGE.
 			$n2.log(this._classname,this);
 		},
 
-		_backgroundClicked: function(){
+		// Send unselect event when the background is clicked
+		_backgroundClicked: function() {
 			if (this.dispatchService) {
 				this.dispatchService.send(DH,{
 					type: 'userUnselect'
@@ -217,15 +221,16 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		_calcListItemWidth: function(){
+		// Dynamically calculate the width for each item in the list
+		_calcListItemWidth: function() {
 			var width;
 			var itemPadding = 30;
 
-			width = ($('#' + this.canvasListId).width()/2) - itemPadding;
+			width = ($('#' + this.canvasTimelineId).width()/2) - itemPadding;
 			this.itemWidth = width;
 		},
 
-		_linkIdExists: function(id){
+		_linkIdExists: function(id) {
 			var currentlyExists = false;
 			if ($('#' + id).length > 0) {
 				currentlyExists = true;
@@ -233,7 +238,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			return currentlyExists;
 		},
 
-		_linkIndexToListItems: function(){
+		_linkIndexToListItems: function() {
 			var i, e, arrayItem, indexItemId, indexItemSortValue, sortValue, index;
 			var itemsArray = $('#' + this.canvasId + ' .n2_vertical_timeline_item_label');
 
@@ -248,11 +253,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 					for (index in this.indexElements) {
 						if (this.indexElements.hasOwnProperty(index)) {
-							if (this.indexElements[index].id && this.indexElements[index].sort) {
+							if (this.indexElements[index].id
+								&& this.indexElements[index].sort) {
 								indexItemId = this.indexElements[index].id;
 								indexItemSortValue = this.indexElements[index].sort;
 
-								if (sortValue >= indexItemSortValue && !this._linkIdExists(indexItemId)) {
+								if (sortValue >= indexItemSortValue
+									&& !this._linkIdExists(indexItemId)) {
 									arrayItem.id = indexItemId;
 								}
 							}
@@ -270,11 +277,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 					for (index in this.indexElements) {
 						if (this.indexElements.hasOwnProperty(index)) {
-							if (this.indexElements[index].id && this.indexElements[index].sort) {
+							if (this.indexElements[index].id
+								&& this.indexElements[index].sort) {
 								indexItemId = this.indexElements[index].id;
 								indexItemSortValue = this.indexElements[index].sort;
 
-								if (sortValue >= indexItemSortValue && !this._linkIdExists(indexItemId)) {
+								if (sortValue >= indexItemSortValue
+									&& !this._linkIdExists(indexItemId)) {
 									arrayItem.id = indexItemId;
 								}
 							}
@@ -294,7 +303,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			// Add container for timeline canvas
 			$('<div>')
-				.attr('class','n2_vertical_timeline')
+				.attr('class', 'n2_vertical_timeline')
 				.attr('id', this.canvasContainerId)
 				.click(function(e){
 					$target = $(e.target);
@@ -329,7 +338,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 
 			$('<ul>')
-				.attr('id', this.canvasListId)
+				.attr('id', this.canvasTimelineId)
 				.appendTo($canvasList);
 
 			// Add canvas padding to bottom
@@ -343,18 +352,22 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_updateTimelinePadding: function(){
-
-			$('#' + this.canvasContainerId + ' .n2_vertical_timeline_list').find('.n2_vertical_timeline_padding')
+			$('#' + this.canvasContainerId + ' .n2_vertical_timeline_list')
+				.find('.n2_vertical_timeline_padding')
 				.css('height', getCanvasHeight(this.canvasId));
 		},
 
 		_refresh: function(){
 			var i, e, timelineItemOptions, timelineIndexOptions, $timelineList, $index;
 
-			$timelineList = $('#' + this.canvasContainerId).find('#' + this.canvasListId);
+			// Empty canvas timeline list
+			$timelineList = $('#' + this.canvasContainerId)
+				.find('#' + this.canvasTimelineId);
 			$timelineList.empty();
 
-			$index = $('#' + this.canvasContainerId).find('#' + this.canvasIndexId);
+			// Empty canvas index list
+			$index = $('#' + this.canvasContainerId)
+				.find('#' + this.canvasIndexId);
 			$index.empty();
 
 			if (this.sortedElements.length > 0) {
@@ -381,7 +394,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					} else {
 						timelineItemOptions = {
 							element: this.sortedElements[i],
-							timelineList: this.canvasListId,
+							timelineList: this.canvasTimelineId,
 							itemWidth: this.itemWidth
 						};
 						new TimelineItem(timelineItemOptions);
@@ -422,20 +435,23 @@ POSSIBILITY OF SUCH DAMAGE.
 					element = this.elementsById[elementId];
 					date = getDateFromDoc(element);
 
-					// If element doesn't provide a label value, base it on a document date value
+					// If element doesn't provide a label value, base it on a
+					// document date value
 					if (typeof element.label === 'undefined') {
 						if (date) {
 							luxonDate = $l.DateTime.fromMillis(date.min);
 							if (this.labelDateFormat) {
 								element.label = _loc(luxonDate.toFormat(this.labelDateFormat));
 							} else {
-								// If no specified label date format is provided, use default format.
+								// If no specified label date format is
+								// provided, use default format.
 								element.label = luxonDate.toFormat(defaultDateFormat);
 							}
 						}
 					}
 
-					// If element doesn't provide a sorted value, try to base it on a document date value
+					// If element doesn't provide a sorted value, try to base
+					// it on a document date value
 					if (typeof element.sort === 'undefined') {
 						if (date) {
 							element.sort = date.min;
@@ -497,6 +513,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_sourceModelUpdated: function(state){
+			this._refresh();
 			this.elementGenerator.sourceModelUpdated(state);
 		},
 
@@ -767,6 +784,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
+		// THIS SHOULD BE REWORKED TO GENERATE AN ITEM AND RETURN IT.
 		_addItemToList: function(){
 			var $timelineItem, $timelineItemContent, $timelineItemContentText;
 			var sortValue = this.element.sort;
@@ -777,25 +795,25 @@ POSSIBILITY OF SUCH DAMAGE.
 			if (sortValue) {
 
 				$timelineItem = $('<li>')
-					.attr('class','n2_vertical_timeline_item n2s_userEvents')
+					.attr('class', 'n2_vertical_timeline_item n2s_userEvents')
 					.attr('nunaliit-document', docId);
 
 				if (itemLabel) {
 					$('<div>')
-						.attr('class','n2_vertical_timeline_item_label')
-						.attr('n2_sortvalue',sortValue)
+						.attr('class', 'n2_vertical_timeline_item_label')
+						.attr('n2_sortvalue', sortValue)
 						.text(itemLabel)
 						.appendTo($timelineItem);
 				}
 
 				$('<div>')
-					.attr('class','n2_vertical_timeline_item_node')
+					.attr('class', 'n2_vertical_timeline_item_node')
 					.appendTo($timelineItem);
 
 				$timelineItemContent = $('<div>')
-					.attr('class','n2_vertical_timeline_item_content')
-					.css('width',this.itemWidth+'px')
-					.css('transform','translateX(-' + this.itemWidth + 'px)')
+					.attr('class', 'n2_vertical_timeline_item_content')
+					.css('width', this.itemWidth + 'px')
+					.css('transform', 'translateX(-' + this.itemWidth + 'px)')
 					.appendTo($timelineItem);
 
 				if (attachmentName) {
@@ -807,7 +825,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 
 				$timelineItemContentText = $('<div>')
-					.attr('class','n2_vertical_timeline_item_content_text')
+					.attr('class', 'n2_vertical_timeline_item_content_text')
 					.appendTo($timelineItemContent);
 
 				$('<div>')
@@ -820,14 +838,14 @@ POSSIBILITY OF SUCH DAMAGE.
 		}
 	});
 
-	// --------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 	function HandleCanvasAvailableRequest(m){
 		if (m.canvasType === 'vertical_timeline') {
 			m.isAvailable = true;
 		}
 	}
 
-	// --------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 	function HandleCanvasDisplayRequest(m){
 		var key, options;
 
@@ -860,7 +878,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		}
 	}
 
-	//--------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 	$n2.canvasVerticalTimeline = {
 		TimelineIndex: TimelineIndex,
 		TimelineItem: TimelineItem,
