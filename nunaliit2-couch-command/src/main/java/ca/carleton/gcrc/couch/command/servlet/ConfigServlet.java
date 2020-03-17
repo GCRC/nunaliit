@@ -1,27 +1,5 @@
 package ca.carleton.gcrc.couch.command.servlet;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.ByteBuffer;
-import java.security.SecureRandom;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Properties;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
@@ -30,12 +8,19 @@ import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
+import ca.carleton.gcrc.couch.client.impl.listener.HtmlAttachmentChangeListener;
+import ca.carleton.gcrc.couch.client.impl.listener.ModuleMetadataChangeListener;
+import ca.carleton.gcrc.couch.client.impl.listener.TextAttachmentChangeListener;
 import ca.carleton.gcrc.couch.command.AtlasProperties;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.date.DateServletConfiguration;
 import ca.carleton.gcrc.couch.export.ExportConfiguration;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
+import ca.carleton.gcrc.couch.metadata.IndexServlet;
+import ca.carleton.gcrc.couch.metadata.RobotsServlet;
+import ca.carleton.gcrc.couch.metadata.SitemapBuilderAtlasChangeListener;
+import ca.carleton.gcrc.couch.metadata.SitemapServlet;
 import ca.carleton.gcrc.couch.onUpload.UploadListener;
 import ca.carleton.gcrc.couch.onUpload.UploadWorker;
 import ca.carleton.gcrc.couch.onUpload.UploadWorkerSettings;
@@ -63,6 +48,7 @@ import ca.carleton.gcrc.couch.submission.mail.SubmissionRejectionGenerator;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.couch.utils.CouchDbTemplateMailMessageGenerator;
+import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailDeliveryImpl;
@@ -77,6 +63,26 @@ import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
 import ca.carleton.gcrc.upload.UploadUtils;
 import ca.carleton.gcrc.utils.VersionUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.ByteBuffer;
+import java.security.SecureRandom;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Properties;
 
 /**
  * Configures the properties of the other servlets. Accepts init
@@ -85,7 +91,6 @@ import ca.carleton.gcrc.utils.VersionUtils;
  */
 @SuppressWarnings("serial")
 public class ConfigServlet extends JsonServlet {
-
 	final protected static char[] hexArray = "0123456789ABCDEF".toCharArray();
 	static public String bytesToHex(byte[] bytes) {
 	    char[] hexChars = new char[bytes.length * 2];
@@ -114,6 +119,10 @@ public class ConfigServlet extends JsonServlet {
 	private SubmissionMailNotifier submissionNotifier = null;
 	private MailVetterDailyNotificationTask vetterDailyTask = null;
 	private ConfigServletActions actions = null;
+	private SitemapBuilderAtlasChangeListener sitemapBuilder;
+	private HtmlAttachmentChangeListener indexChangeListener;
+	private TextAttachmentChangeListener robotsChangeListener;
+	private ModuleMetadataChangeListener moduleMetadataChangeListener;
 	private SecureRandom rng = null;
 	
 	public ConfigServlet() {
@@ -251,7 +260,31 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while creating actions",e);
 			throw e;
 		}
-		
+
+		try {
+			initSitemap(servletContext);
+		}
+		catch (ServletException e) {
+			logger.error("Error initializing sitemap servlet", e);
+			throw e;
+		}
+
+		try {
+			initIndex(servletContext);
+		}
+		catch (ServletException e) {
+			logger.error("Error initializing index servlet", e);
+			throw e;
+		}
+
+		try {
+			initRobots(servletContext);
+		}
+		catch (ServletException e) {
+			logger.error("Error initializing robots servlet", e);
+			throw e;
+		}
+
 		logger.info("Completed Couch Configuration");
 	}
 
@@ -839,6 +872,53 @@ public class ConfigServlet extends JsonServlet {
 		}
 	}
 
+	private void initSitemap(ServletContext servletContext) throws ServletException {
+		try {
+			sitemapBuilder = new SitemapBuilderAtlasChangeListener(documentDatabase, CouchNunaliitConstants.ATLAS_DOC_ID);
+			sitemapBuilder.start();
+
+			servletContext.setAttribute(SitemapServlet.SITEMAP_BUILDER, sitemapBuilder);
+		}
+		catch (Exception e) {
+			logger.error("Error configuring sitemap servlet", e);
+			throw new ServletException("Error configuring sitemap servlet", e);
+		}
+	}
+
+	private void initIndex(ServletContext servletContext) throws ServletException {
+		try {
+			// Watch index.html
+			indexChangeListener = new HtmlAttachmentChangeListener(documentDatabase, CouchNunaliitConstants.SITE_DESIGN_DOC_ID,
+					CouchNunaliitConstants.INDEX_HTML);
+			indexChangeListener.start();
+			// Watches all module documents.
+			moduleMetadataChangeListener = new ModuleMetadataChangeListener(documentDatabase);
+			moduleMetadataChangeListener.start();
+
+			servletContext.setAttribute(IndexServlet.CONFIG_DOCUMENT_DB, documentDatabase);
+			servletContext.setAttribute(IndexServlet.INDEX_DB_CHANGE_LISTENER, indexChangeListener);
+			servletContext.setAttribute(IndexServlet.MODULE_METADATA_CHANGE_LISTENER, moduleMetadataChangeListener);
+		}
+		catch (Exception e) {
+			logger.error("Error configuring index servlet", e);
+			throw new ServletException("Error configuring index servlet", e);
+		}
+	}
+
+	private void initRobots(ServletContext servletContext) throws ServletException {
+		try {
+			robotsChangeListener = new TextAttachmentChangeListener(documentDatabase, CouchNunaliitConstants.SITE_DESIGN_DOC_ID,
+					CouchNunaliitConstants.ROBOTS_TXT);
+			robotsChangeListener.start();
+
+			servletContext.setAttribute(RobotsServlet.ROBOTS_TXT_CHANGE_LISTENER, robotsChangeListener);
+		}
+		catch (Exception e) {
+			logger.error("Error configuring index servlet", e);
+			throw new ServletException("Error configuring index servlet", e);
+		}
+	}
+
 	public void destroy() {
 		try {
 			uploadWorker.stopTimeoutMillis(5*1000); // 5 seconds
@@ -880,6 +960,42 @@ public class ConfigServlet extends JsonServlet {
 			}
 		} catch(Exception e) {
 			logger.error("Unable to shutdown change monitor on submission database", e);
+		}
+
+		try {
+			if (sitemapBuilder != null) {
+				sitemapBuilder.shutdown();
+			}
+		}
+		catch (Exception e) {
+			logger.error("Error occurred while attempting to shutdown sitemap builder", e);
+		}
+
+		try {
+			if (indexChangeListener != null) {
+				indexChangeListener.shutdown();
+			}
+		}
+		catch (Exception e) {
+			logger.error("Error occurred while attempting to shutdown index.html DB change listener", e);
+		}
+
+		try {
+			if (moduleMetadataChangeListener != null) {
+				moduleMetadataChangeListener.shutdown();
+			}
+		}
+		catch (Exception e) {
+			logger.error("Error occurred while attempting to shutdown module metadata DB change listener", e);
+		}
+
+		try {
+			if (robotsChangeListener != null) {
+				robotsChangeListener.shutdown();
+			}
+		}
+		catch (Exception e) {
+			logger.error("Error occurred while attempting to shutdown robots.txt DB change listener", e);
 		}
 	}
 

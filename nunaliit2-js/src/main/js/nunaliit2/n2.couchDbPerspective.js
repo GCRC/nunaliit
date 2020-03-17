@@ -669,7 +669,7 @@ var DbPerspective = $n2.Class({
 //--------------------------------------------------------------------------
 /**
  * This class is a document source (document model that fetches documents
- * remoetly) that loads documents given a specified view.
+ * remotely) that loads documents given a specified view.
  */
 var ModelCouchDbView = $n2.Class({
 	dispatchService: null,
@@ -685,6 +685,10 @@ var ModelCouchDbView = $n2.Class({
 	isSiteView: null,
 
 	includeValues: null,
+
+	startKey: null,
+
+	endKey: null,
 	
 	designDoc: null,
 	
@@ -715,6 +719,8 @@ var ModelCouchDbView = $n2.Class({
 		this.viewName = opts.view;
 		this.isSiteView = opts.isSiteView;
 		this.includeValues = opts.includeValues;
+		this.startKey = opts.startKey;
+		this.endKey = opts.endKey;
 		
 		if( typeof this.viewName !== 'string' ){
 			throw new Error('Model "couchDbView" requires a string parameter "view"');
@@ -773,6 +779,8 @@ var ModelCouchDbView = $n2.Class({
 		
 		this.designDoc.queryView({
 			viewName: this.viewName
+			,startkey: this.startKey
+			,endkey: this.endKey
 			,include_docs: false
 			,onSuccess: function(rows){
 				var docMap = {};
@@ -821,7 +829,7 @@ var ModelCouchDbView = $n2.Class({
 						};
 					});
 
-					--this.loadingCount;
+					--_this.loadingCount;
 
 					_this._docInfoMapLoaded(docInfoByDocId);
 				}
@@ -846,22 +854,25 @@ var ModelCouchDbView = $n2.Class({
 	},
 
 	_docInfoMapLoaded: function(docInfoMap){
+		var oldDoc, newDoc, docId;
 		var added = [];
 		var updated = [];
 		var removed = [];
 		
 		// Detect updated and removed documents
-		for(var docId in this.docsById){
-			var oldDoc;
-			if( this.docsById[docId] ){
+		for(docId in this.docsById){
+			oldDoc = null;
+			newDoc = null;
+
+			if( Object.hasOwnProperty.call(this.docsById, docId) ){
 				oldDoc = this.docsById[docId].clone;
 			};
-			var newDoc;
-			if( docInfoMap[docId] ){
+
+			if( Object.hasOwnProperty.call(docInfoMap, docId) ){
 				newDoc = docInfoMap[docId].clone;
 			};
 
-			if( newDoc ){
+			if( oldDoc && newDoc ){
 				// This document persists. Check if revision changed
 				if( newDoc._rev === oldDoc._rev ){
 					// Nothing changed
@@ -870,24 +881,25 @@ var ModelCouchDbView = $n2.Class({
 					updated.push(newDoc);
 				};
 				
-			} else {
+			} else if( oldDoc ){
 				// This is a removed document
 				removed.push(oldDoc);
 			};
 		};
 		
-		// Detect added documents
-		for(var docId in docInfoMap){
-			var oldDoc;
-			if( this.docsById[docId] ){
+		// Detect added documents and adds initial view results.
+		for(docId in docInfoMap){
+			oldDoc = null;
+			newDoc = null;
+			if( Object.hasOwnProperty.call(this.docsById, docId) ){
 				oldDoc = this.docsById[docId].clone;
 			};
-			var newDoc;
-			if( docInfoMap[docId] ){
+
+			if( Object.hasOwnProperty.call(docInfoMap, docId) ){
 				newDoc = docInfoMap[docId].clone;
 			};
 
-			if( !oldDoc ){
+			if( !oldDoc && newDoc ){
 				// This was added
 				added.push(newDoc);
 			};
@@ -1243,6 +1255,7 @@ function HandleWidgetDisplayRequests(m){
 //--------------------------------------------------------------------------
 $n2.couchDbPerspective = {
 	DbPerspective: DbPerspective
+	,ModelCouchDbView: ModelCouchDbView
 	,DbSelector: DbSelector
 	,CouchLayerDbSelector: CouchLayerDbSelector
 	,handleModelCreate: handleModelCreate

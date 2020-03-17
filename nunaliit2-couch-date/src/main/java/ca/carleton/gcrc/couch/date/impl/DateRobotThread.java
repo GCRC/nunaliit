@@ -92,7 +92,7 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 			}
 		} while( false == done );
 
-		logger.info("Submission date thread exiting");
+		logger.info("Date worker thread exiting");
 	}
 	
 	private void activity() {

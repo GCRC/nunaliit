@@ -1,41 +1,43 @@
-<div class="n2_documentDisplay"><div class="n2_layoutFloat">
-<div class="demo_media">
-<div class="title">
-	<div class="label n2s_localize">Demo Media</div>
-	<div class="end"></div>
-</div>
-{{#demo_media}}
-	{{#if caption}}
-		<div class="demo_media_caption">
-			<div class="label n2s_localize">Caption</div>
-			<div class="value n2s_preserveSpaces">{{caption}}</div>
-			<div class="end"></div>
-		</div>
-	{{/if}}
-{{/demo_media}}
-{{#demo_media}}
-	{{#if credit}}
-		<div class="demo_media_credit">
-			<div class="label n2s_localize">Credit</div>
-			<div class="value">{{credit}}</div>
-			<div class="end"></div>
-		</div>
-	{{/if}}
-{{/demo_media}}
-{{#nunaliit_attachments}}
-{{#files}}
-	{{#:iterate}}
-		{{#value}}
-			{{^source}}
-				{{#attachmentName}}
-					<div class="n2_mediaView">
-						<div class="n2s_insertMediaView" nunaliit-attachment="{{.}}"> </div>
+<div class="n2_documentDisplay">
+	<div class="n2_layoutFloat">
+		<div class="demo_media">
+			<div class="title">
+				<div class="label n2s_localize">Demo Media</div>
+				<div class="end"></div>
+			</div>
+			{{#demo_media}}
+				{{#if caption}}
+					<div class="demo_media_caption">
+						<div class="label n2s_localize">Caption</div>
+						<div class="value n2s_preserveSpaces">{{caption}}</div>
+						<div class="end"></div>
 					</div>
-				{{/attachmentName}}
-			{{/source}}
-		{{/value}}
-	{{/:iterate}}
-{{/files}}
-{{/nunaliit_attachments}}
+				{{/if}}
+			{{/demo_media}}
+			{{#demo_media}}
+				{{#if credit}}
+					<div class="demo_media_credit">
+						<div class="label n2s_localize">Credit</div>
+						<div class="value">{{credit}}</div>
+						<div class="end"></div>
+					</div>
+				{{/if}}
+			{{/demo_media}}
+			{{#nunaliit_attachments}}
+				{{#files}}
+					{{#:iterate}}
+						{{#value}}
+							{{^source}}
+								{{#attachmentName}}
+									<div class="n2_mediaView">
+										<div class="n2s_insertMediaView" nunaliit-attachment="{{.}}"></div>
+									</div>
+								{{/attachmentName}}
+							{{/source}}
+						{{/value}}
+					{{/:iterate}}
+				{{/files}}
+			{{/nunaliit_attachments}}
+		</div>
+	</div>
 </div>
-</div></div>

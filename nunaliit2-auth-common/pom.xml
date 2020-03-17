@@ -5,7 +5,6 @@
     <groupId>ca.carleton.gcrc</groupId>
     <version>2.2.9-SNAPSHOT</version>
   </parent>
-  <groupId>ca.carleton.gcrc</groupId>
   <artifactId>nunaliit2-auth-common</artifactId>
   <version>2.2.9-SNAPSHOT</version>
   <name>nunaliit2-auth-common</name>
@@ -13,7 +12,7 @@
   <dependencies>  
   	<dependency>
   		<groupId>javax.servlet</groupId>
-  		<artifactId>servlet-api</artifactId>
+  		<artifactId>javax.servlet-api</artifactId>
   		<version>${servlet-api.version}</version>
   		<scope>provided</scope>
   	</dependency>

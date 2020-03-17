@@ -283,7 +283,8 @@
 				{"text": "Submission Tool", "href": "./submission.html"},
 				{"text": "Import Tool", "href": "./import.html", "activated": true},
 				{"text": "Debug Tool", "href": "./debug.html"},
-				{"text": "Schema Editor", "href": "./schema_editor.html"}
+				{"text": "Schema Editor", "href": "./schema_editor.html"},
+				{"text": "Metadata Editor", "href": "./metadata.html"}
 			]	
 		});
 	};

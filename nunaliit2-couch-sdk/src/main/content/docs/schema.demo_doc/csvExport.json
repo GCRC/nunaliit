@@ -1,32 +1,32 @@
 [
-   {
-      "label": "title",
-      "select": "demo_doc.title",
-      "type": "text"
-   },
-   {
-      "label": "description",
-      "select": "demo_doc.description",
-      "type": "text"
-   },
-   {
-      "label": "date",
-      "select": "demo_doc.date.date",
-      "type": "text"
-   },
-   {
-      "label": "reference",
-      "select": "demo_doc.reference.doc",
-      "type": "text"
-   },
-   {
-      "label": "nunaliit_hoverSound",
-      "select": "nunaliit_hoverSound.doc",
-      "type": "text"
-   },
-   {
-      "label": "nunaliit_geom",
-      "select": "nunaliit_geom.wkt",
-      "type": "text"
-   }
+	{
+		"select": "demo_doc.title",
+		"label": "title",
+		"type": "text"
+	},
+	{
+		"select": "demo_doc.description",
+		"label": "description",
+		"type": "text"
+	},
+	{
+		"select": "demo_doc.date.date",
+		"label": "date",
+		"type": "text"
+	},
+	{
+		"select": "demo_doc.reference.doc",
+		"label": "reference",
+		"type": "text"
+	},
+	{
+		"select": "nunaliit_hoverSound.doc",
+		"label": "nunaliit_hoverSound",
+		"type": "text"
+	},
+	{
+		"select": "nunaliit_geom.wkt",
+		"label": "nunaliit_geom",
+		"type": "text"
+	}
 ]

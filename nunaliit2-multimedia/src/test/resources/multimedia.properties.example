@@ -1,20 +1,248 @@
-#ffmpegInfoCommand=avprobe %1$s
-#ffmpegConvertVideoCommand=avconv -i %1$s -y -acodec libfaac -ab 48000 -ac 2 -vcodec libx264 -b 128000 -s 320x240 -threads 0 -f mp4 %2$s
-#ffmpegConvertAudioCommand=avconv -i %1$s -y -acodec libmp3lame -ab 48000 -ac 2 -threads 0 -f mp3 %2$s
-#ffmpegCreateThumbnailCommand=avconv -y -ss 00:00:05 -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s
-#imageInfoCommand=identify -verbose %1$s[0]
-#imageConvertCommand=convert -monitor -auto-orient %1$s[0] -compress JPEG -quality 70 %2$s
-#imageResizeCommand=convert -monitor -auto-orient %1$s[0] -resize %3$dx%4$d> -compress JPEG -alpha flatten -quality 70 %2$s
-#imageReorientCommand=convert -monitor -auto-orient %1$s[0] %2$s
-#imageMaxHeight=1000
-#imageMaxWidth=1000
-#thumbnailImageHeight=350
-#thumbnailImageWidth=350
+#
+# file.knownString
+#
+# These entries are to help the linux file command detect mime types
+# that are not otherwise figured out. The property values take the
+# form of:
+# <mime-type>:<known string>
+#
+# If a known string is encountered running "file -bnk", then the
+# associated mime type is assigned. Multiple entries can be set.
+#
+#file.knownString.1=video/3gpp:3GPP
+#file.knownString.2=video/mp4:MP4
+
+#
+# ffmpegVersionCommand
+# 
+# Command used to detect the version of ffmpeg currently installed
+#
+#ffmpegVersionCommand=ffmpeg -version
+
+#
+# ffmpegInfoCommand
+#
+# Command use to obtain information about a multimedia file
+#
+#ffmpegInfoCommand=ffprobe %1$s
+
+#
+# ffmpegConvertVideoCommand
+#
+# Command used to convert an external video file to the format used by Nunaliit.
+# -i %1$s Specifies input file
+# -y Overwrite output files without asking.
+# -acodec Set the audio codec (-codec:a)
+# -ab Audio bitrate (-b:a)
+# -ac Set the number of audio channels.
+# -vcodec Set the video codec (-codec:v)
+# -b Set the stream bitrate in bits per second. (-b:v)
+# -r Set frame rate (Hz value, fraction or abbreviation). (-r:v)
+# -vf scale=320:-2 (-filter:v) Make video 320 pixels wide. Adjust height to preserve ratio (dimension multiple of 2)
+# -threads 0 Optimal number of threads
+# -f mp4 Force input or output file format.
+# %2$s Specifies output file
+#
+#ffmpegConvertVideoCommand=ffmpeg -i %1$s -y -acodec aac -ab 48000 -ac 2 -vcodec libx264 -b:v 128000 -r 24 -vf scale=320:-2 -threads 0 -f mp4 %2$s
+
+#
+# ffmpegConvertAudioCommand
+#
+# Command used to convert an external audio file to the format used by Nunaliit
+# -i %1$s Specifies input file
+# -y Overwrite output files without asking.
+# -acodec Set the audio codec (-codec:a)
+# -ab Audio bitrate (-b:a)
+# -ac Set the number of audio channels.
+# -threads 0 Optimal number of threads
+# -f mp3 Force input or output file format.
+# %2$s Specifies output file
+#
+#ffmpegConvertAudioCommand=ffmpeg -i %1$s -y -acodec libmp3lame -ab 48000 -ac 2 -threads 0 -f mp3 %2$s
+
+#
+# ffmpegCreateThumbnailCommand
+#
+# Command used to create a thumbnail from an external video file.
+# -y Overwrite output files without asking.
+# -ss %5$s When used as an input option (before -i), seeks in this input file to position. The value
+#          inserted at %5$s is usually set to the property named 'ffmpegCreateThumbnailFrameInSec' 
+# -i %1$s Specifies input file
+# -s %3$dx%4$d Set frame size. (-s:v) The value for width (%3$d) is derived from what is offered in
+#              property 'thumbnailVideoWidth'. The value for height (%4$d) is derived from what is 
+#              offered in property 'thumbnailVideoHeight'.
+# -r Set frame rate (Hz value, fraction or abbreviation). (-r:v)
+# -vframes 1 Set the number of video frames to record. (-frames:v)
+# -f image2 Extract images from a video
+# %2$s Specifies output file
+#
+#ffmpegCreateThumbnailCommand=ffmpeg -y -ss %5$s -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s
+
+#
+# ffmpegCreateThumbnailFrameInSec
+#
+# Specifies the position in a video where the thumbnail is extracted.
+#
+#ffmpegCreateThumbnailFrameInSec=5
+
+#
+# thumbnailVideoHeight
+#
+# Specifies the maximum height of a thumbnail extracted from a video. Since this value
+# is a 'maximum', the height of a video thumbnail might get adjusted given the dimensions of
+# the specific video.
+#
 #thumbnailVideoHeight=240
+
+#
+# thumbnailVideoWidth
+#
+# Specifies the maximum width of a thumbnail extracted from a video. Since this value
+# is a 'maximum', the width of a video thumbnail might get adjusted given the dimensions of
+# the specific video.
+#
 #thumbnailVideoWidth=320
+
+#
+# imageInfoCommand
+#
+# Command used to recognize the type of an image. identify is command provided
+# by ImageMagick
+# -verbose Print detailed information about the image. Required by Nunaliit.
+# %1$s Input file name
+# %1$s[0] Get first image represented by file
+#
+#imageInfoCommand=identify -verbose %1$s[0]
+
+#
+# imageConvertCommand
+#
+# Command used to convert an external image file to the format used by Nunaliit
+#
+# -monitor Reports progress. Required by Nunaliit.
+# -auto-orient Automatically orient image
+# %1$s Input file name
+# %1$s[0] First image found in input file
+# -compress JPEG Type of pixel compression when writing the image
+# -quality 70 JPEG/MIFF/PNG compression level
+# %2$s Output file
+#
+#imageConvertCommand=convert -monitor -auto-orient %1$s[0] -compress JPEG -quality 70 %2$s
+
+#
+# imageResizeCommand
+#
+# Command used to resize an image. This is used when the external image is too large
+# for the purposes of Nunaliit. It is also used to create thumbnails.
+#
+# -monitor Reports progress. Required by Nunaliit.
+# -auto-orient Automatically orient image
+# %1$s Input file name
+# %1$s[0] First image found in input file
+# -resize %3$dx%4$d> Resize the image. Shrinks an image with dimension(s) larger than the 
+#                    corresponding width and/or height argument(s).
+# -compress JPEG Type of pixel compression when writing the image
+# -alpha flatten [Not sure anymore what this option provides]
+# -quality 70 JPEG/MIFF/PNG compression level
+# %2$s Output file
+#
+#imageResizeCommand=convert -monitor -auto-orient %1$s[0] -resize %3$dx%4$d> -compress JPEG -alpha flatten -quality 70 %2$s
+
+#
+# imageReorientCommand
+#
+# Command used to re-orient an image. This is used when an external image does not require
+# conversion but re-orientation is needed.
+# -monitor Reports progress. Required by Nunaliit.
+# -auto-orient Automatically orient image
+# %1$s Input file name
+# %1$s[0] First image found in input file
+# %2$s Output file
+#
+#imageReorientCommand=convert -monitor -auto-orient %1$s[0] %2$s
+
+#
+# imageMaxHeight
+#
+# Height that Nunaliit aims for images. Anything larger gets resized.
+#
+#imageMaxHeight=1000
+
+#
+# imageMaxWidth
+#
+# Width that Nunaliit aims for images. Anything larger gets resized.
+#
+#imageMaxWidth=1000
+
+#
+# thumbnailImageHeight
+#
+# Preferred height for image thumbnails.
+#
+#thumbnailImageHeight=350
+
+#
+# thumbnailImageWidth
+#
+# Preferred width for image thumbnails.
+#
+#thumbnailImageWidth=350
+
+#
+# imageMimeTypes
+#
+# Array of MIME types (separated by colons characters ':') that should be
+# considered as images (class image)
+#
 #imageMimeTypes=image/png:image/jpeg
+
+
+#
+# audioMimeTypes
+#
+# Array of MIME types (separated by colons characters ':') that should be
+# considered as audio files (class audio)
+#
 #audioMimeTypes=application/ogg
+
+#
+# videoMimeTypes
+#
+# Array of MIME types (separated by colons characters ':') that should be
+# considered as video files (class video)
+#
 #videoMimeTypes=
+
+#
+# multimedia.conversion.audio.threshold
+#
+# Values, separated by commas, used as threshold to initiate conversion of external audio
+# files.
+# 0 : Acceptable codec (* for any)
+# 1 : Maximum audio bitrate (* for any)
+#
 #multimedia.conversion.audio.threshold=mpeg,250000
+
+#
+# multimedia.conversion.video.threshold
+#
+# Values, separated by commas, used as threshold to initiate conversion of external video
+# files.
+# 0 : Acceptable video codec (* for any)
+# 1 : Maximum video bitrate (* for any)
+# 2 : Acceptable audio codec (* for any)
+# 3 : Maximum audio bitrate (* for any)
+# 4 : Largest acceptable dimension, in pixels (* for any)
+#
 #multimedia.conversion.video.threshold=h264,250000,mpeg4aac,250000,*
+
+#
+# multimedia.conversion.image.threshold
+#
+# Values, separated by commas, used as threshold to initiate conversion of external image
+# files.
+# 0 : Acceptable image format (* for any)
+# 1 : Largest acceptable dimension, in pixels (* for any)
+#
 #multimedia.conversion.image.threshold=JPEG,500

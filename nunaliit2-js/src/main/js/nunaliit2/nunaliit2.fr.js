@@ -321,6 +321,8 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"Media application started":"Application médiatique a débuté"
 	,"Media({docId},{attName})":"Média({docId},{attName})"
 	,"Message":"Message"
+	,"Metadata":"Metadata"
+	,"Metadata Editor":"Metadata Editor"
 	,"Missing input. Can not proceed.":"Données manquantes. Impossible de continuer"
 	,"Model Browser":"Navigateur à modèles"
 	,"Models":"Modèles"

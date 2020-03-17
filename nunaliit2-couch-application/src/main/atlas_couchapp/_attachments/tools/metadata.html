@@ -1,0 +1,70 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
+<head>
+    <title>Metadata Editor</title>
+
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8"/>
+
+    <link rel="shortcut icon" href="../favicon.ico" />
+	<link rel="stylesheet" href="../js-external/materialcomponentsweb/material-components-web.min.css" type="text/css" />
+    <link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css"/>
+    <link rel="stylesheet" href="../js-external/css/jquery.lightbox-0.5.css" type="text/css"/>
+    <link rel="stylesheet" href="../nunaliit2/css/basic/nunaliit2.css" type="text/css"/>
+    <link rel="stylesheet" href="../_list/css_merge/css" type="text/css"/>
+    <link rel="stylesheet" href="../css/atlas.css" type="text/css"/>
+    <link rel="stylesheet" href="css/metadata.css" type="text/css"/>
+</head>
+
+<body class="nunaliit_application nunaliit_metadata_editor" style="overflow: auto;">
+	<main class="main-content metadataEditorApp" id="main-content">
+		<div class="mdc-top-app-bar--fixed-adjust"></div>
+		<div id="metadata_editor" class="metadata_form"></div>
+	</main>
+
+<script type="text/javascript" src="../js-external/materialcomponentsweb/material-components-web.min.js"></script>
+<script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
+<script type="text/javascript" src="../js-external/js/jquery-ui.min.js"></script>
+
+<script type="text/javascript" src="../js-external/OpenLayers/OpenLayers.js"></script>
+<script type="text/javascript" src="../js-external/js/jquery.lightbox-0.5.js"></script>
+
+<script type="text/javascript" src="../js-external/js/jquery.cycle.pack.js"></script>
+<script type="text/javascript" src="../js-external/js/jquery.form.js"></script>
+<script type="text/javascript" src="../js-external/js/jquery.cookie-1.0.js"></script>
+
+<script type="text/javascript" src="../lib/atlas.js"></script>
+<script type="text/javascript" src="../nunaliit2/nunaliit2-debug.js"></script>
+<script type="text/javascript" src="../nunaliit2/nunaliit2-couch-debug.js"></script>
+<script type="text/javascript" src="../config/configuration.js"></script>
+<script type="text/javascript" src="../nunaliit_custom.js"></script>
+
+<script type="text/javascript" src="js/metadata.js"></script>
+
+<script type="text/javascript">
+    // <!--
+    function main_init(config) {
+
+		$n2.metadataEditorApp.addHamburgerMenu();
+
+        if (config.directory && config.directory.authService) {
+            config.directory.authService.createAuthWidget({
+                elemId: 'login'
+            });
+        }
+
+        new $n2.metadataEditorApp.main({
+            config: config,
+            div: $('#metadata_editor')
+        });
+    }
+
+    jQuery().ready(function () {
+        nunaliitConfigure({
+            configuredFunction: main_init
+            , rootPath: '../'
+        });
+    });
+    // -->
+</script>
+</body>
+</html>

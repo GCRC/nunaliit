@@ -6,7 +6,6 @@
 		<groupId>ca.carleton.gcrc</groupId>
 		<version>2.2.9-SNAPSHOT</version>
 	</parent>
-	<groupId>ca.carleton.gcrc</groupId>
 	<artifactId>nunaliit2-utils</artifactId>
 	<name>nunaliit2-utils</name>
 	<version>2.2.9-SNAPSHOT</version>
@@ -62,7 +61,7 @@
 	<dependencies>
 		<dependency>
 			<groupId>javax.servlet</groupId>
-			<artifactId>servlet-api</artifactId>
+			<artifactId>javax.servlet-api</artifactId>
 			<version>${servlet-api.version}</version>
 			<scope>provided</scope>
 		</dependency>
