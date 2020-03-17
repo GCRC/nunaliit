@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2014, Geomatics and Cartographic Research Centre, Carleton 
+Copyright (c) 2020, Geomatics and Cartographic Research Centre, Carleton
 University
 All rights reserved.
 
@@ -430,42 +430,44 @@ function classNamesFromElement(elem){
 // Functions in the global space receives the context object
 // as 'this'.
 var global = {
-	isSelected: function(){
-		return this.n2_selected;
-	}
-	,isHovered: function(){
-		return this.n2_hovered;
-	}
-	,isFound: function(){
-		return this.n2_found;
-	}
-	,isPoint: function(){
-		return 'point' === this.n2_geometry;
+	isPoint: function(){
+		if ( this.nunaliit_geom
+			&& this.nunaliit_geom.wkt){
+			return this.nunaliit_geom.wkt.startsWith("MULTIPOINT") || this.nunaliit_geom.wkt.startsWith("POINT");
+		}
+		return false;
 	}
 	,isLine: function(){
-		return 'line' === this.n2_geometry;
+		if ( this.nunaliit_geom
+			&& this.nunaliit_geom.wkt){
+			return this.nunaliit_geom.wkt.startsWith("MULTILINESTRING") || this.nunaliit_geom.wkt.startsWith("LINESTRING");
+		}
+		return false;
 	}
 	,isPolygon: function(){
-		return 'polygon' === this.n2_geometry;
+		if ( this.nunaliit_geom
+		&& this.nunaliit_geom.wkt){
+			return this.nunaliit_geom.wkt.startsWith("MULTIPOLYGON") || this.nunaliit_geom.wkt.startsWith("POLYGON");
+		}
+		return false;
 	}
 	,isSchema: function(schemaName){
-		if( schemaName && this.n2_doc ){
-			return (schemaName === this.n2_doc.nunaliit_schema);
+		if( schemaName && this ){
+			return (schemaName === this.nunaliit_schema);
 		};
 		return false;
 	}
 	,onLayer: function(layerId){
 		if( layerId
-		 && this.n2_doc 
-		 && this.n2_doc.nunaliit_layers ){
-		 	var index = this.n2_doc.nunaliit_layers.indexOf(layerId);
+		 && this.nunaliit_layers ){
+		 	var index = this.nunaliit_layers.indexOf(layerId);
 			return (index >= 0);
 		};
 		return false;
 	}
 	,hasClass: function(className){
 		if( className
-		 && this.n2_elem ){
+		&& this.n2_elem ){
 			var classNames = classNamesFromElement(this.n2_elem);
 		 	var index = -1;
 		 	if( classNames ){
@@ -482,7 +484,7 @@ var global = {
 			var _this = this;
 			for(var i =0, e= arr.length; i<e; ++i){
 				if (arr[i] === 'doc'){
-					arr[i] = 'n2_doc';
+					continue;
 				}
 				if (typeof _this === 'function'){
 					_this = undefined;
@@ -501,9 +503,8 @@ var global = {
 	,inModel: function(modelId){
 		if( modelId 
 			&& typeof modelId === 'string'
-			&& this.n2_doc
-			&& this.n2_doc.__n2Models ){
-			return this.n2_doc.__n2Models[modelId] || false;
+			&& this.__n2Models ){
+			return this.__n2Models[modelId] || false;
 		}
 		return false;
 	}
@@ -685,7 +686,7 @@ Variable.prototype.getValue = function(ctxt){
 	var obj = undefined;
 	
 	if( ctxt && 'doc' === this.variableName ) {
-		obj = ctxt.n2_doc;
+		obj = ctxt;
 		
 	} else if( ctxt && ctxt[this.variableName] ) {
 		obj = ctxt[this.variableName];
@@ -1131,7 +1132,7 @@ function getGlobalContext(){
 };
 	
 //--------------------------------------------------------------------------
-$n2.styleRuleParser = {
+$n2.styleRuleParserForLegend = {
 	parse: parse
 	,getGlobalContext: getGlobalContext
 };
