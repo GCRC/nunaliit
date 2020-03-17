@@ -513,7 +513,6 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_sourceModelUpdated: function(state){
-			this._refresh();
 			this.elementGenerator.sourceModelUpdated(state);
 		},
 
@@ -784,7 +783,6 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		// THIS SHOULD BE REWORKED TO GENERATE AN ITEM AND RETURN IT.
 		_addItemToList: function(){
 			var $timelineItem, $timelineItemContent, $timelineItemContentText;
 			var sortValue = this.element.sort;
