@@ -50,24 +50,29 @@ POSSIBILITY OF SUCH DAMAGE.
 	 * @returns {object} Nunaliit date object
 	 */
 	function getDateFromDoc(object){
-		var date, key, currentProp;
+		var date, key, value, result;
+
+		// Return object if the object is a Nunaliit date object.
+		if (Object.hasOwnProperty.call(object, 'nunaliit_type')
+			&& object.nunaliit_type === 'date') {
+			return object;
+		}
 
 		for (key in object) {
-			if (object.hasOwnProperty(key)) {
-				currentProp = object[key];
-				if (typeof currentProp === 'object') {
-					if (currentProp.nunaliit_type === 'date') {
-						// if the current object property contains nunaliit date object, return it.
-						date = currentProp;
-						return date;
-					} else {
-						// If the current object property isn't a nunaliit date object
-						// recursively search through object property to see if it contains a nunaliit date object.
-						return getDateFromDoc(currentProp);
-					}
+			if (Object.hasOwnProperty.call(object, key)
+				&& typeof object[key] === 'object') {
+				// Recursively check if nested object contains a Nunaliit
+				// date object.
+				result = getDateFromDoc(object[key]);
+
+				if (result) {
+					// return result if it's not undefined
+					return result;
 				}
 			}
 		}
+
+		return result;
 	}
 
 	/**
