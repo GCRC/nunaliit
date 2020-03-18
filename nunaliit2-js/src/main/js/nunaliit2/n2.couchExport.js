@@ -771,7 +771,7 @@ var ExportService = $n2.Class('ExportService',{
 			,onError: $n2.reportError
 		},opts_);
 		
-		var url = this.serverUrl + 'export/definition/';
+		var url = this.serverUrl + 'definition/';
 		if( opts.fileName ){
 			url = url + opts.fileName;
 		} else {
@@ -886,7 +886,7 @@ var ExportService = $n2.Class('ExportService',{
 			,onError: $n2.reportError
 		},opts_);
 		
-		var url = this.serverUrl + 'export/definition/export';
+		var url = this.serverUrl + 'definition/export';
 
 		var data = {};
 		if( opts.docIds ){

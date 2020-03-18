@@ -23,10 +23,10 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 
 	static private Pattern patternTime = Pattern.compile("^\\s*frame=.*time=\\s*(\\d+\\.\\d*)");
 
-	static public String ffmpegInfoCommand = "avprobe %1$s";
-	static public String ffmpegConvertVideoCommand = "avconv -i %1$s -y -acodec libvo_aacenc -ab 48000 -ac 2 -vcodec libx264 -b:v 128000 -r 24 -vf scale=320:-2 -threads 0 -f mp4 %2$s";
-	static public String ffmpegConvertAudioCommand = "avconv -i %1$s -y -acodec libmp3lame -ab 48000 -ac 2 -threads 0 -f mp3 %2$s";
-	static public String ffmpegCreateThumbnailCommand = "avconv -y -ss %5$s -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s";
+	static public String ffmpegInfoCommand = "ffprobe %1$s";
+	static public String ffmpegConvertVideoCommand = "ffmpeg -i %1$s -y -acodec aac -ab 48000 -ac 2 -vcodec libx264 -b:v 128000 -r 24 -vf scale=320:-2 -threads 0 -f mp4 %2$s";
+	static public String ffmpegConvertAudioCommand = "ffmpeg -i %1$s -y -acodec libmp3lame -ab 48000 -ac 2 -threads 0 -f mp3 %2$s";
+	static public String ffmpegCreateThumbnailCommand = "ffmpeg -y -ss %5$s -i %1$s -s %3$dx%4$d -r 1 -vframes 1 -f image2 %2$s";
 	static public double ffmpegCreateThumbnailFrameInSec = 5.0;
 	
 	static String[] breakUpCommand(String command){
@@ -108,8 +108,8 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 			// generated webm file. Issue discovered on mac os x firefox 53.0.3
 			// https://stackoverflow.com/questions/18123376/webm-to-mp4-conversion-using-ffmpeg
 			if(inputVideo.getFileType().equals("matroska") && inputVideo.getVideoCodec().equals("vp8")) {
-			    //Add the new flags immediately after the command (either avconv or ffmpeg)
-				convertVideoCommand = ffmpegConvertVideoCommand.replaceFirst("(avconv|ffmpeg) ", "$1 -fflags +genpts -r 24 ");
+			    //Add the new flags immediately after the command (either ffmpeg or avconv)
+				convertVideoCommand = ffmpegConvertVideoCommand.replaceFirst("(ffmpeg|avconv) ", "$1 -fflags +genpts -r 24 ");
                 logger.info("Running new command: " + convertVideoCommand);
 			}
 

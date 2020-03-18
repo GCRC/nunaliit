@@ -1,0 +1,138 @@
+<div class="n2_documentDisplay"><div class="n2_layoutFloat">
+<div>
+{{#nunaliit_metadata}}
+	{{#if @context}}
+		<div class="test2_schema_org_@context">
+			<div class="label">@context</div>
+			<div class="value">{{@context}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+	{{#if @type}}
+		<div class="test2_schema_org_@type">
+			<div class="label">@type</div>
+			<div class="value">{{@type}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+	{{#if name}}
+		<div class="test2_schema_org_name">
+			<div class="label n2s_localize">Name</div>
+			<div class="value">{{name}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+	{{#if description}}
+		<div class="test2_schema_org_description">
+			<div class="label n2s_localize">Description</div>
+			<div class="value">{{description}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+	{{#if url}}
+		<div class="test2_schema_org_url">
+			<div class="label n2s_localize">URL</div>
+			<div class="value">{{url}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+	{{#if license}}
+		<div class="test2_schema_org_license">
+			<div class="label n2s_localize">License</div>
+			<div class="value">{{license}}</div>
+			<div class="end"></div>
+		</div>
+	{{/if}}
+	{{#dateCreated}}
+		<div class="test2_schema_org_dateCreated">
+			<div class="label n2s_localize">Date Created</div>
+			<div class="value">{{date}}</div>
+			<div class="end"></div>
+		</div>
+	{{/dateCreated}}
+
+	{{#creator}}
+		{{#if @type}}
+			<div class="test2_schema_org_@type">
+				<div class="label n2s_localize">Type</div>
+				<div class="value n2s_select" n2-choice="{{@type}}">
+					<span class="n2s_choice n2s_localize" n2-choice="Organization">Organization</span>
+					<span class="n2s_choice n2s_localize" n2-choice="Consortium">Consortium</span>
+					<span class="n2s_choice n2s_localize" n2-choice="Educational Organization">Educational Organization</span>
+					<span class="n2s_choice n2s_localize" n2-choice="Government Organization">Government Organization</span>
+					<span class="n2s_choice n2s_localize" n2-choice="Funding Scheme">Funding Scheme</span>
+					<span class="n2s_choice n2s_localize" n2-choice="NGO">NGO</span>
+					<span class="n2s_choice n2s_localize" n2-choice="Corporation">Corporation</span>
+					<span class="n2s_choiceDefault">{{@type}}</span>
+				</div>
+				<div class="end"></div>
+			</div>
+		{{/if}}
+	{{/creator}}
+	{{#creator}}
+		{{#if name}}
+			<div class="test2_schema_org_name">
+				<div class="label n2s_localize">Name</div>
+				<div class="value">{{name}}</div>
+				<div class="end"></div>
+			</div>
+		{{/if}}
+	{{/creator}}
+	{{#creator}}
+		{{#if url}}
+			<div class="test2_schema_org_url">
+				<div class="label n2s_localize">URL</div>
+				<div class="value">{{url}}</div>
+				<div class="end"></div>
+			</div>
+		{{/if}}
+	{{/creator}}
+	{{#creator}}
+		{{#contactPoint}}
+			{{#if contactType}}
+				<div class="test2_schema_org_contactType">
+					<div class="label n2s_localize">Contact Type</div>
+					<div class="value">{{contactType}}</div>
+					<div class="end"></div>
+				</div>
+			{{/if}}
+		{{/contactPoint}}
+	{{/creator}}
+	{{#creator}}
+		{{#contactPoint}}
+			{{#if telephone}}
+				<div class="test2_schema_org_telephone">
+					<div class="label n2s_localize">Telephone</div>
+					<div class="value">{{telephone}}</div>
+					<div class="end"></div>
+				</div>
+			{{/if}}
+		{{/contactPoint}}
+	{{/creator}}
+	{{#creator}}
+		{{#contactPoint}}
+			{{#if email}}
+				<div class="test2_schema_org_email">
+					<div class="label n2s_localize">Email</div>
+					<div class="value">{{email}}</div>
+					<div class="end"></div>
+				</div>
+			{{/if}}
+		{{/contactPoint}}
+	{{/creator}}
+
+	{{#if keywords}}
+	<div class="test2_schema_org_keywords">
+		<div class="label n2s_localize">Keywords</div>
+		<div class="value">
+		{{#keywords}}
+			<div class="array_element">
+			</div>
+		{{/keywords}}
+		</div>
+		<div class="end"></div>
+	</div>
+	{{/if}}
+{{/nunaliit_metadata}}
+</div>
+</div></div>

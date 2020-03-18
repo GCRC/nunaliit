@@ -215,6 +215,8 @@ var NavigationService = $n2.Class({
 	documentSource: null,
 	
 	currentNavigationDoc: null,
+
+	currentNavigationDocId: null,
 	
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -239,6 +241,7 @@ var NavigationService = $n2.Class({
 			d.register(DH,'reportModuleDocument',f);
 			d.register(DH,'navigationGetCurrent',f);
 			d.register(DH,'showPreprocessElement',f);
+			d.register(DH, 'documentContent', f);
 		};
 	},
 	
@@ -249,22 +252,34 @@ var NavigationService = $n2.Class({
 		},opts_);
 		
 		var _this = this;
+		this.currentNavigationDocId = opts.docId;
 		
 		if( opts.doc 
 		 && opts.doc.nunaliit_navigation ){
 			this.navigationDoc = opts.doc;
 			
 			this._fixElements($('body'), this.navigationDoc);
+			if (opts.docId !== 'atlas') {
+				opts.docId = this.navigationDoc._id;
+			}
 			
 			if( this.dispatchService ){
 				this.dispatchService.send(DH, {
 					type: 'navigationReportCurrent'
-					,navigationId: this.navigationDoc._id
+					,navigationId: opts.docId
 					,navigationDoc: this.navigationDoc
 				});
-			};
+			}
 			
-		} else if( opts.docId ){
+		}
+		else if (opts.docId === 'atlas') {
+			// Try atlas document for navigation.
+			this.dispatchService.send(DH, {
+				type: 'requestDocument',
+				docId: 'atlas'
+			});
+		}
+		else if( opts.docId ){
 			if( this.documentSource ){
 				this.documentSource.getDocument({
 					docId: opts.docId
@@ -274,8 +289,8 @@ var NavigationService = $n2.Class({
 						});
 					}
 				});
-			};
-		};
+			}
+		}
 	},
 	
 	printTitle: function(opts_){
@@ -533,7 +548,13 @@ var NavigationService = $n2.Class({
 			var $elem = m.elem;
 			var doc = m.doc;
 			this._fixElements($elem, doc);
-		};
+		} else if (m.type === 'documentContent' && m.docId === 'atlas' && this.currentNavigationDocId === 'atlas') {
+			var atlasDoc = m.doc;
+			this.setCurrentNavigation({
+				doc: atlasDoc.nunaliit_atlas,
+				docId: 'atlas'
+			});
+		}
 	}
 });
 

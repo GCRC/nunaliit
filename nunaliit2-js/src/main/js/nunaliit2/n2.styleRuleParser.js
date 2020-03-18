@@ -476,8 +476,8 @@ var global = {
 		return false;
 	}
 	,hasProperty: function(propName){
-		if (propName &&
-				typeof propName === "string"){
+		if (propName 
+			&& typeof propName === "string"){
 			var arr = propName.split('.');
 			var _this = this;
 			for(var i =0, e= arr.length; i<e; ++i){
@@ -497,6 +497,15 @@ var global = {
 			}
 		}
 		return (typeof _this !== 'undefined') && (_this !== null) && (_this !== '');
+	}
+	,inModel: function(modelId){
+		if( modelId 
+			&& typeof modelId === 'string'
+			&& this.n2_doc
+			&& this.n2_doc.__n2Models ){
+			return this.n2_doc.__n2Models[modelId] || false;
+		}
+		return false;
 	}
 	,Math: Math
 };

@@ -1,17 +1,17 @@
 [
-   {
-      "label": "nunaliit_created_name",
-      "select": "nunaliit_created.name",
-      "type": "text"
-   },
-   {
-      "label": "nunaliit_created_time",
-      "select": "nunaliit_created.time",
-      "type": "text"
-   },
-   {
-      "label": "text",
-      "select": "demo_comment.text",
-      "type": "text"
-   }
+	{
+		"select": "nunaliit_created.name",
+		"label": "nunaliit_created_name",
+		"type": "text"
+	},
+	{
+		"select": "nunaliit_created.time",
+		"label": "nunaliit_created_time",
+		"type": "text"
+	},
+	{
+		"select": "demo_comment.text",
+		"label": "text",
+		"type": "text"
+	}
 ]

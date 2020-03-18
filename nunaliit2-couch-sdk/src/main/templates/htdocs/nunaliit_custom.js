@@ -10,17 +10,6 @@ window.nunaliit_custom.configuration = function(config, callback){
 		
 		return doc;
 	};
-
-	// Custom service
-	if( config.directory.customService ){
-		var customService = config.directory.customService;
-
-		// Default table of content
-		customService.setOption('defaultNavigationIdentifier','navigation.demo');
-		
-		// Default module
-		customService.setOption('defaultModuleIdentifier','module.demo');
-	};
 	
 	// Dispatch service
 	if( config.directory.dispatchService ){

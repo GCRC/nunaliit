@@ -1,7 +1,5 @@
 <span class="demo_media_brief">
-	<span class="n2s_localize demo_media_brief_decoration">
-	Demo Media
-	(</span>
+	<span class="n2s_localize demo_media_brief_decoration">Demo Media (</span>
 	{{#demo_media}}
 		{{#if caption}}
 			<span class="demo_media_caption">{{caption}}</span>

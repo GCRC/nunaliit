@@ -1,0 +1,66 @@
+{
+  "_id": "atlas",
+  "_rev": "7-cfe4bd758d60e4e10cdc099c363768bd",
+  "nunaliit_manifest": {
+    "attachments": {},
+    "digest": "vx1oqqsVrU82GmRPyb+OF2NSEI8=",
+    "type": "SHA-1"
+  },
+  "nunaliit_last_updated": {
+    "nunaliit_type": "actionstamp",
+    "name": "admin",
+    "action": "updated",
+    "time": 1580246898155
+  },
+  "nunaliit_schema": "atlas",
+  "nunaliit_atlas": {
+    "nunaliit_type": "atlas",
+    "nunaliit_navigation": {
+      "nunaliit_type": "navigation",
+      "title": {
+        "nunaliit_type": "localized",
+        "en": "Atlas",
+        "fr": "L'Atlas"
+      },
+      "items": [
+        {
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "Default Module",
+            "fr": "Module de Base"
+          },
+          "module": "module.demo"
+        },
+        {
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "Canvas Module",
+            "fr": "Canvas Module"
+          },
+          "module": "module.test2_canvas"
+        },
+        {
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "External Link",
+            "fr": "External Link"
+          },
+          "href": "http://www.somerandomlink.com"
+        },
+        {
+          "title": {
+            "nunaliit_type": "localized",
+            "en": "Tools",
+            "fr": "Outils"
+          },
+          "href": "./tools/index.html"
+        }
+      ]
+    },
+    "nunaliit_manifest": {
+      "attachments": {},
+      "digest": "/KxzdWOcguFvFh7Z6AdlpqHnKqw=",
+      "type": "SHA-1"
+    }
+  }
+}

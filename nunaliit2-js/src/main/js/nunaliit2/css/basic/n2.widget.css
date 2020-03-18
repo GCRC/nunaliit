@@ -1020,6 +1020,30 @@ Model Browser Widget
 	background-color: #ccc;
 }
 
+/*
+===============================
+WidgetLegend2
+===============================
+*/
+.n2widgetLegend_option.n2widgetLegend_optionUnselected a::before {
+	content: "\2610";
+	padding-right: 5px;
+}
+
+.n2widgetLegend_option.n2widgetLegend_optionSelected a::before {
+	content: "\2611";
+	padding-right: 5px;
+	font-weight: bold;
+}
+
+.nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_checkboxColumn {
+	min-width: 100px; /* width needed to contain four legend symbols */
+	display: inline-block;
+	vertical-align: top;
+}
+
+
+
 /* 
 ==============================
 Sound 

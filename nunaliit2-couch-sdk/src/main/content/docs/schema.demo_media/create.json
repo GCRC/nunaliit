@@ -1,11 +1,11 @@
 {
-   "demo_media": {
-      "caption": "",
-      "credit": ""
-   },
-   "nunaliit_attachments": {
-      "files": {"media": {"data": {}}},
-      "nunaliit_type": "attachment_descriptions"
-   },
-   "nunaliit_schema": "demo_media"
+	"demo_media": {
+		"caption": "",
+		"credit": ""
+	},
+	"nunaliit_attachments": {
+		"nunaliit_type": "attachment_descriptions",
+		"files": {"media": {"data": {}}}
+	},
+	"nunaliit_schema": "demo_media"
 }
