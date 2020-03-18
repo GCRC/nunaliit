@@ -551,6 +551,7 @@ var ModuleDisplay = $n2.Class({
 			var searchInfo = _this.module.getSearchInfo();
 			var modelInfos = _this.module.getModelInfos();
 			var utilityInfos = _this.module.getUtilityInfos();
+
 			
 			// Load up CSS, if specified
 			var css = _this.module.getModuleCSS();
@@ -900,14 +901,28 @@ var ModuleDisplay = $n2.Class({
 			var modelBrowserSpecified = false;
 			for(i=0,e=availableWidgets.length; i<e; ++i){
 				widgetInfo = availableWidgets[i];
-				var widgetDisplayMsg = {
-					type: 'widgetDisplay'
-					,widgetType: widgetInfo.widgetType
-					,widgetOptions: widgetInfo
-					,contentId: _this.contentName
-					,config: config
-					,moduleDisplay: _this
-				};
+				var widgetDisplayMsg;
+				if ( _this.mapInfo && 'LegendWidget2' === widgetInfo.widgetType ){
+					var styleRules = _this.mapInfo.styles || {};
+					widgetDisplayMsg = {
+							type: 'widgetDisplay'
+							,widgetType: widgetInfo.widgetType
+							,widgetOptions: widgetInfo
+							,contentId: _this.contentName
+							,config: config
+							,styleRules : styleRules
+							,moduleDisplay: _this
+					};
+				} else {
+					widgetDisplayMsg = {
+							type: 'widgetDisplay'
+							,widgetType: widgetInfo.widgetType
+							,widgetOptions: widgetInfo
+							,contentId: _this.contentName
+							,config: config
+							,moduleDisplay: _this
+					};
+				}
 
 				var widgetDisplayed = false;
 				
@@ -1329,6 +1344,10 @@ var ModuleDisplay = $n2.Class({
 					mapOptions.mapCoordinateSpecifications.initialBounds;
 			};
 			
+			if( mapInfo
+			 && mapInfo.styles ){
+				mapOptions.canvasStyles = mapInfo.styles;
+			}
 			// Create map control
 			try {
 				_this.mapControl = nunaliit2.mapAndControls(mapOptions);
