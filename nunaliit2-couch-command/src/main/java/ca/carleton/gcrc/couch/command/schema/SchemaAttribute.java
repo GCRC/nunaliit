@@ -1277,8 +1277,6 @@ public class SchemaAttribute {
 						pw.println("\t\t\t\t</div>");
 						
 						pw.println("\t\t\t{{/"+schemaStructure+"}}");
-						
-						pw.println("\t\t\t{{/"+schemaStructure+"}}");
 					}
 				}
 
