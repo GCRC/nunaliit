@@ -59,13 +59,10 @@ import Popup from 'ol-ext/overlay/Popup';
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.canvasMap';
 
-
 //--------------------------------------------------------------------------
 /*
-This canvas displays a map based on OpenLayers5.
-
+ *This canvas displays a map based on OpenLayers5.
  */
-
 //--------------------------------------------------------------------------
 const VENDOR =  {
 		GOOGLEMAP : 'googlemaps',
@@ -141,7 +138,6 @@ class N2MapCanvas  {
 
 		this.overlayInfos = [];
 
-
 		this.mapLayers = [];
 		this.overlayLayers = [];
 
@@ -154,11 +150,6 @@ class N2MapCanvas  {
 		this.endIdx = 0;
 		this.refreshCnt = undefined;
 		
-		var t = new $n2.N2Editor.Base();
-		//==============
-
-		
-
 		this.isClustering = undefined;
 		this.n2View = undefined;
 		this.n2Map = undefined;
@@ -178,7 +169,6 @@ class N2MapCanvas  {
 				}
 		}
 		}
-		
 		
 		this.interactionSet = {
 				selectInteraction : null,
@@ -332,8 +322,6 @@ class N2MapCanvas  {
 
 		this._drawMap();
 		opts.onSuccess();
-		
-
 	}
 
 	/**
@@ -343,9 +331,7 @@ class N2MapCanvas  {
 	 */
 	_processOverlay (overlays) {
 
-
 		var _this = this;
-		
 		if( !$n2.isArray(overlays) ){
 			overlays = [overlays];
 		}
@@ -353,18 +339,18 @@ class N2MapCanvas  {
 		overlays.forEach( (function(overlay){
 
 			// Generate Array<layerInfo> layerInfos;
-			var layerInfoOptions = overlay;
-			var layerInfo = new LayerInfo(layerInfoOptions);
-			var layerOptions = {
-					name: layerInfo.name
-					,projection: layerInfo.sourceProjection
-					,visibility: layerInfo.visibility
-					,_layerInfo: layerInfo
-					,clustering: overlay.clustering
+		    var layerInfoOptions = overlay;
+		    var layerInfo = new LayerInfo(layerInfoOptions);
+		    var layerOptions = {
+			name: layerInfo.name
+			,projection: layerInfo.sourceProjection
+			,visibility: layerInfo.visibility
+			,_layerInfo: layerInfo
+			,clustering: overlay.clustering
 			};
 
-			this.overlayInfos.push(layerOptions);
-			//---------------------
+		    this.overlayInfos.push(layerOptions);
+		    
 			//---------------------
 			if ('couchdb' === overlay.type) {
 				let sourceModelId = undefined;
@@ -417,7 +403,6 @@ class N2MapCanvas  {
 					}
 					});
 					
-					
 					var listenerKey = source.on('change', function(e) {
 						if (source.getState() == 'ready') {
 							if (!_this.refreshCnt){
@@ -442,10 +427,6 @@ class N2MapCanvas  {
 				this.sources.push({});
 			}
 		}).bind(this) );
-		
-
-
-
 	};
 	
     // === LOGIN STUFF START ========================================================
@@ -525,7 +506,6 @@ class N2MapCanvas  {
     		// nothing to do
     		return;
     	};
-    	
 
     	// Apply new mode
     	this.currentMode = mode;
@@ -622,31 +602,32 @@ class N2MapCanvas  {
    		});
     };
 	
-	_getAuthService (){
-		var auth = null;
+    _getAuthService (){
+	var auth = null;
 		
-		if( this.options.directory ) {
-			auth = this.options.directory.authService;
-		};
-		
-		return auth;
+	if( this.options.directory ) {
+	    auth = this.options.directory.authService;
 	};
-	_mapBusyStatus(delta){
 		
-		//TODO new version of progressControl
-//		var previous = this.mapBusyCount;
-//		this.mapBusyCount += delta;
-//		if( previous < 1 && this.mapBusyCount > 0 ) {
-//		$n2.log('Start map busy');
-//		};
-//		if( previous > 0 && this.mapBusyCount < 1 ) {
-//		$n2.log('End map busy');
-//		};
-//		if( this.busyMapControl && delta < 0 ) {
-//		this.busyMapControl.decreaseCounter();
-//		} else if( this.busyMapControl && delta > 0 ) {
-//		this.busyMapControl.increaseCounter();
-//		}
+	return auth;
+	};
+    _mapBusyStatus(delta){
+		
+	// TODO new version of progressControl
+	// Original implementation place here for reference
+	//		var previous = this.mapBusyCount;
+	//		this.mapBusyCount += delta;
+	//		if( previous < 1 && this.mapBusyCount > 0 ) {
+	//		$n2.log('Start map busy');
+	//		};
+	//		if( previous > 0 && this.mapBusyCount < 1 ) {
+	//		$n2.log('End map busy');
+	//		};
+	//		if( this.busyMapControl && delta < 0 ) {
+	//		this.busyMapControl.decreaseCounter();
+	//		} else if( this.busyMapControl && delta > 0 ) {
+	//		this.busyMapControl.increaseCounter();
+	//		}
 	}
 	_getElem(){
 		var $elem = $('#'+this.canvasId);
@@ -713,7 +694,7 @@ class N2MapCanvas  {
 			_this.proj = proj;
 		});
 		//=======================================
-		
+	
 		//Listening on the map move and resolution changes.
 		//Everytime a change is detected. The N2CouchDbSource/N2ModelSource will be update
 		customMap.on('movestart', onMoveStart);
@@ -741,11 +722,9 @@ class N2MapCanvas  {
 		}
 		//========================================
 		
-		
 		this.interactionSet.selectInteraction = new N2Select();
 
-//		------------------------------
-//		------------------------------ create and add layers
+	    //	create and add layers
 		this.overlayLayers = this._genOverlayMapLayers(this.sources);
 		this.mapLayers = this._genBackgroundMapLayers(this.bgSources);
 
@@ -758,8 +737,6 @@ class N2MapCanvas  {
 		});
 		this.popupOverlay = customPopup;
 		this.n2Map.addOverlay(customPopup);
-
-
 
 		/**
 		 * Two Groups : Overlay and Background
@@ -777,7 +754,6 @@ class N2MapCanvas  {
 		customMap.set("layergroup",
 				new LayerGroup({layers: [bgGroup, overlayGroup]})
 		);
-
 
 		var customLayerSwitcher = new LayerSwitcher({
 					tipLabel: 'Legend' // Optional label for button
@@ -808,7 +784,6 @@ class N2MapCanvas  {
 				
 			}
 		}).bind(this));
-
 		
 		this.interactionSet.selectInteraction.on("hover", (function(e) {
 			var mapBrowserEvent = e.upstreamEvent;
@@ -821,7 +796,6 @@ class N2MapCanvas  {
 			}
 		}).bind(this));
 		
-
 		//Create editing layer
 		this.editLayerSource = new VectorSource();
 		var editLayer = new VectorLayer({
@@ -830,9 +804,7 @@ class N2MapCanvas  {
 		});
 		customMap.addLayer(editLayer);
 		this.overlayLayers.push(editLayer);
-		
-		
-		
+			
 		this.editbarControl = new EditBar({
 			interactions: {
 				Select : this.interactionSet.selectInteraction
@@ -909,16 +881,7 @@ class N2MapCanvas  {
 //	       // tooltip.setFeature();
 //	       // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
 //	      });
-		
-		
-		
-		
-		
-		/* Standard Controls */
-//		mainbar.addControl (new ZoomToExtent({  extent: [ 265971,6243397 , 273148,6250665 ] }));
-//		mainbar.addControl (new Rotate());
-//		mainbar.addControl (new FullScreen());
-		//_changeToImageRender();
+
 	}
 
 	onMoveendCallback(evt){
@@ -1208,9 +1171,6 @@ class N2MapCanvas  {
 			$n2.reportError('Bad configuration for layer: ' + name);
 			return null;
 		};
-
-
-
 	}
 	_createBackgroundMapSource (layerDefinition) {
 
@@ -1429,29 +1389,7 @@ class N2MapCanvas  {
 					this._centerMapOnFeature(feature);
 					addGeometryMode = false;
 				}						
-//				} else {
-//					// must center map on feature, if feature contains
-//					// a geometry
-//					if( m.doc 
-//					 && m.doc.nunaliit_geom 
-//					 && m.doc.nunaliit_geom.bbox 
-//					 && m.doc.nunaliit_geom.bbox.length >= 4 ) {
-//						var bbox = m.doc.nunaliit_geom.bbox;
-//						var x = (bbox[0] + bbox[2]) / 2;
-//						var y = (bbox[1] + bbox[3]) / 2;
-//						this._centerMapOnXY(x, y, 'EPSG:4326');
-//
-//						addGeometryMode = false;
-//					};
-//				};
 			};
-			
-			// Remove feature from map
-//			this.infoLayers.forEach(function(layerInfo){
-//				if( layerInfo.featureStrategy ){
-//					layerInfo.featureStrategy.setEditedFeatureIds([fid]);
-//				};
-//			});
 			
 			this.editFeatureInfo = {};
     		this.editFeatureInfo.fid = fid;
@@ -1459,25 +1397,6 @@ class N2MapCanvas  {
 				data: $n2.document.clone(m.doc)
 			};
 	    	var effectiveFeature = null;
-			if( feature ){
-//		    	// Remove feature from current layer
-//		    	var featureLayer = feature.layer;
-//
-//		    	// Compute the actual underlying feature
-//		    	if( fid === feature.fid ){
-//		        	effectiveFeature = feature;
-//		        	
-//		    	} else if( feature.cluster ){
-//		    		for(var i=0,e=feature.cluster.length; i<e; ++i){
-//		    			if( fid === feature.cluster[i].fid ){
-//		    	    		effectiveFeature = feature.cluster[i];
-//		    			};
-//		    		};
-//		    	};
-//		    	
-		    	//this.editFeatureInfo.original.layer = featureLayer;
-		    	//this.editFeatureInfo.original.feature = effectiveFeature;
-			};
 			
 			if( addGeometryMode ){
 				// Edit a document that does not have a geometry.
@@ -1515,7 +1434,8 @@ class N2MapCanvas  {
 //			});
 			
 			// If feature was deleted, then remove it from map
-			//TODO: feature removal for ol5
+		    //TODO: feature removal for ol5;
+		    //?? Uncertain if something need to be take care of upon layerinfo ??
 			if( m.deleted && fid ){
 				reloadRequired = false;
 
@@ -1578,9 +1498,6 @@ class N2MapCanvas  {
 //				
 //			
 //			_this.lastTime = currTime;
-//
-//			
-//			
 //		}
 
 	}
@@ -1688,10 +1605,6 @@ class N2MapCanvas  {
 	}
 
 };
-
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-
 
 //--------------------------------------------------------------------------
 export function HandleCanvasAvailableRequest(m){
