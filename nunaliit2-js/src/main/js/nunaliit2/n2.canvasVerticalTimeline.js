@@ -146,8 +146,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		sourceModelId: null,
 
-		labelDateFormat: null,
-
 		ascendingSortOrder: null,
 
 		displayIndex: null,
@@ -157,7 +155,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				canvasId: null,
 				displayIndex: true,
 				ascendingSortOrder: true,
-				labelDateFormat: null,
 				sourceModelId: null,
 				elementGenerator: null,
 				config: null,
@@ -170,7 +167,6 @@ POSSIBILITY OF SUCH DAMAGE.
 			this.canvasId = opts.canvasId;
 			this.displayIndex = opts.displayIndex;
 			this.ascendingSortOrder = opts.ascendingSortOrder;
-			this.labelDateFormat = opts.labelDateFormat;
 			this.sourceModelId = opts.sourceModelId;
 			this.elementGenerator = opts.elementGenerator;
 			this.elementsById = {};
@@ -426,39 +422,14 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_sortElements: function(){
-			var elementId, element, date, luxonDate;
-			var defaultDateFormat = "yyyy-LL-dd";
+			var elementId, element;
 			this.sortedElements = [];
 
 			for (elementId in this.elementsById) {
 				if (this.elementsById.hasOwnProperty(elementId)) {
 					element = this.elementsById[elementId];
-					date = getDateFromDoc(element);
 
-					// If element doesn't provide a label value, base it on a
-					// document date value
-					if (typeof element.label === 'undefined') {
-						if (date) {
-							luxonDate = $l.DateTime.fromMillis(date.min);
-							if (this.labelDateFormat) {
-								element.label = _loc(luxonDate.toFormat(this.labelDateFormat));
-							} else {
-								// If no specified label date format is
-								// provided, use default format.
-								element.label = luxonDate.toFormat(defaultDateFormat);
-							}
-						}
-					}
-
-					// If element doesn't provide a sorted value, try to base
-					// it on a document date value
-					if (typeof element.sort === 'undefined') {
-						if (date) {
-							element.sort = date.min;
-						}
-					}
-
-					if (element.sort) {
+					if (element.sort && element.label) {
 						this.sortedElements.push(element);
 					}
 				}
@@ -836,6 +807,118 @@ POSSIBILITY OF SUCH DAMAGE.
 		}
 	});
 
+// --------------------------------------------------------------------------
+// Define default element generator for vertical timeline canvas
+var ElementGenerator = $n2.canvasElementGenerator.ElementGenerator;
+
+var DefaultVerticalTimelineElementGenerator = $n2.Class('DefaultVerticalTimelineElementGenerator', ElementGenerator, {
+	
+	labelDateFormat: null,
+
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			labelDateFormat: null
+		},opts_);
+
+		this.labelDateFormat = opts.labelDateFormat;
+
+		ElementGenerator.prototype.initialize.call(this, opts_);
+	},
+
+	_createFragmentsFromDoc: function(doc){
+		return [
+			{
+				id: doc._id
+				,n2_id: doc._id
+				,n2_doc: doc
+			}
+		];
+	},
+
+	_updateElements: function(fragmentMap, currentElementMap){
+		var doc, date, luxonDate, fragId, frag, elementId, element;
+		var elementsById = {};
+		var defaultDateFormat = "yyyy-LL-dd";
+		
+		for(fragId in fragmentMap){
+			frag = fragmentMap[fragId];
+			
+			elementId = fragId;
+			element = currentElementMap[elementId];
+
+			if( !element ){
+				element = {
+					id: elementId
+				};
+			};
+			element.fragments = {};
+			element.fragments[fragId] = frag;
+			elementsById[elementId] = element;
+			
+			doc = frag.n2_doc;
+			element.cells = {
+				id: {
+					value: doc._id
+				}
+				,rev: {
+					value: doc._rev
+				}
+			};
+			element.n2_doc = doc;
+			element.n2_id = doc._id;
+
+			date = getDateFromDoc(element);
+
+			// Define the element label
+			if (date) {
+				luxonDate = $l.DateTime.fromMillis(date.min);
+				if (this.labelDateFormat) {
+					element.label = _loc(luxonDate.toFormat(this.labelDateFormat));
+				} else {
+					// If no specified label date format is
+					// provided, use default format.
+					element.label = luxonDate.toFormat(defaultDateFormat);
+				}
+			}
+
+			// Define the element sort value
+			if (date) {
+				element.sort = date.min;	
+			}
+		};
+		
+		return elementsById;
+	}
+});
+
+function DefaultVerticalTimelineElementGeneratorFactory(opts_){
+	var opts = $n2.extend({
+		type: null
+		,options: null
+		,config: null
+	},opts_);
+	
+	var options = {};
+	if( opts.options ){
+		for(var key in opts.options){
+			var value = opts.options[key];
+			options[key] = value;
+		};
+	};
+	
+	if( opts.config 
+	 && opts.config.directory ){
+		options.dispatchService = opts.config.directory.dispatchService;
+	};
+	
+	return new DefaultVerticalTimelineElementGenerator(options);
+};
+
+$n2.canvasElementGenerator.AddElementGeneratorFactory({
+	type: 'verticalTimelineDefault'
+	,factoryFn: DefaultVerticalTimelineElementGeneratorFactory
+});
+
 	// -------------------------------------------------------------------------
 	function HandleCanvasAvailableRequest(m){
 		if (m.canvasType === 'vertical_timeline') {
@@ -849,7 +932,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		if (m.canvasType === 'vertical_timeline') {
 
-			options = {};
+			options = {
+				elementGeneratorType: 'verticalTimelineDefault'
+			};
+
 			if (m.canvasOptions) {
 				for (key in m.canvasOptions) {
 					if (m.canvasOptions.hasOwnProperty(key)) {
