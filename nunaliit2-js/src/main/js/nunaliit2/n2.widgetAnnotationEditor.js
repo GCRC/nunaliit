@@ -110,7 +110,9 @@ function updateTimeLinkWithTags(timeLink, tagValues){
 
 //+++++++++++++++++++++++++++++++++++++++++++++++
 
-
+/**
+ * @classdesc The data depot for focusing sentence. 
+ */
 var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 	initialize: function(opts_){
 		var opts = $n2.extend({
@@ -273,12 +275,19 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 	}
 	
 });
+
 var CineAnnotationEditorMode = {
 		TAGSELECTION: 'tagselection',
 		TAGGROUPING : 'taggrouping',
 		TAGSETTING : 'tagsetting'
 };
+
 var context_menu_text = ['Tag Selection...', 'Map Tags...', 'Settings...'];
+
+/**
+ * @classdesc The real editor for sentence annotation. It is created for atlascine and aims to provide sentence annotation
+ * function for widgetTranscript widget. It can live in AnnotationWidget container or other container if user want to.
+ */
 var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 
 	dispatchService: null,
@@ -1278,7 +1287,10 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 	
 	}
 });
- 
+/**
+ * @classdesc This is a container for real annotationEditorView. In rendering view, this widget can be seen 
+ * as the sidebar Drawer, that can listen on user intention, model and other widget's changes
+ */
 var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 	
 	dispatchService: null,
@@ -1317,6 +1329,8 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 
 		this.docsById = {};
 		this.currentDocId = null;
+		
+		//The real annotationEditor lives inside annotationWidget container
 		this.annotationEditor = new CineAnnotationEditorView({
 			dispatchService: this.dispatchService,
 			onSaved: function(){
@@ -1526,6 +1540,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		 new AnnotationEditorWidget(options);
 	 }
  };
+ 
 $n2.widgetAnnotationEditor = {
 	AnnotationEditorWidget: AnnotationEditorWidget
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests

@@ -323,7 +323,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		} else {
 			return $rst;
 		}
-		
 	},
 	
 	_cinemapUpdated(sourceState){
@@ -348,6 +347,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var doc = sourceState.added[i];
 				var docId = doc._id;
 
+				//If new cinemapDocument is added, update the cinemap info in this widget
 				if( doc.atlascine2_cinemap ){
 					var media_doc_ref = doc.atlascine2_cinemap.media_doc_ref;
 					if (media_doc_ref){
@@ -396,22 +396,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		};
 		
 		return vTime;
-	},
-
-	_convertVideoTimeToTime: function(vTime){
-		var time = undefined;
-		
-		if( this.timeTable ){
-			this.timeTable.forEach(function(timeEntry){
-				if( timeEntry.videoStart < vTime && vTime < timeEntry.videoEnd ){
-					var frac = (vTime - timeEntry.videoStart) / (timeEntry.videoEnd - timeEntry.videoStart);
-					time = timeEntry.timeStart + (frac * (timeEntry.timeEnd - timeEntry.timeStart));
-					time = Math.floor(time);
-				};
-			});
-		};
-		
-		return time;
 	},
 
 	/**
@@ -1010,6 +994,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		
 		return undefined;
 	},
+	
 	_findVideoAttachmentName: function(doc){
 		if( doc 
 		 && doc.nunaliit_attachments 
@@ -1041,7 +1026,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		
 		 //Inform time model
 		if( this.intervalSetEventName ){
-			//var min = this._convertVideoTimeToTime(currentTime);
 			var max = currentTime;
 			
 			if( typeof max == 'number' ){
@@ -1085,8 +1069,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			//$n2.log('current time: '+ currentTime);
 		}
 
-		
 		if( 'model' === origin ){
+		
 			var $video = $('#'+this.videoId);
 			var currentVideoTime = $video[0].currentTime;
 			if( Math.abs(currentVideoTime - currentTime) < 0.5 ){
@@ -1097,15 +1081,20 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			};
 			
 		} else if( 'text' === origin ){
+			
 			var $video = $('#'+this.videoId);
 			$video[0].currentTime = currentTime;
 			$video[0].play();
+		
 		} else if ('text-oneclick' === origin){
+		
 			var $video = $('#'+this.videoId);
 			_this.pauseVideo($video[0], currentTime);
 			
 		} else if('startEditing' === origin){
+			
 			_this._lastCtxTime = currentTime;
+	
 		} else if ( 'savedState' === origin ){
 		
 			var $video = $('#'+this.videoId);
@@ -1122,11 +1111,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				} else {
 						$video[0].pause();
 						clearInterval(inid);
-				}
-				
+				}				
 			},100);
+			
 		} 
 	},
+	
 	pauseVideo: function($video, currentTime){
 		$video.currentTime = currentTime;
 		var volume = $video.getVolume();
@@ -1147,9 +1137,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			
 		},50);
 	},
+	
 	_onUserScrollAction: function(evt){
 		this.lastTimeUserScroll = $.now();
 	},
+	
 	_scrollToView: function($dst) {
 		var _this = this;
 		var parent_height = $dst.parent().innerHeight();
@@ -1171,6 +1163,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			},100);
 		}
 	},
+	
 	_renderError: function(errMsg){
 		var $elem = this._getElem();
 		
@@ -1182,14 +1175,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 //--------------------------------------------------------------------------
 
-//--------------------------------------------------------------------------
-
-//--------------------------------------------------------------------------
-
-
 var SubtitleFileParser = {
 		srt:{
-			
 			parse: function(srtData) {
 				var reTimeCode = /^([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{1,3})?) --\> ([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{3})?)(.*)$/;
 				var reTimeCode_s = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*/i;
@@ -1242,11 +1229,11 @@ var SubtitleFileParser = {
 				return json;
 			}
 		},
+		
 		webvtt:{
+			
 			pattern_identifier : /^([a-zA-z]+-)?[0-9]+$/
 			,pattern_timecode : /^([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{1,3})?) --\> ([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{3})?)(.*)$/
-
-			
 			,parse: function(trackText) {
 				// match start "chapter-" (or anythingelse)
 				
@@ -1298,6 +1285,7 @@ var SubtitleFileParser = {
 
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
+	
 	if( m.widgetType === 'transcriptWidget' ){
 		m.isAvailable = true;
 
