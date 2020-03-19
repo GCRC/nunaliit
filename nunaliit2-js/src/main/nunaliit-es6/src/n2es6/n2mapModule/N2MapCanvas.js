@@ -208,8 +208,6 @@ class N2MapCanvas  {
 
 		this._drawMap();
 		opts.onSuccess();
-		
-
 	}
 
 	/**
@@ -293,7 +291,6 @@ class N2MapCanvas  {
 					}
 					});
 					
-					
 					var listenerKey = source.on('change', function(e) {
 						if (source.getState() == 'ready') {
 							if (!_this.refreshCnt){
@@ -307,7 +304,7 @@ class N2MapCanvas  {
 							_this.refreshCnt++;
 						}
 					});
-						//      unByKey(listenerKey);
+
 					this.sources.push(source);
 				};
 			} else if ('wfs' === overlay.type) {
@@ -517,7 +514,7 @@ class N2MapCanvas  {
 			active: _this.isClustering ? true: false,
 			onToggle: function(active)
 			{
-				//TODO toggle cluster button only change the clusting-setting for first overlay-layer
+				//NOTE toggle cluster button only change the clusting-setting for first overlay-layer
 				if(active && !_this.isClustering){
 					let c_source =  _this.overlayLayers[0].getSource();
 					_this.overlayLayers[0].setSource(null);
@@ -546,14 +543,7 @@ class N2MapCanvas  {
 			}
 		})
 		mainbar.addControl (pcluster);
-
-		/* Standard Controls */
-//		mainbar.addControl (new ZoomToExtent({  extent: [ 265971,6243397 , 273148,6250665 ] }));
-//		mainbar.addControl (new Rotate());
-//		mainbar.addControl (new FullScreen());
-		//_changeToImageRender();
 	}
-
 
 	_retrivingDocsAndPaintPopup(feature, mapBrowserEvent){
 		var _this = this;
@@ -696,9 +686,6 @@ class N2MapCanvas  {
 						}
 					}
 				});
-//				var layerOptions = _this.overlayInfos.shift();
-//				var layerStyleMap = createStyleMap(layerOptions._layerInfo);
-//				vectorLayer.set('styleMap', layerStyleMap);
 				fg.push(vectorLayer);
 			};
 
@@ -707,53 +694,7 @@ class N2MapCanvas  {
 	
 		function StyleFn(feature, resolution){
 
-			var DONETESTCACHE = {};
-			var RANDOMNAME = ["EU", "NA", "ASIA", "AF"];
-			var RANDOMCOLOR = ["#ff0","#0ff","#0f0","#f0f","#f00","#00f"];
 			var f = feature;
-
-//			if(f.getGeometry().getType() === "Point"){
-//				
-//				var ldata =[];
-//				let e = Math.round(10*Math.random());
-//				let thisradius = 0;
-//				for(var k =0;k<e;k++){
-//					let dur = Math.round(10*Math.random());
-//					let tyr = {
-//							name: RANDOMNAME[k % 4],
-//							opacity: Math.random(),
-//							strokeColor: RANDOMCOLOR[k % 6]
-//					};
-//					let entry = {
-//							duration : dur,
-//							type : tyr
-//					};
-//					ldata.push(entry);
-//					thisradius += entry.duration;
-//				}
-//				
-//
-//
-//				let donutScaleFactor = 5;
-//				let thisStyle = new Style({
-//					image: new customPointStyle({
-//						type: "treeRing",
-//						radius : thisradius* donutScaleFactor,
-//						data: ldata,
-//						donutScaleFactor: donutScaleFactor,
-//						animation: false,
-//						stroke: new Stroke({
-//							color: "#000",
-//							width: 2
-//						})
-//					})
-//				})
-//	
-//				return [thisStyle];
-//
-//			}
-
-
 			var geomType = f.getGeometry()._n2Type;
 			if ( !geomType ) {
 				if ( f
@@ -1100,9 +1041,6 @@ class N2MapCanvas  {
 //				
 //			
 //			_this.lastTime = currTime;
-//
-//			
-//			
 //		}
 
 	}
@@ -1192,10 +1130,6 @@ class N2MapCanvas  {
 	}
 
 };
-
-//--------------------------------------------------------------------------
-//--------------------------------------------------------------------------
-
 
 //--------------------------------------------------------------------------
 export function HandleCanvasAvailableRequest(m){
