@@ -413,8 +413,10 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
+		// Sort elements based on sort value and label
 		_sortElements: function() {
-			var elementId, element;
+			var elementId, element, i, e;
+			var uniqueLabels = [];
 			this.sortedElements = [];
 
 			for (elementId in this.elementsById) {
@@ -447,10 +449,20 @@ POSSIBILITY OF SUCH DAMAGE.
 			if (!this.ascendingSortOrder) {
 				this.sortedElements.reverse();
 			}
+
+			// Remove duplicate labels from canvas
+			for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
+				if (uniqueLabels.indexOf(this.sortedElements[i].label) >= 0) {
+					// Not unique, remove label from element.
+					delete this.sortedElements[i].label;
+				} else {
+					uniqueLabels.push(this.sortedElements[i].label);
+				}
+			}
 		},
 
 		_elementsChanged: function(addedElements, updatedElements, removedElements) {
-			var i,e,removed,added,updated;
+			var i, e, removed, added, updated;
 
 			// Remove elements that are no longer there
 			for (i = 0, e = removedElements.length; i < e; i += 1) {
@@ -802,21 +814,26 @@ POSSIBILITY OF SUCH DAMAGE.
 	});
 
 	// -------------------------------------------------------------------------
-	// Define default element generator for vertical timeline canvas
-	var ElementGenerator = $n2.canvasElementGenerator.ElementGenerator;
-
-	var DefaultVerticalTimelineElementGenerator = $n2.Class('DefaultVerticalTimelineElementGenerator', ElementGenerator, {
+	/**
+	 * Creates an default vertical timeline element generator if custom element
+	 * generator is not provided.
+	 * @class
+	 *
+	 * @param {string} [labelDateFormat='yyyy-LL-dd'] label date format defined
+	 * by luxon library.
+	 */
+	var DefaultVerticalTimelineElementGenerator = $n2.Class('DefaultVerticalTimelineElementGenerator', $n2.canvasElementGenerator.ElementGenerator, {
 
 		labelDateFormat: null,
 
 		initialize: function(opts_) {
 			var opts = $n2.extend({
-				labelDateFormat: null
+				labelDateFormat: 'yyyy-LL-dd'
 			}, opts_);
 
 			this.labelDateFormat = opts.labelDateFormat;
 
-			ElementGenerator.prototype.initialize.call(this, opts_);
+			$n2.canvasElementGenerator.ElementGenerator.prototype.initialize.call(this, opts_);
 		},
 
 		_createFragmentsFromDoc: function(doc) {
@@ -832,7 +849,6 @@ POSSIBILITY OF SUCH DAMAGE.
 		_updateElements: function(fragmentMap, currentElementMap) {
 			var doc, date, luxonDate, fragId, frag, elementId, element;
 			var elementsById = {};
-			var defaultDateFormat = "yyyy-LL-dd";
 
 			for (fragId in fragmentMap) {
 				frag = fragmentMap[fragId];
@@ -868,11 +884,6 @@ POSSIBILITY OF SUCH DAMAGE.
 					luxonDate = $l.DateTime.fromMillis(date.min);
 					if (this.labelDateFormat) {
 						element.label = _loc(luxonDate.toFormat(this.labelDateFormat));
-
-					} else {
-						// If no specified label date format is
-						// provided, use default format.
-						element.label = luxonDate.toFormat(defaultDateFormat);
 					}
 				}
 
@@ -886,6 +897,11 @@ POSSIBILITY OF SUCH DAMAGE.
 		}
 	});
 
+	/**
+	 * Creates an default vertical timeline element generator factory.
+	 * Used to add the default vertical timeline element generator type.
+	 * @class
+	 */
 	function DefaultVerticalTimelineElementGeneratorFactory(opts_) {
 		var opts = $n2.extend({
 			type: null
