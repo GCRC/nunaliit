@@ -1,31 +1,31 @@
 /*
-Copyright (c) 2018, Geomatics and Cartographic Research Centre, Carleton 
+Copyright (c) 2018, Geomatics and Cartographic Research Centre, Carleton
 University
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
- - Redistributions of source code must retain the above copyright notice, 
+ - Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
  - Redistributions in binary form must reproduce the above copyright notice,
    this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
- - Neither the name of the Geomatics and Cartographic Research Centre, 
-   Carleton University nor the names of its contributors may be used to 
-   endorse or promote products derived from this software without specific 
+ - Neither the name of the Geomatics and Cartographic Research Centre,
+   Carleton University nor the names of its contributors may be used to
+   endorse or promote products derived from this software without specific
    prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 */
@@ -34,8 +34,10 @@ POSSIBILITY OF SUCH DAMAGE.
 	"use strict";
 
 	var $l;
-	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); },
-		DH = 'n2.canvasVerticalTimeline';
+	var _loc = function(str,args) {
+		return $n2.loc(str,'nunaliit2',args);
+	};
+	var DH = 'n2.canvasVerticalTimeline';
 
 	// Required library: luxon
 	if (window.luxon) {
@@ -49,8 +51,8 @@ POSSIBILITY OF SUCH DAMAGE.
 	 * @param object
 	 * @returns {object} Nunaliit date object
 	 */
-	function getDateFromDoc(object){
-		var date, key, value, result;
+	function getDateFromDoc(object) {
+		var key, result;
 
 		// Return object if the object is a Nunaliit date object.
 		if (Object.hasOwnProperty.call(object, 'nunaliit_type')
@@ -80,7 +82,7 @@ POSSIBILITY OF SUCH DAMAGE.
 	 * @param canvasId
 	 * @returns {number} canvas height in pixels
 	 */
-	function getCanvasHeight(canvasId){
+	function getCanvasHeight(canvasId) {
 		var canvasHeight = $('#' + canvasId).height();
 
 		if (canvasHeight <= 0) {
@@ -90,7 +92,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		return canvasHeight;
 	}
 
-	// --------------------------------------------------------------------------
+	// -------------------------------------------------------------------------
 	/**
 	 * @class
 	 * The vertical timeline canvas displays an ordered list of elements.
@@ -99,7 +101,7 @@ POSSIBILITY OF SUCH DAMAGE.
 	 * - id: String. Unique identifier for this element
 	 * - n2_doc: Document used to create the element item
 	 * - sort: Optional String. Used to sort the cells in the vertical timeline.
-	 * If no sort value is provided, sort by element date values will be attempted.
+	 * If no sort value is provided, sort by element date values is attempted.
 	 * - fragments: Map map of fragments that make this element. Gives a list of
 	 * documents used to make up this element.
 	 *
@@ -159,8 +161,8 @@ POSSIBILITY OF SUCH DAMAGE.
 				elementGenerator: null,
 				config: null,
 				moduleDisplay: null,
-				onSuccess: function(){},
-				onError: function(err){}
+				onSuccess: function() {},
+				onError: function(err) {}
 			},opts_);
 
 			var _this = this;
@@ -185,7 +187,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			// Register to events
 			if (this.dispatchService) {
-				var f = function(m){
+				var f = function(m) {
 					_this._handleDispatch(m);
 				};
 
@@ -197,7 +199,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			// Element generator
 			if (this.elementGenerator) {
-				this.elementGenerator.setElementsChangedListener(function(added, updated, removed){
+				this.elementGenerator.setElementsChangedListener(function(added, updated, removed) {
 					_this._elementsChanged(added, updated, removed);
 				});
 			}
@@ -222,7 +224,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			var width;
 			var itemPadding = 30;
 
-			width = ($('#' + this.canvasTimelineId).width()/2) - itemPadding;
+			width = ($('#' + this.canvasTimelineId).width() / 2) - itemPadding;
 			this.itemWidth = width;
 		},
 
@@ -235,53 +237,42 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_linkIndexToListItems: function() {
-			var i, e, arrayItem, indexItemId, indexItemSortValue, sortValue, index;
-			var itemsArray = $('#' + this.canvasId + ' .n2_vertical_timeline_item_label');
+			var i, e, arrayItem, indexItemId, indexItemSortValue, itemsArray;
+			var	sortValue, index;
+
+			var getSortValue = function(arrayItem) {
+				var sortValue;
+				if (arrayItem
+					&& arrayItem.attributes
+					&& arrayItem.attributes.n2_sortvalue
+					&& arrayItem.attributes.n2_sortvalue.value) {
+					sortValue = arrayItem.attributes.n2_sortvalue.value;
+				}
+				return sortValue;
+			};
 
 			if (!this.ascendingSortOrder) {
-				for (i = 0, e = itemsArray.length-1; i <= e; e -= 1) {
-					arrayItem = itemsArray[e];
-					if (arrayItem.attributes
-						&& arrayItem.attributes.n2_sortvalue
-						&& arrayItem.attributes.n2_sortvalue.value){
-						sortValue = arrayItem.attributes.n2_sortvalue.value;
-					}
+				itemsArray = $('#' + this.canvasId + ' .n2_vertical_timeline_item_label')
+					.get().reverse();
 
-					for (index in this.indexElements) {
-						if (this.indexElements.hasOwnProperty(index)) {
-							if (this.indexElements[index].id
-								&& this.indexElements[index].sort) {
-								indexItemId = this.indexElements[index].id;
-								indexItemSortValue = this.indexElements[index].sort;
-
-								if (sortValue >= indexItemSortValue
-									&& !this._linkIdExists(indexItemId)) {
-									arrayItem.id = indexItemId;
-								}
-							}
-						}
-					}
-				}
 			} else {
-				for (i = 0, e = itemsArray.length; i < e; i += 1) {
-					arrayItem = itemsArray[i];
-					if (arrayItem.attributes
-						&& arrayItem.attributes.n2_sortvalue
-						&& arrayItem.attributes.n2_sortvalue.value){
-						sortValue = arrayItem.attributes.n2_sortvalue.value;
-					}
+				itemsArray = $('#' + this.canvasId + ' .n2_vertical_timeline_item_label');
+			}
 
-					for (index in this.indexElements) {
-						if (this.indexElements.hasOwnProperty(index)) {
-							if (this.indexElements[index].id
-								&& this.indexElements[index].sort) {
-								indexItemId = this.indexElements[index].id;
-								indexItemSortValue = this.indexElements[index].sort;
+			for (i = 0, e = itemsArray.length; i < e; i += 1) {
+				arrayItem = itemsArray[i];
+				sortValue = getSortValue(arrayItem);
 
-								if (sortValue >= indexItemSortValue
-									&& !this._linkIdExists(indexItemId)) {
-									arrayItem.id = indexItemId;
-								}
+				for (index in this.indexElements) {
+					if (this.indexElements.hasOwnProperty(index)) {
+						if (this.indexElements[index].id
+							&& this.indexElements[index].sort) {
+							indexItemId = this.indexElements[index].id;
+							indexItemSortValue = this.indexElements[index].sort;
+
+							if (sortValue >= indexItemSortValue
+								&& !this._linkIdExists(indexItemId)) {
+								arrayItem.id = indexItemId;
 							}
 						}
 					}
@@ -289,7 +280,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		_createTimeline: function(){
+		_createTimeline: function() {
 			var $target, $canvas, $canvasList;
 			var _this = this;
 
@@ -301,13 +292,12 @@ POSSIBILITY OF SUCH DAMAGE.
 			$('<div>')
 				.attr('class', 'n2_vertical_timeline')
 				.attr('id', this.canvasContainerId)
-				.click(function(e){
+				.click(function(e) {
 					$target = $(e.target);
-					if ($target.hasClass('n2_vertical_timeline_item')) {
+					if ($target.hasClass('n2_vertical_timeline_item')
+						|| $target.parents('.n2_vertical_timeline_item').length > 0) {
 						// Ignore
-					} else if ($target.parents('.n2_vertical_timeline_item').length > 0) {
-					   	// Ignore
-					}	else {
+					} else {
 						_this._backgroundClicked();
 					}
 				})
@@ -325,7 +315,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			$canvasList = $('<div>')
 				.attr('class','n2_vertical_timeline_list')
 				.appendTo($('#' + this.canvasContainerId))
-				.on('scroll', function(){
+				.on('scroll', function() {
 					_this._handleScrollEvent();
 				});
 
@@ -347,13 +337,13 @@ POSSIBILITY OF SUCH DAMAGE.
 			this._refresh();
 		},
 
-		_updateTimelinePadding: function(){
+		_updateTimelinePadding: function() {
 			$('#' + this.canvasContainerId + ' .n2_vertical_timeline_list')
 				.find('.n2_vertical_timeline_padding')
 				.css('height', getCanvasHeight(this.canvasId));
 		},
 
-		_refresh: function(){
+		_refresh: function() {
 			var i, e, timelineItemOptions, timelineIndexOptions, $timelineList, $index;
 
 			// Empty canvas timeline list
@@ -379,11 +369,12 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.indexElements = this.timelineIndex.getIndexElements();
 				this._updateTimelinePadding();
 
-				// Re-Calculate Item Width based on available space
+				// Re-Calculate Item Width based on available window space
 				this._calcListItemWidth();
 
 				for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
-					// Exclude link elements if produced by the generic element generator
+					// Exclude link elements if produced by
+					// the generic element generator
 					if (this.elementGenerator._classname === 'GenericElementGenerator'
 						&& this.sortedElements[i].isLink) {
 						// Do nothing
@@ -411,7 +402,8 @@ POSSIBILITY OF SUCH DAMAGE.
 					if (this.indexElements.hasOwnProperty(index)) {
 						if (this.indexElements[index].id) {
 							elem = document.getElementById(this.indexElements[index].id);
-							if (elem && elem.getBoundingClientRect().top > headerHeight) {
+							if (elem
+								&& elem.getBoundingClientRect().top > headerHeight) {
 								this.timelineIndex.setActiveIndexItem(this.indexElements[index].label);
 								break;
 							}
@@ -421,7 +413,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		_sortElements: function(){
+		_sortElements: function() {
 			var elementId, element;
 			this.sortedElements = [];
 
@@ -435,7 +427,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			}
 
-			this.sortedElements.sort(function(a,b){
+			this.sortedElements.sort(function(a,b) {
 				if (a.sort < b.sort) {
 					return -1;
 				}
@@ -457,25 +449,25 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		_elementsChanged: function(addedElements, updatedElements, removedElements){
+		_elementsChanged: function(addedElements, updatedElements, removedElements) {
 			var i,e,removed,added,updated;
 
 			// Remove elements that are no longer there
-			for (i=0,e=removedElements.length; i<e; i += 1) {
+			for (i = 0, e = removedElements.length; i < e; i += 1) {
 				removed = removedElements[i];
 				delete this.elementsById[removed.id];
 			}
 
 			// Add elements
-			for (i=0,e=addedElements.length; i<e; i += 1) {
+			for (i = 0, e = addedElements.length; i < e; i += 1) {
 				added = addedElements[i];
 				this.elementsById[added.id] = added;
 			}
 
 			// Update elements
-			for (i=0,e=updatedElements.length; i<e; i += 1) {
+			for (i = 0, e = updatedElements.length; i < e; i += 1) {
 				updated = updatedElements[i];
-				this.elementsById[ updated.id ] = updated;
+				this.elementsById[updated.id] = updated;
 			}
 
 			this._sortElements();
@@ -483,19 +475,19 @@ POSSIBILITY OF SUCH DAMAGE.
 			this._refresh();
 		},
 
-		_sourceModelUpdated: function(state){
+		_sourceModelUpdated: function(state) {
 			this.elementGenerator.sourceModelUpdated(state);
 		},
 
-		_handleDispatch: function(m){
-			if ('modelStateUpdated' === m.type) {
+		_handleDispatch: function(m) {
+			if (m.type === 'modelStateUpdated') {
 				if (this.sourceModelId === m.modelId) {
 					if (m.state) {
 						this._sourceModelUpdated(m.state);
 					}
 				}
 
-			} else if ('windowResized' === m.type) {
+			} else if (m.type === 'windowResized') {
 				this._refresh();
 			}
 		}
@@ -536,14 +528,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		itemPadding: null,
 
-		initialize: function(opts_){
+		initialize: function(opts_) {
 			var opts = $n2.extend({
 				canvasId: null,
 				canvasIndexId: null,
 				ascendingSortOrder: null,
 				timelineItems: null,
-				onSuccess: function(){},
-				onError: function(err){}
+				onSuccess: function() {},
+				onError: function(err) {}
 			},opts_);
 
 			this.canvasId = opts.canvasId;
@@ -564,7 +556,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			opts.onSuccess();
 		},
 
-		_generateIndex: function(){
+		_generateIndex: function() {
 			var i, e, sortValue, labelValue, uniqueId;
 			this.uniqueIndexValues = [];
 			var uniqueIndexObjects = {};
@@ -593,7 +585,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 
 			if (this.uniqueIndexValues.length > 1) {
-				this.uniqueIndexValues.sort(function(a,b){
+				this.uniqueIndexValues.sort(function(a,b) {
 					if (a < b) {
 						return -1;
 					}
@@ -613,7 +605,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		_addTimelineIndexToCanvas: function(){
+		_addTimelineIndexToCanvas: function() {
 			var i, e, indexList, indexItem, indexElements, itemId, itemLabel, sortedIndex, sortedIndexItem;
 
 			indexList = $('<ul>')
@@ -644,29 +636,29 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		getSortedIndex: function(){
+		getSortedIndex: function() {
 			return this.sortedIndex;
 		},
 
-		getIndexElements: function(){
+		getIndexElements: function() {
 			return this.indexElements;
 		},
 
-		_setIndex: function(sortedIndex, indexElements){
+		_setIndex: function(sortedIndex, indexElements) {
 			this.sortedIndex = sortedIndex;
 			this.indexElements = indexElements;
 		},
 
-		_getIndexRange: function(){
+		_getIndexRange: function() {
 			return this.indexRange;
 		},
 
-		_setIndexRange: function(startIndex, endIndex){
+		_setIndexRange: function(startIndex, endIndex) {
 			this.indexRange.startIndex = startIndex;
 			this.indexRange.endIndex = endIndex;
 		},
 
-		_updateIndexRange: function(sortValue){
+		_updateIndexRange: function(sortValue) {
 			var currentIndexRange = this._getIndexRange();
 
 			if (!currentIndexRange.startIndex && !currentIndexRange.endIndex) {
@@ -683,7 +675,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		setActiveIndexItem: function(itemLabel){
+		setActiveIndexItem: function(itemLabel) {
 			var i, e, indexItem, indexItems, indexItemText;
 
 			// Update item with active class
@@ -692,7 +684,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			for (i = 0, e = indexItems.length; i < e; i += 1) {
 				indexItem = indexItems.eq(i);
 				indexItemText = indexItem.text();
-				if (indexItemText  === String(itemLabel)) {
+				if (indexItemText === String(itemLabel)) {
 					indexItem.addClass('active');
 				} else {
 					indexItem.removeClass('active');
@@ -717,14 +709,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		timelineList: null,
 
-		initialize: function(opts_){
+		initialize: function(opts_) {
 			var opts = $n2.extend({
 				element: null,
 				itemWidth: null,
 				timelineList: null,
-				onSuccess: function(){},
-				onError: function(err){}
-			},opts_);
+				onSuccess: function() {},
+				onError: function(err) {}
+			}, opts_);
 
 			this.element = opts.element;
 			this.itemWidth = opts.itemWidth;
@@ -735,17 +727,19 @@ POSSIBILITY OF SUCH DAMAGE.
 			opts.onSuccess();
 		},
 
-		_getDocIdFromDoc: function(doc){
+		_getDocIdFromDoc: function(doc) {
 			if (doc && doc._id) {
 				return doc._id;
 			}
 		},
 
-		_getAttachment: function(doc){
+		_getAttachment: function(doc) {
 			var file;
-			if (doc && doc.nunaliit_attachments && doc.nunaliit_attachments.files) {
+			if (doc
+				&& doc.nunaliit_attachments
+				&& doc.nunaliit_attachments.files) {
 				for (file in doc.nunaliit_attachments.files) {
-					if (doc.nunaliit_attachments.files.hasOwnProperty(file)){
+					if (doc.nunaliit_attachments.files.hasOwnProperty(file)) {
 						if (doc.nunaliit_attachments.files[file].originalName) {
 							return doc.nunaliit_attachments.files[file].originalName;
 						}
@@ -754,7 +748,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		_addItemToList: function(){
+		_addItemToList: function() {
 			var $timelineItem, $timelineItemContent, $timelineItemContentText;
 			var sortValue = this.element.sort;
 			var itemLabel = this.element.label;
@@ -807,127 +801,128 @@ POSSIBILITY OF SUCH DAMAGE.
 		}
 	});
 
-// --------------------------------------------------------------------------
-// Define default element generator for vertical timeline canvas
-var ElementGenerator = $n2.canvasElementGenerator.ElementGenerator;
+	// -------------------------------------------------------------------------
+	// Define default element generator for vertical timeline canvas
+	var ElementGenerator = $n2.canvasElementGenerator.ElementGenerator;
 
-var DefaultVerticalTimelineElementGenerator = $n2.Class('DefaultVerticalTimelineElementGenerator', ElementGenerator, {
-	
-	labelDateFormat: null,
+	var DefaultVerticalTimelineElementGenerator = $n2.Class('DefaultVerticalTimelineElementGenerator', ElementGenerator, {
 
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			labelDateFormat: null
-		},opts_);
+		labelDateFormat: null,
 
-		this.labelDateFormat = opts.labelDateFormat;
+		initialize: function(opts_) {
+			var opts = $n2.extend({
+				labelDateFormat: null
+			}, opts_);
 
-		ElementGenerator.prototype.initialize.call(this, opts_);
-	},
+			this.labelDateFormat = opts.labelDateFormat;
 
-	_createFragmentsFromDoc: function(doc){
-		return [
-			{
-				id: doc._id
-				,n2_id: doc._id
-				,n2_doc: doc
-			}
-		];
-	},
+			ElementGenerator.prototype.initialize.call(this, opts_);
+		},
 
-	_updateElements: function(fragmentMap, currentElementMap){
-		var doc, date, luxonDate, fragId, frag, elementId, element;
-		var elementsById = {};
-		var defaultDateFormat = "yyyy-LL-dd";
-		
-		for(fragId in fragmentMap){
-			frag = fragmentMap[fragId];
-			
-			elementId = fragId;
-			element = currentElementMap[elementId];
+		_createFragmentsFromDoc: function(doc) {
+			return [
+				{
+					id: doc._id
+					,n2_id: doc._id
+					,n2_doc: doc
+				}
+			];
+		},
 
-			if( !element ){
-				element = {
-					id: elementId
+		_updateElements: function(fragmentMap, currentElementMap) {
+			var doc, date, luxonDate, fragId, frag, elementId, element;
+			var elementsById = {};
+			var defaultDateFormat = "yyyy-LL-dd";
+
+			for (fragId in fragmentMap) {
+				frag = fragmentMap[fragId];
+
+				elementId = fragId;
+				element = currentElementMap[elementId];
+
+				if (!element) {
+					element = {
+						id: elementId
+					};
+				}
+				element.fragments = {};
+				element.fragments[fragId] = frag;
+				elementsById[elementId] = element;
+
+				doc = frag.n2_doc;
+				element.cells = {
+					id: {
+						value: doc._id
+					}
+					,rev: {
+						value: doc._rev
+					}
 				};
-			};
-			element.fragments = {};
-			element.fragments[fragId] = frag;
-			elementsById[elementId] = element;
-			
-			doc = frag.n2_doc;
-			element.cells = {
-				id: {
-					value: doc._id
-				}
-				,rev: {
-					value: doc._rev
-				}
-			};
-			element.n2_doc = doc;
-			element.n2_id = doc._id;
+				element.n2_doc = doc;
+				element.n2_id = doc._id;
 
-			date = getDateFromDoc(element);
+				date = getDateFromDoc(element);
 
-			// Define the element label
-			if (date) {
-				luxonDate = $l.DateTime.fromMillis(date.min);
-				if (this.labelDateFormat) {
-					element.label = _loc(luxonDate.toFormat(this.labelDateFormat));
-				} else {
-					// If no specified label date format is
-					// provided, use default format.
-					element.label = luxonDate.toFormat(defaultDateFormat);
+				// Define the element label
+				if (date) {
+					luxonDate = $l.DateTime.fromMillis(date.min);
+					if (this.labelDateFormat) {
+						element.label = _loc(luxonDate.toFormat(this.labelDateFormat));
+
+					} else {
+						// If no specified label date format is
+						// provided, use default format.
+						element.label = luxonDate.toFormat(defaultDateFormat);
+					}
+				}
+
+				// Define the element sort value
+				if (date) {
+					element.sort = date.min;
 				}
 			}
 
-			// Define the element sort value
-			if (date) {
-				element.sort = date.min;	
+			return elementsById;
+		}
+	});
+
+	function DefaultVerticalTimelineElementGeneratorFactory(opts_) {
+		var opts = $n2.extend({
+			type: null
+			,options: null
+			,config: null
+		}, opts_);
+
+		var options = {};
+		if (opts.options) {
+			for (var key in opts.options) {
+				var value = opts.options[key];
+				options[key] = value;
 			}
-		};
-		
-		return elementsById;
+		}
+
+		if (opts.config
+			&& opts.config.directory) {
+			options.dispatchService = opts.config.directory.dispatchService;
+		}
+
+		return new DefaultVerticalTimelineElementGenerator(options);
 	}
-});
 
-function DefaultVerticalTimelineElementGeneratorFactory(opts_){
-	var opts = $n2.extend({
-		type: null
-		,options: null
-		,config: null
-	},opts_);
-	
-	var options = {};
-	if( opts.options ){
-		for(var key in opts.options){
-			var value = opts.options[key];
-			options[key] = value;
-		};
-	};
-	
-	if( opts.config 
-	 && opts.config.directory ){
-		options.dispatchService = opts.config.directory.dispatchService;
-	};
-	
-	return new DefaultVerticalTimelineElementGenerator(options);
-};
-
-$n2.canvasElementGenerator.AddElementGeneratorFactory({
-	type: 'verticalTimelineDefault'
-	,factoryFn: DefaultVerticalTimelineElementGeneratorFactory
-});
+	$n2.canvasElementGenerator.AddElementGeneratorFactory({
+		type: 'verticalTimelineDefault'
+		,factoryFn: DefaultVerticalTimelineElementGeneratorFactory
+	});
 
 	// -------------------------------------------------------------------------
-	function HandleCanvasAvailableRequest(m){
+	function HandleCanvasAvailableRequest(m) {
 		if (m.canvasType === 'vertical_timeline') {
 			m.isAvailable = true;
 		}
 	}
 
 	// -------------------------------------------------------------------------
-	function HandleCanvasDisplayRequest(m){
+	function HandleCanvasDisplayRequest(m) {
 		var key, options;
 
 		if (m.canvasType === 'vertical_timeline') {
@@ -946,7 +941,7 @@ $n2.canvasElementGenerator.AddElementGeneratorFactory({
 
 			if (!options.elementGenerator) {
 				// If not defined, use the one specified by type
-					options.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
+				options.elementGenerator = $n2.canvasElementGenerator.CreateElementGenerator({
 					type: options.elementGeneratorType,
 					options: options.elementGeneratorOptions,
 					config: m.config
