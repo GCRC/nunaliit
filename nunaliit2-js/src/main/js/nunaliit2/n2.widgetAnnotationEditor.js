@@ -1288,7 +1288,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 	}
 });
 /**
- * @classdesc This is a container for real annotationEditorView. In rendering view, this widget can be seen 
+ * @classdesc This is a container for real annotationEditorView. From UI perspective, this widget can be seen 
  * as the sidebar Drawer, that can listen on user intention, model and other widget's changes
  */
 var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
