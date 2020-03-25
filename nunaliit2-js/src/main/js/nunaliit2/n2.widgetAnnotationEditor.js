@@ -317,6 +317,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			onCancel: undefined
 		}, opts_);
 		
+		var _this = this;
 		this.dispatchService = opts.dispatchService;
 		this.onSaved = opts.onSaved;
 		this.onCancel = opts.onCancel;
@@ -339,16 +340,26 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			_this._handle(m, addr, dispatcher);
 		};
 		if ( this.dispatchService ){
-			this.dispatchService.register(DH, 'getDataDepot', f);
+			this.dispatchService.register(DH, 'annotationEditorViewRefresh', f);
 		}
 	},
 	_handle: function( m, addr, dispatcher ){
 		var _this = this;
-		if ( 'getDataDepot' === m.type ){
-			this.dispatchService.send({
-				type: 'replyDataDepot',
-				dataDepot: _this.dataDepot
+		if ( 'annotationEditorViewRefresh' === m.type ){
+			var option = m.option;
+			var data = m.data;
+			var doc = m.doc;
+			this.refresh({
+				option: option,
+				data: data,
+				doc: doc
 			});
+
+			_this.dispatchService.send(DH, {
+				type: 'annotationEditorViewRefreshDone'
+			});
+
+			
 		}
 	},
 	getElem: function(){
@@ -1244,6 +1255,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		};
 		
 	},
+	
+	// Blocking method
 	refresh: function(opts_){
 		var _this = this;
 		var $elem = this.getInnerForm();
@@ -1264,10 +1277,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			this.dataDepot.setDoc(doc);
 			this.dataDepot.setOption(opt);
 			this.dataDepot.setData(data);
-		
 		}
 
-		
 		if( doc ){
 			this.currentDoc = doc;
 		};
@@ -1347,18 +1358,24 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		
 		this.elemId = $n2.getUniqueId();
 		this.loaderDivId = $n2.getUniqueId();
-		
-		$('<div>')
-		.attr('id', this.loaderDivId)
-		.addClass('n2AnnotationEditorLoader')
-		.appendTo($container);
+		this.contentDivId = $n2.getUniqueId();
+
 	
 		
-		$('<div>')
+		var $annotationEditor = $('<div>')
 			.attr('id', this.elemId)
 			.addClass('n2AnnotationEditor')
 			.appendTo($container);
 		
+		$('<div>')
+			.attr('id', this.loaderDivId)
+			.addClass('n2AnnotationEditorLoader')
+			.appendTo($annotationEditor);
+		
+		$('<div>')
+			.attr('id', this.contentDivId)
+			.addClass('n2AnnotationEditorView')
+			.appendTo($annotationEditor);
 		
 		// Set up dispatcher
 		if( this.dispatchService ){
@@ -1384,6 +1401,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 			};
 		};
 
+		this._showContent();
 		$n2.log(this._classname, this);
 	},
 	
@@ -1393,6 +1411,10 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 	
 	_getLoaderDiv: function(){
 		return $("#" + this.loaderDivId);
+	},
+	
+	_getContentViewDiv: function(){
+		return $('#' + this.contentDivId);
 	},
 	
 	_drawEditor: function(opts_){
@@ -1411,7 +1433,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		if (this.annotationEditorView) {
 			
 			if( !this.drawer ){
-				var $container = this._getElem();
+				var $container = this._getContentViewDiv();
 				var containerId = $n2.utils.getElementIdentifier($container);
 				this.drawer = new $n2.ui.drawer({
 					containerId: containerId,
@@ -1431,7 +1453,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		this._showLoader();
 		this.drawer.open();
 		
-		this.dispatchService.send({
+		this.dispatchService.send(DH, {
 			type: 'annotationEditorViewRefresh',
 			option: ctxMenuOption,
 			data: senDataArr,
@@ -1454,14 +1476,14 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 	
 	_showContent: function(){
 		var $loader = this._getLoaderDiv();
-		var $content = this._getElem();
+		var $content = this._getContentViewDiv();
 		$loader.hide();
 		$content.show();
 	},
 	
 	_showLoader: function(){
 		var $loader = this._getLoaderDiv();
-		var $content = this._getElem();
+		var $content = this._getContentViewDiv();
 		$loader.show();
 		$content.hide();
 	},
