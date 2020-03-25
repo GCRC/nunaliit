@@ -341,6 +341,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		};
 		if ( this.dispatchService ){
 			this.dispatchService.register(DH, 'annotationEditorViewRefresh', f);
+			this.dispatchService.register(DH, 'annotationEditorViewAggregateModeChanged', f);
 		}
 	},
 	_handle: function( m, addr, dispatcher ){
@@ -360,6 +361,9 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			});
 
 			
+		} else if( 'annotationEditorViewAggregateModeChanged' === m.type){
+			var checked = m.value;
+			_this.onEditorAggregateModeChanged(checked);
 		}
 	},
 	getElem: function(){
@@ -383,11 +387,16 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			label : 'Aggregation',
 			initiallyOn: _this.editorAggregateMode,
 			onChangeCallBack: function(checked){
-				_this.editorAggregateMode = checked; 
-				_this.refresh();
+				_this.dispatchService.send(DH, {
+					type: 'annotationEditorShowLoader'
+				})
+				_this.dispatchService.send(DH, {
+					type: 'annotationEditorViewAggregateModeChanged'
+					,value: checked
+				})
 			}
-		
 		});
+		
 		var $innerForm = $('<div>')
 			.attr('id', this.innerFormId)
 			.appendTo($formField);
@@ -413,6 +422,16 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		};
 		
 		return $formField;
+	},
+	
+	onEditorAggregateModeChanged :function(checked){
+		var _this = this;
+		this.editorAggregateMode = checked;
+		this.refresh();
+
+		_this.dispatchService.send(DH, {
+			type: 'annotationEditorViewRefreshDone'
+		});
 	},
 	
 	_clickedSave: function(){
@@ -1387,6 +1406,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 			this.dispatchService.register(DH,'annotationEditorStart',f);
 			this.dispatchService.register(DH,'annotationEditorClose',f);
 			this.dispatchService.register(DH,'annotationEditorIsAvailable',f);
+			this.dispatchService.register(DH, 'annotationEditorShowLoader', f)
 			this.dispatchService.register(DH, 'annotationEditorViewRefreshDone', f)
 
 			if( this.sourceModelId ){
@@ -1510,6 +1530,8 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		} else if ('annotationEditorViewRefreshDone' === m.type){
 			_this._showContent();
 			this.drawer.open();
+		} else if ('annotationEditorShowLoader' === m.type){
+			_this._showLoader();
 		};
 	},
 	
