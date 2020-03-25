@@ -1304,7 +1304,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 	
 	currentDocId: null,
 	
-	annotationEditor: null,
+	annotationEditorView: null,
 	
 	drawer: null,
 
@@ -1331,7 +1331,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		this.currentDocId = null;
 		
 		//The real annotationEditor lives inside annotationWidget container
-		this.annotationEditor = new CineAnnotationEditorView({
+		this.annotationEditorView = new CineAnnotationEditorView({
 			dispatchService: this.dispatchService,
 			onSaved: function(){
 				_this._closeEditor();
@@ -1346,6 +1346,14 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		this.drawer = null;
 		
 		this.elemId = $n2.getUniqueId();
+		this.loaderDivId = $n2.getUniqueId();
+		
+		$('<div>')
+		.attr('id', this.loaderDivId)
+		.addClass('n2AnnotationEditorLoader')
+		.appendTo($container);
+	
+		
 		$('<div>')
 			.attr('id', this.elemId)
 			.addClass('n2AnnotationEditor')
@@ -1362,6 +1370,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 			this.dispatchService.register(DH,'annotationEditorStart',f);
 			this.dispatchService.register(DH,'annotationEditorClose',f);
 			this.dispatchService.register(DH,'annotationEditorIsAvailable',f);
+			this.dispatchService.register(DH, 'annotationEditorViewRefreshDone', f)
 
 			if( this.sourceModelId ){
 				// Initialize state
@@ -1381,7 +1390,11 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 	_getElem: function(){
 		return $('#'+this.elemId);
 	},
-
+	
+	_getLoaderDiv: function(){
+		return $("#" + this.loaderDivId);
+	},
+	
 	_drawEditor: function(opts_){
 		var opts = $n2.extend({
 			container: undefined
@@ -1389,13 +1402,13 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 			,config: undefined
 		},opts_);
 		
-		this.annotationEditor.render(opts);
+		this.annotationEditorView.render(opts);
 	},
 	
 	_startEditor: function(ctxMenuOption, senDataArr){
 		var _this = this;
 		
-		if (this.annotationEditor) {
+		if (this.annotationEditorView) {
 			
 			if( !this.drawer ){
 				var $container = this._getElem();
@@ -1415,20 +1428,44 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 			currentDoc = this.docsById[this.currentDocId];
 		};
 		
-		this.annotationEditor.refresh({
+		this._showLoader();
+		this.drawer.open();
+		
+		this.dispatchService.send({
+			type: 'annotationEditorViewRefresh',
 			option: ctxMenuOption,
 			data: senDataArr,
 			doc: currentDoc
 		});
 		
-		this.drawer.open();
+//		this.annotationEditorView.refresh({
+//			option: ctxMenuOption,
+//			data: senDataArr,
+//			doc: currentDoc
+//		});
+		
+		
 	},
 	_closeEditor: function(){
 		if (this.drawer) {
 			this.drawer.close();
 		}
 	},
-
+	
+	_showContent: function(){
+		var $loader = this._getLoaderDiv();
+		var $content = this._getElem();
+		$loader.hide();
+		$content.show();
+	},
+	
+	_showLoader: function(){
+		var $loader = this._getLoaderDiv();
+		var $content = this._getElem();
+		$loader.show();
+		$content.hide();
+	},
+	
 	_handle: function(m, addr, dispatcher){
 		var _this = this;
 
@@ -1448,6 +1485,9 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 			if( this.sourceModelId === m.modelId ){
 				this._sourceModelUpdated(m.state);
 			};
+		} else if ('annotationEditorViewRefreshDone' === m.type){
+			_this._showContent();
+			this.drawer.open();
 		};
 	},
 	
@@ -1464,10 +1504,10 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 			if( !this.currentDocId ){
 				this._closeEditor();
 
-			} else if( this.annotationEditor ){
+			} else if( this.annotationEditorView ){
 				this._closeEditor();
 				var doc = this.docsById[this.currentDocId];
-				this.annotationEditor.refresh({
+				this.annotationEditorView.refresh({
 					doc: doc
 				});
 			};
