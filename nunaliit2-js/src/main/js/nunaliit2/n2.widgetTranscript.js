@@ -1050,20 +1050,22 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		var n_cur = Number (currentTime);
 			// console.dir($._data($('#'+ this.transcriptId)[0], 'events'));
 		// Act upon the text
+		$('#' + _this.transcriptId + ' > div').removeClass('highlight');
 		
 		$n2.utils.processLargeArrayAsync(_this.transcript_array, function(transcriptElem, _index_, _array_ ){
 			
+			
 			var $transcriptElem = $('#'+transcriptElem.id);
 
-			$transcriptElem.removeClass('highlight');
+			//$transcriptElem.removeClass('highlight');
 
 			if(n_cur >= transcriptElem.start 
 			 && n_cur < transcriptElem.fin) {
 				$transcriptElem.addClass('highlight');
 				//scroll transcript div, so that the ongoing subtitle always stay in the viewport
-				if ($.now() - this.lastTimeUserScroll > 5000){
+				if ($.now() - _this.lastTimeUserScroll > 5000){
 				
-					this._scrollToView($transcriptElem);
+					_this._scrollToView($transcriptElem);
 				}
 
 			};
