@@ -1002,7 +1002,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		var depot = this.dataDepot;
 		var senData = depot.getData();
 		
-		senData.forEach(function(opts){
+		$n2.utils.processLargeArrayAsync(senData, function(opts, index, array){
+			
 			var $formFieldSection = $('<div>')
 			.addClass('n2WidgetAnnotation_formfieldSection')
 			.appendTo($formField);
@@ -1119,7 +1120,127 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				alert('Current document doesnot have (atlascine2_cinemap) property');
 				return;
 			};
+		
 		});
+		
+//		senData.forEach(function(opts){
+//			var $formFieldSection = $('<div>')
+//			.addClass('n2WidgetAnnotation_formfieldSection')
+//			.appendTo($formField);
+//
+//			$('<span>')
+//			.addClass('n2transcript_label_name')
+//			.text('Start: ' )
+//			.appendTo($formFieldSection);
+//
+//			$('<span>')
+//			.addClass('n2transcript_label label_startTimeCode')
+//			.text(opts.start)
+//			.appendTo($formFieldSection);
+//
+//			$('<span>')
+//			.addClass('n2transcript_label_name')
+//			.text('End: ')
+//			.appendTo($formFieldSection);
+//
+//			$('<span>')
+//			.addClass('n2transcript_label label_finTimeCode')
+//			.text(opts.end)
+//			.appendTo($formFieldSection);
+//
+//			$('<span>')
+//			.addClass('n2transcript_label label_transcriptText')
+//			.text(opts.text)
+//			.appendTo($formFieldSection);
+//
+//			$('<hr>').appendTo($formFieldSection);
+////			.appendTo($formFieldSection);
+//
+//			var doc = _this.currentDoc;
+//			var lastThemeTags = [];
+//			var lastPlaceTags = [];
+//			if( doc 
+//					&& doc.atlascine2_cinemap ){
+//				var timeLinks = doc.atlascine2_cinemap.timeLinks;
+//				if( !timeLinks ){
+////					No timeLinks no worry
+//					return;
+//				};
+//
+//				var matchingSen = depot.getMatchingSen(opts.start, opts.end);
+//				if (matchingSen){
+//					matchingSen.forEach(function(timeLink){
+//						if (timeLink.tags){
+//							for (var tag in timeLink.tags){
+//								var tagProfile = timeLink.tags[tag];
+//								if ( 'place' ===  tagProfile.type || 'location' === tagProfile.type) {
+//									lastPlaceTags.push(tagProfile);
+//								} else {
+//									lastThemeTags.push(tagProfile);
+//								}
+//							}
+//						}
+//					});
+//				}
+//
+//				new $n2.mdc.MDCTagBox({
+//					parentElem : $formFieldSection,
+//					autoCompleteViewName : 'tags',
+//					label: 'Theme Tags',
+//					mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
+//					chips: lastThemeTags,
+//					chipsetsUpdateCallback: function(tagList, operation, target){
+//						switch(operation){
+//							case 'ADD':
+//								var value = target.chipText;
+//								var addtar = $n2.extend({value: value}, target);
+//								delete addtar['fraction'];
+//								_this.dataDepot.addPartialTag(opts.start, opts.end, addtar)
+//								$n2.log('Adding tags', target);
+//								break;
+//							case 'DELETE':
+//								var value = target.chipText;
+//								var deltar = $n2.extend({value: value}, target);
+//								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
+//								$n2.log('Deleting tags', target);
+//								break;
+//						}
+//						//$n2.log('I wonder what is this: ', tagList);
+//					}
+//				});
+//
+//				new $n2.mdc.MDCTagBox({
+//					parentElem : $formFieldSection,
+//					autoCompleteViewName: 'tags',
+//					label: 'Place Tags',
+//					mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
+//					chips:lastPlaceTags,
+//					chipsetsUpdateCallback: function(tagList, operation, target){
+//						switch(operation){
+//							case 'ADD':
+//								var value = target.chipText;
+//								var addtar = $n2.extend({value: value}, target);
+//								addtar['type'] = 'place';
+//								delete addtar['fraction'];
+//								_this.dataDepot.addPartialTag(opts.start, opts.end, addtar)
+//								$n2.log('Adding tags', addtar);
+//								break;
+//							case 'DELETE':
+//								var value = target.chipText;
+//								var deltar = $n2.extend({value: value}, target);
+//								deltar['type'] = 'place';
+//								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
+//								$n2.log('Deleting tags', deltar);
+//								break;
+//						}
+//						//$n2.log('I wonder what is this: ', tagList);
+//					}
+//				})
+//			} else {
+//				alert('Current document doesnot have (atlascine2_cinemap) property');
+//				return;
+//			};
+//		});
 		
 	},
 	_addFormViewAggregated : function($parent, data){
@@ -1314,7 +1435,6 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			default:
 				break;
 			}
-	
 	}
 });
 /**
@@ -1498,14 +1618,14 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		var $loader = this._getLoaderDiv();
 		var $content = this._getContentViewDiv();
 		$loader.hide();
-		$content.show();
+		//$content.show();
 	},
 	
 	_showLoader: function(){
 		var $loader = this._getLoaderDiv();
 		var $content = this._getContentViewDiv();
 		$loader.show();
-		$content.hide();
+		//$content.hide();
 	},
 	
 	_handle: function(m, addr, dispatcher){

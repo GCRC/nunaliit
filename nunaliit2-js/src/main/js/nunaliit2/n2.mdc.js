@@ -1500,9 +1500,12 @@ var MDCSwitch = $n2.Class('MDCSwitch',MDC,{
 		var vanilla = new mdc.switchControl.MDCSwitch(document.querySelector('.mdc-switch'));
 		if (this.onChangeCallBack 
 				&& typeof this.onChangeCallBack === 'function'){
-			vanilla.nativeControl_.addEventListener('change', function(){
-				_this.onChangeCallBack(this.checked);
-			})
+			vanilla.listen('change',  function(evt) {
+				_this.onChangeCallBack(vanilla.checked);
+			});
+			//.handleChange = (evt) => {
+				//this.onChangeCallBack(this.checked);
+			//}
 		}
 
 		if (showService) {
