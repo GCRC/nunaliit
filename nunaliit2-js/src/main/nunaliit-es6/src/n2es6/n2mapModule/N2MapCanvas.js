@@ -147,7 +147,7 @@ class N2MapCanvas  {
 		this.initialTime = null;
 		this.endIdx = 0;
 		this.refreshCnt = undefined;
-	        this._retrivingDocsAndPaintPopupthrottled = $n2.utils.debounce(this._retrivingDocsAndPaintPopup, 50);
+	        this._retrivingDocsAndPaintPopupthrottled = $n2.utils.debounce(this._retrivingDocsAndPaintPopup, 30);
 
 		this.isClustering = undefined;
 		this.n2View = undefined;
