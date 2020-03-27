@@ -390,10 +390,13 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				_this.dispatchService.send(DH, {
 					type: 'annotationEditorShowLoader'
 				})
-				_this.dispatchService.send(DH, {
-					type: 'annotationEditorViewAggregateModeChanged'
-					,value: checked
-				})
+				setTimeout(function(){
+					_this.dispatchService.send(DH, {
+						type: 'annotationEditorViewAggregateModeChanged'
+						,value: checked
+					})
+				}, 0);
+
 			}
 		});
 		
@@ -1593,12 +1596,15 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 		this._showLoader();
 		this.drawer.open();
 		
-		this.dispatchService.send(DH, {
-			type: 'annotationEditorViewRefresh',
-			option: ctxMenuOption,
-			data: senDataArr,
-			doc: currentDoc
-		});
+		setTimeout(function(){
+			_this.dispatchService.send(DH, {
+				type: 'annotationEditorViewRefresh',
+				option: ctxMenuOption,
+				data: senDataArr,
+				doc: currentDoc
+			});
+		}, 0);
+
 		
 //		this.annotationEditorView.refresh({
 //			option: ctxMenuOption,
