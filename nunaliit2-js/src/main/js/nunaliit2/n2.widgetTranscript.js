@@ -298,6 +298,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					this.transcript = undefined;
 					this.srtData = undefined;
 					this.subtitleFormat = undefined;
+					this._refresh();
 					this._documentChanged();
 				}
 			}
