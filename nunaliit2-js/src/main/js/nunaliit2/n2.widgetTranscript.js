@@ -1050,8 +1050,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		var n_cur = Number (currentTime);
 			// console.dir($._data($('#'+ this.transcriptId)[0], 'events'));
 		// Act upon the text
-		for(var i =0;i<this.transcript_array.length;i++) {
-			var transcriptElem = this.transcript_array[i];
+		
+		$n2.utils.processLargeArrayAsync(_this.transcript_array, function(transcriptElem, _index_, _array_ ){
+			
 			var $transcriptElem = $('#'+transcriptElem.id);
 
 			$transcriptElem.removeClass('highlight');
@@ -1066,10 +1067,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				}
 
 			};
-
-			//$n2.log('current time: '+ currentTime);
-		}
-
+			
+		});
+		
 		if( 'model' === origin ){
 		
 			var $video = $('#'+this.videoId);
