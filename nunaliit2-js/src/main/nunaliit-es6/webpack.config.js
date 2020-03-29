@@ -6,16 +6,21 @@ module.exports = {
     module: {
 	rules: [
 	    {
-		test: /\.css$/,
-		use: [
-		    {loader: 'style-loader'},
-		    {loader: 'css-loader'}
-		]
-	    },{
+	    	test: /\.css$/,
+	    	use: [
+	    		{
+	    			loader: 'style-loader'
+	    		},
+	    		{
+	    			loader: 'css-loader'
+	    		}
+	    	]
+	    },
+	    {
 	    	test: /\.geojson$/,
 	    	use: [
 	    		{
-	    		loader: 'json-loader'
+	    			loader: 'json-loader'
 	    		}
 	    	]
 	    }
@@ -30,6 +35,6 @@ module.exports = {
 		libraryExport: 'default'
 	},
     node: {
-	fs: 'empty'
+    	fs: 'empty'
 	}
 };
