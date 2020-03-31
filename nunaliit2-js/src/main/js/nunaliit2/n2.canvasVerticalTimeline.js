@@ -126,8 +126,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		canvasListElemId: null,
 
-		itemWidth: null,
-
 		timelineIndex: null,
 
 		sortedIndex: null,
@@ -219,14 +217,6 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		// Dynamically calculate the width for each item in the list
-		_calcListItemWidth: function() {
-			var width;
-			var itemPadding = 30;
-
-			width = ($('#' + this.canvasTimelineId).width() / 2) - itemPadding;
-			this.itemWidth = width;
-		},
 
 		_linkIdExists: function(id) {
 			var currentlyExists = false;
@@ -369,9 +359,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.indexElements = this.timelineIndex.getIndexElements();
 				this._updateTimelinePadding();
 
-				// Re-Calculate Item Width based on available window space
-				this._calcListItemWidth();
-
 				for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
 					// Exclude link elements if produced by
 					// the generic element generator
@@ -382,7 +369,6 @@ POSSIBILITY OF SUCH DAMAGE.
 						timelineItemOptions = {
 							element: this.sortedElements[i],
 							timelineList: this.canvasTimelineId,
-							itemWidth: this.itemWidth
 						};
 						new TimelineItem(timelineItemOptions);
 					}
@@ -710,7 +696,6 @@ POSSIBILITY OF SUCH DAMAGE.
 	 * Class used for creating Timeline items for the Vertical Timeline Canvas.
 	 *
 	 * @param element
-	 * @param itemWidth
 	 * @param timelineList
 	 */
 	var TimelineItem = $n2.Class('TimelineItem', {
@@ -724,19 +709,27 @@ POSSIBILITY OF SUCH DAMAGE.
 		initialize: function(opts_) {
 			var opts = $n2.extend({
 				element: null,
-				itemWidth: null,
 				timelineList: null,
 				onSuccess: function() {},
 				onError: function(err) {}
 			}, opts_);
 
 			this.element = opts.element;
-			this.itemWidth = opts.itemWidth;
 			this.timelineList = opts.timelineList;
+			this.itemWidth = this._calcListItemWidth();
 
 			this._addItemToList();
 
 			opts.onSuccess();
+		},
+
+		// Dynamically calculate the width for each item in the list
+		_calcListItemWidth: function() {
+			var width;
+			var itemPadding = 30;
+
+			width = ($('#' + this.timelineList).width() / 2) - itemPadding;
+			return width;
 		},
 
 		_getDocIdFromDoc: function(doc) {
