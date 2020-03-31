@@ -130,7 +130,7 @@
             <executions>
                 <execution>
                     <id>copy-es6-js</id>
-                    <phase>process-sources</phase>
+                    <phase>generate-sources</phase>
                     <configuration>
                         <target>
                             <echo>Ant Task - copying es6 files....</echo>
