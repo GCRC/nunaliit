@@ -126,6 +126,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		canvasListElemId: null,
 
+		canvasTimelineId: null,
+
 		timelineIndex: null,
 
 		sortedIndex: null,
@@ -133,8 +135,6 @@ POSSIBILITY OF SUCH DAMAGE.
 		indexElements: null,
 
 		sortedElements: null,
-
-		timelineList: null,
 
 		dispatchService: null,
 
@@ -217,7 +217,6 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-
 		_linkIdExists: function(id) {
 			var currentlyExists = false;
 			if ($('#' + id).length > 0) {
@@ -228,7 +227,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		_linkIndexToListItems: function() {
 			var i, e, arrayItem, indexItemId, indexItemSortValue, itemsArray;
-			var	sortValue, index;
+			var	sortValue, indexKeys, index, key, j, f;
 
 			var getSortValue = function(arrayItem) {
 				var sortValue;
@@ -253,17 +252,18 @@ POSSIBILITY OF SUCH DAMAGE.
 				arrayItem = itemsArray[i];
 				sortValue = getSortValue(arrayItem);
 
-				for (index in this.indexElements) {
-					if (this.indexElements.hasOwnProperty(index)) {
-						if (this.indexElements[index].id
-							&& this.indexElements[index].sort) {
-							indexItemId = this.indexElements[index].id;
-							indexItemSortValue = this.indexElements[index].sort;
+				indexKeys = Object.keys(this.indexElements);
+				for (j = 0, f = indexKeys.length; j < f; j += 1) {
+					key = indexKeys[j];
+					index = this.indexElements[key];
 
-							if (sortValue >= indexItemSortValue
-								&& !this._linkIdExists(indexItemId)) {
-								arrayItem.id = indexItemId;
-							}
+					if (index.id && index.sort) {
+						indexItemId = index.id;
+						indexItemSortValue = index.sort;
+
+						if (sortValue >= indexItemSortValue
+							&& !this._linkIdExists(indexItemId)) {
+							arrayItem.id = indexItemId;
 						}
 					}
 				}
@@ -360,18 +360,11 @@ POSSIBILITY OF SUCH DAMAGE.
 				this._updateTimelinePadding();
 
 				for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
-					// Exclude link elements if produced by
-					// the generic element generator
-					if (this.elementGenerator._classname === 'GenericElementGenerator'
-						&& this.sortedElements[i].isLink) {
-						// Do nothing
-					} else {
-						timelineItemOptions = {
-							element: this.sortedElements[i],
-							timelineList: this.canvasTimelineId,
-						};
-						new TimelineItem(timelineItemOptions);
-					}
+					timelineItemOptions = {
+						element: this.sortedElements[i],
+						canvasTimeLineId: this.canvasTimelineId,
+					};
+					new TimelineItem(timelineItemOptions);
 				}
 
 				this._linkIndexToListItems();
@@ -385,14 +378,14 @@ POSSIBILITY OF SUCH DAMAGE.
 			if (this.sortedIndex && this.indexElements) {
 				for (i = 0, e = this.sortedIndex.length; i < e; i += 1) {
 					index = this.sortedIndex[i];
-					if (this.indexElements.hasOwnProperty(index)) {
-						if (this.indexElements[index].id) {
-							elem = document.getElementById(this.indexElements[index].id);
-							if (elem
-								&& elem.getBoundingClientRect().top > headerHeight) {
-								this.timelineIndex.setActiveIndexItem(this.indexElements[index].label);
-								break;
-							}
+					if (Object.hasOwnProperty.call(this.indexElements, index)
+						&& this.indexElements[index].id) {
+
+						elem = document.getElementById(this.indexElements[index].id);
+						if (elem
+							&& elem.getBoundingClientRect().top > headerHeight) {
+							this.timelineIndex.setActiveIndexItem(this.indexElements[index].label);
+							break;
 						}
 					}
 				}
@@ -401,17 +394,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		// Sort elements based on sort value and label
 		_sortElements: function() {
-			var elementId, element, i, e;
+			var elementKeys, element, i, e, key;
 			var uniqueLabels = [];
 			this.sortedElements = [];
 
-			for (elementId in this.elementsById) {
-				if (this.elementsById.hasOwnProperty(elementId)) {
-					element = this.elementsById[elementId];
+			elementKeys = Object.keys(this.elementsById);
+			for (i = 0, e = elementKeys.length; i < e; i += 1) {
+				key = elementKeys[i];
+				element = this.elementsById[key];
 
-					if (element.sort && element.label) {
-						this.sortedElements.push(element);
-					}
+				if (element.sort && element.label) {
+					this.sortedElements.push(element);
 				}
 			}
 
@@ -468,8 +461,10 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.elementsById[updated.id] = updated;
 			}
 
+			// Resort elements
 			this._sortElements();
 
+			// Referesh canvas
 			this._refresh();
 		},
 
@@ -556,8 +551,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		_generateIndex: function() {
 			var i, e, sortValue, labelValue, uniqueId;
-			this.uniqueIndexValues = [];
 			var uniqueIndexObjects = {};
+			this.uniqueIndexValues = [];
 
 			for (i = 0, e = this.sortedElements.length; i < e; i += 1) {
 				sortValue = this.sortedElements[i].sort;
@@ -569,7 +564,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					if (this.uniqueIndexValues.indexOf(sortValue) < 0) {
 						this.uniqueIndexValues.push(sortValue);
 
-						if (!uniqueIndexObjects.hasOwnProperty(sortValue)) {
+						if (!Object.hasOwnProperty.call(uniqueIndexObjects, sortValue)) {
 							uniqueId = $n2.getUniqueId();
 
 							uniqueIndexObjects[sortValue] = {
@@ -604,7 +599,8 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_addTimelineIndexToCanvas: function() {
-			var i, e, indexList, indexItem, indexElements, itemId, itemLabel, sortedIndex, sortedIndexItem;
+			var i, e, indexList, indexItem, indexElements, itemId, itemLabel;
+			var sortedIndex, sortedIndexItem;
 
 			indexList = $('<ul>')
 				.appendTo('#' + this.canvasIndexId);
@@ -696,7 +692,7 @@ POSSIBILITY OF SUCH DAMAGE.
 	 * Class used for creating Timeline items for the Vertical Timeline Canvas.
 	 *
 	 * @param element
-	 * @param timelineList
+	 * @param canvasTimeLineId
 	 */
 	var TimelineItem = $n2.Class('TimelineItem', {
 
@@ -704,18 +700,18 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		itemWidth: null,
 
-		timelineList: null,
+		canvasTimeLineId: null,
 
 		initialize: function(opts_) {
 			var opts = $n2.extend({
 				element: null,
-				timelineList: null,
+				canvasTimeLineId: null,
 				onSuccess: function() {},
 				onError: function(err) {}
 			}, opts_);
 
 			this.element = opts.element;
-			this.timelineList = opts.timelineList;
+			this.canvasTimeLineId = opts.canvasTimeLineId;
 			this.itemWidth = this._calcListItemWidth();
 
 			this._addItemToList();
@@ -728,7 +724,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			var width;
 			var itemPadding = 30;
 
-			width = ($('#' + this.timelineList).width() / 2) - itemPadding;
+			width = ($('#' + this.canvasTimeLineId).width() / 2) - itemPadding;
 			return width;
 		},
 
@@ -739,15 +735,18 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_getAttachment: function(doc) {
-			var file;
+			var file, files, fileKeys, i, e, key;
 			if (doc
 				&& doc.nunaliit_attachments
 				&& doc.nunaliit_attachments.files) {
-				for (file in doc.nunaliit_attachments.files) {
-					if (doc.nunaliit_attachments.files.hasOwnProperty(file)) {
-						if (doc.nunaliit_attachments.files[file].originalName) {
-							return doc.nunaliit_attachments.files[file].originalName;
-						}
+				files = doc.nunaliit_attachments.files;
+				fileKeys = Object.keys(doc.nunaliit_attachments.files);
+
+				for (i = 0, e = fileKeys.length; i < e; i += 1) {
+					key = fileKeys[i];
+					file = files[key];
+					if (file.originalName) {
+						return file.originalName;
 					}
 				}
 			}
@@ -801,7 +800,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					.attr('nunaliit-document', docId)
 					.appendTo($timelineItemContentText);
 
-				$timelineItem.appendTo('#' + this.timelineList);
+				$timelineItem.appendTo('#' + this.canvasTimeLineId);
 			}
 		}
 	});
@@ -942,7 +941,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			if (m.canvasOptions) {
 				for (key in m.canvasOptions) {
-					if (m.canvasOptions.hasOwnProperty(key)) {
+					if (Object.hasOwnProperty.call(m.canvasOptions, key)) {
 						options[key] = m.canvasOptions[key];
 					}
 				}
