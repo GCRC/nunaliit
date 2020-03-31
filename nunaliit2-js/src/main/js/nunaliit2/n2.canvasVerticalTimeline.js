@@ -122,10 +122,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		canvasContainerId: null,
 
-		indexElemId: null,
-
-		canvasListElemId: null,
-
 		canvasTimelineId: null,
 
 		timelineIndex: null,
@@ -139,8 +135,6 @@ POSSIBILITY OF SUCH DAMAGE.
 		dispatchService: null,
 
 		showService: null,
-
-		dateRange: null,
 
 		elementGenerator: null,
 
@@ -189,7 +183,6 @@ POSSIBILITY OF SUCH DAMAGE.
 					_this._handleDispatch(m);
 				};
 
-				this.dispatchService.register(DH,'modelGetInfo',f);
 				this.dispatchService.register(DH,'modelStateUpdated',f);
 				this.dispatchService.register(DH,'windowResized',f);
 				this.dispatchService.register(DH,'userUnselect',f);
@@ -270,6 +263,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
+		// Add timeline to the canvas
 		_createTimeline: function() {
 			var $target, $canvas, $canvasList;
 			var _this = this;
@@ -333,17 +327,20 @@ POSSIBILITY OF SUCH DAMAGE.
 				.css('height', getCanvasHeight(this.canvasId));
 		},
 
+		// Function to refresh the canvas content
 		_refresh: function() {
 			var i, e, timelineItemOptions, timelineIndexOptions, $timelineList, $index;
 
 			// Empty canvas timeline list
 			$timelineList = $('#' + this.canvasContainerId)
 				.find('#' + this.canvasTimelineId);
+
 			$timelineList.empty();
 
 			// Empty canvas index list
 			$index = $('#' + this.canvasContainerId)
 				.find('#' + this.canvasIndexId);
+
 			$index.empty();
 
 			if (this.sortedElements.length > 0) {
@@ -719,7 +716,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			opts.onSuccess();
 		},
 
-		// Dynamically calculate the width for each item in the list
+		// Calculate the item width
 		_calcListItemWidth: function() {
 			var width;
 			var itemPadding = 30;
