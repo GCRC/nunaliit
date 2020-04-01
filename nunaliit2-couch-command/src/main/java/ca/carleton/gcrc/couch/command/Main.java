@@ -44,6 +44,12 @@ public class Main {
 	}
 
 	static public void main(String[] args) {
+
+		// Resolves an issue when we try to scale an image, we get
+		// "java.awt.AWTError: Assistive Technology not found: org.GNOME.Accessibility.AtkWrapper"
+		// On headless JDK's, the AWT class is looking for this feature that is not available.
+		System.setProperty("javax.accessibility.assistive_technologies", "");
+
 		GlobalSettings globalSettings = null;
 		
 		try {
