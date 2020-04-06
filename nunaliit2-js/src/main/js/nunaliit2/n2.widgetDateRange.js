@@ -55,6 +55,14 @@
 			this._display();
 		},
 
+		_updateDateRangeButtonText: function() {
+			var btn = $('.n2widget_date_range .n2widget_date_range_button');
+			var startDate = this.startDate ? this.startDate : '--';
+			var endDate = this.endDate ? this.endDate : '--';
+
+			btn.text(startDate + ' / ' + endDate);
+		},
+
 		_display: function() {
 			var $container, $startDate, $endDate, $btn;
 			var $widgetWindow, $widgetWindowStart, $widgetWindowEnd;
@@ -70,7 +78,7 @@
 
 			$btn = $('<div>')
 				.addClass('n2widget_date_range_button')
-				.text(this.startDate + " / " + this.endDate)
+				.text("-- / --")
 				.appendTo($container)
 				.click(function() {
 					$('.n2widget_date_range_window')
@@ -133,6 +141,7 @@
 				}
 			}).appendTo($widgetWindowEnd);
 
+
 		},
 
 		_dateRangeUpdated: function() {
@@ -151,6 +160,8 @@
 
 				_this.endDate = null;
 			}
+
+			this._updateDateRangeButtonText();
 
 			this.dispatchService.send(DH, {
 				type: 'yearWidgetUpdate'
