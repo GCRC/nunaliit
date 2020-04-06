@@ -105,8 +105,8 @@ POSSIBILITY OF SUCH DAMAGE.
 	 * - fragments: Map map of fragments that make this element. Gives a list of
 	 * documents used to make up this element.
 	 *
-	 * @param {string} canvasId - Unique identified for the canvas
-	 * @param {string} sourceModelId - Unique identified of the model used by
+	 * @param {string} canvasId - Unique identifier for the canvas
+	 * @param {string} sourceModelId - Unique identifier of the model used by
 	 * the canvas
 	 * @param {string} [elementGeneratorType] Name of element generator type
 	 * @param {object} [elementGeneratorOptions] Element generator options
