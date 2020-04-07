@@ -56,7 +56,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		startDate: null,
 
+		startDatePicker: null,
+
 		endDate: null,
+
+		endDatePicker: null,
 
 		initialize: function(opts_) {
 			var opts = $n2.extend({
@@ -96,14 +100,14 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_setWidgetWindowPosition: function() {
-			var topPadding = 25;
+			var topPadding = 28;
 			var $browserHeight = $(window).height();
 			var widgetOffset = this._getWidgetOffset();
 			var $widgetWindow = $('.n2widget_date_range_window');
 			var windowTop = widgetOffset.top + topPadding;
 
 			if ($browserHeight / 2 < widgetOffset.top) {
-				topPadding = -225;
+				topPadding = -228;
 				windowTop = widgetOffset.top + topPadding;
 			}
 
@@ -113,6 +117,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		_display: function() {
 			var $container, $widgetWindow, $widgetWindowStart, $widgetWindowEnd;
+			var $startDateInput, $endDateInput;
 			var _this = this;
 
 			var elemId = $n2.getUniqueId();
@@ -124,11 +129,24 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			$('<div>')
 				.addClass('n2widget_date_range_button')
+				.attr('title', 'Date Range Widget')
 				.text("-- / --")
 				.appendTo($container)
 				.click(function() {
 					_this._setWidgetWindowPosition();
 					$('.n2widget_date_range_window')
+						.toggleClass('active');
+					$('.n2widget_date_range_window_backdrop')
+						.toggleClass('active');
+				});
+
+			$('<div>')
+				.addClass('n2widget_date_range_window_backdrop')
+				.appendTo($('body'))
+				.click(function() {
+					$('.n2widget_date_range_window')
+						.toggleClass('active');
+					$('.n2widget_date_range_window_backdrop')
 						.toggleClass('active');
 				});
 
@@ -144,7 +162,10 @@ POSSIBILITY OF SUCH DAMAGE.
 				.addClass('n2widget_date_range_end')
 				.appendTo($widgetWindow);
 
-			$('<input>')
+			$('<span>').text('From: ')
+				.appendTo($widgetWindowStart);
+
+			$startDateInput = $('<input>')
 				.addClass('start_date')
 				.attr('name', 'start_date')
 				.attr('type', 'text')
@@ -152,7 +173,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.attr('placeholder', 'Start Date yy-mm-dd')
 				.appendTo($widgetWindowStart);
 
-			$('<div>').datepicker({
+			this.startDatePicker = $('<div>').datepicker({
 				dateFormat: 'yy-mm-dd'
 				,gotoCurrent: true
 				,changeYear: true
@@ -167,7 +188,15 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			}).appendTo($widgetWindowStart);
 
-			$('<input>')
+			if (this.startDate) {
+				$startDateInput.val(this.startDate);
+				this.startDatePicker.datepicker('setDate', this.startDate);
+			}
+
+			$('<span>').text('To: ')
+				.appendTo($widgetWindowEnd);
+
+			$endDateInput = $('<input>')
 				.addClass('end_date')
 				.attr('name', 'end_date')
 				.attr('type', 'text')
@@ -175,7 +204,8 @@ POSSIBILITY OF SUCH DAMAGE.
 				.attr('placeholder', 'End Date yy-mm-dd')
 				.appendTo($widgetWindowEnd);
 
-			$('<div>').datepicker({
+
+			this.endDatePicker = $('<div>').datepicker({
 				dateFormat: 'yy-mm-dd'
 				,gotoCurrent: true
 				,changeYear: true
@@ -190,6 +220,15 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			}).appendTo($widgetWindowEnd);
 
+			if (this.endDate) {
+				$endDateInput.val(this.endDate);
+				this.endDatePicker.datepicker('setDate', this.endDate);
+			}
+
+			// Update date range if start or end date values are initialize
+			if (this.startDate || this.endDate) {
+				this._dateRangeUpdated();
+			}
 		},
 
 		_dateRangeUpdated: function() {
@@ -208,14 +247,17 @@ POSSIBILITY OF SUCH DAMAGE.
 				_this.endDate = null;
 			}
 
+			this.startDatePicker.datepicker('setDate', this.startDate);
+			this.endDatePicker.datepicker('setDate', this.endDate);
+
 			// Update date range button text
 			this._updateDateRangeButtonText();
 
 			// Update widget window position
 			this._setWidgetWindowPosition();
 
-			this.dispatchService.send(DH, {
-				type: 'yearWidgetUpdate'
+			this.dispatchService.synchronousCall(DH, {
+				type: 'dateRangeWidgetUpdate'
 				,startDate: _this.startDate
 				,endDate: _this.endDate
 			});
