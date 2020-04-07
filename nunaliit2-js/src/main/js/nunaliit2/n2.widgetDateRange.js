@@ -52,13 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		dispatchService: null,
 
-		authService: null,
-
-		showAsLink: null,
-
 		containerId: null,
-
-		elemId: null,
 
 		startDate: null,
 
@@ -68,8 +62,6 @@ POSSIBILITY OF SUCH DAMAGE.
 			var opts = $n2.extend({
 				containerId: null
 				,dispatchService: null
-				,authService: null
-				,showAsLink: false
 				,startDate: null
 				,endDate: null
 			},opts_);
@@ -94,23 +86,48 @@ POSSIBILITY OF SUCH DAMAGE.
 			btn.text(startDate + ' / ' + endDate);
 		},
 
+		_getWidgetOffset: function() {
+			var $widget = $('.n2widget_date_range .n2widget_date_range_button');
+			var offset = $widget.offset();
+
+			if (offset) {
+				return offset;
+			}
+		},
+
+		_setWidgetWindowPosition: function() {
+			var topPadding = 25;
+			var $browserHeight = $(window).height();
+			var widgetOffset = this._getWidgetOffset();
+			var $widgetWindow = $('.n2widget_date_range_window');
+			var windowTop = widgetOffset.top + topPadding;
+
+			if ($browserHeight / 2 < widgetOffset.top) {
+				topPadding = -225;
+				windowTop = widgetOffset.top + topPadding;
+			}
+
+			$widgetWindow.css('top', windowTop);
+			$widgetWindow.css('left', widgetOffset.left);
+		},
+
 		_display: function() {
 			var $container, $widgetWindow, $widgetWindowStart, $widgetWindowEnd;
 			var _this = this;
-			var containerId = this.containerId;
 
-			this.elemId = $n2.getUniqueId();
+			var elemId = $n2.getUniqueId();
 
 			$container = $('<div>')
-				.attr('id', this.elemId)
+				.attr('id', elemId)
 				.addClass('n2widget_date_range')
-				.appendTo($('#' + containerId));
+				.appendTo($('#' + this.containerId));
 
 			$('<div>')
 				.addClass('n2widget_date_range_button')
 				.text("-- / --")
 				.appendTo($container)
 				.click(function() {
+					_this._setWidgetWindowPosition();
 					$('.n2widget_date_range_window')
 						.toggleClass('active');
 				});
@@ -128,7 +145,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.appendTo($widgetWindow);
 
 			$('<input>')
-				.attr('id', 'start_date')
+				.addClass('start_date')
 				.attr('name', 'start_date')
 				.attr('type', 'text')
 				.attr('autocomplete', 'off')
@@ -141,7 +158,8 @@ POSSIBILITY OF SUCH DAMAGE.
 				,changeYear: true
 				,constrainInput: false
 				,onSelect: function() {
-					var $startDate = $('#start_date');
+					var $startDate = $('.n2widget_date_range_window')
+						.find('.start_date');
 					_this.startDate = this.value;
 					$startDate.val(_this.startDate);
 					$startDate.text(_this.startDate);
@@ -150,7 +168,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}).appendTo($widgetWindowStart);
 
 			$('<input>')
-				.attr('id', 'end_date')
+				.addClass('end_date')
 				.attr('name', 'end_date')
 				.attr('type', 'text')
 				.attr('autocomplete', 'off')
@@ -163,19 +181,21 @@ POSSIBILITY OF SUCH DAMAGE.
 				,changeYear: true
 				,constrainInput: false
 				,onSelect: function() {
-					var $endDate = $('#end_date');
+					var $endDate = $('.n2widget_date_range_window')
+						.find('.end_date');
 					_this.endDate = this.value;
 					$endDate.val(_this.endDate);
 					$endDate.text(_this.endDate);
 					_this._dateRangeUpdated();
 				}
 			}).appendTo($widgetWindowEnd);
+
 		},
 
 		_dateRangeUpdated: function() {
 			var _this = this;
-			var $startDate = $('#start_date');
-			var $endDate = $('#end_date');
+			var $startDate = $('.n2widget_date_range_window .start_date');
+			var $endDate = $('.n2widget_date_range_window .end_date');
 			var startDateVal = $startDate.val();
 			var endDateVal = $endDate.val();
 
@@ -188,7 +208,11 @@ POSSIBILITY OF SUCH DAMAGE.
 				_this.endDate = null;
 			}
 
+			// Update date range button text
 			this._updateDateRangeButtonText();
+
+			// Update widget window position
+			this._setWidgetWindowPosition();
 
 			this.dispatchService.send(DH, {
 				type: 'yearWidgetUpdate'
@@ -210,7 +234,7 @@ POSSIBILITY OF SUCH DAMAGE.
 	// -------------------------------------------------------------------------
 	function HandleWidgetDisplayRequests(m) {
 		var widgetOptions, containerId, config, options, key, value, i;
-		var optionKeys = Object.keys(widgetOptions);
+		var optionKeys;
 
 		if (m.widgetType === 'dateRangeWidget') {
 			widgetOptions = m.widgetOptions;
@@ -218,11 +242,16 @@ POSSIBILITY OF SUCH DAMAGE.
 			config = m.config;
 			options = {};
 
-			for (i = 0; i < optionKeys.length; i += 1) {
-				key = optionKeys[i];
-				value = widgetOptions[key];
-				options[key] = value;
+			if (widgetOptions) {
+				optionKeys = Object.keys(widgetOptions);
+
+				for (i = 0; i < optionKeys.length; i += 1) {
+					key = optionKeys[i];
+					value = widgetOptions[key];
+					options[key] = value;
+				}
 			}
+
 
 			options.containerId = containerId;
 
