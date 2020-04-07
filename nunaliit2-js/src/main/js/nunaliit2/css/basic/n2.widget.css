@@ -1020,11 +1020,12 @@ Date Range Widget
 .n2widget_date_range_window {
 	display: none;
 	background-color: #ffffff;
-	border: 1px solid #333333;
+	border: 1px solid #666666;
 	border-radius: 2px;
 	z-index: 9;
 	position: absolute;
 	padding: 5px;
+	box-shadow: 1px 2px 3px #999999;
 }
 
 .n2widget_date_range_window .n2widget_date_range_start,
