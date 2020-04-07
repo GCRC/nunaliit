@@ -36,6 +36,18 @@ POSSIBILITY OF SUCH DAMAGE.
 	var DH = 'n2.widgetDateRange';
 
 	// -------------------------------------------------------------------------
+	/**
+	 * @class
+	 * The date range widget provides an interface for selecting a start and
+	 * end date, which is reported to the dispatcher.
+	 *
+	 * @param {object} dispatchService - Dispatch service reference.
+	 * @param {string} containerId - Unique identifier for the container id
+	 * @param {string} [startDate=null] - Initial start date for the widget
+	 * using the date format 'yyyy-mm-dd'
+	 * @param {string} [endDate=null] - Initial end date for the widget using
+	 * the date format 'yyyy-mm-dd'
+	*/
 	var DateRangeWidget = $n2.Class({
 
 		dispatchService: null,
