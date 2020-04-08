@@ -32,6 +32,11 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2) {
 	"use strict";
 
+	// Localization
+	var _loc = function(str,args) {
+		return $n2.loc(str,'nunaliit2-couch',args);
+	};
+
 	// Define Dispatcher Handle
 	var DH = 'n2.widgetDateRange';
 
@@ -83,7 +88,8 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_updateDateRangeButtonText: function() {
-			var btn = $('.n2widget_date_range .n2widget_date_range_button');
+			var btn = $('.n2widget_date_range')
+				.find('.n2widget_date_range_button');
 			var startDate = this.startDate ? this.startDate : '--';
 			var endDate = this.endDate ? this.endDate : '--';
 
@@ -91,8 +97,9 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_getWidgetOffset: function() {
-			var $widget = $('.n2widget_date_range .n2widget_date_range_button');
-			var offset = $widget.offset();
+			var $widgetBtn = $('.n2widget_date_range')
+				.find('.n2widget_date_range_button');
+			var offset = $widgetBtn.offset();
 
 			if (offset) {
 				return offset;
@@ -129,7 +136,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			$('<div>')
 				.addClass('n2widget_date_range_button')
-				.attr('title', 'Date Range Widget')
+				.attr('title', _loc('Date Range Widget'))
 				.text("-- / --")
 				.appendTo($container)
 				.click(function() {
@@ -162,7 +169,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.addClass('n2widget_date_range_end')
 				.appendTo($widgetWindow);
 
-			$('<span>').text('From: ')
+			$('<span>').text(_loc('From') + ': ')
 				.appendTo($widgetWindowStart);
 
 			$startDateInput = $('<input>')
@@ -170,7 +177,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.attr('name', 'start_date')
 				.attr('type', 'text')
 				.attr('autocomplete', 'off')
-				.attr('placeholder', 'Start Date yy-mm-dd')
+				.attr('placeholder', _loc('Start Date') + ' yy-mm-dd')
 				.appendTo($widgetWindowStart);
 
 			this.startDatePicker = $('<div>').datepicker({
@@ -193,7 +200,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.startDatePicker.datepicker('setDate', this.startDate);
 			}
 
-			$('<span>').text('To: ')
+			$('<span>').text(_loc('To') + ': ')
 				.appendTo($widgetWindowEnd);
 
 			$endDateInput = $('<input>')
@@ -201,7 +208,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.attr('name', 'end_date')
 				.attr('type', 'text')
 				.attr('autocomplete', 'off')
-				.attr('placeholder', 'End Date yy-mm-dd')
+				.attr('placeholder', _loc('End Date') + ' yy-mm-dd')
 				.appendTo($widgetWindowEnd);
 
 
