@@ -32,6 +32,8 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2) {
 	"use strict";
 
+	var $l;
+
 	// Localization
 	var _loc = function(str,args) {
 		return $n2.loc(str,'nunaliit2-couch',args);
@@ -39,6 +41,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 	// Define Dispatcher Handle
 	var DH = 'n2.widgetDateRange';
+
+	// Required library: luxon
+	if (window.luxon) {
+		$l = window.luxon;
+	} else {
+		return;
+	}
 
 	// -------------------------------------------------------------------------
 	/**
@@ -178,6 +187,9 @@ POSSIBILITY OF SUCH DAMAGE.
 				.attr('type', 'text')
 				.attr('autocomplete', 'off')
 				.attr('placeholder', _loc('Start Date') + ' yy-mm-dd')
+				.change(function() {
+					_this._dateRangeUpdated();
+				})
 				.appendTo($widgetWindowStart);
 
 			this.startDatePicker = $('<div>').datepicker({
@@ -209,6 +221,9 @@ POSSIBILITY OF SUCH DAMAGE.
 				.attr('type', 'text')
 				.attr('autocomplete', 'off')
 				.attr('placeholder', _loc('End Date') + ' yy-mm-dd')
+				.change(function() {
+					_this._dateRangeUpdated();
+				})
 				.appendTo($widgetWindowEnd);
 
 
@@ -239,11 +254,38 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_dateRangeUpdated: function() {
+			var d;
 			var _this = this;
 			var $startDate = $('.n2widget_date_range_window .start_date');
 			var $endDate = $('.n2widget_date_range_window .end_date');
 			var startDateVal = $startDate.val();
 			var endDateVal = $endDate.val();
+
+			if (startDateVal && this.startDate !== startDateVal) {
+				d = $l.DateTime.fromString(startDateVal, 'yyyy-MM-dd');
+				if (d.isValid) {
+					this.startDate = startDateVal;
+				} else {
+					if (this.startDate) {
+						$startDate.val(this.startDate);
+					} else {
+						$startDate.val('');
+					}
+				}
+			}
+
+			if (endDateVal && this.endDate !== endDateVal) {
+				d = $l.DateTime.fromString(endDateVal, 'yyyy-MM-dd');
+				if (d.isValid) {
+					this.endDate = endDateVal;
+				} else {
+					if (this.endDate) {
+						$endDate.val(this.endDate);
+					} else {
+						$endDate.val('');
+					}
+				}
+			}
 
 			// Set the end date to null if end date is less than the start date
 			if (startDateVal
@@ -251,7 +293,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				&& startDateVal >= endDateVal) {
 				$endDate.text('');
 				$endDate.val(null);
-				_this.endDate = null;
+				this.endDate = null;
 			}
 
 			this.startDatePicker.datepicker('setDate', this.startDate);
