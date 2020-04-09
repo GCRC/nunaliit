@@ -207,6 +207,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			}).appendTo($widgetWindowStart);
 
+			// Update start date input and picker if initially set
 			if (this.startDate) {
 				$startDateInput.val(this.startDate);
 				this.startDatePicker.datepicker('setDate', this.startDate);
@@ -242,6 +243,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			}).appendTo($widgetWindowEnd);
 
+			// Update end date input and picker if initially set
 			if (this.endDate) {
 				$endDateInput.val(this.endDate);
 				this.endDatePicker.datepicker('setDate', this.endDate);
@@ -255,44 +257,43 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		_dateRangeUpdated: function() {
 			var d;
-			var _this = this;
-			var $startDate = $('.n2widget_date_range_window .start_date');
-			var $endDate = $('.n2widget_date_range_window .end_date');
-			var startDateVal = $startDate.val();
-			var endDateVal = $endDate.val();
+			var $startInputDate = $('.n2widget_date_range_window .start_date');
+			var $endInputDate = $('.n2widget_date_range_window .end_date');
 
-			if (startDateVal && this.startDate !== startDateVal) {
-				d = $l.DateTime.fromString(startDateVal, 'yyyy-MM-dd');
+			if ($startInputDate.val()
+				&& this.startDate !== $startInputDate.val()) {
+				d = $l.DateTime.fromString($startInputDate.val(), 'yyyy-MM-dd');
 				if (d.isValid) {
-					this.startDate = startDateVal;
+					this.startDate = $startInputDate.val();
 				} else {
 					if (this.startDate) {
-						$startDate.val(this.startDate);
+						$startInputDate.val(this.startDate);
 					} else {
-						$startDate.val('');
+						$startInputDate.val('');
 					}
 				}
 			}
 
-			if (endDateVal && this.endDate !== endDateVal) {
-				d = $l.DateTime.fromString(endDateVal, 'yyyy-MM-dd');
+			if ($endInputDate.val()
+				&& this.endDate !== $endInputDate.val()) {
+				d = $l.DateTime.fromString($endInputDate.val(), 'yyyy-MM-dd');
 				if (d.isValid) {
-					this.endDate = endDateVal;
+					this.endDate = $endInputDate.val();
 				} else {
 					if (this.endDate) {
-						$endDate.val(this.endDate);
+						$endInputDate.val(this.endDate);
 					} else {
-						$endDate.val('');
+						$endInputDate.val('');
 					}
 				}
 			}
 
 			// Set the end date to null if end date is less than the start date
-			if (startDateVal
-				&& endDateVal
-				&& startDateVal >= endDateVal) {
-				$endDate.text('');
-				$endDate.val(null);
+			if ($startInputDate.val()
+				&& $endInputDate.val()
+				&& $startInputDate.val() >= $endInputDate.val()) {
+				$endInputDate.text('');
+				$endInputDate.val(null);
 				this.endDate = null;
 			}
 
@@ -307,8 +308,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			this.dispatchService.synchronousCall(DH, {
 				type: 'dateRangeWidgetUpdate'
-				,startDate: _this.startDate
-				,endDate: _this.endDate
+				,startDate: this.startDate
+				,endDate: this.endDate
 			});
 		}
 	});
