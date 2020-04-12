@@ -58,6 +58,7 @@ var
 //    }
 // }
 
+ 
 var context_menu_text = ['Tag Selection...', 'Map Tags...', 'Settings...'];
 //--------------------------------------------------------------------------
 var TranscriptWidget = $n2.Class('TranscriptWidget',{
@@ -123,6 +124,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			,docId: undefined
 			,doc: undefined
 			,sourceModelId: undefined
+			,cinemapModelId: undefined
+			,subtitleModelId: undefined
 			, isInsideContentTextPanel : true
 		},opts_);
 
@@ -133,12 +136,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.name = opts.name;
 		this.docId = opts.docId;
 		this.sourceModelId = opts.sourceModelId;
+		this.subtitleModelId = opts.subtitleModelId;
 		this._contextMenuClass = 'transcript-context-menu';
 		
 		this.isInsideContentTextPanel = opts.isInsideContentTextPanel;
 
 		if( opts.doc ){
 			this.doc = opts.doc;
+			
+			// The mediaDocument id, since media document is the target referenced by cinemapdoc and srtdoc
 			this.docId = this.doc._id;
 		};
 		if( !this.name ){
@@ -164,13 +170,38 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		var $container = $('.'+containerClass);
 		
 		this.elemId = $n2.getUniqueId();
+		this.mediaAndSubtitleDivId = $n2.getUniqueId();
+		this.mediaDivId = $n2.getUniqueId();
+		this.subtitleDivId = $n2.getUniqueId();
+		this.subtitleSelectionDivId = $n2.getUniqueId();
+		this.srtSelectionId = $n2.getUniqueId();
+		this.srtSelector = undefined;
 		
 		if (this.isInsideContentTextPanel) {
 
+			var $elem = $('<div>')
+				.attr('id',this.elemId)
+				.appendTo($container);
+			
 			$('<div>')
-			.attr('id',this.elemId)
-			.addClass('n2widgetTranscript n2widgetTranscript_insideTextPanel')
-			.appendTo($container);
+				.attr('id', this.subtitleSelectionDivId)
+				.appendTo($elem);
+			
+			var $mediaAndSubtitleDiv = $('<div>')
+				.attr('id', this.mediaAndSubtitleDivId)
+				.addClass('n2widgetTranscript n2widgetTranscript_insideTextPanel')
+				.appendTo($elem);
+			
+			var $mediaDiv = $('<div>')
+				.attr('id', this.mediaDivId)
+				.appendTo($mediaAndSubtitleDiv);
+			
+			var $transcript = $('<div>')
+				.attr('id', this.subtitleDivId)
+				.addClass('n2widgetTranscript_transcript')
+				.appendTo($mediaAndSubtitleDiv);
+			
+			this._reInstallSubtitleSel();
 
 		} else {
 			$('<div>')
@@ -246,7 +277,82 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	_getElem: function(){
 		return $('#'+this.elemId);
 	},
+	
+	_getMediaAndSubtitleDiv: function(){
+		return $('#' + this.mediaAndSubtitleDivId );
+	},
+	
+	_getMediaDiv: function(){
+		return $('#' + this.mediaDivId );
+	},
+	
+	_getSubtitleDiv: function(){
+		return $('#' + this.subtitleDivId );
+	},
+	
+	_getSubtitleSelectionDiv: function(){
+		return $('#' + this.subtitleSelectionDivId );
+	},
 
+	_getSubtitleSelection: function(){
+		return $('#' + this.srtSelectionId );
+	},
+	
+	_reInstallSubtitleSel: function(){
+		
+		var _this = this;
+		var $elem = this._getSubtitleSelectionDiv();
+		
+		$elem.empty();
+		
+		var menOpts = [];
+		if (this.docId
+			&& _this.mediaDocIdToSrtDocs
+			&& _this.mediaDocIdToSrtDocs[this.docId]){
+			_this.mediaDocIdToSrtDocs[this.docId].forEach(function(srtDoc){
+				menOpts.push({
+					value: srtDoc._id,
+					label: srtDoc.atlascine2_subtitle.language
+				})
+			});
+		}
+		
+		
+		this.srtSelector = new $n2.mdc.MDCSelect({
+			selectId: _this.srtSelectionId,
+			menuOpts: menOpts,
+			parentElem: $elem,
+			preSelected: true,
+			menuChgFunction:function(){
+				$n2.log('Change Subtitle File: '+ this.value);
+				_this._handleSrtSelectionChanged(this.value);
+			}
+		})
+		
+	},
+	
+	_handleSrtSelectionChanged(value){
+		var _this = this;
+		var selectSrtDocId = value;
+		if ( !selectSrtDocId ) return;
+
+		var transcriptAttName = _this._findTranscriptAttachmentName(selectSrtDocId);
+		if ( transcriptAttName && _this.transcript){
+			_this.transcript = $n2.extend(_this.transcript, {
+				srtDocId: selectSrtDocId,
+				srtAttName : transcriptAttName
+			})
+
+			_this.srtData = undefined;
+			_this._documentChanged();
+
+		} else {	
+			_this._renderError('Transcript or media attachment names not found for ' + selectSrtDocId);
+			alert('Transcript or media attachment not found in media document ' + selectSrtDocId);
+		}
+
+	},
+	
 	_handle: function(m, addr, dispatcher){
 		var _this = this;
 
@@ -292,6 +398,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			
 		} else if ( 'modelStateUpdated' === m.type){
 			if( this.sourceModelId === m.modelId ){
+				
+				// Check if cinemap selection changed;
 				var mediaDocChanged = this._cinemapUpdated(m.state);
 				if (mediaDocChanged){
 					this.timeTable = [];
@@ -301,6 +409,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					this._refresh();
 					this._documentChanged();
 				}
+			} else if (this.subtitleModelId === m.modelId ){
+			
+				this._updateMediaToSrtMap(m.state);
+				
+				this._reInstallSubtitleSel();
+				
 			}
 		} else if( 'selected' === m.type ){
 			if( m.docId != this.docId ){
@@ -317,6 +431,34 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			this._color_transcript(m.data);
 		};
 	},
+	
+	_updateMediaToSrtMap: function(sourceState){
+		if( sourceState.added ){
+			for(var i=0,e=sourceState.added.length; i<e; ++i){
+				var doc = sourceState.added[i];
+				var docId = doc._id;
+
+			
+				if( doc.atlascine2_subtitle ){
+					
+					this.mediaDocIdToSrtDocs = this.mediaDocIdToSrtDocs || {};
+					this.srtDocs = this.srtDocs || {};
+					this.srtDocs[docId] = doc;
+					
+					if ( doc.atlascine2_subtitle.linkedMediaDocId ){
+						var mediaDocId = doc.atlascine2_subtitle.linkedMediaDocId.doc;
+						if ( !this.mediaDocIdToSrtDocs[mediaDocId] ){
+							this.mediaDocIdToSrtDocs[mediaDocId] = [];
+						} 
+						this.mediaDocIdToSrtDocs[mediaDocId].push(doc);
+					}
+					
+				};
+			};
+		};
+
+	},
+	
 	_getTranscriptDiv: function(){
 		var $rst = $('div.n2widgetTranscript_transcript');
 		if ($rst.length < 1 || $rst.get(0) == document) {
@@ -417,15 +559,20 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			});
 			return;
 		} else if( !this.transcript ){
+			this._loadVideoFile();
 			this._loadTranscript(this.doc);
-			return;
+			//return;
 
 		} else if( !this.srtData ){
 			var attSrt = undefined;
-			if( this.attachmentService
+			if (this.attachmentService
+			 && this.transcript 
+			 && this.transcript.fromMediaDoc){
+				attSrt = this.attachmentService.getAttachment(this.doc, this.transcript.srtAttName);
+			} else if( this.attachmentService
 			 && this.transcript 
 			 && this.transcript.srtAttName ){
-				attSrt = this.attachmentService.getAttachment(this.doc, this.transcript.srtAttName);
+				attSrt = this.attachmentService.getAttachment(this.srtDocs[this.transcript.srtDocId], this.transcript.srtAttName);
 			};
 
 			var srtUrl = undefined;
@@ -462,8 +609,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					}
 				});
 			} else {
-				// element is wronly configured. Report error
-				_this._renderError('Can not compute URL for SRT/WEBVTT');
+				$n2.log('Can not find any valid SRT/WEBVTT file');
 			};
 			
 		} else if( this.transcript.timeTable ){
@@ -490,17 +636,22 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	_refresh: function(){
 		var _this = this;
 
-		var $elem = this._getElem();
 		
-		$elem.empty();
+		var $subtitleSelectionDiv = this._getSubtitleSelectionDiv();
+		
+		// this $elem is the media and subtitle div
+		var $elem = this._getMediaAndSubtitleDiv();
+		
+		//$elem.empty();
 
-		if( !this.docId ){
+		if( !this.docId || !this.doc ){
 			return;
 		};
-		if( !this.transcript ){
-			return;
-		};
 
+		if ( !this.transcript || !this.transcript.videoAttName ){
+			//Blocking method to load video file first;
+			this._loadVideoFile();
+		}
 		var attVideoName = undefined;
 		if( this.transcript ){
 			attVideoName = this.transcript.videoAttName;
@@ -539,14 +690,13 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		};
 
 		if( attVideoUrl ) {
-			this.mediaDivId = $n2.getUniqueId();
+			//this.mediaDivId = $n2.getUniqueId();
 			var mediaDivId = this.mediaDivId;
 			this.videoId = $n2.getUniqueId();
-			this.transcriptId = $n2.getUniqueId();
+			this.transcriptId = this.subtitleDivId;
 
-			var $mediaDiv = $('<div>')
-					.attr('id', mediaDivId)
-					.appendTo($elem);
+			var $mediaDiv = this._getMediaDiv();
+			$mediaDiv.empty();
 			
 			//DIV for the Video
 			var $video = $('<video>')
@@ -575,10 +725,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			//little refine for css : specically for transcript
 			//$('.n2_content_text').css('overflow','hidden');
 
-			var $transcript = $('<div>')
-				.attr('id', this.transcriptId)
-				.addClass('n2widgetTranscript_transcript')
-				.appendTo($mediaDiv);
+
 			
 			/*this.transcript_array = [
 				{"start": "0.00",
@@ -601,8 +748,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					"text": "Whether a wire comes straight from the ISP hookup outside your house, or it travels over radio waves from your roof, the first stop a wire will make once inside your house, is at your modem."},
 				
 			];*/
-			
-			prep_transcript($transcript, this.transcript_array);
+
 
 			// time update function: #highlight on the span to change the color of the text
 			$video
@@ -614,6 +760,18 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					var duration = this.duration;
 					$n2.log('video duration changed: '+duration);
 				});
+			
+			if ( this.transcript && this.transcript.srtAttName ){
+				var $transcript = this._getSubtitleDiv();
+				$transcript.empty();
+				prep_transcript($transcript, this.transcript_array);
+				
+				if ( this.transcript.fromMediaDoc ){
+					this._getSubtitleSelectionDiv().empty();
+				}
+			} else {
+				//this._documentChanged();
+			}
 
 		} else {
 			_this._renderError('Can not compute URL for video');
@@ -639,8 +797,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				}
 				
 				var ctxdata = [];
-				var idxOfHoverEl = selections
-						.index(
+				var idxOfHoverEl = selections.index(
 						$('div#'+ $(hoveredElem).attr('id'))
 						);
 				if (idxOfHoverEl >= 0){
@@ -910,6 +1067,20 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		return m.available;
 	},
 
+	_loadVideoFile: function(){
+		var mediaDocId = this.docId;
+		var mediaAttName = this._findVideoAttachmentName(this.doc);
+		if ( mediaAttName ){
+			this.transcript = {};
+			this.transcript.videoAttName = mediaAttName;
+			//_this._documentChanged();
+
+		} else {	
+			this._renderError('Media attachment names not found for '+this.doc._id);
+			alert('Media attachment not found in media document ' + this.doc._id);
+		}
+	},
+	
 	_loadTranscript: function(doc){
 		var _this = this;
 		// Look for transcript in-line
@@ -918,13 +1089,29 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			this._documentChanged();
 
 		} else if (doc) {
-			var transcriptAttName = this._findTranscriptAttachmentName(this.doc);
-			var mediaAttName = this._findVideoAttachmentName(this.doc);
-			if (transcriptAttName && mediaAttName){
-				_this.transcript = {
-						srtAttName : transcriptAttName,
-						videoAttName: mediaAttName
-				};
+
+			// Found srt attachment in media doc
+			var transcriptAttName =  this._findTranscriptAttachmentNameFromMediaDoc(doc);
+			if ( transcriptAttName ){
+				_this.transcript = $n2.extend(_this.transcript, {
+					fromMediaDoc: true,
+					srtAttName : transcriptAttName
+				})
+				_this._documentChanged();
+				return;
+			}
+			
+			// Retrieve srt attachments from atlascine2_subtitle documents.
+			var selectSrtDocId = this.srtSelector.getSelectedValue();
+			if ( !selectSrtDocId ) return;
+ 
+			var transcriptAttName = this._findTranscriptAttachmentName(selectSrtDocId);
+			if ( transcriptAttName && _this.transcript){
+				_this.transcript = $n2.extend(_this.transcript, {
+					srtDocId: selectSrtDocId,
+					srtAttName : transcriptAttName
+				})
+
 				_this._documentChanged();
 
 			} else {	
@@ -977,7 +1164,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		};
 	},
 	
-	_findTranscriptAttachmentName: function(doc){
+	// For backward compatibility consideration
+	_findTranscriptAttachmentNameFromMediaDoc: function(doc){
 		if( doc 
 		 && doc.nunaliit_attachments 
 		 && doc.nunaliit_attachments.files ){
@@ -991,7 +1179,29 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					return attName;
 				};
 			};
-		};
+		}
+		
+		return undefined;
+	},
+	
+	_findTranscriptAttachmentName: function(docId){
+		if( this.srtDocs[docId] ){
+			var doc = this.srtDocs[docId];
+			if(doc 
+			&& doc.nunaliit_attachments 
+			&& doc.nunaliit_attachments.files ){
+				for(var attName in doc.nunaliit_attachments.files){
+					var att = doc.nunaliit_attachments.files[attName];
+					if( attName.endsWith('.srt')){
+						this.subtitleFormat = 'SRT';
+						return attName;
+					} else if( attName.endsWith('.vtt') ){
+						this.subtitleFormat = 'WEBVTT';
+						return attName;
+					};
+				};
+			};
+		}
 		
 		return undefined;
 	},

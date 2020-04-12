@@ -1444,6 +1444,16 @@ var MDCSelect = $n2.Class('MDCSelect', MDC, {
 
 	getSelectId: function(){
 		return this.selectId;
+	},
+	
+	getSelectedValue: function(){
+		var _this = this;
+		var $elem = this.getElem();
+		if ( $elem.get(0) ){
+			var vanilla = new mdc.select.MDCSelect(document.querySelector('#'+ _this.mdcId));
+			return vanilla.value;
+		}
+		return null;
 	}
 });
 
