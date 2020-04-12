@@ -388,6 +388,12 @@ class N2MapCanvas  {
 
 		function onMoveStart(evt){
 			customMap.once('moveend', function(evt){
+				
+				//Clearing the popup
+				if ( _this.popupOverlay ){
+					_this.popupOverlay.hide();
+				}
+
 				let res = evt.frameState.viewState.resolution;
 				let proj = _this.n2View.getProjection();
 				let zoom = evt.frameState.viewState.zoom;
