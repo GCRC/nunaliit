@@ -761,14 +761,17 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					$n2.log('video duration changed: '+duration);
 				});
 			
+			// If using embedded srt, remove the srt file selector
+			if ( this.transcript.fromMediaDoc ){
+				this._getSubtitleSelectionDiv().empty();
+			}
+			
 			if ( this.transcript && this.transcript.srtAttName ){
 				var $transcript = this._getSubtitleDiv();
 				$transcript.empty();
 				prep_transcript($transcript, this.transcript_array);
 				
-				if ( this.transcript.fromMediaDoc ){
-					this._getSubtitleSelectionDiv().empty();
-				}
+
 			} else {
 				//this._documentChanged();
 			}

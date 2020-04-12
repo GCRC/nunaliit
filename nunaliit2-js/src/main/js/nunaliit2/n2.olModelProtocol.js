@@ -278,7 +278,6 @@ OpenLayers.Protocol.Model = OpenLayers.Class(OpenLayers.Protocol, {
 			,sourceModelId: this.sourceModelId
 			,updatedCallback: function(state){
 				if( _this.readWasCalled ){
-					console.log("N2Update times: " + _this.cnt++);
 					_this._modelSourceUpdated(state);
 				};
 			}
