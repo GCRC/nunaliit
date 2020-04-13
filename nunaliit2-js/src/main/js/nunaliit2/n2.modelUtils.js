@@ -497,7 +497,230 @@ var ModelIntersect = $n2.Class({
 	}
 });
 
+//--------------------------------------------------------------------------
 
+var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
+
+	modelType: null,
+	dispatchService: null,
+	sourceModelId: null,
+	matchingFields: null,
+	addedMap: null,
+	updatedMap: null,
+	removedMap: null,
+	docInfosByDocId: null,
+	docInfosByDocIdClone: null,
+	modelIsLoading: null,
+
+	initialize: function(opts_) {
+		var f, m;
+		var opts = $n2.extend({
+			modelId: null,
+			sourceModelId: null,
+			informationModelIds: null,
+			dispatchService: null,
+			matchingFields: null
+		},opts_);
+
+		var _this = this;
+
+		this.modelType = 'ModelSchemaJoinTransform';
+		this.modelId = opts.modelId;
+		this.modelIsLoading = false;
+		this.dispatchService = opts.dispatchService;
+		this.sourceModelId = opts.sourceModelId;
+		this.matchingFields = opts.matchingFields;
+
+		this.addedMap = {};
+		this.updatedMap = {};
+		this.removedMap = {};
+		this.docInfosByDocId = {};
+		this.docInfosByDocIdClone = {};
+		this.schemaDocsByDocId = {};
+
+		// Register to events
+		if (this.dispatchService) {
+			f = function(m, addr, dispatcher) {
+				_this._handle(m, addr, dispatcher);
+			};
+
+			this.dispatchService.register(DH, 'modelGetInfo', f);
+			this.dispatchService.register(DH, 'modelGetState', f);
+			this.dispatchService.register(DH, 'modelStateUpdated', f);
+
+			// Initialize state
+			m = {
+				type: 'modelGetState',
+				modelId: this.sourceModelId
+			};
+
+			this.dispatchService.synchronousCall(DH, m);
+			if (m.state) {
+				this._sourceModelUpdated(m.state);
+			}
+		}
+
+		$n2.log(this._classname,this);
+	},
+
+	_handle: function(m, addr, dispatcher) {
+		var added, docInfo, docInfoKeys, doc;
+		var _this = this;
+		if (m.type === 'modelGetInfo') {
+			if (this.modelId === m.modelId) {
+				m.modelInfo = this._getModelInfo();
+			}
+
+		} else if (m.type === 'modelGetState') {
+			if (this.modelId === m.modelId) {
+				added = [];
+				docInfoKeys = Object.keys(this.docInfosByDocId);
+				docInfoKeys.forEach(function(docId) {
+					docInfo = _this.docInfosByDocId[docId];
+					doc = docInfo.doc;
+					added.push(doc);
+				});
+
+				m.state = {
+					added: added,
+					updated: [],
+					removed: [],
+					loading: this.modelIsLoading
+				};
+			}
+
+		} else if (m.type === 'modelStateUpdated') {
+			// Does it come from our source?
+			if (this.sourceModelId === m.modelId) {
+				this._sourceModelUpdated(m.state);
+			}
+		}
+	},
+
+	_getModelInfo: function() {
+		var modelInfo = {
+			modelId: this.modelId,
+			modelType: this.modelType,
+			parameters: {}
+		};
+		return modelInfo;
+	},
+
+	_sourceModelUpdated: function(sourceState) {
+		var i, e, doc, docId, docInfo, previousDoc, schema;
+		var added, updated, removed;
+		this.addedMap = {};
+		this.updatedMap = {};
+		this.removedMap = {};
+
+		if (typeof sourceState.loading === 'boolean'
+			&& this.modelIsLoading !== sourceState.loading) {
+			this.modelIsLoading = sourceState.loading;
+		}
+
+		// Loop through all added documents
+		if (sourceState.added) {
+			for (i = 0, e = sourceState.added.length; i < e; i += 1) {
+				doc = sourceState.added[i];
+				docId = doc._id;
+				if (doc.nunaliit_schema) {
+					schema = doc.nunaliit_schema;
+					// Add schema collection object if it doesn't exist
+					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId, schema)) {
+						this.schemaDocsByDocId[schema] = {};
+					}
+
+					var schemaDocsCollection = this.schemaDocsByDocId[schema];
+					schemaDocsCollection[docId] = doc;
+		//			this.addedMap[docId] = doc;
+				}
+			}
+		}
+
+		// Loop through all updated documents
+		if (sourceState.updated) {
+			for (i = 0, e = sourceState.updated.length; i < e; i += 1) {
+				doc = sourceState.updated[i];
+				docId = doc._id;
+
+				if (doc.nunaliit_schema) {
+					schema = doc.nunaliit_schema;
+					// Add schema collection object if it doesn't exist
+					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId, schema)) {
+						this.schemaDocsByDocId[schema] = {};
+					}
+
+					var schemaDocsCollection = this.schemaDocsByDocId[schema];
+					schemaDocsCollection[docId] = doc;
+		//			this.updatedMap[docId] = doc;
+				}
+			}
+		}
+
+		// Loop through all removed documents
+		if (sourceState.removed) {
+			for (i = 0, e = sourceState.removed.length; i < e; i += 1) {
+				doc = sourceState.removed[i];
+				docId = doc._id;
+
+				if (doc.nunaliit_schema) {
+					schema = doc.nunaliit_schema;
+					var schemaDocsCollection = this.schemaDocsByDocId[schema];
+					if (schemaDocsCollection[docId]) {
+						delete schemaDocsCollection[docId];
+		//				this.removedMap[docId] = doc;
+					}
+				}
+			}
+		}
+
+		// Report changes
+		this._joinSchemaDocs();
+
+		added = $n2.utils.values(this.addedMap);
+		updated = $n2.utils.values(this.updatedMap);
+		removed = $n2.utils.values(this.removedMap);
+		this._reportStateUpdate(added, updated, removed);
+	},
+
+	_joinSchemaDocs: function() {
+		var docId, docInfo, doc, transform, match, i;
+		var added, updated, removed;
+		var joinedDocs = {};
+
+		for (i in this.matchingFields) {
+			var match = this.matchingFields[i];
+			var originSchema = match.originSchema;
+			var originField = match.originField;
+			var refSchema = match.referenceSchema;
+			var refField = match.referenceField;
+
+		}
+
+		// Report changes
+		added = $n2.utils.values(this.addedMap);
+		updated = $n2.utils.values(this.updatedMap);
+		removed = $n2.utils.values(this.removedMap);
+		this._reportStateUpdate(added, updated, removed);
+	},
+
+	_reportStateUpdate: function(added, updated, removed) {
+		var stateUpdate = {
+			added: added,
+			updated: updated,
+			removed: removed,
+			loading: this.modelIsLoading
+		};
+
+		if (this.dispatchService) {
+			this.dispatchService.send(DH,{
+				type: 'modelStateUpdated',
+				modelId: this.modelId,
+				state: stateUpdate
+			});
+		}
+	}
+});
 
 //--------------------------------------------------------------------------
 /*
@@ -634,6 +857,33 @@ function handleModelCreate(m, addr, dispatcher){
 		
 		m.created = true;
 
+	} else if (m.modelType === 'schemajoin') {
+		var options = {};
+		
+		if (m && m.modelOptions) {
+			if (m.modelOptions.sourceModelId 
+				&& m.modelOptions.sourceModelId.length) {
+				options.sourceModelId = m.modelOptions.sourceModelId;
+			}
+			if (m.modelOptions.matchingFields
+				&& m.modelOptions.matchingFields.length) {
+				options.matchingFields = m.modelOptions.matchingFields;
+			}
+		}
+
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+		
+		if (m && m.config) {
+			if (m.config.directory) {
+				options.dispatchService = m.config.directory.dispatchService;
+			}
+		}
+		
+		m.model = new ModelSchemaJoinTransform(options);
+		
+		m.created = true;
+
 	} else if( m.modelType === 'staticDocumentSource' ){
 		var options = {};
 		
@@ -662,6 +912,7 @@ function handleModelCreate(m, addr, dispatcher){
 $n2.modelUtils = {
 	ModelUnion: ModelUnion
 	,ModelIntersect: ModelIntersect
+	,ModelSchemaJoinTransform: ModelSchemaJoinTransform
 	,StaticDocumentSource: StaticDocumentSource
 	,handleModelCreate: handleModelCreate 
 };
