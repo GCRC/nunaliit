@@ -304,6 +304,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		var $elem = this._getSubtitleSelectionDiv();
 		
 		$elem.empty();
+		if (this.srtSelector) {
+			delete this.srtSelector;
+			this.srtSelector = undefined;
+		}
 		
 		var menOpts = [];
 		if (this.docId
@@ -557,8 +561,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				'type': 'requestDocument'
 				,'docId': this.docId
 			});
-			return;
+			this._reInstallSubtitleSel();
+			//return;
 		} else if( !this.transcript ){
+		
 			this._loadVideoFile();
 			this._loadTranscript(this.doc);
 			//return;
@@ -640,17 +646,19 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		var $subtitleSelectionDiv = this._getSubtitleSelectionDiv();
 		
 		// this $elem is the media and subtitle div
-		var $elem = this._getMediaAndSubtitleDiv();
-		
-		//$elem.empty();
+		var $elem = this._getMediaDiv();
+		$elem.empty();
+		$elem = this._getSubtitleDiv();
+		$elem.empty();
 
-		if( !this.docId || !this.doc ){
+		if( !this.doc || this.docId !== this.doc._id ){
 			return;
 		};
 
 		if ( !this.transcript || !this.transcript.videoAttName ){
 			//Blocking method to load video file first;
-			this._loadVideoFile();
+			//this._loadVideoFile();
+			return;
 		}
 		var attVideoName = undefined;
 		if( this.transcript ){
