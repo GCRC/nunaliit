@@ -327,6 +327,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				menuOpts: menOpts,
 				parentElem: $elem,
 				preSelected: true,
+				menuLabel: 'Language',
 				menuChgFunction:function(){
 					$n2.log('Change Subtitle File: '+ this.value);
 					_this._handleSrtSelectionChanged(this.value);
