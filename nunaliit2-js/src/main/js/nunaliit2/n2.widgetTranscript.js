@@ -321,17 +321,19 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			});
 		}
 		
-		
-		this.srtSelector = new $n2.mdc.MDCSelect({
-			selectId: _this.srtSelectionId,
-			menuOpts: menOpts,
-			parentElem: $elem,
-			preSelected: true,
-			menuChgFunction:function(){
-				$n2.log('Change Subtitle File: '+ this.value);
-				_this._handleSrtSelectionChanged(this.value);
-			}
-		})
+		if (menOpts.length > 0){
+			this.srtSelector = new $n2.mdc.MDCSelect({
+				selectId: _this.srtSelectionId,
+				menuOpts: menOpts,
+				parentElem: $elem,
+				preSelected: true,
+				menuChgFunction:function(){
+					$n2.log('Change Subtitle File: '+ this.value);
+					_this._handleSrtSelectionChanged(this.value);
+				}
+			})
+		}
+
 		
 	},
 	
