@@ -360,6 +360,22 @@ var LanguageService = $n2.Class({
 		};
 	},
 	
+	setLanguages: function(languageList) {
+		var i, language;
+		// Empty language list
+		this.languages.length = 0;
+	
+		if ($n2.isArray(languageList)
+			&& languageList.length) {
+			for (i = 0; i < languageList.length; i += 1) {
+				language = languageList[i];
+				if (language.name && language.code) {
+					this.languages.push(language);
+				}
+			}
+		}
+	},
+
 	setUseToggleWidget: function(f){
 		this.useToggleWidget = f;
 	},
