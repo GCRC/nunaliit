@@ -162,6 +162,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						for (var i in this.labels) {
 							if (_loc(effectiveLabel) === _loc(this.labels[i])) {
 								atLeastOne = true;
+								break;
 							}
 						}
 					}
@@ -735,6 +736,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						for (var j in this.labels) {
 							if (_loc(effectiveLabel) === _loc(this.labels[j])) {
 								atLeastOne = true;
+								break;
 							}
 						}
 					}
