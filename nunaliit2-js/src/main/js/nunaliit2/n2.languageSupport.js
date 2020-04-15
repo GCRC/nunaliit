@@ -182,7 +182,7 @@ var LanguageSwitcher = $n2.Class({
 			if( locale.lang === code ){
 				$input.attr('checked', 'checked');
 			};
-			
+
 			$('<label/>')
 				.attr('for',id)
 				.text(name)
@@ -316,6 +316,8 @@ var LanguageService = $n2.Class({
 	dispatcher: null,
 	
 	languages: null,
+
+	defaultLanguage: null,
 	
 	useToggleWidget: null,
 	
@@ -323,6 +325,7 @@ var LanguageService = $n2.Class({
 		var opts = $n2.extend({
 			directory: null
 			,languages: null
+			,defaultLanguage: null
 		},opts_);
 
 		var _this = this;
@@ -362,6 +365,10 @@ var LanguageService = $n2.Class({
 	
 	setLanguages: function(languageList) {
 		var i, language;
+
+		// Unset default language
+		this.defaultLanguage = null;
+
 		// Empty language list
 		this.languages.length = 0;
 	
@@ -371,6 +378,11 @@ var LanguageService = $n2.Class({
 				language = languageList[i];
 				if (language.name && language.code) {
 					this.languages.push(language);
+				}
+
+				if (language.default
+					&& !this.defaultLanguage) {
+					this.defaultLanguage = language;
 				}
 			}
 		}
@@ -410,10 +422,14 @@ var LanguageService = $n2.Class({
 		if( 'languageSelect' === msg.type ){
 			if( msg.lang ) {
 				this._selectLanguage(msg.lang);
+
+			} else if (this.defaultLanguage) { 
+				this._selectLanguage(this.defaultLanguage.code);
+
 			} else {
 				this._resetLanguage();
-			};
-		};
+			}
+		}
 	},
 	
 	_selectLanguage: function(lang){
