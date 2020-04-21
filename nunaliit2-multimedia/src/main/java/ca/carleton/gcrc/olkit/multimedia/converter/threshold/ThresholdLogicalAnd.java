@@ -1,27 +1,26 @@
 package ca.carleton.gcrc.olkit.multimedia.converter.threshold;
 
+import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionThreshold;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
-
-import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionThreshold;
 
 public class ThresholdLogicalAnd implements MultimediaConversionThreshold {
 
-	private List<MultimediaConversionThreshold> children = new Vector<MultimediaConversionThreshold>(); 
+	private List<MultimediaConversionThreshold> children = new ArrayList<>();
 	
 	public void addThreshold(MultimediaConversionThreshold threshold) {
 		children.add(threshold);
 	}
 	
 	@Override
-	public boolean isConversionRequired(String videoFormat, Long videoRate,
-			String audioFormat, Long audioRate, Long imageWidth,
-			Long imageHeight) {
+	public boolean isConversionRequired(String videoFormat, Long videoRate, String audioFormat, Long audioRate,
+										Long imageWidth, Long imageHeight, Long fileSizeMb) {
 
 		for(MultimediaConversionThreshold child : children) {
-			if( false == child.isConversionRequired(videoFormat, videoRate, audioFormat, audioRate, imageWidth, imageHeight) ) {
+			if(!child.isConversionRequired(videoFormat, videoRate, audioFormat, audioRate, imageWidth, imageHeight, fileSizeMb)) {
 				return false;
 			}
 		}
@@ -32,7 +31,7 @@ public class ThresholdLogicalAnd implements MultimediaConversionThreshold {
 	@Override
 	public boolean isResizeRequired(Long imageWidth, Long imageHeight) {
 		for(MultimediaConversionThreshold child : children) {
-			if( false == child.isResizeRequired(imageWidth, imageHeight) ) {
+			if(!child.isResizeRequired(imageWidth, imageHeight)) {
 				return false;
 			}
 		}

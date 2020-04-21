@@ -10,63 +10,66 @@ import org.slf4j.LoggerFactory;
 
 public class ThresholdAudio implements MultimediaConversionThreshold {
 
-	static final protected Logger logger = LoggerFactory.getLogger(ThresholdImage.class);
+	private static final Logger logger = LoggerFactory.getLogger(ThresholdAudio.class);
 
-	static public ThresholdAudio parseString(String s) {
+	private final String format;
+	private final Long bitrate;
+	private final Long maxFileSizeMb;
+
+	public ThresholdAudio(String format, Long bitrate, Long maxFileSizeMb) {
+		this.format = format;
+		this.bitrate = bitrate;
+		this.maxFileSizeMb = maxFileSizeMb;
+	}
+
+	/**
+	 * Parses a settings string in the format:
+	 * <audio-codec>,<max-audio-bitrate>,<max-file-size>
+	 *
+	 * @param s The settings string to parse.
+	 * @return The object representing audio threshold settings.
+	 */
+	public static ThresholdAudio parseString(String s) {
 		String[] components = s.split(",");
-		if( 2 == components.length ) {
+		if (3 == components.length) {
 			String format = null;
 			Long bitrate = null;
-			
-			if( false == "*".equals( components[0].trim() ) ) {
+			Long maxFileSize = null;
+
+			if (!"*".equals(components[0].trim())) {
 				format = components[0].trim();
 			}
-			
-			if( false == "*".equals( components[1].trim() ) ) {
-				bitrate = Long.parseLong( components[1].trim() );
+
+			if (!"*".equals(components[1].trim())) {
+				bitrate = Long.parseLong(components[1].trim());
 			}
-			
-			return new ThresholdAudio(format, bitrate);
-			
-		} else {
-			logger.error("Unable to parse image conversion threshold: "+s);
+
+			// File size
+			if (!"*".equals(components[2].trim())) {
+				maxFileSize = Long.parseLong(components[2].trim());
+			}
+
+			return new ThresholdAudio(format, bitrate, maxFileSize);
+		}
+		else {
+			logger.error("Unable to parse image conversion threshold: {}", s);
 			return null;
 		}
 	}
-	
-	private String format = null;
-	private Long bitrate = null;
-	
-	public ThresholdAudio(String format, Long bitrate) {
-		this.format = format;
-		this.bitrate = bitrate;
-	}
-	
+
 	@Override
-	public boolean isConversionRequired(
-			String videoFormat
-			,Long videoRate
-			,String audioFormat
-			,Long audioRate
-			,Long imageWidth
-			,Long imageHeight
-			) {
+	public boolean isConversionRequired(String videoFormat, Long videoRate, String audioFormat, Long audioRate,
+										Long imageWidth, Long imageHeight, Long fileSizeMb) {
 
-		if( null != format ) {
-			if( false == format.equals( audioFormat ) ) {
-				return true;
-			}
+		if (format != null && !format.equalsIgnoreCase(audioFormat)) {
+			return true;
 		}
 
-		if( null != bitrate ) {
-			if( null == audioRate ) {
-				return true;
-			} else if( audioRate.longValue() > bitrate.longValue() ) {
-				return true;
-			}
+		if (bitrate != null && (audioRate == null || (audioRate > bitrate))) {
+			return true;
 		}
-		
-		return false;
+
+		return this.maxFileSizeMb != null && fileSizeMb > maxFileSizeMb;
 	}
 
 	@Override
@@ -93,7 +96,16 @@ public class ThresholdAudio implements MultimediaConversionThreshold {
 		} else {
 			pw.print( "*" );
 		}
-		
+
+		pw.print(",");
+
+		if (maxFileSizeMb != null) {
+			pw.println(maxFileSizeMb);
+		}
+		else {
+			pw.print("*");
+		}
+
 		pw.print(")");
 		
 		pw.flush();

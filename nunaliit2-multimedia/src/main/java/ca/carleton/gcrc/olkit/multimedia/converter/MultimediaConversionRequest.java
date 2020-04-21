@@ -1,8 +1,10 @@
 package ca.carleton.gcrc.olkit.multimedia.converter;
 
 import java.io.File;
+import java.math.BigInteger;
 
 import ca.carleton.gcrc.olkit.multimedia.xmp.XmpInfo;
+import org.apache.commons.io.FileUtils;
 
 
 public class MultimediaConversionRequest {
@@ -12,6 +14,7 @@ public class MultimediaConversionRequest {
 	private boolean thumbnailCreated = false;
 	private boolean skipConversion = false;
 	private File inFile;
+	private long inFileSizeMb;
 	private int inHeight = 0;
 	private int inWidth = 0;
 	private float inDurationInSec = (float) 0.0;
@@ -31,6 +34,14 @@ public class MultimediaConversionRequest {
 	}
 	public void setInFile(File inFile) {
 		this.inFile = inFile;
+		BigInteger sizeInBytes = FileUtils.sizeOfAsBigInteger(inFile);
+		BigInteger sizeInMbBigInt = sizeInBytes.divide(BigInteger.valueOf(FileUtils.ONE_MB));
+		// Safe to convert to long now that it's in MB.
+		inFileSizeMb = sizeInMbBigInt.longValue();
+	}
+
+	public long getInFileSizeMb() {
+		return inFileSizeMb;
 	}
 
 	public int getInHeight() {
