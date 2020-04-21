@@ -4,8 +4,8 @@ import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionThreshold
 
 public class ThresholdDummy implements MultimediaConversionThreshold {
 
-	private boolean conversionRequired;
-	private boolean resizeRequired;
+	private final boolean conversionRequired;
+	private final boolean resizeRequired;
 	
 	public ThresholdDummy(boolean conversionRequired, boolean resizeRequired) {
 		this.conversionRequired = conversionRequired;
@@ -13,9 +13,8 @@ public class ThresholdDummy implements MultimediaConversionThreshold {
 	}
 	
 	@Override
-	public boolean isConversionRequired(String videoFormat, Long videoRate,
-			String audioFormat, Long audioRate, Long imageWidth,
-			Long imageHeight) {
+	public boolean isConversionRequired(String videoFormat, Long videoRate, String audioFormat, Long audioRate,
+										Long imageWidth, Long imageHeight, Long fileSizeMb) {
 		return conversionRequired;
 	}
 
@@ -23,5 +22,4 @@ public class ThresholdDummy implements MultimediaConversionThreshold {
 	public boolean isResizeRequired(Long imageWidth, Long imageHeight) {
 		return resizeRequired;
 	}
-	
 }

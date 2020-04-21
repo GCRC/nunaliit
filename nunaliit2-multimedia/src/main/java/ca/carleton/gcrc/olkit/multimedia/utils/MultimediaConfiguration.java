@@ -16,235 +16,264 @@ import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFmpegProcessorDefault;
 import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessorDefault;
 
-public class MultimediaConfiguration {
+public class MultimediaConfiguration
+{
 
-	static public int IMAGE_MAX_WIDTH = 1000;
-	static public int IMAGE_MAX_HEIGHT = 1000;
-	static public int IMAGE_THUMB_HEIGHT = 350;
-	static public int IMAGE_THUMB_WIDTH = 350;
-	static public int VIDEO_THUMB_HEIGHT = 240;
-	static public int VIDEO_THUMB_WIDTH = 320;
-	
+	private MultimediaConfiguration() {
+	}
+
+	private static int imageMaxWidth = 1000;
+	private static int imageMaxHeight = 1000;
+	private static int imageThumbHeight = 350;
+	private static int imageThumbWidth = 350;
+	private static int videoThumbHeight = 240;
+	private static int videoThumbWidth = 320;
 
 	static final Logger logger = LoggerFactory.getLogger(MultimediaConfiguration.class);
-	
-	static public void configureFromProperties(Properties props) {
-		// FFMpeg
-		{
-			String command = props.getProperty("ffmpegVersionCommand", null);
-			if( null != command ) {
-				FFmpeg.ffmpegVersionCommand = command;
-			}
-		}
-		{
-			String command = props.getProperty("ffmpegInfoCommand", null);
-			if( null != command ) {
-				FFmpegProcessorDefault.ffmpegInfoCommand = command;
-			}
-		}
-		{
-			String command = props.getProperty("ffmpegConvertVideoCommand", null);
-			if( null != command ) {
-				FFmpegProcessorDefault.ffmpegConvertVideoCommand = command;
-			}
-		}
-		{
-			String command = props.getProperty("ffmpegConvertAudioCommand", null);
-			if( null != command ) {
-				FFmpegProcessorDefault.ffmpegConvertAudioCommand = command;
-			}
-		}
-		{
-			String command = props.getProperty("ffmpegCreateThumbnailCommand", null);
-			if( null != command ) {
-				FFmpegProcessorDefault.ffmpegCreateThumbnailCommand = command;
-			}
-		}
-		{
-			String secondsStr = props.getProperty("ffmpegCreateThumbnailFrameInSec", null);
-			if( null != secondsStr ) {
-				try {
-				double seconds = Double.parseDouble(secondsStr.trim());
-				if( seconds < 0 ){
-					throw new Exception("Negative value: "+seconds);
-				}
-				
-				FFmpegProcessorDefault.ffmpegCreateThumbnailFrameInSec = seconds;
 
-				} catch(Exception e) {
-					logger.error("Property 'ffmpegCreateThumbnailFrameInSec' should contain a positive number",e);
+	public static void configureFromProperties(Properties props) {
+		// FFMpeg
+		String ffmpegVersionCommand = props.getProperty("ffmpegVersionCommand", null);
+		if (ffmpegVersionCommand != null) {
+			FFmpeg.ffmpegVersionCommand = ffmpegVersionCommand;
+		}
+
+		String ffmpegInfoCommand = props.getProperty("ffmpegInfoCommand", null);
+		if (ffmpegInfoCommand != null) {
+			FFmpegProcessorDefault.ffmpegInfoCommand = ffmpegInfoCommand;
+		}
+
+		String ffmpegConvertVideoCommand = props.getProperty("ffmpegConvertVideoCommand", null);
+		if (null != ffmpegConvertVideoCommand) {
+			FFmpegProcessorDefault.ffmpegConvertVideoCommand = ffmpegConvertVideoCommand;
+		}
+
+		String ffmpegConvertAudioCommand = props.getProperty("ffmpegConvertAudioCommand", null);
+		if (ffmpegConvertAudioCommand != null) {
+			FFmpegProcessorDefault.ffmpegConvertAudioCommand = ffmpegConvertAudioCommand;
+		}
+
+		String ffmpegCreateThumbnailCommand = props.getProperty("ffmpegCreateThumbnailCommand", null);
+		if (ffmpegCreateThumbnailCommand != null) {
+			FFmpegProcessorDefault.ffmpegCreateThumbnailCommand = ffmpegCreateThumbnailCommand;
+		}
+
+		String secondsStr = props.getProperty("ffmpegCreateThumbnailFrameInSec", null);
+		if (null != secondsStr) {
+			try {
+				double seconds = Double.parseDouble(secondsStr.trim());
+				if (seconds < 0) {
+					throw new Exception("Negative value: " + seconds);
 				}
+
+				FFmpegProcessorDefault.ffmpegCreateThumbnailFrameInSec = seconds;
+			}
+			catch (Exception e) {
+				logger.error("Property 'ffmpegCreateThumbnailFrameInSec' should contain a positive number", e);
 			}
 		}
 
 		// ImageMagick
-		{
-			String command = props.getProperty("imageInfoCommand", null);
-			if( null != command ) {
-				ImageMagickProcessorDefault.imageInfoCommand = command;
-			}
+		String imageInfoCommand = props.getProperty("imageInfoCommand", null);
+		if (imageInfoCommand != null) {
+			ImageMagickProcessorDefault.imageInfoCommand = imageInfoCommand;
 		}
-		{
-			String command = props.getProperty("imageConvertCommand", null);
-			if( null != command ) {
-				ImageMagickProcessorDefault.imageConvertCommand = command;
-			}
+
+		String imageConvertCommand = props.getProperty("imageConvertCommand", null);
+		if (imageConvertCommand != null) {
+			ImageMagickProcessorDefault.imageConvertCommand = imageConvertCommand;
 		}
-		{
-			String command = props.getProperty("imageResizeCommand", null);
-			if( null != command ) {
-				ImageMagickProcessorDefault.imageResizeCommand = command;
-			}
+
+		String imageResizeCommand = props.getProperty("imageResizeCommand", null);
+		if (imageResizeCommand != null) {
+			ImageMagickProcessorDefault.imageResizeCommand = imageResizeCommand;
 		}
-		{
-			String command = props.getProperty("imageReorientCommand", null);
-			if( null != command ) {
-				ImageMagickProcessorDefault.imageReorientCommand = command;
-			}
+
+		String imageReorientCommand = props.getProperty("imageReorientCommand", null);
+		if (imageReorientCommand != null) {
+			ImageMagickProcessorDefault.imageReorientCommand = imageReorientCommand;
 		}
 
 		// Known MIME types
-		{
-			String typeString = props.getProperty("imageMimeTypes", null);
-			if( null != typeString ) {
-				String[] types = typeString.split(":");
-				for(String type : types) {
-					MimeUtils.addKnownImageMimeType(type.trim());
-				}
+		String imageMimeTypes = props.getProperty("imageMimeTypes", null);
+		if (imageMimeTypes != null) {
+			String[] types = imageMimeTypes.split(":");
+			for (String type : types) {
+				MimeUtils.addKnownImageMimeType(type.trim());
 			}
 		}
-		{
-			String typeString = props.getProperty("audioMimeTypes", null);
-			if( null != typeString ) {
-				String[] types = typeString.split(";");
-				for(String type : types) {
-					MimeUtils.addKnownAudioMimeType(type.trim());
-				}
+
+		String audioMimeTypes = props.getProperty("audioMimeTypes", null);
+		if (audioMimeTypes != null) {
+			String[] types = audioMimeTypes.split(";");
+			for (String type : types) {
+				MimeUtils.addKnownAudioMimeType(type.trim());
 			}
 		}
-		{
-			String typeString = props.getProperty("videoMimeTypes", null);
-			if( null != typeString ) {
-				String[] types = typeString.split(";");
-				for(String type : types) {
-					MimeUtils.addKnownVideoMimeType(type.trim());
-				}
+
+		String videoMimeTypes = props.getProperty("videoMimeTypes", null);
+		if (videoMimeTypes != null) {
+			String[] types = videoMimeTypes.split(";");
+			for (String type : types) {
+				MimeUtils.addKnownVideoMimeType(type.trim());
 			}
 		}
-		
+
 		// Image and thumbnail sizes
-		{
-			String sizeString = props.getProperty("imageMaxHeight", null);
-			if( null != sizeString ) {
-				int size = Integer.parseInt(sizeString);
-				IMAGE_MAX_HEIGHT = size;
-			}
+		String imageMaxHeight = props.getProperty("imageMaxHeight", null);
+		if (imageMaxHeight != null) {
+			MultimediaConfiguration.imageMaxHeight = Integer.parseInt(imageMaxHeight);
 		}
-		{
-			String sizeString = props.getProperty("imageMaxWidth", null);
-			if( null != sizeString ) {
-				int size = Integer.parseInt(sizeString);
-				IMAGE_MAX_WIDTH = size;
-			}
+
+		String imageMaxWidth = props.getProperty("imageMaxWidth", null);
+		if (imageMaxWidth != null) {
+			MultimediaConfiguration.imageMaxWidth = Integer.parseInt(imageMaxWidth);
 		}
-		{
-			String sizeString = props.getProperty("thumbnailImageHeight", null);
-			if( null != sizeString ) {
-				int size = Integer.parseInt(sizeString);
-				IMAGE_THUMB_HEIGHT = size;
-			}
+
+		String thumbnailImageHeight = props.getProperty("thumbnailImageHeight", null);
+		if (thumbnailImageHeight != null) {
+			imageThumbHeight = Integer.parseInt(thumbnailImageHeight);
 		}
-		{
-			String sizeString = props.getProperty("thumbnailImageWidth", null);
-			if( null != sizeString ) {
-				int size = Integer.parseInt(sizeString);
-				IMAGE_THUMB_WIDTH = size;
-			}
+
+		String thumbnailImageWidth = props.getProperty("thumbnailImageWidth", null);
+		if (thumbnailImageWidth != null) {
+			imageThumbWidth = Integer.parseInt(thumbnailImageWidth);
 		}
-		{
-			String sizeString = props.getProperty("thumbnailVideoHeight", null);
-			if( null != sizeString ) {
-				int size = Integer.parseInt(sizeString);
-				VIDEO_THUMB_HEIGHT = size;
-			}
+
+		String thumbnailVideoHeight = props.getProperty("thumbnailVideoHeight", null);
+		if (thumbnailVideoHeight != null) {
+			videoThumbHeight = Integer.parseInt(thumbnailVideoHeight);
 		}
-		{
-			String sizeString = props.getProperty("thumbnailVideoWidth", null);
-			if( null != sizeString ) {
-				int size = Integer.parseInt(sizeString);
-				VIDEO_THUMB_WIDTH = size;
-			}
+
+		String thumbnailVideoWidth = props.getProperty("thumbnailVideoWidth", null);
+		if (thumbnailVideoWidth != null) {
+			videoThumbWidth = Integer.parseInt(thumbnailVideoWidth);
 		}
-		
+
 		// Conversion thresholds
-		{
-			String logicalThresholdString = props.getProperty("multimedia.conversion.image.threshold", null);
-			if( null != logicalThresholdString ) {
-				ThresholdLogicalAnd and = new ThresholdLogicalAnd();
-				
-				String[] thresholdStrings = logicalThresholdString.split("\\|");
-				for(String thresholdString : thresholdStrings) {
-					ThresholdImage threshold = ThresholdImage.parseString(thresholdString);
-					and.addThreshold(threshold);
-				}
-				
-				MultimediaConverterImpl.imageConversionThreshold = and;
-				
-				logger.info("Image Conversion Threshold: "+MultimediaConverterImpl.imageConversionThreshold);
-			}
-		}
-		{
-			String logicalThresholdString = props.getProperty("multimedia.conversion.audio.threshold", null);
-			if( null != logicalThresholdString ) {
-				ThresholdLogicalAnd and = new ThresholdLogicalAnd();
-				
-				String[] thresholdStrings = logicalThresholdString.split("\\|");
-				for(String thresholdString : thresholdStrings) {
-					ThresholdAudio threshold = ThresholdAudio.parseString(thresholdString);
-					and.addThreshold(threshold);
-				}
-				
-				MultimediaConverterImpl.audioConversionThreshold = and;
-				
-				logger.info("Audio Conversion Threshold: "+MultimediaConverterImpl.audioConversionThreshold);
-			}
-		}
-		{
-			String logicalThresholdString = props.getProperty("multimedia.conversion.video.threshold", null);
-			if( null != logicalThresholdString ) {
-				ThresholdLogicalAnd and = new ThresholdLogicalAnd();
-				
-				String[] thresholdStrings = logicalThresholdString.split("\\|");
-				for(String thresholdString : thresholdStrings) {
-					ThresholdVideo threshold = ThresholdVideo.parseString(thresholdString);
-					and.addThreshold(threshold);
-				}
-				
-				MultimediaConverterImpl.videoConversionThreshold = and;
-				
-				logger.info("Video Conversion Threshold: "+MultimediaConverterImpl.videoConversionThreshold);
-			}
-		}
-		
+		String imageThresholdString = props.getProperty("multimedia.conversion.image.threshold", null);
+		MultimediaConverterImpl.imageConversionThreshold = parseImageThreshold(imageThresholdString);
+		logger.info("Image Conversion Threshold: {}", MultimediaConverterImpl.imageConversionThreshold);
+
+		String audioThresholdString = props.getProperty("multimedia.conversion.audio.threshold", null);
+		MultimediaConverterImpl.audioConversionThreshold = parseAudioThreshold(audioThresholdString);
+		logger.info("Audio Conversion Threshold: {}", MultimediaConverterImpl.audioConversionThreshold);
+
+		String videoThresholdString = props.getProperty("multimedia.conversion.video.threshold", null);
+		MultimediaConverterImpl.videoConversionThreshold = parseVideoThreshold(videoThresholdString);
+		logger.info("Video Conversion Threshold: {}", MultimediaConverterImpl.videoConversionThreshold);
+
 		// File known strings
-		{
-			Enumeration<?> it = props.propertyNames();
-			while( it.hasMoreElements() ) {
-				Object propertyNameObj = it.nextElement();
-				if( propertyNameObj instanceof String ) {
-					String propertyName = (String)propertyNameObj;
-					if( propertyName.startsWith("file.knownString") ) {
-						String value = props.getProperty(propertyName);
-						// The value should be in the form of <mime-type> : <known string>
-						String[] parts = value.split(":");
-						if( 2 == parts.length ) {
-							SystemFile.addKnownString(parts[0],parts[1]);
-						} else {
-							logger.error("Can not interpret property: "+propertyName+"="+value);
-						}
+		Enumeration<?> it = props.propertyNames();
+		while (it.hasMoreElements()) {
+			Object propertyNameObj = it.nextElement();
+			if (propertyNameObj instanceof String) {
+				String propertyName = (String) propertyNameObj;
+				if (propertyName.startsWith("file.knownString")) {
+					String value = props.getProperty(propertyName);
+					// The value should be in the form of <mime-type> : <known string>
+					String[] parts = value.split(":");
+					if (2 == parts.length) {
+						SystemFile.addKnownString(parts[0], parts[1]);
+					}
+					else {
+						logger.error("Can not interpret property: {}={}", propertyName, value);
 					}
 				}
 			}
 		}
+	}
+
+	/**
+	 * Parses the image threshold property (multimedia.conversion.image.threshold). Example formats:
+	 * - JPEG,500
+	 * - jpeg,500|png,500|gif,500
+	 *
+	 * @param propertyValue The image threshold property to parse.
+	 * @return Threshold configuration for images.
+	 */
+	public static ThresholdLogicalAnd parseImageThreshold(String propertyValue) {
+		ThresholdLogicalAnd thresholdLogicalAnd = null;
+		if (propertyValue != null && propertyValue.length() > 0) {
+			thresholdLogicalAnd = new ThresholdLogicalAnd();
+
+			String[] thresholdStrings = propertyValue.split("\\|");
+			for (String thresholdString : thresholdStrings) {
+				ThresholdImage threshold = ThresholdImage.parseString(thresholdString);
+				thresholdLogicalAnd.addThreshold(threshold);
+			}
+		}
+
+		return thresholdLogicalAnd;
+	}
+
+	/**
+	 * Parses the audio threshold property (multimedia.conversion.audio.threshold). Example formats:
+	 * - mpeg,250000
+	 * - mpeg,250000|ogg,128000
+	 *
+	 * @param propertyValue The audio threshold property to parse.
+	 * @return Threshold configuration for audio.
+	 */
+	public static ThresholdLogicalAnd parseAudioThreshold(String propertyValue) {
+		ThresholdLogicalAnd thresholdLogicalAnd = null;
+		if (propertyValue != null && propertyValue.length() > 0) {
+			thresholdLogicalAnd = new ThresholdLogicalAnd();
+
+			String[] thresholdStrings = propertyValue.split("\\|");
+			for (String thresholdString : thresholdStrings) {
+				ThresholdAudio threshold = ThresholdAudio.parseString(thresholdString);
+				thresholdLogicalAnd.addThreshold(threshold);
+			}
+		}
+
+		return thresholdLogicalAnd;
+	}
+
+	/**
+	 * Parses the video threshold property (multimedia.conversion.video.threshold). Example formats:
+	 * - h264,250000,mpeg4aac,250000,*
+	 * - h264,250000,mpeg4aac,250000,*|mp4,250000,aac,250000,*
+	 *
+	 * @param propertyValue The video threshold property to parse.
+	 * @return Threshold configuration for video.
+	 */
+	public static ThresholdLogicalAnd parseVideoThreshold(String propertyValue) {
+		ThresholdLogicalAnd thresholdLogicalAnd = null;
+		if (propertyValue != null && propertyValue.length() > 0) {
+			thresholdLogicalAnd = new ThresholdLogicalAnd();
+
+			String[] thresholdStrings = propertyValue.split("\\|");
+			for (String thresholdString : thresholdStrings) {
+				ThresholdVideo threshold = ThresholdVideo.parseString(thresholdString);
+				thresholdLogicalAnd.addThreshold(threshold);
+			}
+		}
+
+		return thresholdLogicalAnd;
+	}
+
+	public static int getImageMaxWidth() {
+		return imageMaxWidth;
+	}
+
+	public static int getImageMaxHeight() {
+		return imageMaxHeight;
+	}
+
+	public static int getImageThumbHeight() {
+		return imageThumbHeight;
+	}
+
+	public static int getImageThumbWidth() {
+		return imageThumbWidth;
+	}
+
+	public static int getVideoThumbHeight() {
+		return videoThumbHeight;
+	}
+
+	public static int getVideoThumbWidth() {
+		return videoThumbWidth;
 	}
 }

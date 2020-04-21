@@ -10,136 +10,115 @@ import org.slf4j.LoggerFactory;
 
 public class ThresholdVideo implements MultimediaConversionThreshold {
 
-	static final protected Logger logger = LoggerFactory.getLogger(ThresholdVideo.class);
+	protected static final Logger logger = LoggerFactory.getLogger(ThresholdVideo.class);
 
-	static public ThresholdVideo parseString(String s) {
-		String videoFormat = null;
-		Long videoBitrate = null;
-		String audioFormat = null;
-		Long audioBitrate = null;
-		Long size = null;
-		
-		String[] components = s.split(",");
-		if( components.length != 5 ) {
-			logger.error("Unable to parse image conversion threshold: "+s);
-			return null;
+	private final String videoFormat;
+	private final Long videoBitrate;
+	private final String audioFormat;
+	private final Long audioBitrate;
+	private final Long width;
+	private final Long height;
+	private final Long maxFileSizeMb;
 
-		} else {
-			// video
-			if( false == "*".equals( components[0].trim() ) ) {
-				videoFormat = components[0].trim();
-			}
-			
-			if( false == "*".equals( components[1].trim() ) ) {
-				videoBitrate = Long.parseLong( components[1].trim() );
-			}
-			
-			// audio
-			if( false == "*".equals( components[2].trim() ) ) {
-				audioFormat = components[2].trim();
-			}
-			
-			if( false == "*".equals( components[3].trim() ) ) {
-				audioBitrate = Long.parseLong( components[3].trim() );
-			}
-					
-			// image
-			if( false == "*".equals( components[4].trim() ) ) {
-				size = Long.parseLong( components[4].trim() );
-			}
-		}
-
-		return new ThresholdVideo(videoFormat, videoBitrate, audioFormat, audioBitrate, size, size);
-	}
-	
-	private String videoFormat = null;
-	private Long videoBitrate = null;
-	private String audioFormat = null;
-	private Long audioBitrate = null;
-	private Long width = null;
-	private Long height = null;
-	
-	public ThresholdVideo(
-			String videoFormat
-			,Long videoBitrate
-			,String audioFormat
-			,Long audioBitrate
-			,Long width
-			,Long height
-			) {
+	public ThresholdVideo(String videoFormat, Long videoBitrate, String audioFormat, Long audioBitrate, Long width,
+						  Long height, Long maxFileSizeMb) {
 		this.videoFormat = videoFormat;
 		this.videoBitrate = videoBitrate;
 		this.audioFormat = audioFormat;
 		this.audioBitrate = audioBitrate;
 		this.width = width;
 		this.height = height;
+		this.maxFileSizeMb = maxFileSizeMb;
 	}
-	
+
+	/**
+	 * Parses a settings string in the format:
+	 * <video-codec>,<max-video-bitrate>,<audio-codec>,<max-audio-bitrate>,<max-dimension>,<max-file-size>
+	 *
+	 * @param s The settings string to parse.
+	 * @return The object representing video threshold settings.
+	 */
+	public static ThresholdVideo parseString(String s) {
+		String videoFormat = null;
+		Long videoBitrate = null;
+		String audioFormat = null;
+		Long audioBitrate = null;
+		Long size = null;
+		Long maxFileSize = null;
+		
+		String[] components = s.split(",");
+		if (components.length != 6) {
+			logger.error("Unable to parse image conversion threshold: {}", s);
+			return null;
+		}
+		else {
+			// video
+			if (!"*".equals(components[0].trim())) {
+				videoFormat = components[0].trim();
+			}
+
+			if (!"*".equals(components[1].trim())) {
+				videoBitrate = Long.parseLong(components[1].trim());
+			}
+
+			// audio
+			if (!"*".equals(components[2].trim())) {
+				audioFormat = components[2].trim();
+			}
+
+			if (!"*".equals(components[3].trim())) {
+				audioBitrate = Long.parseLong(components[3].trim());
+			}
+
+			// image
+			if (!"*".equals(components[4].trim())) {
+				size = Long.parseLong(components[4].trim());
+			}
+
+			// File size
+			if (!"*".equals(components[5].trim())) {
+				maxFileSize = Long.parseLong(components[5].trim());
+			}
+		}
+
+		return new ThresholdVideo(videoFormat, videoBitrate, audioFormat, audioBitrate, size, size, maxFileSize);
+	}
+
 	@Override
-	public boolean isConversionRequired(
-			String videoFormat
-			,Long videoRate
-			,String audioFormat
-			,Long audioRate
-			,Long imageWidth
-			,Long imageHeight
-			) {
+	public boolean isConversionRequired(String videoFormat, Long videoRate, String audioFormat, Long audioRate,
+										Long imageWidth, Long imageHeight, Long fileSizeMb) {
 
-		if( null != this.videoFormat ) {
-			if( false == this.videoFormat.equals( videoFormat ) ) {
-				return true;
-			}
-		}
-
-		if( null != this.videoBitrate ) {
-			if( null == videoRate ) {
-				return true;
-			} else if( videoRate.longValue() > this.videoBitrate.longValue() ) {
-				return true;
-			}
-		}
-
-		if( null != this.audioFormat ) {
-			if( false == this.audioFormat.equals( audioFormat ) ) {
-				return true;
-			}
-		}
-
-		if( null != this.audioBitrate ) {
-			if( null == audioRate ) {
-				return true;
-			} else if( audioRate.longValue() > this.audioBitrate.longValue() ) {
-				return true;
-			}
-		}
-
-		if( isResizeRequired(imageWidth,imageHeight) ) {
+		if (this.videoFormat != null && !this.videoFormat.equalsIgnoreCase(videoFormat)) {
 			return true;
 		}
-		
-		return false;
+
+		if (this.videoBitrate != null && (videoRate == null || (videoRate > this.videoBitrate))) {
+			return true;
+		}
+
+		if (this.audioFormat != null && !this.audioFormat.equalsIgnoreCase(audioFormat)) {
+			return true;
+		}
+
+		if (this.audioBitrate != null && (audioRate == null || (audioRate > this.audioBitrate))) {
+			return true;
+		}
+
+		if (this.maxFileSizeMb != null && fileSizeMb > maxFileSizeMb) {
+			return true;
+		}
+
+		return isResizeRequired(imageWidth, imageHeight);
 	}
 
 	@Override
 	public boolean isResizeRequired(Long imageWidth, Long imageHeight) {
 
-		if( null != this.width ) {
-			if( null == imageWidth ) {
-				return true;
-			} else if( imageWidth.longValue() > this.width.longValue() ) {
-				return true;
-			}
+		if (this.width != null && (null == imageWidth || (imageWidth > this.width))) {
+			return true;
 		}
-		
-		if( null != this.height ) {
-			if( null == imageHeight ) {
-				return true;
-			} else if( imageHeight.longValue() > this.height.longValue() ) {
-				return true;
-			}
-		}
-		
-		return false;
+
+		return this.height != null && (imageHeight == null || (imageHeight > this.height));
 	}
 
 	public String toString() {
@@ -192,6 +171,15 @@ public class ThresholdVideo implements MultimediaConversionThreshold {
 			pw.print( height );
 		} else {
 			pw.print( "*" );
+		}
+
+		pw.print(",");
+
+		if (maxFileSizeMb != null) {
+			pw.println(maxFileSizeMb);
+		}
+		else {
+			pw.print("*");
 		}
 		
 		pw.print(")");
