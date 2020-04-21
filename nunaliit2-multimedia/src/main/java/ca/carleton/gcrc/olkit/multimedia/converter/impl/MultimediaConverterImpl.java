@@ -1,10 +1,5 @@
 package ca.carleton.gcrc.olkit.multimedia.converter.impl;
 
-import java.io.File;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionProgress;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionRequest;
 import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionThreshold;
@@ -22,14 +17,18 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
 import ca.carleton.gcrc.olkit.multimedia.xmp.XmpExtractor;
 import ca.carleton.gcrc.olkit.multimedia.xmp.XmpInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
 
 public class MultimediaConverterImpl implements MultimediaConverter {
 
-	static public MultimediaConversionThreshold imageConversionThreshold = new DefaultThresholdImage();
-	static public MultimediaConversionThreshold audioConversionThreshold = new DefaultThresholdAudio();
-	static public MultimediaConversionThreshold videoConversionThreshold = new DefaultThresholdVideo();
+	public static MultimediaConversionThreshold imageConversionThreshold = new DefaultThresholdImage();
+	public static MultimediaConversionThreshold audioConversionThreshold = new DefaultThresholdAudio();
+	public static MultimediaConversionThreshold videoConversionThreshold = new DefaultThresholdVideo();
 
-	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
+	private static final Logger logger = LoggerFactory.getLogger(MultimediaConverterImpl.class);
 
 	@Override
 	public void convertVideo(MultimediaConversionRequest request) throws Exception {
@@ -43,7 +42,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 		if( null == inFile ) {
 			throw new Exception("Must provide a file for video conversion");
 		}
-		
+
 		MultimediaConversionProgress progress = request.getProgress();
 		if( null == progress ) {
 			progress = MultimediaConversionProgressNull.getSingleton();
@@ -63,9 +62,9 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				,videoInfo.getAudioCodec()
 				,videoInfo.getBitRate()
 				,videoInfo.getWidth()
-				,videoInfo.getHeight()
-				);
-		
+				,videoInfo.getHeight(),
+				request.getInFileSizeMb());
+
 		// Report length and dimensions
 		if( null == videoInfo.getDurationInSec() ) {
 			request.setInDurationInSec( (float)0.0 );
@@ -125,8 +124,8 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			ffmpeg.createThumbnail(
 					outVideoInfo, 
 					thumbnailFile, 
-					MultimediaConfiguration.VIDEO_THUMB_WIDTH, 
-					MultimediaConfiguration.VIDEO_THUMB_HEIGHT
+					MultimediaConfiguration.getImageThumbWidth(),
+					MultimediaConfiguration.getVideoThumbHeight()
 				);
 			
 			request.setThumbnailFile(thumbnailFile);
@@ -174,7 +173,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				,audioInfo.getBitRate()
 				,null
 				,null
-				);
+				, request.getInFileSizeMb());
 
 		// Report length and dimensions
 		request.setInDurationInSec( audioInfo.getDurationInSec() );
@@ -265,12 +264,12 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 						,null
 						,null
 						,null
-						,new Long(imageInfo.width)
-						,new Long(imageInfo.height)
-						);
+						, (long) imageInfo.width
+						, (long) imageInfo.height
+						, request.getInFileSizeMb());
 				resizeRequired = imageConversionThreshold.isResizeRequired(
-						new Long(imageInfo.width)
-						,new Long(imageInfo.height)
+						(long) imageInfo.width
+						, (long) imageInfo.height
 						);
 				
 				if( imageInfo.orientation == ImageInfo.Orientation.REQUIRES_CONVERSION ) {
@@ -312,8 +311,8 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				im.resizeImage(
 						imageInfo, 
 						outFile, 
-						MultimediaConfiguration.IMAGE_MAX_WIDTH, 
-						MultimediaConfiguration.IMAGE_MAX_HEIGHT
+						MultimediaConfiguration.getImageMaxWidth(),
+						MultimediaConfiguration.getImageMaxHeight()
 					);
 			} else if(conversionRequired) {
 				im.convertImage(imageInfo, outFile);
@@ -349,8 +348,8 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			im.resizeImage(
 					imageInfo,
 					thumbnailFile,
-					MultimediaConfiguration.IMAGE_THUMB_WIDTH,
-					MultimediaConfiguration.IMAGE_THUMB_HEIGHT
+					MultimediaConfiguration.getImageThumbWidth(),
+					MultimediaConfiguration.getImageThumbHeight()
 				);
 			
 			request.setThumbnailFile(thumbnailFile);
@@ -420,8 +419,8 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			im.resizeImage(
 					imageInfo, 
 					thumbnailFile, 
-					MultimediaConfiguration.IMAGE_THUMB_WIDTH, 
-					MultimediaConfiguration.IMAGE_THUMB_HEIGHT
+					MultimediaConfiguration.getImageThumbWidth(),
+					MultimediaConfiguration.getImageThumbHeight()
 				);
 			
 			request.setThumbnailFile(thumbnailFile);
@@ -432,13 +431,15 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			request.setThumbnailWidth( thumbImageInfo.width );
 		}
 	}
-	
-	private String getExtensionFromImageFormat(String imageFormat){
-		if( "JPEG".equals(imageFormat) ){
+
+	private String getExtensionFromImageFormat(String imageFormat) {
+		if ("JPEG".equalsIgnoreCase(imageFormat) || "JPG".equalsIgnoreCase(imageFormat)) {
 			return "jpg";
-		} else if( "GIF".equals(imageFormat) ){
+		}
+		else if ("GIF".equalsIgnoreCase(imageFormat)) {
 			return "gif";
-		} else if( "PNG".equals(imageFormat) ){
+		}
+		else if ("PNG".equalsIgnoreCase(imageFormat)) {
 			return "png";
 		}
 		return null;
