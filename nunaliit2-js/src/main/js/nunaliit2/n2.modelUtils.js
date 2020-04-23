@@ -504,7 +504,10 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	modelType: null,
 	dispatchService: null,
 	sourceModelId: null,
-	matchingFields: null,
+	leftSchema: null,
+	rightSchema: null,
+	leftJoinField: null,
+	rightJoinField: null,
 	addedMap: null,
 	updatedMap: null,
 	removedMap: null,
@@ -519,7 +522,10 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			sourceModelId: null,
 			informationModelIds: null,
 			dispatchService: null,
-			matchingFields: null
+			leftSchema: null,
+			rightSchema: null,
+			leftJoinField: null,
+			rightJoinField: null,
 		},opts_);
 
 		var _this = this;
@@ -529,14 +535,17 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		this.modelIsLoading = false;
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
-		this.matchingFields = opts.matchingFields;
+		this.leftSchema = opts.leftSchema;
+		this.rightSchema = opts.rightSchema;
+		this.leftJoinField = opts.leftJoinField;
+		this.rightJoinField = opts.rightJoinField;
 
 		this.addedMap = {};
 		this.updatedMap = {};
 		this.removedMap = {};
 		this.docInfosByDocId = {};
-		this.docInfosByDocIdClone = {};
-		this.schemaDocsByDocId = {};
+		this.leftSchemaDocsByDocId = {};
+		this.rightSchemaDocsByDocId = {};
 
 		// Register to events
 		if (this.dispatchService) {
@@ -606,6 +615,19 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		return modelInfo;
 	},
 
+	_cloneDocument: function(doc) {
+			var key, value;
+			var clone = {};
+
+			for (key in doc) {
+				if (Object.prototype.hasOwnProperty.call(doc,key)) {
+					value = doc[key];
+					clone[key] = value;
+				}
+			}
+			return clone;
+		},
+
 	_sourceModelUpdated: function(sourceState) {
 		var i, e, doc, docId, docInfo, previousDoc, schema;
 		var added, updated, removed;
@@ -623,16 +645,19 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			for (i = 0, e = sourceState.added.length; i < e; i += 1) {
 				doc = sourceState.added[i];
 				docId = doc._id;
-				if (doc.nunaliit_schema) {
-					schema = doc.nunaliit_schema;
-					// Add schema collection object if it doesn't exist
-					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId, schema)) {
-						this.schemaDocsByDocId[schema] = {};
-					}
+				docInfo = {
+					id: docId,
+					doc: doc,
+					original: doc
+				};
 
-					var schemaDocsCollection = this.schemaDocsByDocId[schema];
-					schemaDocsCollection[docId] = doc;
-		//			this.addedMap[docId] = doc;
+				if (doc.nunaliit_schema === this.leftSchema) {
+					this.leftSchemaDocsByDocId[docId] = docInfo;
+					this.addedMap[docId] = doc;
+
+				} else if (doc.nunaliit_schema === this.rightSchema) {
+					this.rightSchemaDocsByDocId[docId] = docInfo;
+					this.addedMap[docId] = doc;
 				}
 			}
 		}
@@ -642,17 +667,20 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			for (i = 0, e = sourceState.updated.length; i < e; i += 1) {
 				doc = sourceState.updated[i];
 				docId = doc._id;
+				docInfo = {
+					id: docId,
+					doc: doc,
+					original: doc
+				};
 
-				if (doc.nunaliit_schema) {
-					schema = doc.nunaliit_schema;
-					// Add schema collection object if it doesn't exist
-					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId, schema)) {
-						this.schemaDocsByDocId[schema] = {};
-					}
-
-					var schemaDocsCollection = this.schemaDocsByDocId[schema];
-					schemaDocsCollection[docId] = doc;
-		//			this.updatedMap[docId] = doc;
+				if (doc.nunaliit_schema === this.leftSchema) {
+					delete this.leftSchemaDocsByDocId[docId];
+					this.leftSchemaDocsByDocId[docId] = docInfo;
+					this.updatedMap[docId] = doc;
+				} else if (doc.nunaliit_schema === this.rightSchema) {
+					delete this.rightSchemaDocsByDocId[docId];
+					this.rightSchemaDocsByDocId[docId] = docInfo;
+					this.updatedMap[docId] = doc;
 				}
 			}
 		}
@@ -663,13 +691,13 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 				doc = sourceState.removed[i];
 				docId = doc._id;
 
-				if (doc.nunaliit_schema) {
-					schema = doc.nunaliit_schema;
-					var schemaDocsCollection = this.schemaDocsByDocId[schema];
-					if (schemaDocsCollection[docId]) {
-						delete schemaDocsCollection[docId];
-		//				this.removedMap[docId] = doc;
-					}
+				if (doc.nunaliit_schema === this.leftSchema) {
+					delete this.leftSchemaDocsByDocId[docId];
+					this.removedMap[docId] = doc;
+
+				} else if (doc.nunaliit_schema === this.rightSchema) {
+					delete this.rightSchemaDocsByDocId[docId];
+					this.removedMap[docId] = doc;
 				}
 			}
 		}
@@ -684,17 +712,39 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	},
 
 	_joinSchemaDocs: function() {
-		var docId, docInfo, doc, transform, match, i;
+		var docId, docInfo, doc, transform;
 		var added, updated, removed;
-		var joinedDocs = {};
+		var leftSchemaDocIds = Object.keys(this.leftSchemaDocsByDocId);
+		
+		// Loop over all documents, recomputing doc transforms
+		for (var i = 0; i < leftSchemaDocIds.length; i += 1) {
+			docId = leftSchemaDocIds[i];
+			docInfo = this.leftSchemaDocsByDocId[docId];
+			doc = docInfo.original;
 
-		for (i in this.matchingFields) {
-			var match = this.matchingFields[i];
-			var originSchema = match.originSchema;
-			var originField = match.originField;
-			var refSchema = match.referenceSchema;
-			var refField = match.referenceField;
+			if (Object.keys(this.rightSchemaDocsByDocId).length) {
+				transform = this._computeTransform(doc);
 
+				if (doc === transform) {
+					// No transform
+				} else {
+					// A transform was computed
+					docInfo.doc = undefined;
+					docInfo.doc = transform;
+
+					// Find where it belongs
+					if (this.addedMap[docId]) {
+						this.addedMap[docId] = transform;
+					} else if (this.updatedMap[docId]) {
+						this.updatedMap[docId] = transform;
+					} else if (this.removedMap[docId]) {
+						// just leave previous
+					} else {
+						// Not already in list. Add to update list
+						this.updatedMap[docId] = transform;
+					}
+				}
+			}
 		}
 
 		// Report changes
@@ -702,6 +752,61 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		updated = $n2.utils.values(this.updatedMap);
 		removed = $n2.utils.values(this.removedMap);
 		this._reportStateUpdate(added, updated, removed);
+	},
+
+	// Recursive function which gets a field
+	_getFieldValue: function(obj, props) {
+		var i, value, fieldsCopy, currentChild;
+		var firstProp = props.shift();
+
+		if (firstProp === 'doc'
+			&& props.length) {
+			value = this._getFieldValue(obj, props);	
+
+		} else {
+			if (props.length) {
+				if (Object.hasOwnProperty.call(obj, firstProp)) {
+					// Check next property in props list
+					value = this._getFieldValue(obj[firstProp], props);
+				} else {
+					// Object doesn't include property
+					value = false;
+				}
+
+			} else {
+				// Check if final property in object
+				if (Object.hasOwnProperty.call(obj, firstProp)) {
+					value = obj[firstProp];
+				} else {
+					value = false;
+				}
+			}
+		}
+
+		return value;
+	},
+
+	_computeTransform: function(doc) {
+		var transformed, i, leftJoinVal;
+		var docId, rightDoc, rightDocs, rightJoinVal;
+		var transformed = this._cloneDocument(doc);
+
+		leftJoinVal = this._getFieldValue(doc, this.leftJoinField.split('.'));
+		rightDocs = Object.keys(this.rightSchemaDocsByDocId);
+
+		for (i = 0; i < rightDocs.length; i += 1) {
+			docId = rightDocs[i];
+			rightDoc = this.rightSchemaDocsByDocId[docId];
+			rightJoinVal = this._getFieldValue(rightDoc.original, this.rightJoinField.split('.'));
+			
+			if (leftJoinVal
+				&& rightJoinVal
+				&& leftJoinVal === rightJoinVal) {
+				
+				transformed['_' + this.rightSchema] = rightDoc.original;
+			}
+		}
+		return transformed;
 	},
 
 	_reportStateUpdate: function(added, updated, removed) {
@@ -858,16 +963,14 @@ function handleModelCreate(m, addr, dispatcher){
 		m.created = true;
 
 	} else if (m.modelType === 'schemajoin') {
+		var optionKeys, i, key;
 		var options = {};
 		
 		if (m && m.modelOptions) {
-			if (m.modelOptions.sourceModelId 
-				&& m.modelOptions.sourceModelId.length) {
-				options.sourceModelId = m.modelOptions.sourceModelId;
-			}
-			if (m.modelOptions.matchingFields
-				&& m.modelOptions.matchingFields.length) {
-				options.matchingFields = m.modelOptions.matchingFields;
+			optionKeys = Object.keys(m.modelOptions);
+			for (i = 0; i < optionKeys.length; i += 1) {
+				key = optionKeys[i];
+				options[key] = m.modelOptions[key];
 			}
 		}
 
