@@ -497,8 +497,18 @@ var ModelIntersect = $n2.Class({
 	}
 });
 
-//--------------------------------------------------------------------------
-
+// --------------------------------------------------------------------------
+/* 
+ * @class
+ * A model transform which joins multiple documents based on schema. 
+ *
+ * @param {string} [name] desc
+ * @param {string} sourceModelId - Id of the source model
+ * @param {string} leftSchema - Name of the left schema. e.g. 'demo_account'.
+ * @param {string} leftJoinField - The field in the schema used for joining. e.g. 'doc.demo_account.person_ref.doc`
+ * @param {string} rightSchema - Name of the right schema. e.g. 'demo_person'.
+ * @param {string} rightJoinField - The field in the schema used for joining. e.g. 'doc._id'.
+ */
 var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 	modelType: null,
