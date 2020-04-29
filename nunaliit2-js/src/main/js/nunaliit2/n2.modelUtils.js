@@ -503,22 +503,15 @@ var ModelIntersect = $n2.Class({
  * on supplied join fields. 
  *
  * @param {string} sourceModelId - Id of the source model
- * @param {string} leftSchema - Name of the left schema. e.g. 'demo_account'.
- * @param {string} leftJoinField - The field in the schema used for joining.
- * e.g. 'doc.demo_account.person_ref.doc`
- * @param {string} rightSchema - Name of the right schema. e.g. 'demo_person'.
- * @param {string} rightJoinField - The field in the schema used for joining.
- * e.g. 'doc._id'.
+ * @param {array} batchJoins - list of joins between different scheams.
  */
 var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 	modelType: null,
 	dispatchService: null,
 	sourceModelId: null,
-	leftSchema: null,
-	rightSchema: null,
-	leftJoinField: null,
-	rightJoinField: null,
+	batchNum: null,
+	batchJoins: null,
 	addedMap: null,
 	updatedMap: null,
 	removedMap: null,
@@ -532,10 +525,8 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			sourceModelId: null,
 			informationModelIds: null,
 			dispatchService: null,
-			leftSchema: null,
-			rightSchema: null,
-			leftJoinField: null,
-			rightJoinField: null,
+			batchNum: 0,
+			batchJoins: null
 		},opts_);
 
 		var _this = this;
@@ -545,15 +536,18 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		this.modelIsLoading = false;
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
-		this.leftSchema = opts.leftSchema;
-		this.rightSchema = opts.rightSchema;
-		this.leftJoinField = opts.leftJoinField;
-		this.rightJoinField = opts.rightJoinField;
+		this.batchNum = opts.batchNum;
+
+		if (opts.batchJoins.length) {
+			this.batchJoins = opts.batchJoins;
+			this._setLeftRightSchemas(this.batchJoins[this.batchNum]);
+		}
 
 		this.addedMap = {};
 		this.updatedMap = {};
 		this.removedMap = {};
 		this.docInfosByDocId = {};
+		this.schemaDocsByDocId = {};
 		this.leftSchemaDocsByDocId = {};
 		this.rightSchemaDocsByDocId = {};
 
@@ -580,6 +574,26 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		}
 
 		$n2.log(this._classname,this);
+	},
+
+	_setLeftRightSchemas: function(batch) {
+		if (batch) {
+			if (batch.leftSchema) {
+				this.leftSchema = batch.leftSchema;
+			}
+
+			if (batch.rightSchema) {
+				this.rightSchema = batch.rightSchema;
+			}
+
+			if (batch.leftJoinField) {
+				this.leftJoinField = batch.leftJoinField;
+			}
+
+			if (batch.rightJoinField) {
+				this.rightJoinField = batch.rightJoinField;
+			}
+		}
 	},
 
 	_handle: function(m, addr, dispatcher) {
@@ -640,10 +654,13 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 	_sourceModelUpdated: function(sourceState) {
 		var i, e, doc, docId, docInfo, previousDoc, schema;
-		var added, updated, removed;
+		var added, updated, removed, schema, schemaDocs;
+		var processingRequired = false;
 		this.addedMap = {};
 		this.updatedMap = {};
 		this.removedMap = {};
+		this.schemaDocsByDocId.length = 0;
+		this.batchNum = 0;
 
 		if (typeof sourceState.loading === 'boolean'
 			&& this.modelIsLoading !== sourceState.loading) {
@@ -661,13 +678,16 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 					original: doc
 				};
 
-				if (doc.nunaliit_schema === this.leftSchema) {
-					this.leftSchemaDocsByDocId[docId] = docInfo;
+				if (doc.nunaliit_schema) {
+					schema = doc.nunaliit_schema;
+					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId, schema)) {
+						this.schemaDocsByDocId[schema] = {};	
+					}
+					schemaDocs = this.schemaDocsByDocId[schema];
+					schemaDocs[docId] = docInfo;
+					this.docInfosByDocId[docId] = docInfo;
 					this.addedMap[docId] = doc;
-
-				} else if (doc.nunaliit_schema === this.rightSchema) {
-					this.rightSchemaDocsByDocId[docId] = docInfo;
-					this.addedMap[docId] = doc;
+					processingRequired = true;
 				}
 			}
 		}
@@ -683,15 +703,18 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 					original: doc
 				};
 
-				if (doc.nunaliit_schema === this.leftSchema) {
-					delete this.leftSchemaDocsByDocId[docId];
-					this.leftSchemaDocsByDocId[docId] = docInfo;
-					this.updatedMap[docId] = doc;
+				if (doc.nunaliit_schema) {
+					schema = doc.nunaliit_schema;
+					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId, schema)) {
+						this.schemaDocsByDocId[schema] = {};	
+					}
 
-				} else if (doc.nunaliit_schema === this.rightSchema) {
-					delete this.rightSchemaDocsByDocId[docId];
-					this.rightSchemaDocsByDocId[docId] = docInfo;
+					schemaDocs = this.schemaDocsByDocId[schema];
+					delete this.schemaDocs[docId];
+					schemaDocs[docId] = docInfo;
+					this.docInfosByDocId[docId] = docInfo;
 					this.updatedMap[docId] = doc;
+					processingRequired = true;
 				}
 			}
 		}
@@ -702,68 +725,96 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 				doc = sourceState.removed[i];
 				docId = doc._id;
 
-				if (doc.nunaliit_schema === this.leftSchema) {
-					delete this.leftSchemaDocsByDocId[docId];
-					this.removedMap[docId] = doc;
+				if (doc.nunaliit_schema) {
+					schema = doc.nunaliit_schema;
+					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId.nunaliit_schema, schema)) {
+						this.schemaDocsByDocId[schema] = {};	
+					}
 
-				} else if (doc.nunaliit_schema === this.rightSchema) {
-					delete this.rightSchemaDocsByDocId[docId];
+					schemaDocs = this.schemaDocsByDocId[schema];
+					delete this.schemaDocs[docId];
+					delete this.docInfosByDocId[docId];
 					this.removedMap[docId] = doc;
+					processingRequired = true;
 				}
 			}
 		}
 
-		// Report changes
-		this._joinSchemaDocs();
+		if (processingRequired) {
+			this._joinSchemaDocs();
 
-		added = $n2.utils.values(this.addedMap);
-		updated = $n2.utils.values(this.updatedMap);
-		removed = $n2.utils.values(this.removedMap);
-		this._reportStateUpdate(added, updated, removed);
+			// Report changes
+			added = $n2.utils.values(this.addedMap);
+			updated = $n2.utils.values(this.updatedMap);
+			removed = $n2.utils.values(this.removedMap);
+			this._reportStateUpdate(added, updated, removed);
+		}
+
 	},
 
 	// Entry function to start left schema document transformations
 	_joinSchemaDocs: function() {
 		var docId, docInfo, doc, transform;
 		var added, updated, removed;
+		this.leftSchemaDocsByDocId = this.schemaDocsByDocId[this.leftSchema] || {};
+
 		var leftSchemaDocIds = Object.keys(this.leftSchemaDocsByDocId);
 
 		// Loop over all documents, recomputing doc transforms
 		for (var i = 0; i < leftSchemaDocIds.length; i += 1) {
 			docId = leftSchemaDocIds[i];
 			docInfo = this.leftSchemaDocsByDocId[docId];
-			doc = docInfo.original;
+			doc = docInfo.joined || docInfo.original;
 
-			if (Object.keys(this.rightSchemaDocsByDocId).length) {
-				transform = this._computeTransform(doc);
+			if (Object.hasOwnProperty.call(this.schemaDocsByDocId, this.rightSchema)) {
 
-				if (doc === transform) {
-					// No transform
-				} else {
-					// A transform was computed
-					docInfo.doc = undefined;
-					docInfo.doc = transform;
+				this.rightSchemaDocsByDocId = this.schemaDocsByDocId[this.rightSchema] || {};
 
-					// Find where it belongs
-					if (this.addedMap[docId]) {
-						this.addedMap[docId] = transform;
-					} else if (this.updatedMap[docId]) {
-						this.updatedMap[docId] = transform;
-					} else if (this.removedMap[docId]) {
-						// just leave previous
+				if (Object.keys(this.rightSchemaDocsByDocId).length) {
+					transform = this._computeTransform(doc);
+
+					if (doc === transform) {
+						// No transform
 					} else {
-						// Not already in list. Add to update list
-						this.updatedMap[docId] = transform;
+						// A transform was computed
+						docInfo.doc = undefined;
+						docInfo.doc = transform;
+
+						// Update left schema original doc for future joins
+						docInfo.joined = transform;
+						this.leftSchemaDocsByDocId[docId] = docInfo;
+
+						// Find where it belongs
+						if (this.addedMap[docId]) {
+							this.addedMap[docId] = transform;
+						} else if (this.updatedMap[docId]) {
+							this.updatedMap[docId] = transform;
+						} else if (this.removedMap[docId]) {
+							// just leave previous
+						} else {
+							// Not already in list. Add to update list
+							this.updatedMap[docId] = transform;
+						}
 					}
 				}
 			}
 		}
 
-		// Report changes
-		added = $n2.utils.values(this.addedMap);
-		updated = $n2.utils.values(this.updatedMap);
-		removed = $n2.utils.values(this.removedMap);
-		this._reportStateUpdate(added, updated, removed);
+		// perform next batch of schema join conditions
+		if (!this.modelIsLoading
+			&& this.batchNum < this.batchJoins.length - 1) {
+			this.batchNum += 1;
+			this._setLeftRightSchemas(this.batchJoins[this.batchNum]);
+			this._joinSchemaDocs();
+
+		} else {
+			// Report changes
+			added = $n2.utils.values(this.addedMap);
+			updated = $n2.utils.values(this.updatedMap);
+			removed = $n2.utils.values(this.removedMap);
+			this._reportStateUpdate(added, updated, removed);
+		}
+
 	},
 
 	// Recursive function which gets a join field value from a document object.
@@ -822,6 +873,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 				// right schema in the left schema document transformation.
 				if (rightJoinVal && leftJoinVal === rightJoinVal) {
 					transformed['_' + this.rightSchema] = rightDoc.original;
+					break;
 				}
 			}
 		}
