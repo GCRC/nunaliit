@@ -227,7 +227,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				})
 				.appendTo($widgetWindowEnd);
 
-
 			this.endDatePicker = $('<div>').datepicker({
 				dateFormat: 'yy-mm-dd'
 				,gotoCurrent: true
@@ -260,32 +259,42 @@ POSSIBILITY OF SUCH DAMAGE.
 			var $startInputDate = $('.n2widget_date_range_window .start_date');
 			var $endInputDate = $('.n2widget_date_range_window .end_date');
 
-			if ($startInputDate.val()
-				&& this.startDate !== $startInputDate.val()) {
-				d = $l.DateTime.fromString($startInputDate.val(), 'yyyy-MM-dd');
-				if (d.isValid) {
-					this.startDate = $startInputDate.val();
-				} else {
-					if (this.startDate) {
-						$startInputDate.val(this.startDate);
+			if ($startInputDate.val()) {
+				if (this.startDate !== $startInputDate.val()) {
+					d = $l.DateTime.fromString($startInputDate.val(), 'yyyy-MM-dd');
+					if (d.isValid) {
+						// if the date input is valid, update the startDate.
+						this.startDate = $startInputDate.val();
 					} else {
-						$startInputDate.val('');
+						// if the input is an invalid date string use the
+						// previous valid start date.
+						if (this.startDate && $startInputDate.val()) {
+							$startInputDate.val(this.startDate);
+						}
 					}
 				}
+			} else {
+				// if the input is an empty string, set startDate value to null.
+				this.startDate = null;
 			}
 
-			if ($endInputDate.val()
-				&& this.endDate !== $endInputDate.val()) {
-				d = $l.DateTime.fromString($endInputDate.val(), 'yyyy-MM-dd');
-				if (d.isValid) {
-					this.endDate = $endInputDate.val();
-				} else {
-					if (this.endDate) {
-						$endInputDate.val(this.endDate);
+			if ($endInputDate.val()) {
+				if (this.endDate !== $endInputDate.val()) {
+					d = $l.DateTime.fromString($endInputDate.val(), 'yyyy-MM-dd');
+					if (d.isValid) {
+						// if the date input is valid, update the endDate.
+						this.endDate = $endInputDate.val();
 					} else {
-						$endInputDate.val('');
+						// if the input is an invalid date string use the
+						// previous valid end date.
+						if (this.endDate) {
+							$endInputDate.val(this.endDate);
+						}
 					}
 				}
+			} else {
+				// if the input is an empty string, set endDate value to null.
+				this.endDate = null;
 			}
 
 			// Set the end date to null if end date is less than the start date
