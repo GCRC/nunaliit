@@ -500,10 +500,29 @@ var ModelIntersect = $n2.Class({
 /* 
  * @class
  * A model transform which joins multiple documents of different schemas based
- * on supplied join fields. 
+ * on supplied join fields. This transformation functions by copying the right
+ * schema's document content into the left schema's document under a
+ * '_<schema-name>' key.
  *
- * @param {string} sourceModelId - Id of the source model
- * @param {array} batchJoins - list of joins between different scheams.
+ * @param {string} sourceModelId - Id of the source model.
+ * @param {array} batchJoins - list of joins between different schemas. Note:
+ * joins are perfomed in the order they are listed, and join transforms persist
+ * between each batch process.
+ * Example:
+ * 		"batchJoins": [
+ * 			{
+ * 				"leftSchema": "testatlas_account",
+ * 				"leftJoinField": "doc.testatlas_account.bank.doc",
+ * 				"rightSchema": "testatlas_bank",
+ * 				"rightJoinField": "doc._id"
+ * 			},
+ * 			{
+ * 				"leftSchema": "testatlas_account",
+ * 				"leftJoinField": "doc.testatlas_account.person.doc",
+ * 				"rightSchema": "testatlas_person",
+ * 				"rightJoinField": "doc._id"
+ * 			}
+ * 		]
  */
 var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
@@ -512,10 +531,17 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	sourceModelId: null,
 	batchNum: null,
 	batchJoins: null,
+	leftSchema: null,
+	rightSchema: null,
+	leftJoinField: null,
+	rightJoinField: null,
 	addedMap: null,
 	updatedMap: null,
 	removedMap: null,
 	docInfosByDocId: null,
+	schemaDocsByDocId: null, 
+	leftSchemaDocsByDocId: null, 
+	rightSchemaDocsByDocId: null, 
 	modelIsLoading: null,
 
 	initialize: function(opts_) {
@@ -538,9 +564,15 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		this.sourceModelId = opts.sourceModelId;
 		this.batchNum = opts.batchNum;
 
-		if (opts.batchJoins.length) {
+		if ($n2.isArray(opts.batchJoins)
+			&& opts.batchJoins.length) {
 			this.batchJoins = opts.batchJoins;
+
+			// Set the initial left and right schemas to which need to be joined
 			this._setLeftRightSchemas(this.batchJoins[this.batchNum]);
+
+		} else {
+			throw new Error('batchJoins needs to be an array.');
 		}
 
 		this.addedMap = {};
@@ -576,21 +608,26 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		$n2.log(this._classname,this);
 	},
 
+	// Set the left and right schemas and join fields used for the transform.
 	_setLeftRightSchemas: function(batch) {
 		if (batch) {
-			if (batch.leftSchema) {
+			if (batch.leftSchema
+				&& typeof batch.leftSchema === 'string') {
 				this.leftSchema = batch.leftSchema;
 			}
 
-			if (batch.rightSchema) {
+			if (batch.rightSchema
+				&& typeof batch.rightSchema === 'string') {
 				this.rightSchema = batch.rightSchema;
 			}
 
-			if (batch.leftJoinField) {
+			if (batch.leftJoinField
+				&& typeof batch.leftJoinField === 'string') {
 				this.leftJoinField = batch.leftJoinField;
 			}
 
-			if (batch.rightJoinField) {
+			if (batch.rightJoinField
+				&& typeof batch.rightJoinField === 'string') {
 				this.rightJoinField = batch.rightJoinField;
 			}
 		}
@@ -683,6 +720,8 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId, schema)) {
 						this.schemaDocsByDocId[schema] = {};	
 					}
+					
+					// Divide added documents by schemas
 					schemaDocs = this.schemaDocsByDocId[schema];
 					schemaDocs[docId] = docInfo;
 					this.docInfosByDocId[docId] = docInfo;
@@ -709,6 +748,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 						this.schemaDocsByDocId[schema] = {};	
 					}
 
+					// Divide updated documents by schemas
 					schemaDocs = this.schemaDocsByDocId[schema];
 					delete this.schemaDocs[docId];
 					schemaDocs[docId] = docInfo;
@@ -767,7 +807,6 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			doc = docInfo.joined || docInfo.original;
 
 			if (Object.hasOwnProperty.call(this.schemaDocsByDocId, this.rightSchema)) {
-
 				this.rightSchemaDocsByDocId = this.schemaDocsByDocId[this.rightSchema] || {};
 
 				if (Object.keys(this.rightSchemaDocsByDocId).length) {
@@ -845,6 +884,10 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 					value = false;
 				}
 			}
+		}
+
+		if (!value) {
+			$n2.logError('Join field not found in schema');
 		}
 
 		return value;
