@@ -188,7 +188,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.attr('autocomplete', 'off')
 				.attr('placeholder', _loc('Start Date') + ' yy-mm-dd')
 				.change(function() {
-					_this._dateRangeUpdated();
+					_this._startDateRangeUpdated();
 				})
 				.appendTo($widgetWindowStart);
 
@@ -203,7 +203,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					_this.startDate = this.value;
 					$startDate.val(_this.startDate);
 					$startDate.text(_this.startDate);
-					_this._dateRangeUpdated();
+					_this._startDateRangeUpdated();
 				}
 			}).appendTo($widgetWindowStart);
 
@@ -223,7 +223,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.attr('autocomplete', 'off')
 				.attr('placeholder', _loc('End Date') + ' yy-mm-dd')
 				.change(function() {
-					_this._dateRangeUpdated();
+					_this._endDateRangeUpdated();
 				})
 				.appendTo($widgetWindowEnd);
 
@@ -238,7 +238,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					_this.endDate = this.value;
 					$endDate.val(_this.endDate);
 					$endDate.text(_this.endDate);
-					_this._dateRangeUpdated();
+					_this._endDateRangeUpdated();
 				}
 			}).appendTo($widgetWindowEnd);
 
@@ -249,12 +249,16 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 
 			// Update date range if start or end date values are initialize
-			if (this.startDate || this.endDate) {
-				this._dateRangeUpdated();
+			if (this.startDate) {
+				this._startDateRangeUpdated();
+			}
+
+			if (this.endDate) {
+				this._endDateRangeUpdated();
 			}
 		},
 
-		_dateRangeUpdated: function() {
+		_startDateRangeUpdated: function() {
 			var d;
 			var $startInputDate = $('.n2widget_date_range_window .start_date');
 			var $endInputDate = $('.n2widget_date_range_window .end_date');
@@ -277,6 +281,35 @@ POSSIBILITY OF SUCH DAMAGE.
 				// if the input is an empty string, set startDate value to null.
 				this.startDate = null;
 			}
+
+			// Set the end date to null if end date is less than the start date
+			if ($startInputDate.val()
+				&& $endInputDate.val()
+				&& $startInputDate.val() >= $endInputDate.val()) {
+				$endInputDate.text('');
+				$endInputDate.val(null);
+				this.endDate = null;
+			}
+
+			this.startDatePicker.datepicker('setDate', this.startDate);
+
+			// Update date range button text
+			this._updateDateRangeButtonText();
+
+			// Update widget window position
+			this._setWidgetWindowPosition();
+
+			this.dispatchService.synchronousCall(DH, {
+				type: 'dateRangeWidgetUpdate'
+				,startDate: this.startDate
+				,endDate: this.endDate
+			});
+		},
+
+		_endDateRangeUpdated: function() {
+			var d;
+			var $startInputDate = $('.n2widget_date_range_window .start_date');
+			var $endInputDate = $('.n2widget_date_range_window .end_date');
 
 			if ($endInputDate.val()) {
 				if (this.endDate !== $endInputDate.val()) {
@@ -306,7 +339,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.endDate = null;
 			}
 
-			this.startDatePicker.datepicker('setDate', this.startDate);
 			this.endDatePicker.datepicker('setDate', this.endDate);
 
 			// Update date range button text
