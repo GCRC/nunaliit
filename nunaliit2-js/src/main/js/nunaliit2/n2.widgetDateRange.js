@@ -110,6 +110,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.find('.n2widget_date_range_button');
 			var offset = $widgetBtn.offset();
 
+			offset.width = $widgetBtn.width();
 			if (offset) {
 				return offset;
 			}
@@ -117,25 +118,28 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		_setWidgetWindowPosition: function() {
 			var topPadding = 28;
-			var leftPadding = 465;
+			var rightPadding = 36;
 			var $browserHeight = $(window).height();
 			var $browserWidth = $(window).width();
 			var widgetOffset = this._getWidgetOffset();
 			var $widgetWindow = $('.n2widget_date_range_window');
 			var windowTop = widgetOffset.top + topPadding;
-			var windowLeft = widgetOffset.left;
 
 			if ($browserHeight / 2 < widgetOffset.top) {
 				topPadding = -228;
 				windowTop = widgetOffset.top + topPadding;
 			}
 
-			if ($browserWidth / 2 < widgetOffset.left) {
-				windowLeft = widgetOffset.left - leftPadding;
-			}
-
 			$widgetWindow.css('top', windowTop);
-			$widgetWindow.css('left', windowLeft);
+
+			if ($browserWidth / 2 < widgetOffset.left) {
+				$widgetWindow.css('left', '');
+				$widgetWindow.css('right', $browserWidth - widgetOffset.left - widgetOffset.width - rightPadding);
+
+			} else {
+				$widgetWindow.css('left', widgetOffset.left);
+				$widgetWindow.css('right', '');
+			}
 		},
 
 		_display: function() {
@@ -265,10 +269,23 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
+		_checkStartDateOccursBeforeEndDate: function() {
+			var $startInputDate = $('.n2widget_date_range_window .start_date');
+			var $endInputDate = $('.n2widget_date_range_window .end_date');
+
+			// Set the end date to null if end date is less than the start date
+			if ($startInputDate.val()
+				&& $endInputDate.val()
+				&& $startInputDate.val() >= $endInputDate.val()) {
+				$endInputDate.text('');
+				$endInputDate.val(null);
+				this.endDate = null;
+			}
+		},
+
 		_startDateRangeUpdated: function() {
 			var d;
 			var $startInputDate = $('.n2widget_date_range_window .start_date');
-			var $endInputDate = $('.n2widget_date_range_window .end_date');
 
 			if ($startInputDate.val()) {
 				if (this.startDate !== $startInputDate.val()) {
@@ -289,14 +306,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.startDate = null;
 			}
 
-			// Set the end date to null if end date is less than the start date
-			if ($startInputDate.val()
-				&& $endInputDate.val()
-				&& $startInputDate.val() >= $endInputDate.val()) {
-				$endInputDate.text('');
-				$endInputDate.val(null);
-				this.endDate = null;
-			}
+			this._checkStartDateOccursBeforeEndDate();
 
 			this.startDatePicker.datepicker('setDate', this.startDate);
 
@@ -315,7 +325,6 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		_endDateRangeUpdated: function() {
 			var d;
-			var $startInputDate = $('.n2widget_date_range_window .start_date');
 			var $endInputDate = $('.n2widget_date_range_window .end_date');
 
 			if ($endInputDate.val()) {
@@ -337,14 +346,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.endDate = null;
 			}
 
-			// Set the end date to null if end date is less than the start date
-			if ($startInputDate.val()
-				&& $endInputDate.val()
-				&& $startInputDate.val() >= $endInputDate.val()) {
-				$endInputDate.text('');
-				$endInputDate.val(null);
-				this.endDate = null;
-			}
+			this._checkStartDateOccursBeforeEndDate();
 
 			this.endDatePicker.datepicker('setDate', this.endDate);
 
