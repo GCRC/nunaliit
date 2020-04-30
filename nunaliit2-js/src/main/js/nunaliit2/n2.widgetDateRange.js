@@ -117,18 +117,25 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		_setWidgetWindowPosition: function() {
 			var topPadding = 28;
+			var leftPadding = 465;
 			var $browserHeight = $(window).height();
+			var $browserWidth = $(window).width();
 			var widgetOffset = this._getWidgetOffset();
 			var $widgetWindow = $('.n2widget_date_range_window');
 			var windowTop = widgetOffset.top + topPadding;
+			var windowLeft = widgetOffset.left;
 
 			if ($browserHeight / 2 < widgetOffset.top) {
 				topPadding = -228;
 				windowTop = widgetOffset.top + topPadding;
 			}
 
+			if ($browserWidth / 2 < widgetOffset.left) {
+				windowLeft = widgetOffset.left - leftPadding;
+			}
+
 			$widgetWindow.css('top', windowTop);
-			$widgetWindow.css('left', widgetOffset.left);
+			$widgetWindow.css('left', windowLeft);
 		},
 
 		_display: function() {
