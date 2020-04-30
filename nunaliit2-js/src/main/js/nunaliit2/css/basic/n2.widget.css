@@ -1010,19 +1010,6 @@ Date Range Widget
 	float: right;
 }
 
-/*
-.n2widget_date_range .n2widget_date_range_icon {
-    background-image: url(images/calendar_icon.png);
-    background-position: center;
-    background-repeat: no-repeat;
-    background-color: transparent;
-    width: 25px;
-    height: 25px;
-    padding: 0px 0px 0px 0px;
-    cursor: pointer;
-}
-*/
-
 .n2widget_date_range input {
 	display: block;
 	padding: 2px 0px;
