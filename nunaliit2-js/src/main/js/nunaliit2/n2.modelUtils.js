@@ -1076,7 +1076,7 @@ function handleModelCreate(m, addr, dispatcher){
 		
 		m.created = true;
 
-	} else if (m.modelType === 'schemajoin') {
+	} else if (m.modelType === 'schemaDocsJoin') {
 		var optionKeys, i, key;
 		var options = {};
 		
