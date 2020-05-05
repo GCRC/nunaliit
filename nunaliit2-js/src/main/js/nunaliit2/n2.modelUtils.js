@@ -500,27 +500,28 @@ var ModelIntersect = $n2.Class({
 /* 
  * @class
  * A model transform which joins multiple documents of different schemas based
- * on supplied join fields. This transformation functions by copying the right
- * schema's document content into the left schema's document under a
+ * on supplied join fields. This transformation functions by copying the copy
+ * from schema's document content into the copy to schema's document under a
  * '_<schema-name>' key.
  *
  * @param {string} sourceModelId - Id of the source model.
- * @param {array} joins - list of joins between different schemas. Note:
- * joins are perfomed in the order they are listed, and join transforms persist
- * between each process.
+ * @param {array} joins - list of joins between different schemas.
+ * Note: Joins are performed in the order they are listed, and join transforms
+ * persist between each process.
+ *
  * Example:
  * 		"joins": [
  * 			{
- * 				"leftSchema": "testatlas_account",
- * 				"leftJoinField": "doc.testatlas_account.bank.doc",
- * 				"rightSchema": "testatlas_bank",
- * 				"rightJoinField": "doc._id"
+ * 				"copyToSchema": "testatlas_account",
+ * 				"copyToJoinKey": "doc.testatlas_account.bank.doc",
+ * 				"copyFromSchema": "testatlas_bank",
+ * 				"copyFromJoinKey": "doc._id"
  * 			},
  * 			{
- * 				"leftSchema": "testatlas_account",
- * 				"leftJoinField": "doc.testatlas_account.person.doc",
- * 				"rightSchema": "testatlas_person",
- * 				"rightJoinField": "doc._id"
+ * 				"copyToSchema": "testatlas_account",
+ * 				"copyToJoinKey": "doc.testatlas_account.person.doc",
+ * 				"copyFromSchema": "testatlas_person",
+ * 				"copyFromJoinKey": "doc._id"
  * 			}
  * 		]
  */
@@ -531,17 +532,17 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	sourceModelId: null,
 	joinNum: null,
 	joins: null,
-	leftSchema: null,
-	rightSchema: null,
-	leftJoinField: null,
-	rightJoinField: null,
+	copyToSchema: null,
+	copyFromSchema: null,
+	copyToJoinKey: null,
+	copyFromJoinKey: null,
 	addedMap: null,
 	updatedMap: null,
 	removedMap: null,
 	docInfosByDocId: null,
 	schemaDocsByDocId: null, 
-	leftSchemaDocsByDocId: null, 
-	rightSchemaDocsByDocId: null, 
+	copyToSchemaDocsByDocId: null, 
+	copyFromSchemaDocsByDocId: null, 
 	modelIsLoading: null,
 
 	initialize: function(opts_) {
@@ -568,8 +569,8 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			&& opts.joins.length) {
 			this.joins = opts.joins;
 
-			// Set the initial left and right schemas to which need to be joined
-			this._setLeftRightSchemas(this.joins[this.joinNum]);
+			// Set the initial copy to and copy from schemas to be joined
+			this._setSchemasToJoin(this.joins[this.joinNum]);
 
 		} else {
 			throw new Error('Joins needs to be an array.');
@@ -580,8 +581,8 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		this.removedMap = {};
 		this.docInfosByDocId = {};
 		this.schemaDocsByDocId = {};
-		this.leftSchemaDocsByDocId = {};
-		this.rightSchemaDocsByDocId = {};
+		this.copyToSchemaDocsByDocId = {};
+		this.copyFromSchemaDocsByDocId = {};
 
 		// Register to events
 		if (this.dispatchService) {
@@ -608,27 +609,27 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		$n2.log(this._classname,this);
 	},
 
-	// Set the left and right schemas and join fields used for the transform.
-	_setLeftRightSchemas: function(batch) {
-		if (batch) {
-			if (batch.leftSchema
-				&& typeof batch.leftSchema === 'string') {
-				this.leftSchema = batch.leftSchema;
+	// Set schemas and join keys used for the transform.
+	_setSchemasToJoin: function(joinInfo) {
+		if (joinInfo) {
+			if (joinInfo.copyToSchema
+				&& typeof joinInfo.copyToSchema === 'string') {
+				this.copyToSchema = joinInfo.copyToSchema;
 			}
 
-			if (batch.rightSchema
-				&& typeof batch.rightSchema === 'string') {
-				this.rightSchema = batch.rightSchema;
+			if (joinInfo.copyFromSchema
+				&& typeof joinInfo.copyFromSchema === 'string') {
+				this.copyFromSchema = joinInfo.copyFromSchema;
 			}
 
-			if (batch.leftJoinField
-				&& typeof batch.leftJoinField === 'string') {
-				this.leftJoinField = batch.leftJoinField;
+			if (joinInfo.copyToJoinKey
+				&& typeof joinInfo.copyToJoinKey === 'string') {
+				this.copyToJoinKey = joinInfo.copyToJoinKey;
 			}
 
-			if (batch.rightJoinField
-				&& typeof batch.rightJoinField === 'string') {
-				this.rightJoinField = batch.rightJoinField;
+			if (joinInfo.copyFromJoinKey
+				&& typeof joinInfo.copyFromJoinKey === 'string') {
+				this.copyFromJoinKey = joinInfo.copyFromJoinKey;
 			}
 		}
 	},
@@ -792,24 +793,26 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 	},
 
-	// Entry function to start left schema document transformations
+	// Entry function to start copy to schema document transformations
 	_joinSchemaDocs: function() {
 		var docId, docInfo, doc, transform;
 		var added, updated, removed;
-		this.leftSchemaDocsByDocId = this.schemaDocsByDocId[this.leftSchema] || {};
+		this.copyToSchemaDocsByDocId = this.schemaDocsByDocId[this.copyToSchema] || {};
 
-		var leftSchemaDocIds = Object.keys(this.leftSchemaDocsByDocId);
+		var copyToSchemaDocIds = Object.keys(this.copyToSchemaDocsByDocId);
 
 		// Loop over all documents, recomputing doc transforms
-		for (var i = 0; i < leftSchemaDocIds.length; i += 1) {
-			docId = leftSchemaDocIds[i];
-			docInfo = this.leftSchemaDocsByDocId[docId];
+		for (var i = 0; i < copyToSchemaDocIds.length; i += 1) {
+			docId = copyToSchemaDocIds[i];
+			docInfo = this.copyToSchemaDocsByDocId[docId];
 			doc = docInfo.joined || docInfo.original;
 
-			if (Object.hasOwnProperty.call(this.schemaDocsByDocId, this.rightSchema)) {
-				this.rightSchemaDocsByDocId = this.schemaDocsByDocId[this.rightSchema] || {};
+			if (Object.hasOwnProperty.call(this.schemaDocsByDocId, this.copyFromSchema)) {
+				this.copyFromSchemaDocsByDocId = this.schemaDocsByDocId[this.copyFromSchema] || {};
 
-				if (Object.keys(this.rightSchemaDocsByDocId).length) {
+				// Check that copyFrom dictionary has items
+				if (Object.keys(this.copyFromSchemaDocsByDocId).length) {
+					// transform the document
 					transform = this._computeTransform(doc);
 
 					if (doc === transform) {
@@ -819,9 +822,9 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 						docInfo.doc = undefined;
 						docInfo.doc = transform;
 
-						// Update left schema original doc for future joins
+						// Update copy to schema original doc for future joins
 						docInfo.joined = transform;
-						this.leftSchemaDocsByDocId[docId] = docInfo;
+						this.copyToSchemaDocsByDocId[docId] = docInfo;
 
 						// Find where it belongs
 						if (this.addedMap[docId]) {
@@ -839,11 +842,11 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			}
 		}
 
-		// perform next batch of schema join conditions
+		// perform next schema docs join
 		if (!this.modelIsLoading
 			&& this.joinNum < this.joins.length - 1) {
 			this.joinNum += 1;
-			this._setLeftRightSchemas(this.joins[this.joinNum]);
+			this._setSchemasToJoin(this.joins[this.joinNum]);
 			this._joinSchemaDocs();
 
 		} else {
@@ -893,29 +896,29 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		return value;
 	},
 
-	// Transform of left schema document. Left schema will include a copy of
-	// the right schema if the left and right join fields match.
+	// Transform of copy to schema document. Copy to schema will include a copy
+	// of the copy from schema if the join keys match.
 	_computeTransform: function(doc) {
-		var transformed, i, leftJoinVal;
-		var docId, rightDoc, rightDocs, rightJoinVal;
+		var transformed, i, copyToJoinVal;
+		var docId, copyFromDoc, copyFromDocs, copyFromJoinVal;
 		var transformed = this._cloneDocument(doc);
 
-		// Get left schema document join value if available
-		leftJoinVal = this._getFieldValue(doc, this.leftJoinField.split('.'));
-		rightDocs = Object.keys(this.rightSchemaDocsByDocId);
+		// Get copy to schema document join value if available
+		copyToJoinVal = this._getFieldValue(doc, this.copyToJoinKey.split('.'));
+		copyFromDocs = Object.keys(this.copyFromSchemaDocsByDocId);
 
-		if (leftJoinVal) {
-			for (i = 0; i < rightDocs.length; i += 1) {
-				docId = rightDocs[i];
-				rightDoc = this.rightSchemaDocsByDocId[docId];
+		if (copyToJoinVal) {
+			for (i = 0; i < copyFromDocs.length; i += 1) {
+				docId = copyFromDocs[i];
+				copyFromDoc = this.copyFromSchemaDocsByDocId[docId];
 
-				// Get right schema document join value if available
-				rightJoinVal = this._getFieldValue(rightDoc.original, this.rightJoinField.split('.'));
+				// Get copy from schema document join value if available
+				copyFromJoinVal = this._getFieldValue(copyFromDoc.original, this.copyFromJoinKey.split('.'));
 
-				// If left and right join values match, then add a copy of the
-				// right schema in the left schema document transformation.
-				if (rightJoinVal && leftJoinVal === rightJoinVal) {
-					transformed['_' + this.rightSchema] = rightDoc.original;
+				// If join values match, then add a copy of the copy from
+				// schema in the copy to schema document transformation.
+				if (copyFromJoinVal && copyToJoinVal === copyFromJoinVal) {
+					transformed['_' + this.copyFromSchema] = copyFromDoc.original;
 					break;
 				}
 			}
