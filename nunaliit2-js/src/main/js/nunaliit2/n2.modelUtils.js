@@ -505,11 +505,11 @@ var ModelIntersect = $n2.Class({
  * '_<schema-name>' key.
  *
  * @param {string} sourceModelId - Id of the source model.
- * @param {array} batchJoins - list of joins between different schemas. Note:
+ * @param {array} joins - list of joins between different schemas. Note:
  * joins are perfomed in the order they are listed, and join transforms persist
- * between each batch process.
+ * between each process.
  * Example:
- * 		"batchJoins": [
+ * 		"joins": [
  * 			{
  * 				"leftSchema": "testatlas_account",
  * 				"leftJoinField": "doc.testatlas_account.bank.doc",
@@ -529,8 +529,8 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	modelType: null,
 	dispatchService: null,
 	sourceModelId: null,
-	batchNum: null,
-	batchJoins: null,
+	joinNum: null,
+	joins: null,
 	leftSchema: null,
 	rightSchema: null,
 	leftJoinField: null,
@@ -551,8 +551,8 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			sourceModelId: null,
 			informationModelIds: null,
 			dispatchService: null,
-			batchNum: 0,
-			batchJoins: null
+			joinNum: 0,
+			joins: null
 		},opts_);
 
 		var _this = this;
@@ -562,17 +562,17 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		this.modelIsLoading = false;
 		this.dispatchService = opts.dispatchService;
 		this.sourceModelId = opts.sourceModelId;
-		this.batchNum = opts.batchNum;
+		this.joinNum = opts.joinNum;
 
-		if ($n2.isArray(opts.batchJoins)
-			&& opts.batchJoins.length) {
-			this.batchJoins = opts.batchJoins;
+		if ($n2.isArray(opts.joins)
+			&& opts.joins.length) {
+			this.joins = opts.joins;
 
 			// Set the initial left and right schemas to which need to be joined
-			this._setLeftRightSchemas(this.batchJoins[this.batchNum]);
+			this._setLeftRightSchemas(this.joins[this.joinNum]);
 
 		} else {
-			throw new Error('batchJoins needs to be an array.');
+			throw new Error('Joins needs to be an array.');
 		}
 
 		this.addedMap = {};
@@ -697,7 +697,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		this.updatedMap = {};
 		this.removedMap = {};
 		this.schemaDocsByDocId.length = 0;
-		this.batchNum = 0;
+		this.joinNum = 0;
 
 		if (typeof sourceState.loading === 'boolean'
 			&& this.modelIsLoading !== sourceState.loading) {
@@ -841,9 +841,9 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 		// perform next batch of schema join conditions
 		if (!this.modelIsLoading
-			&& this.batchNum < this.batchJoins.length - 1) {
-			this.batchNum += 1;
-			this._setLeftRightSchemas(this.batchJoins[this.batchNum]);
+			&& this.joinNum < this.joins.length - 1) {
+			this.joinNum += 1;
+			this._setLeftRightSchemas(this.joins[this.joinNum]);
 			this._joinSchemaDocs();
 
 		} else {
