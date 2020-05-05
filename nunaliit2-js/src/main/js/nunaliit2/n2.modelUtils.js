@@ -859,30 +859,41 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 	},
 
-	// Recursive function which gets a join field value from a document object.
-	// If the object doesn't have the field, it returns false.
-	_getFieldValue: function(obj, props) {
-		var i, value, fieldsCopy, currentChild;
+	// Recursive function which gets a join key value from a document object.
+	// If the object doesn't have the key, it returns false.
+	_getKeyValue: function(obj, props) {
+		var i, value, keyValue, currentChild;
 		var firstProp = props.shift();
 
 		if (firstProp === 'doc'
 			&& props.length) {
-			value = this._getFieldValue(obj, props);	
+			value = this._getKeyValue(obj, props);	
 
 		} else {
 			if (props.length) {
 				if (Object.hasOwnProperty.call(obj, firstProp)) {
 					// Check next property in props list
-					value = this._getFieldValue(obj[firstProp], props);
+					value = this._getKeyValue(obj[firstProp], props);
 				} else {
 					// Object doesn't include property
 					value = false;
 				}
 
 			} else {
-				// Check if final property in object
+				// Check final property in object.
+				// if a string, return the string otherwise check if its a
+				// nunaliit reference object, with a doc key.
 				if (Object.hasOwnProperty.call(obj, firstProp)) {
-					value = obj[firstProp];
+					keyValue = obj[firstProp];
+					if (typeof keyValue === 'object'
+						&& Object.hasOwnProperty.call(keyValue, 'nunaliit_type')
+						&& keyValue.nunaliit_type === 'reference'
+						&& Object.hasOwnProperty.call(keyValue, 'doc')
+						&& typeof keyValue.doc === 'string') {
+						value = keyValue.doc;
+					} else if (typeof keyValue === 'string') {
+						value = keyValue;
+					}
 				} else {
 					value = false;
 				}
@@ -904,7 +915,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		var transformed = this._cloneDocument(doc);
 
 		// Get copy to schema document join value if available
-		copyToJoinVal = this._getFieldValue(doc, this.copyToJoinKey.split('.'));
+		copyToJoinVal = this._getKeyValue(doc, this.copyToJoinKey.split('.'));
 		copyFromDocs = Object.keys(this.copyFromSchemaDocsByDocId);
 
 		if (copyToJoinVal) {
@@ -913,7 +924,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 				copyFromDoc = this.copyFromSchemaDocsByDocId[docId];
 
 				// Get copy from schema document join value if available
-				copyFromJoinVal = this._getFieldValue(copyFromDoc.original, this.copyFromJoinKey.split('.'));
+				copyFromJoinVal = this._getKeyValue(copyFromDoc.original, this.copyFromJoinKey.split('.'));
 
 				// If join values match, then add a copy of the copy from
 				// schema in the copy to schema document transformation.
