@@ -510,20 +510,20 @@ var ModelIntersect = $n2.Class({
  * persist between each process.
  *
  * Example:
- * 		"joins": [
- * 			{
- * 				"copyToSchema": "testatlas_account",
- * 				"copyToJoinKey": "doc.testatlas_account.bank.doc",
- * 				"copyFromSchema": "testatlas_bank",
- * 				"copyFromJoinKey": "doc._id"
- * 			},
- * 			{
- * 				"copyToSchema": "testatlas_account",
- * 				"copyToJoinKey": "doc.testatlas_account.person.doc",
- * 				"copyFromSchema": "testatlas_person",
- * 				"copyFromJoinKey": "doc._id"
- * 			}
- * 		]
+ *		"joins": [
+ *			{
+ *				"copyToSchema": "testatlas_account",
+ *				"copyToJoinKey": "doc.testatlas_account.bank.doc",
+ *				"copyFromSchema": "testatlas_bank",
+ *				"copyFromJoinKey": "doc._id"
+ *			},
+ *			{
+ *				"copyToSchema": "testatlas_account",
+ *				"copyToJoinKey": "doc.testatlas_account.person.doc",
+ *				"copyFromSchema": "testatlas_person",
+ *				"copyFromJoinKey": "doc._id"
+ *			}
+ *		]
  */
 var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
@@ -536,6 +536,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	copyFromSchema: null,
 	copyToJoinKey: null,
 	copyFromJoinKey: null,
+	keysToCopy: null,
 	addedMap: null,
 	updatedMap: null,
 	removedMap: null,
@@ -615,21 +616,42 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			if (joinInfo.copyToSchema
 				&& typeof joinInfo.copyToSchema === 'string') {
 				this.copyToSchema = joinInfo.copyToSchema;
+			} else {
+				this.copyToSchema = undefined;
 			}
 
 			if (joinInfo.copyFromSchema
 				&& typeof joinInfo.copyFromSchema === 'string') {
 				this.copyFromSchema = joinInfo.copyFromSchema;
+			} else {
+				this.copyFromSchema = undefined;
 			}
 
 			if (joinInfo.copyToJoinKey
 				&& typeof joinInfo.copyToJoinKey === 'string') {
 				this.copyToJoinKey = joinInfo.copyToJoinKey;
+			} else {
+				this.copyToJoinKey = undefined;
 			}
 
 			if (joinInfo.copyFromJoinKey
 				&& typeof joinInfo.copyFromJoinKey === 'string') {
 				this.copyFromJoinKey = joinInfo.copyFromJoinKey;
+			} else {
+				this.copyFromJoinKey = undefined;
+			}
+
+			if (joinInfo.keysToCopy
+				&& $n2.isArray(joinInfo.keysToCopy)
+				&& joinInfo.keysToCopy.length) {
+				this.keysToCopy = joinInfo.keysToCopy;
+
+				// Add doc id key if not specified in keys to copy
+				if (this.keysToCopy.indexOf('doc._id') < 0) {
+					this.keysToCopy.push('doc._id');
+				}
+			} else {
+				this.keysToCopy = undefined;
 			}
 		}
 	},
@@ -697,7 +719,6 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		this.addedMap = {};
 		this.updatedMap = {};
 		this.removedMap = {};
-		this.schemaDocsByDocId.length = 0;
 		this.joinNum = 0;
 
 		if (typeof sourceState.loading === 'boolean'
@@ -751,7 +772,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 					// Divide updated documents by schemas
 					schemaDocs = this.schemaDocsByDocId[schema];
-					delete this.schemaDocs[docId];
+					delete schemaDocs[docId];
 					schemaDocs[docId] = docInfo;
 					this.docInfosByDocId[docId] = docInfo;
 					this.updatedMap[docId] = doc;
@@ -768,12 +789,9 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 				if (doc.nunaliit_schema) {
 					schema = doc.nunaliit_schema;
-					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId.nunaliit_schema, schema)) {
-						this.schemaDocsByDocId[schema] = {};	
-					}
 
 					schemaDocs = this.schemaDocsByDocId[schema];
-					delete this.schemaDocs[docId];
+					delete schemaDocs[docId];
 					delete this.docInfosByDocId[docId];
 					this.removedMap[docId] = doc;
 					processingRequired = true;
@@ -795,14 +813,14 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 	// Entry function to start copy to schema document transformations
 	_joinSchemaDocs: function() {
-		var docId, docInfo, doc, transform;
+		var docId, docInfo, doc, transform, i;
 		var added, updated, removed;
 		this.copyToSchemaDocsByDocId = this.schemaDocsByDocId[this.copyToSchema] || {};
 
 		var copyToSchemaDocIds = Object.keys(this.copyToSchemaDocsByDocId);
 
 		// Loop over all documents, recomputing doc transforms
-		for (var i = 0; i < copyToSchemaDocIds.length; i += 1) {
+		for (i = 0; i < copyToSchemaDocIds.length; i += 1) {
 			docId = copyToSchemaDocIds[i];
 			docInfo = this.copyToSchemaDocsByDocId[docId];
 			doc = docInfo.joined || docInfo.original;
@@ -870,74 +888,114 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		}
 	},
 
+	// Update an object with the supplied key structure and value.
+	_updateObjFromKeyString: function(obj, keyString, keyValue) {
+		var keysSplit = keyString.split('.');
+		var firstKey = keysSplit.shift();
+
+		if (!Object.hasOwnProperty.call(obj, firstKey)) {
+			// Add object property if it doesn't exist.
+			if (keysSplit.length) {
+				obj[firstKey] = {};
+				this._updateObjFromKeyString(obj[firstKey], keysSplit.join('.'), keyValue);	
+			} else {
+				obj[firstKey] = keyValue;
+			}
+		} else {
+			if (keysSplit.length) {
+				this._updateObjFromKeyString(obj[firstKey], keysSplit.join('.'), keyValue);
+			} else {
+				obj[firstKey] = keyValue;
+			}
+		}
+	},
+
 	// Recursive function which gets a join key value from a document object.
 	// If the object doesn't have the key, it returns false.
-	_getKeyValues: function(obj, props) {
+	_getKeyValues: function(obj, keyString) {
 		var i, value, keyValue, currentChild, item, itemValue;
+		var props = keyString.split('.');
 		var firstProp = props.shift();
 
-		if (firstProp === 'doc'
-			&& props.length) {
-			value = this._getKeyValues(obj, props);	
+		if (props.length) {
+			if (Object.hasOwnProperty.call(obj, firstProp)) {
+				// Check next property in props list
+				value = this._getKeyValues(obj[firstProp], props.join('.'));
+			} else {
+				// Object doesn't include property
+				value = false;
+			}
 
 		} else {
-			if (props.length) {
-				if (Object.hasOwnProperty.call(obj, firstProp)) {
-					// Check next property in props list
-					value = this._getKeyValues(obj[firstProp], props);
-				} else {
-					// Object doesn't include property
-					value = false;
-				}
-
-			} else {
-				// Check final property in object.
-				// if a string, return the string otherwise check if its a
-				// Nunaliit reference object, with a doc key.
-				if (Object.hasOwnProperty.call(obj, firstProp)) {
-					keyValue = obj[firstProp];
-					if (this._isNunaliitRefObj(keyValue)){
-						value = keyValue.doc;
-					} else if (typeof keyValue === 'string') {
-						value = keyValue;
-					} else if ($n2.isArray(keyValue)
-						&& keyValue.length) {
-						value = [];
-						for (i = 0; i < keyValue.length; i += 1) {
-							item = keyValue[i];
-							if (this._isNunaliitRefObj(item)) {
-								itemValue = item.doc;
-								value.push(itemValue);
-							}
+			// Check final property in object.
+			// if a string, return the string otherwise check if its a
+			// Nunaliit reference object, with a doc key.
+			if (Object.hasOwnProperty.call(obj, firstProp)) {
+				keyValue = obj[firstProp];
+				if (this._isNunaliitRefObj(keyValue)){
+					value = keyValue.doc;
+				} else if (typeof keyValue === 'string') {
+					value = keyValue;
+				} else if ($n2.isArray(keyValue)
+					&& keyValue.length) {
+					value = [];
+					for (i = 0; i < keyValue.length; i += 1) {
+						item = keyValue[i];
+						if (this._isNunaliitRefObj(item)) {
+							itemValue = item.doc;
+							value.push(itemValue);
+						} else if (typeof item === 'string'){
+							value.push(item);
 						}
 					}
-				} else {
-					value = false;
 				}
+			} else {
+				value = false;
 			}
 		}
 
 		return value;
 	},
 
+	// Get specific key content from copyFrom schema document.
+	_copyKeyContent: function(doc) {
+		var i, key, keyValue, copiedKeys;
+		var copiedKeysObj = {};
+
+		for (i = 0; i < this.keysToCopy.length; i += 1) {
+			key = this.keysToCopy[i];
+			keyValue = this._getKeyValues(doc, key);
+			if (keyValue) {
+				this._updateObjFromKeyString(copiedKeysObj, key, keyValue);
+			}
+		}
+		return copiedKeysObj;
+	},
+
 	// Transform of copy to schema document. Copy to schema will include a copy
 	// of the copy from schema if the join keys match.
 	_computeTransform: function(doc) {
-		var transformed, i, j, copyToJoinVal;
+		var transformed, i, j, copyToJoinVal, docExists;
 		var docId, copyFromDoc, copyFromDocs, copyFromJoinVal;
 		var transformed = this._cloneDocument(doc);
 
 		// Get copy to schema document join value if available
-		copyToJoinVal = this._getKeyValues(doc, this.copyToJoinKey.split('.'));
+		copyToJoinVal = this._getKeyValues(doc, this.copyToJoinKey);
 		copyFromDocs = Object.keys(this.copyFromSchemaDocsByDocId);
 
 		if (copyToJoinVal) {
+
+			// Reset copy from schema before performing schema copy.
+			if (Object.hasOwnProperty.call(transformed, '_' + this.copyFromSchema)) {
+				transformed['_' + this.copyFromSchema] = undefined;
+			}
+
 			for (i = 0; i < copyFromDocs.length; i += 1) {
 				docId = copyFromDocs[i];
 				copyFromDoc = this.copyFromSchemaDocsByDocId[docId];
 
 				// Get copy from schema document join value if available
-				copyFromJoinVal = this._getKeyValues(copyFromDoc.original, this.copyFromJoinKey.split('.'));
+				copyFromJoinVal = this._getKeyValues(copyFromDoc.original, this.copyFromJoinKey);
 
 				// If join values match, then add a copy of the copy from
 				// schema in the copy to schema document transformation.
@@ -945,13 +1003,17 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 					&& copyToJoinVal.length
 					&& $n2.isArray(copyFromJoinVal)
 					&& copyFromJoinVal.length) {
-					if (!Object.hasOwnProperty.call(transformed, '_' + this.copyFromSchema)) {
+					if (!$n2.isArray(transformed['_' + this.copyFromSchema])) {
 						transformed['_' + this.copyFromSchema] = [];
 					}
 
 					for (j = 0; j < copyFromJoinVal.length; j += 1) {
 						if (copyToJoinVal.indexOf(copyFromJoinVal[j]) >= 0) {
-							transformed['_' + this.copyFromSchema].push(copyFromDoc.original);
+							if (this.keysToCopy) {
+								transformed['_' + this.copyFromSchema].push(this._copyKeyContent(copyFromDoc.original));
+							} else {
+								transformed['_' + this.copyFromSchema].push(copyFromDoc.original);
+							}
 							break;
 						}
 					}
@@ -960,22 +1022,36 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 					&& copyToJoinVal.length
 					&& typeof copyFromJoinVal === 'string'
 					&& copyToJoinVal.indexOf(copyFromJoinVal) >= 0) {
-					if (!Object.hasOwnProperty.call(transformed, '_' + this.copyFromSchema)) {
+					if (!$n2.isArray(transformed['_' + this.copyFromSchema])) {
 						transformed['_' + this.copyFromSchema] = [];
 					}
-					transformed['_' + this.copyFromSchema].push(copyFromDoc.original);
+
+					if (this.keysToCopy) {
+						transformed['_' + this.copyFromSchema].push(this._copyKeyContent(copyFromDoc.original));
+					} else {
+						transformed['_' + this.copyFromSchema].push(copyFromDoc.original);
+					}
 
 				} else if ($n2.isArray(copyFromJoinVal)
 					&& copyFromJoinVal.length
 					&& typeof copyToJoinVal === 'string'
 					&& copyFromJoinVal.indexOf(copyToJoinVal) >= 0) {
-					if (!Object.hasOwnProperty.call(transformed, '_' + this.copyFromSchema)) {
+					if (!$n2.isArray(transformed['_' + this.copyFromSchema])) {
 						transformed['_' + this.copyFromSchema] = [];
 					}
-					transformed['_' + this.copyFromSchema].push(copyFromDoc.original);
+
+					if (this.keysToCopy) {
+						transformed['_' + this.copyFromSchema].push(this._copyKeyContent(copyFromDoc.original));
+					} else {
+						transformed['_' + this.copyFromSchema].push(copyFromDoc.original);
+					}
 
 				} else if (copyFromJoinVal && copyToJoinVal === copyFromJoinVal) {
-					transformed['_' + this.copyFromSchema] = copyFromDoc.original;
+					if (this.keysToCopy) {
+						transformed['_' + this.copyFromSchema] = this._copyKeyContent(copyFromDoc.original);
+					} else {
+						transformed['_' + this.copyFromSchema] = copyFromDoc.original;
+					}
 					break;
 				}
 			}
