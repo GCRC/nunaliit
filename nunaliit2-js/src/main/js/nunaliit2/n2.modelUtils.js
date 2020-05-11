@@ -713,7 +713,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	},
 
 	_sourceModelUpdated: function(sourceState) {
-		var i, e, doc, docId, docInfo, previousDoc, schema;
+		var i, e, doc, docId, docInfo, schema;
 		var added, updated, removed, schema, schemaDocs;
 		var processingRequired = false;
 		this.addedMap = {};
@@ -740,9 +740,9 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 				if (doc.nunaliit_schema) {
 					schema = doc.nunaliit_schema;
 					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId, schema)) {
-						this.schemaDocsByDocId[schema] = {};	
+						this.schemaDocsByDocId[schema] = {};
 					}
-					
+
 					// Divide added documents by schemas
 					schemaDocs = this.schemaDocsByDocId[schema];
 					schemaDocs[docId] = docInfo;
@@ -767,7 +767,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 				if (doc.nunaliit_schema) {
 					schema = doc.nunaliit_schema;
 					if (!Object.hasOwnProperty.call(this.schemaDocsByDocId, schema)) {
-						this.schemaDocsByDocId[schema] = {};	
+						this.schemaDocsByDocId[schema] = {};
 					}
 
 					// Divide updated documents by schemas
@@ -800,7 +800,9 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		}
 
 		if (processingRequired) {
-			this._joinSchemaDocs();
+			if (!this.modelIsLoading) {
+				this._joinSchemaDocs();
+			}
 
 			// Report changes
 			added = $n2.utils.values(this.addedMap);
@@ -813,11 +815,11 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 	// Entry function to start copy to schema document transformations
 	_joinSchemaDocs: function() {
-		var docId, docInfo, doc, transform, i;
+		var docId, docInfo, doc, transform, i, copyToSchemaDocIds;
 		var added, updated, removed;
 		this.copyToSchemaDocsByDocId = this.schemaDocsByDocId[this.copyToSchema] || {};
 
-		var copyToSchemaDocIds = Object.keys(this.copyToSchemaDocsByDocId);
+		copyToSchemaDocIds = Object.keys(this.copyToSchemaDocsByDocId);
 
 		// Loop over all documents, recomputing doc transforms
 		for (i = 0; i < copyToSchemaDocIds.length; i += 1) {
@@ -860,21 +862,19 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			}
 		}
 
-		// perform next schema docs join
-		if (!this.modelIsLoading
-			&& this.joinNum < this.joins.length - 1) {
+		// Perform next schema docs join.
+		if (this.joinNum < this.joins.length - 1) {
 			this.joinNum += 1;
 			this._setSchemasToJoin(this.joins[this.joinNum]);
 			this._joinSchemaDocs();
 
 		} else {
-			// Report changes
+			// Report changes if no more transformations are needed.
 			added = $n2.utils.values(this.addedMap);
 			updated = $n2.utils.values(this.updatedMap);
 			removed = $n2.utils.values(this.removedMap);
 			this._reportStateUpdate(added, updated, removed);
 		}
-
 	},
 
 	// Checks if an object is a Nunaliit reference object
@@ -889,7 +889,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	},
 
 	// Update an object with the supplied key structure and value.
-	_updateObjFromKeyString: function(obj, keyString, keyValue) {
+	_updateObjWithKeyString: function(obj, keyString, keyValue) {
 		var keysSplit = keyString.split('.');
 		var firstKey = keysSplit.shift();
 
@@ -897,13 +897,13 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			// Add object property if it doesn't exist.
 			if (keysSplit.length) {
 				obj[firstKey] = {};
-				this._updateObjFromKeyString(obj[firstKey], keysSplit.join('.'), keyValue);	
+				this._updateObjWithKeyString(obj[firstKey], keysSplit.join('.'), keyValue);
 			} else {
 				obj[firstKey] = keyValue;
 			}
 		} else {
 			if (keysSplit.length) {
-				this._updateObjFromKeyString(obj[firstKey], keysSplit.join('.'), keyValue);
+				this._updateObjWithKeyString(obj[firstKey], keysSplit.join('.'), keyValue);
 			} else {
 				obj[firstKey] = keyValue;
 			}
@@ -913,7 +913,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	// Recursive function which gets a join key value from a document object.
 	// If the object doesn't have the key, it returns false.
 	_getKeyValues: function(obj, keyString) {
-		var i, value, keyValue, currentChild, item, itemValue;
+		var i, value, keyValue, item, itemValue;
 		var props = keyString.split('.');
 		var firstProp = props.shift();
 
@@ -932,7 +932,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			// Nunaliit reference object, with a doc key.
 			if (Object.hasOwnProperty.call(obj, firstProp)) {
 				keyValue = obj[firstProp];
-				if (this._isNunaliitRefObj(keyValue)){
+				if (this._isNunaliitRefObj(keyValue)) {
 					value = keyValue.doc;
 				} else if (typeof keyValue === 'string') {
 					value = keyValue;
@@ -944,7 +944,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 						if (this._isNunaliitRefObj(item)) {
 							itemValue = item.doc;
 							value.push(itemValue);
-						} else if (typeof item === 'string'){
+						} else if (typeof item === 'string') {
 							value.push(item);
 						}
 					}
@@ -966,7 +966,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			key = this.keysToCopy[i];
 			keyValue = this._getKeyValues(doc, key);
 			if (keyValue) {
-				this._updateObjFromKeyString(copiedKeysObj, key, keyValue);
+				this._updateObjWithKeyString(copiedKeysObj, key, keyValue);
 			}
 		}
 		return copiedKeysObj;
@@ -975,7 +975,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	// Transform of copy to schema document. Copy to schema will include a copy
 	// of the copy from schema if the join keys match.
 	_computeTransform: function(doc) {
-		var transformed, i, j, copyToJoinVal, docExists;
+		var i, j, copyToJoinVal;
 		var docId, copyFromDoc, copyFromDocs, copyFromJoinVal;
 		var transformed = this._cloneDocument(doc);
 
@@ -983,13 +983,12 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		copyToJoinVal = this._getKeyValues(doc, this.copyToJoinKey);
 		copyFromDocs = Object.keys(this.copyFromSchemaDocsByDocId);
 
+		// Reset copy from schema before performing schema copy.
+		if (Object.hasOwnProperty.call(transformed, '_' + this.copyFromSchema)) {
+			transformed['_' + this.copyFromSchema] = undefined;
+		}
+
 		if (copyToJoinVal) {
-
-			// Reset copy from schema before performing schema copy.
-			if (Object.hasOwnProperty.call(transformed, '_' + this.copyFromSchema)) {
-				transformed['_' + this.copyFromSchema] = undefined;
-			}
-
 			for (i = 0; i < copyFromDocs.length; i += 1) {
 				docId = copyFromDocs[i];
 				copyFromDoc = this.copyFromSchemaDocsByDocId[docId];
