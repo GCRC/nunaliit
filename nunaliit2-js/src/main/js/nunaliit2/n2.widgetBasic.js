@@ -972,11 +972,6 @@ var Service = $n2.Class({
 				 && $n2.widgetTranscript.HandleWidgetAvailableRequests ){
 					$n2.widgetTranscript.HandleWidgetAvailableRequests(m);
 				};
-				
-				if( $n2.widgetDateRange
-				 && $n2.widgetDateRange.HandleWidgetAvailableRequests ){
-					$n2.widgetDateRange.HandleWidgetAvailableRequests(m);
-				};
 			};
 
 		} else if( 'widgetDisplay' === m.type ){
@@ -1076,11 +1071,6 @@ var Service = $n2.Class({
 				if( $n2.widgetTranscript 
 				 && $n2.widgetTranscript.HandleWidgetDisplayRequests ){
 					$n2.widgetTranscript.HandleWidgetDisplayRequests(m);
-				};
-
-				if( $n2.widgetDateRange
-				 && $n2.widgetDateRange.HandleWidgetDisplayRequests ){
-					$n2.widgetDateRange.HandleWidgetDisplayRequests(m);
 				};
 			};
 
