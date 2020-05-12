@@ -893,20 +893,16 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		var keysSplit = keyString.split('.');
 		var firstKey = keysSplit.shift();
 
-		if (!Object.hasOwnProperty.call(obj, firstKey)) {
-			// Add object property if it doesn't exist.
-			if (keysSplit.length) {
+		if (keysSplit.length) {
+			if (!Object.hasOwnProperty.call(obj, firstKey)) {
+				// Add object property if it doesn't exist.
 				obj[firstKey] = {};
 				this._updateObjWithKeyString(obj[firstKey], keysSplit.join('.'), keyValue);
 			} else {
-				obj[firstKey] = keyValue;
+				this._updateObjWithKeyString(obj[firstKey], keysSplit.join('.'), keyValue);
 			}
 		} else {
-			if (keysSplit.length) {
-				this._updateObjWithKeyString(obj[firstKey], keysSplit.join('.'), keyValue);
-			} else {
-				obj[firstKey] = keyValue;
-			}
+			obj[firstKey] = keyValue;
 		}
 	},
 
@@ -914,24 +910,23 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	// If the object doesn't have the key, it returns false.
 	_getKeyValues: function(obj, keyString) {
 		var i, value, keyValue, item, itemValue;
-		var props = keyString.split('.');
-		var firstProp = props.shift();
+		var keysSplit = keyString.split('.');
+		var firstKey = keysSplit.shift();
 
-		if (props.length) {
-			if (Object.hasOwnProperty.call(obj, firstProp)) {
-				// Check next property in props list
-				value = this._getKeyValues(obj[firstProp], props.join('.'));
+		if (keysSplit.length) {
+			if (Object.hasOwnProperty.call(obj, firstKey)) {
+				// Check next property in keysSplit list
+				value = this._getKeyValues(obj[firstKey], keysSplit.join('.'));
 			} else {
 				// Object doesn't include property
 				value = false;
 			}
 
 		} else {
-			// Check final property in object.
-			// if a string, return the string otherwise check if its a
-			// Nunaliit reference object, with a doc key.
-			if (Object.hasOwnProperty.call(obj, firstProp)) {
-				keyValue = obj[firstProp];
+			// Check final property in object, and handle if its a string, 
+			// array, or document reference.
+			if (Object.hasOwnProperty.call(obj, firstKey)) {
+				keyValue = obj[firstKey];
 				if (this._isNunaliitRefObj(keyValue)) {
 					value = keyValue.doc;
 				} else if (typeof keyValue === 'string') {
