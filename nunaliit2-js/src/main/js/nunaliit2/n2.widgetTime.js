@@ -100,7 +100,7 @@ if (window.luxon) {
  *
  * @param {object} dispatchService - Dispatch service reference.
  * @param {string} containerId - Unique identifier for the container id
- * @param {string} sourceModelId - Unique identifier for the source model id
+ * @param {string} [sourceModelId] - Unique identifier for the source model id
  * @param {string} [startDate=null] - Initial start date for the widget
  * using the date format 'yyyy-mm-dd'
  * @param {string} [endDate=null] - Initial end date for the widget using
@@ -149,20 +149,6 @@ var DateRangeWidget = $n2.Class({
 			};
 			this.dispatchService.synchronousCall(DH, modelInfoRequest);
 			var sourceModelInfo = modelInfoRequest.modelInfo;
-			
-			if (sourceModelInfo 
-				&& sourceModelInfo.parameters 
-				&& sourceModelInfo.parameters.range) {
-				var paramInfo = sourceModelInfo.parameters.range;
-				this.rangeChangeEventName = paramInfo.changeEvent;
-				this.rangeGetEventName = paramInfo.getEvent;
-				this.rangeSetEventName = paramInfo.setEvent;
-
-				if (paramInfo.value) {
-					this.rangeMin = paramInfo.value.min;
-					this.rangeMax = paramInfo.value.max;
-				}
-			}
 			
 			if (sourceModelInfo 
 				&& sourceModelInfo.parameters 
@@ -382,7 +368,7 @@ var DateRangeWidget = $n2.Class({
 	},
 
 	_startDateRangeUpdated: function() {
-		var d;
+		var d, value;
 		var $startInputDate = $('.n2widget_date_range_window .start_date');
 
 		if ($startInputDate.val()) {
@@ -414,6 +400,23 @@ var DateRangeWidget = $n2.Class({
 		// Update widget window position
 		this._setWidgetWindowPosition();
 
+
+		if (this.dispatchService
+			&& this.intervalSetEventName) {
+			value = new $n2.date.DateInterval({
+				startDate: this.startDate
+				,endDate: this.endDate
+				,min: $l.DateTime.fromISO(this.startDate).toMillis()
+				,max: $l.DateTime.fromISO(this.endDate).toMillis()
+				,ongoing: false
+			});
+			
+			this.dispatchService.send(DH,{
+				type: this.intervalSetEventName
+				,value: value
+			});
+		}
+
 		this.dispatchService.synchronousCall(DH, {
 			type: 'dateRangeWidgetUpdate'
 			,startDate: this.startDate
@@ -422,7 +425,7 @@ var DateRangeWidget = $n2.Class({
 	},
 
 	_endDateRangeUpdated: function() {
-		var d;
+		var d, value;
 		var $endInputDate = $('.n2widget_date_range_window .end_date');
 
 		if ($endInputDate.val()) {
@@ -453,6 +456,22 @@ var DateRangeWidget = $n2.Class({
 
 		// Update widget window position
 		this._setWidgetWindowPosition();
+
+		if (this.dispatchService
+			&& this.intervalSetEventName) {
+			value = new $n2.date.DateInterval({
+				startDate: this.startDate
+				,endDate: this.endDate
+				,min: $l.DateTime.fromISO(this.startDate).toMillis()
+				,max: $l.DateTime.fromISO(this.endDate).toMillis()
+				,ongoing: false
+			});
+			
+			this.dispatchService.send(DH,{
+				type: this.intervalSetEventName
+				,value: value
+			});
+		}
 
 		this.dispatchService.synchronousCall(DH, {
 			type: 'dateRangeWidgetUpdate'
@@ -790,7 +809,7 @@ var TimelineWidget = $n2.Class({
 
 //--------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
-	if( m.widgetType === 'dateRangeWidget' ){
+	if( m.widgetType === 'dateRange' ){
 		if( $.fn.slider ) {
 			m.isAvailable = true;
 		}
@@ -804,7 +823,7 @@ function HandleWidgetAvailableRequests(m){
 // --------------------------------------------------------------------------
 function HandleWidgetDisplayRequests(m){
 	var widgetOptions, config, options, optionKeys, containerId, i, key, value;
-	if (m.widgetType === 'dateRangeWidget') {
+	if (m.widgetType === 'dateRange') {
 		widgetOptions = m.widgetOptions;
 		containerId = m.containerId;
 		config = m.config;
