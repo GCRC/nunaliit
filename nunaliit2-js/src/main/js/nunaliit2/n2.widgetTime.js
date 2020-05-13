@@ -1,31 +1,31 @@
 /*
-Copyright (c) 2014, Geomatics and Cartographic Research Centre, Carleton 
+Copyright (c) 2020, Geomatics and Cartographic Research Centre, Carleton
 University
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
- - Redistributions of source code must retain the above copyright notice, 
+ - Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
  - Redistributions in binary form must reproduce the above copyright notice,
    this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
- - Neither the name of the Geomatics and Cartographic Research Centre, 
-   Carleton University nor the names of its contributors may be used to 
-   endorse or promote products derived from this software without specific 
+ - Neither the name of the Geomatics and Cartographic Research Centre,
+   Carleton University nor the names of its contributors may be used to
+   endorse or promote products derived from this software without specific
    prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
 */
@@ -34,10 +34,10 @@ POSSIBILITY OF SUCH DAMAGE.
 "use strict";
 
 var $l;
-var 
- _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
- ,DH = 'n2.widgetTime'
- ;
+var _loc = function(str,args) {
+	return $n2.loc(str,'nunaliit2',args);
+};
+var DH = 'n2.widgetTime';
 
 //--------------------------------------------------------------------------
 function numberToPaddedString(d){
@@ -181,10 +181,6 @@ var DateRangeWidget = $n2.Class({
 			var fn = function(m, addr, dispatcher){
 				_this._handle(m, addr, dispatcher);
 			};
-			
-			if( this.rangeChangeEventName ){
-				this.dispatchService.register(DH, this.rangeChangeEventName, fn);
-			}
 			
 			if( this.intervalChangeEventName ){
 				this.dispatchService.register(DH, this.intervalChangeEventName, fn);
@@ -466,16 +462,35 @@ var DateRangeWidget = $n2.Class({
 	},
 	
 	_handle: function(m, addr, dispatcher){
-		if (this.rangeChangeEventName === m.type) {
-			if (m.value) {
-				this.rangeMin = m.value.min;
-				this.rangeMax = m.value.max;
-			}
-			
-		} else if (this.intervalChangeEventName === m.type) {
+		if (this.intervalChangeEventName === m.type) {
 			if (m.value) {
 				this.intervalMin = m.value.min;
+				this.startDate = $l.DateTime.fromMillis(this.intervalMin).toFormat("yyyy-MM-dd");
+
+				var $startInputDate = $('.n2widget_date_range_window .start_date');
+				$startInputDate.val(this.startDate);
+
+				this.startDatePicker.datepicker('setDate', this.startDate);
+
 				this.intervalMax = m.value.max;
+				this.endDate = $l.DateTime.fromMillis(this.intervalMax).toFormat("yyyy-MM-dd");
+
+				var $endInputDate = $('.n2widget_date_range_window .end_date');
+				$endInputDate.val(this.endDate);
+
+				this.endDatePicker.datepicker('setDate', this.endDate);
+				
+				// Update date range button text
+				this._updateDateRangeButtonText();
+
+				// Update widget window position
+				this._setWidgetWindowPosition();
+
+				this.dispatchService.synchronousCall(DH, {
+					type: 'dateRangeWidgetUpdate'
+					,startDate: this.startDate
+					,endDate: this.endDate
+				});
 			}
 		}
 	}
