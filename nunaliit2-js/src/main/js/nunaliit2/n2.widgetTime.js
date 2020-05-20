@@ -119,9 +119,19 @@ var DateRangeWidget = $n2.Class({
 
 	sourceModelId: null,
 
+	rangeChangeEventName: null,
+
+	rangeMin: null,
+
+	rangeMax: null,
+
 	intervalChangeEventName: null,
 
 	intervalSetEventName: null,
+
+	intervalMin: null,
+
+	intervalMax: null,
 
 	startDate: null,
 
@@ -162,6 +172,20 @@ var DateRangeWidget = $n2.Class({
 			
 			if (sourceModelInfo 
 				&& sourceModelInfo.parameters 
+				&& sourceModelInfo.parameters.range) {
+				var paramInfo = sourceModelInfo.parameters.range;
+				this.rangeChangeEventName = paramInfo.changeEvent;
+				this.rangeGetEventName = paramInfo.getEvent;
+				this.rangeSetEventName = paramInfo.setEvent;
+
+				if (paramInfo.value) {
+					this.rangeMin = paramInfo.value.min;
+					this.rangeMax = paramInfo.value.max;
+				}
+			}
+
+			if (sourceModelInfo 
+				&& sourceModelInfo.parameters 
 				&& sourceModelInfo.parameters.interval) {
 				paramInfo = sourceModelInfo.parameters.interval;
 				this.intervalChangeEventName = paramInfo.changeEvent;
@@ -177,6 +201,10 @@ var DateRangeWidget = $n2.Class({
 				_this._handle(m, addr, dispatcher);
 			};
 			
+			if( this.rangeChangeEventName ){
+				this.dispatchService.register(DH, this.rangeChangeEventName, fn);
+			}
+
 			if (this.intervalChangeEventName) {
 				this.dispatchService.register(DH, this.intervalChangeEventName, fn);
 			}
@@ -360,9 +388,28 @@ var DateRangeWidget = $n2.Class({
 		}
 	},
 
-	_checkStartDateOccursBeforeEndDate: function() {
+	_checkDateIsInRange: function() {
+		var startOfDateRange, endOfDateRange;
 		var $startInputDate = $('.n2widget_date_range_window .start_date');
 		var $endInputDate = $('.n2widget_date_range_window .end_date');
+		var startDateMS = $l.DateTime.fromString($startInputDate.val(), 'yyyy-MM-dd').toMillis();
+		var endDateMS = $l.DateTime.fromString($endInputDate.val(), 'yyyy-MM-dd').toMillis();
+
+		// Set start date to range min if input is less than range min.
+		if (this.rangeMin
+			&& this.rangeMin > startDateMS) {
+			startOfDateRange = $l.DateTime.fromMillis(this.rangeMin).toFormat("yyyy-MM-dd");
+			this.startDate = startOfDateRange;
+			$startInputDate.val(startOfDateRange);
+		}
+
+		// Set end date to range max if input is more than range max.
+		if (this.rangeMax
+			&& this.rangeMax < endDateMS) {
+			endOfDateRange = $l.DateTime.fromMillis(this.rangeMax).toFormat("yyyy-MM-dd");
+			this.endDate = endOfDateRange;
+			$endInputDate.val(endOfDateRange);
+		}
 
 		// Set the end date to null if end date is less than the start date
 		if ($startInputDate.val()
@@ -397,7 +444,7 @@ var DateRangeWidget = $n2.Class({
 			this.startDate = null;
 		}
 
-		this._checkStartDateOccursBeforeEndDate();
+		this._checkDateIsInRange();
 
 		this.startDatePicker.datepicker('setDate', this.startDate);
 
@@ -453,7 +500,7 @@ var DateRangeWidget = $n2.Class({
 			this.endDate = null;
 		}
 
-		this._checkStartDateOccursBeforeEndDate();
+		this._checkDateIsInRange();
 
 		this.endDatePicker.datepicker('setDate', this.endDate);
 
@@ -488,7 +535,16 @@ var DateRangeWidget = $n2.Class({
 	
 	_handle: function(m, addr, dispatcher){
 		var $startInputDate, $endInputDate;
-		if (this.intervalChangeEventName === m.type) {
+		if (this.rangeChangeEventName === m.type) {
+			if (m.value) {
+				this.rangeMin = m.value.min;
+				this.rangeMax = m.value.max;
+			} else {
+				this.rangeMin = null;
+				this.rangeMax = null;
+			}
+
+		} else if (this.intervalChangeEventName === m.type) {
 			if (m.value) {
 				this.intervalMin = m.value.min;
 				this.startDate = $l.DateTime.fromMillis(this.intervalMin).toFormat("yyyy-MM-dd");
