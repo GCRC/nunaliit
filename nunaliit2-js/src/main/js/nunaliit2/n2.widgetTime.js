@@ -98,6 +98,11 @@ if (window.luxon) {
  * The date range widget provides an interface for selecting a start and
  * end date, which is reported to the dispatcher.
  *
+ * The widget can either be used with a source model in the same manner the
+ * time line widget can be implemented. If no source model is provided, the 
+ * widget can still be used and provide the dispatcher details with the updated
+ * date range when changed.
+ *
  * @param {object} dispatchService - Dispatch service reference.
  * @param {string} containerId - Unique identifier for the container id
  * @param {string} [sourceModelId] - Unique identifier for the source model id
@@ -113,6 +118,10 @@ var DateRangeWidget = $n2.Class({
 	containerId: null,
 
 	sourceModelId: null,
+
+	intervalChangeEventName: null,
+
+	intervalSetEventName: null,
 
 	startDate: null,
 
@@ -131,6 +140,7 @@ var DateRangeWidget = $n2.Class({
 			,endDate: null
 		},opts_);
 
+		var modelInfoRequest, sourceModelInfo, paramInfo, fn;
 		var _this = this;
 
 		this.containerId = opts.containerId;
@@ -142,20 +152,19 @@ var DateRangeWidget = $n2.Class({
 		// Set up model listener
 		if (this.dispatchService) {
 			// Get model info
-			var modelInfoRequest = {
+			modelInfoRequest = {
 				type: 'modelGetInfo'
 				,modelId: this.sourceModelId
 				,modelInfo: null
 			};
 			this.dispatchService.synchronousCall(DH, modelInfoRequest);
-			var sourceModelInfo = modelInfoRequest.modelInfo;
+			sourceModelInfo = modelInfoRequest.modelInfo;
 			
 			if (sourceModelInfo 
 				&& sourceModelInfo.parameters 
 				&& sourceModelInfo.parameters.interval) {
-				var paramInfo = sourceModelInfo.parameters.interval;
+				paramInfo = sourceModelInfo.parameters.interval;
 				this.intervalChangeEventName = paramInfo.changeEvent;
-				this.intervalGetEventName = paramInfo.getEvent;
 				this.intervalSetEventName = paramInfo.setEvent;
 
 				if (paramInfo.value) {
@@ -164,11 +173,11 @@ var DateRangeWidget = $n2.Class({
 				}
 			}
 			
-			var fn = function(m, addr, dispatcher){
+			fn = function(m, addr, dispatcher) {
 				_this._handle(m, addr, dispatcher);
 			};
 			
-			if( this.intervalChangeEventName ){
+			if (this.intervalChangeEventName) {
 				this.dispatchService.register(DH, this.intervalChangeEventName, fn);
 			}
 		}
@@ -230,7 +239,6 @@ var DateRangeWidget = $n2.Class({
 		var $container, $widgetWindow, $widgetWindowStart, $widgetWindowEnd;
 		var $startDateInput, $endDateInput;
 		var _this = this;
-
 		var elemId = $n2.getUniqueId();
 
 		$container = $('<div>')
@@ -347,7 +355,6 @@ var DateRangeWidget = $n2.Class({
 		if (this.startDate) {
 			this._startDateRangeUpdated();
 		}
-
 		if (this.endDate) {
 			this._endDateRangeUpdated();
 		}
@@ -399,7 +406,6 @@ var DateRangeWidget = $n2.Class({
 
 		// Update widget window position
 		this._setWidgetWindowPosition();
-
 
 		if (this.dispatchService
 			&& this.intervalSetEventName) {
@@ -481,12 +487,13 @@ var DateRangeWidget = $n2.Class({
 	},
 	
 	_handle: function(m, addr, dispatcher){
+		var $startInputDate, $endInputDate;
 		if (this.intervalChangeEventName === m.type) {
 			if (m.value) {
 				this.intervalMin = m.value.min;
 				this.startDate = $l.DateTime.fromMillis(this.intervalMin).toFormat("yyyy-MM-dd");
 
-				var $startInputDate = $('.n2widget_date_range_window .start_date');
+				$startInputDate = $('.n2widget_date_range_window .start_date');
 				$startInputDate.val(this.startDate);
 
 				this.startDatePicker.datepicker('setDate', this.startDate);
@@ -494,7 +501,7 @@ var DateRangeWidget = $n2.Class({
 				this.intervalMax = m.value.max;
 				this.endDate = $l.DateTime.fromMillis(this.intervalMax).toFormat("yyyy-MM-dd");
 
-				var $endInputDate = $('.n2widget_date_range_window .end_date');
+				$endInputDate = $('.n2widget_date_range_window .end_date');
 				$endInputDate.val(this.endDate);
 
 				this.endDatePicker.datepicker('setDate', this.endDate);
