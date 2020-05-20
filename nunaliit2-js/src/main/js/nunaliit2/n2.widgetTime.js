@@ -173,7 +173,7 @@ var DateRangeWidget = $n2.Class({
 			if (sourceModelInfo 
 				&& sourceModelInfo.parameters 
 				&& sourceModelInfo.parameters.range) {
-				var paramInfo = sourceModelInfo.parameters.range;
+				paramInfo = sourceModelInfo.parameters.range;
 				this.rangeChangeEventName = paramInfo.changeEvent;
 				this.rangeGetEventName = paramInfo.getEvent;
 				this.rangeSetEventName = paramInfo.setEvent;
@@ -317,7 +317,7 @@ var DateRangeWidget = $n2.Class({
 			.attr('name', 'start_date')
 			.attr('type', 'text')
 			.attr('autocomplete', 'off')
-			.attr('placeholder', _loc('Start Date') + ' yy-mm-dd')
+			.attr('placeholder', _loc('Start Date') + ' yyyy-mm-dd')
 			.change(function() {
 				_this._startDateRangeUpdated();
 			})
@@ -352,7 +352,7 @@ var DateRangeWidget = $n2.Class({
 			.attr('name', 'end_date')
 			.attr('type', 'text')
 			.attr('autocomplete', 'off')
-			.attr('placeholder', _loc('End Date') + ' yy-mm-dd')
+			.attr('placeholder', _loc('End Date') + ' yyyy-mm-dd')
 			.change(function() {
 				_this._endDateRangeUpdated();
 			})
@@ -424,13 +424,13 @@ var DateRangeWidget = $n2.Class({
 	_startDateRangeUpdated: function() {
 		var d, value;
 		var $startInputDate = $('.n2widget_date_range_window .start_date');
-
 		if ($startInputDate.val()) {
 			if (this.startDate !== $startInputDate.val()) {
-				d = $l.DateTime.fromString($startInputDate.val(), 'yyyy-MM-dd');
+				d = $l.DateTime.fromISO($startInputDate.val());
 				if (d.isValid) {
 					// if the date input is valid, update the startDate.
-					this.startDate = $startInputDate.val();
+					$startInputDate.val(d.toFormat("yyyy-MM-dd"));
+					this.startDate = d.toFormat("yyyy-MM-dd");
 				} else {
 					// if the input is an invalid date string use the
 					// previous valid start date.
@@ -483,10 +483,11 @@ var DateRangeWidget = $n2.Class({
 
 		if ($endInputDate.val()) {
 			if (this.endDate !== $endInputDate.val()) {
-				d = $l.DateTime.fromString($endInputDate.val(), 'yyyy-MM-dd');
+				d = $l.DateTime.fromISO($endInputDate.val());
 				if (d.isValid) {
 					// if the date input is valid, update the endDate.
-					this.endDate = $endInputDate.val();
+					$endInputDate.val(d.toFormat("yyyy-MM-dd"));
+					this.endDate = d.toFormat("yyyy-MM-dd");
 				} else {
 					// if the input is an invalid date string use the
 					// previous valid end date.
