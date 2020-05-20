@@ -39,7 +39,7 @@ var _loc = function(str,args) {
 };
 var DH = 'n2.widgetTime';
 
-//--------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 function numberToPaddedString(d){
 	if (d < 10) {
         return '0' + d;
@@ -47,7 +47,7 @@ function numberToPaddedString(d){
       return '' + d;
 };
 
-//--------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 function formatDate(date, format){
 	var acc = [];
 
@@ -150,7 +150,7 @@ var DateRangeWidget = $n2.Class({
 			,endDate: null
 		},opts_);
 
-		var modelInfoRequest, sourceModelInfo, paramInfo, fn;
+		var modelInfoRequest, sourceModelInfo, paramInfo, dispatchFn;
 		var _this = this;
 
 		this.containerId = opts.containerId;
@@ -169,9 +169,9 @@ var DateRangeWidget = $n2.Class({
 			};
 			this.dispatchService.synchronousCall(DH, modelInfoRequest);
 			sourceModelInfo = modelInfoRequest.modelInfo;
-			
-			if (sourceModelInfo 
-				&& sourceModelInfo.parameters 
+
+			if (sourceModelInfo
+				&& sourceModelInfo.parameters
 				&& sourceModelInfo.parameters.range) {
 				paramInfo = sourceModelInfo.parameters.range;
 				this.rangeChangeEventName = paramInfo.changeEvent;
@@ -184,8 +184,8 @@ var DateRangeWidget = $n2.Class({
 				}
 			}
 
-			if (sourceModelInfo 
-				&& sourceModelInfo.parameters 
+			if (sourceModelInfo
+				&& sourceModelInfo.parameters
 				&& sourceModelInfo.parameters.interval) {
 				paramInfo = sourceModelInfo.parameters.interval;
 				this.intervalChangeEventName = paramInfo.changeEvent;
@@ -196,17 +196,17 @@ var DateRangeWidget = $n2.Class({
 					this.intervalMax = paramInfo.value.max;
 				}
 			}
-			
-			fn = function(m, addr, dispatcher) {
+
+			dispatchFn = function(m, addr, dispatcher) {
 				_this._handle(m, addr, dispatcher);
 			};
-			
-			if( this.rangeChangeEventName ){
-				this.dispatchService.register(DH, this.rangeChangeEventName, fn);
+
+			if (this.rangeChangeEventName) {
+				this.dispatchService.register(DH, this.rangeChangeEventName, dispatchFn);
 			}
 
 			if (this.intervalChangeEventName) {
-				this.dispatchService.register(DH, this.intervalChangeEventName, fn);
+				this.dispatchService.register(DH, this.intervalChangeEventName, dispatchFn);
 			}
 		}
 
@@ -379,7 +379,7 @@ var DateRangeWidget = $n2.Class({
 			this.endDatePicker.datepicker('setDate', this.endDate);
 		}
 
-		// Update date range if start or end date values are initialize
+		// Update date range if start and/or end date values are initialize
 		if (this.startDate) {
 			this._startDateRangeUpdated();
 		}
@@ -463,7 +463,7 @@ var DateRangeWidget = $n2.Class({
 				,max: $l.DateTime.fromISO(this.endDate).toMillis()
 				,ongoing: false
 			});
-			
+
 			this.dispatchService.send(DH,{
 				type: this.intervalSetEventName
 				,value: value
@@ -520,7 +520,7 @@ var DateRangeWidget = $n2.Class({
 				,max: $l.DateTime.fromISO(this.endDate).toMillis()
 				,ongoing: false
 			});
-			
+
 			this.dispatchService.send(DH,{
 				type: this.intervalSetEventName
 				,value: value
@@ -533,8 +533,8 @@ var DateRangeWidget = $n2.Class({
 			,endDate: this.endDate
 		});
 	},
-	
-	_handle: function(m, addr, dispatcher){
+
+	_handle: function(m, addr, dispatcher) {
 		var $startInputDate, $endInputDate;
 		if (this.rangeChangeEventName === m.type) {
 			if (m.value) {
@@ -562,7 +562,7 @@ var DateRangeWidget = $n2.Class({
 				$endInputDate.val(this.endDate);
 
 				this.endDatePicker.datepicker('setDate', this.endDate);
-				
+
 				// Update date range button text
 				this._updateDateRangeButtonText();
 
@@ -579,7 +579,7 @@ var DateRangeWidget = $n2.Class({
 	}
 });
 
-//--------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 var TimelineWidget = $n2.Class({
 	
 	dispatchService: null,
@@ -822,7 +822,7 @@ var TimelineWidget = $n2.Class({
 			});
 		};
 	},
-	
+
 	_handle: function(m, addr, dispatcher){
 		if( this.rangeChangeEventName === m.type ){
 			if( m.value ){
@@ -871,7 +871,7 @@ var TimelineWidget = $n2.Class({
 	}
 });
 
-//--------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 function HandleWidgetAvailableRequests(m){
 	if( m.widgetType === 'dateRange' ){
 		if( $.fn.slider ) {
