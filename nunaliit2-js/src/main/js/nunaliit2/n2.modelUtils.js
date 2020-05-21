@@ -497,7 +497,7 @@ var ModelIntersect = $n2.Class({
 	}
 });
 
-/* 
+/*
  * @class
  * A model transform which joins multiple documents of different schemas based
  * on supplied join fields. This transformation functions by copying the copy
@@ -541,13 +541,13 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	updatedMap: null,
 	removedMap: null,
 	docInfosByDocId: null,
-	schemaDocsByDocId: null, 
-	copyToSchemaDocsByDocId: null, 
-	copyFromSchemaDocsByDocId: null, 
+	schemaDocsByDocId: null,
+	copyToSchemaDocsByDocId: null,
+	copyFromSchemaDocsByDocId: null,
 	modelIsLoading: null,
 
 	initialize: function(opts_) {
-		var f, m;
+		var dispatchFn, msg;
 		var opts = $n2.extend({
 			modelId: null,
 			sourceModelId: null,
@@ -587,23 +587,23 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 		// Register to events
 		if (this.dispatchService) {
-			f = function(m, addr, dispatcher) {
+			dispatchFn = function(m, addr, dispatcher) {
 				_this._handle(m, addr, dispatcher);
 			};
 
-			this.dispatchService.register(DH, 'modelGetInfo', f);
-			this.dispatchService.register(DH, 'modelGetState', f);
-			this.dispatchService.register(DH, 'modelStateUpdated', f);
+			this.dispatchService.register(DH, 'modelGetInfo', dispatchFn);
+			this.dispatchService.register(DH, 'modelGetState', dispatchFn);
+			this.dispatchService.register(DH, 'modelStateUpdated', dispatchFn);
 
 			// Initialize state
-			m = {
+			msg = {
 				type: 'modelGetState',
 				modelId: this.sourceModelId
 			};
 
-			this.dispatchService.synchronousCall(DH, m);
-			if (m.state) {
-				this._sourceModelUpdated(m.state);
+			this.dispatchService.synchronousCall(DH, msg);
+			if (msg.state) {
+				this._sourceModelUpdated(msg.state);
 			}
 		}
 
@@ -699,21 +699,8 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 		return modelInfo;
 	},
 
-	_cloneDocument: function(doc) {
-		var key, value;
-		var clone = {};
-
-		for (key in doc) {
-			if (Object.prototype.hasOwnProperty.call(doc,key)) {
-				value = doc[key];
-				clone[key] = value;
-			}
-		}
-		return clone;
-	},
-
 	_sourceModelUpdated: function(sourceState) {
-		var i, e, doc, docId, docInfo, schema;
+		var i, e, doc, docId, docInfo;
 		var added, updated, removed, schema, schemaDocs;
 		var processingRequired = false;
 		this.addedMap = {};
@@ -923,7 +910,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 			}
 
 		} else {
-			// Check final property in object, and handle if its a string, 
+			// Check final property in object, and handle if its a string,
 			// array, or document reference.
 			if (Object.hasOwnProperty.call(obj, firstKey)) {
 				keyValue = obj[firstKey];
@@ -954,7 +941,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 
 	// Get specific key content from copyFrom schema document.
 	_copyKeyContent: function(doc) {
-		var i, key, keyValue, copiedKeys;
+		var i, key, keyValue;
 		var copiedKeysObj = {};
 
 		for (i = 0; i < this.keysToCopy.length; i += 1) {
@@ -972,7 +959,7 @@ var ModelSchemaJoinTransform = $n2.Class('ModelSchemaJoinTransform', {
 	_computeTransform: function(doc) {
 		var i, j, copyToJoinVal;
 		var docId, copyFromDoc, copyFromDocs, copyFromJoinVal;
-		var transformed = this._cloneDocument(doc);
+		var transformed = $n2.deepCopy(doc);
 
 		// Get copy to schema document join value if available
 		copyToJoinVal = this._getKeyValues(doc, this.copyToJoinKey);
