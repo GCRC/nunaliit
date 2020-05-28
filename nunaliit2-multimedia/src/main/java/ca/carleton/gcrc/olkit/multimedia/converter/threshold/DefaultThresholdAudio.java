@@ -5,7 +5,7 @@ import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionThreshold
 public class DefaultThresholdAudio implements MultimediaConversionThreshold {
 
 	protected static final long DEFAULT_MAX_BITRATE = 250000;
-	protected static final String DEFAULT_REQUIRED_AUDIO_ENCODING = "aac";
+	protected static final String DEFAULT_REQUIRED_AUDIO_ENCODING = "mp3";
 
 	@Override
 	public boolean isConversionRequired(String videoFormat, Long videoRate, String audioFormat, Long audioRate,
