@@ -216,14 +216,15 @@ var DateRangeWidget = $n2.Class({
 	},
 
 	_getWidgetOffset: function() {
+		var defaultOffset = {top: 0, left: 0};
 		var $widgetBtn = $('.n2widget_date_range')
 			.find('.n2widget_date_range_button');
-		var offset = $widgetBtn.offset();
+		var offset = $widgetBtn.offset() || defaultOffset;
 
+		// Calculate offset width
 		offset.width = $widgetBtn.width();
-		if (offset) {
-			return offset;
-		}
+
+		return offset;
 	},
 
 	_setWidgetWindowPosition: function() {
