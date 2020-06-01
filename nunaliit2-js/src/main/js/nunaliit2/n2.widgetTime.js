@@ -33,7 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2) {
 "use strict";
 
-var $l;
+var $luxon;
 var _loc = function(str,args) {
 	return $n2.loc(str,'nunaliit2',args);
 };
@@ -87,7 +87,7 @@ function formatDate(date, format){
 
 // Required library: luxon
 if (window.luxon) {
-	$l = window.luxon;
+	$luxon = window.luxon;
 } else {
 	return;
 }
@@ -383,7 +383,7 @@ var DateRangeWidget = $n2.Class({
 		var $startInputDate = $('.n2widget_date_range_window .start_date');
 		if ($startInputDate.val()) {
 			if (this.startDate !== $startInputDate.val()) {
-				d = $l.DateTime.fromISO($startInputDate.val());
+				d = $luxon.DateTime.fromISO($startInputDate.val());
 				if (d.isValid) {
 					// if the date input is valid, update the startDate.
 					$startInputDate.val(d.toFormat("yyyy-MM-dd"));
@@ -417,8 +417,8 @@ var DateRangeWidget = $n2.Class({
 			value = new $n2.date.DateInterval({
 				startDate: this.startDate
 				,endDate: this.endDate
-				,min: $l.DateTime.fromISO(this.startDate).toMillis()
-				,max: $l.DateTime.fromISO(this.endDate).toMillis()
+				,min: $luxon.DateTime.fromISO(this.startDate).toMillis()
+				,max: $luxon.DateTime.fromISO(this.endDate).toMillis()
 				,ongoing: false
 			});
 
@@ -442,7 +442,7 @@ var DateRangeWidget = $n2.Class({
 
 		if ($endInputDate.val()) {
 			if (this.endDate !== $endInputDate.val()) {
-				d = $l.DateTime.fromISO($endInputDate.val());
+				d = $luxon.DateTime.fromISO($endInputDate.val());
 				if (d.isValid) {
 					// if the date input is valid, update the endDate.
 					$endInputDate.val(d.toFormat("yyyy-MM-dd"));
@@ -476,8 +476,8 @@ var DateRangeWidget = $n2.Class({
 			value = new $n2.date.DateInterval({
 				startDate: this.startDate
 				,endDate: this.endDate
-				,min: $l.DateTime.fromISO(this.startDate).toMillis()
-				,max: $l.DateTime.fromISO(this.endDate).toMillis()
+				,min: $luxon.DateTime.fromISO(this.startDate).toMillis()
+				,max: $luxon.DateTime.fromISO(this.endDate).toMillis()
 				,ongoing: false
 			});
 
@@ -507,13 +507,13 @@ var DateRangeWidget = $n2.Class({
 		var startOfDateRange, endOfDateRange;
 		var $startInputDate = $('.n2widget_date_range_window .start_date');
 		var $endInputDate = $('.n2widget_date_range_window .end_date');
-		var startDateMS = $l.DateTime.fromISO($startInputDate.val()).toMillis();
-		var endDateMS = $l.DateTime.fromISO($endInputDate.val()).toMillis();
+		var startDateMS = $luxon.DateTime.fromISO($startInputDate.val()).toMillis();
+		var endDateMS = $luxon.DateTime.fromISO($endInputDate.val()).toMillis();
 
 		// Set start date to range min if input is less than range min.
 		if (this.rangeMin
 			&& this.rangeMin > startDateMS) {
-			startOfDateRange = $l.DateTime.fromMillis(this.rangeMin).toFormat("yyyy-MM-dd");
+			startOfDateRange = $luxon.DateTime.fromMillis(this.rangeMin).toFormat("yyyy-MM-dd");
 			this.startDate = startOfDateRange;
 			$startInputDate.val(startOfDateRange);
 		}
@@ -521,7 +521,7 @@ var DateRangeWidget = $n2.Class({
 		// Set end date to range max if input is more than range max.
 		if (this.rangeMax
 			&& this.rangeMax < endDateMS) {
-			endOfDateRange = $l.DateTime.fromMillis(this.rangeMax).toFormat("yyyy-MM-dd");
+			endOfDateRange = $luxon.DateTime.fromMillis(this.rangeMax).toFormat("yyyy-MM-dd");
 			this.endDate = endOfDateRange;
 			$endInputDate.val(endOfDateRange);
 		}
@@ -550,7 +550,7 @@ var DateRangeWidget = $n2.Class({
 		} else if (this.intervalChangeEventName === msg.type) {
 			if (msg.value) {
 				this.intervalMin = msg.value.min;
-				this.startDate = $l.DateTime.fromMillis(this.intervalMin).toFormat("yyyy-MM-dd");
+				this.startDate = $luxon.DateTime.fromMillis(this.intervalMin).toFormat("yyyy-MM-dd");
 
 				$startInputDate = $('.n2widget_date_range_window .start_date');
 				$startInputDate.val(this.startDate);
@@ -558,7 +558,7 @@ var DateRangeWidget = $n2.Class({
 				this.startDatePicker.datepicker('setDate', this.startDate);
 
 				this.intervalMax = msg.value.max;
-				this.endDate = $l.DateTime.fromMillis(this.intervalMax).toFormat("yyyy-MM-dd");
+				this.endDate = $luxon.DateTime.fromMillis(this.intervalMax).toFormat("yyyy-MM-dd");
 
 				$endInputDate = $('.n2widget_date_range_window .end_date');
 				$endInputDate.val(this.endDate);
