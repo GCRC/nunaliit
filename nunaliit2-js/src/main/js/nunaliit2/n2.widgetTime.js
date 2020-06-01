@@ -888,13 +888,22 @@ function HandleWidgetAvailableRequests(m){
 
 // --------------------------------------------------------------------------
 function HandleWidgetDisplayRequests(m){
-	var widgetOptions, config, options, optionKeys, containerId, i, key, value;
-	if (m.widgetType === 'dateRange') {
-		widgetOptions = m.widgetOptions;
-		containerId = m.containerId;
-		config = m.config;
-		options = {};
+	var widgetOptions, config, optionKeys, containerId, i, key, value;
+	var options = {};
 
+	if (m.widgetOptions) {
+		widgetOptions = m.widgetOptions;
+	}
+
+	if (m.containerId) {
+		containerId = m.containerId;
+	}
+
+	if (m.config) {
+		config = m.config;
+	}
+
+	if (m.widgetType === 'dateRange') {
 		if (widgetOptions) {
 			optionKeys = Object.keys(widgetOptions);
 
@@ -915,11 +924,6 @@ function HandleWidgetDisplayRequests(m){
 		new DateRangeWidget(options);
 
 	} else if (m.widgetType === 'timeline') {
-		widgetOptions = m.widgetOptions;
-		containerId = m.containerId;
-		config = m.config;
-		options = {};
-		
 		if (widgetOptions) {
 			for (key in widgetOptions) {
 				value = widgetOptions[key];
