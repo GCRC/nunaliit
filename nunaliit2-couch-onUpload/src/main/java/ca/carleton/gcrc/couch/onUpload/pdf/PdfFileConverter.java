@@ -164,8 +164,8 @@ public class PdfFileConverter implements FileConversionPlugin {
 			pdfbox.createPdfThumbnail(
 					pdfInfo, 
 					thumbnailFile, 
-					MultimediaConfiguration.IMAGE_THUMB_WIDTH, 
-					MultimediaConfiguration.IMAGE_THUMB_HEIGHT
+					MultimediaConfiguration.getImageThumbWidth(),
+					MultimediaConfiguration.getImageThumbHeight()
 				);
 
 			// Get information about thumbnail

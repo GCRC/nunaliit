@@ -152,14 +152,22 @@ POSSIBILITY OF SUCH DAMAGE.
 				if( style.label ){
 					var effectiveLabel = _loc( style.label );
 					var labelInfo = stylesByLabel[effectiveLabel];
-					if( !labelInfo ){
+					if (!labelInfo) {
 						labelInfo = {};
 						stylesByLabel[effectiveLabel] = labelInfo;
-					};
+					}
 					labelInfo[styleId] = styleInfo;
-					atLeastOne = true;
-				};
-			};
+
+					if (this.labels) {
+						for (var i in this.labels) {
+							if (_loc(effectiveLabel) === _loc(this.labels[i])) {
+								atLeastOne = true;
+								break;
+							}
+						}
+					}
+				}
+			}
 
 			// If at least one style with label, then must display
 			if( atLeastOne ){
@@ -717,14 +725,22 @@ POSSIBILITY OF SUCH DAMAGE.
 				var atLeastOne = false;
 
 				for(var i=0,e=_this.completeChoices.length; i < e; i++){
-						var labelId = _this.completeChoices[i].labelId;
-						var effectiveLabel = _loc( _this.completeChoices[i].label );
-						stylesByLabel[labelId] = {
-								effectivelabel: effectiveLabel
-								,labelId : labelId
-						};
-						atLeastOne = true;
-				};
+					var labelId = _this.completeChoices[i].labelId;
+					var effectiveLabel = _loc( _this.completeChoices[i].label );
+					stylesByLabel[labelId] = {
+							effectivelabel: effectiveLabel
+							,labelId : labelId
+					};
+					
+					if (this.labels) {
+						for (var j in this.labels) {
+							if (_loc(effectiveLabel) === _loc(this.labels[j])) {
+								atLeastOne = true;
+								break;
+							}
+						}
+					}
+				}
 
 				// If at least one style with label, then must display
 				if( atLeastOne ){

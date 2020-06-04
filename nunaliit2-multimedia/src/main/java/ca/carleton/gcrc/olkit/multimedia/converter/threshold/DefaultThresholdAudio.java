@@ -4,27 +4,22 @@ import ca.carleton.gcrc.olkit.multimedia.converter.MultimediaConversionThreshold
 
 public class DefaultThresholdAudio implements MultimediaConversionThreshold {
 
+	protected static final long DEFAULT_MAX_BITRATE = 250000;
+	protected static final String DEFAULT_REQUIRED_AUDIO_ENCODING = "mp3";
+
 	@Override
-	public boolean isConversionRequired(
-			String videoFormat
-			,Long videoRate
-			,String audioFormat
-			,Long audioRate
-			,Long imageWidth
-			,Long imageHeight
-			) {
+	public boolean isConversionRequired(String videoFormat, Long videoRate, String audioFormat, Long audioRate,
+										Long imageWidth, Long imageHeight, Long fileSizeMb) {
+		boolean isConversionRequired = false;
 
-		if( null == audioRate ) {
-			return true;
-		} else if( audioRate.longValue() > 250000 ) {
-			return true;
-		}
-		if( false == "mp3".equals( audioFormat ) ) {
-			return true;
+		if (audioRate == null
+				|| audioRate > DEFAULT_MAX_BITRATE
+				|| !DEFAULT_REQUIRED_AUDIO_ENCODING.equalsIgnoreCase(audioFormat)
+		) {
+			isConversionRequired = true;
 		}
 
-		return false;
-
+		return isConversionRequired;
 	}
 
 	@Override
