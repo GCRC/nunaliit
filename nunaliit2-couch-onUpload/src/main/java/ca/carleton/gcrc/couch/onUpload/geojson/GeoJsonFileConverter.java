@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.io.StringWriter;
 import java.util.List;
 
+import org.apache.tika.mime.MediaType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -36,17 +37,27 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 
 	@Override
 	public boolean handlesFileClass(String fileClass, String work) {
-		
-		if( "geojson".equalsIgnoreCase(fileClass) ) {
-			if( work == FileConversionPlugin.WORK_ANALYZE ) {
-				return true;
-			}
-			if( work == FileConversionPlugin.WORK_APPROVE ) {
+
+		if ("geojson".equalsIgnoreCase(fileClass)) {
+			if (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
+					|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)) {
 				return true;
 			}
 		}
 		
 		return false;
+	}
+
+	@Override
+	public boolean handlesWorkType(MediaType mediaType, String work) {
+		boolean handlesWorkType = false;
+
+		if (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
+				|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)) {
+			handlesWorkType = true;
+		}
+
+		return handlesWorkType;
 	}
 
 	@Override

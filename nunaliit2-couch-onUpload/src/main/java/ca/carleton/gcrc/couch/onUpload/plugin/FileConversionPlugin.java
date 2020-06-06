@@ -3,6 +3,7 @@ package ca.carleton.gcrc.couch.onUpload.plugin;
 import java.io.File;
 
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
+import org.apache.tika.mime.MediaType;
 
 public interface FileConversionPlugin {
 	
@@ -18,9 +19,11 @@ public interface FileConversionPlugin {
 	String getName();
 	
 	FileConversionMetaData getFileMetaData(File file);
-	
+
 	boolean handlesFileClass(String fileClass, String work);
-	
+
+	boolean handlesWorkType(MediaType mediaType, String work);
+
 	void performWork(String work, AttachmentDescriptor attachmentDescriptor) throws Exception;
 	
 //	void analyzeFile(FileConversionContext conversionContext) throws Exception;
