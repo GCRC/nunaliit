@@ -54,7 +54,7 @@
 				"@type": "Place"
 			},
 			"@context": {
-				"@vocab": "http://schema.org"
+				"@vocab": "http://schema.org/"
 			},
 			"url": ""
 		}
