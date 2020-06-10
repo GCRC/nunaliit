@@ -3,6 +3,7 @@ package ca.carleton.gcrc.olkit.multimedia.utils;
 import java.util.Enumeration;
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,18 +151,23 @@ public class MultimediaConfiguration
 			videoThumbWidth = Integer.parseInt(thumbnailVideoWidth);
 		}
 
-		// Conversion thresholds
 		String imageThresholdString = props.getProperty("multimedia.conversion.image.threshold", null);
-		MultimediaConverterImpl.imageConversionThreshold = parseImageThreshold(imageThresholdString);
-		logger.info("Image Conversion Threshold: {}", MultimediaConverterImpl.imageConversionThreshold);
+		if (StringUtils.isNotBlank(imageThresholdString)) {
+			MultimediaConverterImpl.imageConversionThreshold = parseImageThreshold(imageThresholdString);
+			logger.info("Image Conversion Threshold: {}", MultimediaConverterImpl.imageConversionThreshold);
+		}
 
 		String audioThresholdString = props.getProperty("multimedia.conversion.audio.threshold", null);
-		MultimediaConverterImpl.audioConversionThreshold = parseAudioThreshold(audioThresholdString);
-		logger.info("Audio Conversion Threshold: {}", MultimediaConverterImpl.audioConversionThreshold);
+		if (StringUtils.isNotBlank(audioThresholdString)) {
+			MultimediaConverterImpl.audioConversionThreshold = parseAudioThreshold(audioThresholdString);
+			logger.info("Audio Conversion Threshold: {}", MultimediaConverterImpl.audioConversionThreshold);
+		}
 
 		String videoThresholdString = props.getProperty("multimedia.conversion.video.threshold", null);
-		MultimediaConverterImpl.videoConversionThreshold = parseVideoThreshold(videoThresholdString);
-		logger.info("Video Conversion Threshold: {}", MultimediaConverterImpl.videoConversionThreshold);
+		if (StringUtils.isNotBlank(videoThresholdString)) {
+			MultimediaConverterImpl.videoConversionThreshold = parseVideoThreshold(videoThresholdString);
+			logger.info("Video Conversion Threshold: {}", MultimediaConverterImpl.videoConversionThreshold);
+		}
 
 		// File known strings
 		Enumeration<?> it = props.propertyNames();
