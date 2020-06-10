@@ -7,6 +7,10 @@ import java.util.regex.Pattern;
 
 public class MimeUtils {
 	
+	public static final String TYPE_AUDIO = "audio";
+	public static final String TYPE_VIDEO = "video";
+	public static final String TYPE_IMAGE = "image";
+
 	public enum MultimediaClass {
 		AUDIO("audio")
 		,VIDEO("video")

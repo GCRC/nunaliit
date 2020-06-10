@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.tika.mime.MediaType;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -35,15 +36,25 @@ public class GpxFileConverter implements FileConversionPlugin {
 	public boolean handlesFileClass(String fileClass, String work) {
 		
 		if( "gpx".equalsIgnoreCase(fileClass) ) {
-			if( work == FileConversionPlugin.WORK_ANALYZE ) {
-				return true;
-			}
-			if( work == FileConversionPlugin.WORK_APPROVE ) {
+			if (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
+					|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)) {
 				return true;
 			}
 		}
 		
 		return false;
+	}
+
+	@Override
+	public boolean handlesWorkType(MediaType mediaType, String work) {
+		boolean handlesWorkType = false;
+
+		if (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
+				|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)) {
+			handlesWorkType = true;
+		}
+
+		return handlesWorkType;
 	}
 
 	@Override

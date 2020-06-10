@@ -654,17 +654,15 @@ public class ConfigServlet extends JsonServlet {
 			uploadWorker.setDocumentDbDesign(couchDd);
 			uploadWorker.setMediaDir(repositoryDir);
 			uploadWorker.setMailNotification(mailNotification);
+			props.setProperty("atlas.name", atlasProperties.getAtlasName());
+			uploadWorker.setUploadProperties(props);
 			{
 				MultimediaFileConverter mmPlugin = new MultimediaFileConverter(props);
 				mmPlugin.setAtlasName(atlasProperties.getAtlasName());
-				uploadWorker.addConversionPlugin( mmPlugin );
 			}
-			uploadWorker.addConversionPlugin( new GpxFileConverter() );
-			uploadWorker.addConversionPlugin( new GeoJsonFileConverter() );
 			{
 				PdfFileConverter pdfPlugin = new PdfFileConverter(props);
 				pdfPlugin.setAtlasName(atlasProperties.getAtlasName());
-				uploadWorker.addConversionPlugin( pdfPlugin );
 			}
 			if( null != submissionDb ){
 				CouchDesignDocument submissionDbDesign = submissionDb.getDesignDocument("submission");

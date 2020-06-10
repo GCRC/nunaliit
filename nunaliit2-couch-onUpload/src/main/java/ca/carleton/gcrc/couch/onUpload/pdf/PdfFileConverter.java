@@ -1,11 +1,5 @@
 package ca.carleton.gcrc.couch.onUpload.pdf;
 
-import java.io.File;
-import java.util.Properties;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.onUpload.UploadConstants;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
@@ -25,6 +19,12 @@ import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagick;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickInfo;
 import ca.carleton.gcrc.olkit.multimedia.imageMagick.ImageMagickProcessor;
 import ca.carleton.gcrc.olkit.multimedia.utils.MultimediaConfiguration;
+import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.Properties;
 
 public class PdfFileConverter implements FileConversionPlugin {
 
@@ -66,17 +66,29 @@ public class PdfFileConverter implements FileConversionPlugin {
 
 	@Override
 	public boolean handlesFileClass(String fileClass, String work) {
-		
-		if( "pdf".equalsIgnoreCase(fileClass) ) {
-			if( work == FileConversionPlugin.WORK_ANALYZE ) {
-				return true;
-			}
-			if( work == FileConversionPlugin.WORK_APPROVE ) {
-				return true;
-			}
+		boolean handlesWorkType = false;
+
+		if ("pdf".equalsIgnoreCase(fileClass)
+				&& (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
+				|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)
+				|| FileConversionPlugin.WORK_ORIENT.equalsIgnoreCase(work))) {
+			handlesWorkType = true;
 		}
 		
-		return false;
+		return handlesWorkType;
+	}
+
+	@Override
+	public boolean handlesWorkType(MediaType mediaType, String work) {
+		boolean handlesWorkType = false;
+
+		if (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
+				|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)
+				|| FileConversionPlugin.WORK_ORIENT.equalsIgnoreCase(work)) {
+			handlesWorkType = true;
+		}
+
+		return handlesWorkType;
 	}
 
 	@Override
@@ -110,10 +122,11 @@ public class PdfFileConverter implements FileConversionPlugin {
 		
 		logger.debug("PDF start perform work: "+work);
 		
-		if( work == FileConversionPlugin.WORK_ANALYZE ) {
+		if(FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work) ) {
 			analyzeFile(attDescription);
 		
-		} else if( work == FileConversionPlugin.WORK_APPROVE ) {
+		}
+		else if(FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work) ) {
 			approveFile(attDescription);
 		
 		} else {
@@ -125,6 +138,7 @@ public class PdfFileConverter implements FileConversionPlugin {
 
 	public void analyzeFile(AttachmentDescriptor attDescription) throws Exception {
 		DocumentDescriptor docDescriptor = attDescription.getDocumentDescriptor();
+		FileConversionContext conversionContext = attDescription.getContext();
 		OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
 		CouchAuthenticationContext submitter = attDescription.getSubmitter();
 		
@@ -209,6 +223,9 @@ public class PdfFileConverter implements FileConversionPlugin {
 					attDescription.getAttachmentName(),
 					thumbnailExtension
 				);
+
+			conversionContext.uploadFile(thumbnailAttachmentName, thumbFile, "image/jpeg");
+
 			AttachmentDescriptor thumbnailObj = docDescriptor.getAttachmentDescription(thumbnailAttachmentName);
 
 			if( CouchNunaliitUtils.hasVetterRole(submitter, atlasName) ) {
