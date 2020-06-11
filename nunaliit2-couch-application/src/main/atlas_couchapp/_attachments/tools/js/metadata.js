@@ -35,7 +35,7 @@
         '          "@type": "Place"\n' +
         '        },\n' +
         '        "@context": {\n' +
-        '          "@vocab": "http://schema.org"\n' +
+        '          "@vocab": "http://schema.org/"\n' +
         '        },\n' +
         '        "url": ""\n' +
         '      }');
