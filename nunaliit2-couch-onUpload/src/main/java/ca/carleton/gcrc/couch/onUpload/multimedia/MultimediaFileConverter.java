@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -173,43 +174,43 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 	public boolean handlesFileClass(String fileClass, String work) {
 			
 		if( MultimediaClass.AUDIO.getValue().equals(fileClass) ) {
-			if( work == FileConversionPlugin.WORK_ANALYZE ) {
+			if( FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_APPROVE ) {
+			} else if( FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work) ) {
 				return true;
 			}
 		}
 
 		if( MultimediaClass.VIDEO.getValue().equals(fileClass) ) {
-			if( work == FileConversionPlugin.WORK_ANALYZE ) {
+			if( FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_APPROVE ) {
+			} else if( FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_ROTATE_CW ) {
+			} else if( FileConversionPlugin.WORK_ROTATE_CW.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_ROTATE_CCW ) {
+			} else if( FileConversionPlugin.WORK_ROTATE_CCW.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_ROTATE_180 ) {
+			} else if( FileConversionPlugin.WORK_ROTATE_180.equalsIgnoreCase(work) ) {
 				return true;
 			}
 		}
 
 		if( MultimediaClass.IMAGE.getValue().equals(fileClass) ) {
-			if( work == FileConversionPlugin.WORK_ANALYZE ) {
+			if( FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_APPROVE ) {
+			} else if( FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_ORIENT ) {
+			} else if( FileConversionPlugin.WORK_ORIENT.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_THUMBNAIL ) {
+			} else if( FileConversionPlugin.WORK_THUMBNAIL.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_UPLOAD_ORIGINAL ) {
+			} else if( FileConversionPlugin.WORK_UPLOAD_ORIGINAL.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_ROTATE_CW ) {
+			} else if( FileConversionPlugin.WORK_ROTATE_CW.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_ROTATE_CCW ) {
+			} else if( FileConversionPlugin.WORK_ROTATE_CCW.equalsIgnoreCase(work) ) {
 				return true;
-			} else if( work == FileConversionPlugin.WORK_ROTATE_180 ) {
+			} else if( FileConversionPlugin.WORK_ROTATE_180.equalsIgnoreCase(work) ) {
 				return true;
 			}
 		}
@@ -218,22 +219,65 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 	}
 
 	@Override
+	public boolean handlesWorkType(MediaType mediaType, String work) {
+		boolean handlesWorkType = false;
+
+		// video | audio | image (from mime type)
+		switch (mediaType.getType()) {
+			case MimeUtils.TYPE_AUDIO:
+				if (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)) {
+					handlesWorkType = true;
+				}
+				break;
+
+			case MimeUtils.TYPE_VIDEO:
+				if (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_ROTATE_CW.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_ROTATE_CCW.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_ROTATE_180.equalsIgnoreCase(work)) {
+					handlesWorkType = true;
+				}
+				break;
+
+			case MimeUtils.TYPE_IMAGE:
+				if (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_ORIENT.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_THUMBNAIL.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_UPLOAD_ORIGINAL.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_ROTATE_CW.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_ROTATE_CCW.equalsIgnoreCase(work)
+						|| FileConversionPlugin.WORK_ROTATE_180.equalsIgnoreCase(work)) {
+					handlesWorkType = true;
+				}
+				break;
+
+			default:
+				break;
+		}
+
+		return handlesWorkType;
+	}
+
+	@Override
 	public void performWork(
 		String work
 		,AttachmentDescriptor attDescription
 		) throws Exception {
 
-		if( work == FileConversionPlugin.WORK_ANALYZE ) {
+		if( FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work) ) {
 			analyzeFile(attDescription);
-		} else if( work == FileConversionPlugin.WORK_APPROVE ) {
+		} else if( FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work) ) {
 			approveFile(attDescription);
-		} else if( work == FileConversionPlugin.WORK_ORIENT ) {
+		} else if( FileConversionPlugin.WORK_ORIENT.equalsIgnoreCase(work) ) {
 			orientImage(attDescription);
-		} else if( work == FileConversionPlugin.WORK_THUMBNAIL ) {
+		} else if( FileConversionPlugin.WORK_THUMBNAIL.equalsIgnoreCase(work) ) {
 			createThumbnail(attDescription);
-		} else if( work == FileConversionPlugin.WORK_UPLOAD_ORIGINAL ) {
+		} else if( FileConversionPlugin.WORK_UPLOAD_ORIGINAL.equalsIgnoreCase(work) ) {
 			uploadOriginalFile(attDescription);
-		} else if( work == FileConversionPlugin.WORK_ROTATE_CW ) {
+		} else if( FileConversionPlugin.WORK_ROTATE_CW.equalsIgnoreCase(work) ) {
 			rotate(work, attDescription);
 		} else {
 			throw new Exception("Plugin does not support work: "+work);
