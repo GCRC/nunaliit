@@ -1,22 +1,11 @@
 package ca.carleton.gcrc.couch.onUpload;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.client.CouchDbChangeListener;
 import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
-import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.client.impl.CouchDbException;
 import ca.carleton.gcrc.couch.onUpload.conversion.AttachmentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
@@ -28,14 +17,26 @@ import ca.carleton.gcrc.couch.onUpload.conversion.WorkDescriptor;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachProcessor;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachProcessorImpl;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
-import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionMetaData;
+import ca.carleton.gcrc.couch.onUpload.parser.ContentTypeDetector;
+import ca.carleton.gcrc.couch.onUpload.parser.FileConverterFactory;
 import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplificationProcessImpl;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifier;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifierDisabled;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifierImpl;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
-import ca.carleton.gcrc.olkit.multimedia.file.SystemFile;
+import org.apache.tika.mime.MediaType;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Vector;
 
 public class UploadWorkerThread extends Thread implements CouchDbChangeListener {
 	
@@ -53,26 +54,29 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	private File mediaDir;
 	private MailNotification mailNotification;
 	private DocumentsInError docsInError = new DocumentsInError();
-	private List<FileConversionPlugin> fileConverters;
 	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
 	private GeometrySimplifier simplifier = null;
 	private InReachProcessor inReachProcessor = null;
+	private Properties uploadProperties;
+	private FileConverterFactory fileConverterFactory;
 	
 	protected UploadWorkerThread(
-		UploadWorkerSettings settings
-		,CouchDesignDocument documentDbDesign
-		,CouchDesignDocument submissionDbDesign
-		,File mediaDir
-		,MailNotification mailNotification
-		,List<FileConversionPlugin> fileConverters
-		) throws Exception {
+			UploadWorkerSettings settings
+		, CouchDesignDocument documentDbDesign
+		, CouchDesignDocument submissionDbDesign
+		, File mediaDir
+		, MailNotification mailNotification
+		, Properties uploadProperties
+			) throws Exception {
 		this.settings = settings;
 		this.documentDbDesign = documentDbDesign;
 		this.submissionDbDesign = submissionDbDesign;
 		this.mediaDir = mediaDir;
 		this.mailNotification = mailNotification;
-		this.fileConverters = fileConverters;
-		
+		this.uploadProperties = uploadProperties;
+
+		fileConverterFactory = new FileConverterFactory(this.uploadProperties);
+
 		noWorkDelayInMs = DELAY_NO_WORK_POLLING;
 		CouchDbChangeMonitor changeMonitor = documentDbDesign.getDatabase().getChangeMonitor();
 		if( null != changeMonitor ){
@@ -396,43 +400,17 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				if( false == file.exists() || false == file.isFile() ){
 					throw new Exception("Uploaded media file does not exist: "+file.getAbsolutePath());
 				}
-			};
+			}
 
 			// Set file size
 			long fileSize = file.length();
 			originalObj.setSize(fileSize);
 
-			// Mime type, encoding type and file class
-			boolean pluginFound = false;
-			String mimeType = null;
-			String mimeEncoding = null;
-			String fileClass = null;
-			for(FileConversionPlugin fcp : this.fileConverters) {
-				FileConversionMetaData md = fcp.getFileMetaData(file);
-				if( md.isFileConvertable() ) {
-					mimeType = md.getMimeType();
-					fileClass = md.getFileClass();
-					mimeEncoding = md.getMimeEncoding();
-	
-					pluginFound = true;
-					break;
-				}
-			}
-			if( false == pluginFound ) {
-				logger.info("No plugin found for uploaded file");
-				
-				SystemFile sf = SystemFile.getSystemFile(file);
-				mimeType = sf.getMimeType();
-				mimeEncoding = sf.getMimeEncoding();
-			}
-			if( null != mimeType ) {
-				originalObj.setContentType(mimeType);
-			}
-			if( null != mimeEncoding ) {
-				originalObj.setEncodingType(mimeEncoding);
-			}
-			if( null != fileClass ){
-				attDescription.setFileClass(fileClass);
+			MediaType mediaType = ContentTypeDetector.detectMimeType(file);
+			if (mediaType != null) {
+				originalObj.setContentType(mediaType.toString());
+
+				attDescription.setFileClass(ContentTypeDetector.detectNunaliitFileClass(file));
 			}
 
 			// Update status
@@ -447,8 +425,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	 * node, such as a mobile device. In that case, the media is marked
 	 * as 'submitted_inline' since the media is already attached to the document
 	 * but as not yet gone through the process that the robot implements.
-	 * @param docId
-	 * @param attachmentName
+	 * @param work
 	 * @throws Exception
 	 */
 	private void performSubmittedInlineWork(Work work) throws Exception {
@@ -528,15 +505,21 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
-			for(FileConversionPlugin fcp : this.fileConverters) {
-				if( fcp.handlesFileClass(fileClass, FileConversionPlugin.WORK_ANALYZE) ) {
-					fcp.performWork(FileConversionPlugin.WORK_ANALYZE, attDescription);
-					pluginFound = true;
-					break;
-				}
+
+			File attFile = attDescription.getOriginalFileDescription().getMediaFile();
+			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(attFile);
+			MediaType mediaType = ContentTypeDetector.detectMimeType(attFile);
+			if (plugin != null && plugin.handlesWorkType(mediaType, FileConversionPlugin.WORK_ANALYZE)) {
+				pluginFound = true;
+				plugin.performWork(FileConversionPlugin.WORK_ANALYZE, attDescription);
 			}
+
 			if( false == pluginFound ) {
-				logger.info("No plugin found to analyze file class: "+fileClass);
+				String mediaTypeStr = "unknown mime type";
+				if (mediaType != null) {
+					mediaTypeStr = mediaType.toString();
+				}
+				logger.info("No plugin found to analyze file class: {} ({})", fileClass, mediaTypeStr);
 				
 				// By default, original file is used
 				attDescription.setOriginalUpload(true);
@@ -586,15 +569,21 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		} else {
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
-			for(FileConversionPlugin fcp : this.fileConverters) {
-				if( fcp.handlesFileClass(fileClass, FileConversionPlugin.WORK_APPROVE) ) {
-					fcp.performWork(FileConversionPlugin.WORK_APPROVE, attDescription);
-					pluginFound = true;
-					break;
-				}
+
+			File attFile = attDescription.getOriginalFileDescription().getMediaFile();
+			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(attFile);
+			MediaType mediaType = ContentTypeDetector.detectMimeType(attFile);
+			if (plugin != null && plugin.handlesWorkType(mediaType, FileConversionPlugin.WORK_APPROVE)) {
+				pluginFound = true;
+				plugin.performWork(FileConversionPlugin.WORK_APPROVE, attDescription);
 			}
+
 			if( false == pluginFound ) {
-				logger.info("No plugin found for uploaded file class: "+fileClass);
+				String mediaTypeStr = "unknown mime type";
+				if (mediaType != null) {
+					mediaTypeStr = mediaType.toString();
+				}
+				logger.info("No plugin found for uploaded file class: {} ({})", fileClass, mediaTypeStr);
 				
 				String mimeType = attDescription.getContentType();
 				if( null == mimeType ) {
@@ -643,15 +632,16 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			} else {
 				boolean pluginFound = false;
 				String fileClass = attDescription.getFileClass();
-				for(FileConversionPlugin fcp : this.fileConverters) {
-					if( fcp.handlesFileClass(fileClass, FileConversionPlugin.WORK_ORIENT) ) {
-						fcp.performWork(FileConversionPlugin.WORK_ORIENT, attDescription);
-						pluginFound = true;
-						break;
-					}
+
+				// At this point, the Nunaliit custom fileClass should be set properly, no need to process the file.
+				FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
+				if (plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_ORIENT)) {
+					plugin.performWork(FileConversionPlugin.WORK_ORIENT, attDescription);
+					pluginFound = true;
 				}
+
 				if( false == pluginFound ) {
-					logger.info("No plugin found for uploaded file class: "+fileClass);
+					logger.info("No plugin found for uploaded file class: {}", fileClass);
 				}
 	
 				// Update status
@@ -703,17 +693,23 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 
 				boolean pluginFound = false;
 				String fileClass = attDescription.getFileClass();
-				for(FileConversionPlugin fcp : this.fileConverters) {
-					if( fcp.handlesFileClass(fileClass, FileConversionPlugin.WORK_THUMBNAIL) ) {
-						fcp.performWork(FileConversionPlugin.WORK_THUMBNAIL, attDescription);
-						pluginFound = true;
-						
-						logger.info("Created thumbnail");
-						break;
-					}
+
+				File attFile = attDescription.getOriginalFileDescription().getMediaFile();
+				FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(attFile);
+				MediaType mediaType = ContentTypeDetector.detectMimeType(attFile);
+				if (plugin != null && plugin.handlesWorkType(mediaType, FileConversionPlugin.WORK_THUMBNAIL)) {
+					pluginFound = true;
+					plugin.performWork(FileConversionPlugin.WORK_THUMBNAIL, attDescription);
+
+					logger.info("Created thumbnail");
 				}
+
 				if( false == pluginFound ) {
-					logger.info("No plugin found for thumbnail creation, file class: "+fileClass);
+					String mediaTypeStr = "unknown mime type";
+					if (mediaType != null) {
+						mediaTypeStr = mediaType.toString();
+					}
+					logger.info("No plugin found for thumbnail creation, file class: {} ({})", fileClass, mediaTypeStr);
 				}
 
 				// Update status
@@ -746,17 +742,25 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
-			for(FileConversionPlugin fcp : this.fileConverters) {
-				if( fcp.handlesFileClass(fileClass, FileConversionPlugin.WORK_UPLOAD_ORIGINAL) ) {
-					fcp.performWork(FileConversionPlugin.WORK_UPLOAD_ORIGINAL, attDescription);
-					pluginFound = true;
-					
-					logger.info("Original file uploaded");
-					break;
-				}
+
+			File attFile = attDescription.getOriginalFileDescription().getMediaFile();
+			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(attFile);
+			MediaType mediaType = ContentTypeDetector.detectMimeType(attFile);
+			if (plugin != null && plugin.handlesWorkType(mediaType, FileConversionPlugin.WORK_UPLOAD_ORIGINAL)) {
+				pluginFound = true;
+				plugin.performWork(FileConversionPlugin.WORK_UPLOAD_ORIGINAL, attDescription);
+
+				logger.info("Original file uploaded");
 			}
+
 			if( false == pluginFound ) {
-				workDescription.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE, "No plugin found for thumbnail creation, file class: "+fileClass);
+				String mediaTypeStr = "unknown mime type";
+				if (mediaType != null) {
+					mediaTypeStr = mediaType.toString();
+				}
+				workDescription.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE,
+						String.format("No plugin found for thumbnail creation, file class: %s (%s)", fileClass,
+								mediaTypeStr));
 			}
 
 			// Update status
@@ -788,17 +792,24 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
-			for(FileConversionPlugin fcp : this.fileConverters) {
-				if( fcp.handlesFileClass(fileClass, workType) ) {
-					fcp.performWork(workType, attDescription);
-					pluginFound = true;
-					
-					logger.info("Rotation work complete: "+workType);
-					break;
-				}
+
+			File attFile = attDescription.getOriginalFileDescription().getMediaFile();
+			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(attFile);
+			MediaType mediaType = ContentTypeDetector.detectMimeType(attFile);
+			if (plugin != null && plugin.handlesWorkType(mediaType, workType)) {
+				pluginFound = true;
+				plugin.performWork(workType, attDescription);
+
+				logger.info("Rotation work complete: "+workType);
 			}
+
 			if( false == pluginFound ) {
-				workDescription.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE, "No plugin found for thumbnail creation, file class: "+fileClass);
+				String mediaTypeStr = "unknown mime type";
+				if (mediaType != null) {
+					mediaTypeStr = mediaType.toString();
+				}
+				workDescription.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE,
+						String.format("No plugin found for thumbnail creation, file class: %s (%s)", fileClass, mediaTypeStr));
 			}
 
 			// Update status
@@ -825,7 +836,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		try {
 //			String title = "Vetting Request";
 //			String description = "A file has been submitted for approval and requires your vetting action.";
-			
+
 			mailNotification.uploadNotification(docId, attachmentName);
 			
 		} catch(Exception e) {
@@ -968,7 +979,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				if( key.length() > 1 ){
 					uploadId = key.getString(1);
 				}
-			};
+			}
 			
 			if( UploadConstants.UPLOAD_WORK_UPLOADED_FILE.equals(state) ) {
 				rowsByUploadId.put(uploadId, row);
@@ -1050,5 +1061,5 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 		
 		return errors;
-	};
+	}
 }

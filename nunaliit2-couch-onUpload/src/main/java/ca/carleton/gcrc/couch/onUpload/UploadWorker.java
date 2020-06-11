@@ -1,13 +1,11 @@
 package ca.carleton.gcrc.couch.onUpload;
 
-import java.io.File;
-import java.util.List;
-import java.util.Vector;
-
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotification;
 import ca.carleton.gcrc.couch.onUpload.mail.MailNotificationNull;
-import ca.carleton.gcrc.couch.onUpload.plugin.FileConversionPlugin;
+
+import java.io.File;
+import java.util.Properties;
 
 public class UploadWorker {
 
@@ -17,8 +15,7 @@ public class UploadWorker {
 	private File mediaDir = null;
 	private UploadWorkerThread workerThread = null;
 	private MailNotification mailNotification = new MailNotificationNull();
-	private List<FileConversionPlugin> fileConverters = new Vector<FileConversionPlugin>();
-	
+	private Properties uploadProperties;
 
 	public UploadWorker(UploadWorkerSettings settings) {
 		this.settings = settings;
@@ -55,9 +52,9 @@ public class UploadWorker {
 	public void setMailNotification(MailNotification mailNotification) {
 		this.mailNotification = mailNotification;
 	}
-	
-	public void addConversionPlugin(FileConversionPlugin plugin) {
-		fileConverters.add(plugin);
+
+	public void setUploadProperties(Properties uploadProperties) {
+		this.uploadProperties = uploadProperties;
 	}
 
 	synchronized public void start() throws Exception {
@@ -80,8 +77,7 @@ public class UploadWorker {
 				,submissionDbDesign
 				,mediaDir
 				,mailNotification
-				,fileConverters
-				);
+				,uploadProperties);
 		workerThread.start();
 	}
 	

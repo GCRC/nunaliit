@@ -1,0 +1,155 @@
+{
+  "@context": "http://schema.org/",
+  "@type": "Dataset",
+  "identifier": "https://doi.org/10.5885/45648CE-1A9AB63DFF91440B",
+  "url": "http://www.cen.ulaval.ca/nordicanad/dpage.aspx?doi=10.5885/45648CE-1A9AB63DFF91440B",
+  "isAccessibleForFree": true,
+  "name": "Dynamics of ice cover over a far northern lake : Direct observations of Ward Hunt Lake, Canadian High Arctic, by automated camera.",
+  "alternateName": "Dynamique du couvert de glace d’un lac dans l'extrême nord : Observations directes du lac Ward Hunt, haut arctique canadien, par caméra automatisée.",
+  "description": "Long-term monitoring of lakes and fjords on the northern coast of Ellesmere Island, Nunavut, provides information on the effects of climate change on these ecosystems and their seasonal and interannual dynamics.  Lake ice cover is a sentinel variable with controlling effects on lake ecosystems, and it is especially sensitive to climate change. This dataset of ice imagery for Ward Hunt Lake (Ward Hunt Island) covers the period 2016-2018 and is a contribution to the NEIGE program (Northern Ellesmere Island in the Global Environment). Weather-resistant time-lapse cameras were installed on metal supports (rods) overlooking the lake in order to observe and document changes in the lake (ice and snow cover, water level) and its watershed (snow, vegetation, ground conditions, wildlife).  The dataset has been separated into seasonal folders to facilitate downloading; note that there was a change of  camera model and repositioning in 2017.",
+  "datePublished": "2020-04-15",
+  "dateModified": "2020-04-15",
+  "version": "1.0",
+  "keywords": "Ward Hunt Island,Ward Hunt Island,haut arctique,high Arctic,glace de lac,lake ice,changement climatique,climate change,Tuvaijuittuq,Tuvaijuittuq,Quttinirpaaq,Quttinirpaaq,neige,snow,lacs,lakes,cryosphère,cryosphere,désert polaire,polar desert",
+  "citation": "NEIGE 2020. Dynamics of ice cover over a far northern lake : Direct observations of Ward Hunt Lake, Canadian High Arctic, by automated camera., v. 1.0 (2016-2018). Nordicana D74, doi: 10.5885/45648CE-1A9AB63DFF91440B.",
+  "temporalCoverage": "2016-06-25/2018-07-29",
+  "author": [
+    {
+      "@type": "Organization",
+      "name": " NEIGE"
+    }
+  ],
+  "contributor": [
+    {
+      "@type": "Person",
+      "jobTitle": "DataCollector",
+      "name": "Paschale N. Bégin",
+      "givenName": "Paschale N.",
+      "familyName": "Bégin",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Centre d'études nordiques, Université Laval"
+      }
+    },
+    {
+      "@type": "Person",
+      "jobTitle": "Researcher",
+      "name": "Alexander I. Culley",
+      "givenName": "Alexander I.",
+      "familyName": "Culley",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Centre d'études nordiques, Université Laval"
+      }
+    },
+    {
+      "@type": "Person",
+      "jobTitle": "Researcher",
+      "name": "Daniel Fortier",
+      "givenName": "Daniel ",
+      "familyName": "Fortier",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Centre d'études nordiques, Université de Montréal"
+      }
+    },
+    {
+      "@type": "Person",
+      "jobTitle": "Researcher",
+      "name": "Sophie Larochelle",
+      "givenName": "Sophie ",
+      "familyName": "Larochelle",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Centre d'optique, photonique et laser,  Université Laval"
+      }
+    },
+    {
+      "@type": "Person",
+      "jobTitle": "DataManager",
+      "name": "Alex Matveev",
+      "givenName": "Alex ",
+      "familyName": "Matveev",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Centre d'études nordiques, Université Laval"
+      }
+    },
+    {
+      "@type": "Person",
+      "jobTitle": "DataCollector",
+      "name": "Michel Paquette",
+      "givenName": "Michel ",
+      "familyName": "Paquette",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Centre d'études nordiques, Université de Montréal"
+      }
+    },
+    {
+      "@type": "Person",
+      "jobTitle": "DataCollector",
+      "name": "Denis Sarrazin",
+      "givenName": "Denis ",
+      "familyName": "Sarrazin",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Centre d'études nordiques, Université Laval"
+      }
+    },
+    {
+      "@type": "Person",
+      "jobTitle": "ProjectLeader",
+      "name": "Warwick F. Vincent",
+      "givenName": "Warwick F.",
+      "familyName": "Vincent",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Centre d'études nordiques, Université Laval"
+      }
+    }
+  ],
+  "variableMeasured": [
+    {
+      "@type": "PropertyValue",
+      "name": "Digitized photographs",
+      "description": "Direct observations from automated cameras.",
+      "unitText": "unitless"
+    }
+  ],
+  "measurementTechnique": [
+    "Appareil photo professionnel Reconyx PC800",
+    "Canon EOS Rebel T6i, Lens Model: EF-S18-55mm f/3.5-5.6 IS STM",
+    "Canon EOS Rebel T6i, Modèle d'objectif: EF-S18-55mm f/3.5-5.6 IS STM",
+    "Reconyx PC800 Professional camera"
+  ],
+  "spatialCoverage": {
+    "geo": [
+      {
+        "@type": "GeoCoordinates",
+        "latitude": "83.0878",
+        "longitude": "-74.1454",
+        "name": "Ward Hunt Lake"
+      },
+      {
+        "@type": "GeoCoordinates",
+        "latitude": "83.0879",
+        "longitude": "-74.213",
+        "name": "Automated camera site"
+      }
+    ],
+    "@type": "Place"
+  },
+  "license": "http://www.cen.ulaval.ca/nordicanad/en_modalite.aspx",
+  "publisher": {
+    "@type": "Organization",
+    "name": "Nordicana D",
+    "url": "http://www.cen.ulaval.ca/nordicanad/en_index.aspx",
+    "logo": "http://www.cen.ulaval.ca/nordicanad/images/logofloconcouleur_75pct_02.png"
+  },
+  "provider": {
+    "@type": "Organization",
+    "name": "Centre d'études Nordiques (CEN)",
+    "url": "http://www.cen.ulaval.ca/"
+  }
+}
