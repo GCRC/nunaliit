@@ -506,20 +506,14 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
 
-			File attFile = attDescription.getOriginalFileDescription().getMediaFile();
-			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(attFile);
-			MediaType mediaType = ContentTypeDetector.detectMimeType(attFile);
-			if (plugin != null && plugin.handlesWorkType(mediaType, FileConversionPlugin.WORK_ANALYZE)) {
+			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
+			if (plugin != null && plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_ANALYZE)) {
 				pluginFound = true;
 				plugin.performWork(FileConversionPlugin.WORK_ANALYZE, attDescription);
 			}
 
 			if( false == pluginFound ) {
-				String mediaTypeStr = "unknown mime type";
-				if (mediaType != null) {
-					mediaTypeStr = mediaType.toString();
-				}
-				logger.info("No plugin found to analyze file class: {} ({})", fileClass, mediaTypeStr);
+				logger.info("No plugin found to analyze file class: {}", fileClass);
 				
 				// By default, original file is used
 				attDescription.setOriginalUpload(true);
@@ -570,20 +564,14 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
 
-			File attFile = attDescription.getOriginalFileDescription().getMediaFile();
-			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(attFile);
-			MediaType mediaType = ContentTypeDetector.detectMimeType(attFile);
-			if (plugin != null && plugin.handlesWorkType(mediaType, FileConversionPlugin.WORK_APPROVE)) {
+			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
+			if (plugin != null && plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_APPROVE)) {
 					pluginFound = true;
 				plugin.performWork(FileConversionPlugin.WORK_APPROVE, attDescription);
 				}
 
 			if( false == pluginFound ) {
-				String mediaTypeStr = "unknown mime type";
-				if (mediaType != null) {
-					mediaTypeStr = mediaType.toString();
-				}
-				logger.info("No plugin found for uploaded file class: {} ({})", fileClass, mediaTypeStr);
+				logger.info("No plugin found for uploaded file class: {}", fileClass);
 				
 				String mimeType = attDescription.getContentType();
 				if( null == mimeType ) {
@@ -633,7 +621,6 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				boolean pluginFound = false;
 				String fileClass = attDescription.getFileClass();
 
-				// At this point, the Nunaliit custom fileClass should be set properly, no need to process the file.
 				FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
 				if (plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_ORIENT)) {
 					plugin.performWork(FileConversionPlugin.WORK_ORIENT, attDescription);
@@ -694,10 +681,8 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				boolean pluginFound = false;
 				String fileClass = attDescription.getFileClass();
 
-				File attFile = attDescription.getOriginalFileDescription().getMediaFile();
-				FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(attFile);
-				MediaType mediaType = ContentTypeDetector.detectMimeType(attFile);
-				if (plugin != null && plugin.handlesWorkType(mediaType, FileConversionPlugin.WORK_THUMBNAIL)) {
+				FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
+				if (plugin != null && plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_THUMBNAIL)) {
 						pluginFound = true;
 					plugin.performWork(FileConversionPlugin.WORK_THUMBNAIL, attDescription);
 
@@ -705,11 +690,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 					}
 
 				if( false == pluginFound ) {
-					String mediaTypeStr = "unknown mime type";
-					if (mediaType != null) {
-						mediaTypeStr = mediaType.toString();
-					}
-					logger.info("No plugin found for thumbnail creation, file class: {} ({})", fileClass, mediaTypeStr);
+					logger.info("No plugin found for thumbnail creation, file class: {}", fileClass);
 				}
 
 				// Update status
@@ -743,10 +724,8 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
 
-			File attFile = attDescription.getOriginalFileDescription().getMediaFile();
-			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(attFile);
-			MediaType mediaType = ContentTypeDetector.detectMimeType(attFile);
-			if (plugin != null && plugin.handlesWorkType(mediaType, FileConversionPlugin.WORK_UPLOAD_ORIGINAL)) {
+			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
+			if (plugin != null && plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_UPLOAD_ORIGINAL)) {
 					pluginFound = true;
 				plugin.performWork(FileConversionPlugin.WORK_UPLOAD_ORIGINAL, attDescription);
 
@@ -754,13 +733,8 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				}
 
 			if( false == pluginFound ) {
-				String mediaTypeStr = "unknown mime type";
-				if (mediaType != null) {
-					mediaTypeStr = mediaType.toString();
-				}
 				workDescription.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE,
-						String.format("No plugin found for thumbnail creation, file class: %s (%s)", fileClass,
-								mediaTypeStr));
+						String.format("No plugin found for thumbnail creation, file class: %s", fileClass));
 			}
 
 			// Update status
@@ -793,10 +767,8 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
 
-			File attFile = attDescription.getOriginalFileDescription().getMediaFile();
-			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(attFile);
-			MediaType mediaType = ContentTypeDetector.detectMimeType(attFile);
-			if (plugin != null && plugin.handlesWorkType(mediaType, workType)) {
+			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
+			if (plugin != null && plugin.handlesFileClass(fileClass, workType)) {
 					pluginFound = true;
 				plugin.performWork(workType, attDescription);
 
@@ -804,12 +776,8 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				}
 
 			if( false == pluginFound ) {
-				String mediaTypeStr = "unknown mime type";
-				if (mediaType != null) {
-					mediaTypeStr = mediaType.toString();
-				}
 				workDescription.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE,
-						String.format("No plugin found for thumbnail creation, file class: %s (%s)", fileClass, mediaTypeStr));
+						String.format("No plugin found for thumbnail creation, file class: %s", fileClass));
 			}
 
 			// Update status
