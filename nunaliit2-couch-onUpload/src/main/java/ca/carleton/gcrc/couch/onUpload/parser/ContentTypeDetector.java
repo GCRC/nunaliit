@@ -81,7 +81,7 @@ public class ContentTypeDetector
 			}
 		}
 		else {
-			log.error("File is null, cannot determine mime type");
+			log.warn("File is null, cannot determine mime type");
 		}
 
 		return mediaType;
