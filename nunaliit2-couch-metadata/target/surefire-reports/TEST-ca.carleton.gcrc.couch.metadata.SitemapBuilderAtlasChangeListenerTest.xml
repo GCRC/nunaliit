@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="ca.carleton.gcrc.couch.metadata.SitemapBuilderAtlasChangeListenerTest" time="0.62" tests="4" errors="0" skipped="0" failures="0">
+  <properties>
+    <property name="sun.desktop" value="gnome"/>
+    <property name="awt.toolkit" value="sun.awt.X11.XToolkit"/>
+    <property name="file.encoding.pkg" value="sun.io"/>
+    <property name="java.specification.version" value="1.8"/>
+    <property name="sun.cpu.isalist" value=""/>
+    <property name="sun.jnu.encoding" value="UTF-8"/>
+    <property name="java.class.path" value="/home/roikle/.m2/repository/org/apache/maven/surefire/surefire-booter/2.22.1/surefire-booter-2.22.1.jar:/home/roikle/.m2/repository/org/apache/maven/surefire/surefire-api/2.22.1/surefire-api-2.22.1.jar:/home/roikle/.m2/repository/org/apache/maven/surefire/surefire-logger-api/2.22.1/surefire-logger-api-2.22.1.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-metadata/target/test-classes:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-metadata/target/classes:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-client/target/nunaliit2-couch-client-2.2.9-SNAPSHOT.jar:/home/roikle/.m2/repository/commons-codec/commons-codec/1.10/commons-codec-1.10.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-json/target/nunaliit2-json-2.2.9-SNAPSHOT.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-utils/target/nunaliit2-utils-2.2.9-SNAPSHOT.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-security/target/nunaliit2-security-2.2.9-SNAPSHOT.jar:/home/roikle/.m2/repository/org/jsoup/jsoup/1.12.1/jsoup-1.12.1.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-utils/target/nunaliit2-couch-utils-2.2.9-SNAPSHOT.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-mail/target/nunaliit2-mail-2.2.9-SNAPSHOT.jar:/home/roikle/.m2/repository/com/sun/mail/javax.mail/1.5.4/javax.mail-1.5.4.jar:/home/roikle/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar:/home/roikle/.m2/repository/com/github/spullara/mustache/java/compiler/0.8.18/compiler-0.8.18.jar:/home/roikle/.m2/repository/com/google/guava/guava/16.0.1/guava-16.0.1.jar:/home/roikle/.m2/repository/org/slf4j/slf4j-api/1.7.13/slf4j-api-1.7.13.jar:/home/roikle/.m2/repository/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar:/home/roikle/.m2/repository/junit/junit/3.8.2/junit-3.8.2.jar:/home/roikle/.m2/repository/org/apache/commons/commons-lang3/3.9/commons-lang3-3.9.jar:/home/roikle/.m2/repository/commons-io/commons-io/2.5/commons-io-2.5.jar:/home/roikle/.m2/repository/org/mockito/mockito-core/3.2.4/mockito-core-3.2.4.jar:/home/roikle/.m2/repository/net/bytebuddy/byte-buddy/1.10.5/byte-buddy-1.10.5.jar:/home/roikle/.m2/repository/net/bytebuddy/byte-buddy-agent/1.10.5/byte-buddy-agent-1.10.5.jar:/home/roikle/.m2/repository/org/objenesis/objenesis/2.6/objenesis-2.6.jar:/home/roikle/.m2/repository/org/apache/maven/surefire/surefire-junit3/2.22.1/surefire-junit3-2.22.1.jar"/>
+    <property name="java.vm.vendor" value="Private Build"/>
+    <property name="sun.arch.data.model" value="64"/>
+    <property name="java.vendor.url" value="http://java.oracle.com/"/>
+    <property name="user.timezone" value=""/>
+    <property name="java.vm.specification.version" value="1.8"/>
+    <property name="os.name" value="Linux"/>
+    <property name="user.country" value="CA"/>
+    <property name="sun.java.launcher" value="SUN_STANDARD"/>
+    <property name="sun.boot.library.path" value="/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/amd64"/>
+    <property name="sun.java.command" value="org.apache.maven.surefire.booter.ForkedBooter /home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-metadata/target/surefire 2020-06-12T15-14-57_137-jvmRun1 surefire425099548318591510tmp surefire_223101153734188988521tmp"/>
+    <property name="surefire.test.class.path" value="/home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-metadata/target/test-classes:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-metadata/target/classes:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-client/target/nunaliit2-couch-client-2.2.9-SNAPSHOT.jar:/home/roikle/.m2/repository/commons-codec/commons-codec/1.10/commons-codec-1.10.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-json/target/nunaliit2-json-2.2.9-SNAPSHOT.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-utils/target/nunaliit2-utils-2.2.9-SNAPSHOT.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-security/target/nunaliit2-security-2.2.9-SNAPSHOT.jar:/home/roikle/.m2/repository/org/jsoup/jsoup/1.12.1/jsoup-1.12.1.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-utils/target/nunaliit2-couch-utils-2.2.9-SNAPSHOT.jar:/home/roikle/workspace/gcrc_nunaliit/nunaliit2-mail/target/nunaliit2-mail-2.2.9-SNAPSHOT.jar:/home/roikle/.m2/repository/com/sun/mail/javax.mail/1.5.4/javax.mail-1.5.4.jar:/home/roikle/.m2/repository/javax/activation/activation/1.1/activation-1.1.jar:/home/roikle/.m2/repository/com/github/spullara/mustache/java/compiler/0.8.18/compiler-0.8.18.jar:/home/roikle/.m2/repository/com/google/guava/guava/16.0.1/guava-16.0.1.jar:/home/roikle/.m2/repository/org/slf4j/slf4j-api/1.7.13/slf4j-api-1.7.13.jar:/home/roikle/.m2/repository/javax/servlet/javax.servlet-api/3.1.0/javax.servlet-api-3.1.0.jar:/home/roikle/.m2/repository/junit/junit/3.8.2/junit-3.8.2.jar:/home/roikle/.m2/repository/org/apache/commons/commons-lang3/3.9/commons-lang3-3.9.jar:/home/roikle/.m2/repository/commons-io/commons-io/2.5/commons-io-2.5.jar:/home/roikle/.m2/repository/org/mockito/mockito-core/3.2.4/mockito-core-3.2.4.jar:/home/roikle/.m2/repository/net/bytebuddy/byte-buddy/1.10.5/byte-buddy-1.10.5.jar:/home/roikle/.m2/repository/net/bytebuddy/byte-buddy-agent/1.10.5/byte-buddy-agent-1.10.5.jar:/home/roikle/.m2/repository/org/objenesis/objenesis/2.6/objenesis-2.6.jar:"/>
+    <property name="sun.cpu.endian" value="little"/>
+    <property name="user.home" value="/home/roikle"/>
+    <property name="user.language" value="en"/>
+    <property name="java.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.home" value="/usr/lib/jvm/java-8-openjdk-amd64/jre"/>
+    <property name="basedir" value="/home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-metadata"/>
+    <property name="file.separator" value="/"/>
+    <property name="line.separator" value="&#10;"/>
+    <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
+    <property name="java.specification.name" value="Java Platform API Specification"/>
+    <property name="java.awt.graphicsenv" value="sun.awt.X11GraphicsEnvironment"/>
+    <property name="sun.boot.class.path" value="/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/resources.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/rt.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/sunrsasign.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jsse.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jce.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/charsets.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/jfr.jar:/usr/lib/jvm/java-8-openjdk-amd64/jre/classes"/>
+    <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
+    <property name="java.runtime.version" value="1.8.0_252-8u252-b09-1~18.04-b09"/>
+    <property name="user.name" value="roikle"/>
+    <property name="path.separator" value=":"/>
+    <property name="os.version" value="5.3.0-59-generic"/>
+    <property name="java.endorsed.dirs" value="/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/endorsed"/>
+    <property name="java.runtime.name" value="OpenJDK Runtime Environment"/>
+    <property name="file.encoding" value="UTF-8"/>
+    <property name="java.vm.name" value="OpenJDK 64-Bit Server VM"/>
+    <property name="localRepository" value="/home/roikle/.m2/repository"/>
+    <property name="java.vendor.url.bug" value="http://bugreport.sun.com/bugreport/"/>
+    <property name="java.io.tmpdir" value="/tmp"/>
+    <property name="java.version" value="1.8.0_252"/>
+    <property name="user.dir" value="/home/roikle/workspace/gcrc_nunaliit/nunaliit2-couch-metadata"/>
+    <property name="os.arch" value="amd64"/>
+    <property name="java.vm.specification.name" value="Java Virtual Machine Specification"/>
+    <property name="java.awt.printerjob" value="sun.print.PSPrinterJob"/>
+    <property name="sun.os.patch.level" value="unknown"/>
+    <property name="java.library.path" value="/usr/java/packages/lib/amd64:/usr/lib/x86_64-linux-gnu/jni:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:/usr/lib/jni:/lib:/usr/lib"/>
+    <property name="java.vm.info" value="mixed mode"/>
+    <property name="java.vendor" value="Private Build"/>
+    <property name="java.vm.version" value="25.252-b09"/>
+    <property name="java.ext.dirs" value="/usr/lib/jvm/java-8-openjdk-amd64/jre/lib/ext:/usr/java/packages/lib/ext"/>
+    <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
+    <property name="java.class.version" value="52.0"/>
+  </properties>
+  <testcase name="testThreeLevelNavigation" classname="ca.carleton.gcrc.couch.metadata.SitemapBuilderAtlasChangeListenerTest" time="0.599"/>
+  <testcase name="testWithMetadataNavigation" classname="ca.carleton.gcrc.couch.metadata.SitemapBuilderAtlasChangeListenerTest" time="0.005"/>
+  <testcase name="testTwoLevelNavigation" classname="ca.carleton.gcrc.couch.metadata.SitemapBuilderAtlasChangeListenerTest" time="0.004"/>
+  <testcase name="testOneLevelNavigation" classname="ca.carleton.gcrc.couch.metadata.SitemapBuilderAtlasChangeListenerTest" time="0.004"/>
+</testsuite>
