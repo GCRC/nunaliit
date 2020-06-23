@@ -5079,7 +5079,6 @@ var MapAndControls = $n2.Class('MapAndControls',{
 	// === END -- SIMPLIFIED GEOMETRIES ===================================================
 
     // === START -- MAP STYLES IN USE ===================================================
-
     _getMapStylesInUse: function(){
     	var mapStylesInUse = {};
 
@@ -5899,9 +5898,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 				if (cb && typeof cb === 'function'){
 					cb(null, this);
 				}
-
 			}
-
 		};
 	},
 	

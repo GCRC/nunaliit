@@ -4,6 +4,7 @@
 
 import {getUid} from 'ol/util.js';
 import {default as Interaction} from 'ol/interaction/Interaction.js';
+import Collection from 'ol/Collection.js';
 import {singleClick, never,click, shiftKeyOnly, pointerMove} from 'ol/events/condition.js';
 import Event from 'ol/events/Event.js';
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -75,7 +76,7 @@ class N2Select extends Interaction {
 		 * @type {boolean}
 		 */
 		this.multi_ = options.multi ? options.multi : false;
-
+		this.clickedFeaturesCollection = new Collection();
 		this.clickCondition_ = click;
 		//clicked can return multiple ones.
 		this.clickedFeatures_ = [];
@@ -104,14 +105,16 @@ class N2Select extends Interaction {
 	}
 	setActive(b){
 		super.setActive(b)
-		if (b &&
-				this.map_) {
-			super.setMap(this.map_)
-			this.map_.addInteraction(this);
-		} else {
-			super.setMap();
-
-		}
+//		if (b && this.map_) {
+//			super.setMap(this.map_)
+//			this.map_.addInteraction(this);
+//		} else {
+//			super.setMap();
+//
+//		}
+	}
+	getFeatures(){
+		return this.clickedFeaturesCollection;
 	}
 //	setHoverCallback(callbackFn){
 //	this.hoverCallback = callbackFn;
@@ -173,6 +176,7 @@ function handleEvent_(mapBrowserEvent) {
 
 		let selected = [];
 		let deselected = [];
+		this.clickedFeaturesCollection.clear();
 		map.forEachFeatureAtPixel(mapBrowserEvent.pixel,
 				(
 						/**
@@ -186,6 +190,7 @@ function handleEvent_(mapBrowserEvent) {
 						function(feature, layer) {
 							if (feature) {
 								selected.push(feature);
+								this.clickedFeaturesCollection.push(feature);
 								return true;
 							}
 						}).bind(this), {

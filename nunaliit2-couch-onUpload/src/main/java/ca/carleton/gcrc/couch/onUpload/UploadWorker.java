@@ -52,7 +52,7 @@ public class UploadWorker {
 	public void setMailNotification(MailNotification mailNotification) {
 		this.mailNotification = mailNotification;
 	}
-	
+
 	public void setUploadProperties(Properties uploadProperties) {
 		this.uploadProperties = uploadProperties;
 	}

@@ -34,8 +34,8 @@ public class GpxFileConverter implements FileConversionPlugin {
 
 	@Override
 	public boolean handlesFileClass(String fileClass, String work) {
-		
-		if( "gpx".equalsIgnoreCase(fileClass) ) {
+
+		if ("gpx".equalsIgnoreCase(fileClass)) {
 			if (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
 					|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)) {
 				return true;

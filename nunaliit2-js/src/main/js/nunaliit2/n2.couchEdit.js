@@ -243,6 +243,8 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.editors = opts.editors;
 		this.couchProj = opts.couchProj;
+		
+	//	this.ol_format_WKT = new $n2.n2es6.ol_format_WKT();
 
 		this.editedDocument = {};
 		var clonedDoc = $n2.extend(true,{},opts.doc); // deep copy
@@ -625,7 +627,12 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		
 		if( m.type === 'editGeometryModified' ){
 			if( m._origin !== this ){
-				this._geometryModified(m.docId, m.geom, m.proj);
+				if ( m._origin._classname === 'MapAndControls' ){
+					this._geometryModified(m.docId, m.geom, m.proj);
+				} else {
+					this._ol_geometryModified(m.docId, m.geom, m.proj);
+				}
+				
 			};
 		} else if( m.type === 'mapGeometryAdded' ){
 			this._addGeometry(m.geometry, m.projection);
@@ -746,7 +753,28 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			});
 		};
 	}
-
+	,_ol_geometryModified: function(docId, geom, proj) {
+		
+		var geomData = this.editedDocument.nunaliit_geom;
+		var proj_couch = new $n2.n2es6.ol_proj_Projection({code: this.couchProj.getCode()});
+		var proj_feat = proj;
+		geomData.wkt = this.ol_format_WKT.writeGeometry(geom, {
+				dataProjection: proj_couch,
+				featureProjection: proj_feat
+		});
+		
+		$n2.couchGeom.updatedGeometry(geomData);
+		this.currentGeometryWkt = geomData.wkt;
+		if( this.schemaEditor ) {
+			this.schemaEditor.refresh();
+		};
+		if( this.treeEditor ) {
+			this.treeEditor.refresh();
+		};
+		if( this.slideEditor ) {
+			this.slideEditor.refresh();
+		};
+	}
 	,_geometryModified: function(docId, geom, proj) {
 
 		if( proj.getCode() != this.couchProj.getCode() ) {
@@ -886,6 +914,8 @@ var CouchDocumentEditor = $n2.Class({
 		this.moduleEditInfo = opts.moduleEditInfo;
 		this.relatedDocProcess = opts.relatedDocProcess;
 		
+//		this.ol_format_WKT = new $n2.n2es6.ol_format_WKT();
+		
 		this.userButtons = [];
 		var label = 'button';
 		for(var key in opts) {
@@ -931,7 +961,7 @@ var CouchDocumentEditor = $n2.Class({
 		return false;
 	},
 
-	startEditingFromGeometry: function(olGeom, olProj) {
+	startEditingFromGeometry: function(olGeom, olProj, isNewOpenlayers) {
 		
 		var _this = this;
 	
@@ -955,10 +985,18 @@ var CouchDocumentEditor = $n2.Class({
 			if( olProj.getCode() != _this.couchProj.getCode() ) {
 				// Need to convert
 				var geom = olGeom.clone();
-				geom.transform(olProj,_this.couchProj);
+				if ( !isNewOpenlayers ){
+					geom.transform(olProj,_this.couchProj);
+				} else {
+					var couchProj = new $n2.n2es6.ol_proj_Projection(
+							{code: _this.couchProj.getCode()}
+							);
+					geom.transform(olProj, couchProj);
+				}
+				
 				olGeom = geom;
 			};
-			var g = $n2.couchGeom.getCouchGeometry(olGeom);
+			var g = $n2.couchGeom.getCouchGeometry(olGeom, isNewOpenlayers);
 			_this.editedDocument.nunaliit_geom = g;
 			_this.currentGeometryWkt = g.wkt;
 			
@@ -2111,8 +2149,29 @@ var CouchDocumentEditor = $n2.Class({
 			refreshFunction(_this.editedDocument, $editorContainer, _this);
 		});
 	},
-	
-	_geometryModified: function(docId, geom, proj) {
+	_ol_geometryModified: function(docId, geom, proj) {
+		
+		var geomData = this.editedDocument.nunaliit_geom;
+		var proj_couch = new $n2.n2es6.ol_proj_Projection({code: this.couchProj.getCode()});
+		var proj_feat = proj;
+		geomData.wkt = this.ol_format_WKT.writeGeometry(geom, {
+				dataProjection: proj_couch,
+				featureProjection: proj_feat
+		});
+		
+		$n2.couchGeom.ol5_updatedGeometry(geomData);
+		this.currentGeometryWkt = geomData.wkt;
+		if( this.schemaEditor ) {
+			this.schemaEditor.refresh();
+		};
+		if( this.treeEditor ) {
+			this.treeEditor.refresh();
+		};
+		if( this.slideEditor ) {
+			this.slideEditor.refresh();
+		};
+	}
+	,_geometryModified: function(docId, geom, proj) {
 
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
@@ -2134,7 +2193,33 @@ var CouchDocumentEditor = $n2.Class({
 			this.slideEditor.refresh();
 		};
 	},
-	
+	_ol_addGeometry: function(geom, proj){
+		if( proj.getCode() != this.couchProj.getCode() ) {
+			// Need to convert
+			geom = geom.clone();
+			geom.transform(proj.getCode(),this.couchProj.getCode());
+		};
+    	
+		var geomData = this.editedDocument.nunaliit_geom;
+		if( !geomData ){
+			geomData = {
+				nunaliit_type: 'geometry'
+			};
+			this.editedDocument.nunaliit_geom = geomData;
+		};
+		geomData.wkt = geom.toString();
+		$n2.couchGeom.ol5_updatedGeometry(geomData);
+		this.currentGeometryWkt = geomData.wkt;
+		if( this.schemaEditor ) {
+			this.schemaEditor.refresh();
+		};
+		if( this.treeEditor ) {
+			this.treeEditor.refresh();
+		};
+		if( this.slideEditor ) {
+			this.slideEditor.refresh();
+		};
+	},
 	_addGeometry: function(geom, proj) {
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
@@ -2201,12 +2286,23 @@ var CouchDocumentEditor = $n2.Class({
 	_handle: function(m){
 		if( m.type === 'editGeometryModified' ){
 			if( m._origin !== this ){
-				this._geometryModified(m.docId, m.geom, m.proj);
+				if ( m._origin._classname === 'MapAndControls' ){
+					this._geometryModified(m.docId, m.geom, m.proj);
+				} else {
+					this._ol_geometryModified(m.docId, m.geom, m.proj);
+				}
+				
 			};
 			
 		} else if( m.type === 'mapGeometryAdded' ){
-			this._addGeometry(m.geometry, m.projection);
-
+			if( m._origin !== this ){
+				if( m._origin._classname === 'MapAndControls' ){
+					this._addGeometry(m.geometry, m.projection);
+				} else {
+					this._ol_addGeometry( m.docId, m.geom, m.proj);
+				}
+			}
+			
 		} else if( 'historyIsHashChangePermitted' === m.type ) {
 			if( null != this.editedDocument ) {
 				if( confirm( _loc('Do you wish to leave document editor?') ) ) {
@@ -2447,15 +2543,15 @@ var CouchEditService = $n2.Class({
 		this.showDocumentForm(doc);
 	},
 	
-	_createFromGeometry: function(olGeom, olProj){
+	_createFromGeometry: function(olGeom, olProj, isNewOpenlayers){
 		var _this = this;
-		
+		var _isOl3 = isNewOpenlayers || false;
 		// Check that we are logged in
 		var authService = this.authService;
 		if( authService && false == authService.isLoggedIn() ) {
 			authService.showLoginForm({
 				onSuccess: function(result,options) {
-					_this._createFromGeometry(olGeom, olProj);
+					_this._createFromGeometry(olGeom, olProj, _isOl3);
 				}
 			});
 			return;
@@ -2467,7 +2563,7 @@ var CouchEditService = $n2.Class({
 		};
 		
 		this.currentEditor = this._createEditor();
-		this.currentEditor.startEditingFromGeometry(olGeom, olProj);
+		this.currentEditor.startEditingFromGeometry(olGeom, olProj, _isOl3);
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -2475,8 +2571,11 @@ var CouchEditService = $n2.Class({
 			this._initiateEditor(m.doc);
 			
 		} else if( 'editCreateFromGeometry' === m.type ) {
-			this._createFromGeometry(m.geometry, m.projection);
-			
+			if ( m._origin._classname === 'MapAndControls' ){
+				this._createFromGeometry(m.geometry, m.projection);
+			} else {
+				this._createFromGeometry(m.geometry, m.projection, true)
+			}
 		} else if( 'editCancel' === m.type ) {
 			this.cancelDocumentForm();
 

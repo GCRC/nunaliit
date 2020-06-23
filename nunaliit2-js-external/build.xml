@@ -29,7 +29,7 @@
     	<!-- Copy -->
     	<mkdir dir="${javascript.dest.dir}/js-external"/>
 		<copy todir="${javascript.dest.dir}/js-external">
-			<fileset dir="./src/main/js/js-external"/>
+			<fileset dir="./src/main/js/js-external" excludes="**/node_modules/**" />
 		</copy>
     </target>
 

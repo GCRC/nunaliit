@@ -626,9 +626,9 @@ Polar Stereographic Projection Selector
   
 }
 
-.n2-tag-box.mdc-text-field.n2s_attachedMDCTextField.mdc-text-field--outlined {
-	width: 260px;
-}
+/* .n2-tag-box.mdc-text-field.n2s_attachedMDCTextField.mdc-text-field--outlined {
+ 	width: 260px;
+*/ }
 
 .input_group_for_customMDC { 
   position:relative;
@@ -669,7 +669,7 @@ Polar Stereographic Projection Selector
 }
 
 /* active state */
-.input_group_for_customMDC input:focus ~ label, input:valid ~ label 		{
+.input_group_for_customMDC input:focus ~ label,.input_group_for_customMDC input:valid ~ label 		{
   top:-20px;
   font-size:14px;
   color:#5264AE;
@@ -736,14 +736,13 @@ Polar Stereographic Projection Selector
   to 	{ width:0; background:transparent; }
 }
 
-
-
 .mdc-chip-partial {
 	border: dotted;
 }
 .mdc-chip-full {
 	border: solid;
 }
+
 /* 
 ==============================
 Drawer widget 
@@ -1077,6 +1076,28 @@ Model Browser Widget
 	background-color: #ccc;
 }
 
+/*
+===============================
+WidgetLegend2
+===============================
+*/
+.n2widgetLegend_option.n2widgetLegend_optionUnselected a::before {
+	content: "\2610";
+	padding-right: 5px;
+}
+
+.n2widgetLegend_option.n2widgetLegend_optionSelected a::before {
+	content: "\2611";
+	padding-right: 5px;
+	font-weight: bold;
+}
+
+.nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_checkboxColumn {
+	min-width: 100px; /* width needed to contain four legend symbols */
+	display: inline-block;
+	vertical-align: top;
+}
+
 /* 
 ==============================
 Sound 
@@ -1248,3 +1269,68 @@ Duplicate Widget
 	float: right;
 	padding: 4px 10px;
 }
+
+/* 
+==============================
+Date Range Widget  
+==============================
+*/
+.n2widget_date_range {
+	float: right;
+}
+
+.n2widget_date_range input {
+	display: block;
+	padding: 2px 0px;
+	margin: 0px 2px;
+	color: #333333 !important;
+}
+
+.n2widget_date_range_window {
+	display: none;
+	position: absolute;
+	z-index: 10;
+	border: 1px solid #666666;
+	border-radius: 2px;
+	background-color: #ffffff;
+	padding: 5px;
+	box-shadow: 1px 2px 3px #999999;
+	min-width: 520px;
+}
+
+.n2widget_date_range_window_backdrop {
+	display: none;
+	position: absolute;
+	z-index: 9;
+	width: 100%;
+	height: 100%;
+	background-color: #00000050;
+}
+
+.n2widget_date_range_window .n2widget_date_range_start,
+.n2widget_date_range_window .n2widget_date_range_end {
+    width: 50%;
+    display: inline-table;
+}
+
+.n2widget_date_range_window.active,
+.n2widget_date_range_window_backdrop.active {
+	display: block;
+}
+
+.n2widget_date_range .n2widget_date_range_button {
+    display: inline-block;
+	cursor: pointer;
+    border: 1px solid #333333;
+    border-radius: 2px;
+    color: #333333;
+    background-image: url(images/calendar_icon.png);
+    background-position: 2px center;
+    background-repeat: no-repeat;
+	background-color: #f1f1f1;
+	background-size: 18px 18px;
+    padding: 2px 10px 2px 24px;
+	margin: 2px;
+	line-height: 20px;
+}
+

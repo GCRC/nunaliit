@@ -366,6 +366,8 @@ var DocumentModel = $n2.Class('DocumentModel', {
 			this.dispatchService.register(DH, 'modelGetState', function(m, addr, dispatcher){
 				if( m.modelId === _this.modelId ){
 					var currentDocs = _this._getCurrentDocuments();
+				
+					currentDocs.nunaliit_model = this.modelId;
 					m.state = {
 						added: currentDocs
 						,updated: []

@@ -43,7 +43,7 @@
 				var importProfile = importProfiles[i];
 				importProfileMenuOpts.push({
 					"value": importProfile.getId(),
-					"label": _loc(importProfile.getLabel()) + ' (' + importProfile.getType() + ')'
+					"text": _loc(importProfile.getLabel()) + ' (' + importProfile.getType() + ')'
 				});
 			}
 		} else {
@@ -53,6 +53,7 @@
 		// Import Profile Select Menu
 		var importProfileSelect = new $n2.mdc.MDCSelect({
 			parentElem: $buttonLine,
+			mdcClasses: ['import_profile'],
 			menuLabel: 'Import Profile',
 			nativeClasses : ['import_profile'],
 			menuOpts: importProfileMenuOpts
@@ -77,7 +78,7 @@
 			btnLabel: 'Verify',
 			onBtnClick: function(){
 				var $inputSection = $appDiv.find('.importAppInput');
-				var importProfileId = $inputSection.find('.import_profile').val();
+				var importProfileId = importProfileSelect.getSelectedValue();
 				var importData = $inputSection.find('.importData').val();
 				
 				var error = false;
@@ -283,7 +284,8 @@
 				{"text": "Submission Tool", "href": "./submission.html"},
 				{"text": "Import Tool", "href": "./import.html", "activated": true},
 				{"text": "Debug Tool", "href": "./debug.html"},
-				{"text": "Schema Editor", "href": "./schema_editor.html"}
+				{"text": "Schema Editor", "href": "./schema_editor.html"},
+				{"text": "Metadata Editor", "href": "./metadata.html"}
 			]	
 		});
 	};

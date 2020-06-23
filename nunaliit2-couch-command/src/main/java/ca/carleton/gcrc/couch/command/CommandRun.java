@@ -1,36 +1,37 @@
 package ca.carleton.gcrc.couch.command;
 
-import java.io.File;
-import java.io.PrintStream;
-import java.net.URL;
-import java.util.EnumSet;
-
-import javax.servlet.DispatcherType;
-
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.rolling.RollingFileAppender;
-import org.apache.log4j.rolling.TimeBasedRollingPolicy;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.DefaultServlet;
-import org.eclipse.jetty.servlet.FilterHolder;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.GzipFilter;
-import org.eclipse.jetty.proxy.ProxyServlet;
-
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.TransparentProxyFixedEscaped;
 import ca.carleton.gcrc.couch.command.impl.TransparentWithRedirectServlet;
 import ca.carleton.gcrc.couch.command.servlet.ConfigServlet;
 import ca.carleton.gcrc.couch.date.DateServlet;
 import ca.carleton.gcrc.couch.export.ExportServlet;
+import ca.carleton.gcrc.couch.metadata.IndexServlet;
+import ca.carleton.gcrc.couch.metadata.RobotsServlet;
+import ca.carleton.gcrc.couch.metadata.SitemapServlet;
 import ca.carleton.gcrc.couch.simplifiedGeometry.SimplifiedGeometryServlet;
 import ca.carleton.gcrc.couch.submission.SubmissionServlet;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.mail.MailServlet;
 import ca.carleton.gcrc.progress.ProgressServlet;
 import ca.carleton.gcrc.upload.UploadServlet;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.rolling.RollingFileAppender;
+import org.apache.log4j.rolling.TimeBasedRollingPolicy;
+import org.eclipse.jetty.proxy.ProxyServlet;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.DefaultServlet;
+import org.eclipse.jetty.servlet.FilterHolder;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.servlets.GzipFilter;
+
+import javax.servlet.DispatcherType;
+import java.io.File;
+import java.io.PrintStream;
+import java.net.URL;
+import java.util.EnumSet;
 
 public class CommandRun implements Command {
 
@@ -90,7 +91,7 @@ public class CommandRun implements Command {
 		if( options.getArguments().size() > 1 ){
 			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
 		}
-		
+
 		File atlasDir = gs.getAtlasDir();
 
 		// Load properties for atlas
@@ -251,6 +252,21 @@ public class CommandRun implements Command {
         	context.addServlet(servletHolder,"/servlet/mail/*");
         }
 
+		// index.html servlet
+		ServletHolder indexServlet = new ServletHolder(new IndexServlet());
+		indexServlet.setInitOrder(2);
+		context.addServlet(indexServlet, "/index.html");
+
+		// Servlet for serving sitemap.xml
+		ServletHolder sitemapServlet = new ServletHolder(new SitemapServlet());
+		sitemapServlet.setInitOrder(2);
+		context.addServlet(sitemapServlet, "/sitemap.xml");
+
+		// robots.txt servlet
+		ServletHolder robotsServlet = new ServletHolder(new RobotsServlet());
+		robotsServlet.setInitOrder(2);
+		context.addServlet(robotsServlet, "/robots.txt");
+
         // Proxy to site
         {
         	ServletHolder servletHolder = new ServletHolder(new TransparentWithRedirectServlet());
@@ -263,5 +279,4 @@ public class CommandRun implements Command {
 		server.start();
 		server.join();
 	}
-
 }

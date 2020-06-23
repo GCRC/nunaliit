@@ -1,0 +1,66 @@
+{
+  "nunaliit_type": "atlas",
+  "nunaliit_navigation": {
+    "title": {
+      "nunaliit_type": "localized",
+      "en": "Atlas",
+      "fr": "L'Atlas"
+    },
+    "items": [
+      {
+        "title": {
+          "nunaliit_type": "localized",
+          "en": "Demo Module",
+          "fr": "Module de Demo"
+        },
+        "module": "module.demo",
+        "items": [
+          {
+            "module": "module.demo"
+          }
+        ]
+      },
+      {
+        "title": {
+          "nunaliit_type": "localized",
+          "en": "Tools",
+          "fr": "Outils"
+        },
+        "href": "./tools/index.html"
+      }
+    ]
+  },
+  "default_module": "module.demo",
+  "nunaliit_metadata": {
+    "license": "",
+    "creator": {
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "",
+        "telephone": "",
+        "email": ""
+      },
+      "@type": "Organization",
+      "name": "",
+      "url": ""
+    },
+    "dateCreated": "",
+    "keywords": [
+    ],
+    "temporalCoverage": "",
+    "@type": "Dataset",
+    "name": "",
+    "description": "",
+    "spatialCoverage": {
+      "geo": {
+        "@type": "GeoShape",
+        "box": ""
+      },
+      "@type": "Place"
+    },
+    "@context": {
+      "@vocab": "http://schema.org/"
+    },
+    "url": ""
+  }
+}

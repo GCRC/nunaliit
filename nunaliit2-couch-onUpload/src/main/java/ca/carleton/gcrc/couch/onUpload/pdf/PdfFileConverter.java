@@ -74,7 +74,7 @@ public class PdfFileConverter implements FileConversionPlugin {
 				|| FileConversionPlugin.WORK_ORIENT.equalsIgnoreCase(work))) {
 			handlesWorkType = true;
 		}
-		
+
 		return handlesWorkType;
 	}
 
@@ -128,8 +128,8 @@ public class PdfFileConverter implements FileConversionPlugin {
 		}
 		else if(FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work) ) {
 			approveFile(attDescription);
-		
-		} else {
+		}
+		else {
 			throw new Exception("Plugin can not perform work: "+work);
 		}
 		

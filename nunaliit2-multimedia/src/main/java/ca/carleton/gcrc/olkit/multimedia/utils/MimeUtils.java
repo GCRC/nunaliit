@@ -6,7 +6,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class MimeUtils {
-	
+
 	public static final String TYPE_AUDIO = "audio";
 	public static final String TYPE_VIDEO = "video";
 	public static final String TYPE_IMAGE = "image";

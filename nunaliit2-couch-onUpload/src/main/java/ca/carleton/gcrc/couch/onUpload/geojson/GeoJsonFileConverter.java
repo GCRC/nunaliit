@@ -37,8 +37,8 @@ public class GeoJsonFileConverter implements FileConversionPlugin {
 
 	@Override
 	public boolean handlesFileClass(String fileClass, String work) {
-		
-		if( "geojson".equalsIgnoreCase(fileClass) ) {
+
+		if ("geojson".equalsIgnoreCase(fileClass)) {
 			if (FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work)
 					|| FileConversionPlugin.WORK_APPROVE.equalsIgnoreCase(work)) {
 				return true;

@@ -253,7 +253,7 @@ var UserManagementApplication = $n2.Class({
 		$userForm.append('</br>');
 
 		new $n2.mdc.MDCButton({
-			parentElem, $userForm,
+			parentElem: $userForm,
 			mdcId: 'btnAddUser2',
 			btnLabel: 'Proceed',
 			btnRaised: true,
@@ -1336,7 +1336,8 @@ function addHamburgerMenu(){
 			{"text": "Submission Tool", "href": "./submission.html"},
 			{"text": "Import Tool", "href": "./import.html"},
 			{"text": "Debug Tool", "href": "./debug.html"},
-			{"text": "Schema Editor", "href": "./schema_editor.html"}
+			{"text": "Schema Editor", "href": "./schema_editor.html"},
+			{"text": "Metadata Editor", "href": "./metadata.html"}
 		]	
 	});
 };

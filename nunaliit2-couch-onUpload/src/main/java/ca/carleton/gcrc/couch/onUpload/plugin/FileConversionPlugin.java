@@ -19,9 +19,9 @@ public interface FileConversionPlugin {
 	String getName();
 	
 	FileConversionMetaData getFileMetaData(File file);
-	
+
 	boolean handlesFileClass(String fileClass, String work);
-	
+
 	boolean handlesWorkType(MediaType mediaType, String work);
 
 	void performWork(String work, AttachmentDescriptor attachmentDescriptor) throws Exception;

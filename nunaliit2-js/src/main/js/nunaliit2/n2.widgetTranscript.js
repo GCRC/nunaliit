@@ -316,7 +316,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			_this.mediaDocIdToSrtDocs[this.docId].forEach(function(srtDoc){
 				menOpts.push({
 					value: srtDoc._id,
-					label: srtDoc.atlascine2_subtitle.language
+					text: srtDoc.atlascine2_subtitle.language
 				})
 			});
 		}
@@ -329,16 +329,21 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				preSelected: true,
 				menuLabel: 'Language',
 				menuChgFunction:function(){
-					$n2.log('Change Subtitle File: '+ this.value);
-					_this._handleSrtSelectionChanged(this.value);
+					var $sel = $(this)
+						.find('li.mdc-list-item--selected');
+
+					var selectValue;
+					if ($sel[0] && $sel[0].dataset && $sel[0].dataset.value) {
+						selectValue = $sel[0].dataset.value;
+					}
+					$n2.log('Change Subtitle File: ' + selectValue);
+					_this._handleSrtSelectionChanged(selectValue);
 				}
 			})
 		}
-
-		
 	},
 	
-	_handleSrtSelectionChanged(value){
+	_handleSrtSelectionChanged: function(value){
 		var _this = this;
 		var selectSrtDocId = value;
 		if ( !selectSrtDocId ) return;
@@ -475,7 +480,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 	},
 	
-	_cinemapUpdated(sourceState){
+	_cinemapUpdated: function(sourceState){
 		var _this = this;
 		var cineIsUpdated = false;
 		

@@ -124,7 +124,13 @@ var ExportApplication = $n2.Class('ExportApplication',{
 			parentElem: $('#' + $exportDialog.getContentId())
 			,menuLabel: 'Script'
 			,menuChgFunction: methodChanged
-			,menuOpts: [{"value":"__custom__", "label":"Custom Script", "selected":"selected"}] 
+			,menuOpts: [
+				{
+				"value": "__custom__",
+				"text": "Custom Script",
+				"selected": true
+				}
+			]
 		});
 
 		// Filter
@@ -132,22 +138,22 @@ var ExportApplication = $n2.Class('ExportApplication',{
 			parentElem: $('#' + $exportDialog.getContentId())
 			,menuLabel: 'Filter'
 			,menuOpts: [
-				{"value":"all", "label":"All Geometries", "selected":"selected"}
-				,{"value":"points", "label":"Only Point Geometries"}
-				,{"value":"linestrings", "label":"Only LineString Geometries"}
-				,{"value":"polygons", "label":"Only Polygon Geometries"}
-			] 
+				{"value": "all", "text": "All Geometries", "selected": true}
+				,{"value": "points", "text": "Only Point Geometries"}
+				,{"value": "linestrings", "text": "Only LineString Geometries"}
+				,{"value": "polygons", "text": "Only Polygon Geometries"}
+			]
 		});
-		
+
 		// Format
 		var $formatSelect = new $n2.mdc.MDCSelect({
 			parentElem: $('#' + $exportDialog.getContentId())
 			,menuLabel: 'Format'
 			,menuChgFunction: formatChanged
 			,menuOpts: [
-				{"value":"geojson", "label":"geojson", "selected":"selected"}
-				,{"value":"csv", "label":"CSV"}
-			] 
+				{"value": "geojson", "text": "geojson", "selected": true}
+				,{"value": "csv", "text": "CSV"}
+			]
 		});
 
 		// File name
@@ -179,8 +185,8 @@ var ExportApplication = $n2.Class('ExportApplication',{
 			parentElem: $('#' + $exportDialog.getFooterId())
 			,btnLabel: 'Export'
 			,onBtnClick: function(){
-				var filter = $('#' + $filterSelect.getSelectId()).val();
-				var format = $('#' + $formatSelect.getSelectId()).val();
+				var filter = $filterSelect.getSelectedValue();
+				var format = $formatSelect.getSelectedValue();
 				var fileName = $('#' + $fileNameInput.getInputId()).val();
 				var scriptText = $('#' + $scriptInput.getInputId()).val();
 
@@ -207,7 +213,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 				,include_docs: true
 				,onSuccess: function(rows){
 					rows.forEach(function(row){
-						var $sel = $('#' + $methodSelect.getSelectId());
+						var $sel = $('#' + $methodSelect.getSelectId()).find('.mdc-list');
 
 						var scriptDoc = row.doc;
 						if( scriptDoc 
@@ -224,10 +230,16 @@ var ExportApplication = $n2.Class('ExportApplication',{
 								label = scriptDoc._id;
 							};
 							
-							$('<option>')
-								.val(scriptDoc._id)
-								.text( label )
+							var $listItem = $('<li>')
+								.attr('data-value', scriptDoc._id)
+								.attr('role', 'menuitem')
+								.addClass('mdc-list-item')
 								.appendTo($sel);
+
+							$('<span>')
+								.addClass('mdc-list-item__text')
+								.text( label )
+								.appendTo($listItem);
 
 							knownScriptById[scriptDoc._id] = scriptDoc.nunaliit_script.script;
 						};
@@ -242,7 +254,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		};
 		
 		function formatChanged(){
-			var extension = $('#' + $formatSelect.getSelectId()).val();
+			var extension = $formatSelect.getSelectedValue();
 			var name = $('#' + $fileNameInput.getInputId()).val();
 			var i = name.lastIndexOf('.');
 			if( i >= 0 ){
@@ -253,7 +265,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		};
 		
 		function methodChanged(){
-			var method = $('#' + $methodSelect.getSelectId()).val();
+			var method = $methodSelect.getSelectedValue();
 
 			var scriptText = knownScriptById[method];
 			if( scriptText ){
@@ -759,7 +771,7 @@ var ExportService = $n2.Class('ExportService',{
 			,onError: $n2.reportError
 		},opts_);
 		
-		var url = this.serverUrl + 'export/definition/';
+		var url = this.serverUrl + 'definition/';
 		if( opts.fileName ){
 			url = url + opts.fileName;
 		} else {
@@ -874,7 +886,7 @@ var ExportService = $n2.Class('ExportService',{
 			,onError: $n2.reportError
 		},opts_);
 		
-		var url = this.serverUrl + 'export/definition/export';
+		var url = this.serverUrl + 'definition/export';
 
 		var data = {};
 		if( opts.docIds ){

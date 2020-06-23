@@ -59,7 +59,6 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	private InReachProcessor inReachProcessor = null;
 	private Properties uploadProperties;
 	private FileConverterFactory fileConverterFactory;
-
 	protected UploadWorkerThread(
 		UploadWorkerSettings settings
 		,CouchDesignDocument documentDbDesign
@@ -76,7 +75,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		this.uploadProperties = uploadProperties;
 
 		fileConverterFactory = new FileConverterFactory(this.uploadProperties);
-		
+
 		noWorkDelayInMs = DELAY_NO_WORK_POLLING;
 		CouchDbChangeMonitor changeMonitor = documentDbDesign.getDatabase().getChangeMonitor();
 		if( null != changeMonitor ){
@@ -409,7 +408,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			MediaType mediaType = ContentTypeDetector.detectMimeType(file);
 			if (mediaType != null) {
 				originalObj.setContentType(mediaType.toString());
-	
+
 				attDescription.setFileClass(ContentTypeDetector.detectNunaliitFileClass(file));
 			}
 
@@ -566,9 +565,9 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 
 			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
 			if (plugin != null && plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_APPROVE)) {
-					pluginFound = true;
+				pluginFound = true;
 				plugin.performWork(FileConversionPlugin.WORK_APPROVE, attDescription);
-				}
+			}
 
 			if( false == pluginFound ) {
 				logger.info("No plugin found for uploaded file class: {}", fileClass);
@@ -624,8 +623,8 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
 				if (plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_ORIENT)) {
 					plugin.performWork(FileConversionPlugin.WORK_ORIENT, attDescription);
-						pluginFound = true;
-					}
+					pluginFound = true;
+				}
 
 				if( false == pluginFound ) {
 					logger.info("No plugin found for uploaded file class: {}", fileClass);
@@ -683,11 +682,11 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 
 				FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
 				if (plugin != null && plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_THUMBNAIL)) {
-						pluginFound = true;
+					pluginFound = true;
 					plugin.performWork(FileConversionPlugin.WORK_THUMBNAIL, attDescription);
 
-						logger.info("Created thumbnail");
-					}
+					logger.info("Created thumbnail");
+				}
 
 				if( false == pluginFound ) {
 					logger.info("No plugin found for thumbnail creation, file class: {}", fileClass);
@@ -726,11 +725,11 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 
 			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
 			if (plugin != null && plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_UPLOAD_ORIGINAL)) {
-					pluginFound = true;
+				pluginFound = true;
 				plugin.performWork(FileConversionPlugin.WORK_UPLOAD_ORIGINAL, attDescription);
 
-					logger.info("Original file uploaded");
-				}
+				logger.info("Original file uploaded");
+			}
 
 			if( false == pluginFound ) {
 				workDescription.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE,
@@ -769,11 +768,11 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 
 			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
 			if (plugin != null && plugin.handlesFileClass(fileClass, workType)) {
-					pluginFound = true;
+				pluginFound = true;
 				plugin.performWork(workType, attDescription);
 
-					logger.info("Rotation work complete: "+workType);
-				}
+				logger.info("Rotation work complete: "+workType);
+			}
 
 			if( false == pluginFound ) {
 				workDescription.setStringAttribute(UploadConstants.UPLOAD_WORK_UPLOAD_ORIGINAL_IMAGE,
@@ -804,7 +803,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		try {
 //			String title = "Vetting Request";
 //			String description = "A file has been submitted for approval and requires your vetting action.";
-			
+
 			mailNotification.uploadNotification(docId, attachmentName);
 			
 		} catch(Exception e) {

@@ -235,6 +235,7 @@ var ModelFilter = $n2.Class('ModelFilter',{
 	
 	_sourceModelUpdated: function(sourceState){
 		
+		var _this = this;
 		var added = []
 			,updated = []
 			,removed = []
@@ -251,6 +252,8 @@ var ModelFilter = $n2.Class('ModelFilter',{
 				var doc = sourceState.added[i];
 				var docId = doc._id;
 	
+
+				
 				var docInfo = this.docInfosByDocId[docId];
 				if( !docInfo ){
 					docInfo = {
@@ -266,6 +269,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 				if( visible ){
 					docInfo.visible = visible;
 					added.push(doc);
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					doc.__n2Models[_this.modelId] = true;
 				};
 			};
 		};
@@ -300,6 +306,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 						// Is visible and did not used to be visible: added
 						added.push(doc);
 					};
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					doc.__n2Models[_this.modelId] = true;
 				} else {
 					if( docInfo.visible ){
 						// Is not visible and used to be visible: remove
@@ -307,6 +316,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 					} else {
 						// Is not visible and did not used to be visible: nothing
 					};
+					// Removing modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					delete doc.__n2Models[_this.modelId] ;
 				};
 				
 				// Update visibility
@@ -326,6 +338,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 					if( docInfo.visible ){
 						// Has been removed, but used to be visible: remove
 						removed.push(doc);
+						// Removing modelId into each doc
+						doc.__n2Models = doc.__n2Models || {};
+						delete doc.__n2Models[_this.modelId] ;
 					};
 				};
 			};
@@ -360,6 +375,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 					// Is visible and did not used to be visible: added
 					added.push(doc);
 				};
+				// Adding modelId into each doc
+				doc.__n2Models = doc.__n2Models || {};
+				doc.__n2Models[_this.modelId] = true;
 			} else {
 				if( docInfo.visible ){
 					// Is not visible and used to be visible: remove
@@ -367,6 +385,9 @@ var ModelFilter = $n2.Class('ModelFilter',{
 				} else {
 					// Is not visible and did not used to be visible: nothing
 				};
+				// Removing modelId into each doc
+				doc.__n2Models = doc.__n2Models || {};
+				delete doc.__n2Models[_this.modelId];
 			};
 			
 			// Update visibility
@@ -762,6 +783,8 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			};
 		});
 		
+		// ModelParamter is the messenger between model and externalEntity (Widgets)
+		// Define set~Choices get~Choices function in this model to passing the choices. 	
 		this.selectedChoicesParameter = new $n2.model.ModelParameter({
 			model: this
 			,modelId: this.modelId
@@ -837,6 +860,8 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 		};
 		
 		this.allSelected = false;
+		
+		//Rule of Thumb: this.selectedChoiceIdMap is always sync with the selectedChoice Paramter
 		this.selectedChoiceIdMap = {};
 		choiceIdArray.forEach(function(choiceId){
 			if( typeof choiceId !== 'string' ){
@@ -854,6 +879,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 
 		this._selectionChanged(this.selectedChoiceIdMap, this.allSelected);
 		this._filterChanged();
+		
 		
 		this.allSelectedParameter.sendUpdate();
 		this.selectedChoicesParameter.sendUpdate();
@@ -1010,7 +1036,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			for(var i=0,e=sourceState.added.length; i<e; ++i){
 				var doc = sourceState.added[i];
 				var docId = doc._id;
-	
+				
 				var docInfo = this.docInfosByDocId[docId];
 				if( !docInfo ){
 					docInfo = {
@@ -1031,6 +1057,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 						// Is visible and did not used to be visible: added
 						added.push(doc);
 					};
+					
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					doc.__n2Models[_this.modelId] = true;
 				} else {
 					if( docInfo.visible ){
 						// Is not visible and used to be visible: remove
@@ -1038,6 +1068,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 					} else {
 						// Is not visible and did not used to be visible: nothing
 					};
+					
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					delete doc.__n2Models[_this.modelId];
 				};
 				
 				// Update visibility
@@ -1075,6 +1109,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 						// Is visible and did not used to be visible: added
 						added.push(doc);
 					};
+					
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					doc.__n2Models[_this.modelId] = true;
 				} else {
 					if( docInfo.visible ){
 						// Is not visible and used to be visible: remove
@@ -1082,6 +1120,10 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 					} else {
 						// Is not visible and did not used to be visible: nothing
 					};
+					
+					// Adding modelId into each doc
+					doc.__n2Models = doc.__n2Models || {};
+					delete doc.__n2Models[_this.modelId];
 				};
 				
 				// Update visibility
@@ -1097,9 +1139,11 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				var docInfo = this.docInfosByDocId[docId];
 				if( docInfo ){
 					delete this.docInfosByDocId[docId];
-					
+	
 					if( docInfo.visible ){
 						// Has been removed, but used to be visible: remove
+						doc.__n2Models = doc.__n2Models || {};
+						delete doc.__n2Models[_this.modelId];
 						removed.push(doc);
 					};
 				};
@@ -1123,6 +1167,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 			receiveChoices(availableChoices);
 		};
 		
+		// Support Async calling by tracking the version(generation) of response
 		function receiveChoices(choices){
 			if( _this.currentChoiceGeneration === currentChoiceGeneration ){
 				_this._updateAvailableChoices(choices);
@@ -1154,6 +1199,7 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 	 */
 	_filterChanged: function(){
 		
+		var _this = this;
 		var added = []
 			,updated = []
 			,removed = []
@@ -1174,6 +1220,9 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 					// Is visible and did not used to be visible: added
 					added.push(doc);
 				};
+				// Adding modelId into each doc
+				doc.__n2Models = doc.__n2Models || {};
+				doc.__n2Models[_this.modelId] = true;
 			} else {
 				if( docInfo.visible ){
 					// Is not visible and used to be visible: remove
@@ -1181,6 +1230,9 @@ var SelectableDocumentFilter = $n2.Class('SelectableDocumentFilter', {
 				} else {
 					// Is not visible and did not used to be visible: nothing
 				};
+				// Removing modelId into each doc
+				doc.__n2Models = doc.__n2Models || {};
+				delete doc.__n2Models[_this.modelId];
 			};
 			
 			// Update visibility
@@ -1822,7 +1874,6 @@ var MultiDocumentFilter = $n2.Class('MultiDocumentFilter', SelectableDocumentFil
 	},
 
 	_isDocVisible: function(doc, selectedChoiceIdMap){
-		var i, e;
 			
 		if (doc && doc._id) {
 			if (selectedChoiceIdMap[doc._id]) {
@@ -1832,7 +1883,148 @@ var MultiDocumentFilter = $n2.Class('MultiDocumentFilter', SelectableDocumentFil
 		return false;
 	}
 });
+//-=------------------------------------------------------------------------
+/*
+* Filter: a Document Model that filters out certain documents based on styles(SytleRules)
+* defined inside map.json. The stylesRules are injected, during module initializing 
+* process, so there is no need to ask it from atlas builder.
+* Options:
+* - modelId: String. Identifier for this model
+* - sourceModelId: String. Identifier for the model where documents are obtained
+* - dispatchService: Service:Dispatcher
+* - rules: Array. style rule defined inside map.json
+*/
+var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocumentFilter, {
+	initialize: function(opts_){
+		var opts = $n2.extend({
+			modelId: undefined
+			,sourceModelId: undefined
+			,dispatchService: undefined
+			,rules: null
+		},opts_);
+		
+		var _this = this;
+		$n2.modelFilter.SelectableDocumentFilter.prototype.initialize.call(this,opts);
+		
+		//Because widgetLegend needs a complete list of choices, we defined a new parameter
+		//Initially, value of completeChoices is computed from stylesRules
+		this.completeChoicesParameter = new $n2.model.ModelParameter({
+			model: this
+			,modelId: this.modelId
+			,type: 'objects'
+			,name: 'completeChoices'
+			,label: _loc('Complete Choices')
+			,setFn: this._setCompleteChoices
+			,getFn: this.getCompleteChoices
+			,dispatchService: this.dispatchService
+		});
+		
+		//This is the store for all the conditions defined inside map.json
+		this.conditionByLabel = {};
+		if ( $n2.isArray(opts.rules) ){
+			opts.rules.forEach(function(rule){
+				if (rule.label){
+					var condition = null;
+					var effectivelabel = null;
+					var labelType = '';
+					if ( typeof rule.label === 'object' ){
+						if ( rule.label.nunaliit_type
+							&& rule.label.nunaliit_type === 'localized'
+							&& rule.label.en ){
+							effectivelabel = rule.label.en;
+							labelType = 'localized';
+						} else {
+							$n2.log('ConditionalModelFilter: one of the localized label misses en field for indexing', rule.label);
+							return;
+						}
+					} else if ( typeof rule.label === 'string'){
+						effectivelabel = rule.label;
+						labelType = 'string';
+					} else {
+						$n2.log('ConditionalModelFilter: one of the condition has invalid label', rule.label)
+						return;
+					}
+					if ( rule.condition ){
+						condition = $n2.styleRuleParserForLegend.parse(rule.condition);
+					}
+					_this.conditionByLabel[effectivelabel] = {
+							labelId: effectivelabel
+							,condition: condition
+							,label: rule.label
+							,labelType : labelType
+					}
+				}
 
+			})
+		};
+
+		this.selectedChoiceIdMap = {};
+		var completedChoices = this.getCompleteChoices();
+		completedChoices.forEach(function(choiceinfo){
+			var effectLabel = choiceinfo.labelId;
+			_this.selectedChoiceIdMap[effectLabel] = true;
+		});
+		this.selectedChoicesParameter.sendUpdate();
+	},
+
+	_computeAvailableChoicesFromDocs: function(docs, callbackFn){
+		return null;
+	},
+	
+	// Invoke by superclass._getModelInfo to collect all the parameters
+	_addModelInfoParameters: function(info){
+		info.parameters.completeChoices = this.completeChoicesParameter.getInfo();
+		info.parameters.selectedChoices = this.selectedChoicesParameter.getInfo();
+	},
+	
+	getCompleteChoices: function(){
+		var completeChoices = [];
+		for(var choiceId in this.conditionByLabel){
+			var choiceInfo = this.conditionByLabel[choiceId];
+			completeChoices.push(choiceInfo);
+		};
+		completeChoices.sort();
+		return completeChoices;
+	},
+	
+	_setCompleteChoices: function(choiceIdArray){
+		var _this = this;
+		_this.selectedChoiceIdMap = {};
+		choiceIdArray.forEach(function(choiceId){
+			_this.selectedChoiceIdMap[choiceId.labelId] = true;
+		});
+		_this.selectedChoicesParameter.sendUpdate();
+	},
+	
+	//@Override the document visibility is computed by all the valid conditions. 
+	_isDocVisible: function(doc, selectedChoiceIdMap){
+		
+		var _this = this;
+		if( doc ){
+			var result = false;
+			try {
+				//Greedy approach to filtering documents
+				for (var choice in selectedChoiceIdMap){
+					var conditionInfo = _this.conditionByLabel[choice];
+					if ( !conditionInfo ){
+						result = false;
+					} else {
+						var condition = conditionInfo.condition;
+						result = condition.getValue(doc);
+					}
+					
+					if ( result ){
+						return result;
+					}
+				}
+			} catch (e){
+				return false;
+			}
+			return false;
+		}
+	}
+	
+})
 //--------------------------------------------------------------------------
 function handleModelCreate(m, addr, dispatcher){
 	if( m.modelType === 'filter' ){
@@ -2022,6 +2214,33 @@ function handleModelCreate(m, addr, dispatcher){
 		};
 		
 		m.model = new MultiDocumentFilter(options);
+		
+		m.created = true;
+	} else if( m.modelType === 'conditionalModelFilter' ){
+		var options = {};
+		
+		if( m && m.modelOptions ){
+			for(var key in m.modelOptions){
+				options[key] = m.modelOptions[key];
+			};
+		};
+		
+		options.modelId = m.modelId;
+		options.modelType = m.modelType;
+		
+		var module = m.moduleDisplay.module;
+		
+		var mapInfo = module.getMapInfo();
+		
+		options.rules = mapInfo.styles;
+		
+		if( m && m.config ){
+			if( m.config.directory ){
+				options.dispatchService = m.config.directory.dispatchService;
+			};
+		};
+		
+		m.model = new ConditionalModelFilter(options);
 		
 		m.created = true;
 	};

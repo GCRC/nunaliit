@@ -592,7 +592,7 @@ public class SchemaAttribute {
 							label = option.getValue();
 						}
 						pw.print(label);
-						pw.print("</span>");
+						pw.println("</span>");
 					}
 					pw.println("\t\t\t</span>");
 					pw.println("\t\t{{/if}}");
@@ -664,6 +664,9 @@ public class SchemaAttribute {
 					} else if( "date".equals(elementType) ){
 						pw.print("{{date}}");
 						
+					} else if( "tagbox".equals(elementType) ){
+						pw.print("{{.}}");
+						
 					} else if( "reference".equals(elementType) ){
 						pw.print("{{#doc}}");
 						pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
@@ -732,22 +735,22 @@ public class SchemaAttribute {
 			}
 
 			if( "title".equals(type) ) {
-				pw.println("<div class=\"title mdc-typography--headline6\">");
+				pw.println("\t\t\t<div class=\"title mdc-typography--headline6\">");
 
-				pw.println("\t<div class=\"value"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t<div class=\"value"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t<div class=\"end\"></div>");
 				
-				pw.println("</div>");
+				pw.println("\t\t\t</div>");
 				
 			} else if( "string".equals(type)
 			 || "localized".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 
 					String fixUrlClass = "";
 					String fixMaxHeight = "";
@@ -766,97 +769,97 @@ public class SchemaAttribute {
 					}
 					
 					if( "string".equals(type) ){
-						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+id+"}}</div>");
+						pw.println("\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+id+"}}</div>");
 
 					} else if( "localized".equals(type) ){
-						pw.println("\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+id+"{{/:localize}}</div>");
+						pw.println("\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+id+"{{/:localize}}</div>");
 					}
 					
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
 					
-					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "date".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#"+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value\">{{date}}</div>");
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"value\">{{date}}</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
 					
-					
-					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/"+id+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "reference".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#"+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#"+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					
 					if( "thumbnail".equals(referenceType) ){
-						pw.println("\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{doc}}\"></div>");
+						pw.println("\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{doc}}\"></div>");
 					} else {
-						pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+						pw.println("\t\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
 					}
 
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
 					
 					
-					pw.println("\t{{/"+id+"}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/"+id+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "custom".equals(type) ){
 				if( null != id && null != customType ){
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 					
-					pw.println("\t\t\t<div class=\"value n2s_custom\""
+					pw.println("\t\t\t\t\t\t<div class=\"value n2s_custom\""
 							+ " nunaliit-custom=\""+customType+"\""
 							+ " nunaliit-selector=\"{{#:selector}}"+id+"{{/:selector}}\">"
 							+ "</div>");
 
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
 					
 					
-					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "array".equals(type) ){
 				if( null != id ){
 
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
 
-					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
-					pw.println("\t\t<div class=\"value\">");
-					pw.println("\t\t{{#"+id+"}}");
-					pw.print("\t\t\t<div class=\"array_element");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t{{#"+id+"}}");
+					pw.print("\t\t\t\t\t\t\t<div class=\"array_element");
+
 					if( urlsToLinks ){
 						pw.print(" n2s_convertTextUrlToLink");
 					}
@@ -869,41 +872,43 @@ public class SchemaAttribute {
 					pw.println("\">");
 					
 					if( "string".equals(elementType) ){
-						pw.println("{{.}}");
+						pw.println("\t\t\t\t\t\t\t\t{{.}}");
 					} else if( "localized".equals(elementType) ){
-						pw.println("{{#:localize}}.{{/:localize}}");
+						pw.println("\t\t\t\t\t\t\t\t{{#:localize}}.{{/:localize}}");
 					} else if( "date".equals(elementType) ){
-						pw.println("{{date}}");
+						pw.println("\t\t\t\t\t\t\t\t{{date}}");
+					} else if( "tagbox".equals(elementType) ){
+						pw.println("\t\t\t\t\t\t\t\t{{.}}");
 					} else if( "reference".equals(elementType) ){
-						pw.println("\t\t\t\t<a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a>");
+						pw.println("\t\t\t\t\t\t\t\t<a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a>");
 					} else if( "custom".equals(elementType) ){
 						if( null != customType ){
-							pw.println("\t\t\t\t<span class=\"n2s_custom\""
+							pw.println("\t\t\t\t\t\t\t\t<span class=\"n2s_custom\""
 								+ " nunaliit-custom=\""+customType+"\""
 								+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
 						}
 					}
 					
-					pw.println("\t\t\t</div>");
-					pw.println("\t\t{{/"+id+"}}");
-					pw.println("\t\t</div>");
-					pw.println("\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t{{/"+id+"}}");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t</div>");
+					pw.println("\t\t\t\t</div>");
 					
-					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
-					pw.println("\t{{#if "+id+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
 	
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 	
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+id+"}}\">");
 					
 					for(SelectionOption option : options){
 						String value = option.getValue();
@@ -912,115 +917,116 @@ public class SchemaAttribute {
 							optLabel = value;
 						}
 						
-						pw.println("\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
+						pw.println("\t\t\t\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
 					}
 
-					pw.println("\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+id+"}}</span>");
+					pw.println("\t\t\t\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+id+"}}</span>");
 					
-					pw.println("\t\t\t</div>");
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
 					
 					
-					pw.println("\t{{/if}}");
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "checkbox".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value\">");
-					pw.println("\t\t\t\t{{#if "+id+"}}");
-					pw.println("\t\t\t\t\t<span class=\"n2s_localize\">Yes</span>");
-					pw.println("\t\t\t\t{{else}}");
-					pw.println("\t\t\t\t\t<span class=\"n2s_localize\">No</span>");
-					pw.println("\t\t\t\t{{/if}}");
-					pw.println("\t\t\t</div>");
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t{{#if "+id+"}}");
+					pw.println("\t\t\t\t\t\t\t<span class=\"n2s_localize\">Yes</span>");
+					pw.println("\t\t\t\t\t\t{{else}}");
+					pw.println("\t\t\t\t\t\t\t<span class=\"n2s_localize\">No</span>");
+					pw.println("\t\t\t\t\t\t{{/if}}");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "checkbox_group".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-					pw.println("\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
-					pw.println("\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
+
 					for(CheckboxGroupItem item : checkboxes){
 						String itemId = item.getId();
 						String itemLabel = item.getLabel();
-						pw.println("\t\t\t\t{{#"+itemId+"}}");
+						pw.println("\t\t\t\t\t\t{{#"+itemId+"}}");
 						if( null == itemLabel ){
-							pw.println("\t\t\t\t\t<div>"+itemId+"</div>");
+							pw.println("\t\t\t\t\t\t\t<div>"+itemId+"</div>");
 						} else {
-							pw.println("\t\t\t\t\t<div class=\"n2s_localize\">"+itemLabel+"</div>");
+							pw.println("\t\t\t\t\t\t\t<div class=\"n2s_localize\">"+itemLabel+"</div>");
 						}
-						pw.println("\t\t\t\t{{/"+itemId+"}}");
+						pw.println("\t\t\t\t\t\t{{/"+itemId+"}}");
 					}
-					pw.println("\t\t\t</div>");
-					pw.println("\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 					
-					pw.println("\t\t</div>");
+					pw.println("\t\t\t\t</div>");
 					
 					
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 				
 			} else if( "file".equals(type) ){
-				pw.println("{{#nunaliit_attachments}}");
-				pw.println("{{#files}}");
-				pw.println("\t{{#:iterate}}");
-				pw.println("\t\t{{#value}}");
-				pw.println("\t\t\t{{^source}}");
+				pw.println("\t\t\t{{#nunaliit_attachments}}");
+				pw.println("\t\t\t\t{{#files}}");
+				pw.println("\t\t\t\t\t{{#:iterate}}");
+				pw.println("\t\t\t\t\t\t{{#value}}");
+				pw.println("\t\t\t\t\t\t\t{{^source}}");
 
-				pw.println("\t\t\t\t{{#attachmentName}}");
-				pw.println("\t\t\t\t\t<div class=\"n2_mediaView\">");
-				pw.println("\t\t\t\t\t\t<div class=\"n2s_insertMediaView\" nunaliit-attachment=\"{{.}}\"> </div>");
-				pw.println("\t\t\t\t\t</div>");
-				pw.println("\t\t\t\t{{/attachmentName}}");
+				pw.println("\t\t\t\t\t\t\t\t{{#attachmentName}}");
+				pw.println("\t\t\t\t\t\t\t\t\t<div class=\"n2_mediaView\">");
+				pw.println("\t\t\t\t\t\t\t\t\t\t<div class=\"n2s_insertMediaView\" nunaliit-attachment=\"{{.}}\"></div>");
+				pw.println("\t\t\t\t\t\t\t\t\t</div>");
+				pw.println("\t\t\t\t\t\t\t\t{{/attachmentName}}");
 
-				pw.println("\t\t\t{{/source}}");
-				pw.println("\t\t{{/value}}");
-				pw.println("\t{{/:iterate}}");
-				pw.println("{{/files}}");
-				pw.println("{{/nunaliit_attachments}}");
+				pw.println("\t\t\t\t\t\t\t{{/source}}");
+				pw.println("\t\t\t\t\t\t{{/value}}");
+				pw.println("\t\t\t\t\t{{/:iterate}}");
+				pw.println("\t\t\t\t{{/files}}");
+				pw.println("\t\t\t{{/nunaliit_attachments}}");
 
 			} else if( "geometry".equals(type) ){
 				if( null != id ){
 					throw new Exception("'id' should not be specified for attributes of type 'geometry'");
 				}
 
-				pw.println("{{#nunaliit_geom}}");
-				pw.println("\t\t<div class=\"nunaliit_geom\">");
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
-				pw.println("\t\t\t<div class=\"value\">{{wkt}}</div>");
-				pw.println("\t\t\t<div class=\"end\"></div>");
-				pw.println("\t\t</div>");
-				pw.println("{{/nunaliit_geom}}");
+				pw.println("\t\t\t{{#nunaliit_geom}}");
+				pw.println("\t\t\t\t<div class=\"nunaliit_geom\">");
+				pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+				pw.println("\t\t\t\t\t<div class=\"value\">{{wkt}}</div>");
+				pw.println("\t\t\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t</div>");
+				pw.println("\t\t\t{{/nunaliit_geom}}");
 
 			} else if( "hover_sound".equals(type) ){
 				if( null != id ){
 					throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
 				}
 
-				pw.println("{{#nunaliit_hoverSound}}");
-				pw.println("\t\t<div class=\"nunaliit_hoverSound\">");
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
-				pw.println("\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
-				pw.println("\t\t\t<div class=\"end\"></div>");
-				pw.println("\t\t</div>");
-				pw.println("{{/nunaliit_hoverSound}}");
+				pw.println("\t\t\t{{#nunaliit_hoverSound}}");
+				pw.println("\t\t\t\t<div class=\"nunaliit_hoverSound\">");
+				pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+				pw.println("\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+				pw.println("\t\t\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t</div>");
+				pw.println("\t\t\t{{/nunaliit_hoverSound}}");
 
 			} else if( "createdBy".equals(type) ){
 				if( null == label ){
@@ -1028,21 +1034,21 @@ public class SchemaAttribute {
 					labelLocalizeClass = " n2s_localize";
 				}
 
-				pw.println("{{#nunaliit_created}}");
-				pw.println("\t{{#if name}}");
+				pw.println("\t\t\t{{#nunaliit_created}}");
+				pw.println("\t\t\t\t{{#if name}}");
 
-				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created\">");
+				pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_nunaliit_created\">");
 
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+				pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 
-				pw.println("\t\t\t<div class=\"value n2s_insertUserName\">{{name}}</div>");
+				pw.println("\t\t\t\t\t\t<div class=\"value n2s_insertUserName\">{{name}}</div>");
 				
-				pw.println("\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 				
-				pw.println("\t\t</div>");
+				pw.println("\t\t\t\t\t</div>");
 				
-				pw.println("\t{{/if}}");
-				pw.println("{{/nunaliit_created}}");
+				pw.println("\t\t\t\t{{/if}}");
+				pw.println("\t\t\t{{/nunaliit_created}}");
 
 			} else if( "createdTime".equals(type) ){
 				if( null == label ){
@@ -1050,21 +1056,21 @@ public class SchemaAttribute {
 					labelLocalizeClass = " n2s_localize";
 				}
 
-				pw.println("{{#nunaliit_created}}");
-				pw.println("\t{{#if time}}");
+				pw.println("\t\t\t{{#nunaliit_created}}");
+				pw.println("\t\t\t\t{{#if time}}");
 
-				pw.println("\t\t<div class=\""+schemaClass+"_nunaliit_created_time\">");
+				pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_nunaliit_created_time\">");
 
-				pw.println("\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
+				pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+" mdc-typography--subtitle2\">"+label+"</div>");
 
-				pw.println("\t\t\t<div class=\"value n2s_insertTime\">{{time}}</div>");
+				pw.println("\t\t\t\t\t\t<div class=\"value n2s_insertTime\">{{time}}</div>");
 				
-				pw.println("\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
 				
-				pw.println("\t\t</div>");
+				pw.println("\t\t\t\t\t</div>");
 				
-				pw.println("\t{{/if}}");
-				pw.println("{{/nunaliit_created}}");
+				pw.println("\t\t\t\t{{/if}}");
+				pw.println("\t\t\t{{/nunaliit_created}}");
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
@@ -1082,11 +1088,12 @@ public class SchemaAttribute {
 			}
 
 			if( "title".equals(type) ){
-				pw.println("<div class=\"title\">");
+				pw.println("\t\t\t<div class=\"title\">");
 
-				pw.println("\t<div class=\"value mdc-typography--headline6"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t<div class=\"value mdc-typography--headline6"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t<div class=\"end\"></div>");
 				
-				pw.println("</div>");
+				pw.println("\t\t\t</div>");
 
  			} else if( isTextarea() ){
 				if( null != id ){
@@ -1160,54 +1167,62 @@ public class SchemaAttribute {
 						fieldType += ",search="+encodeFieldParameter(searchFunction);
 					}					
 					
-						pw.println("{{#"+schemaStructure+"}}");
-						pw.println("<div class=\""+schemaClass+"_"+id+"\">");
+						pw.println("\t\t\t{{#"+schemaStructure+"}}");
+						pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-						pw.println("\t<div class=\"value\">");
-						pw.println("\t\t{{#:field}}"+id+fieldType+"{{/:field}}");
-						pw.println("\t</div>");
-						pw.println("</div>");
+						pw.println("\t\t\t\t\t<div class=\"value\">");
+						pw.println("\t\t\t\t\t\t{{#:field}}"+id+fieldType+"{{/:field}}");
+						pw.println("\t\t\t\t\t</div>");
+						pw.println("\t\t\t\t</div>");
 						
-						pw.println("{{/"+schemaStructure+"}}");
+						pw.println("\t\t\t{{/"+schemaStructure+"}}");
 			 	}
 
 			} else if( "selection".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<div class=\"value\">");
-					pw.println("\t\t\t<div class=\"mdc-select mdc-select--outlined n2s_attachMDCSelect\">");
-					pw.println("\t\t\t\t<i class=\"mdc-select__dropdown-icon\"></i>");
-					pw.println("\t\t\t\t<select class=\"{{#:input}}"+id+"{{/:input}} mdc-select__native-control\">");
-					
+					pw.println("\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t<div class=\"mdc-select mdc-select--outlined n2s_attachMDCSelect\">");
+					pw.println("\t\t\t\t\t\t\t<div class=\"mdc-select__anchor\">");
+					pw.println("\t\t\t\t\t\t\t\t<i class=\"mdc-select__dropdown-icon\"></i>");
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"mdc-select__selected-text\"></div>");
+
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"mdc-notched-outline\">");
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"mdc-notched-outline__leading\"></div>");
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"mdc-notched-outline__notch\">");
+					pw.println("\t\t\t\t\t\t\t\t\t\t<label class=\"mdc-floating-label "+labelLocalizeClass+"\">"+label+"</label>");
+					pw.println("\t\t\t\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"mdc-notched-outline__trailing\"></div>");
+					pw.println("\t\t\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t\t</div>");
+
+					pw.println("\t\t\t\t\t\t\t<div class=\"{{#:input}}"+id+",select{{/:input}} mdc-select__menu mdc-menu mdc-menu-surface\">");
+					pw.println("\t\t\t\t\t\t\t\t<ul class=\"mdc-list\">");
+
 					for(SelectionOption option : options){
-						pw.print("\t\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
+						pw.print("\t\t\t\t\t\t\t\t\t<li class=\"n2s_localize mdc-list-item\" role=\"option\" data-value=\""+option.getValue()+"\">");
 						String optLabel = option.getLabel();
 						if( null == optLabel ){
 							optLabel = option.getValue();
 						}
 						pw.print(optLabel);
-						pw.println("</option>");
+						pw.println("</li>");
 					}
-					
-					pw.println("\t\t\t\t</select>");
 
-					pw.println("\t\t\t\t<div class=\"mdc-notched-outline\">");
-					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__leading\"></div>");
-					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__notch\">");
-					pw.println("\t\t\t\t\t\t<label class=\"mdc-floating-label "+labelLocalizeClass+"\">"+label+"</label>");
+					pw.println("\t\t\t\t\t\t\t\t</ul>");
+					
+					pw.println("\t\t\t\t\t\t\t</div>");
+
+					pw.println("\t\t\t\t\t\t</div>");
+
 					pw.println("\t\t\t\t\t</div>");
-					pw.println("\t\t\t\t\t<div class=\"mdc-notched-outline__trailing\"></div>");
+
 					pw.println("\t\t\t\t</div>");
-					pw.println("\t\t\t</div>");
-
-					pw.println("\t\t</div>");
-
-					pw.println("\t</div>");
 					
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "array".equals(type) ){
@@ -1228,6 +1243,9 @@ public class SchemaAttribute {
 					} else if( "date".equals(elementType) ){
 						fieldType += ",date";
 						arrayType = " \"date\"";
+					} else if( "tagbox".equals(elementType) ){
+						fieldType += ",tagbox";
+						arrayType = " \"tagbox\"";
 					} else if( "reference".equals(elementType) ){
 						fieldType += ",reference";
 						arrayType = " \"reference\"";
@@ -1246,60 +1264,61 @@ public class SchemaAttribute {
 					}
 					
 					if( null != fieldType ){
-						pw.println("{{#"+schemaStructure+"}}");
+						pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-						pw.println("\t<div class=\""+schemaClass+"_"+id+"\">");
+						pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
-						pw.println("\t\t<div class=\"value\">");
-						pw.println("\t\t\t{{#:array "+id+arrayType+"}}");
-						pw.println("\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
-						pw.println("\t\t\t{{/:array}}");
-						pw.println("\t\t</div>");
+						pw.println("\t\t\t\t\t<div class=\"value\">");
+						pw.println("\t\t\t\t\t\t{{#:array "+id+arrayType+"}}");
+						pw.println("\t\t\t\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
+						pw.println("\t\t\t\t\t\t{{/:array}}");
+						pw.println("\t\t\t\t\t</div>");
 						
-						pw.println("\t</div>");
+						pw.println("\t\t\t\t</div>");
 						
-						pw.println("{{/"+schemaStructure+"}}");
+						pw.println("\t\t\t{{/"+schemaStructure+"}}");
 					}
 				}
 
 			} else if( "checkbox_group".equals(type) ){
 				if( null != id ){
-					pw.println("{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
 
-					pw.println("\t<div class=\"mdc-list-group "+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t<div class=\"mdc-list-group "+schemaClass+"_"+id+"\">");
 
-					pw.println("\t\t<h3 class=\"label mdc-list-group__subheader"+labelLocalizeClass+"\">"+label+"</h3>");
-					pw.println("\t\t<ul class=\"mdc-list value\" role=\"group\" aria-orientation=\"vertical\">");
+					pw.println("\t\t\t\t\t<h3 class=\"label mdc-list-group__subheader"+labelLocalizeClass+"\">"+label+"</h3>");
+					pw.println("\t\t\t\t\t<ul class=\"mdc-list value\" role=\"group\" aria-orientation=\"vertical\">");
 					
 					for(CheckboxGroupItem item : checkboxes){
 						String itemId = item.getId();
 						String itemLabel = item.getLabel();
 						String forId = id+"_"+itemId;
 						
-						pw.println("\t\t\t<li class=\"mdc-list-item\">");
-						pw.println("\t\t\t\t<div class=\"mdc-checkbox n2s_attachMDCCheckbox\">");
-						pw.println("\t\t\t\t\t<input type=\"checkbox\" class=\"mdc-checkbox__native-control {{#:input}}"+itemId+"{{/:input}}\" id=\""+forId+"\" />");
-						pw.println("\t\t\t\t\t<div class=\"mdc-checkbox__background\">");
-						pw.println("\t\t\t\t\t\t<svg class=\"mdc-checkbox__checkmark\" viewBox=\"0 0 24 24\">");
-						pw.println("\t\t\t\t\t\t\t<path fill=\"none\" stroke=\"white\" class=\"mdc-checkbox__checkmark-path\" d=\"M1.73,12.91 8.1,19.28 22.79,4.59\" />");
-						pw.println("\t\t\t\t\t\t</svg>");
-						pw.println("\t\t\t\t\t\t<div class=\"mdc-checkbox__mixedmark\"></div>");
-						pw.println("\t\t\t\t\t</div>");
-						pw.println("\t\t\t\t</div>");
+						pw.println("\t\t\t\t\t\t<li class=\"mdc-list-item\">");
+						pw.println("\t\t\t\t\t\t\t<div class=\"mdc-checkbox n2s_attachMDCCheckbox\">");
+						pw.println("\t\t\t\t\t\t\t\t<input type=\"checkbox\" class=\"mdc-checkbox__native-control {{#:input}}"+itemId+"{{/:input}}\" id=\""+forId+"\" />");
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"mdc-checkbox__background\">");
+						pw.println("\t\t\t\t\t\t\t\t\t<svg class=\"mdc-checkbox__checkmark\" viewBox=\"0 0 24 24\">");
+						pw.println("\t\t\t\t\t\t\t\t\t\t<path fill=\"none\" stroke=\"white\" class=\"mdc-checkbox__checkmark-path\" d=\"M1.73,12.91 8.1,19.28 22.79,4.59\" />");
+						pw.println("\t\t\t\t\t\t\t\t\t</svg>");
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"mdc-checkbox__mixedmark\"></div>");
+						pw.println("\t\t\t\t\t\t\t\t</div>");
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"mdc-checkbox__ripple\"></div>");
+						pw.println("\t\t\t\t\t\t\t</div>");
 
 						if( null == itemLabel ) {
-							pw.println(" <label for=\""+forId+"\">"+itemId+"</label>");
+							pw.println("\t\t\t\t\t\t\t<label for=\""+forId+"\">"+itemId+"</label>");
 						} else {
-							pw.println(" <label for=\""+forId+"\" class=\"n2s_localize\">"+itemLabel+"</label>");
+							pw.println("\t\t\t\t\t\t\t<label for=\""+forId+"\" class=\"n2s_localize\">"+itemLabel+"</label>");
 						}
 
-						pw.println("\t\t\t</li>");
+						pw.println("\t\t\t\t\t\t</li>");
 					}
 
-					pw.println("\t\t</ul>");
-					pw.println("\t</div>");
+					pw.println("\t\t\t\t\t</ul>");
+					pw.println("\t\t\t\t</div>");
 					
-					pw.println("{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 
 			} else if( "file".equals(type) ){
@@ -1316,9 +1335,9 @@ public class SchemaAttribute {
 					labelValue = ",label="+encodeFieldParameter(label);
 				}
 
-				pw.println("<div class=\"nunaliit_geom\">");
-				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_geom,geometry"+labelValue+"{{/:field}}</div>");
-				pw.println("</div>");
+				pw.println("\t\t\t<div class=\"nunaliit_geom\">");
+				pw.println("\t\t\t\t<div class=\"value\">{{#:field}}nunaliit_geom,geometry"+labelValue+"{{/:field}}</div>");
+				pw.println("\t\t\t</div>");
 
 			} else if( "hover_sound".equals(type) ){
 				String labelValue = "";
@@ -1336,11 +1355,11 @@ public class SchemaAttribute {
 					searchFunctionString = ",search="+encodeFieldParameter(searchFunction);
 				}
 
-				pw.println("<div class=\"nunaliit_hoverSound\">");
+				pw.println("\t\t\t<div class=\"nunaliit_hoverSound\">");
 
-				pw.println("\t<div class=\"value\">{{#:field}}nunaliit_hoverSound,reference"+labelValue+searchFunctionString+"{{/:field}}</div>");
+				pw.println("\t\t\t\t<div class=\"value\">{{#:field}}nunaliit_hoverSound,reference"+labelValue+searchFunctionString+"{{/:field}}</div>");
 				
-				pw.println("</div>");
+				pw.println("\t\t\t</div>");
 
 			} else if( "createdBy".equals(type) ){
 				// nothing to do

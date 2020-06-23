@@ -13,7 +13,7 @@ ehthumbs.db
 Thumbs.db
 /target
 
-# VIM created files #
+# VIM created files   #
 #######################
 *.swp
 
@@ -22,4 +22,6 @@ Thumbs.db
 *.iml
 .idea/
 
-package-lock.json
+# Metadata directory  #
+#######################
+/.metadata/
