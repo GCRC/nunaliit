@@ -16,32 +16,38 @@ class N2StackingHistory {
 		listen(this._map, 'postcompose', this.clear , this);
 		//listen(this._map, '', , this);
 	}
+
 	getStackingHistory(ext){
 		var rst = undefined;
 		var hashkey = undefined;
 		if (Array.isArray(ext) && ext.length === 4){
 			hashkey = ext[0] + '' + ext[1];
 		}
+
 		if ( this._history[hashkey] ){
 			rst = this._history[hashkey] ;
 		}
-		return  rst;
+
+		return	rst;
 	}
+
 	addStackingHistory(ext, extraInfo){
 		var hashkey = undefined;
 		if (Array.isArray(ext) && ext.length === 4){
 			hashkey =  ext[0] +''+ ext[1];
-		};
+		}
+
 		var pointInfo = {
 			extra: extraInfo
 		};
+
 		if ( !this._history[hashkey] ){
 			this._history[hashkey] = [];
 		}
 		this._history[hashkey].push(pointInfo);
 		return this._history[hashkey];
-
 	}
+
 	_isCloseEnough(f1, f2){
 		var precision = this._precision;
 		var ext1 = f1.getGeometry().getExtent();
@@ -61,13 +67,12 @@ class N2StackingHistory {
 		}
 		return rst;
 	}
+
 	clear(){
 		for (var key in this._history) {
-    	delete this._history[key];
+		delete this._history[key];
 		}
-
 	}
-
 }
 
 export default N2StackingHistory;

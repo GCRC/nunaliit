@@ -13,8 +13,6 @@ import {default as Projection} from 'ol/proj/Projection.js';
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.canvasMap';
 
-
-
 /**
 * @classdesc
 * The N2CouchDbSource class is the customized vector source using in
@@ -38,8 +36,6 @@ class N2CouchDbSource extends Vector {
 		this.mapProjCode = null;
 		this.epsg4326Resolution = null;
 
-
-
 		var _this = this;
 
 		this.sourceId = $n2.getUniqueId();
@@ -58,7 +54,7 @@ class N2CouchDbSource extends Vector {
 			this.dispatchService.register(DH,'modelGetInfo',f);
 			this.dispatchService.register(DH,'modelStateUpdated',f);
 			this.dispatchService.register(DH,'simplifiedGeometryReport',f);
-		};
+		}
 
 		// Request for current state
 		if( this.sourceModelId ){
@@ -71,10 +67,11 @@ class N2CouchDbSource extends Vector {
 				this.dispatchService.synchronousCall(DH,msg);
 				if( msg.state ){
 					this._sourceModelStateUpdated(msg.state);
-				};
-			};
-		};
-	};
+				}
+			}
+		}
+	}
+
 	_sourceModelStateUpdated(state){
 		var _this = this;
 
@@ -86,10 +83,11 @@ class N2CouchDbSource extends Vector {
 				if( !docInfo ){
 					docInfo = {};
 					_this.infoByDocId[docId] = docInfo;
-				};
+				}
 				docInfo.doc = addedDoc;
 			});
-		};
+		}
+
 		if( state.updated ){
 			state.updated.forEach(function(updatedDoc){
 				var docId = updatedDoc._id;
@@ -97,7 +95,8 @@ class N2CouchDbSource extends Vector {
 				if( !docInfo ){
 					docInfo = {};
 					_this.infoByDocId[docId] = docInfo;
-				};
+				}
+
 				if( docInfo.doc ){
 					if( docInfo.doc._rev !== updatedDoc._rev ){
 						// New version of document. Clear simplified info
@@ -105,18 +104,18 @@ class N2CouchDbSource extends Vector {
 						delete docInfo.simplifiedName;
 						delete docInfo.simplifiedResolution;
 						delete docInfo.simplifiedInstalled;
-					};
+					}
 				}
 				docInfo.doc = updatedDoc;
 			});
-		};
+		}
+
 		if( state.removed ){
 			state.removed.forEach(function(removedDoc){
 				var docId = removedDoc._id;
 				delete _this.infoByDocId[docId];
 			});
-		};
-
+		}
 		//this._reloadAllFeatures();
 	}
 
@@ -126,7 +125,7 @@ class N2CouchDbSource extends Vector {
 		if('modelStateUpdated' === m.type) {
 			if( this.sourceModelId === m.modelId ){
 				this._sourceModelStateUpdated(m.state);
-			};
+			}
 		} else if('simplifiedGeometryReport' === m.type) {
 			if( $n2.isArray(m.simplifiedGeometries) ){
 				var atLeastOne = false;
@@ -139,16 +138,16 @@ class N2CouchDbSource extends Vector {
 					if( docInfo ){
 						if( !docInfo.simplifications ){
 							docInfo.simplifications = {};
-						};
+						}
 						docInfo.simplifications[attName] = wkt;
 						atLeastOne = true;
-					};
+					}
 				});
 
 				if( atLeastOne ){
 					this._reloadAllFeatures();
-				};
-			};
+				}
+			}
 		}
 	}
 
@@ -176,18 +175,18 @@ class N2CouchDbSource extends Vector {
 							} else if( attRes > bestResolution ){
 								bestResolution = attRes;
 								bestAttName = attName;
-							};
-						};
-					};
+							}
+						}
+					}
 
 					// At this point, if bestResolution is set, then this is the geometry we should
 					// be displaying
 					if( undefined !== bestResolution ){
 						docInfo.simplifiedName = bestAttName;
 						docInfo.simplifiedResolution = bestResolution;
-					};
-				};
-			};
+					}
+				}
+			}
 
 			var geometriesRequested = [];
 			for(var docId in this.infoByDocId){
@@ -198,7 +197,7 @@ class N2CouchDbSource extends Vector {
 					var wkt = undefined;
 					if( docInfo.simplifications ){
 						wkt = docInfo.simplifications[docInfo.simplifiedName];
-					};
+					}
 
 					// If I do not have it, request it
 					if( !wkt ){
@@ -208,8 +207,8 @@ class N2CouchDbSource extends Vector {
 							,doc: doc
 						};
 						geometriesRequested.push(geomRequest);
-					};
-				};
+					}
+				}
 			}
 
 			this.dispatchService.send(DH,{
@@ -228,11 +227,10 @@ class N2CouchDbSource extends Vector {
 			// Convert [0,0] and [0,1] to proj
 			var p0 = transformFn([0,0]);
 			var p1 = transformFn([0,1]);
-
 			var factor = Math.sqrt( ((p0[0]-p1[0])*(p0[0]-p1[0])) + ((p0[1]-p1[1])*(p0[1]-p1[1])) );
 
 			targetResolution = targetResolution * factor;
-		};
+		}
 
 		return targetResolution;
 	}
@@ -257,7 +255,7 @@ class N2CouchDbSource extends Vector {
 							// use it
 							wkt = docInfo.simplifications[docInfo.simplifiedName];
 							docInfo.simplifiedInstalled = docInfo.simplifiedName;
-					};
+					}
 				var geometry = wktFormat.readGeometryFromText(wkt);
 				geometry.transform('EPSG:4326', _this.mapProjCode);
 				var feature = new Feature();
@@ -272,18 +270,15 @@ class N2CouchDbSource extends Vector {
 					$n2.log('Invalid feature', doc);
 				}
 				
-				
 				//docInfo.feature = feature;
-						// 				if (geoJSONFeature['properties']) {
-						// 					feature.setProperties(geoJSONFeature['properties']);
-						// 				}
+				//if (geoJSONFeature['properties']) {
+				//	feature.setProperties(geoJSONFeature['properties']);
+				//}
+			}
+		}
 
-				
-			};
-		};
-
-				this.clear();
-				this.addFeatures(features);
+		this.clear();
+		this.addFeatures(features);
 	}
 }
 

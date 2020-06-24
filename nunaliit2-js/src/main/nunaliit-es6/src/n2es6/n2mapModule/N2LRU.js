@@ -9,7 +9,6 @@
  * @api
  */
 
-
 class lrunode {
 	constructor(key, value) {
 
@@ -23,6 +22,7 @@ class lrunode {
 		this.next = null;
 	}
 }
+
 class N2LRU{
 
 	constructor(limit) {
@@ -67,7 +67,7 @@ class N2LRU{
 			}
 		}
 		this.setHead(node);
-	};
+	}
 
 	/* Retrieve a single entry from the cache */
 	get (key) {
@@ -80,7 +80,7 @@ class N2LRU{
 		} else {
 			return null;
 		}
-	};
+	}
 
 	/* Remove a single entry from the cache */
 	remove (key) {
@@ -97,7 +97,7 @@ class N2LRU{
 		}
 		delete this.map[key];
 		this.size--;
-	};
+	}
 
 	/* Resets the entire cache - Argument limit is optional to be reset */
 	removeAll (limit) {
@@ -108,7 +108,7 @@ class N2LRU{
 		if (typeof limit == "number") {
 			this.limit = limit;
 		}
-	};
+	}
 
 	/* Traverse through the cache elements using a callback function
 	 * Returns args [node element, element number, cache instance] for the callback function to use
@@ -151,4 +151,5 @@ class N2LRU{
 		return s;
 	}
 }
+
 export default N2LRU

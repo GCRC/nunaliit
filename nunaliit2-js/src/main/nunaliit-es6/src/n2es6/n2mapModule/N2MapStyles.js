@@ -87,15 +87,15 @@ class N2MapStyles {
 	* ol5 map style obj.
 	* @return {import("ol/style/Style.js").default} produce a ol5 Style object
 	*/
- 	loadStyleFromN2Symbolizer(symbols , feature){
- 		var geometryType = feature.n2_geometry;
- 		var typeLabel = {_n2type: geometryType};
- 		//let key = Object.assign({}, symbols, typeLabel);
- 		//let candidate = this.lrucache.get(hash(key));
- 		//if (candidate){
- 		//	return candidate;
- 		//}
- 		let candidate =  this.getOl5StyleObjFromSymbol(symbols, geometryType, feature);	
+	loadStyleFromN2Symbolizer(symbols , feature){
+		var geometryType = feature.n2_geometry;
+		var typeLabel = {_n2type: geometryType};
+		//let key = Object.assign({}, symbols, typeLabel);
+		//let candidate = this.lrucache.get(hash(key));
+		//if (candidate){
+		//	return candidate;
+		//}
+		let candidate =  this.getOl5StyleObjFromSymbol(symbols, geometryType, feature);	
 		//this.lrucache.set(key, candidate );
 		return candidate;
 	}
@@ -185,7 +185,7 @@ class N2MapStyles {
 				recurProps (arr,
 						currnode,
 						value, nextlevel)
-				return  currnode;
+				return	currnode;
 
 			} else if (currNodeString === 'image') {
 				let currnode = option_image;
@@ -194,7 +194,7 @@ class N2MapStyles {
 						currnode,
 						value, nextlevel)
 				
-				return  currnode;
+				return	currnode;
 
 			} else if (currNodeString === 'text') {
 				let currnode = supernode.getText();
@@ -208,7 +208,7 @@ class N2MapStyles {
 								currnode,
 								value,
 								nextlevel);
-					return  currnode;
+					return	currnode;
 				} else if (arr.length === nextlevel) {
 					return value;
 				}
@@ -227,7 +227,7 @@ class N2MapStyles {
 						nextlevel);
 
 
-				return  currnode;
+				return	currnode;
 
 
 			} else if (currNodeString === 'stroke') {
@@ -240,7 +240,7 @@ class N2MapStyles {
 				recurProps (arr,
 						currnode,
 						value, nextlevel);
-				return  currnode;
+				return	currnode;
 
 
 			} else if (currNodeString.indexOf('color') === 0 ) {
@@ -319,9 +319,9 @@ class N2MapStyles {
 					case 'dash':
 						return [7];
 					case 'dashdot':
-						return  [10, 5, 0, 5];
+						return	[10, 5, 0, 5];
 					case 'longdash':
-					 	return [15];
+						return [15];
 					case 'longdashdot':
 						return [20, 10, 0 , 10];
 					default:
@@ -384,7 +384,7 @@ class N2MapStyles {
 				recurProps (arr,
 						currnode,
 						value, nextlevel)
-				return  currnode;
+				return	currnode;
 
 			} else if (currNodeString === 'image') {
 				let currnode = supernode.getImage();
@@ -402,7 +402,7 @@ class N2MapStyles {
 						currnode,
 						value, nextlevel)
 				currnode.render_();
-				return  currnode;
+				return	currnode;
 
 			} else if (currNodeString === 'text') {
 				let currnode = supernode.getText();
@@ -416,7 +416,7 @@ class N2MapStyles {
 								currnode,
 								value,
 								nextlevel);
-					return  currnode;
+					return	currnode;
 				} else if (arr.length === nextlevel) {
 					return value;
 				}
@@ -435,7 +435,7 @@ class N2MapStyles {
 						nextlevel);
 
 
-				return  currnode;
+				return	currnode;
 
 
 			} else if (currNodeString === 'stroke') {
@@ -448,7 +448,7 @@ class N2MapStyles {
 				recurProps (arr,
 						currnode,
 						value, nextlevel);
-				return  currnode;
+				return	currnode;
 
 
 			} else if (currNodeString.indexOf('color') === 0 ) {
@@ -527,9 +527,9 @@ class N2MapStyles {
 					case 'dash':
 						return [7];
 					case 'dashdot':
-						return  [10, 5, 0, 5];
+						return	[10, 5, 0, 5];
 					case 'longdash':
-					 	return [15];
+						return [15];
 					case 'longdashdot':
 						return [20, 10, 0 , 10];
 					default:
@@ -570,7 +570,7 @@ class N2MapStyles {
 			if (font === "" || cnt > 2) return;
 			var rhb = font.indexOf(' ');
 			rhb = (rhb !== -1) ? rhb : font.length;
-				let curr =  font.substring(0,rhb);
+				let curr =	font.substring(0,rhb);
 				let idx = isWhichPartOfFont (curr)
 				fontArr[idx] = curr;
 				DFS (font.substring(rhb+1), fontArr, cnt++);

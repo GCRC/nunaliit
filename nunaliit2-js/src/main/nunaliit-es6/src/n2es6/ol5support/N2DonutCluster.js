@@ -13,6 +13,7 @@ import {getCenter, buffer, createEmpty, createOrUpdateFromCoordinate} from 'ol/e
 import Point from 'ol/geom/Point.js';
 import Feature from 'ol/Feature.js';
 import {scale as scaleCoordinate, add as addCoordinate} from 'ol/coordinate.js';
+
 /**
 * @classdesc
 * Layer source that cluster the donut geometry. Implemented for atlascine 2 project
@@ -85,34 +86,33 @@ class N2DonutCluster extends VectorSource {
 		*/
 		this.clusterId = 1;
 		this.sourceChangeKey_ = null;
-	    if (options.source){
-	    	this.source = options.source;
-	    	this.sourceChangeKey_ =
-	    		listen(this.source, EventType.CHANGE, this.refresh, this);
-	    }
+		if (options.source){
+			this.source = options.source;
+			this.sourceChangeKey_ =	listen(this.source, EventType.CHANGE, this.refresh, this);
+		}
+
 		/**
 	     * @type {Array<Feature>}
 	     * @protected
 	     */
-	    this.features = [];
-	   // this.source = options.source;
-	    
-	    listen(this, 'sourceRefChanged', this.handleSourceRefChange, this);
-	    //listen(this.source, EventType.CHANGE, this.refresh, this);
+		this.features = [];
+		// this.source = options.source;
 
+		listen(this, 'sourceRefChanged', this.handleSourceRefChange, this);
+		//listen(this.source, EventType.CHANGE, this.refresh, this);
 	}
 	
 	handleSourceRefChange(){
-		 if (this.sourceChangeKey_) {
-		      unlistenByKey(this.sourceChangeKey_);
-		      this.sourceChangeKey_ = null;
-		    }
-		    var source = this.source;
-		    if (source) {
-		      this.sourceChangeKey_ = listen(source,
-		        EventType.CHANGE, this.refresh, this);
-		    }
-		    
+		if (this.sourceChangeKey_) {
+			unlistenByKey(this.sourceChangeKey_);
+			this.sourceChangeKey_ = null;
+		}
+
+		var source = this.source;
+			if (source) {
+				this.sourceChangeKey_ = listen(source,
+				EventType.CHANGE, this.refresh, this);
+			}
 	}
 	
 	setSource(source){
@@ -122,14 +122,14 @@ class N2DonutCluster extends VectorSource {
 			this.source = null;
 			
 		}
+
 		this.dispatchEvent('sourceRefChanged');
 		if (this.source){
 			this.refresh();
 			this.changed();
 		}
-
-		
 	}
+
 	/**
 	* Loading the feature from the layer source, and config the resolution and projection
 	* @override

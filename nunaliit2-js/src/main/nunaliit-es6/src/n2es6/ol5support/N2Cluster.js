@@ -85,16 +85,16 @@ class N2Cluster extends VectorSource {
 		*/
 		this.clusterId = 1;
 		
-	    /**
+		/**
 	     * @type {Array<Feature>}
 	     * @protected
 	     */
-	    this.features = [];
-	    this.source = options.source;
-	    
-	    listen(this.source, EventType.CHANGE, this.refresh, this);
+		this.features = [];
+		this.source = options.source;
 
+		listen(this.source, EventType.CHANGE, this.refresh, this);
 	}
+
 	/**
 	* Loading the feature from the layer source, and config the resolution and projection
 	* @override
@@ -119,36 +119,37 @@ class N2Cluster extends VectorSource {
 	}
 	clear(opt_fast){
 		
-		 if (opt_fast) {
-		      for (var featureId in this.featureChangeKeys_) {
-		        var keys = this.featureChangeKeys_[featureId];
-		        keys.forEach(unlistenByKey);
-		      }
-		      if (!this.featuresCollection_) {
-		        this.featureChangeKeys_ = {};
-		        this.idIndex_ = {};
-		        this.undefIdIndex_ = {};
-		      }
-		    } else {
-		      if (this.featuresRtree_) {
-		        this.featuresRtree_.forEach(this.removeFeatureInternal, this);
-		        for (var id in this.nullGeometryFeatures_) {
-		          this.removeFeatureInternal(this.nullGeometryFeatures_[id]);
-		        }
-		      }
-		    }
-		    if (this.featuresCollection_) {
-		      this.featuresCollection_.clear();
-		    }
+		if (opt_fast) {
+			for (var featureId in this.featureChangeKeys_) {
+				var keys = this.featureChangeKeys_[featureId];
+				keys.forEach(unlistenByKey);
+			}
 
-		    if (this.featuresRtree_) {
-		      this.featuresRtree_.clear();
-		    }
-		    this.loadedExtentsRtree_.clear();
-		    this.nullGeometryFeatures_ = {};
+			if (!this.featuresCollection_) {
+				this.featureChangeKeys_ = {};
+				this.idIndex_ = {};
+				this.undefIdIndex_ = {};
+			}
+		} else {
+			if (this.featuresRtree_) {
+				this.featuresRtree_.forEach(this.removeFeatureInternal, this);
+				for (var id in this.nullGeometryFeatures_) {
+					this.removeFeatureInternal(this.nullGeometryFeatures_[id]);
+				}
+			}
+		}
+		if (this.featuresCollection_) {
+			this.featuresCollection_.clear();
+		}
 
-		
+		if (this.featuresRtree_) {
+			this.featuresRtree_.clear();
+		}
+
+		this.loadedExtentsRtree_.clear();
+		this.nullGeometryFeatures_ = {};
 	}
+
 	/**
 	* The cluster function for cluster Point, Line and Geometry
 	* @override

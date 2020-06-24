@@ -34,8 +34,6 @@ ol_geom_Geometry.prototype.toString = function(srtProjCode, dstProjCode){
 		d_code = d_code || 'EPSG:4326'
 		return toString (this, s_code, d_code);
 	}
-	return;
-	
 }
 })();
 export default toString;

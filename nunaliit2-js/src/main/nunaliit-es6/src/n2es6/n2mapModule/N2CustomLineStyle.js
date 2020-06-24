@@ -9,7 +9,7 @@ import Stroke from 'ol/style/Stroke'
  * Custom style for feature linestring.
  * @api
  */
-class N2CustomLineStyle extends RegularShape{
+class N2CustomLineStyle extends RegularShape {
 	constructor(opt_options) {
 		var options = $n2.extend({
 			

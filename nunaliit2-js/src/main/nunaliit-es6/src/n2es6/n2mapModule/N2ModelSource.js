@@ -2,7 +2,6 @@
  * @module n2es6/n2mapModule/N2ModelSource
  */
 
-
 import Vector from 'ol/source/Vector.js';
 import WKT from 'ol/format/WKT.js';
 import Feature from 'ol/Feature.js';
@@ -62,7 +61,7 @@ class N2ModelSource extends Vector {
 			//this.dispatchService.register(DH,'modelGetInfo',f);
 			//this.dispatchService.register(DH,'modelStateUpdated',f);
 			//this.dispatchService.register(DH,'simplifiedGeometryReport',f);
-		};
+		}
 		
 //		var isLoading = this.modelObserver.isLoading();
 //		if( typeof isLoading === 'boolean' ){
@@ -98,7 +97,7 @@ class N2ModelSource extends Vector {
 		if( typeof state.loading === 'boolean' ){
 			state.loading = state.loading;
 			this._reportLoading(state.loading);
-		};
+		}
 
 		if( state.added ){
 			state.added.forEach(function(addedDoc){
@@ -107,10 +106,10 @@ class N2ModelSource extends Vector {
 				if( !docInfo ){
 					docInfo = {};
 					_this.infoByDocId[docId] = docInfo;
-				};
+				}
 				docInfo.doc = addedDoc;
 			});
-		};
+		}
 		if( state.updated ){
 			state.updated.forEach(function(updatedDoc){
 				var docId = updatedDoc._id;
@@ -118,7 +117,8 @@ class N2ModelSource extends Vector {
 				if( !docInfo ){
 					docInfo = {};
 					_this.infoByDocId[docId] = docInfo;
-				};
+				}
+
 				if( docInfo.doc ){
 					if( docInfo.doc._rev !== updatedDoc._rev ){
 						// New version of document. Clear simplified info
@@ -126,17 +126,18 @@ class N2ModelSource extends Vector {
 						delete docInfo.simplifiedName;
 						delete docInfo.simplifiedResolution;
 						delete docInfo.simplifiedInstalled;
-					};
+					}
 				}
 				docInfo.doc = updatedDoc;
 			});
-		};
+		}
+
 		if( state.removed ){
 			state.removed.forEach(function(removedDoc){
 				var docId = removedDoc._id;
 				delete _this.infoByDocId[docId];
 			});
-		};
+		}
 		
 // ===========================================================
 // 2.3.0-alpha code which breaks atlascine-branch functionality
@@ -152,21 +153,23 @@ class N2ModelSource extends Vector {
 		//this.loading = false;
 		//this._reloadAllFeatures();
 	}
+
 	_reportLoading(flag){
 		if( this.loading && !flag ){
 			this.loading = false;
 			if( this.notifications 
 					&& typeof this.notifications.readEnd === 'function'){
 				this.notifications.readEnd();
-			};
+			}
 			this._reloadAllFeatures();
+
 		} else if( !this.loading && flag ){
 			this.loading = true;
 			if( this.notifications 
 					&& typeof this.notifications.readStart === 'function'){
 				this.notifications.readStart();
-			};
-		};
+			}
+		}
 	}
 
 	
@@ -185,16 +188,16 @@ class N2ModelSource extends Vector {
 					if( docInfo ){
 						if( !docInfo.simplifications ){
 							docInfo.simplifications = {};
-						};
+						}
 						docInfo.simplifications[attName] = wkt;
 						atLeastOne = true;
-					};
+					}
 				});
 
 				if( atLeastOne ){
 					this._reloadAllFeatures();
-				};
-			};
+				}
+			}
 		}
 	}
 
@@ -227,23 +230,23 @@ class N2ModelSource extends Vector {
 						} else if( attRes > bestResolution ){
 							bestResolution = attRes;
 							bestAttName = attName;
-						};
-					};
-				};
+						}
+					}
+				}
 
 				// At this point, if bestResolution is set, then this is the geometry we should
 				// be displaying
 				if( undefined !== bestResolution ){
 					docInfo.simplifiedName = bestAttName;
 					docInfo.simplifiedResolution = bestResolution;
-				};
+				}
 				
 				if( docInfo.simplifiedName ) {
 					// There is a simplification needed, do I have it already?
 					var wkt = undefined;
 					if( docInfo.simplifications ){
 						wkt = docInfo.simplifications[docInfo.simplifiedName];
-					};
+					}
 
 					// If I do not have it, request it
 					if( !wkt ){
@@ -253,10 +256,10 @@ class N2ModelSource extends Vector {
 								,doc: doc
 						};
 						geometriesRequested.push(geomRequest);
-					};
-				};
-			};
-		};
+					}
+				}
+			}
+		}
 
 //		this.dispatchService.send(DH,{
 //			type: 'simplifiedGeometryRequest'
@@ -357,7 +360,7 @@ class N2ModelSource extends Vector {
 			var factor = Math.sqrt( ((p0[0]-p1[0])*(p0[0]-p1[0])) + ((p0[1]-p1[1])*(p0[1]-p1[1])) );
 
 			targetResolution = targetResolution * factor;
-		};
+		}
 
 		return targetResolution;
 	}
@@ -390,7 +393,7 @@ class N2ModelSource extends Vector {
 					// use it
 					wkt = docInfo.simplifications[docInfo.simplifiedName];
 					docInfo.simplifiedInstalled = docInfo.simplifiedName;
-				};
+				}
 				var geometry = wktFormat.readGeometryFromText(wkt);
 				geometry.transform('EPSG:4326', _this.mapProjCode);
 				var feature = new Feature();
@@ -413,11 +416,11 @@ class N2ModelSource extends Vector {
 				}
 
 				//docInfo.feature = feature;
-				// 				if (geoJSONFeature['properties']) {
-				// 					feature.setProperties(geoJSONFeature['properties']);
-				// 				}
-			};
-		};
+				//				if (geoJSONFeature['properties']) {
+				//					feature.setProperties(geoJSONFeature['properties']);
+				//				}
+			}
+		}
 
 		this.clear(true);
 		this.addFeatures(features);

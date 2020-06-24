@@ -23,16 +23,16 @@ const colors =
  *
  * @constructor
  * @param {object} options
- *	@param {String} options.type Chart type: pie,pie3D, donut or bar
- *	@param {number} options.radius Chart radius/size, default 20
- *	@param {number} options.rotation Rotation in radians (positive rotation clockwise). Default is 0.
- *	@param {bool} options.snapToPixel use integral numbers of pixels, default true
- *	@param {olstyleStroke} options.stroke stroke style
- *	@param {String|Array<olcolor>} options.colors predefined color set "classic","dark","pale","pastel","neon" / array of color string, default classic
- *	@param {number} options.offsetX X offset in px
- *	@param {number} options.offsetY Y offset in px
- *	@param {number} options.animation step in an animation sequence [0,1]
- *	@param {number} options.max maximum value for bar chart
+ * @param {String} options.type Chart type: pie,pie3D, donut or bar
+ * @param {number} options.radius Chart radius/size, default 20
+ * @param {number} options.rotation Rotation in radians (positive rotation clockwise). Default is 0.
+ * @param {bool} options.snapToPixel use integral numbers of pixels, default true
+ * @param {olstyleStroke} options.stroke stroke style
+ * @param {String|Array<olcolor>} options.colors predefined color set "classic","dark","pale","pastel","neon" / array of color string, default classic
+ * @param {number} options.offsetX X offset in px
+ * @param {number} options.offsetY Y offset in px
+ * @param {number} options.animation step in an animation sequence [0,1]
+ * @param {number} options.max maximum value for bar chart
  * @api
  */
 class N2CustomPointStyle extends RegularShape{
@@ -49,9 +49,6 @@ class N2CustomPointStyle extends RegularShape{
 			color : '#000000',
 			opacity: 1
 		}, opt_options)
-	
-
-		
 		
 		if (options.stacking){
 			var hist = N2CustomPointStyle.__stackingHistory;
@@ -64,11 +61,13 @@ class N2CustomPointStyle extends RegularShape{
 					&& cachedPointInfo.length > 0){
 					for(var item of cachedPointInfo) {
 						var incre = item.extra.incre;
-						if (typeof incre === 'number')
+						if (typeof incre === 'number') {
 							previousRadius += incre;
+						}
 					}
 				}
 			}
+
 			if (options.data
 				&& typeof options.data === 'object'
 				&& typeof options.data.duration === 'number'){
@@ -78,25 +77,31 @@ class N2CustomPointStyle extends RegularShape{
 			}
 		} else {
 			options.data.forEach(function(d){
-			options.radius +=Math.ceil(d.duration-0.4);
-		})
+				options.radius +=Math.ceil(d.duration-0.4);
+			})
 		}
+
 		options.radius *= 2* options.donutScaleFactor;
+
+		super ({
+				radius: options.radius , 
+				fill: new Fill({color: [0,0,0,0]}),
+				rotation: options.rotation,
+				snapToPixel: options.snapToPixel
+			});
 		
-		super ({	radius: options.radius , 
-					fill: new Fill({color: [0,0,0,0]}),
-					rotation: options.rotation,
-					snapToPixel: options.snapToPixel
-				});
-		if (options.scale) this.setScale(options.scale);
+		if (options.scale){
+			this.setScale(options.scale);
+		}
 
 		this.stroke_ = options.stroke? new Stroke({
-									color: options.stroke,
-									width: 2
-								}): new Stroke({
-									color: "#ffffff",
-									width: 2
-								});
+			color: options.stroke,
+			width: 2
+			}): new Stroke({
+				color: "#ffffff",
+				width: 2
+			});
+
 		this.text_ = options.text || null;
 		this.donutratio_ = options.donutRatio || 0.5;
 		this.donutScaleFactor = options.donutScaleFactor ;
@@ -110,16 +115,21 @@ class N2CustomPointStyle extends RegularShape{
 		this.startupOffset_ = options.startupOffset;
 		this.data_ = options.data;
 		this._stacking = options.stacking;
+
 		if (options.feature){
 			this._ext = options.feature.getGeometry().getExtent();
 		}
-		if (options.colors instanceof Array)
-		{	this.colors_ = options.colors;
+
+		if (options.colors instanceof Array) {
+			this.colors_ = options.colors;
+
+		} else {
+			this.colors_ = colors[options.colors];
+			if (!this.colors_){
+				this.colors_ = colors.classic;
+			}
 		}
-		else 
-		{	this.colors_ = colors[options.colors];
-			if (!this.colors_) this.colors_ = colors.classic;
-		}
+
 		if (options.stacking && options.map){
 			if (! N2CustomPointStyle.__stackingHistory){
 				N2CustomPointStyle.__stackingHistory = new N2StackingHistory({
@@ -127,19 +137,21 @@ class N2CustomPointStyle extends RegularShape{
 				});
 			}
 		}
+
 		if (this.data_){
 			this.renderCanvas_();
 		} else {
 			return;
 		}
-}
+	}
 
 	/**
-	 *  Get data associatied with the chart
+	 *	Get data associatied with the chart
 	 */
 	getData() {
 		return this.data_;
 	}
+
 	/**
 	 * Set data associatied with the chart
 	 * 
@@ -156,6 +168,7 @@ class N2CustomPointStyle extends RegularShape{
 	getRadius() {
 		return this.radius_;
 	}
+
 	/** Set symbol radius
 	 *	@param {number} symbol radius
 	 *	@param {number} donut ratio
@@ -180,6 +193,7 @@ class N2CustomPointStyle extends RegularShape{
 		}
 		this.renderCanvas_();
 	}
+
 	_getPreviousRadius (){
 		var hist = N2CustomPointStyle.__stackingHistory;
 		var rst = this.startupOffset_;
@@ -198,6 +212,7 @@ class N2CustomPointStyle extends RegularShape{
 		}
 		return rst;
 	}
+
 	_appendNewRadius (ext, radius){
 		var hist = N2CustomPointStyle.__stackingHistory;
 		
@@ -225,9 +240,10 @@ class N2CustomPointStyle extends RegularShape{
 			
 			if( duration > 0 ) {
 				if( null != currentRing 
-				 && currentRing.type !== type ) {
+					&& currentRing.type !== type ) {
 					currentRing = null;
-				};
+				}
+
 				if( null == currentRing ) {
 					currentRing = {
 						typeName: type.name
@@ -235,13 +251,14 @@ class N2CustomPointStyle extends RegularShape{
 						,duration: 0
 					};
 					rings.push(currentRing);
-				};
+				}
 				currentRing.duration = currentRing.duration + duration;
-			};
-		};
+			}
+		}
 
 		return rings;
 	}
+
 	/** @private
 	*/
 	renderCanvas_ (){	
@@ -253,10 +270,10 @@ class N2CustomPointStyle extends RegularShape{
 			strokeWidth = this.stroke_.getWidth();
 		}
 	
-	//	no atlas manager is used, create a new canvas
+		//	no atlas manager is used, create a new canvas
 		var canvas = this.getImage();
 	
-	//	draw the circle on the canvas
+		//	draw the circle on the canvas
 		var context = (canvas.getContext('2d'));
 		context.clearRect(0, 0, canvas.width, canvas.width);
 		context.lineJoin = 'round';
@@ -266,19 +283,18 @@ class N2CustomPointStyle extends RegularShape{
 		for (i=0; i<this.data_.length; i++)
 			sum += this.data_[i];
 	
-	//	reset transform
+		//	reset transform
 		context.setTransform(1, 0, 0, 1, 0, 0);
 	
-	//	then move to (x, y)
+		//	then move to (x, y)
 		context.translate(0,0);
 	
 		var step = this.animation_.animate ? this.animation_.step : 1;
-	//	console.log(this.animation_.step)
-	
-	//	Draw pie
+		//	console.log(this.animation_.step)
+
+		//	Draw pie
 		switch (this.type_){
 			case "treeRing":{
-	
 				c = canvas.width/2;
 				context.strokeStyle = strokeStyle;
 				context.lineWidth = strokeWidth;
@@ -292,7 +308,7 @@ class N2CustomPointStyle extends RegularShape{
 					let ring = rings[i];
 					let dur = ring.duration;
 					let effectiveRadiusIncre = Math.floor(
-							(1 * Math.sqrt( dur / 60 ) * this.donutScaleFactor * 7.7)
+						(1 * Math.sqrt( dur / 60 ) * this.donutScaleFactor * 7.7)
 					);
 					var type = ring.type;
 					let region = new Path2D();
@@ -310,7 +326,6 @@ class N2CustomPointStyle extends RegularShape{
 				break;
 			}
 			case "treeRingB":{
-	
 				c = canvas.width/2;
 				context.strokeStyle = strokeStyle;
 				context.lineWidth = strokeWidth;
@@ -340,7 +355,6 @@ class N2CustomPointStyle extends RegularShape{
 				region.closePath();
 				//context.lineWidth = 6;
 				
-				
 				context.strokeStyle = this.stroke_;
 				context.stroke(region, 'evenodd');
 				context.fillStyle = this.color_
@@ -353,9 +367,9 @@ class N2CustomPointStyle extends RegularShape{
 					context.textBaseline= "middle";
 					context.globalAlpha = 1.0;
 					context.fillText(this.text_ , 
-									c + Math.cos(-Math.PI/2)*(currRadius+5),
-									c + Math.sin(-Math.PI/2)*(currRadius+5)
-								);
+						c + Math.cos(-Math.PI/2)*(currRadius+5),
+						c + Math.sin(-Math.PI/2)*(currRadius+5)
+					);
 				}
 				
 				context.restore();
@@ -415,8 +429,10 @@ class N2CustomPointStyle extends RegularShape{
 					max = this.max_;
 				}
 				else{
-					for (i=0; i<this.data_.length; i++)
-					{	if (max < this.data_[i]) max = this.data_[i];
+					for (i=0; i<this.data_.length; i++){
+						if (max < this.data_[i]){
+							max = this.data_[i];
+						}
 					}
 				}
 				var s = Math.min(5,2*this.radius_/this.data_.length);
@@ -437,17 +453,15 @@ class N2CustomPointStyle extends RegularShape{
 				context.stroke();
 				x0 = x;
 				}
-	
 			}
-	}
+		}
 	
-	//	Set Anchor
+		//	Set Anchor
 		var anchor = this.getAnchor();
 		anchor[0] = c - this.offset_[0];
 		anchor[1] = c - this.offset_[1];
 
 	}
-	
 
 	getChecksum () {
 		var strokeChecksum = (this.stroke_!==null) ?
@@ -468,6 +482,7 @@ class N2CustomPointStyle extends RegularShape{
 		}
 	
 		return this.checksums_[0];
-	};
+	}
 }
+
 export default N2CustomPointStyle

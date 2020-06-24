@@ -28,7 +28,7 @@ class N2LayerInfo {
 			// String to identify this layer among others
 			id: null,
 
-			 /**
+			/**
 			  * sourceSrsName: default source projection of WFS feature data - Geoserver can reproject but cannot
 			  * handle a bbox param on a GetFeature in reprojected coordinates.  This is used to tell the atlas
 			  * what coordinates to use when request the vector layer features.
@@ -65,12 +65,12 @@ class N2LayerInfo {
 			// To update the default style associated with a layer, insert an object containing the
 			// named styles e.g.
 			// layerInfo.styleMap: {
-			//   normal: {
-			//     strokeColor: "#f4f4f4"
-			//   }
-			//   ,clicked: {
-			//     strokeColor: "#ff0000"
-			//   }
+			//	 normal: {
+			//	   strokeColor: "#f4f4f4"
+			//	 }
+			//	 ,clicked: {
+			//	   strokeColor: "#ff0000"
+			//	 }
 			// }
 			// The style names in use are:
 			// - normal -> default style for features
@@ -120,12 +120,12 @@ class N2LayerInfo {
 		// Derive database projection from name
 		if( this.sourceSrsName ){
 			this.sourceProjection = this.sourceSrsName;
-		};
+		}
 
 		// Localize name
 		if( this.name ){
 			this.name = _loc(this.name);
-		};
+		}
 
 		// Popup function
 		if( !this.featurePopupHtmlFn ){
@@ -133,12 +133,13 @@ class N2LayerInfo {
 				var cb = this.customService.getOption('mapFeaturePopupCallback');
 				if( typeof cb === 'function' ) {
 					this.featurePopupHtmlFn = cb;
-				};
-			};
-		};
+				}
+			}
+		}
+
 		if( !this.featurePopupHtmlFn ){
 			this.featurePopupHtmlFn = $n2.mapAndControls.DefaultPopupHtmlFunction;
-		};
+		}
 
 		// Cluster click callback
 		if( !this.clusterClickCallback ){
@@ -146,40 +147,41 @@ class N2LayerInfo {
 				var cb = this.customService.getOption('mapClusterClickCallback');
 				if( typeof cb === 'function' ) {
 					this.clusterClickCallback = cb;
-				};
-			};
-		};
+				}
+			}
+		}
+
 		if( !this.clusterClickCallback ){
 			this.clusterClickCallback = $n2.mapAndControls.ZoomInClusterClickCallback;
-		};
+		}
 	}
 
 	forEachFeature(callback){
 		if( typeof callback === 'function'
-		 && this.olLayer
-		 && this.olLayer.features ){
+			&& this.olLayer
+			&& this.olLayer.features ){
 			for(var i=0,e=this.olLayer.features.length; i<e; ++i){
 				var feature = this.olLayer.features[i];
 				if( feature.cluster ){
 					for(var j=0,k=feature.cluster; j<k; ++j){
 						var cf = feature.cluster[j];
 						callback.call(this,cf,feature);
-					};
+					}
 				} else {
 					callback.call(this,feature);
-				};
-			};
-		};
+				}
+			}
+		}
 	}
 
 	accumulateMapStylesInUse(stylesInUse){
 		// Loop over drawn features (do not iterate in clusters)
 		if( this.olLayer
-		 && this.olLayer.features ){
+			&& this.olLayer.features ){
 			for(var i=0,e=this.olLayer.features.length; i<e; ++i){
 				var feature = this.olLayer.features[i];
 				if( feature._n2Style
-				 && typeof feature._n2Style.id === 'string'){
+					&& typeof feature._n2Style.id === 'string'){
 					var style = feature._n2Style;
 
 					var styleInfo = stylesInUse[style.id];
@@ -188,15 +190,15 @@ class N2LayerInfo {
 							style: style
 						};
 						stylesInUse[style.id] = styleInfo;
-					};
+					}
 
 					var geometryType = feature.n2_geometry;
 					if( geometryType && !styleInfo[geometryType] ){
 						styleInfo[geometryType] = feature;
-					};
-				};
-			};
-		};
+					}
+				}
+			}
+		}
 	}
 }
 export default N2LayerInfo;

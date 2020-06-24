@@ -35,6 +35,7 @@ const N2SelectEventType = {
 		 */
 		FIND : 'find'
 }
+
 /**
  * @classdesc
  * @extends Event
@@ -54,6 +55,7 @@ class N2SelectEvent extends Event {
 		this.upstreamEvent = upstreamEvent;
 	}
 }
+
 /**
  * @classdesc
  * @extends Interaction
@@ -149,7 +151,7 @@ function handleEvent_(mapBrowserEvent) {
 					return true;
 				}).bind(this),
 				{
-			hitTolerance: this.hitTolerance_
+					hitTolerance: this.hitTolerance_
 				});
 
 
@@ -171,31 +173,31 @@ function handleEvent_(mapBrowserEvent) {
 						selected || null, deselected, mapBrowserEvent)
 		);
 
-
 	} else if (this.clickCondition_(mapBrowserEvent)) {
-
 		let selected = [];
 		let deselected = [];
 		this.clickedFeaturesCollection.clear();
 		map.forEachFeatureAtPixel(mapBrowserEvent.pixel,
-				(
-						/**
-						 * @param {import("../Feature.js").FeatureLike}
-						 *            feature Feature.
-						 * @param {import("../layer/Layer.js").default}
-						 *            layer Layer.
-						 * @return {boolean|undefined} Continue to iterate over
-						 *         the features.
-						 */
-						function(feature, layer) {
-							if (feature) {
-								selected.push(feature);
-								this.clickedFeaturesCollection.push(feature);
-								return true;
-							}
-						}).bind(this), {
-			hitTolerance: this.hitTolerance_
-		});
+			(
+				/**
+				 * @param {import("../Feature.js").FeatureLike}
+				 *            feature Feature.
+				 * @param {import("../layer/Layer.js").default}
+				 *            layer Layer.
+				 * @return {boolean|undefined} Continue to iterate over
+				 *         the features.
+				 */
+				function(feature, layer) {
+					if (feature) {
+						selected.push(feature);
+						this.clickedFeaturesCollection.push(feature);
+						return true;
+					}
+				}
+			).bind(this), {
+				hitTolerance: this.hitTolerance_
+			}
+		);
 //		for (let i = this.clickedFeatures_.length - 1; i >= 0; --i) {
 //		const feature = this.clickedFeatures_[i];
 //		const index = selected.indexOf(feature);
