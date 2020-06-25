@@ -115,9 +115,7 @@ class N2MapCanvas  {
 		this._classname = 'N2MapCanvas';
 		this.dispatchService  = null;
 		this._suppressSetHash = false;
-
 		this.showService = null;
-
 		this.canvasId = opts.canvasId;
 		this.sourceModelId = opts.sourceModelId;
 		this.interactionId = opts.interactionId;
@@ -134,12 +132,9 @@ class N2MapCanvas  {
 		}
 
 		this.sources = [];
-
 		this.overlayInfos = [];
-
 		this.mapLayers = [];
 		this.overlayLayers = [];
-
 		this.center = undefined;
 		this.resolution = undefined;
 		this.proj = undefined;
@@ -179,7 +174,6 @@ class N2MapCanvas  {
 			};
 		
 		// MODES
-		
 		var addOrEditLabel = _loc('Add or Edit a Map Feature');
 		var cancelLabel = _loc('Cancel Feature Editing');
 		
@@ -879,125 +873,120 @@ class N2MapCanvas  {
 			}
 		})
 		mainbar.addControl (pcluster);
-	}
 
-// ===========================================================
-// 2.3.0-alpha code which breaks atlascine-branch functionality
-// ===========================================================
-//		//Create editing layer
-//		this.editLayerSource = new VectorSource();
-//		var editLayer = new VectorLayer({
-//			title: 'Edit',
-//			source: this.editLayerSource 
-//		});
-//		customMap.addLayer(editLayer);
-//		this.overlayLayers.push(editLayer);
-//			
-//		this.editbarControl = new EditBar({
-//			interactions: {
-//				Select : this.interactionSet.selectInteraction
-//			},
-//			source: editLayer.getSource()});
-//		customMap.addControl(this.editbarControl);
-//		this.editbarControl.setVisible(false);
-//		this.editbarControl.getInteraction('Select').on('clicked', function(e){
-//			if (_this.currentMode === _this.modes.ADD_OR_SELECT_FEATURE 
-//			|| _this.currentMode === _this.modes.EDIT_FEATURE ){
-//				return false;
-//			}
-//		});	
-//		  this.editbarControl.getInteraction('ModifySelect').on('modifystart', function(e){
-//			 console.log('modifying features:', e.features);
-//			//if (e.features.length===1) tooltip.setFeature(e.features[0]);
+		//Create editing layer
+		this.editLayerSource = new VectorSource();
+		var editLayer = new VectorLayer({
+			title: 'Edit',
+			source: this.editLayerSource 
+		});
+		customMap.addLayer(editLayer);
+		this.overlayLayers.push(editLayer);
+			
+		this.editbarControl = new EditBar({
+			interactions: {
+				Select : this.interactionSet.selectInteraction
+			},
+			source: editLayer.getSource()});
+		customMap.addControl(this.editbarControl);
+		this.editbarControl.setVisible(false);
+		this.editbarControl.getInteraction('Select').on('clicked', function(e){
+			if (_this.currentMode === _this.modes.ADD_OR_SELECT_FEATURE 
+			|| _this.currentMode === _this.modes.EDIT_FEATURE ){
+				return false;
+			}
+		});	
+		this.editbarControl.getInteraction('ModifySelect').on('modifystart', function(e){
+			console.log('modifying features:', e.features);
+			//if (e.features.length===1) tooltip.setFeature(e.features[0]);
+		});
+
+		this.editbarControl.getInteraction('ModifySelect').on('modifyend', onModifyEnd);
+		function onModifyEnd(e){
+			var features = e.features;
+			for (var i=0,e=features.length; i<e; i++){
+				var geometry = features[i].getGeometry();
+				//console.log(geometry.toString('EPSG:3857' , 'EPSG:4326'))
+				_this.dispatchService.send(DH,{
+					type: 'editGeometryModified'
+					,docId: features[i].fid
+					,geom: geometry
+					,proj: new Projection({code: 'EPSG:3857'})
+					,_origin: _this
+				});
+			}
+			//  tooltip.setFeature();
+			return false;
+		}
+
+		this.editbarControl.getInteraction('DrawPoint').on('drawend', function(e){
+			_this.editModeAddFeatureCallback( evt ); 
+		});
+//		  //  tooltip.setInfo(e.oldValue ? '' : 'Click map to place a point...');
 //		  });
-//		  this.editbarControl.getInteraction('ModifySelect').on('modifyend', onModifyEnd);
-//		  
-//		  function onModifyEnd(e){
-//			  var features = e.features;
-//			  for (var i=0,e=features.length; i<e; i++){
-//				  var geometry = features[i].getGeometry();
-//				  //console.log(geometry.toString('EPSG:3857' , 'EPSG:4326'))
-//				_this.dispatchService.send(DH,{
-//					type: 'editGeometryModified'
-//					,docId: features[i].fid
-//					,geom: geometry
-//					,proj: new Projection({code: 'EPSG:3857'})
-//					,_origin: _this
-//				});
-//			  }
-//			  //  tooltip.setFeature();
-//			  return false;
-//		  };
-//		  this.editbarControl.getInteraction('DrawPoint').on('drawend', function(e){
-//			  _this.editModeAddFeatureCallback( evt ); 
+
+		this.editbarControl.getInteraction('DrawLine').on('drawend', function(evt){
+			_this.editModeAddFeatureCallback( evt );
+		});
+
+		// tooltip.setFeature();
+//		   // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing line...');
 //		  });
-////		  //  tooltip.setInfo(e.oldValue ? '' : 'Click map to place a point...');
-////		  });
-//		  this.editbarControl.getInteraction('DrawLine').on('drawend', function(evt){
-//			  _this.editModeAddFeatureCallback( evt );
+//		  editbarControl.getInteraction('DrawLine').on('drawstart', function(e){
+//		   // tooltip.setFeature(e.feature);
+//		   // tooltip.setInfo('Click to continue drawing line...');
 //		  });
-//		  // tooltip.setFeature();
-////		   // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing line...');
-////		  });
-////		  editbarControl.getInteraction('DrawLine').on('drawstart', function(e){
-////		   // tooltip.setFeature(e.feature);
-////		   // tooltip.setInfo('Click to continue drawing line...');
-////		  });
-////		  this.editbarControl.getInteraction('DrawPolygon').on('drawstart', function(e){
-////			  e.stopPropagation();
-////		   // tooltip.setFeature(e.feature);
-////		   // tooltip.setInfo('Click to continue drawing shape...');
-////		  });
-//		  this.editbarControl.getInteraction('DrawPolygon').on('drawend', function(evt){
-//		   
-//			_this.editModeAddFeatureCallback( evt );
+//		  this.editbarControl.getInteraction('DrawPolygon').on('drawstart', function(e){
+//			  e.stopPropagation();
+//		   // tooltip.setFeature(e.feature);
+//		   // tooltip.setInfo('Click to continue drawing shape...');
+//		  });
+		this.editbarControl.getInteraction('DrawPolygon').on('drawend', function(evt){
+			_this.editModeAddFeatureCallback( evt );
+			// tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
+		});
+//		  editbarControl.getInteraction('DrawHole').on('drawstart', function(e){
+//		   // tooltip.setFeature(e.feature);
+//		   // tooltip.setInfo('Click to continue drawing hole...');
+//		  });
+//		  editbarControl.getInteraction('DrawHole').on(['change:active','drawend'], function(e){
+//		   // tooltip.setFeature();
+//		   // tooltip.setInfo(e.oldValue ? '' : 'Click polygon to start drawing hole...');
+//		  });
+//		  editbarControl.getInteraction('DrawRegular').on('drawstart', function(e){
+//		   // tooltip.setFeature(e.feature);
+//		   // tooltip.setInfo('Move and click map to finish drawing...');
+//		  });
+//		  editbarControl.getInteraction('DrawRegular').on(['change:active','drawend'], function(e){
+//		   // tooltip.setFeature();
 //		   // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
 //		  });
-////		  editbarControl.getInteraction('DrawHole').on('drawstart', function(e){
-////		   // tooltip.setFeature(e.feature);
-////		   // tooltip.setInfo('Click to continue drawing hole...');
-////		  });
-////		  editbarControl.getInteraction('DrawHole').on(['change:active','drawend'], function(e){
-////		   // tooltip.setFeature();
-////		   // tooltip.setInfo(e.oldValue ? '' : 'Click polygon to start drawing hole...');
-////		  });
-////		  editbarControl.getInteraction('DrawRegular').on('drawstart', function(e){
-////		   // tooltip.setFeature(e.feature);
-////		   // tooltip.setInfo('Move and click map to finish drawing...');
-////		  });
-////		  editbarControl.getInteraction('DrawRegular').on(['change:active','drawend'], function(e){
-////		   // tooltip.setFeature();
-////		   // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
-////		  });
-//
-//	}
-//
-//	onMoveendCallback(evt){
-//		
-//	}
-//
-//	editModeAddFeatureCallback(evt){
-//		var feature = evt.feature;
-//		var previousMode = this.currentMode;
-//		this.switchToEditFeatureMode(feature.fid, feature);
-//		previousMode.featureAdded(feature);
-//		this._centerMapOnFeature(feature);
-//	}
-//	_dispatch(m){
-//		var dispatcher = this._getDispatchService();
-//		if( dispatcher ) {
-//			dispatcher.send(DH,m);
-//		};
-//	}
+	}
+
+	onMoveendCallback(evt){
+		
+	}
+
+	editModeAddFeatureCallback(evt){
+		var feature = evt.feature;
+		var previousMode = this.currentMode;
+		this.switchToEditFeatureMode(feature.fid, feature);
+		previousMode.featureAdded(feature);
+		this._centerMapOnFeature(feature);
+	}
+	_dispatch(m){
+		var dispatcher = this._getDispatchService();
+		if( dispatcher ) {
+			dispatcher.send(DH,m);
+		}
+	}
 
 	_retrivingDocsAndPaintPopup(feature, mapBrowserEvent){
 		var _this = this;
 		if (_this.popupOverlay) {
-
 			var popup = _this.popupOverlay;
 			var featurePopupHtmlFn;
 			if (! $n2.isArray(feature)){
-				
 				if (_this.customService){
 					var cb = _this.customService.getOption('mapFeaturePopupCallback');
 					if( typeof cb === 'function' ) {
@@ -1079,7 +1068,6 @@ class N2MapCanvas  {
 	}
 
 	_genOverlayMapLayers(Sources) {
-
 		var fg = [];
 		var _this = this;
 		
@@ -1089,7 +1077,6 @@ class N2MapCanvas  {
 				var alphasource = Sources[i];
 				var betaSource = alphasource;
 				if (overlayInfo.clustering) {
-					
 					if ( typeof _this.isClustering === 'undefined'){
 						_this.isClustering = true;
 					}
@@ -1452,142 +1439,144 @@ class N2MapCanvas  {
 				
 			}
 
-// ===========================================================
-// 2.3.0-alpha code which breaks atlascine-branch functionality
-// ===========================================================
-//		} else if( 'editInitiate' === type ) {
-//			
-//			var fid = undefined;
-//			if( m.doc ){
-//				fid = m.doc._id;
-//			};
-//			
-//			var feature = null;
-//			var addGeometryMode = true;
-//			
-//			if( fid ){
-//				var feature = this._getMapFeaturesIncludingFid(fid);
-//			
-//				//TODO: center feature on map;
-//				if( feature ) {
-//					this._centerMapOnFeature(feature);
-//					addGeometryMode = false;
-//				}						
-//			};
-//			
-//			this.editFeatureInfo = {};
-//			this.editFeatureInfo.fid = fid;
-//			this.editFeatureInfo.original = {
-//				data: $n2.document.clone(m.doc)
-//			};
-//			var effectiveFeature = null;
-//			
-//			if( addGeometryMode ){
-//				// Edit a document that does not have a geometry.
-//				// Allow adding a geometry.
-//				this.switchToAddGeometryMode(fid);
-//			} else {
-//				// Do not provide the effective feature. The event 'editReportOriginalDocument'
-//				// will provide the original geometry. The effective feature might have a simplified
-//				// version of the geometry
-//				this.switchToEditFeatureMode(fid);
-//			};
-//			
-//		} else if( 'editClosed' === type ) {
-//
-//			var fid = this.editFeatureInfo.fid;
-//			if( !fid ){
-//				fid = m.docId;
-//			};
-//			var reloadRequired = true;
-//			if( m.cancelled ){
-//				reloadRequired = false;
-//			};
-//			
-//			// By switching to the navigate mode, the feature on the
-//			// edit layer will be removed.
-//			//var editFeature = this._removeGeometryEditor();
-//			this.editLayerSource.clear();
-//			this._switchMapMode(this.modes.NAVIGATE);
-//
-//			// Add back feature to map
-////			this.infoLayers.forEach(function(layerInfo){
-////				if( layerInfo.featureStrategy ){
-////					layerInfo.featureStrategy.setEditedFeatureIds(null);
-////				};
-////			});
-//			
-//			// If feature was deleted, then remove it from map
-//			//TODO: feature removal for ol5;
-//			//?? Uncertain if something need to be take care of upon layerinfo ??
-//			if( m.deleted && fid ){
-//				reloadRequired = false;
-//
-//				this.forEachVectorLayer(function(layerInfo, layer){
-//					var reloadLayer = false;
-//					var featuresToAdd = [];
-//					layerInfo.forEachFeature(function(f){
-//						if( f.fid === fid ){
-//							reloadLayer = true;
-//						} else {
-//							featuresToAdd.push(f);
-//						};
-//					});
-//					
-//					if( reloadLayer ){
-//						layer.removeAllFeatures({silent:true});
-//						layer.addFeatures(featuresToAdd);
-//					};
-//				});
-//			};
-//			
-//			this.editFeatureInfo = {};
-//			this.editFeatureInfo.original = {};
-//			
-//			// Reload feature
-////			if( reloadRequired ){
-////				var filter = $n2.olFilter.fromFid(fid);
-////				this._reloadFeature(filter);
-////			};
-//			
-//		} else if ('resolutionRequest' === type){
-//			m.resolution = _this.resolution;
-//			m.proj = _this.proj;
-		}
-//		else if ('focusOn' === type) {
-//			
-//			if (_this.popupOverlay) {
-//				var popup = _this.popupOverlay;
-//				var content = "tset";
-//				popup.show(,content);
-//			}
-//		}
-//		else if ('time_interval_change' === type){
-//			let currTime = m.value.min;
-//			let incre = 100000000;
-//			
-//			if (_this.lastTime === null){
-//				_this.initialTime = currTime;
-//				_this.lastTime = currTime;
-//				_this.mockingData = _this.mockingDataComplete.slice(0,1);
-//
-//			}
-//			
-//				_this.endIdx = parseInt((currTime - _this.initialTime)/incre);
-//				_this.mockingData = _this.mockingDataComplete.slice(0,_this.endIdx);
-//	
-//				_this.dispatchService.send(DH,{
-//					type: 'n2rerender'
-//				});
-//				
-//			
-//			_this.lastTime = currTime;
-//		}
+		} else if( 'editInitiate' === type ) {
+			
+			var fid = undefined;
+			if( m.doc ){
+				fid = m.doc._id;
+			}
+			
+			var feature = null;
+			var addGeometryMode = true;
+			
+			if( fid ){
+				var feature = this._getMapFeaturesIncludeingFidMapOl5(fid);
+			
+				//TODO: center feature on map;
+				if( feature ) {
+					this._centerMapOnFeature(feature);
+					addGeometryMode = false;
+				}						
+			}
+			
+			this.editFeatureInfo = {};
+			this.editFeatureInfo.fid = fid;
+			this.editFeatureInfo.original = {
+				data: $n2.document.clone(m.doc)
+			};
 
+			var effectiveFeature = null;
+			
+			if( addGeometryMode ){
+				// Edit a document that does not have a geometry.
+				// Allow adding a geometry.
+				this.switchToAddGeometryMode(fid);
+			} else {
+				// Do not provide the effective feature. The event 'editReportOriginalDocument'
+				// will provide the original geometry. The effective feature might have a simplified
+				// version of the geometry
+				this.switchToEditFeatureMode(fid);
+			}
+			
+		} else if( 'editClosed' === type ) {
+
+			var fid = this.editFeatureInfo.fid;
+			if( !fid ){
+				fid = m.docId;
+			}
+
+			var reloadRequired = true;
+			if( m.cancelled ){
+				reloadRequired = false;
+			}
+			
+			// By switching to the navigate mode, the feature on the
+			// edit layer will be removed.
+			//var editFeature = this._removeGeometryEditor();
+			this.editLayerSource.clear();
+			this._switchMapMode(this.modes.NAVIGATE);
+
+			// Add back feature to map
+//			this.infoLayers.forEach(function(layerInfo){
+//				if( layerInfo.featureStrategy ){
+//					layerInfo.featureStrategy.setEditedFeatureIds(null);
+//				};
+//			});
+			
+			// If feature was deleted, then remove it from map
+			//TODO: feature removal for ol5;
+			//?? Uncertain if something need to be take care of upon layerinfo ??
+			if( m.deleted && fid ){
+				reloadRequired = false;
+
+				this.forEachVectorLayer(function(layerInfo, layer){
+					var reloadLayer = false;
+					var featuresToAdd = [];
+					layerInfo.forEachFeature(function(f){
+						if( f.fid === fid ){
+							reloadLayer = true;
+						} else {
+							featuresToAdd.push(f);
+						}
+					});
+					
+					if( reloadLayer ){
+						layer.removeAllFeatures({silent:true});
+						layer.addFeatures(featuresToAdd);
+					}
+				});
+			}
+			
+			this.editFeatureInfo = {};
+			this.editFeatureInfo.original = {};
+			
+			// Reload feature
+//			if( reloadRequired ){
+//				var filter = $n2.olFilter.fromFid(fid);
+//				this._reloadFeature(filter);
+//			};
+			
+		} else if ('resolutionRequest' === type){
+			m.resolution = _this.resolution;
+			m.proj = _this.proj;
+
+		} else if ('focusOn' === type) {
+			
+			if (_this.popupOverlay) {
+				var popup = _this.popupOverlay;
+				var content = "tset";
+				//popup.show(,content);
+			}
+
+		} else if ('time_interval_change' === type){
+			let currTime = m.value.min;
+			let incre = 100000000;
+			
+			if (_this.lastTime === null){
+				_this.initialTime = currTime;
+				_this.lastTime = currTime;
+				// ===========================================================
+				// 2.3.0-alpha mockingData commented out due to it causes an error
+				// ===========================================================
+				//_this.mockingData = _this.mockingDataComplete.slice(0,1);
+
+			}
+			
+			_this.endIdx = parseInt((currTime - _this.initialTime)/incre);
+			// ===========================================================
+			// 2.3.0-alpha mockingData commented out due to it causes an error 
+			// ===========================================================
+			//_this.mockingData = _this.mockingDataComplete.slice(0,_this.endIdx);
+	
+			_this.dispatchService.send(DH,{
+				type: 'n2rerender'
+			});
+
+			_this.lastTime = currTime;
+		}
 	}
 	
 	_getMapFeaturesIncludeingFidMapOl5(fidMap) {
-		
 		var result_features = [];
 		if( this.features_ && this.features_.length > 0 ) {
 			
@@ -1619,9 +1608,9 @@ class N2MapCanvas  {
 	}
 	
 // ===========================================================
-// 2.3.0-alpha code which breaks atlascine-branch functionality
+// 2.3.0-alpha code which is replaced by the _getMapFeaturesIncludeingFidMapOl5
+// function in the the atlascine branch.
 // ===========================================================
-//
 //	_getMapFeaturesIncludingFid(fid) {
 //		var result_feature = null;
 //		if (fid){
@@ -1642,8 +1631,8 @@ class N2MapCanvas  {
 ////							};
 ////						};
 ////					};
-//				};
-//			};
+//				}
+//			}
 //		}
 //		
 //		return result_feature;
