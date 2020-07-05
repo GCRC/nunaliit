@@ -75,22 +75,23 @@ const VENDOR =	{
 };
 
 const olStyleNames = {
-		"fill": "fillColor"
-		,"fill-opacity": "fillOpacity"
-		,"stroke": "strokeColor"
-		,"stroke-opacity": "strokeOpacity"
-		,"stroke-width": "strokeWidth"
-		,"stroke-linecap": "strokeLinecap"
-		,"stroke-dasharray": "strokeDashstyle"
-		,"r": "pointRadius"
-		,"pointer-events": "pointEvents"
-		,"color": "fontColor"
-		,"font-family": "fontFamily"
-		,"font-size": "fontSize"
-		,"font-weight": "fontWeight"
+	"fill": "fillColor"
+	,"fill-opacity": "fillOpacity"
+	,"stroke": "strokeColor"
+	,"stroke-opacity": "strokeOpacity"
+	,"stroke-width": "strokeWidth"
+	,"stroke-linecap": "strokeLinecap"
+	,"stroke-dasharray": "strokeDashstyle"
+	,"r": "pointRadius"
+	,"pointer-events": "pointEvents"
+	,"color": "fontColor"
+	,"font-family": "fontFamily"
+	,"font-size": "fontSize"
+	,"font-weight": "fontWeight"
 };
+
 const stringStyles = {
-		"label": true
+	"label": true
 };
 
 /**
@@ -163,15 +164,15 @@ class N2MapCanvas  {
 		}
 
 		this.interactionSet = {
-				selectInteraction : null,
-				drawInteraction : null
+			selectInteraction : null,
+			drawInteraction : null
 		};
 		this.currentInteract = null;
 		this.n2intentWrapper = null;
 		this._processOverlay(opts.overlays);
 		this.editFeatureInfo = {
-				original: {}
-			};
+			original: {}
+		};
 		
 		// MODES
 		var addOrEditLabel = _loc('Add or Edit a Map Feature');
@@ -185,14 +186,14 @@ class N2MapCanvas  {
 					_this._hoverFeature(feature, layer);
 					_this._hoverFeaturePopup(feature, layer);
 				}
+
 				,onStartClick: function(feature, mapFeature) {
 					//_this.initAndDisplayClickedPlaceInfo(feature);
 				}
-				,onEndClick: function(feature) {
-				}
-				,featureAdded: function(feature) {
-					
-				}
+
+				,onEndClick: function(feature) {}
+
+				,featureAdded: function(feature) {}
 			}
 			,ADD_OR_SELECT_FEATURE: {
 				name: "ADD_OR_SELECT"
@@ -201,8 +202,8 @@ class N2MapCanvas  {
 					_this._hoverFeature(feature, layer);
 					_this._hoverFeaturePopup(feature, layer);
 				}
-				,onStartClick: function(mapFeature) {
 
+				,onStartClick: function(mapFeature) {
 					var editAllowed = true;
 					if( mapFeature.cluster && mapFeature.cluster.length > 1 ) {
 						alert( _loc('This feature is a cluster and can not be edited directly. Please, zoom in to see features within cluster.') );
@@ -217,8 +218,7 @@ class N2MapCanvas  {
 					}
 				}
 
-				,onEndClick: function(feature) {
-				}
+				,onEndClick: function(feature) {}
 
 				,featureAdded: function(feature) {
 					_this.editFeatureInfo.original = {};
@@ -250,11 +250,11 @@ class N2MapCanvas  {
 						proj = feature.layer.map.getProjectionObject();
 					}
 					
-				_this._dispatch({
-					type: 'mapGeometryAdded'
-					,geometry: feature.geometry
-					,projection: proj
-				});
+					_this._dispatch({
+						type: 'mapGeometryAdded'
+						,geometry: feature.geometry
+						,projection: proj
+					});
 				}
 			}
 			,EDIT_FEATURE: {
@@ -298,7 +298,7 @@ class N2MapCanvas  {
 		
 		if (this.renderOrderBasedOn
 			&& this.renderOrderBasedOn[0] === '='){
-			try{
+			try {
 				var targetString = this.renderOrderBasedOn.substr(1);
 				if (targetString.startsWith("doc")){
 					targetString = targetString.substr(3);
@@ -306,7 +306,7 @@ class N2MapCanvas  {
 				}
 				this.renderOrderBasedOn = $n2.styleRuleParser.parse(
 						targetString);
-			} catch(e){
+			} catch(e) {
 				this.renderOrderBasedOn = e;
 			}
 		}
@@ -319,26 +319,41 @@ class N2MapCanvas  {
 	/**
 	 * Preprocess the opts.overlay. Producing overlay-sources array
 	 * and overlay-infos array.
-	 * @param  {Array} overlays [description]
+	 * @param {Array} overlays - List of overlays provided by a module's canvas.json. 
 	 */
 	_processOverlay(overlays) {
 
 		var _this = this;
-		if( !$n2.isArray(overlays) ){
+		if (!$n2.isArray(overlays)) {
 			overlays = [overlays];
 		}
 			
-		overlays.forEach( (function(overlay){
-
+		overlays.forEach( (function(overlay) {
 			// Generate Array<layerInfo> layerInfos;
+			var source;
 			var layerInfoOptions = overlay;
 			var layerInfo = new LayerInfo(layerInfoOptions);
 			var layerOptions = {
-			name: layerInfo.name
-			,projection: layerInfo.sourceProjection
-			,visibility: layerInfo.visibility
-			,_layerInfo: layerInfo
-			,clustering: overlay.clustering
+				name: layerInfo.name
+				,projection: layerInfo.sourceProjection
+				,visibility: layerInfo.visibility
+				,_layerInfo: layerInfo
+				,clustering: overlay.clustering
+			};
+			var getSourceModelId = function(overlay){
+				var sourceModelId;
+				if (overlay.options
+					&& 'string' === typeof overlay.options.sourceModelId) {
+					sourceModelId = overlay.options.sourceModelId;
+
+				} else if (overlay.options
+					&& 'string' === typeof overlay.options.layerName) {
+					sourceModelId = overlay.options.layerName;
+
+				} else {
+					$n2.logError('Map canvas overlay is not named. Will be ignored');
+				}
+				return sourceModelId;				
 			};
 
 			this.overlayInfos.push(layerOptions);
@@ -346,18 +361,10 @@ class N2MapCanvas  {
 			//---------------------
 			if ('couchdb' === overlay.type) {
 				let sourceModelId = undefined;
-				if( overlay.options
-						&& 'string' === typeof overlay.options.sourceModelId ){
-					sourceModelId = overlay.options.sourceModelId;
-				} else if( overlay.options
-						&& 'string' === typeof overlay.options.layerName ){
-					sourceModelId = overlay.options.layerName;
-				} else {
-					$n2.logError('Map canvas overlay is not named. Will be ignored');
-				}
+				sourceModelId = getSourceModelId(overlay);
 
-				if( sourceModelId ){
-					var source = new CouchDbSource({
+				if (sourceModelId) {
+					source = new CouchDbSource({
 						sourceModelId: sourceModelId
 						,dispatchService: this.dispatchService
 						,projCode: 'EPSG:3857'
@@ -365,21 +372,12 @@ class N2MapCanvas  {
 					this.sources.push(source);
 				}
 
-			} else if ( 'model' === overlay.type ) {
-
+			} else if ('model' === overlay.type) {
 				let sourceModelId = undefined;
-				if( overlay.options
-						&& 'string' === typeof overlay.options.sourceModelId ){
-					sourceModelId = overlay.options.sourceModelId;
-				} else if( overlay.options
-						&& 'string' === typeof overlay.options.layerName ){
-					sourceModelId = overlay.options.layerName;
-				} else {
-					$n2.logError('Map canvas overlay is not named. Will be ignored');
-				}
+				sourceModelId = getSourceModelId(overlay);
 
 				if( sourceModelId ){
-					var source = new N2ModelSource({
+					source = new N2ModelSource({
 						sourceModelId: sourceModelId
 						,dispatchService: this.dispatchService
 						,projCode: 'EPSG:3857'
@@ -390,6 +388,7 @@ class N2MapCanvas  {
 							readStart: function(){
 								//_this._mapBusyStatus(1);
 							}
+
 							,readEnd: function(){
 								//_this._mapBusyStatus(-1);
 							}
@@ -401,6 +400,7 @@ class N2MapCanvas  {
 							if (!_this.refreshCnt) {
 								_this.refreshCnt = 1;
 							}
+
 							var curCnt = _this.refreshCnt;
 							_this.dispatchService.send(DH, {
 								type: 'mapRefreshCallbackRequest',
@@ -444,14 +444,18 @@ class N2MapCanvas  {
 		if( showLogin ) {
 			this.hideMapInteractionSwitch();
 			this._switchMapMode(this.modes.NAVIGATE);
+
 		} else {
 			this.showMapInteractionSwitch();
 		}
 	}
 
 	// === LOGIN STUFF END ========================================================
+	/**
+	 * Get the jQuery selection of the 'Add or Edit a Map Feature' button
+	 */
 	_getMapInteractionSwitch() {
-		return $("#"+this.interactionId)
+		return $("#" + this.interactionId)
 			.find('.n2map_map_interaction_switch');
 	}
 
@@ -462,16 +466,21 @@ class N2MapCanvas  {
 	showMapInteractionSwitch() {
 		this._getMapInteractionSwitch().show();
 	}
-	
+
+	/**
+	 * Create and Add the 'Add or Edit a Map Feature' button to the map canvas.
+	 */
 	createMapInteractionSwitch() {
 		var _this = this;
-		var mapInteractionButton = $('<input type="button" class="n2map_map_interaction_switch"/>')
+		var mapInteractionButton = $('<input>')
+			.attr('type', 'button')
+			.addClass('n2map_map_interaction_switch')
 			.val(this.modes.NAVIGATE.buttonValue)
-			.click( function(evt) { 
+			.click(function(evt) {
 				_this._clickedMapInteractionSwitch(evt);
 			});
 
-		$("#"+this.interactionId)
+		$("#" + this.interactionId)
 			.empty()
 			.append(mapInteractionButton);
 	}
@@ -668,6 +677,7 @@ class N2MapCanvas  {
 					new Projection({code: 'EPSG:4326'}),
 					new Projection({code: 'EPSG:3857'})
 			);
+
 			customMap.once('postrender', function(evt){
 				let res = evt.frameState.viewState.resolution;
 				let proj = _this.n2View.getProjection();
@@ -798,6 +808,7 @@ class N2MapCanvas  {
 							this.currentMode.onStartClick(feature);
 						}
 					}
+
 				} else {
 					if (this.currentMode.onStartClick) {
 						if ( e.selected.length === 1 ){
@@ -887,7 +898,9 @@ class N2MapCanvas  {
 			interactions: {
 				Select : this.interactionSet.selectInteraction
 			},
-			source: editLayer.getSource()});
+			source: editLayer.getSource()
+		});
+
 		customMap.addControl(this.editbarControl);
 		this.editbarControl.setVisible(false);
 		this.editbarControl.getInteraction('Select').on('clicked', function(e){
@@ -896,6 +909,7 @@ class N2MapCanvas  {
 				return false;
 			}
 		});	
+
 		this.editbarControl.getInteraction('ModifySelect').on('modifystart', function(e){
 			console.log('modifying features:', e.features);
 			//if (e.features.length===1) tooltip.setFeature(e.features[0]);
@@ -963,9 +977,7 @@ class N2MapCanvas  {
 //		  });
 	}
 
-	onMoveendCallback(evt){
-		
-	}
+	onMoveendCallback(evt){}
 
 	editModeAddFeatureCallback(evt){
 		var feature = evt.feature;
@@ -974,6 +986,7 @@ class N2MapCanvas  {
 		previousMode.featureAdded(feature);
 		this._centerMapOnFeature(feature);
 	}
+
 	_dispatch(m){
 		var dispatcher = this._getDispatchService();
 		if( dispatcher ) {
@@ -993,6 +1006,7 @@ class N2MapCanvas  {
 						featurePopupHtmlFn = cb;
 					}
 				}
+
 				//var contentArr = feature.data._ldata.tags;
 				if( featurePopupHtmlFn ){
 					featurePopupHtmlFn({
@@ -1013,24 +1027,23 @@ class N2MapCanvas  {
 			} else {
 				//n2es6 does not support multi hover, so does nunaliit2 
 			}
-		
 		}
 	}
 	
 	_retrivingDocsAndSendSelectedEvent(features) {
-
 		var _this = this;
 		var validFeatures = [];
 		for ( let i = 0, v = features.length;i< v ;i++) {
-
 			let feature = features[i];
 			DFS(feature, function(t) {
 				validFeatures.push(t)
 			})
 		}
+
 		if (_this.dispatchService ) {
 			if( 0 === validFeatures.length){
 				return;
+
 			} else if ( 1 === validFeatures.length) {
 				let t = validFeatures[0];
 				_this.dispatchService.send(DH, {
@@ -1038,13 +1051,15 @@ class N2MapCanvas  {
 						,docId: t.data._id
 						,doc: t.data
 						,feature: t
-				})
+				});
+
 			} else if (1 < validFeatures.length) {
 
 				let docIds = [];
 				validFeatures.forEach(function(elem) {
 					docIds.push(elem.data._id);
 				})
+
 				_this.dispatchService.send(DH,{
 					type: 'userSelect'
 						,docIds: docIds
@@ -1058,6 +1073,7 @@ class N2MapCanvas  {
 				callback (item);
 				return;
 			}
+
 			let innerFeatures = item.cluster;
 			if (innerFeatures && Array.isArray(innerFeatures)) {
 				for (let i=0,e=innerFeatures.length; i< e; i++) {
@@ -1134,18 +1150,20 @@ class N2MapCanvas  {
 			var geomType = f.getGeometry()._n2Type;
 			if (!geomType) {
 				if (f.getGeometry()
-						.getType()
-						.indexOf('Line') >= 0){
+					.getType()
+					.indexOf('Line') >= 0){
 					geomType = f.getGeometry()._n2Type = 'line';
 
 				} else if (f.getGeometry()
-						.getType()
-						.indexOf('Polygon') >= 0){
+					.getType()
+					.indexOf('Polygon') >= 0){
 					geomType = f.getGeometry()._n2Type = 'polygon';
+
 				} else {
 					geomType = f.getGeometry()._n2Type = 'point';
 				}
 			}
+
 			f.n2_geometry = geomType;
 			//Deal with n2_doc tag
 			var data = f.data;
@@ -1223,6 +1241,12 @@ class N2MapCanvas  {
 		}
 	}
 
+	/**
+	 * Creates an OpenLayer 5 Tile object, from the layer definition.
+	 * @param {object} layerDefinition - Background layer definition defined in the module's canvas.json 
+	 * in the backgrounds array. 
+	 * @param {boolean} isDefaultLayer 
+	 */
 	_createOLLayerFromDefinition(layerDefinition, isDefaultLayer) {
 		var name = _loc(layerDefinition.name);
 		var _this = this;
@@ -1242,6 +1266,11 @@ class N2MapCanvas  {
 		}
 	}
 
+	/**
+	 * Creates an OpenLayers 5 Background map source object based on the supplied layer definition type.
+	 * @param {object} layerDefinition - Background layer definition defined in the module's canvas.json 
+	 * in the backgrounds array. 
+	 */
 	_createBackgroundMapSource (layerDefinition) {
 		var sourceTypeInternal =
 			layerDefinition.type.replace(/\W/g,'').toLowerCase();
@@ -1252,15 +1281,15 @@ class N2MapCanvas  {
 			$n2.log('Background of Google map is under construction');
 
 		} else if (sourceTypeInternal == VENDOR.BING) {
-
 			return new BingMaps(sourceOptionsInternal);
 
 		} else if (sourceTypeInternal == VENDOR.WMS) {
 			if (sourceOptionsInternal
-					&& sourceOptionsInternal.url
-					&& sourceOptionsInternal.layers
-					&& sourceOptionsInternal.styles) {
+				&& sourceOptionsInternal.url
+				&& sourceOptionsInternal.layers
+				&& sourceOptionsInternal.styles) {
 				var parameters = {};
+
 				for (var key in sourceOptionsInternal) {
 					if ('LAYERS' === key.toUpperCase()
 						|| 'STYLES' === key.toUpperCase()
@@ -1272,7 +1301,6 @@ class N2MapCanvas  {
 
 						parameters[key.toUpperCase()] = sourceOptionsInternal[key]
 					}
-
 				}
 
 				return new TileWMS({
@@ -1320,7 +1348,9 @@ class N2MapCanvas  {
 				for (var key in options) {
 					wmtsOpt[key] = options[key];
 				}
+
 				return new WMTS(wmtsOpt);
+
 			} else {
 				$n2.reportError('Bad configuration for layer: '+name);
 				return null;
@@ -1366,6 +1396,7 @@ class N2MapCanvas  {
 			if (m._suppressSetHash) {
 				this._suppressSetHash = m._suppressSetHash 
 			}
+
 			var extent = undefined;
 			var targetCenter = [x, y];
 			
@@ -1386,17 +1417,21 @@ class N2MapCanvas  {
 				//extent and zoom into that
 				if (extent[0] === extent[2] || extent[1] === extent [3]) {
 					//If calculated extent is a point
-					_this.n2View.animate({
-						center: targetCenter,
-						duration: 500
-					}
-					,{
-						zoom: 9,
-						duration: 500
-					});
+					_this.n2View.animate(
+						{
+							center: targetCenter,
+							duration: 500
+						}
+						,{
+							zoom: 9,
+							duration: 500
+						}
+					);
+
 				} else {
 					_this.n2View.fit(extent,{duration: 1500});
 				}
+
 			} else {
 				// No projCode provided, just zoom in with targetCenter
 				_this.n2View.animate({
@@ -1428,6 +1463,7 @@ class N2MapCanvas  {
 				//var viewExt = olmap.getView().calculateExtent(olmap.getSize());
 				//olmap.getView().fit(viewExt);
 			}
+
 		} else if ( 'mapRefreshCallbackRequest' === type ){
 			//This refresh only execute the last invoke,
 			//the earlier invoke will be cancelled if new invoke arrived
@@ -1436,7 +1472,6 @@ class N2MapCanvas  {
 				if ( cb && typeof cb === 'function'){
 					cb(null, this);
 				}
-				
 			}
 
 		} else if( 'editInitiate' === type ) {
@@ -1648,13 +1683,13 @@ class N2MapCanvas  {
 	 */
 	_computeFullBoundingBox(f, srcProj, dstProj) {
 		if (f && f.nunaliit_geom
-				&& f.nunaliit_geom.bbox){
+			&& f.nunaliit_geom.bbox){
 			let bbox = f.nunaliit_geom.bbox;
 			let geomBounds = undefined;
 			if ( Array.isArray(bbox)) {
 				geomBounds = transformExtent(bbox,
-						new Projection({code: srcProj}),
-						new Projection({code: dstProj})
+					new Projection({code: srcProj}),
+					new Projection({code: dstProj})
 				);
 				return geomBounds;
 			}
