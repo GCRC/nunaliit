@@ -45,6 +45,8 @@ import {unByKey} from 'ol/Observable';
 import {default as DrawInteraction} from 'ol/interaction/Draw.js';
 import Stamen from 'ol/source/Stamen.js';
 import OSM from 'ol/source/OSM';
+import BingMaps from 'ol/source/BingMaps';
+import TileWMS from 'ol/source/TileWMS';
 import LayerSwitcher from 'ol-layerswitcher';
 
 import 'ol-ext/dist/ol-ext.css';
