@@ -33,10 +33,12 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2) {
 "use strict";
 
-var 
- _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); }
- ,DH = 'n2.widgetTranscript'
- ;
+var _loc = function(str,args) { 
+	return $n2.loc(str,'nunaliit2',args); 
+};
+
+var DH = 'n2.widgetTranscript';
+
 //+++++++++++++++++++++++++++++++++++++++++++++++
 // Given start and end time, find timeLinks matching in the set
 // timeLink = {
@@ -57,7 +59,6 @@ var
 //        "doc": "stock.rwanda"
 //    }
 // }
-
  
 var context_menu_text = ['Tag Selection...', 'Map Tags...', 'Settings...'];
 //--------------------------------------------------------------------------
@@ -146,27 +147,26 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			
 			// The mediaDocument id, since media document is the target referenced by cinemapdoc and srtdoc
 			this.docId = this.doc._id;
-		};
+		}
+
 		if( !this.name ){
 			this.name = $n2.getUniqueId();
-		};
+		}
 
 		this.transcriptDiv = undefined;
 		this.transcript_array = [];
-		
 		this.subtitleFormat = undefined;
-
 		this.lastTimeUserScroll = 0;
 		this.mediaDivId = undefined;
 		this.annotationEditor = undefined;
 		this._lastCtxTime = undefined;
 		
-		
 		// Get container
 		var containerClass = opts.containerClass;
 		if( !containerClass ){
 			throw new Error('containerClass must be specified');
-		};
+		}
+
 		var $container = $('.'+containerClass);
 		
 		this.elemId = $n2.getUniqueId();
@@ -178,7 +178,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.srtSelector = undefined;
 		
 		if (this.isInsideContentTextPanel) {
-
 			var $elem = $('<div>')
 				.attr('id',this.elemId)
 				.appendTo($container);
@@ -192,11 +191,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.addClass('n2widgetTranscript n2widgetTranscript_insideTextPanel')
 				.appendTo($elem);
 			
-			var $mediaDiv = $('<div>')
+			$('<div>')
 				.attr('id', this.mediaDivId)
 				.appendTo($mediaAndSubtitleDiv);
 			
-			var $transcript = $('<div>')
+			$('<div>')
 				.attr('id', this.subtitleDivId)
 				.addClass('n2widgetTranscript_transcript')
 				.appendTo($mediaAndSubtitleDiv);
@@ -209,6 +208,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			.addClass('n2widgetTranscript')
 			.appendTo($container);
 		}
+
 		// Set up dispatcher
 		if( this.dispatchService ){
 			if( this.sourceModelId ){
@@ -222,7 +222,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var sourceModelInfo = modelInfoRequest.modelInfo;
 				
 				if( sourceModelInfo 
-				 && sourceModelInfo.parameters ){
+					&& sourceModelInfo.parameters ){
 					if( sourceModelInfo.parameters.interval ){
 						var paramInfo = sourceModelInfo.parameters.interval;
 						this.intervalChangeEventName = paramInfo.changeEvent;
@@ -232,17 +232,17 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						if( paramInfo.value ){
 							this.intervalMin = paramInfo.value.min;
 							this.intervalMax = paramInfo.value.max;
-						};
-					};
+						}
+					}
 
 					if( sourceModelInfo.parameters.range ){
 						var paramInfo = sourceModelInfo.parameters.range;
 						this.rangeChangeEventName = paramInfo.changeEvent;
 						this.rangeGetEventName = paramInfo.getEvent;
 						this.rangeSetEventName = paramInfo.setEvent;
-					};
-				};
-			};
+					}
+				}
+			}
 
 			var f = function(m, addr, dispatcher){
 				_this._handle(m, addr, dispatcher);
@@ -252,9 +252,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			this.dispatchService.register(DH,'mediaTimeChanged',f);
 			this.dispatchService.register(DH,'documentContent',f);
 			this.dispatchService.register(DH,'replyColorForDisplayedSentences', f);
+
 			if( this.intervalChangeEventName ){
 				this.dispatchService.register(DH,this.intervalChangeEventName,f);
-			};
+			}
 			
 			// If the widget was built specifying a specific document, then do not change
 			// content on user selection. If no document specified, then listen to user selection.
@@ -266,8 +267,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				this.srtData = undefined;
 				this.subtitleFormat = undefined;
 				//this.dispatchService.register(DH,'selected',f);
-			};
-		};
+			}
+		}
 
 		$n2.log(this._classname, this);
 
@@ -299,7 +300,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	},
 	
 	_reInstallSubtitleSel: function(){
-		
 		var _this = this;
 		var $elem = this._getSubtitleSelectionDiv();
 		
@@ -362,12 +362,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			_this._renderError('Transcript or media attachment names not found for ' + selectSrtDocId);
 			alert('Transcript or media attachment not found in media document ' + selectSrtDocId);
 		}
-
 	},
 	
 	_handle: function(m, addr, dispatcher){
-		var _this = this;
-
 		/*
 			mediaTimeChange message
 			{
@@ -379,10 +376,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				      text => event originated from clicking text
 			}
 		*/
+
 		if( 'mediaTimeChanged' === m.type ){
 			if( m.name == this.name ){
 				this._timeChanged(m.currentTime, m.origin);
-			};
+			}
 			
 		} else if( 'documentContent' === m.type ){
 			if( m.docId == this.docId ){
@@ -392,8 +390,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				} else if( this.doc._rev != m.doc._rev ){
 					this.doc = m.doc;
 					this._documentChanged();
-				};
-			};
+				}
+			}
 
 		} else if( this.intervalChangeEventName === m.type ) {
 			//$n2.log("intervalChangeEvent "+this.intervalChangeEventName+" => ", m);
@@ -405,12 +403,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var videoTime = this._convertTimeToVideoTime(this.intervalMin);
 				if( typeof videoTime == 'number' ){
 					this._timeChanged(videoTime, 'model');
-				};
-			};
+				}
+			}
 			
 		} else if ( 'modelStateUpdated' === m.type){
 			if( this.sourceModelId === m.modelId ){
-				
 				// Check if cinemap selection changed;
 				var mediaDocChanged = this._cinemapUpdated(m.state);
 				if (mediaDocChanged){
@@ -421,13 +418,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					this._refresh();
 					this._documentChanged();
 				}
+
 			} else if (this.subtitleModelId === m.modelId ){
-			
 				this._updateMediaToSrtMap(m.state);
-				
 				this._reInstallSubtitleSel();
-				
 			}
+
 		} else if( 'selected' === m.type ){
 			if( m.docId != this.docId ){
 				this.docId = m.docId;
@@ -437,11 +433,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				this.srtData = undefined;
 				this.subtitleFormat = undefined;
 				this._documentChanged();
-			};
+			}
+
 		} else if ( 'replyColorForDisplayedSentences' === m.type ){
 			//$n2.log('colors: ', m.data);
 			this._color_transcript(m.data);
-		};
+		}
 	},
 	
 	_updateMediaToSrtMap: function(sourceState){
@@ -449,10 +446,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			for(var i=0,e=sourceState.added.length; i<e; ++i){
 				var doc = sourceState.added[i];
 				var docId = doc._id;
-
 			
 				if( doc.atlascine_subtitle ){
-					
 					this.mediaDocIdToSrtDocs = this.mediaDocIdToSrtDocs || {};
 					this.srtDocs = this.srtDocs || {};
 					this.srtDocs[docId] = doc;
@@ -464,11 +459,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						} 
 						this.mediaDocIdToSrtDocs[mediaDocId].push(doc);
 					}
-					
-				};
-			};
-		};
-
+				}
+			}
+		}
 	},
 	
 	_getTranscriptDiv: function(){
@@ -483,7 +476,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	_cinemapUpdated: function(sourceState){
 		var _this = this;
 		var cineIsUpdated = false;
-		
 
 		// Loop through all removed documents
 		if( sourceState.removed ){
@@ -492,10 +484,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var docId = doc._id;
 				if( doc.atlascine_cinemap ){
 					//_this.docId = undefined;
-				};
-				
-			};
-		};
+				}
+			}
+		}
 		
 		if( sourceState.added ){
 			for(var i=0,e=sourceState.added.length; i<e; ++i){
@@ -513,31 +504,30 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							cineIsUpdated = true;
 						}
 					}
-				};
-			};
-		};
+				}
+			}
+		}
 
 		// Loop through all updated documents
 		if( sourceState.updated ){
 			for(var i=0,e=sourceState.updated.length; i<e; ++i){
 				var doc = sourceState.updated[i];
 				var docId = doc._id;
-					if( doc.atlascine_cinemap ){
-						var media_doc_ref = doc.atlascine_cinemap.media_doc_ref;
-						var mediaDocId = media_doc_ref.doc;
-						if (mediaDocId
-							&& mediaDocId !== _this.docId) {
-							_this.docId = mediaDocId;
-							cineIsUpdated = true;
-						}
+				if( doc.atlascine_cinemap ){
+					var media_doc_ref = doc.atlascine_cinemap.media_doc_ref;
+					var mediaDocId = media_doc_ref.doc;
+					if (mediaDocId
+						&& mediaDocId !== _this.docId) {
+						_this.docId = mediaDocId;
+						cineIsUpdated = true;
+					}
 
-					};
-				};
-		};
-
-
+				}
+			}
+		}
 		return cineIsUpdated;
 	},
+
 	_convertTimeToVideoTime: function(t){
 		var vTime = undefined;
 		
@@ -546,10 +536,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				if( timeEntry.timeStart < t && t < timeEntry.timeEnd ){
 					var frac = (t - timeEntry.timeStart) / (timeEntry.timeEnd - timeEntry.timeStart);
 					vTime = timeEntry.videoStart + (frac * (timeEntry.videoEnd - timeEntry.videoStart))
-				};
+				}
 			});
-		};
-		
+		}
 		return vTime;
 	},
 
@@ -562,6 +551,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		if (!this.docId){
 			$n2.log('n2.widgetTranscript inital document change');
 			return;
+
 		} else if( !this.doc || this.docId !== this.doc._id ){
 			// We do not have the document. Request it.
 			this.doc = undefined;
@@ -571,6 +561,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			});
 			this._reInstallSubtitleSel();
 			//return;
+
 		} else if( !this.transcript ){
 		
 			this._loadVideoFile();
@@ -580,19 +571,19 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		} else if( !this.srtData ){
 			var attSrt = undefined;
 			if (this.attachmentService
-			 && this.transcript 
-			 && this.transcript.fromMediaDoc){
+				&& this.transcript 
+				&& this.transcript.fromMediaDoc){
 				attSrt = this.attachmentService.getAttachment(this.doc, this.transcript.srtAttName);
 			} else if( this.attachmentService
-			 && this.transcript 
-			 && this.transcript.srtAttName ){
+				&& this.transcript 
+				&& this.transcript.srtAttName ){
 				attSrt = this.attachmentService.getAttachment(this.srtDocs[this.transcript.srtDocId], this.transcript.srtAttName);
-			};
+			}
 
 			var srtUrl = undefined;
 			if( attSrt ){
 				srtUrl = attSrt.computeUrl();
-			};
+			}
 
 			if( srtUrl ){
 				// download content of attachment and call rendering function
@@ -616,19 +607,21 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						}
 						_this._documentChanged();
 					}
+
 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
 						// error while getting SRT content. Jump into same error
 						// as wrongly configured
 						_this._documentChanged();
 					}
 				});
+
 			} else {
 				$n2.log('Can not find any valid SRT/WEBVTT file');
-			};
+			}
 			
 		} else if( this.transcript.timeTable ){
 
-		};
+		}
 
 		// At the end of all this, refresh
 		this._refresh();
@@ -649,8 +642,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 	_refresh: function(){
 		var _this = this;
-
-		
 		var $subtitleSelectionDiv = this._getSubtitleSelectionDiv();
 		
 		// this $elem is the media and subtitle div
@@ -661,13 +652,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		if( !this.doc || this.docId !== this.doc._id ){
 			return;
-		};
+		}
 
 		if ( !this.transcript || !this.transcript.videoAttName ){
 			//Blocking method to load video file first;
 			//this._loadVideoFile();
 			return;
 		}
+
 		var attVideoName = undefined;
 		if( this.transcript ){
 			attVideoName = this.transcript.videoAttName;
@@ -676,34 +668,36 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		var attVideoDesc = null;
 		var data = this.doc; // shorthand
 		if( data 
-		 && data.nunaliit_attachments
-		 && data.nunaliit_attachments.files
-		 && attVideoName
-		 ) {
+			&& data.nunaliit_attachments
+			&& data.nunaliit_attachments.files
+			&& attVideoName ) {
 			attVideoDesc = data.nunaliit_attachments.files[attVideoName];
+
 			if( attVideoDesc
-			 && attVideoDesc.fileClass !== 'video' ){
+				&& attVideoDesc.fileClass !== 'video' ){
 				attVideoDesc = undefined;
-			};
-		};
+			}
+		}
 
 		var thumbnailUrl = null;
 		if( attVideoDesc
-		 && attVideoDesc.thumbnail ){
+			&& attVideoDesc.thumbnail ){
 			var attThumb = this.attachmentService.getAttachment(this.doc, attVideoDesc.thumbnail);
+
 			if( attThumb ){
 				thumbnailUrl = attThumb.computeUrl();
-			};
-		};
+			}
+		}
 
 		var attVideoUrl = undefined;
 		if( attVideoDesc 
-		 && attVideoDesc.status === 'attached' ) {
+			&& attVideoDesc.status === 'attached' ) {
 			var attVideo = this.attachmentService.getAttachment(this.doc, attVideoName);
+
 			if( attVideo ){
 				attVideoUrl = attVideo.computeUrl();
-			};
-		};
+			}
+		}
 
 		if( attVideoUrl ) {
 			//this.mediaDivId = $n2.getUniqueId();
@@ -728,20 +722,17 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 			if( attVideoDesc.mimeType ){
 				$videoSource.attr('type', attVideoDesc.mimeType);
-			};
-
+			}
 	
 			$video.mediaelementplayer({
 				poster: thumbnailUrl
 				,alwaysShowControls : true
-				, pauseOtherPlayers : false
+				,pauseOtherPlayers : false
 				,features: ['playpause','progress','volume','sourcechooser','fullscreen']
 			}); 
 
 			//little refine for css : specically for transcript
 			//$('.n2_content_text').css('overflow','hidden');
-
-
 			
 			/*this.transcript_array = [
 				{"start": "0.00",
@@ -762,9 +753,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				{"start": "25.01",
 					"fin": "30.00",
 					"text": "Whether a wire comes straight from the ISP hookup outside your house, or it travels over radio waves from your roof, the first stop a wire will make once inside your house, is at your modem."},
-				
 			];*/
-
 
 			// time update function: #highlight on the span to change the color of the text
 			$video
@@ -786,7 +775,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var $transcript = this._getSubtitleDiv();
 				$transcript.empty();
 				prep_transcript($transcript, this.transcript_array);
-				
 
 			} else {
 				//this._documentChanged();
@@ -794,7 +782,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		} else {
 			_this._renderError('Can not compute URL for video');
-		};
+		}
+
 //		if (typeof _this._lastCtxTime !== 'undefined'){
 //			_this._updateCurrentTime(_this._lastCtxTime, 'savedState');
 //		}
@@ -811,14 +800,16 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					var $transcriptElem = $('#'+transcriptElem.id);
 					$transcriptElem.removeClass('sentence-highlight-pending');
 				}
+
 				if (! selections || selections.size() === 0) {
 					return;
 				}
 				
 				var ctxdata = [];
 				var idxOfHoverEl = selections.index(
-						$('div#'+ $(hoveredElem).attr('id'))
-						);
+					$('div#'+ $(hoveredElem).attr('id'))
+				);
+
 				if (idxOfHoverEl >= 0){
 					selections.each(function(){
 						var $elmnt = $(this);
@@ -830,19 +821,17 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						var curTxt = $elmnt.text();
 						
 						var _d = {
-								start: curStart,
-								startTimeCode: startTimeCode,
-								finTimeCode: finTimeCode,
-								end: curFin,
-								text: curTxt
+							start: curStart,
+							startTimeCode: startTimeCode,
+							finTimeCode: finTimeCode,
+							end: curFin,
+							text: curTxt
 						};
 						ctxdata.push(_d);
-						
-						
-						$elmnt.addClass('sentence-highlight-pending')
+						$elmnt.addClass('sentence-highlight-pending');
 					})		
+
 				} else {
-					
 					$(hoveredElem)
 						.parent()
 						.children().each(function(){
@@ -861,11 +850,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					var curTxt = $elmnt.text();
 					
 					var _d = {
-							start: curStart,
-							startTimeCode: startTimeCode,
-							finTimeCode: finTimeCode,
-							end: curFin,
-							text: curTxt
+						start: curStart,
+						startTimeCode: startTimeCode,
+						finTimeCode: finTimeCode,
+						end: curFin,
+						text: curTxt
 					};
 					ctxdata.push(_d);
 				}
@@ -874,46 +863,46 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				contextMenu[0].style.left = e.pageX + 'px';
 				contextMenu[0].style.top = e.pageY + 'px';
 				contextMenu.removeClass('transcript-context-menu-hide');
-			
-			};
+			}
 		}
+
 		function prep_transcript($transcript, transcript_array){
 			var temp;
 			var currentSelectSentences = undefined;
-			
 			
 			//Create contextMenu for transcripts
 			var contextMenu = $('div.' + _this._contextMenuClass);
 			if (contextMenu.length > 0){
 				contextMenu.remove();
 			}
+
 			var transcript_context_menu_list = $('<ul>');
 			$.each(context_menu_text, function(i){
-				var li = $('<li/>')
-							.text(context_menu_text[i])
-							.click(function(){
-								var senDataArr = contextMenu.data().value;
-								if (senDataArr && senDataArr.length == 1 ){
-									
-									var currentTime = senDataArr[0].start;
-									if (typeof currentTime !== "undefined"){
-										_this._updateCurrentTime(currentTime, 'startEditing');
-									}
-									
-								}
-								if (senDataArr && senDataArr.length > 0){
-									_this._renderDrawer(context_menu_text[i], senDataArr);
-								};
-								$('div.' + _this._contextMenuClass).addClass("transcript-context-menu-hide");
-							})
-							.appendTo(transcript_context_menu_list);
+				$('<li/>')
+					.text(context_menu_text[i])
+					.click(function(){
+						var senDataArr = contextMenu.data().value;
+						if (senDataArr && senDataArr.length == 1 ){
+							var currentTime = senDataArr[0].start;
+							if (typeof currentTime !== "undefined"){
+								_this._updateCurrentTime(currentTime, 'startEditing');
+							}
+						}
+
+						if (senDataArr && senDataArr.length > 0){
+							_this._renderDrawer(context_menu_text[i], senDataArr);
+						}
+
+						$('div.' + _this._contextMenuClass).addClass("transcript-context-menu-hide");
+					})
+					.appendTo(transcript_context_menu_list);
 			});
+
 			contextMenu = $('<div>')
-								.addClass( _this._contextMenuClass)
-								.addClass("transcript-context-menu-hide")
-								.append(transcript_context_menu_list)
-								.appendTo(document.body);
-			
+				.addClass( _this._contextMenuClass)
+				.addClass("transcript-context-menu-hide")
+				.append(transcript_context_menu_list)
+				.appendTo(document.body);
 
 			//drawing all the sentence and binding event for click and right click
 			var tagsBySentenceSpanIds = {};
@@ -924,9 +913,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var id = $n2.getUniqueId();
 				transcriptElem.id = id;
 				tagsBySentenceSpanIds [id] = {
-						start:transcriptElem.startTimeCode
-						,end : transcriptElem.finTimeCode
+					start:transcriptElem.startTimeCode
+					,end : transcriptElem.finTimeCode
 				}
+
 				temp = $('<div>')
 					.attr('id', id)
 					.attr('data-start', transcriptElem.start)
@@ -938,13 +928,13 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					.html(transcriptElem.text+ " ")
 					.appendTo($transcript)
 			}
+
 			$('div#'+ _this.transcriptId).multiSelect({
 				unselectOn: 'head',
 				keepSelection: false,
 				stop: function($sel, $elem) {
 					currentSelectSentences = undefined;
-						currentSelectSentences = $sel;
-					
+					currentSelectSentences = $sel;
 				}
 			});
 			
@@ -955,9 +945,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					e.preventDefault();
 					return false;
 				}
+
 				clicks++;
 				if(clicks === 1) {
-
 					timer = setTimeout(function() {
 						//perform single-click action  
 						switch(e.which){
@@ -984,7 +974,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					}, DELAY);
 
 				} else {
-
 					clearTimeout(timer);    //prevent single-click action
 					//perform double-click action
 					switch(e.which){
@@ -999,20 +988,18 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						break;
 					case 3:
 						break;
-
 					}
 					clicks = 0;             //after action performed, reset counter
 				}
-
 				// close the context menu, if it still exists
 			})
-		.on('dblclick', function(e){
-			e.preventDefault();
-		})
-		.on ('contextmenu', function(e){
-			e.preventDefault();
-			return true;
-		})
+			.on('dblclick', function(e){
+				e.preventDefault();
+			})
+			.on ('contextmenu', function(e){
+				e.preventDefault();
+				return true;
+			});
 			
 			_this.dispatchService.send(DH, {
 				type: 'resetDisplayedSentences'
@@ -1021,10 +1008,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			
 			// Deal with scrolling, the scrolling should close the annotationEditor
 			$transcript.on('scroll', function(e){
-			
-					e.stopPropagation();
-					contextMenu.addClass('transcript-context-menu-hide');
-					_this._closeDrawer();
+				e.stopPropagation();
+				contextMenu.addClass('transcript-context-menu-hide');
+				_this._closeDrawer();
 	
 //				for(var i =0;i<_this.transcript_array.length;i++) {
 //					var transcriptElem = _this.transcript_array[i];
@@ -1032,21 +1018,22 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 //					$transcriptElem.removeClass('sentence-highlight-pending');
 //				}
 			})
-			
-			
-		};
+		}
+
 		function closeCtxMenu(){
 			
 		}
 	},
+
 	_color_transcript: function(colorMap){
 		var $set = this._getTranscriptDiv();
 		if ( $set ){
-		$set.find('.n2widgetTranscript_transcript').each(function(){
-			var $elem = $(this);
-			$elem.css({"background-color" : 'transparent'});
-		})
+			$set.find('.n2widgetTranscript_transcript').each(function(){
+				var $elem = $(this);
+				$elem.css({"background-color" : 'transparent'});
+			})
 		}
+
 		for (var id in colorMap) {
 			var _data = colorMap[id];
 			var _color = _data.color;
@@ -1060,14 +1047,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			}
 		}
 	},
+
 	_closeDrawer: function(){
 		this.dispatchService.send(DH,{
 			type: 'annotationEditorClose'
 		});
-	}
-	,
-	_renderDrawer: function(ctxMenuOption, senDataArr){
+	},
 
+	_renderDrawer: function(ctxMenuOption, senDataArr){
 		this.dispatchService.send(DH,{
 			type: 'annotationEditorStart'
 			,ctxMenuOption: ctxMenuOption
@@ -1082,7 +1069,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		};
 
 		this.dispatchService.synchronousCall(DH,m);
-
 		return m.available;
 	},
 
@@ -1102,15 +1088,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	
 	_loadTranscript: function(doc){
 		var _this = this;
+		var transcriptAttName;
 		// Look for transcript in-line
 		if( doc && doc.nunaliit_transcript ){
 			this.transcript = doc.nunaliit_transcript;
 			this._documentChanged();
 
 		} else if (doc) {
-
 			// Found srt attachment in media doc
-			var transcriptAttName =  this._findTranscriptAttachmentNameFromMediaDoc(doc);
+			transcriptAttName =  this._findTranscriptAttachmentNameFromMediaDoc(doc);
 			if ( transcriptAttName ){
 				_this.transcript = $n2.extend(_this.transcript, {
 					fromMediaDoc: true,
@@ -1131,7 +1117,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				return;
 			}
  
-			var transcriptAttName = this._findTranscriptAttachmentName(selectSrtDocId);
+			transcriptAttName = this._findTranscriptAttachmentName(selectSrtDocId);
 			if ( transcriptAttName && _this.transcript){
 				_this.transcript = $n2.extend(_this.transcript, {
 					srtDocId: selectSrtDocId,
@@ -1144,22 +1130,21 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				_this._renderError('Transcript or media attachment names not found for '+this.doc._id);
 				alert('Transcript or media attachment not found in media document ' + this.doc._id);
 			}
-
 			
 		} else {
 			// Find the attachment for the transcript
-			var transcriptAttName = this._findTranscriptAttachmentName(this.doc);
+			transcriptAttName = this._findTranscriptAttachmentName(this.doc);
 			if( transcriptAttName ){
 				// Load transcript
 				var att = undefined;
 				if( this.attachmentService ){
 					att = this.attachmentService.getAttachment(this.doc, transcriptAttName);
-				};
+				}
 
 				var url = undefined;
 				if( att ){
 					url = att.computeUrl();
-				};
+				}
 
 				if( url ){
 					// download content of attachment and call rendering function
@@ -1180,21 +1165,23 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 							_this._renderError('Error fetching transcript');
 						}
 					});
+
 				} else {
 					// element is wronly configured. Report error
 					_this._renderError('Can not compute URL for transcript');
-				};
+				}
+
 			} else {
 				_this._renderError('Transcript attachment name not found for '+this.doc._id);
-			};
-		};
+			}
+		}
 	},
 	
 	// For backward compatibility consideration
 	_findTranscriptAttachmentNameFromMediaDoc: function(doc){
 		if( doc 
-		 && doc.nunaliit_attachments 
-		 && doc.nunaliit_attachments.files ){
+			&& doc.nunaliit_attachments 
+			&& doc.nunaliit_attachments.files ){
 			for(var attName in doc.nunaliit_attachments.files){
 				var att = doc.nunaliit_attachments.files[attName];
 				if( attName.endsWith('.srt')){
@@ -1203,10 +1190,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				} else if( attName.endsWith('.vtt') ){
 					this.subtitleFormat = 'WEBVTT';
 					return attName;
-				};
-			};
+				}
+			}
 		}
-		
 		return undefined;
 	},
 	
@@ -1214,8 +1200,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		if( this.srtDocs[docId] ){
 			var doc = this.srtDocs[docId];
 			if(doc 
-			&& doc.nunaliit_attachments 
-			&& doc.nunaliit_attachments.files ){
+				&& doc.nunaliit_attachments 
+				&& doc.nunaliit_attachments.files ){
 				for(var attName in doc.nunaliit_attachments.files){
 					var att = doc.nunaliit_attachments.files[attName];
 					if( attName.endsWith('.srt')){
@@ -1224,28 +1210,28 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					} else if( attName.endsWith('.vtt') ){
 						this.subtitleFormat = 'WEBVTT';
 						return attName;
-					};
-				};
-			};
+					}
+				}
+			}
 		}
-		
 		return undefined;
 	},
 	
 	_findVideoAttachmentName: function(doc){
 		if( doc 
-		 && doc.nunaliit_attachments 
-		 && doc.nunaliit_attachments.files ){
+			&& doc.nunaliit_attachments 
+			&& doc.nunaliit_attachments.files ){
 			for(var attName in doc.nunaliit_attachments.files){
 				var att = doc.nunaliit_attachments.files[attName];
 				if( (att.fileClass === 'video'|| att.fileClass === 'audio')
-						&& att.conversionPerformed){
+					&& att.conversionPerformed){
 					return attName;
-				};
-			};
-		};
+				}
+			}
+		}
 		return undefined;
 	},
+
 	/**
 	 * Receives the current time as video time
 	 */
@@ -1258,10 +1244,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			,currentTime: currentTime
 			,origin: origin
 		});
-	
-
 		
-		 //Inform time model
+		// Inform time model
 		if( this.intervalSetEventName ){
 			var max = currentTime;
 			
@@ -1276,12 +1260,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					type: this.intervalSetEventName
 					,value: value
 				});
-			};
-		};
+			}
+		}
 	},
 
 	_timeChanged: function(currentTime, origin){
-		
 		var _this = this;
 		var n_cur = Number (currentTime);
 			// console.dir($._data($('#'+ this.transcriptId)[0], 'events'));
@@ -1289,23 +1272,18 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		$('#' + _this.transcriptId + ' > div').removeClass('highlight');
 		
 		$n2.utils.processLargeArrayAsync(_this.transcript_array, function(transcriptElem, _index_, _array_ ){
-			
-			
 			var $transcriptElem = $('#'+transcriptElem.id);
-
 			//$transcriptElem.removeClass('highlight');
 
 			if(n_cur >= transcriptElem.start 
-			 && n_cur < transcriptElem.fin) {
+				&& n_cur < transcriptElem.fin) {
 				$transcriptElem.addClass('highlight');
 				//scroll transcript div, so that the ongoing subtitle always stay in the viewport
 				if ($.now() - _this.lastTimeUserScroll > 5000){
 				
 					_this._scrollToView($transcriptElem);
 				}
-
-			};
-			
+			}
 		});
 		
 		if( 'model' === origin ){
@@ -1317,25 +1295,21 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			} else {
 				$video[0].currentTime = currentTime;
 				$video[0].play();
-			};
+			}
 			
 		} else if( 'text' === origin ){
-			
 			var $video = $('#'+this.videoId);
 			$video[0].currentTime = currentTime;
 			$video[0].play();
 		
 		} else if ('text-oneclick' === origin){
-		
 			var $video = $('#'+this.videoId);
 			_this.pauseVideo($video[0], currentTime);
 			
 		} else if('startEditing' === origin){
-			
 			_this._lastCtxTime = currentTime;
 	
 		} else if ( 'savedState' === origin ){
-		
 			var $video = $('#'+this.videoId);
 			$video[0].load();
 			$video[0].currentTime = currentTime;
@@ -1348,11 +1322,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				if(!isPlaying){
 						
 				} else {
-						$video[0].pause();
-						clearInterval(inid);
+					$video[0].pause();
+					clearInterval(inid);
 				}				
 			},100);
-			
 		} 
 	},
 	
@@ -1373,7 +1346,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				$video.setVolume(volume);
 				clearInterval(inid);
 			}
-			
 		},50);
 	},
 	
@@ -1392,7 +1364,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			
 			var inid = setInterval(function(){
 				var curOffset = $dst.parent().scrollTop();
-				if(curOffset !== oldOffset){
+				if(curOffset !== oldOffset) {
 					
 				} else {
 					$('#'+ _this.transcriptId).on("scroll", _this._onUserScrollAction.bind(_this));
@@ -1405,64 +1377,60 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	
 	_renderError: function(errMsg){
 		var $elem = this._getElem();
-		
 		$elem.empty();
-
 		$n2.logError('Unable to display tether content({docId}): '+errMsg);
 	}
 });
 
-//--------------------------------------------------------------------------
-
+// --------------------------------------------------------------------------
 var SubtitleFileParser = {
-		srt:{
-			parse: function(srtData) {
-				var reTimeCode = /^([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{1,3})?) --\> ([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{3})?)(.*)$/;
-				var reTimeCode_s = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*/i;
-				var json = [];
-				var lines = srtData.split(/\r?\n/);
-				if( !$n2.isArray(lines) ){
-					throw new Error('srtFile data processing error');
-				};
-				var cur = -1;
-				var totalLength = lines.length;
-				
-				var curSentence = "";
-				while( ++cur < (totalLength-1)){
-					if( lines[cur].replace(/^\s+|\s+$/g,'') === ""){
+	srt:{
+		parse: function(srtData) {
+			var reTimeCode = /^([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{1,3})?) --\> ([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{3})?)(.*)$/;
+			var reTimeCode_s = /([0-9]{1,2}):([0-9]{1,2}):([0-9]{1,2})((\,|\.)([0-9]+))?\s*/i;
+			var json = [];
+			var lines = srtData.split(/\r?\n/);
+			if( !$n2.isArray(lines) ){
+				throw new Error('srtFile data processing error');
+			}
+			var cur = -1;
+			var totalLength = lines.length;
+
+			var curSentence = "";
+			while( ++cur < (totalLength-1)){
+				if( lines[cur].replace(/^\s+|\s+$/g,'') === ""){
+					continue;
+				} else {
+					var tmpIdx = lines[cur].replace(/^\s+|\s+$/g,'');
+					var tmpTimecode = lines[++cur].replace(/^\s+|\s+$/g,'');
+					var matcher = reTimeCode.exec(tmpTimecode);
+					if(tmpIdx.search(/[0-9]+/i) === -1
+						|| !matcher ) {
 						continue;
 					} else {
-						var tmpIdx = lines[cur].replace(/^\s+|\s+$/g,'');
-						var tmpTimecode = lines[++cur].replace(/^\s+|\s+$/g,'');
-						var matcher = reTimeCode.exec(tmpTimecode);
-						if(tmpIdx.search(/[0-9]+/i) === -1
-						 || !matcher ) {
-							continue;
-						} else {
-							var curEntry = {
-									"start": null,
-									"startTimeCode": matcher[1],
-									"fin": null,
-									"finTimeCode": matcher[3],
-									"text": ""
-							};
-							//$n2.log("The"+tmpIdx+"-th transcript");
-							//$n2.log("The timecode: "+ tmpTimecode);
+						var curEntry = {
+							"start": null,
+							"startTimeCode": matcher[1],
+							"fin": null,
+							"finTimeCode": matcher[3],
+							"text": ""
+						};
+						//$n2.log("The"+tmpIdx+"-th transcript");
+						//$n2.log("The timecode: "+ tmpTimecode);
 
-							curEntry.start  =  $n2.utils.convertSMPTEtoSeconds(matcher[1]);
-							curEntry.fin = $n2.utils.convertSMPTEtoSeconds(matcher[3]);
-							while(++cur < totalLength){
-								curSentence = lines[cur];
-								if( curSentence.replace(/^\s+|\s+$/g,'') === "" ){
-									curEntry.text += ' ';
-									break;
-								};
-								curEntry.text += curSentence;
+						curEntry.start  =  $n2.utils.convertSMPTEtoSeconds(matcher[1]);
+						curEntry.fin = $n2.utils.convertSMPTEtoSeconds(matcher[3]);
+						while(++cur < totalLength){
+							curSentence = lines[cur];
+							if( curSentence.replace(/^\s+|\s+$/g,'') === "" ){
+								curEntry.text += ' ';
+								break;
 							}
-							json.push(curEntry);
-							
+							curEntry.text += curSentence;
 						}
-						
+
+						json.push(curEntry);
+						}
 					}
 				}
 				return json;
@@ -1470,56 +1438,52 @@ var SubtitleFileParser = {
 		},
 		
 		webvtt:{
-			
 			pattern_identifier : /^([a-zA-z]+-)?[0-9]+$/
 			,pattern_timecode : /^([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{1,3})?) --\> ([0-9]{2}:[0-9]{2}:[0-9]{2}([,.][0-9]{3})?)(.*)$/
 			,parse: function(trackText) {
-				// match start "chapter-" (or anythingelse)
+			// match start "chapter-" (or anythingelse)
 				
-				var 
-					i = 0,
-					lines = trackText.split(/\r?\n/),
-					//entries = {text:[], times:[]},
-					entries = [],
-					timecode,
-					text;
-				for(; i<lines.length; i++) {
-					// check for the line number
-					//if (this.pattern_identifier.exec(lines[i])){
-						// skip to the next line where the start --> end time code should be
-						//i++;
-						timecode = this.pattern_timecode.exec(lines[i]);				
-						//if (timecode) {
-						if (timecode && i<lines.length){
-							i++;
-							// grab all the (possibly multi-line) text that follows
-							text = lines[i];
-							i++;
-							while(lines[i] !== '' && i<lines.length){
-								text = text + '\n' + lines[i];
-								i++;
-							}
-							//text = $.trim(text).replace(/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig, "<a href='$1' target='_blank'>$1</a>");
-							// Text is in a different array so I can use .join
-							//entries.text.push(text);
-							entries.push(
-							{
-								'start': ($n2.utils.convertSMPTEtoSeconds(timecode[1]) == 0) ? 0.000 : $n2.utils.convertSMPTEtoSeconds(timecode[1]),
-								'fin': $n2.utils.convertSMPTEtoSeconds(timecode[3]),
-								'startTimeCode' : timecode[1], 
-								'finTimeCode': timecode[3],
-								'settings': timecode[5],
-								'text' : text
-							});
-						//}
-					}
-				}
-				return entries;
-			}
-		
-		}
+			var i = 0,
+				lines = trackText.split(/\r?\n/),
+				//entries = {text:[], times:[]},
+				entries = [],
+				timecode,
+				text;
 
-		
+			for(; i<lines.length; i++) {
+				// check for the line number
+				//if (this.pattern_identifier.exec(lines[i])){
+				// skip to the next line where the start --> end time code should be
+				//i++;
+				timecode = this.pattern_timecode.exec(lines[i]);				
+				//if (timecode) {
+				if (timecode && i<lines.length){
+					i++;
+					// grab all the (possibly multi-line) text that follows
+					text = lines[i];
+					i++;
+
+					while(lines[i] !== '' && i<lines.length){
+						text = text + '\n' + lines[i];
+						i++;
+					}
+
+					//text = $.trim(text).replace(/(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#\/%?=~_|!:,.;]*[-A-Z0-9+&@#\/%=~_|])/ig, "<a href='$1' target='_blank'>$1</a>");
+					// Text is in a different array so I can use .join
+					//entries.text.push(text);
+					entries.push({
+						'start': ($n2.utils.convertSMPTEtoSeconds(timecode[1]) == 0) ? 0.000 : $n2.utils.convertSMPTEtoSeconds(timecode[1]),
+						'fin': $n2.utils.convertSMPTEtoSeconds(timecode[3]),
+						'startTimeCode' : timecode[1], 
+						'finTimeCode': timecode[3],
+						'settings': timecode[5],
+						'text' : text
+					});
+				}
+			}
+			return entries;
+		}
+	}
 }
 
 //--------------------------------------------------------------------------
@@ -1527,9 +1491,8 @@ function HandleWidgetAvailableRequests(m){
 	
 	if( m.widgetType === 'transcriptWidget' ){
 		m.isAvailable = true;
-
 	}
-};
+}
 
 //--------------------------------------------------------------------------
 function HandleWidgetDisplayRequests(m){
@@ -1537,27 +1500,25 @@ function HandleWidgetDisplayRequests(m){
 		var widgetOptions = m.widgetOptions;
 		var containerClass = widgetOptions.containerClass;
 		var config = m.config;
-		
 		var options = {};
 		
 		if( widgetOptions ){
 			for(var key in widgetOptions){
 				var value = widgetOptions[key];
 				options[key] = value;
-			};
-		};
+			}
+		}
 
 		options.containerClass = containerClass;
 		
 		if( config && config.directory ){
 			options.dispatchService = config.directory.dispatchService;
 			options.attachmentService = config.directory.attachmentService;
-		};
+		}
 		
 		new TranscriptWidget(options);
-
 	}
-};
+}
 
 //--------------------------------------------------------------------------
 $n2.widgetTranscript = {
