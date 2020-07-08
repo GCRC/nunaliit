@@ -1121,8 +1121,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			}
 			
 			// Retrieve srt attachments from atlascine_subtitle documents.
-			var selectSrtDocId = this.srtSelector.getSelectedValue();
-			if ( !selectSrtDocId ) return;
+			var selectSrtDocId;
+
+			if (this.srtSelector) {
+				selectSrtDocId = this.srtSelector.getSelectedValue();
+			}
+
+			if (!selectSrtDocId) {
+				return;
+			}
  
 			var transcriptAttName = this._findTranscriptAttachmentName(selectSrtDocId);
 			if ( transcriptAttName && _this.transcript){
