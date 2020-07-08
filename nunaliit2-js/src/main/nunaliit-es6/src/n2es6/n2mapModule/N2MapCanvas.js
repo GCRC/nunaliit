@@ -451,16 +451,15 @@ class N2MapCanvas  {
 			this.showMapInteractionSwitch();
 		}
 	}
-
 	// === LOGIN STUFF END ========================================================
-	/**
-	 * Get the jQuery selection of the 'Add or Edit a Map Feature' button
-	 */
+
+	// Get the jQuery selection of the 'Add or Edit a Map Feature' button
 	_getMapInteractionSwitch() {
 		return $("#" + this.interactionId)
 			.find('.n2map_map_interaction_switch');
 	}
 
+	// Hide 'Add or Edit a Map Feature' button
 	hideMapInteractionSwitch() {
 		this._getMapInteractionSwitch().hide();
 	}
@@ -469,9 +468,7 @@ class N2MapCanvas  {
 		this._getMapInteractionSwitch().show();
 	}
 
-	/**
-	 * Create and Add the 'Add or Edit a Map Feature' button to the map canvas.
-	 */
+	// Create and Add the 'Add or Edit a Map Feature' button to the map canvas.
 	createMapInteractionSwitch() {
 		var _this = this;
 		var mapInteractionButton = $('<input>')
@@ -508,6 +505,11 @@ class N2MapCanvas  {
 		return false;
 	}
 	
+	/**
+	 * 
+	 * @param {object} mode 
+	 * @param {object} opts 
+	 */
 	//TODO the final function for different mode
 	_switchMapMode(mode, opts) {
 		if( this.currentMode === mode ) {
@@ -611,6 +613,7 @@ class N2MapCanvas  {
 		});
 	}
 	
+	// Get the AuthService Object
 	_getAuthService() {
 		var auth = null;
 			
@@ -640,6 +643,7 @@ class N2MapCanvas  {
 		//		}
 	}
 
+	// Get the map canvas element
 	_getElem() {
 		var $elem = $('#'+this.canvasId);
 		if( $elem.length < 1 ){
@@ -648,6 +652,7 @@ class N2MapCanvas  {
 		return $elem;
 	}
 
+	// Create a OpenLayers Map Object
 	_drawMap() {
 		var _this = this;
 
@@ -1085,67 +1090,15 @@ class N2MapCanvas  {
 		}
 	}
 
+	/**
+	 * Create OpenLayers layers from source objects produced by the _processOverlay(). 
+	 * @param {array} Sources - Array of map overlay source objects
+	 * @returns {array} fg - An array of foreground overlay vector layers
+	 */
 	_genOverlayMapLayers(Sources) {
 		var fg = [];
 		var _this = this;
-		
-		if (Sources) {
-			for (var i = 0, e = Sources.length; i < e; i++){
-				var overlayInfo = _this.overlayInfos[i];
-				var alphasource = Sources[i];
-				var betaSource = alphasource;
-				if (overlayInfo.clustering) {
-					if ( typeof _this.isClustering === 'undefined'){
-						_this.isClustering = true;
-					}
-					var clsOpt = Object.assign({}, overlayInfo.clustering
-							,{source: alphasource});
-					betaSource = new N2DonutCluster(clsOpt);
-//					betaSource = new N2Cluster(clsOpt);
-				}
 
-				var charlieSource = new N2SourceWithN2Intent({
-					interaction: _this.interactionSet.selectInteraction,
-					source: betaSource,
-					dispatchService: _this.dispatchService
-				});
-
-				_this.n2intentWrapper = charlieSource;
-				var vectorLayer = new VectorLayer({
-					title: "CouchDb",
-					renderMode : 'vector',
-					source: charlieSource,
-					style: StyleFn,
-					renderOrder: function(feature1, feature2){
-						var valueSelector = _this.renderOrderBasedOn;
-
-						if ( typeof valueSelector === 'object'
-							&& typeof valueSelector.getValue(feature1) === 'number'){
-								
-							var l = valueSelector.getValue(feature1),
-								r = valueSelector.getValue(feature2);
-							if (typeof l === 'number' && typeof r === 'number'){
-								if (l < r){
-									return -1;
-								} else if(l > r){
-									return 1;
-								} else {
-									return 0;
-								}
-							}
-						} else {
-							return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
-						}
-					}
-				});
-//				var layerOptions = _this.overlayInfos.shift();
-//				var layerStyleMap = createStyleMap(layerOptions._layerInfo);
-//				vectorLayer.set('styleMap', layerStyleMap);
-				fg.push(vectorLayer);
-			}
-		}
-		return (fg);
-	
 		function StyleFn(feature, resolution){
 
 			var f = feature;
@@ -1203,11 +1156,92 @@ class N2MapCanvas  {
 			innerStyle = Array.isArray(innerStyle)? innerStyle : [innerStyle];
 			return innerStyle;
 		}
+		
+		if (Sources) {
+			for (var i = 0, e = Sources.length; i < e; i++){
+				var overlayInfo = _this.overlayInfos[i];
+				var alphasource = Sources[i];
+				var betaSource = alphasource;
+				if (overlayInfo.clustering) {
+					if ( typeof _this.isClustering === 'undefined'){
+						_this.isClustering = true;
+					}
+					var clsOpt = Object.assign({}, overlayInfo.clustering
+							,{source: alphasource});
+					betaSource = new N2DonutCluster(clsOpt);
+//					betaSource = new N2Cluster(clsOpt);
+				}
+
+				var charlieSource = new N2SourceWithN2Intent({
+					interaction: _this.interactionSet.selectInteraction,
+					source: betaSource,
+					dispatchService: _this.dispatchService
+				});
+
+				_this.n2intentWrapper = charlieSource;
+				var vectorLayer = new VectorLayer({
+					title: "CouchDb",
+					renderMode : 'vector',
+					source: charlieSource,
+					style: StyleFn,
+					renderOrder: function(feature1, feature2){
+						var valueSelector = _this.renderOrderBasedOn;
+
+						if ( typeof valueSelector === 'object'
+							&& typeof valueSelector.getValue(feature1) === 'number'){
+								
+							var l = valueSelector.getValue(feature1),
+								r = valueSelector.getValue(feature2);
+							if (typeof l === 'number' && typeof r === 'number'){
+								if (l < r){
+									return -1;
+								} else if(l > r){
+									return 1;
+								} else {
+									return 0;
+								}
+							}
+						} else {
+							return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
+						}
+					}
+				});
+//				var layerOptions = _this.overlayInfos.shift();
+//				var layerStyleMap = createStyleMap(layerOptions._layerInfo);
+//				vectorLayer.set('styleMap', layerStyleMap);
+				fg.push(vectorLayer);
+			}
+		}
+		return (fg);
 	}
 
+	/**
+	 * Create OpenLayers layers based on background objects. 
+	 * @param {array} bgSources - Array of background objects provided by the canvas.json 
+	 * @returns {object} bg - Created background layer
+	 */
 	_genBackgroundMapLayers(bgSources) {
-		var _this = this;
 		var bg = null;
+
+		function _computeDefaultLayer(backgrounds, idx) {
+			var i, e, layerDefinition;
+			if (typeof _computeDefaultLayer.defaultLayerIdx == 'undefined' ) {
+				_computeDefaultLayer.defaultLayerIdx = -1;
+			}
+
+			if (_computeDefaultLayer.defaultLayerIdx === -1 ) {
+				_computeDefaultLayer.defaultLayerIdx = 0;
+				for (i = 0, e = backgrounds.length; i < e; ++i) {
+					layerDefinition = backgrounds[i];
+					if (typeof (layerDefinition.defaultLayer) !== 'undefined'
+						&& layerDefinition.defaultLayer ) {
+						_computeDefaultLayer.defaultLayerIdx = i;
+					}
+				}
+			}
+			return (_computeDefaultLayer.defaultLayerIdx === idx);
+		}
+
 		if (bgSources) {
 			// This is the method used when background layers are specified
 			// via couchModule
@@ -1221,26 +1255,7 @@ class N2MapCanvas  {
 				if( l ) bg[bg.length] = l;
 			}
 		}
-
 		return(bg);
-
-		function _computeDefaultLayer(backgrounds, idx) {
-			if (typeof _computeDefaultLayer.defaultLayerIdx == 'undefined' ) {
-				_computeDefaultLayer.defaultLayerIdx = -1;
-			}
-
-			if (_computeDefaultLayer.defaultLayerIdx === -1 ) {
-				_computeDefaultLayer.defaultLayerIdx = 0;
-				for (var i=0,e=backgrounds.length; i<e; ++i) {
-					var layerDefinition = backgrounds[i];
-					if (typeof (layerDefinition.defaultLayer) !== 'undefined'
-						&& layerDefinition.defaultLayer ) {
-						_computeDefaultLayer.defaultLayerIdx = i;
-					}
-				}
-			}
-			return (_computeDefaultLayer.defaultLayerIdx === idx);
-		}
 	}
 
 	/**
