@@ -203,12 +203,12 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 		var doc = this._doc;
 		
 		if( doc
-			&& doc.atlascine2_cinemap ){
-				var timeLinks = doc.atlascine2_cinemap.timeLinks;
+			&& doc.atlascine_cinemap ){
+				var timeLinks = doc.atlascine_cinemap.timeLinks;
 				if( !timeLinks ){
 					// Create if it does not exist
 					timeLinks = [];
-					doc.atlascine2_cinemap.timeLinks = timeLinks;
+					doc.atlascine_cinemap.timeLinks = timeLinks;
 					//return;
 				};
 				if (data && $n2.isArray(data)){
@@ -552,12 +552,12 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			var modified = false;
 			var lastTagsMapByTimelink = {};
 			if( doc 
-			 && doc.atlascine2_cinemap ){
-				var timeLinks = doc.atlascine2_cinemap.timeLinks;
+			 && doc.atlascine_cinemap ){
+				var timeLinks = doc.atlascine_cinemap.timeLinks;
 				if( !timeLinks ){
 					// Create if it does not exist
 					timeLinks = [];
-					doc.atlascine2_cinemap.timeLinks = timeLinks;
+					doc.atlascine_cinemap.timeLinks = timeLinks;
 				};
 				
 				var matchingLinks = findTimeLink(
@@ -577,7 +577,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 //							"doc": "stock.rwanda"
 //						}
 					};
-					doc.atlascine2_cinemap.timeLinks.push(newTimeLink);
+					doc.atlascine_cinemap.timeLinks.push(newTimeLink);
 					matchingLinks.push(newTimeLink);
 				};
 				
@@ -626,8 +626,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		function updateDocForTagGrouping (doc){
 			var $formfieldSections = $('div#'+_this.innerFormId + ' div.n2WidgetAnnotation_tagGroup_formfieldSection');
 			var modified = false;
-			var oldTagColors = doc.atlascine2_cinemap.tagColors;
-			var oldTagGroups = doc.atlascine2_cinemap.tagGroups;
+			var oldTagColors = doc.atlascine_cinemap.tagColors;
+			var oldTagGroups = doc.atlascine_cinemap.tagGroups;
 			var newTagColors = {};
 			var newTagGroups  = {};
 			$formfieldSections.each(function(){
@@ -652,8 +652,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					oldTagGroups, newTagColors, newTagGroups);
 			
 			if( modified ){
-				doc.atlascine2_cinemap.tagColors = newTagColors;
-				doc.atlascine2_cinemap.tagGroups = newTagGroups;
+				doc.atlascine_cinemap.tagColors = newTagColors;
+				doc.atlascine_cinemap.tagGroups = newTagGroups;
 				$n2.log('newTagColors: ', newTagColors);
 				$n2.log('newtagGroups: ', newTagGroups);
 				documentSource.updateDocument({
@@ -678,11 +678,11 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					var _gsfInputValue= _gsfInput.val();
 					var _gtoInputValue = _gtoInput.val();
 					if (_gsfInputValue || _gtoInputValue){
-						if (typeof doc.atlascine2_cinemap.settings === 'undefined'){
-							doc.atlascine2_cinemap.settings = {};
+						if (typeof doc.atlascine_cinemap.settings === 'undefined'){
+							doc.atlascine_cinemap.settings = {};
 						}
-						doc.atlascine2_cinemap.settings.globalScaleFactor = _gsfInputValue;
-						doc.atlascine2_cinemap.settings.globalTimeOffset = _gtoInputValue;
+						doc.atlascine_cinemap.settings.globalScaleFactor = _gsfInputValue;
+						doc.atlascine_cinemap.settings.globalTimeOffset = _gtoInputValue;
 						documentSource.updateDocument({
 							doc: doc
 							,onSuccess: onSaved
@@ -743,7 +743,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		};
 		function singleSectionUpForTagGrouping (doc, tagname, tagcolor, chilrenTags){
 			if( doc 
-				&& doc.atlascine2_cinemap ){
+				&& doc.atlascine_cinemap ){
 				
 			}
 		};
@@ -776,9 +776,9 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		.appendTo($formFieldSection);
 		
 		if (doc
-			&& doc.atlascine2_cinemap
-			&& doc.atlascine2_cinemap.settings){
-			_setting = $n2.extend(_setting, doc.atlascine2_cinemap.settings);
+			&& doc.atlascine_cinemap
+			&& doc.atlascine_cinemap.settings){
+			_setting = $n2.extend(_setting, doc.atlascine_cinemap.settings);
 		}
 		for (var se in _setting){
 			if (se === 'globalScaleFactor'){
@@ -812,15 +812,15 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		var doc = this.currentDoc;
 		var existingTagGroupArr = [];
 		if (doc
-			&& doc.atlascine2_cinemap 
-			&& doc.atlascine2_cinemap.tagColors ){
-			for (var tagna in doc.atlascine2_cinemap.tagGroups ){
+			&& doc.atlascine_cinemap 
+			&& doc.atlascine_cinemap.tagColors ){
+			for (var tagna in doc.atlascine_cinemap.tagGroups ){
 				if (tagna === 'place' || tagna === 'location'){
 					continue;
 				}
 				var taginfo = {
 						name: tagna,
-						color: doc.atlascine2_cinemap.tagColors[tagna],
+						color: doc.atlascine_cinemap.tagColors[tagna],
 						children: []
 				};
 				var tagchildren = findChildTags(tagna);
@@ -849,14 +849,14 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		});
 		function findChildTags(target){
 			var rst = undefined;
-			for(var tagna in doc.atlascine2_cinemap.tagGroups){
+			for(var tagna in doc.atlascine_cinemap.tagGroups){
 				if (tagna === target 
-					&& doc.atlascine2_cinemap.tagGroups[tagna].length > 0){
+					&& doc.atlascine_cinemap.tagGroups[tagna].length > 0){
 					if(!rst){
 						rst = [];
 					}
 					//clone the children tags group
-					rst = doc.atlascine2_cinemap.tagGroups[tagna].slice(0);
+					rst = doc.atlascine_cinemap.tagGroups[tagna].slice(0);
 				}
 			}
 			return rst;
@@ -1043,8 +1043,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			var lastThemeTags = [];
 			var lastPlaceTags = [];
 			if( doc 
-					&& doc.atlascine2_cinemap ){
-				var timeLinks = doc.atlascine2_cinemap.timeLinks;
+					&& doc.atlascine_cinemap ){
+				var timeLinks = doc.atlascine_cinemap.timeLinks;
 				if( !timeLinks ){
 //					No timeLinks no worry
 					return;
@@ -1120,7 +1120,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					}
 				})
 			} else {
-				alert('Current document doesnot have (atlascine2_cinemap) property');
+				alert('Current document doesnot have (atlascine_cinemap) property');
 				return;
 			};
 		
@@ -1163,8 +1163,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 //			var lastThemeTags = [];
 //			var lastPlaceTags = [];
 //			if( doc 
-//					&& doc.atlascine2_cinemap ){
-//				var timeLinks = doc.atlascine2_cinemap.timeLinks;
+//					&& doc.atlascine_cinemap ){
+//				var timeLinks = doc.atlascine_cinemap.timeLinks;
 //				if( !timeLinks ){
 ////					No timeLinks no worry
 //					return;
@@ -1240,7 +1240,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 //					}
 //				})
 //			} else {
-//				alert('Current document doesnot have (atlascine2_cinemap) property');
+//				alert('Current document doesnot have (atlascine_cinemap) property');
 //				return;
 //			};
 //		});

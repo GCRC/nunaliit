@@ -316,7 +316,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			_this.mediaDocIdToSrtDocs[this.docId].forEach(function(srtDoc){
 				menOpts.push({
 					value: srtDoc._id,
-					text: srtDoc.atlascine2_subtitle.language
+					text: srtDoc.atlascine_subtitle.language
 				})
 			});
 		}
@@ -451,14 +451,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var docId = doc._id;
 
 			
-				if( doc.atlascine2_subtitle ){
+				if( doc.atlascine_subtitle ){
 					
 					this.mediaDocIdToSrtDocs = this.mediaDocIdToSrtDocs || {};
 					this.srtDocs = this.srtDocs || {};
 					this.srtDocs[docId] = doc;
 					
-					if ( doc.atlascine2_subtitle.linkedMediaDocId ){
-						var mediaDocId = doc.atlascine2_subtitle.linkedMediaDocId.doc;
+					if ( doc.atlascine_subtitle.linkedMediaDocId ){
+						var mediaDocId = doc.atlascine_subtitle.linkedMediaDocId.doc;
 						if ( !this.mediaDocIdToSrtDocs[mediaDocId] ){
 							this.mediaDocIdToSrtDocs[mediaDocId] = [];
 						} 
@@ -490,7 +490,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			for(var i=0,e=sourceState.removed.length; i<e; ++i){
 				var doc = sourceState.removed[i];
 				var docId = doc._id;
-				if( doc.atlascine2_cinemap ){
+				if( doc.atlascine_cinemap ){
 					//_this.docId = undefined;
 				};
 				
@@ -503,8 +503,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				var docId = doc._id;
 
 				//If new cinemapDocument is added, update the cinemap info in this widget
-				if( doc.atlascine2_cinemap ){
-					var media_doc_ref = doc.atlascine2_cinemap.media_doc_ref;
+				if( doc.atlascine_cinemap ){
+					var media_doc_ref = doc.atlascine_cinemap.media_doc_ref;
 					if (media_doc_ref){
 						var mediaDocId = media_doc_ref.doc;
 						if (mediaDocId
@@ -522,8 +522,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			for(var i=0,e=sourceState.updated.length; i<e; ++i){
 				var doc = sourceState.updated[i];
 				var docId = doc._id;
-					if( doc.atlascine2_cinemap ){
-						var media_doc_ref = doc.atlascine2_cinemap.media_doc_ref;
+					if( doc.atlascine_cinemap ){
+						var media_doc_ref = doc.atlascine_cinemap.media_doc_ref;
 						var mediaDocId = media_doc_ref.doc;
 						if (mediaDocId
 							&& mediaDocId !== _this.docId) {
@@ -1120,7 +1120,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				return;
 			}
 			
-			// Retrieve srt attachments from atlascine2_subtitle documents.
+			// Retrieve srt attachments from atlascine_subtitle documents.
 			var selectSrtDocId = this.srtSelector.getSelectedValue();
 			if ( !selectSrtDocId ) return;
  
