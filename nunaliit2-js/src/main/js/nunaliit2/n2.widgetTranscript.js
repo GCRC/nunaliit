@@ -474,14 +474,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	},
 	
 	_cinemapUpdated: function(sourceState){
+		var i, e, doc, docId, media_doc_ref, mediaDocId;
 		var _this = this;
 		var cineIsUpdated = false;
 
 		// Loop through all removed documents
 		if( sourceState.removed ){
-			for(var i=0,e=sourceState.removed.length; i<e; ++i){
-				var doc = sourceState.removed[i];
-				var docId = doc._id;
+			for(i=0, e=sourceState.removed.length; i<e; ++i){
+				doc = sourceState.removed[i];
+				docId = doc._id;
 				if( doc.atlascine_cinemap ){
 					//_this.docId = undefined;
 				}
@@ -489,15 +490,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 		
 		if( sourceState.added ){
-			for(var i=0,e=sourceState.added.length; i<e; ++i){
-				var doc = sourceState.added[i];
-				var docId = doc._id;
+			for(i=0,e=sourceState.added.length; i<e; ++i){
+				doc = sourceState.added[i];
+				docId = doc._id;
 
 				//If new cinemapDocument is added, update the cinemap info in this widget
 				if( doc.atlascine_cinemap ){
-					var media_doc_ref = doc.atlascine_cinemap.media_doc_ref;
+					media_doc_ref = doc.atlascine_cinemap.media_doc_ref;
 					if (media_doc_ref){
-						var mediaDocId = media_doc_ref.doc;
+						mediaDocId = media_doc_ref.doc;
 						if (mediaDocId
 							&& mediaDocId !== _this.docId) {
 							_this.docId = mediaDocId;
@@ -510,18 +511,17 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 		// Loop through all updated documents
 		if( sourceState.updated ){
-			for(var i=0,e=sourceState.updated.length; i<e; ++i){
-				var doc = sourceState.updated[i];
-				var docId = doc._id;
+			for(i=0, e=sourceState.updated.length; i<e; ++i){
+				doc = sourceState.updated[i];
+				docId = doc._id;
 				if( doc.atlascine_cinemap ){
-					var media_doc_ref = doc.atlascine_cinemap.media_doc_ref;
-					var mediaDocId = media_doc_ref.doc;
+					media_doc_ref = doc.atlascine_cinemap.media_doc_ref;
+					mediaDocId = media_doc_ref.doc;
 					if (mediaDocId
 						&& mediaDocId !== _this.docId) {
 						_this.docId = mediaDocId;
 						cineIsUpdated = true;
 					}
-
 				}
 			}
 		}
@@ -618,9 +618,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			} else {
 				$n2.log('Can not find any valid SRT/WEBVTT file');
 			}
-			
-		} else if( this.transcript.timeTable ){
-
+//		} else if( this.transcript.timeTable ){
 		}
 
 		// At the end of all this, refresh
@@ -761,6 +759,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					var currentTime = this.currentTime;
 					_this._updateCurrentTime(currentTime, 'video');
 				})
+
 				.bind('durationchange', function(e) {
 					var duration = this.duration;
 					$n2.log('video duration changed: '+duration);
@@ -813,7 +812,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				if (idxOfHoverEl >= 0){
 					selections.each(function(){
 						var $elmnt = $(this);
-						var eid = $elmnt.attr('id');
 						var curStart =$elmnt.attr('data-start');
 						var curFin = $elmnt.attr('data-fin');
 						var startTimeCode = $elmnt.attr('data-startcode');
@@ -842,7 +840,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					$(hoveredElem).addClass('selected');
 					
 					var $elmnt = $(hoveredElem);
-					var eid = $elmnt.attr('id');
 					var curStart =$elmnt.attr('data-start');
 					var curFin = $elmnt.attr('data-fin');
 					var startTimeCode = $elmnt.attr('data-startcode');
@@ -867,7 +864,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 
 		function prep_transcript($transcript, transcript_array){
-			var temp;
 			var currentSelectSentences = undefined;
 			
 			//Create contextMenu for transcripts
@@ -917,7 +913,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					,end : transcriptElem.finTimeCode
 				}
 
-				temp = $('<div>')
+				$('<div>')
 					.attr('id', id)
 					.attr('data-start', transcriptElem.start)
 					.attr('data-fin', transcriptElem.fin)
@@ -970,7 +966,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 						}  
 						clicks = 0;             //after action performed, reset counter
-
 					}, DELAY);
 
 				} else {
@@ -1265,6 +1260,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	},
 
 	_timeChanged: function(currentTime, origin){
+		var $video;
 		var _this = this;
 		var n_cur = Number (currentTime);
 			// console.dir($._data($('#'+ this.transcriptId)[0], 'events'));
@@ -1287,8 +1283,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		});
 		
 		if( 'model' === origin ){
-		
-			var $video = $('#'+this.videoId);
+			$video = $('#'+this.videoId);
 			var currentVideoTime = $video[0].currentTime;
 			if( Math.abs(currentVideoTime - currentTime) < 0.5 ){
 				// Debounce
@@ -1298,19 +1293,19 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			}
 			
 		} else if( 'text' === origin ){
-			var $video = $('#'+this.videoId);
+			$video = $('#'+this.videoId);
 			$video[0].currentTime = currentTime;
 			$video[0].play();
 		
 		} else if ('text-oneclick' === origin){
-			var $video = $('#'+this.videoId);
+			$video = $('#'+this.videoId);
 			_this.pauseVideo($video[0], currentTime);
 			
 		} else if('startEditing' === origin){
 			_this._lastCtxTime = currentTime;
 	
 		} else if ( 'savedState' === origin ){
-			var $video = $('#'+this.videoId);
+			$video = $('#'+this.videoId);
 			$video[0].load();
 			$video[0].currentTime = currentTime;
 
@@ -1407,6 +1402,7 @@ var SubtitleFileParser = {
 					if(tmpIdx.search(/[0-9]+/i) === -1
 						|| !matcher ) {
 						continue;
+
 					} else {
 						var curEntry = {
 							"start": null,
