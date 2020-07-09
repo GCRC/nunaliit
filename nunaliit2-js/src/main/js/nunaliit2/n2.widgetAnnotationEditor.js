@@ -119,7 +119,6 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 		this.editorMode = undefined;
 		this.focusSentences = [];
 	/*	focusSentences : [
-			
 			{
 				start: '0',
 				end: '10',
@@ -253,12 +252,10 @@ var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
 						text: text
 					}
 
-						_this.focusSentences.push(senRec);
+					_this.focusSentences.push(senRec);
 				});
 			}
-
 		}
-		
 	},
 
 	getDoc: function(){
@@ -406,7 +403,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			}
 		});
 		
-		var $innerForm = $('<div>')
+		$('<div>')
 			.attr('id', this.innerFormId)
 			.appendTo($formField);
 
@@ -432,7 +429,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		return $formField;
 	},
 	
-	onEditorAggregateModeChanged :function(checked){
+	onEditorAggregateModeChanged: function(checked){
 		var _this = this;
 		this.editorAggregateMode = checked;
 		this.refresh();
@@ -644,8 +641,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				var tagbox =$(this).find('div.n2-tag-box > div.mdc-chip-set');
 				var tagValues = (tagbox.first().data('tags'));
 				if (typeof color !== "undefined"
-							&& color.length == 7
-							&& typeof name !== "undefined" ) {
+					&& color.length == 7
+					&& typeof name !== "undefined" ) {
 					newTagColors[name] = color;
 				}
 
@@ -753,9 +750,9 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			return false;
 		}
 
-		function singleSectionUpForTagGrouping (doc, tagname, tagcolor, chilrenTags){
-			if( doc && doc.atlascine_cinemap ){}
-		}
+		//function singleSectionUpForTagGrouping (doc, tagname, tagcolor, chilrenTags){
+		//	if( doc && doc.atlascine_cinemap ){}
+		//}
 
 		function onSaved(doc){
 			if( _this.onSaved ){
@@ -904,9 +901,10 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 							.addClass('formfieldSection_footer')
 							.appendTo($formFieldSection);
 			
-			var $mdcInputDiv= $('<div>')
+			var $mdcColorInputDiv= $('<div>')
 					.addClass('input_group_for_customMDC for_color')
 					.appendTo($leftdiv);
+
 			$('<input>')
 				.addClass('n2transcript_input input_colorpicker')
 				.colorPicker({
@@ -917,23 +915,40 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 				})
 				.val(taginfo.color)
 				.css("background-color", taginfo.color)
-				.appendTo($mdcInputDiv);
+				.appendTo($mdcColorInputDiv);
 
-			$('<span>').addClass('highlight').appendTo($mdcInputDiv);
-			$('<span>').addClass('bar').appendTo($mdcInputDiv);
-			$('<label>').text('Color').appendTo($mdcInputDiv);
+			$('<span>')
+				.addClass('highlight')
+				.appendTo($mdcColorInputDiv);
+
+			$('<span>')
+				.addClass('bar')
+				.appendTo($mdcColorInputDiv);
+
+			$('<label>')
+				.text('Color')
+				.appendTo($mdcColorInputDiv);
 			
-			var $mdcInputDiv= $('<div>')
+			var $mdcTagInputDiv= $('<div>')
 				.addClass('input_group_for_customMDC for_tagname')
 				.appendTo($headdiv);
 			
 			$('<input>')
 				.addClass('n2transcript_input input_tagname')
 				.val(taginfo.name)
-				.appendTo($mdcInputDiv);
-			$('<span>').addClass('highlight').appendTo($mdcInputDiv);
-			$('<span>').addClass('bar').appendTo($mdcInputDiv);
-			$('<label>').text('Tag Name').appendTo($mdcInputDiv);
+				.appendTo($mdcTagInputDiv);
+
+			$('<span>')
+				.addClass('highlight')
+				.appendTo($mdcTagInputDiv);
+
+			$('<span>')
+				.addClass('bar')
+				.appendTo($mdcTagInputDiv);
+
+			$('<label>')
+				.text('Tag Name')
+				.appendTo($mdcTagInputDiv);
 			
 			new $n2.mdc.MDCTagBox({
 				parentElem : $rightdiv,
@@ -990,9 +1005,17 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			})
 			.appendTo($mdcInputDiv);
 
-		$('<span>').addClass('highlight').appendTo($mdcInputDiv);
-		$('<span>').addClass('bar').appendTo($mdcInputDiv);
-		$('<label>').text('Color').appendTo($mdcInputDiv);
+		$('<span>')
+			.addClass('highlight')
+			.appendTo($mdcInputDiv);
+
+		$('<span>')
+			.addClass('bar')
+			.appendTo($mdcInputDiv);
+
+		$('<label>')
+			.text('Color')
+			.appendTo($mdcInputDiv);
 		
 		var $mdcInputDiv= $('<div>')
 			.addClass('input_group_for_customMDC for_tagname')
@@ -1002,9 +1025,17 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 			.addClass('n2transcript_input input_tagname')
 			.appendTo($mdcInputDiv);
 
-		$('<span>').addClass('highlight').appendTo($mdcInputDiv);
-		$('<span>').addClass('bar').appendTo($mdcInputDiv);
-		$('<label>').text('Tag Name').appendTo($mdcInputDiv);
+		$('<span>')
+			.addClass('highlight')
+			.appendTo($mdcInputDiv);
+
+		$('<span>')
+			.addClass('bar')
+			.appendTo($mdcInputDiv);
+
+		$('<label>')
+			.text('Tag Name')
+			.appendTo($mdcInputDiv);
 
 		new $n2.mdc.MDCTagBox({
 			parentElem : $rightdiv,
@@ -1094,17 +1125,18 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 					chips: lastThemeTags,
 					chipsetsUpdateCallback: function(tagList, operation, target){
+						var value, addtar, deltar;
 						switch(operation){
 							case 'ADD':
-								var value = target.chipText;
-								var addtar = $n2.extend({value: value}, target);
+								value = target.chipText;
+								addtar = $n2.extend({value: value}, target);
 								delete addtar['fraction'];
 								_this.dataDepot.addPartialTag(opts.start, opts.end, addtar)
 								$n2.log('Adding tags', target);
 								break;
 							case 'DELETE':
-								var value = target.chipText;
-								var deltar = $n2.extend({value: value}, target);
+								value = target.chipText;
+								deltar = $n2.extend({value: value}, target);
 								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
 								$n2.log('Deleting tags', target);
 								break;
@@ -1120,9 +1152,10 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 					mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
 					chips:lastPlaceTags,
 					chipsetsUpdateCallback: function(tagList, operation, target){
+						var value;
 						switch(operation){
 							case 'ADD':
-								var value = target.chipText;
+								value = target.chipText;
 								var addtar = $n2.extend({value: value}, target);
 								addtar['type'] = 'place';
 								delete addtar['fraction'];
@@ -1130,7 +1163,7 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 								$n2.log('Adding tags', addtar);
 								break;
 							case 'DELETE':
-								var value = target.chipText;
+								value = target.chipText;
 								var deltar = $n2.extend({value: value}, target);
 								deltar['type'] = 'place';
 								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
@@ -1273,8 +1306,8 @@ var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 		var _this = this;
 		var $formField = $parent;
 		var $formFieldSection = $('<div>')
-				.addClass('n2WidgetAnnotation_formfieldSection')
-				.appendTo($formField);
+			.addClass('n2WidgetAnnotation_formfieldSection')
+			.appendTo($formField);
 		var depot = this.dataDepot;
 		var senData = depot.getData();
 
@@ -1608,7 +1641,7 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 				var containerId = $n2.utils.getElementIdentifier($container);
 				this.drawer = new $n2.ui.drawer({
 					containerId: containerId,
-					width : '500px',
+					width: '500px',
 					customizedContentFn: function(opts){
 						_this._drawEditor(opts);
 					}
@@ -1714,33 +1747,34 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 	},
 	
 	_sourceModelUpdated: function(sourceState){
+		var i, e, doc, docId;
 		if( sourceState.added ){
-			for(var i=0,e=sourceState.added.length; i<e; ++i){
+			for(i=0, e=sourceState.added.length; i<e; ++i){
 				
 				//Temporary workup for single cinemap selection
 				//Better bug fix the SelectableDocumentFilter
 				this.docsById = {};
 				
-				var doc = sourceState.added[i];
-				var docId = doc._id;
+				doc = sourceState.added[i];
+				docId = doc._id;
 				
 				this.docsById[docId] = doc;
 			}
 		}
 
 		if( sourceState.updated ){
-			for(var i=0,e=sourceState.updated.length; i<e; ++i){
-				var doc = sourceState.updated[i];
-				var docId = doc._id;
+			for(i=0, e=sourceState.updated.length; i<e; ++i){
+				doc = sourceState.updated[i];
+				docId = doc._id;
 				
 				this.docsById[docId] = doc;
 			}
 		}
 
 		if( sourceState.removed ){
-			for(var i=0,e=sourceState.removed.length; i<e; ++i){
-				var doc = sourceState.removed[i];
-				var docId = doc._id;
+			for(i=0, e=sourceState.removed.length; i<e; ++i){
+				doc = sourceState.removed[i];
+				docId = doc._id;
 				
 				delete this.docsById[docId];
 			}
