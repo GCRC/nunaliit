@@ -1673,6 +1673,9 @@ var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 //		});
 	},
 
+	/**
+	 * Close the editor drawer
+	 */
 	_closeEditor: function(){
 		if (this.drawer) {
 			this.drawer.close();

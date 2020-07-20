@@ -343,13 +343,18 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 	},
 	
-	_handleSrtSelectionChanged: function(value){
+	/**
+	 * Event handling method that's called when the srt selection is changed.
+	 * The method gets the new transcript attachment, and the document is changed. 
+	 * @param {string} docId - document id
+	 */
+	_handleSrtSelectionChanged: function(docId){
 		var _this = this;
-		var selectSrtDocId = value;
+		var selectSrtDocId = docId;
 		if ( !selectSrtDocId ) return;
 
 		var transcriptAttName = _this._findTranscriptAttachmentName(selectSrtDocId);
-		if ( transcriptAttName && _this.transcript){
+		if (transcriptAttName && _this.transcript) {
 			_this.transcript = $n2.extend(_this.transcript, {
 				srtDocId: selectSrtDocId,
 				srtAttName : transcriptAttName
