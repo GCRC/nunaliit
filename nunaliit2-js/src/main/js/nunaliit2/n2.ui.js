@@ -101,8 +101,8 @@ var drawer = new $n2.Class("drawer",{
 			var $buttonContainer = $('#'+opts.buttonContainerId).first();
 			if( $buttonContainer.length > 0 ){
 				this.buttonContainerId = $n2.utils.getElementIdentifier($buttonContainer);
-			};
-		};
+			}
+		}
 	
 		// Set Drawer Position & Dimensions
 		// ---------------------------------------------
@@ -126,15 +126,16 @@ var drawer = new $n2.Class("drawer",{
 
 					if (msg.isAvailable) {
 						widgetHandlerAvailable = true;
-					};
-				};
+					}
+				}
+
 				if (widgetInfo && !widgetHandlerAvailable) {
 					$n2.log("Widget handler not found for type: " + widgetInfo.widgetType);
 				} else {
 					availableWidgets.push(widgetInfo);
-				};
+				}
 			});
-		};
+		}
 
 		// If at least one widget is available, then build container
 		var hasElemInsideDrawer = false
@@ -148,20 +149,21 @@ var drawer = new $n2.Class("drawer",{
 			this._render(availableWidgets, opts.customizedContentFn);
 		} else {
 			$n2.log(this._classname + ": Not drawing because drawer is empty");
-		} ;
+		}
 	}
+
 	,getId : function(){
 		if(this.drawerId){
 			return this.drawerId;
 		}
 	},
-	_render: function(availableWidgets, customizedContentFn){
 
+	_render: function(availableWidgets, customizedContentFn){
 		var _this = this;
 		// Get container
 		if (!this.containerId) {
 			throw new Error("Drawer container class must be specified");
-		};
+		}
 
 		var $drawerContainer = $("#" + this.containerId);
 
@@ -183,7 +185,7 @@ var drawer = new $n2.Class("drawer",{
 			$widget.css("transform", "translateY(0px)");
 		} else if (this.drawer.pullDirection === "DOWN") {
 			$widget.css("transform", "translateY(-" + this.drawer.height + ")");
-		};
+		}
 
 		// Add classes
 		if (typeof this.addClasses === "string") {
@@ -192,9 +194,9 @@ var drawer = new $n2.Class("drawer",{
 			this.addClasses.forEach(function(className){
 				if (typeof className === "string") {
 					$widget.addClass(className);
-				};
+				}
 			});
-		};
+		}
 
 		this._contentContainerId = $n2.getUniqueId();
 		var $widgetContainer = $("<div>")
@@ -220,25 +222,23 @@ var drawer = new $n2.Class("drawer",{
 				,containerId: _this._contentContainerId
 				,config: _this.config
 			});
-		};
+		}
 
 		this._addCloseButton();
 		this._addOpenButton();
 		//this._addMask();
 
 		$n2.log(this._classname, this);
-		
 	},
 
 	_setDrawerPosition: function(opts){
-
 		var validPullDirections = false;
 		if( typeof opts.pullDirection === 'string' ){
 			validPullDirections = opts.pullDirection.toUpperCase() === "LEFT"
-				|| opts.pullDirection.toUpperCase() === "RIGHT"
-				|| opts.pullDirection.toUpperCase() === "UP"
-				|| opts.pullDirection.toUpperCase() === "DOWN";
-		};
+			|| opts.pullDirection.toUpperCase() === "RIGHT"
+			|| opts.pullDirection.toUpperCase() === "UP"
+			|| opts.pullDirection.toUpperCase() === "DOWN";
+		}
 
 		if (validPullDirections) {
 			if (opts.pullDirection.toUpperCase() === "RIGHT") {
@@ -253,12 +253,13 @@ var drawer = new $n2.Class("drawer",{
 			} else if (opts.pullDirection.toUpperCase() === "DOWN") {
 				this.drawer.pullDirection = "DOWN";
 				this.drawer.yPos = "0%";
-			};
+			}
+
 		} else {
 			// default pull direction is right
 			this.drawer.pullDirection = "RIGHT";
 			this.drawer.xPos = "0%";
-		};
+		}
 
 		// Set drawer x position
 		if (!this.drawer.xPos) {
@@ -267,12 +268,13 @@ var drawer = new $n2.Class("drawer",{
 					this.drawer.xPos = parseInt(opts.xPos)+"px";
 				} else if (opts.xPos.slice(-1) === "%" || opts.xPos.slice(-2) === "px") {
 					this.drawer.xPos = opts.xPos;
-				};				
+				}
+
 			} else {
 				// set default x position
 				this.drawer.xPos = "0%";
-			};
-		};
+			}
+		}
 
 		// Set drawer y position
 		if (!this.drawer.yPos) {
@@ -281,12 +283,13 @@ var drawer = new $n2.Class("drawer",{
 					this.drawer.yPos = parseInt(opts.yPos)+"px";
 				} else if (opts.yPos.slice(-1) === "%" || opts.yPos.slice(-2) === "px") {
 					this.drawer.yPos = opts.yPos;
-				};
+				}
+
 			} else {
 				// set default y position
 				this.drawer.yPos = "0%";
-			};			
-		};
+			}
+		}
 	},
 
 	_setDrawerDimensions: function(opts){
@@ -296,15 +299,16 @@ var drawer = new $n2.Class("drawer",{
 				this.drawer.width = opts.width;
 			} else if (Number.isInteger(parseInt(opts.width))) {
 				this.drawer.width = parseInt(opts.width)+"px";
-			};
+			}
+
 		} else {
 			// default drawer width values
 			if (this.drawer.pullDirection === "RIGHT" || this.drawer.pullDirection === "LEFT") {
 				this.drawer.width = "250px";
 			} else {
 				this.drawer.width = "100%";
-			};
-		};
+			}
+		}
 
 		// Set drawer height
 		if (!this.drawer.height && opts.height) {
@@ -312,7 +316,8 @@ var drawer = new $n2.Class("drawer",{
 				this.drawer.height = opts.height;
 			} else if (Number.isInteger(parseInt(opts.height))) {
 				this.drawer.height = parseInt(opts.height)+"px";
-			};
+			}
+
 		} else {
 			// default drawer height values
 			if (this.drawer.pullDirection === "UP" || this.drawer.pullDirection === "DOWN") {
@@ -320,7 +325,7 @@ var drawer = new $n2.Class("drawer",{
 			} else {
 				this.drawer.height = "100%";
 			}
-		};
+		}
 	},
 
 	_addCloseButton: function(){
@@ -341,7 +346,7 @@ var drawer = new $n2.Class("drawer",{
 					$("#"+_this.drawerId).css("transform", "translateY(0px)");
 				} else if (_this.drawer.pullDirection === "DOWN") {
 					$("#"+_this.drawerId).css("transform", "translateY(-" + _this.drawer.height + ")");
-				};
+				}
 				
 				var $drawer_content_mask = $("#" + _this.maskId);
 				$drawer_content_mask.css("visibility","hidden");
@@ -357,12 +362,12 @@ var drawer = new $n2.Class("drawer",{
 
 		if (typeof this.buttonContainerId === "string") {
 			$buttonContainer = $("#"+this.buttonContainerId);
-		};
+		}
 
 		var openButtonText = "\u2261";
 		if (typeof this.buttonText === "string") {
 			openButtonText = this.buttonText;
-		};
+		}
 
 		var $button = $("<span>")
 			.addClass("n2widget_drawer_open_button")
@@ -377,7 +382,7 @@ var drawer = new $n2.Class("drawer",{
 					$("#"+_this.drawerId).css("transform", "translateY(-" + _this.drawer.height + ")");
 				} else if (_this.drawer.pullDirection === "DOWN") {
 					$("#"+_this.drawerId).css("transform", "translateY(0px)");
-				};
+				}
 
 				var $drawer_content_mask = $("#"+_this.maskId);
 				$drawer_content_mask.css("visibility","visible");
@@ -391,12 +396,13 @@ var drawer = new $n2.Class("drawer",{
 			this.addButtonClasses.forEach(function(className){
 				if (typeof className === "string") {
 					$button.addClass(className);
-				};
+				}
 			});
-		};
+		}
 
 		$button.prependTo($buttonContainer);
 	},
+
 	open: function(){
 		var _this = this;
 		// Set Transform translateX depending on pull direction
@@ -408,13 +414,14 @@ var drawer = new $n2.Class("drawer",{
 			$("#"+_this.drawerId).css("transform", "translateY(-" + _this.drawer.height + ")");
 		} else if (_this.drawer.pullDirection === "DOWN") {
 			$("#"+_this.drawerId).css("transform", "translateY(0px)");
-		};
+		}
 
 		//_this._refreshContent();
 		var $drawer_content_mask = $("#"+_this.maskId);
 		$drawer_content_mask.css("visibility","visible");
 		//$n2.log($drawer_content_mask);
 	},
+
 	close: function(){
 		var _this = this;
 		// Set Transform translateX depending on pull direction
@@ -426,19 +433,20 @@ var drawer = new $n2.Class("drawer",{
 			$("#"+_this.drawerId).css("transform", "translateY(0px)");
 		} else if (_this.drawer.pullDirection === "DOWN") {
 			$("#"+_this.drawerId).css("transform", "translateY(-" + _this.drawer.height + ")");
-		};
+		}
 		
 		var $drawer_content_mask = $("#" + _this.maskId);
 		$drawer_content_mask.css("visibility","hidden");
 		//$n2.log($drawer_content_mask);
 	},
+
 	_addMask: function(){
 		var _this = this;
 
 		var $drawerContainer = $("body");
 		if (typeof this.containerId === "string") {
 			$drawerContainer = $("#"+this.containerId);
-		};
+		}
 
 		// Add an atlas content mask
 		// Used to hide content not related to drawer navigation menu
@@ -456,7 +464,7 @@ var drawer = new $n2.Class("drawer",{
 					$("#"+_this.drawerId).css("transform", "translateY(0px)");
 				} else if (_this.drawer.pullDirection === "DOWN") {
 					$("#"+_this.drawerId).css("transform", "translateY(-" + _this.drawer.height + ")");
-				};
+				}
 
 				var $drawer_content_mask = $("#"+_this.maskId);
 				$drawer_content_mask.css("visibility","hidden");
@@ -468,8 +476,8 @@ var drawer = new $n2.Class("drawer",{
 function HandleWidgetAvailableRequests(m){
 	if( m.widgetType === 'drawerWidget' ){
 		m.isAvailable = true;
-	};
-};
+	}
+}
 
 //--------------------------------------------------------------------------
 function HandleWidgetDisplayRequests(m){
@@ -484,8 +492,8 @@ function HandleWidgetDisplayRequests(m){
 			for(var key in widgetOptions){
 				var value = widgetOptions[key];
 				options[key] = value;
-			};
-		};
+			}
+		}
 		
 		options.containerId = containerId;
 
@@ -494,12 +502,12 @@ function HandleWidgetDisplayRequests(m){
 
 			if( config.directory ){
 				options.dispatchService = config.directory.dispatchService;
-			};
-		};
+			}
+		}
 
 		new drawer(options);
-	};
-};
+	}
+}
 
 var tagbox = $n2.Class("tagbox", {
 
@@ -514,23 +522,23 @@ var tagbox = $n2.Class("tagbox", {
 		this.widgetId = $n2.utils.getElementIdentifier(widget);
 
 		var inputfield = $('<input>')
-							.attr('type', "text")
-							.attr('value', '')
-							.attr('placeholder', '')
-							.addClass('mdc-text-field__input')
-							.appendTo(widget);
+			.attr('type', "text")
+			.attr('value', '')
+			.attr('placeholder', '')
+			.addClass('mdc-text-field__input')
+			.appendTo(widget);
 		
 		inputfield.on('focusout',function() {
-				var txt = this.value.replace(/[^a-z0-9\+\-\.\#]/ig,''); // allowed characters
-				if(txt) {
-					$("<span/>", {text:txt.toLowerCase(), insertBefore:this});
-				}
-				this.value = "";
-				});
+			var txt = this.value.replace(/[^a-z0-9\+\-\.\#]/ig,''); // allowed characters
+			if(txt) {
+				$("<span/>", {text:txt.toLowerCase(), insertBefore:this});
+			}
+			this.value = "";
+			});
 		
 		inputfield.on('keyup', function(ev) {
-				// if: comma|enter (delimit more keyCodes with | pipe)
-				if(/(188|13)/.test(ev.which)) $(this).focusout(); 
+			// if: comma|enter (delimit more keyCodes with | pipe)
+			if(/(188|13)/.test(ev.which)) $(this).focusout(); 
 		});
 		widget.on('click', 'span', function() {
 				if(confirm("Remove "+ $(this).text() +"?")) $(this).remove(); 
@@ -540,18 +548,20 @@ var tagbox = $n2.Class("tagbox", {
 	getWidget:function(){
 		return $('#'+this.widgetId);
 	},
+
 	setTags: function(tags){
 		var $widget = this.getWidget();
 		if (tags){
 			tags.forEach(function(tag){
 				$widget.children().last().before(
-						$('<span>')
-						.text(String(tag))
-						);
+					$('<span>')
+					.text(String(tag))
+					);
 			})
 		}
 		return $(this);
 	},
+
 	getTags: function() {
 		var $widget = this.getWidget();
 		var $spans = $widget.children('span');
@@ -572,6 +582,7 @@ var tagbox = $n2.Class("tagbox", {
 		$spans.remove();
 	}
 });
+
 jQuery.fn.n2TagBox = function(){
 	var $tb = $(this);
 	
