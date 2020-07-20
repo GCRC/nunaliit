@@ -1172,7 +1172,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 	},
 	
-	// For backward compatibility consideration
+	/**
+	 * Retrieve subtitle attachment (either src or vtt format) from media document.
+	 * This is for backward compatibility consideration
+	 * @param {object} doc - Media doc.
+	 * @returns {string} - Returns the attachement file name.
+	 */
 	_findTranscriptAttachmentNameFromMediaDoc: function(doc){
 		if( doc 
 			&& doc.nunaliit_attachments 
@@ -1191,6 +1196,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		return undefined;
 	},
 	
+	/**
+	 * Retrieve subtitle attachment (either src or vtt format) from subtitle document
+	 * @param {string} docId - Doc id for subtitle document.
+	 * @returns {string} - Returns the attachement file name.
+	 */
 	_findTranscriptAttachmentName: function(docId){
 		if( this.srtDocs[docId] ){
 			var doc = this.srtDocs[docId];
