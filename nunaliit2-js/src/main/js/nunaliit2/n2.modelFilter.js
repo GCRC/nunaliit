@@ -2231,8 +2231,15 @@ function handleModelCreate(m, addr, dispatcher){
 		var module = m.moduleDisplay.module;
 		
 		var mapInfo = module.getMapInfo();
-		
-		options.rules = mapInfo.styles;
+
+		// Check if mapInfo object exists
+		if (mapInfo) {
+			options.rules = mapInfo.styles;
+		} else {
+			// If no mapInfo object exists, try to get canvasInfo.
+			var canvasInfo = module.getCanvasInfo();
+			options.rules = canvasInfo.styles;
+		}
 		
 		if( m && m.config ){
 			if( m.config.directory ){
