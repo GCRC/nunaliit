@@ -892,6 +892,10 @@ var ModuleDisplay = $n2.Class({
 					var widgetHandlerAvailable = false;
 					if( widgetInfo && widgetInfo.widgetType ) {
 						var msg = {
+							type: 'widgetIsTypeAvailable'
+							,widgetType: widgetInfo.widgetType
+							,widgetOptions: widgetInfo
+							,isAvailable: false
 						};
 
 						_this._sendSynchronousMessage(msg);
