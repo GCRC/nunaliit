@@ -4,49 +4,40 @@
 
 /* Floating Side Panel Styling */
 .nunaliit_atlas .n2_content_floating {
-    position: absolute;
-    top: 102px;
+	position: absolute;
+	top: 102px;
 	left: auto;
-    bottom: 17px;
+	bottom: 17px;
 	transition: 0.5s ease right;
 }
 .nunaliit_atlas.n2_display_format_classic .n2_content_floating {
-    right: -450px;
-    width: 410px;
+	right: -450px;
+	width: 410px;
 }
 .nunaliit_atlas.n2_display_format_tiled .n2_content_floating {
-    right: -640px;
-    width: 600px;
+	right: -640px;
+	width: 600px;
 }
-.nunaliit_atlas .n2_content_floating.show,
-.nunaliit_atlas.nunaliit_editing .n2_content_floating {
+.nunaliit_atlas.show_floating_side_panel .n2_content_floating {
 	right: 0px;
 	transition: 0.5s ease right;
 }
-.nunaliit_atlas.n2_display_format_tiled.nunaliit_editing .n2_content_floating .n2CouchEditor_container {
+.nunaliit_atlas.n2_display_format_tiled.show_floating_side_panel .n2_content_floating .n2CouchEditor_container {
 	padding: 0px;
 }
 
 /* Update map interaction button position */
 .nunaliit_atlas .n2_content_contains_no_sidepanel .n2_content_map_interaction {
-    right: 33px !important;
+	right: 33px !important;
 }
-.nunaliit_atlas.n2_display_format_classic.nunaliit_editing .n2_content_contains_no_sidepanel .n2_content_map_interaction {
+.nunaliit_atlas.n2_display_format_classic.show_floating_side_panel .n2_content_contains_no_sidepanel .n2_content_map_interaction {
 	right: 468px !important;
 }
-.nunaliit_atlas.n2_display_format_tiled.nunaliit_editing .n2_content_contains_no_sidepanel .n2_content_map_interaction {
+.nunaliit_atlas.n2_display_format_tiled.show_floating_side_panel .n2_content_contains_no_sidepanel .n2_content_map_interaction {
 	right: 650px !important;
-}
-
-/* Update open layers editor toolbar*/
-.nunaliit_atlas.n2_display_format_classic .n2_content_contains_no_sidepanel .olControlEditingToolbar {
-    right: 635px;
-}
-.nunaliit_atlas.n2_display_format_tiled .n2_content_contains_no_sidepanel .olControlEditingToolbar {
-    right: 825px;
 }
 
 /* Update main content panel to be 100% width if using floating side panel */
 .nunaliit_atlas #content.n2_content_contains_no_sidepanel .olMap {
-    width: 100%;
+	width: 100%;
 }

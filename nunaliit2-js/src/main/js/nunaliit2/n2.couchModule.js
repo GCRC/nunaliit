@@ -253,9 +253,8 @@ var Module = $n2.Class({
 				introDisplayed = true;
 
 			} else if( 'attachment' === introInfo.type
-			 && introInfo.attachmentName
-			 && this.atlasDb
-			 ) {
+				&& introInfo.attachmentName
+				&& this.atlasDb ) {
 				var displayId = $n2.getUniqueId();
 				$elem.empty();
 				$('<div>')
@@ -269,30 +268,30 @@ var Module = $n2.Class({
 					var attUrl = this.atlasDb.getAttachmentUrl(this.moduleDoc,localeStr.str);
 
 					$.ajax({
-				    	url: attUrl
-				    	,type: 'get'
-				    	,async: true
-				    	,success: function(intro) {
-				    		if( localeStr.fallback ){
-				    			var $inner = $('<span class="n2_localized_string n2_localize_fallback"></span>');
-				    			$('<span class="n2_localize_fallback_lang"></span>')
-				    				.text('('+localeStr.lang+')')
-				    				.appendTo($inner);
-				    			$('<span></span>')
-				    				.html(intro)
-				    				.appendTo($inner);
-			    				$('#'+displayId).empty().append($inner);
-				    		} else {
-					    		$('#'+displayId).html(intro);
-				    		};
+						url: attUrl
+						,type: 'get'
+						,async: true
+						,success: function(intro) {
+							if( localeStr.fallback ){
+								var $inner = $('<span class="n2_localized_string n2_localize_fallback"></span>');
+								$('<span class="n2_localize_fallback_lang"></span>')
+									.text('('+localeStr.lang+')')
+									.appendTo($inner);
+								$('<span></span>')
+									.html(intro)
+									.appendTo($inner);
+								$('#'+displayId).empty().append($inner);
+							} else {
+								$('#'+displayId).html(intro);
+							};
 							if( opts.showService ) {
 								opts.showService.fixElementAndChildren($('#'+displayId), {}, _this.moduleDoc);
 							};
 							opts.onLoaded();
-				    	}
-				    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
+						}
+						,error: function(XMLHttpRequest, textStatus, errorThrown) {
 							$n2.log('Unable to obtain module intro: '+textStatus);
-				    	}
+						}
 					});
 				};
 			};
@@ -445,7 +444,20 @@ var ModuleDisplay = $n2.Class({
 		var d = this.dispatchService;
 		if( d ){
 			d.register(DH,'unselected',function(m){
+				_this._hideFloatingSidePanel();
 				_this._initSidePanel();
+			});
+			d.register(DH,'selected',function(m){
+				_this._showFloatingSidePanel();
+			});
+			d.register(DH,'editInitiate',function(m){
+				_this._showFloatingSidePanel();
+			});
+			d.register(DH,'editCreateFromGeometry',function(m){
+				_this._showFloatingSidePanel();
+			});
+			d.register(DH,'editClosed',function(m){
+				_this._hideFloatingSidePanel();
 			});
 			d.register(DH,'moduleGetCurrent',function(m){
 				m.moduleId = _this.getCurrentModuleId();
@@ -920,22 +932,22 @@ var ModuleDisplay = $n2.Class({
 				if ( _this.mapInfo && 'LegendWidget2' === widgetInfo.widgetType ){
 					var styleRules = _this.mapInfo.styles || {};
 					widgetDisplayMsg = {
-							type: 'widgetDisplay'
-							,widgetType: widgetInfo.widgetType
-							,widgetOptions: widgetInfo
-							,contentId: _this.contentName
-							,config: config
-							,styleRules : styleRules
-							,moduleDisplay: _this
+						type: 'widgetDisplay'
+						,widgetType: widgetInfo.widgetType
+						,widgetOptions: widgetInfo
+						,contentId: _this.contentName
+						,config: config
+						,styleRules : styleRules
+						,moduleDisplay: _this
 					};
 				} else {
 					widgetDisplayMsg = {
-							type: 'widgetDisplay'
-							,widgetType: widgetInfo.widgetType
-							,widgetOptions: widgetInfo
-							,contentId: _this.contentName
-							,config: config
-							,moduleDisplay: _this
+						type: 'widgetDisplay'
+						,widgetType: widgetInfo.widgetType
+						,widgetOptions: widgetInfo
+						,contentId: _this.contentName
+						,config: config
+						,moduleDisplay: _this
 					};
 				}
 
@@ -1169,8 +1181,8 @@ var ModuleDisplay = $n2.Class({
 					};
 
 					if( l.options
-					 && l.options.extent
-					 && mapOptions.mapDisplay.srsName != mapOptions.mapCoordinateSpecifications.srsName ){
+						&& l.options.extent
+						&& mapOptions.mapDisplay.srsName != mapOptions.mapCoordinateSpecifications.srsName ){
 						var defProj = new OpenLayers.Projection(mapOptions.mapCoordinateSpecifications.srsName);
 						var mapProj = new OpenLayers.Projection(mapOptions.mapDisplay.srsName);
 						var bl = new OpenLayers.Geometry.Point(l.options.extent[0], l.options.extent[1]);
@@ -1221,6 +1233,7 @@ var ModuleDisplay = $n2.Class({
 				if ($n2.isDefined(layerInfo.gutter)) {
 					layerDefinition.gutter = layerInfo.gutter;
 				};
+
 				if ($n2.isDefined(layerInfo.displayInLayerSwitcher)) {
 					layerDefinition.displayInLayerSwitcher = layerInfo.displayInLayerSwitcher;
 				};
@@ -1235,9 +1248,10 @@ var ModuleDisplay = $n2.Class({
 					if( !layerDefinition.options.layerName ){
 						layerDefinition.options.layerName = layerDefinition.id;
 					};
+
 					if( !layerDefinition.id
-					 && layerDefinition.options
-					 && layerDefinition.options.layerName ){
+						&& layerDefinition.options
+						&& layerDefinition.options.layerName ){
 						layerDefinition.id = layerDefinition.options.layerName;
 					};
 
@@ -1271,9 +1285,8 @@ var ModuleDisplay = $n2.Class({
 		};
 
 		if( mapInfo
-		 && mapInfo.coordinates
-		 && mapInfo.coordinates.autoInitialBounds
-		 ){
+			&& mapInfo.coordinates
+			&& mapInfo.coordinates.autoInitialBounds ){
 			// Figure out projection for configuration
 			var coordinateProjection = undefined;
 			if( mapOptions.mapCoordinateSpecifications.srsName ){
@@ -1310,7 +1323,7 @@ var ModuleDisplay = $n2.Class({
 			};
 
 			if( autoBounds
-			 && typeof autoBounds.computeInitialBounds === 'function' ){
+				&& typeof autoBounds.computeInitialBounds === 'function' ){
 				autoBounds.computeInitialBounds({
 					mapOptions: mapOptions
 					,mapInfo: mapInfo
@@ -1347,20 +1360,19 @@ var ModuleDisplay = $n2.Class({
 			// Map max extent
 			var mapInfo = _this.module.getMapInfo();
 			if( mapInfo
-			 && mapInfo.coordinates
-			 && mapInfo.coordinates.maxExtent
-			 ){
+				&& mapInfo.coordinates
+				&& mapInfo.coordinates.maxExtent ){
 				mapOptions.mapCoordinateSpecifications.maxExtent =
 					mapInfo.coordinates.maxExtent;
 
 			} else if( mapOptions.mapDisplay.srsName !== null
-			 && mapOptions.mapDisplay.srsName !== 'EPSG:4326' ) {
+				&& mapOptions.mapDisplay.srsName !== 'EPSG:4326' ) {
 				mapOptions.mapCoordinateSpecifications.maxExtent =
 					mapOptions.mapCoordinateSpecifications.initialBounds;
 			};
 
 			if( mapInfo
-			 && mapInfo.styles ){
+				&& mapInfo.styles ){
 				mapOptions.canvasStyles = mapInfo.styles;
 			}
 			// Create map control
@@ -1378,6 +1390,22 @@ var ModuleDisplay = $n2.Class({
 			$n2.log('module',_this);
 			opts.onSuccess(_this);
 		};
+	}
+
+	,_showFloatingSidePanel: function(){
+		var $nunaliitAtlas = $('body.nunaliit_atlas');
+		var $floatingSidePanel = $nunaliitAtlas.find('.n2_content_floating');
+		if ($floatingSidePanel.length) {
+			$nunaliitAtlas.addClass('show_floating_side_panel');
+		}
+	}
+
+	,_hideFloatingSidePanel: function(){
+		var $nunaliitAtlas = $('body.nunaliit_atlas');
+		var $floatingSidePanel = $nunaliitAtlas.find('.n2_content_floating');
+		if ($floatingSidePanel.length) {
+			$nunaliitAtlas.removeClass('show_floating_side_panel');
+		}
 	}
 
 	,_initSidePanel: function(){
@@ -1481,14 +1509,14 @@ var ModuleDisplay = $n2.Class({
 		// Load help text
 		var moduleInfo = this.module.getModuleInfo();
 		if( moduleInfo.help
-		 && moduleInfo.help.nunaliit_type === 'reference'
-		 && moduleInfo.help.doc ){
+			&& moduleInfo.help.nunaliit_type === 'reference'
+			&& moduleInfo.help.doc ){
 			// load up help document
 			this.config.atlasDb.getDocument({
 				docId: moduleInfo.help.doc
 				,onSuccess: function(doc){
 					if( doc
-					 && doc.nunaliit_help ){
+						&& doc.nunaliit_help ){
 						$n2.help.InstallHelpInfo('main',doc.nunaliit_help);
 						installHelpButton();
 					} else {
