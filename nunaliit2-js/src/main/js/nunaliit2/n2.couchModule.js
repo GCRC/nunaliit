@@ -1,43 +1,43 @@
 /*
-Copyright (c) 2012, Geomatics and Cartographic Research Centre, Carleton 
+Copyright (c) 2012, Geomatics and Cartographic Research Centre, Carleton
 University
 All rights reserved.
 
-Redistribution and use in source and binary forms, with or without 
+Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
 
- - Redistributions of source code must retain the above copyright notice, 
+ - Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
  - Redistributions in binary form must reproduce the above copyright notice,
    this list of conditions and the following disclaimer in the documentation
    and/or other materials provided with the distribution.
- - Neither the name of the Geomatics and Cartographic Research Centre, 
-   Carleton University nor the names of its contributors may be used to 
-   endorse or promote products derived from this software without specific 
+ - Neither the name of the Geomatics and Cartographic Research Centre,
+   Carleton University nor the names of its contributors may be used to
+   endorse or promote products derived from this software without specific
    prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
-ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE 
-LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
-CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF 
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) 
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE 
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
 ;(function($,$n2){
 "use strict";
 
-var 
+var
 	_loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); }
 	,DH = 'n2.couchModule'
 	;
 
-//=========================================================================	
+//=========================================================================
 
 function isSrsNameSupported(srsName){
 	if( typeof(OpenLayers) !== 'undefined'
@@ -46,7 +46,7 @@ function isSrsNameSupported(srsName){
 	 && OpenLayers.Projection.transforms[srsName] ){
 		return true;
 	};
-	
+
 	if( typeof(Proj4js) !== 'undefined'
 	 && Proj4js.Proj ){
 		var proj = new Proj4js.Proj(srsName);
@@ -54,17 +54,17 @@ function isSrsNameSupported(srsName){
 			return true;
 		};
 	};
-	
+
 	return false;
 };
 
-//=========================================================================	
+//=========================================================================
 var Module = $n2.Class({
-	
+
 	moduleDoc: null,
-	
+
 	atlasDb: null,
-	
+
 	initialize: function(moduleDoc, atlasDb){
 		this.moduleDoc = moduleDoc;
 		this.atlasDb = atlasDb;
@@ -134,7 +134,7 @@ var Module = $n2.Class({
 		};
 		return modelInfos;
 	},
-	
+
 	getUtilityInfos: function(){
 		var utilityInfos = null;
 		var moduleInfo = this.getModuleInfo();
@@ -167,7 +167,7 @@ var Module = $n2.Class({
 		};
 		return css;
 	},
-	
+
 	/*
 	 * Finds the introduction text associated with the module and inserts it
 	 * in the element provided. Once the content of the introduction is loaded
@@ -180,10 +180,10 @@ var Module = $n2.Class({
 			,dispatchService: null
 			,onLoaded: function(){}
 		},opts_);
-		
+
 		var _this = this;
 		var $elem = opts.elem;
-		
+
 		var introInfo = null;
 		var moduleInfo = this.getModuleInfo();
 		if( moduleInfo ){
@@ -202,40 +202,40 @@ var Module = $n2.Class({
 				,module: this
 			};
 			opts.dispatchService.synchronousCall(DH,msg);
-			
+
 			// If an introduction was performed, then no need
 			// to empty the element
 			if( msg.performed ){
 				introDisplayed = true;
 			};
 		};
-		
+
 		if( !introDisplayed && introInfo ){
 			if( 'html' === introInfo.type && introInfo.content ) {
-				
+
 				$elem.empty();
 				var $outer = $('<div>')
 					.addClass('n2ModuleIntro n2ModuleIntro_html')
 					.appendTo($elem);
-				
+
 				var content = _loc(introInfo.content);
 				if( content ) {
 					$outer.html(content);
-					
+
 					if( opts.showService ) {
 						opts.showService.fixElementAndChildren($outer, {}, this.moduleDoc);
-					};					
+					};
 				};
 				opts.onLoaded();
 				introDisplayed = true;
-				
+
 			} else if( 'text' === introInfo.type && introInfo.content ) {
-				
+
 				$elem.empty();
 				var $outer = $('<div>')
 					.addClass('n2ModuleIntro n2ModuleIntro_text')
 					.appendTo($elem);
-				
+
 				var content = _loc(introInfo.content);
 				if( content ) {
 					var $wrapper = $('<div>')
@@ -243,7 +243,7 @@ var Module = $n2.Class({
 					$outer
 						.empty()
 						.append($wrapper);
-					
+
 					if( opts.showService ) {
 						$wrapper.addClass('n2s_preserveSpaces');
 						opts.showService.fixElementAndChildren($wrapper, {}, this.moduleDoc);
@@ -251,8 +251,8 @@ var Module = $n2.Class({
 				};
 				opts.onLoaded();
 				introDisplayed = true;
-				
-			} else if( 'attachment' === introInfo.type 
+
+			} else if( 'attachment' === introInfo.type
 			 && introInfo.attachmentName
 			 && this.atlasDb
 			 ) {
@@ -263,11 +263,11 @@ var Module = $n2.Class({
 					.addClass('n2ModuleIntro n2ModuleIntro_attachment')
 					.appendTo($elem);
 				introDisplayed = true;
-				
+
 				var localeStr = $n2.l10n.getStringForLocale(introInfo.attachmentName);
 				if( localeStr.str ) {
 					var attUrl = this.atlasDb.getAttachmentUrl(this.moduleDoc,localeStr.str);
-					
+
 					$.ajax({
 				    	url: attUrl
 				    	,type: 'get'
@@ -297,71 +297,71 @@ var Module = $n2.Class({
 				};
 			};
 		};
-		
+
 		if( !introDisplayed ){
 			$elem.empty();
 			return false;
 		};
-		
+
 		return true;
 	},
-	
+
 	getAttachmentUrl: function(attachmentName){
 		return this.atlasDb.getAttachmentUrl(this.moduleDoc, attachmentName);
 	}
 });
-	
-//=========================================================================	
+
+//=========================================================================
 var ModuleDisplay = $n2.Class({
 
 	config: null,
 
 	moduleId: null,
-	
+
 	module: null,
 
 	mapControl: null,
-	
+
 	displayControl: null,
 
 	titleName: null,
 
 	moduleTitleName: null,
-	
+
 	contentName: null,
 
 	mapName: null,
-	
+
 	mapInteractionName: null,
 
 	sidePanelName: null,
-	
+
 	filterPanelName: null,
 
 	searchPanelName: null,
-	
+
 	loginPanelNames: null,
-	
+
 	navigationName: null,
-	
+
 	navigationDocId: null,
 
 	languageSwitcherName: null,
-	
+
 	helpButtonName: null,
-	
+
 	helpDialogId: null,
-	
+
 	styleMapFn: null,
-	
+
 	mapStyles: null,
-	
+
 	// Services
-	
+
 	dispatchService: null,
-	
+
 	navigationService: null,
-	
+
 	initialize: function(opts_){
 		var opts = $n2.extend({
 			moduleName: null
@@ -529,13 +529,13 @@ var ModuleDisplay = $n2.Class({
 				_this.moduleId = moduleDoc._id;
 				var safeId = $n2.utils.stringToHtmlId(moduleDoc._id);
 				$('body').addClass('nunaliit_module_'+safeId);
-				
+
 				// Update any associated navigation items
 				$('.n2_nav_module+'+safeId).addClass('n2_nav_currentModule');
 			};
 
 			_this.module = new Module(moduleDoc, atlasDb);
-			
+
 			_this._sendDispatchMessage({
 				type: 'reportModuleDocument'
 				,doc: moduleDoc
@@ -543,7 +543,7 @@ var ModuleDisplay = $n2.Class({
 				,module: _this.module
 				,moduleDisplay: _this
 			});
-			
+
 			var moduleInfo = _this.module.getModuleInfo();
 			var mapInfo = _this.module.getMapInfo();
 			var canvasInfo = _this.module.getCanvasInfo();
@@ -552,7 +552,7 @@ var ModuleDisplay = $n2.Class({
 			var modelInfos = _this.module.getModelInfos();
 			var utilityInfos = _this.module.getUtilityInfos();
 
-			
+
 			// Load up CSS, if specified
 			var css = _this.module.getModuleCSS();
 			if( typeof css === 'string' ){
@@ -561,7 +561,7 @@ var ModuleDisplay = $n2.Class({
 					,name: 'module'
 				});
 			};
-			
+
 			// Create models
 			if( modelInfos ){
 				for(var i=0,e=modelInfos.length; i<e; ++i){
@@ -576,15 +576,15 @@ var ModuleDisplay = $n2.Class({
 						,config: config
 						,moduleDisplay: _this
 					};
-						
+
 					_this._sendSynchronousMessage(msg);
-						
+
 					if( ! msg.created ){
 						$n2.logError('Model not created: '+modelInfo.modelType+'/'+modelInfo.modelId);
 					};
 				};
 			};
-			
+
 			// Create utilities
 			var inputChangeDetectorSpecified = false;
 			if( utilityInfos ){
@@ -594,7 +594,7 @@ var ModuleDisplay = $n2.Class({
 					if( 'inputChangeDetector' === utilityInfo.utilityType ){
 						inputChangeDetectorSpecified = true;
 					};
-					
+
 					var msg = {
 						type: 'utilityCreate'
 						,utilityType: utilityInfo.utilityType
@@ -603,15 +603,15 @@ var ModuleDisplay = $n2.Class({
 						,config: config
 						,moduleDisplay: _this
 					};
-						
+
 					_this._sendSynchronousMessage(msg);
-						
+
 					if( ! msg.created ){
 						$n2.logError('Utility not created: '+utilityInfo.utilityType);
 					};
 				};
 			};
-			
+
 			// Add utility 'inputChangeDetector', if not already specified
 			if( !inputChangeDetectorSpecified ){
 				var msg = {
@@ -624,14 +624,14 @@ var ModuleDisplay = $n2.Class({
 					,config: config
 					,moduleDisplay: _this
 				};
-					
+
 				_this._sendSynchronousMessage(msg);
-					
+
 				if( ! msg.created ){
 					$n2.logError('Unable to add utility inputChangeDetector');
 				};
 			};
-			
+
 			// Check if support for canvas is available
 			var canvasHandlerAvailable = false;
 			if( canvasInfo && canvasInfo.canvasType ) {
@@ -641,9 +641,9 @@ var ModuleDisplay = $n2.Class({
 					,canvasOptions: canvasInfo
 					,isAvailable: false
 				};
-				
+
 				_this._sendSynchronousMessage(msg);
-				
+
 				if( msg.isAvailable ){
 					canvasHandlerAvailable = true;
 				};
@@ -652,13 +652,13 @@ var ModuleDisplay = $n2.Class({
 				$n2.logError('Canvas handler not found for type: '+canvasInfo.canvasType);
 				canvasInfo = null;
 			};
-			
+
 			// Handle content div
 			if( _this.contentName ){
 				var $contentDiv = $('#'+_this.contentName)
 					.empty()
 					;
-				
+
 				if( mapInfo || canvasInfo ) {
 					_this.mapName = $n2.getUniqueId();
 					$('<div></div>')
@@ -678,11 +678,11 @@ var ModuleDisplay = $n2.Class({
 					_this.mapInteractionName = null;
 					$contentDiv.addClass('n2_content_contains_no_map');
 				};
-				
+
 				if( searchInfo && searchInfo.disabled ) {
 					_this.searchPanelName = null;
 					$contentDiv.addClass('n2_content_contains_no_search');
-					
+
 				} else if( _this.searchPanelName ) {
 					// Search panel is specified. No need to create
 					// Therefore, search is not located within the content
@@ -696,13 +696,28 @@ var ModuleDisplay = $n2.Class({
 						.appendTo($contentDiv);
 					$contentDiv.addClass('n2_content_contains_search');
 				};
-				
+
 				_this.sidePanelName = $n2.getUniqueId();
-				$('<div></div>')
+				var $sidePanel = $('<div></div>')
 					.attr('id',_this.sidePanelName)
-					.addClass('n2_content_text')
-					.appendTo($contentDiv);
-				$contentDiv.addClass('n2_content_contains_text');
+					.addClass('n2_content_text');
+
+				// Add side panel inside content panel or after content panel
+				// depending on if the floating display type is used in the
+				// module.
+				if( displayInfo
+					&& displayInfo.floating ) {
+					$sidePanel.addClass('n2_content_floating');
+					$sidePanel.insertAfter($contentDiv);
+
+					$contentDiv.addClass('n2_content_contains_no_sidepanel');
+
+					// Hide overflow when using floating side panel.
+					$('html').css('overflow', 'hidden');
+				} else {
+					$sidePanel.appendTo($contentDiv);
+					$contentDiv.addClass('n2_content_contains_text');
+				}
 			};
 
 			// Styles
@@ -714,11 +729,11 @@ var ModuleDisplay = $n2.Class({
 
 			} else if( mapInfo && typeof mapInfo.styles === 'object' ){
 				_this.mapStyles = new $n2.mapStyles.MapFeatureStyles(mapInfo.styles);
-			
+
 			} else {
 				_this.mapStyles = new $n2.mapStyles.MapFeatureStyles(null);
 			};
-			
+
 			// Title
 			if( moduleInfo && moduleInfo.title ) {
 				var title = _loc(moduleInfo.title);
@@ -733,7 +748,7 @@ var ModuleDisplay = $n2.Class({
 				document.title = title; // needed for IE 6
 				_this._installModuleTitle($('#'+opts.moduleTitleName), title);
 			};
-			
+
 			// Language switcher
 			if( _this.languageSwitcherName
 			 && _this.config.directory.languageService ){
@@ -741,13 +756,13 @@ var ModuleDisplay = $n2.Class({
 					elemId: _this.languageSwitcherName
 				});
 			};
-			
+
 			// Help button
 			if( moduleInfo.help && _this.helpButtonName ){
 				_this._installHelpButton();
 			};
-			
-			// Display 
+
+			// Display
 			if( displayInfo ){
 				var displayFormat = null;
 				if( displayInfo.type ){
@@ -759,7 +774,7 @@ var ModuleDisplay = $n2.Class({
 				if( !displayFormat ){
 					displayFormat = 'classic';
 				};
-				
+
 				var displayHandlerAvailable = false;
 				var msg = {
 					type: 'displayIsTypeAvailable'
@@ -771,7 +786,7 @@ var ModuleDisplay = $n2.Class({
 				if( msg.isAvailable ){
 					displayHandlerAvailable = true;
 				};
-				
+
 				if( displayHandlerAvailable ){
 					_this._sendDispatchMessage({
 						type: 'displayRender'
@@ -791,7 +806,7 @@ var ModuleDisplay = $n2.Class({
 				};
 			};
 		};
-			
+
 		function drawCanvas(searchInfo, mapInfo, canvasInfo) {
 			var editInfo = _this.module.getEditInfo();
 
@@ -810,7 +825,7 @@ var ModuleDisplay = $n2.Class({
 			if( editInfo && editInfo.newDocumentSchemaNames ){
 				if( 'ALL_SCHEMAS' === editInfo.newDocumentSchemaNames ){
 					config.couchEditor.setSchemas( $n2.couchEdit.Constants.ALL_SCHEMAS );
-					
+
 				} else if( editInfo.newDocumentSchemaNames.length ){
 					config.directory.schemaRepository.getSchemas({
 						names: editInfo.newDocumentSchemaNames
@@ -839,7 +854,7 @@ var ModuleDisplay = $n2.Class({
 					elem: $('#'+_this.searchPanelName)
 				});
 			};
-			
+
 			// Display map
 			if( mapInfo ) {
 				_this._initializeMap({
@@ -847,7 +862,7 @@ var ModuleDisplay = $n2.Class({
 					,onSuccess: drawWidgets
 					,onError: opts.onError
 				});
-				
+
 			} else if( canvasInfo ) {
 				_this._sendDispatchMessage({
 					type: 'canvasDisplay'
@@ -860,12 +875,12 @@ var ModuleDisplay = $n2.Class({
 					,onSuccess: drawWidgets
 					,onError: opts.onError
 				});
-				
+
 			} else {
 				drawWidgets();
 			};
 		};
-		
+
 		function drawWidgets(){
 			var widgetInfos = _this.module.getWidgetInfos();
 
@@ -877,14 +892,10 @@ var ModuleDisplay = $n2.Class({
 					var widgetHandlerAvailable = false;
 					if( widgetInfo && widgetInfo.widgetType ) {
 						var msg = {
-							type: 'widgetIsTypeAvailable'
-							,widgetType: widgetInfo.widgetType
-							,widgetOptions: widgetInfo
-							,isAvailable: false
 						};
-						
+
 						_this._sendSynchronousMessage(msg);
-						
+
 						if( msg.isAvailable ){
 							widgetHandlerAvailable = true;
 						};
@@ -925,14 +936,14 @@ var ModuleDisplay = $n2.Class({
 				}
 
 				var widgetDisplayed = false;
-				
+
 				// Install at containerId
 				if( widgetInfo.containerId ){
 					widgetDisplayMsg.containerId = widgetInfo.containerId;
 					_this._sendDispatchMessage(widgetDisplayMsg);
 					widgetDisplayed = true;
 				};
-				
+
 				// Install under each containerClass
 				if( widgetInfo.containerClass ){
 					$('.'+widgetInfo.containerClass).each(function(){
@@ -942,19 +953,19 @@ var ModuleDisplay = $n2.Class({
 					});
 					widgetDisplayed = true;
 				};
-				
+
 				if( !widgetDisplayed ) {
 					// At this point, neither containerId nor containerClass
 					// were specified
 					widgetDisplayMsg.containerId = _this.contentName;
 					_this._sendDispatchMessage(widgetDisplayMsg);
 				};
-				
+
 				if( 'modelBrowserWidget' === widgetInfo.widgetType ){
 					modelBrowserSpecified = true;
 				};
 			};
-			
+
 			// Add model browser widget, if not specified
 			if( !modelBrowserSpecified ){
 				var $footer = $('.nunaliit_footer');
@@ -977,7 +988,7 @@ var ModuleDisplay = $n2.Class({
 
 			displayComplete();
 		};
-		
+
 		function displayComplete(){
 			// Side panel
 			_this._initSidePanel();
@@ -990,12 +1001,12 @@ var ModuleDisplay = $n2.Class({
 			opts.onSuccess(_this);
 		};
 	},
-	
+
 	getCurrentModuleId: function(){
 		if( this.module && this.module._id ){
 			return this.module._id;
 		};
-		
+
 		return this.moduleId;
 	},
 
@@ -1005,30 +1016,30 @@ var ModuleDisplay = $n2.Class({
 			,onSuccess: function(moduleDisplay){}
 			,onError: function(err){}
 		},opts_);
-		
+
 		var _this = this;
-		
+
 		var mapInfo = _this.module.getMapInfo();
 		var customService = this._getCustomService();
-		
+
 		// Add points only
 		var addPointsOnly = false;
 		if( mapInfo && mapInfo.addPointsOnly ){
 			addPointsOnly = mapInfo.addPointsOnly;
 		};
-		
+
 		// Toggle click
 		var toggleClick = false;
 		if( mapInfo && mapInfo.toggleClick ){
 			toggleClick = mapInfo.toggleClick;
 		};
-		
+
 		// Add SRS attribution text
 		var showSRSAttribution = false;
 		if( mapInfo && mapInfo.showSRSAttribution ){
 			showSRSAttribution = mapInfo.showSRSAttribution;
 		};
-		
+
 		// ScaleLine
 		var scaleLine = {
 			visible: false
@@ -1042,21 +1053,21 @@ var ModuleDisplay = $n2.Class({
 		if( mapInfo && mapInfo.enableWheelZoom ){
 			enableWheelZoom = true;
 		};
-		
+
 		// dbSearchEngine
-		var dbSearchEngine = { 
+		var dbSearchEngine = {
 			relMediaPath: './'
 		};
 		if( mapInfo && mapInfo.dbSearchEngine ){
 			dbSearchEngine = mapInfo.dbSearchEngine;
 		};
-		
+
 		// canvasName
 		var canvasName = undefined;
 		if( mapInfo && typeof mapInfo.canvasName === 'string' ){
 			canvasName = mapInfo.canvasName;
 		};
-		
+
 		var mapOptions = {
 			dbSearchEngine: dbSearchEngine
 			,canvasName: canvasName
@@ -1082,23 +1093,23 @@ var ModuleDisplay = $n2.Class({
 				,initiallyOpened: false
 			}
 		};
-		
+
 		// Layer selector
 		if( mapInfo && mapInfo.layerSelector ){
 			if( mapInfo.layerSelector.suppress ){
 				mapOptions.layerSwitcher.suppress = true;
 			};
-			
+
 			if( mapInfo.layerSelector.initiallyOpened ){
 				mapOptions.layerSwitcher.initiallyOpened = true;
 			};
 		};
-	
+
 		// Initial Bounds, Map coordinates
 		var initialBounds = null;
 		if( mapInfo && mapInfo.coordinates ){
 			initialBounds = mapInfo.coordinates.initialBounds;
-			
+
 			if( mapInfo.coordinates.srsName ){
 				// Verify if SRS name is supported
 				if( false == isSrsNameSupported(mapInfo.coordinates.srsName) ) {
@@ -1107,7 +1118,7 @@ var ModuleDisplay = $n2.Class({
 					});
 					alert(msg);
 				};
-				
+
 				mapOptions.mapDisplay.srsName = mapInfo.coordinates.srsName;
 				mapOptions.mapCoordinateSpecifications.srsName = mapInfo.coordinates.srsName;
 			} else {
@@ -1116,28 +1127,28 @@ var ModuleDisplay = $n2.Class({
 				mapOptions.mapCoordinateSpecifications.srsName = 'EPSG:4326';
 			};
 
-			
+
 			if( mapInfo.coordinates.mousePositionSrsName ){
-				mapOptions.mapCoordinateSpecifications.mousePositionSrsName = 
+				mapOptions.mapCoordinateSpecifications.mousePositionSrsName =
 					mapInfo.coordinates.mousePositionSrsName;
 			};
-			
+
 			// Detect forced display projections based on background layer
 			if( mapInfo.backgrounds ){
 				for(var i=0,e=mapInfo.backgrounds.length; i<e; ++i){
 					if( 'Google Maps' === mapInfo.backgrounds[i].type ) {
 						mapOptions.mapDisplay.srsName = 'EPSG:900913';
-						
+
 					} else if( 'osm' === mapInfo.backgrounds[i].type ) {
 						mapOptions.mapDisplay.srsName = 'EPSG:900913';
-						
+
 					} else if( 'stamen' === mapInfo.backgrounds[i].type ) {
 						mapOptions.mapDisplay.srsName = 'EPSG:900913';
 					};
 				};
 			};
 		};
-		
+
 		// Background Layers
 		if( mapInfo && mapInfo.backgrounds ){
 			mapOptions.mapDisplay.backgrounds = [];
@@ -1153,8 +1164,8 @@ var ModuleDisplay = $n2.Class({
 						l.options.url = url;
 					};
 
-					if( l.options 
-					 && l.options.extent 
+					if( l.options
+					 && l.options.extent
 					 && mapOptions.mapDisplay.srsName != mapOptions.mapCoordinateSpecifications.srsName ){
 						var defProj = new OpenLayers.Projection(mapOptions.mapCoordinateSpecifications.srsName);
 						var mapProj = new OpenLayers.Projection(mapOptions.mapDisplay.srsName);
@@ -1168,11 +1179,11 @@ var ModuleDisplay = $n2.Class({
 						l.options.extent[3] = tr.y;
 					};
 				};
-				
+
 				mapOptions.mapDisplay.backgrounds.push(l);
 			};
 		};
-	
+
 		// Overlay Layers
 		if( mapInfo && mapInfo.overlays ){
 			var styleMapFn = _this.styleMapFn;
@@ -1183,14 +1194,14 @@ var ModuleDisplay = $n2.Class({
 				};
 			};
 			if( !styleMapFn ) {
-				styleMapFn = function(layerInfo_){ 
-					return _this.mapStyles.getStyleMapForLayerInfo(layerInfo_); 
+				styleMapFn = function(layerInfo_){
+					return _this.mapStyles.getStyleMapForLayerInfo(layerInfo_);
 				};
 			};
-			
+
 			for(var i=0,e=mapInfo.overlays.length; i<e; ++i){
 				var layerInfo = mapInfo.overlays[i];
-				
+
 				var layerDefinition = {
 					id: layerInfo.id
 					,name: layerInfo.name
@@ -1202,14 +1213,14 @@ var ModuleDisplay = $n2.Class({
 					,useHoverSound: true
 					,clustering: false
 				};
-				
+
 				if ($n2.isDefined(layerInfo.gutter)) {
 					layerDefinition.gutter = layerInfo.gutter;
 				};
 				if ($n2.isDefined(layerInfo.displayInLayerSwitcher)) {
 					layerDefinition.displayInLayerSwitcher = layerInfo.displayInLayerSwitcher;
 				};
-				
+
 				if( 'couchdb' === layerInfo.type ){
 					layerDefinition.options = $n2.extend({
 						viewName: 'geom'
@@ -1220,24 +1231,24 @@ var ModuleDisplay = $n2.Class({
 					if( !layerDefinition.options.layerName ){
 						layerDefinition.options.layerName = layerDefinition.id;
 					};
-					if( !layerDefinition.id 
+					if( !layerDefinition.id
 					 && layerDefinition.options
 					 && layerDefinition.options.layerName ){
 						layerDefinition.id = layerDefinition.options.layerName;
 					};
-					
+
 				} else {
 					layerDefinition.options = layerInfo.options;
 				};
-	
+
 				if( layerInfo.featurePopupDelayMs ){
 					layerDefinition.featurePopupDelay = layerInfo.featurePopupDelayMs;
 				};
-	
+
 				if( typeof(layerInfo.useHoverSound) === 'boolean' ){
 					layerDefinition.useHoverSound = layerInfo.useHoverSound;
 				};
-				
+
 				if( layerInfo.clustering ){
 					layerDefinition.clustering = layerInfo.clustering;
 				};
@@ -1249,13 +1260,13 @@ var ModuleDisplay = $n2.Class({
 				if( typeof layerInfo.minimumPolygonPixelSize === 'number' ){
 					layerDefinition.minimumPolygonPixelSize = layerInfo.minimumPolygonPixelSize;
 				};
-				
+
 				// Add layer to map
 				mapOptions.overlays.push( layerDefinition );
 			};
 		};
-		
-		if( mapInfo 
+
+		if( mapInfo
 		 && mapInfo.coordinates
 		 && mapInfo.coordinates.autoInitialBounds
 		 ){
@@ -1266,13 +1277,13 @@ var ModuleDisplay = $n2.Class({
 			} else {
 				coordinateProjection = new OpenLayers.Projection('EPSG:4326');
 			};
-			
+
 			var autoBounds = undefined;
 			if( typeof mapInfo.coordinates.autoInitialBounds === 'object' ){
 				// Make a copy of configuration that contains map info
 				var instanceConfiguration = $n2.extend({},mapInfo.coordinates.autoInitialBounds);
 				instanceConfiguration._mapInfo = mapInfo;
-				
+
 				// Initial bounds computed from a configured object
 				var m = {
 					type: 'instanceCreate'
@@ -1281,7 +1292,7 @@ var ModuleDisplay = $n2.Class({
 				_this.dispatchService.synchronousCall(DH,m);
 				autoBounds = m.instance;
 			};
-			
+
 			if( !autoBounds ){
 				// Default
 				var m = {
@@ -1293,8 +1304,8 @@ var ModuleDisplay = $n2.Class({
 				_this.dispatchService.synchronousCall(DH,m);
 				autoBounds = m.instance;
 			};
-			
-			if( autoBounds 
+
+			if( autoBounds
 			 && typeof autoBounds.computeInitialBounds === 'function' ){
 				autoBounds.computeInitialBounds({
 					mapOptions: mapOptions
@@ -1320,30 +1331,30 @@ var ModuleDisplay = $n2.Class({
 		} else {
 			initialBoundsComputed(mapOptions, initialBounds);
 		};
-		
+
 		function initialBoundsComputed(mapOptions, initialBounds){
 			if( !initialBounds ) {
 				opts.onError('Initial map extent not specified');
 				return;
 			};
-		
+
 			mapOptions.mapCoordinateSpecifications.initialBounds = initialBounds;
-			
+
 			// Map max extent
 			var mapInfo = _this.module.getMapInfo();
-			if( mapInfo 
+			if( mapInfo
 			 && mapInfo.coordinates
 			 && mapInfo.coordinates.maxExtent
 			 ){
-				mapOptions.mapCoordinateSpecifications.maxExtent = 
+				mapOptions.mapCoordinateSpecifications.maxExtent =
 					mapInfo.coordinates.maxExtent;
-				
-			} else if( mapOptions.mapDisplay.srsName !== null 
+
+			} else if( mapOptions.mapDisplay.srsName !== null
 			 && mapOptions.mapDisplay.srsName !== 'EPSG:4326' ) {
 				mapOptions.mapCoordinateSpecifications.maxExtent =
 					mapOptions.mapCoordinateSpecifications.initialBounds;
 			};
-			
+
 			if( mapInfo
 			 && mapInfo.styles ){
 				mapOptions.canvasStyles = mapInfo.styles;
@@ -1369,9 +1380,9 @@ var ModuleDisplay = $n2.Class({
 		var _this = this;
 
 		var customService = this._getCustomService();
-		
+
 		var $elem = $('#'+this.sidePanelName);
-		
+
 		var displayIntroFn = customService.getOption('moduleDisplayIntroFunction', null);
 		if( displayIntroFn ){
 			displayIntroFn({
@@ -1390,7 +1401,7 @@ var ModuleDisplay = $n2.Class({
 			});
 		};
 	}
-	
+
 	,_getShowService: function(){
 		var ss = null;
 		if( this.config.directory ){
@@ -1398,7 +1409,7 @@ var ModuleDisplay = $n2.Class({
 		};
 		return ss;
 	}
-	
+
 	,_getCustomService: function(){
 		var cs = null;
 		if( this.config.directory ){
@@ -1406,24 +1417,24 @@ var ModuleDisplay = $n2.Class({
 		};
 		return cs;
 	}
-	
+
 	,_sendDispatchMessage: function(m){
 		var d = this.dispatchService;
 		if( d ){
 			d.send(DH,m);
 		};
 	}
-	
+
 	,_sendSynchronousMessage: function(m){
 		var d = this.dispatchService;
 		if( d ){
 			d.synchronousCall(DH,m);
 		};
 	}
-	
+
 	,_installModuleTitle: function($elem, text){
 		var _this = this;
-		
+
 		$elem.empty();
 
 		var $a = $('<a class="nunaliit_module_title_link" href="#"></a>')
@@ -1438,7 +1449,7 @@ var ModuleDisplay = $n2.Class({
 						type: 'mapResetExtent'
 					});
 				};
-				
+
 				// Follow link
 				return true;
 			});
@@ -1454,25 +1465,25 @@ var ModuleDisplay = $n2.Class({
 			};
 		};
 	}
-	
+
 	,_installHelpButton: function(){
 		var _this = this;
-		
+
 		var $elem = $('#'+this.helpButtonName);
 		if( $elem.length < 1 ) return; // nothing to do
-		
+
 		$elem.empty();
-		
+
 		// Load help text
 		var moduleInfo = this.module.getModuleInfo();
-		if( moduleInfo.help 
+		if( moduleInfo.help
 		 && moduleInfo.help.nunaliit_type === 'reference'
 		 && moduleInfo.help.doc ){
 			// load up help document
 			this.config.atlasDb.getDocument({
 				docId: moduleInfo.help.doc
 				,onSuccess: function(doc){
-					if( doc 
+					if( doc
 					 && doc.nunaliit_help ){
 						$n2.help.InstallHelpInfo('main',doc.nunaliit_help);
 						installHelpButton();
@@ -1486,24 +1497,24 @@ var ModuleDisplay = $n2.Class({
 					$elem.attr('n2_error','Unable to load help document'+err);
 				}
 			});
-			
+
 		} else {
 			$n2.log('Do not know how to handle help information');
 			$elem.attr('n2_error','Do not know how to handle help information');
 		};
 
 		function installHelpButton(){
-			
+
 			var $a = $('<a class="nunaliit_module_help_button" href="#"></a>');
 			$a.text( _loc('Help') );
-			
+
 			$('#'+_this.helpButtonName)
 				.empty()
 				.append($a);
-			
+
 			$a.click(function(){
 				var $btn = $(this);
-				
+
 				$n2.help.ToggleHelp('main', $btn);
 
 				return false;
