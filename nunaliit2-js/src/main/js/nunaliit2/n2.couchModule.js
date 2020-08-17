@@ -445,9 +445,11 @@ var ModuleDisplay = $n2.Class({
 		if( d ){
 			d.register(DH,'unselected',function(m){
 				_this._hideFloatingSidePanel();
+				_this._hideBackdrop();
 				_this._initSidePanel();
 			});
 			d.register(DH,'selected',function(m){
+				_this._showBackdrop();
 				_this._showFloatingSidePanel();
 			});
 			d.register(DH,'editInitiate',function(m){
@@ -721,6 +723,18 @@ var ModuleDisplay = $n2.Class({
 					&& displayInfo.floating ) {
 					$sidePanel.addClass('n2_content_floating');
 					$sidePanel.insertAfter($contentDiv);
+
+					// Add backdrop.
+					$('<div></div>')
+						.addClass('n2_content_backdrop')
+						.click(function() {
+							if (d) {
+								d.send(DH,{
+								type: 'userUnselect'
+								});
+							}
+						})
+						.insertAfter($contentDiv);
 
 					$contentDiv.addClass('n2_content_contains_no_sidepanel');
 
@@ -1406,6 +1420,16 @@ var ModuleDisplay = $n2.Class({
 		if ($floatingSidePanel.length) {
 			$nunaliitAtlas.removeClass('show_floating_side_panel');
 		}
+	}
+
+	,_showBackdrop: function(){
+		var $nunaliitBackdrop = $('body.nunaliit_atlas .n2_content_backdrop');
+		$nunaliitBackdrop.addClass('show');
+	}
+
+	,_hideBackdrop: function(){
+		var $nunaliitBackdrop = $('body.nunaliit_atlas .n2_content_backdrop');
+		$nunaliitBackdrop.removeClass('show');
 	}
 
 	,_initSidePanel: function(){

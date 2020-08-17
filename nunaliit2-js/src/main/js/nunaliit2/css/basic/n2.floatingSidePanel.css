@@ -26,6 +26,20 @@
 	padding: 0px;
 }
 
+/* Backdrop style rules */
+.nunaliit_atlas.show_floating_side_panel .n2_content_backdrop {
+	background-color: rgba(50, 50, 50, 0.5);
+	display: none;
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
+.nunaliit_atlas.show_floating_side_panel .n2_content_backdrop.show {
+	display: block;
+}
+
 /* Update map interaction button position */
 .nunaliit_atlas .n2_content_contains_no_sidepanel .n2_content_map_interaction {
 	right: 33px !important;
