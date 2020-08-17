@@ -444,22 +444,22 @@ var ModuleDisplay = $n2.Class({
 		var d = this.dispatchService;
 		if( d ){
 			d.register(DH,'unselected',function(m){
-				_this._hideFloatingSidePanel();
+				_this._hideSlidingSidePanel();
 				_this._hideBackdrop();
 				_this._initSidePanel();
 			});
 			d.register(DH,'selected',function(m){
 				_this._showBackdrop();
-				_this._showFloatingSidePanel();
+				_this._showSlidingSidePanel();
 			});
 			d.register(DH,'editInitiate',function(m){
-				_this._showFloatingSidePanel();
+				_this._showSlidingSidePanel();
 			});
 			d.register(DH,'editCreateFromGeometry',function(m){
-				_this._showFloatingSidePanel();
+				_this._showSlidingSidePanel();
 			});
 			d.register(DH,'editClosed',function(m){
-				_this._hideFloatingSidePanel();
+				_this._hideSlidingSidePanel();
 			});
 			d.register(DH,'moduleGetCurrent',function(m){
 				m.moduleId = _this.getCurrentModuleId();
@@ -717,11 +717,11 @@ var ModuleDisplay = $n2.Class({
 					.addClass('n2_content_text');
 
 				// Add side panel inside content panel or after content panel
-				// depending on if the floating display type is used in the
+				// depending on if the sliding display type is used in the
 				// module.
 				if( displayInfo
-					&& displayInfo.floating ) {
-					$sidePanel.addClass('n2_content_floating');
+					&& displayInfo.sliding ) {
+					$sidePanel.addClass('n2_content_sliding');
 					$sidePanel.insertAfter($contentDiv);
 
 					// Add backdrop.
@@ -738,7 +738,7 @@ var ModuleDisplay = $n2.Class({
 
 					$contentDiv.addClass('n2_content_contains_no_sidepanel');
 
-					// Hide overflow when using floating side panel.
+					// Hide overflow when using sliding side panel.
 					$('html').css('overflow', 'hidden');
 				} else {
 					$sidePanel.appendTo($contentDiv);
@@ -1406,19 +1406,19 @@ var ModuleDisplay = $n2.Class({
 		};
 	}
 
-	,_showFloatingSidePanel: function(){
+	,_showSlidingSidePanel: function(){
 		var $nunaliitAtlas = $('body.nunaliit_atlas');
-		var $floatingSidePanel = $nunaliitAtlas.find('.n2_content_floating');
-		if ($floatingSidePanel.length) {
-			$nunaliitAtlas.addClass('show_floating_side_panel');
+		var $slidingSidePanel = $nunaliitAtlas.find('.n2_content_sliding');
+		if ($slidingSidePanel.length) {
+			$nunaliitAtlas.addClass('show_sliding_side_panel');
 		}
 	}
 
-	,_hideFloatingSidePanel: function(){
+	,_hideSlidingSidePanel: function(){
 		var $nunaliitAtlas = $('body.nunaliit_atlas');
-		var $floatingSidePanel = $nunaliitAtlas.find('.n2_content_floating');
-		if ($floatingSidePanel.length) {
-			$nunaliitAtlas.removeClass('show_floating_side_panel');
+		var $slidingSidePanel = $nunaliitAtlas.find('.n2_content_sliding');
+		if ($slidingSidePanel.length) {
+			$nunaliitAtlas.removeClass('show_sliding_side_panel');
 		}
 	}
 
