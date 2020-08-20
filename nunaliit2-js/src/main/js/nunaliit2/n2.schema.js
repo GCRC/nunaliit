@@ -412,6 +412,12 @@ function _formField() {
 				txtFldArea: txtFldArea
 			});
 
+			if (opts.wikiTransform) {
+				$('<div>')
+					.addClass('n2schema_help_wiki')
+					.appendTo($formField.find('#' + undefinedLocTextField.getId()));
+			}
+
 			$formField.find('#' + undefinedLocTextField.getInputId())
 				.addClass(selClass + '-s' + lang);
 
