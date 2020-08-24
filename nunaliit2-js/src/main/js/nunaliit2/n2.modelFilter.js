@@ -1886,13 +1886,13 @@ var MultiDocumentFilter = $n2.Class('MultiDocumentFilter', SelectableDocumentFil
 //-=------------------------------------------------------------------------
 /*
 * Filter: a Document Model that filters out certain documents based on styles(SytleRules)
-* defined inside map.json. The stylesRules are injected, during module initializing 
-* process, so there is no need to ask it from atlas builder.
+* defined inside map.json or canvas.json. The stylesRules are injected, during module 
+* initializing process, so there is no need to ask it from atlas builder.
 * Options:
 * - modelId: String. Identifier for this model
 * - sourceModelId: String. Identifier for the model where documents are obtained
 * - dispatchService: Service:Dispatcher
-* - rules: Array. style rule defined inside map.json
+* - rules: Array. Style rules defined inside the map.json or canvas.json
 */
 var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocumentFilter, {
 	initialize: function(opts_){
@@ -1919,7 +1919,7 @@ var ConditionalModelFilter = $n2.Class('ConditionalModelFilter', SelectableDocum
 			,dispatchService: this.dispatchService
 		});
 		
-		//This is the store for all the conditions defined inside map.json
+		//This is the store for all the conditions defined inside map.json or canvas.json
 		this.conditionByLabel = {};
 		if ( $n2.isArray(opts.rules) ){
 			opts.rules.forEach(function(rule){
@@ -2231,8 +2231,15 @@ function handleModelCreate(m, addr, dispatcher){
 		var module = m.moduleDisplay.module;
 		
 		var mapInfo = module.getMapInfo();
-		
-		options.rules = mapInfo.styles;
+
+		// Check if mapInfo object exists
+		if (mapInfo) {
+			options.rules = mapInfo.styles;
+		} else {
+			// If no mapInfo object exists, try to get canvasInfo.
+			var canvasInfo = module.getCanvasInfo();
+			options.rules = canvasInfo.styles;
+		}
 		
 		if( m && m.config ){
 			if( m.config.directory ){
