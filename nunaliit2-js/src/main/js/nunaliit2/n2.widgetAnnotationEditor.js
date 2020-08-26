@@ -38,6 +38,14 @@ POSSIBILITY OF SUCH DAMAGE.
 	};
 	var DH = 'n2.widgetAnnotationEditor';
 
+	var CineAnnotationEditorMode = {
+		TAGSELECTION: 'tagselection',
+		TAGGROUPING: 'taggrouping',
+		TAGSETTING: 'tagsetting'
+	};
+
+	var context_menu_text = ['Tag Selection...', 'Map Tags...', 'Settings...'];
+
 	// Find the time links based on start & end time link values.
 	function findTimeLink(timeLinks, startTime, endTime) {
 		var result = [];
@@ -90,10 +98,11 @@ POSSIBILITY OF SUCH DAMAGE.
 	// +++++++++++++++++++++++++++++++++++++++++++++++
 	// Given a timelink and tags, update the timelink
 	function updateTimeLinkWithTags(timeLink, tagValues) {
+		var kv, tag;
 		var updated = false;
 
-		for (var kv in tagValues) {
-			var tag = findTimeLinkTagByValue(timeLink, kv);
+		for (kv in tagValues) {
+			tag = findTimeLinkTagByValue(timeLink, kv);
 			if (!tag) {
 				tag = tagValues[kv];
 				delete tag['fraction'];
@@ -152,9 +161,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		addPartialTag: function(start, end, tagProfile) {
 			this.focusSentences.forEach(function(s) {
+				var k;
 				if (s.start === start
 					&& s.end === end) {
-					var k = tagProfile.value + '--' + tagProfile.type;
+					k = tagProfile.value + '--' + tagProfile.type;
 					s.tags[k] = tagProfile;
 				}
 			});
@@ -169,9 +179,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		deletePartialTag: function(start, end, tagProfile) {
 			this.focusSentences.forEach(function(s) {
+				var k;
 				if (s.start === start
 					&& s.end === end) {
-					var k = tagProfile.value + '--' + tagProfile.type;
+					k = tagProfile.value + '--' + tagProfile.type;
 					delete s.tags[k];
 				}
 			});
@@ -217,6 +228,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						var start = d.startTimeCode;
 						var end = d.finTimeCode;
 						var text = d.text;
+						var totalTags = {};
 
 						// Get time links with match start and end times
 						var matchingLinks = findTimeLink(
@@ -238,7 +250,6 @@ POSSIBILITY OF SUCH DAMAGE.
 							matchingLinks.push(newTimeLink);
 						}
 
-						var totalTags = {};
 						matchingLinks.forEach(function(e) {
 							if (e.tags) {
 								e.tags.forEach(function(t) {
@@ -246,6 +257,7 @@ POSSIBILITY OF SUCH DAMAGE.
 									totalTags[key] = t;
 								});
 							}
+
 						});
 
 						var senRec = {
@@ -277,14 +289,6 @@ POSSIBILITY OF SUCH DAMAGE.
 			this.focusSentences.length = 0;
 		},
 	});
-
-	var CineAnnotationEditorMode = {
-		TAGSELECTION: 'tagselection',
-		TAGGROUPING: 'taggrouping',
-		TAGSETTING: 'tagsetting'
-	};
-
-	var context_menu_text = ['Tag Selection...', 'Map Tags...', 'Settings...'];
 
 	/**
 	 * @classdesc The real editor for sentence annotation. It is created for
@@ -1305,7 +1309,85 @@ POSSIBILITY OF SUCH DAMAGE.
 //		});
 		},
 
-		_addFormViewAggregated: function($parent, data) {
+		_buildThemeTagProfiles: function(senData) {
+			var rst = [];
+			var fracMap = undefined;
+			if (senData.length > 0) {
+				fracMap = {}; // true means full cover; false means partial
+
+				senData.forEach(function(sd) {
+					for (var tag in sd.tags) {
+						if (sd.tags[tag].type !== 'place'
+						&& sd.tags[tag].type !== 'location') {
+							fracMap[tag] = $n2.extend({fraction: 'full'}, sd.tags[tag]);
+						}
+					}
+				});
+
+				for (var tag in fracMap) {
+					senData.forEach(function(se) {
+						if (!(tag in se.tags)) {
+							fracMap[tag].fraction = 'partial';
+						}
+					});
+				}
+
+			} else {
+				$n2.log("focusSentences data is not valid");
+			}
+
+			if (fracMap) {
+				for (var tag in fracMap) {
+					rst.push(fracMap[tag]);
+				}
+			}
+			return rst;
+		},
+
+		_buildPlaceTagProfiles: function(senData) {
+			var rst = [];
+			var fracMap = undefined;
+			if (senData.length > 0) {
+				fracMap = {};//true means full cover; false means partial
+
+				senData.forEach(function(sd){
+					for (var tag in sd.tags){
+						if (sd.tags[tag].type
+							&& (sd.tags[tag].type === 'place'
+							|| sd.tags[tag].type === 'location')) {
+							fracMap[tag] = $n2.extend({fraction: 'full'}, sd.tags[tag]);
+						}
+					}
+				});
+
+				for (var tag in fracMap) {
+					senData.forEach(function(se) {
+						if (!(tag in se.tags)) {
+							fracMap[tag].fraction = 'partial';
+						}
+					});
+				}
+
+			} else {
+				$n2.log("focusSentences data is not valid");
+			}
+
+			if (fracMap) {
+				for (var tag in fracMap) {
+					rst.push(fracMap[tag]);
+				}
+			}
+			return rst;
+		},
+
+		/**
+		 * Add annotation form field section to annotation editor widget.
+		 *  - Form includes; place tag tagbox field, theme tag tagbox field,
+		 * comments, and sentance text.
+		 * @param {object} $parent jQuery Reference to the DOM element which
+		 * will contains the annotation form.
+		 */
+		_addFormViewAggregated: function($parent) {
 		// Instead read and parsing the tags from cinemap
 		// We receive the data from dataDepot now for aggregateView
 			var _this = this;
@@ -1316,16 +1398,17 @@ POSSIBILITY OF SUCH DAMAGE.
 			var depot = this.dataDepot;
 			var senData = depot.getData();
 
-			var lastThemeTags = buildThemeTagProfiles(senData);
+			var lastThemeTags = this._buildThemeTagProfiles(senData);
 			lastThemeTags = lastThemeTags || [];
 
-			var lastPlaceTags = buildPlaceTagProfiles(senData);
+			var lastPlaceTags = this._buildPlaceTagProfiles(senData);
 
 			var aggreText = '';
 			senData.forEach(function(sd) {
 				aggreText += sd.text + ' ';
 			});
 
+			// Add span containing the selected transcript text
 			$('<span>')
 				.addClass('n2transcript_label label_transcriptText')
 				.text(aggreText)
@@ -1333,127 +1416,72 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			$('<hr>').appendTo($formFieldSection);
 
+			// Add theme tags tagbox component.
 			new $n2.mdc.MDCTagBox({
 				parentElem: $formFieldSection,
 				autoCompleteViewName: 'tags',
 				label: 'Theme Tags',
 				mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 				chips: lastThemeTags,
-				chipsetsUpdateCallback: function(tagList, operation, target){
-					switch(operation) {
+				chipsetsUpdateCallback: function(tagList, operation, target) {
+					var value, addtar, deltar;
+					switch (operation) {
 					case 'ADD':
-						var value = target.chipText;
-						var addtar = $n2.extend({value: value}, target);
-						_this.dataDepot.addFullTag(addtar)
+						value = target.chipText;
+						addtar = $n2.extend({value: value}, target);
+						_this.dataDepot.addFullTag(addtar);
 						$n2.log('Adding tags', target);
 						break;
 					case 'DELETE':
-						var value = target.chipText;
-						var deltar = $n2.extend({value: value}, target);
+						value = target.chipText;
+						deltar = $n2.extend({value: value}, target);
 						_this.dataDepot.deleteTag(deltar);
 						$n2.log('Deleting tags', target);
+						break;
+					default:
 						break;
 					}
 				// $n2.log('I wonder what is this: ', tagList);
 				}
 			});
 
+			// Add place tags tagbox component
 			new $n2.mdc.MDCTagBox({
-				parentElem : $formFieldSection,
+				parentElem: $formFieldSection,
 				label: 'Place Tags',
 				autoCompleteViewName: 'tags',
 				mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
-				chips:lastPlaceTags,
-				chipsetsUpdateCallback: function(tagList, operation, target){
-					switch(operation){
+				chips: lastPlaceTags,
+				chipsetsUpdateCallback: function(tagList, operation, target) {
+					var value, addtar, deltar;
+					switch (operation) {
 					case 'ADD':
-						var value = target.chipText;
-						var addtar = $n2.extend({value: value, type: 'place'}, target);
+						value = target.chipText;
+						addtar = $n2.extend(
+							{value: value, type: 'place'},
+							target
+						);
 						addtar['type'] = 'place';
-						_this.dataDepot.addFullTag(addtar)
+						_this.dataDepot.addFullTag(addtar);
 						$n2.log('Adding tags', addtar);
 						break;
 					case 'DELETE':
-						var value = target.chipText;
-						var deltar = $n2.extend({value: value, type: 'place'}, target);
+						value = target.chipText;
+						deltar = $n2.extend(
+							{value: value, type: 'place'},
+							target
+						);
 						deltar['type'] = 'place';
 						_this.dataDepot.deleteTag(deltar);
 						$n2.log('Deleting tags', deltar);
 						break;
+					default:
+						break;
 					}
 				// $n2.log('I wonder what is this: ', tagList);
 				}
 			});
-			function buildThemeTagProfiles(senData) {
-				var rst = [];
-				var fracMap = undefined;
-				if (senData.length > 0) {
-					fracMap = {}; // true means full cover; false means partial
 
-					senData.forEach(function(sd) {
-						for (var tag in sd.tags) {
-							if (sd.tags[tag].type !== 'place'
-							&& sd.tags[tag].type !== 'location') {
-								fracMap[tag] = $n2.extend({fraction: 'full'}, sd.tags[tag]);
-							}
-						}
-					});
-
-					for (var tag in fracMap) {
-						senData.forEach(function(se) {
-							if (!(tag in se.tags)) {
-								fracMap[tag].fraction = 'partial';
-							}
-						});
-					}
-
-				} else {
-					$n2.log("focusSentences data is not valid");
-				}
-
-				if (fracMap) {
-					for (var tag in fracMap) {
-						rst.push(fracMap[tag]);
-					}
-				}
-				return rst;
-			}
-
-			function buildPlaceTagProfiles(senData){
-				var rst = [];
-				var fracMap = undefined;
-				if (senData.length > 0) {
-					fracMap = {};//true means full cover; false means partial
-
-					senData.forEach(function(sd){
-						for (var tag in sd.tags){
-							if (sd.tags[tag].type
-								&& (sd.tags[tag].type === 'place'
-								|| sd.tags[tag].type === 'location')) {
-								fracMap[tag] = $n2.extend({fraction: 'full'}, sd.tags[tag]);
-							}
-						}
-					});
-
-					for (var tag in fracMap) {
-						senData.forEach(function(se) {
-							if (!(tag in se.tags)) {
-								fracMap[tag].fraction = 'partial';
-							}
-						});
-					}
-
-				} else {
-					$n2.log("focusSentences data is not valid");
-				}
-
-				if (fracMap) {
-					for (var tag in fracMap) {
-						rst.push(fracMap[tag]);
-					}
-				}
-				return rst;
-			}
 		},
 
 		_addTagSelEditing: function() {
@@ -1467,15 +1495,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		// Blocking method
 		refresh: function(opts_) {
+			var opt, data, doc;
 			var _this = this;
 			var $elem = this.getInnerForm();
 			$elem.empty();
-			var opt, data, doc;
+
 			if (opts_) {
 				opt = opts_.option;
 				data = opts_.data;
 				doc = opts_.doc;
 
+				// Set editor mode based on user selection
 				if (opt === context_menu_text[0]) {
 					this.editorMode = CineAnnotationEditorMode.TAGSELECTION;
 
@@ -1485,6 +1515,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				} else if (opt === context_menu_text[2]) {
 					this.editorMode = CineAnnotationEditorMode.TAGSETTING;
 				}
+
 				this.dataDepot.setDoc(doc);
 				this.dataDepot.setOption(opt);
 				this.dataDepot.setData(data);
@@ -1494,7 +1525,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				this.currentDoc = doc;
 			}
 
-			switch(this.editorMode) {
+			switch (this.editorMode) {
 			case CineAnnotationEditorMode.TAGSELECTION:
 				_this._addTagSelEditing();
 				break;
@@ -1596,9 +1627,9 @@ POSSIBILITY OF SUCH DAMAGE.
 				};
 
 				this.dispatchService.register(DH, 'modelStateUpdated', f);
-				this.dispatchService.register(DH,'annotationEditorStart',f);
-				this.dispatchService.register(DH,'annotationEditorClose',f);
-				this.dispatchService.register(DH,'annotationEditorIsAvailable',f);
+				this.dispatchService.register(DH, 'annotationEditorStart', f);
+				this.dispatchService.register(DH, 'annotationEditorClose', f);
+				this.dispatchService.register(DH, 'annotationEditorIsAvailable', f);
 				this.dispatchService.register(DH, 'annotationEditorShowLoader', f);
 				this.dispatchService.register(DH, 'annotationEditorViewRefreshDone', f);
 
