@@ -38,18 +38,22 @@ POSSIBILITY OF SUCH DAMAGE.
 	};
 	var DH = 'n2.widgetAnnotationEditor';
 
+	// Find the time links based on start & end time link values.
 	function findTimeLink(timeLinks, startTime, endTime) {
 		var result = [];
-		var timeLink;
+		var timeLink, i, e, start_in_ms, end_in_ms;
 		var target_start = startTime.replace(',', '.');
 		var target_end = endTime.replace(',', '.');
 		if (target_start && target_end) {
 
-			for (var i = 0, e = timeLinks.length; i < e; i++) {
+			for (i = 0, e = timeLinks.length; i < e; i += 1) {
 				try {
 					timeLink = timeLinks[i];
-					var start_in_ms = timeLink.starttime.replace(',', '.');
-					var end_in_ms = timeLink.endtime.replace(',', '.');
+					start_in_ms = timeLink.starttime.replace(',', '.');
+					end_in_ms = timeLink.endtime.replace(',', '.');
+
+					// Add time link element to result if start and end times
+					// match the time link values.
 					if (start_in_ms &&
 						end_in_ms &&
 						start_in_ms === target_start &&
@@ -213,6 +217,8 @@ POSSIBILITY OF SUCH DAMAGE.
 						var start = d.startTimeCode;
 						var end = d.finTimeCode;
 						var text = d.text;
+
+						// Get time links with match start and end times
 						var matchingLinks = findTimeLink(
 							timeLinks,
 							start,
@@ -234,10 +240,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 						var totalTags = {};
 						matchingLinks.forEach(function(e) {
-							e.tags.forEach(function(t) {
-								var key = t.value + '--' + t.type;
-								totalTags[key] = t;
-							});
+							if (e.tags) {
+								e.tags.forEach(function(t) {
+									var key = t.value + '--' + t.type;
+									totalTags[key] = t;
+								});
+							}
 						});
 
 						var senRec = {
@@ -366,6 +374,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			return $('#' + this.editorId);
 		},
 
+		// Get the element id of the inner form div
 		getInnerForm: function() {
 			return $('#' + this.innerFormId);
 		},
@@ -416,7 +425,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					parentElem: $formField,
 					btnLabel: 'Cancel',
 					onBtnClick: function() {
-						this._clickedCancel();
+						_this._clickedCancel();
 					}
 				});
 			}
@@ -500,6 +509,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
+			// Update document if modified.
 			function updateDocForTags(doc, depot) {
 				var senData = depot.getData();
 				var modified = false;
@@ -1168,6 +1178,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						//$n2.log('I wonder what is this: ', tagList);
 						}
 					});
+
 				} else {
 					alert('Current document does not have (atlascine_cinemap) property');
 					return;
@@ -1307,6 +1318,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			var lastThemeTags = buildThemeTagProfiles(senData);
 			lastThemeTags = lastThemeTags || [];
+
 			var lastPlaceTags = buildPlaceTagProfiles(senData);
 
 			var aggreText = '';
@@ -1410,7 +1422,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			function buildPlaceTagProfiles(senData){
 				var rst = [];
 				var fracMap = undefined;
-				if(senData.length > 0){
+				if (senData.length > 0) {
 					fracMap = {};//true means full cover; false means partial
 
 					senData.forEach(function(sd){
@@ -1435,8 +1447,8 @@ POSSIBILITY OF SUCH DAMAGE.
 					$n2.log("focusSentences data is not valid");
 				}
 
-				if (fracMap){
-					for (var tag in fracMap){
+				if (fracMap) {
+					for (var tag in fracMap) {
 						rst.push(fracMap[tag]);
 					}
 				}
