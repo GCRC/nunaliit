@@ -1334,3 +1334,16 @@ Date Range Widget
 	line-height: 20px;
 }
 
+/*
+==============================
+Transcript widget style rules
+==============================
+*/
+.nunaliit_atlas .n2widgetTranscript .mejs__controls {
+	width: auto !important;
+	right: 450px;
+}
+
+.nunaliit_atlas.n2_display_format_tiled .n2widgetTranscript .mejs__controls {
+	right: 640px;
+}
