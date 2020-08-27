@@ -118,6 +118,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 	// +++++++++++++++++++++++++++++++++++++++++++++++
 	/**
+	* Creates a new data depot object, containing data on the focused sentence.
  	* @classdesc The data depot for focusing sentence.
  	*/
 	var AnnotationEditorDataDepot = $n2.Construct('AnnotationEditorDataDepot',{
@@ -152,72 +153,104 @@ POSSIBILITY OF SUCH DAMAGE.
 			this._option = undefined;
 		},
 
+		/**
+		 * Add a new full tag profile object to a sentence tag array.
+		 * @param {object} tagProfile A tag profile object containing tag data;
+		 * tag value, chip text, fraction type (full), and tag type.
+		 */
 		addFullTag: function(tagProfile) {
-			this.focusSentences.forEach(function(s) {
+			this.focusSentences.forEach(function(sentence) {
 				var k = tagProfile.value + '--' + tagProfile.type;
-				s.tags[k] = tagProfile;
+				sentence.tags[k] = tagProfile;
 			});
 		},
 
+		/**
+		 * Add a new partial tag profile object to a sentence tag array.
+		 * @param {object} tagProfile A tag profile object containing tag data;
+		 * tag value, chip text, fraction type (full), and tag type.
+		 * @param {string} start start time value
+		 * @param {string} end end time value
+		 */
 		addPartialTag: function(start, end, tagProfile) {
-			this.focusSentences.forEach(function(s) {
+			this.focusSentences.forEach(function(sentence) {
 				var k;
-				if (s.start === start
-					&& s.end === end) {
+				if (sentence.start === start
+					&& sentence.end === end) {
 					k = tagProfile.value + '--' + tagProfile.type;
-					s.tags[k] = tagProfile;
+					sentence.tags[k] = tagProfile;
 				}
 			});
 		},
 
+		/**
+		 * Delete a full tag profile object from a sentence tag array.
+		 * @param {object} tagProfile A tag profile object containing tag data;
+		 * tag value, fraction type, and tag type.
+		 */
 		deleteTag: function(tagProfile) {
-			this.focusSentences.forEach(function(s) {
+			this.focusSentences.forEach(function(sentence) {
 				var k = tagProfile.value + '--' + tagProfile.type;
-				delete s.tags[k];
+				delete sentence.tags[k];
 			});
 		},
 
+		/**
+		 * Delete a partial tag profile object from a sentence tag array.
+		 * @param {object} tagProfile A tag profile object containing tag data;
+		 * tag value, fraction type, and tag type.
+		 * @param {string} start start time value
+		 * @param {string} end end time value
+		 */
 		deletePartialTag: function(start, end, tagProfile) {
-			this.focusSentences.forEach(function(s) {
+			this.focusSentences.forEach(function(sentence) {
 				var k;
-				if (s.start === start
-					&& s.end === end) {
+				if (sentence.start === start
+					&& sentence.end === end) {
 					k = tagProfile.value + '--' + tagProfile.type;
-					delete s.tags[k];
+					delete sentence.tags[k];
 				}
 			});
 		},
 
-		getMatchingSen: function(startTimeCode, finTimeCode) {
-			var rst = undefined;
+		/**
+		 * Retrieve the matching sentence based on start and end time codes
+		 * @param {object} startTimeCode Time code for the start of the sentence
+		 * @param {object} endTimeCode Time code for the end of the sentence.
+		 * @return {array} A list of sentence objects which match the start and
+		 * end time codes.
+		 */
+		getMatchingSen: function(startTimeCode, endTimeCode) {
+			var result = [];
 			this.focusSentences.forEach(function(fs) {
 				var start = fs.start;
 				var end = fs.end;
 				if (start === startTimeCode
-					&& end === finTimeCode) {
-					if (!rst) {
-						rst = [];
-					}
-					rst.push(fs);
+					&& end === endTimeCode) {
+					result.push(fs);
 				}
 			});
-			return rst;
+			return result;
 		},
 
+		// Get the list of focus sentence data.
 		getData: function() {
 			return this.focusSentences;
 		},
 
+		// Set the list of focus sentence values
 		setData: function(data) {
 			var _this = this;
+			// reset sentences in focus
 			this.reset();
 			var doc = this._doc;
 
+			// Get timelinks from selected document.
 			if (doc
 				&& doc.atlascine_cinemap) {
 				var timeLinks = doc.atlascine_cinemap.timeLinks;
 				if (!timeLinks) {
-					// Create if it does not exist
+					// Create timeLinks if it doesn't exist
 					timeLinks = [];
 					doc.atlascine_cinemap.timeLinks = timeLinks;
 					// return;
@@ -236,8 +269,9 @@ POSSIBILITY OF SUCH DAMAGE.
 							start,
 							end);
 
-						if (matchingLinks.length < 1) {
-							// Should I create one? If so, how?
+						// Create a new time link object, if no matching links
+						// exists.
+						if (!matchingLinks.length) {
 							var newTimeLink = {
 								'starttime': start
 								,'endtime': end
@@ -260,6 +294,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 						});
 
+						// Create Sentence Record
 						var senRec = {
 							start: start,
 							end: end,
@@ -352,9 +387,9 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		_handle: function( m, addr, dispatcher) {
+		_handle: function(m, addr, dispatcher) {
 			var _this = this;
-			if ('annotationEditorViewRefresh' === m.type) {
+			if (m.type === 'annotationEditorViewRefresh') {
 				var option = m.option;
 				var data = m.data;
 				var doc = m.doc;
@@ -368,7 +403,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					type: 'annotationEditorViewRefreshDone'
 				});
 
-			} else if ('annotationEditorViewAggregateModeChanged' === m.type) {
+			} else if (m.type === 'annotationEditorViewAggregateModeChanged') {
 				var checked = m.value;
 				_this.onEditorAggregateModeChanged(checked);
 			}
@@ -383,6 +418,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			return $('#' + this.innerFormId);
 		},
 
+		// Add annotation editor control and form container.
 		render: function(opts){
 			var _this = this;
 			var $container = opts.container;
@@ -524,7 +560,6 @@ POSSIBILITY OF SUCH DAMAGE.
 					if (typeof start !== "undefined"
 						&& typeof end !== "undefined"
 						&& typeof tagValues !== "undefined"){
-						modified |= singleSectionUpdate (doc, tagValues, start, end);
 					}
 				})
 
@@ -556,7 +591,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			}
 
-			function singleSectionUpdate(doc, tagValues, start, end){
 				// Modify current document
 				var modified = false;
 				var lastTagsMapByTimelink = {};
@@ -590,13 +624,14 @@ POSSIBILITY OF SUCH DAMAGE.
 						matchingLinks.push(newTimeLink);
 					}
 
+
 					// Check and verify deleting tag(s)
 					matchingLinks.forEach(function(timeLink) {
 						if (timeLink.tags
-						&& Array.isArray(timeLink.tags)) {
+							&& $n2.isArray(timeLink.tags)) {
 							timeLink.tags.forEach(function(tag) {
 								var tagString = tag.value + '--' + tag.type;
-								if (!lastTagsMapByTimelink[tagString]) {
+								if (!Object.hasOwnProperty.call(lastTagsMapByTimelink, tagString)) {
 									lastTagsMapByTimelink[tagString] = [];
 								}
 								lastTagsMapByTimelink[tagString].push(timeLink);
@@ -765,8 +800,8 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		_clickedCancel: function(){
-			if( this.onCancel ){
+		_clickedCancel: function() {
+			if (this.onCancel) {
 				this.onCancel(this);
 			}
 		},
@@ -822,6 +857,11 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
+		/**
+		 * Add tag group form view to annotation editor.
+		 * @param {Object} $parent jQuery reference to the DOM element, which
+		 * will be the container for the tag group form.
+		 */
 		_addTagGroupEditing: function($parent){
 			var _this = this;
 			var doc = this.currentDoc;
@@ -829,23 +869,25 @@ POSSIBILITY OF SUCH DAMAGE.
 			if (doc
 				&& doc.atlascine_cinemap
 				&& doc.atlascine_cinemap.tagColors) {
-				for (var tagna in doc.atlascine_cinemap.tagGroups) {
-					if (tagna === 'place' || tagna === 'location'){
+				for (var tagName in doc.atlascine_cinemap.tagGroups) {
+					if (tagName === 'place' || tagName === 'location'){
 						continue;
 					}
+
 					var taginfo = {
-						name: tagna,
-						color: doc.atlascine_cinemap.tagColors[tagna],
+						name: tagName,
+						color: doc.atlascine_cinemap.tagColors[tagName],
 						children: []
 					};
-					var tagchildren = findChildTags(tagna);
+
+					var tagchildren = findChildTags(tagName);
 					if (tagchildren) {
 						taginfo.children = tagchildren;
 					}
 					existingTagGroupArr.push(taginfo);
 				}
 
-				//generate existing tagGroupEditors
+				// generate existing tagGroupEditors
 				_this._addExistingTagGroupSingleUnit($parent, existingTagGroupArr);
 			}
 
@@ -854,8 +896,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				parentElem: $parent,
 				mdcClasses: ['n2WidgetAnnotation_tagGroup_addNewGroupBtn'],
 				btnLabel: 'Add new tag group',
-				onBtnClick: function(){
-					var _self = this;
+				onBtnClick: function() {
 					var $taggroupContainer = $('<div>')
 						.addClass('n2WidgetAnnotation_tagGroup_container')
 						.insertBefore($('.n2WidgetAnnotation_tagGroup_addNewGroupBtn'));
@@ -863,29 +904,33 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
-			function findChildTags(target){
-				var rst = undefined;
-				for (var tagna in doc.atlascine_cinemap.tagGroups) {
-					if (tagna === target
-						&& doc.atlascine_cinemap.tagGroups[tagna].length > 0) {
-						if (!rst) {
-							rst = [];
-						}
+			/**
+			 * Find and returns a list of tags associated with a tag group name
+			 * @param {string} groupName tag group name.
+			 * @return {array} list of tags associated with a tag group.
+			 */
+			function findChildTags(groupName) {
+				var tagName;
+				var result = [];
+				for (tagName in doc.atlascine_cinemap.tagGroups) {
+					if (tagName === groupName
+						&& doc.atlascine_cinemap.tagGroups[tagName].length) {
 						// clone the children tags group
-						rst = doc.atlascine_cinemap.tagGroups[tagna].slice(0);
+						result = doc.atlascine_cinemap.tagGroups[tagName].slice(0);
 					}
 				}
-				return rst;
+				return result;
 			}
 		},
 
-		_addExistingTagGroupSingleUnit: function($parent, tagGroupArr){
+		_addExistingTagGroupSingleUnit: function($parent, tagGroupArr) {
 			var $formField = $parent;
-			tagGroupArr.forEach(function(taginfo){
+			tagGroupArr.forEach(function(taginfo) {
 
 				var $formFieldSection = $('<div>')
 					.addClass('n2WidgetAnnotation_tagGroup_formfieldSection')
 					.appendTo($formField);
+
 				$('<hr>').appendTo($formFieldSection);
 //				var colorPk = new $n2.mdc.MDCTextField({
 //					txtFldLabel: 'color',
@@ -960,7 +1005,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					.appendTo($mdcTagInputDiv);
 
 				new $n2.mdc.MDCTagBox({
-					parentElem : $rightdiv,
+					parentElem: $rightdiv,
 					label: 'TagGroupMember',
 					mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
 					chips: taginfo.children
@@ -968,15 +1013,15 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				new $n2.mdc.MDCButton({
 					parentElem: $footerdiv,
-					btnLabel : 'Delete',
-					onBtnClick: function(){
+					btnLabel: 'Delete',
+					onBtnClick: function() {
 						$formFieldSection.remove();
 					}
 				});
 			});
 		},
 
-		_addEmptyTagGroupSingleUnit: function($parent, opts) {
+		_addEmptyTagGroupSingleUnit: function($parent) {
 			var $formField = $parent;
 			var $formFieldSection = $('<div>')
 				.addClass('n2WidgetAnnotation_tagGroup_formfieldSection')
@@ -1062,7 +1107,14 @@ POSSIBILITY OF SUCH DAMAGE.
 			});
 		},
 
-		_addFormViewForSingleUnit: function($parent, data){
+		/**
+		 * Add single unit annotation form view to annotation editor widget.
+		 * - Form includes; place tag tagbox field, theme tag tagbox field,
+		 * comments, and sentence text.
+		 * @param {object} $parent jQuery Reference to the DOM element which
+		 * will contains the annotation form.
+		 */
+		_addFormViewForSingleUnit: function($parent){
 			var _this = this;
 			var $formField = $parent;
 			var depot = this.dataDepot;
@@ -1099,7 +1151,6 @@ POSSIBILITY OF SUCH DAMAGE.
 					.appendTo($formFieldSection);
 
 				$('<hr>').appendTo($formFieldSection);
-//					.appendTo($formFieldSection);
 
 				var doc = _this.currentDoc;
 				var lastThemeTags = [];
@@ -1107,7 +1158,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				if (doc && doc.atlascine_cinemap) {
 					var timeLinks = doc.atlascine_cinemap.timeLinks;
 					if (!timeLinks) {
-//						No timeLinks no worry
+						// No timeLinks no worry
 						return;
 					}
 
@@ -1117,7 +1168,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							if (timeLink.tags) {
 								for (var tag in timeLink.tags) {
 									var tagProfile = timeLink.tags[tag];
-									if ('place' ===  tagProfile.type || 'location' === tagProfile.type) {
+									if ('place' === tagProfile.type || 'location' === tagProfile.type) {
 										lastPlaceTags.push(tagProfile);
 									} else {
 										lastThemeTags.push(tagProfile);
@@ -1148,6 +1199,8 @@ POSSIBILITY OF SUCH DAMAGE.
 								deltar = $n2.extend({value: value}, target);
 								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
 								$n2.log('Deleting tags', target);
+								break;
+							default:
 								break;
 							}
 						// $n2.log('I wonder what is this: ', tagList);
@@ -1309,25 +1362,40 @@ POSSIBILITY OF SUCH DAMAGE.
 //		});
 		},
 
+		/**
+		 * Creates full and partial tag profiles for all theme tags
+		 * @param {Object} senData Sentence data for each time link.
+		 * Sentence data objects contains; start and end times, tags, comments,
+		 * and the sentence text.
+		 * @return {array} tag profiles which indicate if a sentence theme tag
+		 * is either full or partial.
+		 */
 		_buildThemeTagProfiles: function(senData) {
-			var rst = [];
-			var fracMap = undefined;
-			if (senData.length > 0) {
-				fracMap = {}; // true means full cover; false means partial
+			var result = [];
+			var fracMap, senTag, mapTag;
+			if (senData.length) {
+				fracMap = {};
 
+				// true means full cover; false means partial
+				// All non-place tags are initially set to full fraction.
 				senData.forEach(function(sd) {
-					for (var tag in sd.tags) {
-						if (sd.tags[tag].type !== 'place'
-						&& sd.tags[tag].type !== 'location') {
-							fracMap[tag] = $n2.extend({fraction: 'full'}, sd.tags[tag]);
+					for (senTag in sd.tags) {
+						if (sd.tags[senTag].type !== 'place'
+							&& sd.tags[senTag].type !== 'location') {
+							fracMap[senTag] = $n2.extend(
+								{fraction: 'full'},
+								sd.tags[senTag]
+							);
 						}
 					}
 				});
 
-				for (var tag in fracMap) {
+				// Tags which are in the fraction map which don't exist in the
+				// sentence data, are defined as a partial fraction.
+				for (mapTag in fracMap) {
 					senData.forEach(function(se) {
-						if (!(tag in se.tags)) {
-							fracMap[tag].fraction = 'partial';
+						if (!Object.hasOwnProperty.call(se.tags, mapTag)) {
+							fracMap[mapTag].fraction = 'partial';
 						}
 					});
 				}
@@ -1338,52 +1406,67 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			if (fracMap) {
 				for (var tag in fracMap) {
-					rst.push(fracMap[tag]);
+					result.push(fracMap[tag]);
 				}
 			}
-			return rst;
-		},
-
-		_buildPlaceTagProfiles: function(senData) {
-			var rst = [];
-			var fracMap = undefined;
-			if (senData.length > 0) {
-				fracMap = {};//true means full cover; false means partial
-
-				senData.forEach(function(sd){
-					for (var tag in sd.tags){
-						if (sd.tags[tag].type
-							&& (sd.tags[tag].type === 'place'
-							|| sd.tags[tag].type === 'location')) {
-							fracMap[tag] = $n2.extend({fraction: 'full'}, sd.tags[tag]);
-						}
-					}
-				});
-
-				for (var tag in fracMap) {
-					senData.forEach(function(se) {
-						if (!(tag in se.tags)) {
-							fracMap[tag].fraction = 'partial';
-						}
-					});
-				}
-
-			} else {
-				$n2.log("focusSentences data is not valid");
-			}
-
-			if (fracMap) {
-				for (var tag in fracMap) {
-					rst.push(fracMap[tag]);
-				}
-			}
-			return rst;
+			return result;
 		},
 
 		/**
-		 * Add annotation form field section to annotation editor widget.
-		 *  - Form includes; place tag tagbox field, theme tag tagbox field,
-		 * comments, and sentance text.
+		 * Creates full and partial tag profiles for all place tags
+		 * @param {Object} senData Sentence data for each time link.
+		 * Sentence data objects contains; start and end times, tags, comments,
+		 * and the sentence text.
+		 * @return {array} tag profiles which indicate if a sentence place tag
+		 * is either full or partial.
+		 */
+		_buildPlaceTagProfiles: function(senData) {
+			var result = [];
+			var fracMap, senTag, mapTag;
+			if (senData.length) {
+				fracMap = {};
+
+				// true means full cover; false means partial
+				// All place tags are initially set to full fraction.
+				senData.forEach(function(sd) {
+					for (senTag in sd.tags) {
+						if (sd.tags[senTag].type
+							&& (sd.tags[senTag].type === 'place'
+							|| sd.tags[senTag].type === 'location')) {
+							fracMap[senTag] = $n2.extend(
+								{fraction: 'full'},
+								sd.tags[senTag]
+							);
+						}
+					}
+				});
+
+				// Tags which are in the fraction map which don't exist in the
+				// sentence data, are defined as a partial fraction.
+				for (mapTag in fracMap) {
+					senData.forEach(function(se) {
+						if (!(mapTag in se.tags)) {
+							fracMap[mapTag].fraction = 'partial';
+						}
+					});
+				}
+
+			} else {
+				$n2.log("focusSentences data is not valid");
+			}
+
+			if (fracMap) {
+				for (var tag in fracMap) {
+					result.push(fracMap[tag]);
+				}
+			}
+			return result;
+		},
+
+		/**
+		 * Add aggregated annotation form view to annotation editor widget.
+		 * - Form includes; place tag tagbox field, theme tag tagbox field,
+		 * comments, and sentence text.
 		 * @param {object} $parent jQuery Reference to the DOM element which
 		 * will contains the annotation form.
 		 */
@@ -1484,6 +1567,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 		},
 
+		/**
+		 * Depending on if aggregated mode is on or not, either show the
+		 * aggregated or single unit form view.
+		 */
 		_addTagSelEditing: function() {
 			var _this = this;
 			if (_this.editorAggregateMode) {
@@ -1639,6 +1726,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						dispatchService: this.dispatchService
 						,modelId: this.sourceModelId
 					});
+
 					if (state) {
 						this._sourceModelUpdated(state);
 					}
@@ -1653,12 +1741,12 @@ POSSIBILITY OF SUCH DAMAGE.
 			return $('#' + this.elemId);
 		},
 
-		// Get the element id of the loader div (div.n2AnnotationEditorLoader)
+		// Get the element id of the loader div.n2AnnotationEditorLoader
 		_getLoaderDiv: function() {
 			return $("#" + this.loaderDivId);
 		},
 
-		// Get the element id of the content view div (div.n2AnnotationEditorView)
+		// Get the element id of the content view div.n2AnnotationEditorView
 		_getContentViewDiv: function() {
 			return $('#' + this.contentDivId);
 		},
@@ -1675,7 +1763,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			this.annotationEditorView.render(opts);
 		},
 
-		// Start the Annotation Editor Widget when tag selection button is clicked.
+		// Start the Annotation Editor Widget when tag selection option is clicked.
 		_startEditor: function(ctxMenuOption, senDataArr){
 			var _this = this;
 
@@ -1683,7 +1771,9 @@ POSSIBILITY OF SUCH DAMAGE.
 				if (!this.drawer) {
 					var $container = this._getContentViewDiv();
 					var containerId = $n2.utils.getElementIdentifier($container);
-					// Add a sliding drawer to content view div (div.n2AnnotationEditorView)
+
+					// Add a sliding drawer to content view
+					// div.n2AnnotationEditorView
 					this.drawer = new $n2.ui.drawer({
 						containerId: containerId,
 						width: '500px',
@@ -1712,16 +1802,14 @@ POSSIBILITY OF SUCH DAMAGE.
 				});
 			}, 0);
 
-//		this.annotationEditorView.refresh({
-//			option: ctxMenuOption,
-//			data: senDataArr,
-//			doc: currentDoc
-//		});
+//			this.annotationEditorView.refresh({
+//				option: ctxMenuOption,
+//				data: senDataArr,
+//				doc: currentDoc
+//			});
 		},
 
-		/**
-	 	* Close the editor drawer
-	 	*/
+	 	// Close the editor drawer
 		_closeEditor: function() {
 			if (this.drawer) {
 				this.drawer.close();
@@ -1743,42 +1831,44 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_handle: function(m, addr, dispatcher) {
+			var ctxMenuOption, senDataArr;
 			var _this = this;
 
-			if ('annotationEditorStart' === m.type) {
-				var ctxMenuOption = m.ctxMenuOption;
-				var senDataArr = m.senDataArr;
+			if (m.type === 'annotationEditorStart') {
+				ctxMenuOption = m.ctxMenuOption;
+				senDataArr = m.senDataArr;
 				this._startEditor(ctxMenuOption, senDataArr);
 
-			} else if ('annotationEditorClose' === m.type) {
+			} else if (m.type === 'annotationEditorClose') {
 				this._closeEditor();
 
-			} else if ('annotationEditorIsAvailable' === m.type) {
+			} else if (m.type === 'annotationEditorIsAvailable') {
 				m.available = true;
 
-			} else if ('modelStateUpdated' === m.type) {
+			} else if (m.type === 'modelStateUpdated') {
 				// Does it come from one of our sources?
 				if (this.sourceModelId === m.modelId) {
 					this._sourceModelUpdated(m.state);
 				}
 
-			} else if ('annotationEditorViewRefreshDone' === m.type) {
+			} else if (m.type === 'annotationEditorViewRefreshDone') {
 				_this._showContent();
 				this.drawer.open();
 
-			} else if ('annotationEditorShowLoader' === m.type) {
+			} else if (m.type === 'annotationEditorShowLoader') {
 				_this._showLoader();
 			}
 		},
 
 		_refreshCurrentDoc: function() {
+			var docId, doc;
 			if (this.docsById[this.currentDocId]) {
 				// OK, nothing has changed
 
 			} else {
 				// Select a new document
 				this.currentDocId = undefined;
-				for (var docId in this.docsById) {
+				for (docId in this.docsById) {
 					this.currentDocId = docId;
 				}
 
@@ -1787,7 +1877,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				} else if (this.annotationEditorView) {
 					this._closeEditor();
-					var doc = this.docsById[this.currentDocId];
+					doc = this.docsById[this.currentDocId];
 					this.annotationEditorView.refresh({
 						doc: doc
 					});
@@ -1812,7 +1902,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 
 			if (sourceState.updated) {
-				for (i = 0, e = sourceState.updated.length; i < e; ++i) {
+				for (i = 0, e = sourceState.updated.length; i < e; i += 1) {
 					doc = sourceState.updated[i];
 					docId = doc._id;
 
@@ -1821,7 +1911,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 
 			if (sourceState.removed) {
-				for (i=0, e=sourceState.removed.length; i<e; ++i) {
+				for (i = 0, e = sourceState.removed.length; i < e; i += 1) {
 					doc = sourceState.removed[i];
 					docId = doc._id;
 
@@ -1840,16 +1930,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 	// -------------------------------------------------------------------------
 	function HandleWidgetDisplayRequests(m) {
+		var options, config, containerId, widgetOptions, key, value;
 		if (m.widgetType === 'annotationEditorWidget') {
-			var widgetOptions = m.widgetOptions;
-			var containerId = widgetOptions.containerId;
-			var config = m.config;
+			widgetOptions = m.widgetOptions;
+			containerId = widgetOptions.containerId;
+			config = m.config;
 
-			var options = {};
+			options = {};
 
 			if (widgetOptions) {
-				for (var key in widgetOptions) {
-					var value = widgetOptions[key];
+				for (key in widgetOptions) {
+					value = widgetOptions[key];
 					options[key] = value;
 				}
 			}
