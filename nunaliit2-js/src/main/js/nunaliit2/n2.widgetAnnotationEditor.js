@@ -591,6 +591,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			}
 
+			function singleSectionUpdate(doc, tagValues, start, end) {
 				// Modify current document
 				var modified = false;
 				var lastTagsMapByTimelink = {};
