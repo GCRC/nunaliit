@@ -426,9 +426,14 @@ POSSIBILITY OF SUCH DAMAGE.
 				.attr('id', this.editorId)
 				.appendTo($container);
 
+			// Style switch to be placed in-line with content below.
+			var $switchContainer = $('<div>')
+				.css('margin', '10px 0px 0px 20px')
+				.appendTo($formField);
+
 			// Add switch for aggregation
 			new $n2.mdc.MDCSwitch({
-				parentElem: $formField,
+				parentElem: $switchContainer,
 				label: 'Aggregation',
 				initiallyOn: _this.editorAggregateMode,
 				onChangeCallBack: function(checked) {
@@ -1810,7 +1815,7 @@ POSSIBILITY OF SUCH DAMAGE.
 //			});
 		},
 
-	 	// Close the editor drawer
+		// Close the editor drawer
 		_closeEditor: function() {
 			if (this.drawer) {
 				this.drawer.close();
