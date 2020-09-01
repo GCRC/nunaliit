@@ -567,6 +567,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					if (typeof start !== "undefined"
 						&& typeof end !== "undefined"
 						&& typeof tagValues !== "undefined") {
+						modified |= singleSectionUpdate (doc, tagValues, start, end);
 					}
 				})
 
