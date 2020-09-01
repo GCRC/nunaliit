@@ -535,7 +535,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			documentSource.getDocument({
 				docId: this.currentDoc._id
-				,onSuccess:function(doc) {
+				,onSuccess: function(doc) {
 					switch(_this.editorMode) {
 					case CineAnnotationEditorMode.TAGSELECTION:
 						updateDocForTags(doc, _this.dataDepot);
@@ -546,6 +546,8 @@ POSSIBILITY OF SUCH DAMAGE.
 						break;
 					case CineAnnotationEditorMode.TAGSETTING:
 						updateDocForTagSetting(doc);
+						break;
+					default:
 						break;
 					}
 				}
@@ -564,7 +566,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					var tagValues = sd.tags;
 					if (typeof start !== "undefined"
 						&& typeof end !== "undefined"
-						&& typeof tagValues !== "undefined"){
+						&& typeof tagValues !== "undefined") {
 					}
 				})
 
@@ -760,7 +762,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					return true;
 				}
 
-				if ($n2.keys(oldTagGroups).length !== $n2.keys(newTagGroups ).length) {
+				if ($n2.keys(oldTagGroups).length !== $n2.keys(newTagGroups).length) {
 					return true;
 				}
 
@@ -812,7 +814,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 		},
 
-		_addTagSetting: function($parent){
+		_addTagSetting: function($parent) {
 			var _this = this;
 			//current cinemap doc;
 			var doc = this.currentDoc;
@@ -848,7 +850,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						.val(_sf)
 						.appendTo($formFieldSection);
 
-				} else if (se === 'globalTimeOffset'){
+				} else if (se === 'globalTimeOffset') {
 					var _sf = _setting[se];
 					$('<label>')
 						.attr('for', _this.gloTimeOffsetId)
@@ -876,7 +878,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				&& doc.atlascine_cinemap
 				&& doc.atlascine_cinemap.tagColors) {
 				for (var tagName in doc.atlascine_cinemap.tagGroups) {
-					if (tagName === 'place' || tagName === 'location'){
+					if (tagName === 'place' || tagName === 'location') {
 						continue;
 					}
 
@@ -989,7 +991,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					.text('Color')
 					.appendTo($mdcColorInputDiv);
 
-				var $mdcTagInputDiv= $('<div>')
+				var $mdcTagInputDiv = $('<div>')
 					.addClass('input_group_for_customMDC for_tagname')
 					.appendTo($headdiv);
 
@@ -1174,7 +1176,8 @@ POSSIBILITY OF SUCH DAMAGE.
 							if (timeLink.tags) {
 								for (var tag in timeLink.tags) {
 									var tagProfile = timeLink.tags[tag];
-									if ('place' === tagProfile.type || 'location' === tagProfile.type) {
+									if ('place' === tagProfile.type
+										|| 'location' === tagProfile.type) {
 										lastPlaceTags.push(tagProfile);
 									} else {
 										lastThemeTags.push(tagProfile);
@@ -1772,6 +1775,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		// Start the Annotation Editor Widget when tag selection option is clicked.
 		_startEditor: function(ctxMenuOption, senDataArr){
 			var _this = this;
+			var currentDoc;
 
 			if (this.annotationEditorView) {
 				if (!this.drawer) {
@@ -1790,7 +1794,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			}
 
-			var currentDoc = undefined;
 			if (this.currentDocId) {
 				currentDoc = this.docsById[this.currentDocId];
 			}
@@ -1894,7 +1897,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		_sourceModelUpdated: function(sourceState) {
 			var i, e, doc, docId;
 			if (sourceState.added) {
-				for (i = 0, e = sourceState.added.length; i < e; ++i) {
+				for (i = 0, e = sourceState.added.length; i < e; i += 1) {
 
 					// Temporary workup for single cinemap selection
 					// Better bug fix the SelectableDocumentFilter
