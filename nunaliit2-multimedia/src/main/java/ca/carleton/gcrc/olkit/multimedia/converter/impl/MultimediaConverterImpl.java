@@ -39,7 +39,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 		request.setThumbnailCreated(false);
 
 		File inFile = request.getInFile();
-		if( null == inFile ) {
+		if (inFile == null) {
 			throw new Exception("Must provide a file for video conversion");
 		}
 
@@ -54,7 +54,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			FFmpegProcessor ffmpeg = FFmpeg.getProcessor(null);
 			videoInfo = ffmpeg.getMediaInfo( inFile );
 		}
-		
+
 		// Check if conversion is required
 		boolean conversionRequired = videoConversionThreshold.isConversionRequired(
 				videoInfo.getVideoCodec()
@@ -71,8 +71,17 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 		} else {
 			request.setInDurationInSec(videoInfo.getDurationInSec());
 		}
-		request.setInHeight(videoInfo.getHeight().intValue());
-		request.setInWidth(videoInfo.getWidth().intValue());
+		
+		if (videoInfo.getHeight() == null) {
+			request.setInHeight(0);
+		} else {
+			request.setInHeight(videoInfo.getHeight().intValue());
+		}
+		if (videoInfo.getWidth() == null) {
+			request.setInWidth(0);
+		} else {
+			request.setInWidth(videoInfo.getWidth().intValue());
+		}
 		
 		FFmpegMediaInfo outVideoInfo = null;
 		if( false == conversionRequired ) {
