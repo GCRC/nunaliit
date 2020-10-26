@@ -96,10 +96,11 @@ public class SystemFile {
 		
 		// Parse line
 		String[] components = line.split(";");
-		
+
 		if( components.length > 0 ) {
 			String[] mimeTypes = components[0].split("\\\\012- ");
 			for(String mimeType : mimeTypes){
+				System.out.println(mimeType);
 				if( null == result.mimeType ){
 					result.mimeType = mimeType;
 				} else if( mimeType.startsWith("video") ) {
