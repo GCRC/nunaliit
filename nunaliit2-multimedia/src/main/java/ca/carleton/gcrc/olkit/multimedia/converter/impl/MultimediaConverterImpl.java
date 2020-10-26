@@ -71,8 +71,16 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 		} else {
 			request.setInDurationInSec(videoInfo.getDurationInSec());
 		}
-		request.setInHeight(videoInfo.getHeight().intValue());
-		request.setInWidth(videoInfo.getWidth().intValue());
+		if (null == videoInfo.getHeight()) {
+			request.setInHeight(0);
+		} else {
+			request.setInHeight(videoInfo.getHeight().intValue());
+		}
+		if (null == videoInfo.getWidth()) {
+			request.setInWidth(0);
+		} else {
+			request.setInWidth(videoInfo.getWidth().intValue());
+		}
 		
 		FFmpegMediaInfo outVideoInfo = null;
 		if( false == conversionRequired ) {
