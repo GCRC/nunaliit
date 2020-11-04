@@ -135,11 +135,12 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 
 		logger.info("Upload worker thread exiting");
 	}
-	
+
 	private void activity() {
 		Work work = null;
 		try {
 			work = getWork();
+			System.out.println("~~~ work: " + work);
 		} catch (Exception e) {
 			logger.error("Error accessing server",e);
 			waitMillis(DELAY_ERROR); // wait a minute
@@ -149,16 +150,21 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		if( null == work ) {
 			// Nothing to do, remove old errors
 			List<String> docIdsRecovered = docsInError.removeErrorsOlderThanMs(DELAY_CLEAR_OLD_ERRORS);
+			System.out.println("$$$$$$$$$$$$$$$$$$ work is null");
 
 			if( docIdsRecovered.size() <= 0 ) {
 				// No errors to get rid of and no work, wait
+				System.out.println("********** WAITING *********" + noWorkDelayInMs);
 				waitMillis(noWorkDelayInMs);
 				return;
 			}
 		} else {
 			try {
 				// Handle this work
+				System.out.println("---------");
+				System.out.println("Before Perform Work");
 				performWork(work);
+				System.out.println("After Perform Work");
 				
 			} catch(Exception e) {
 				boolean shouldErrorBeTakenIntoAccount = true;
@@ -237,7 +243,10 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			performSubmittedInlineWork(work);
 			
 		} else if( UploadConstants.UPLOAD_STATUS_ANALYZED.equals(state) ) {
+			// TODO
+			System.out.println("STARTED ANALYZING");
 			performAnalyzedWork(work);
+			System.out.println("FINISHED ANALYZING");
 			
 		} else if( UploadConstants.UPLOAD_STATUS_APPROVED.equals(state) ) {
 			performApprovedWork(work);
@@ -475,18 +484,20 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 	}
 
 	private void performAnalyzedWork(Work work) throws Exception {
+		System.out.println("ASM 1");
 		String attachmentName = work.getAttachmentName();
-
+		System.out.println("ASM 2");
 		FileConversionContext conversionContext = 
 			new FileConversionContextImpl(work,documentDbDesign,mediaDir);
-
+		System.out.println("ASM 3");
 		DocumentDescriptor docDescriptor = conversionContext.getDocument();
-
+		System.out.println("ASM 4");
 		AttachmentDescriptor attDescription = null;
 		if( docDescriptor.isAttachmentDescriptionAvailable(attachmentName) ){
 			attDescription = docDescriptor.getAttachmentDescription(attachmentName);
+			System.out.println("ASM 5");
 		}
-		
+		System.out.println("ASM 6");
 		if( null == attDescription ) {
 			logger.info("Analysis object not found");
 
@@ -498,34 +509,40 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				logger.error("Analysis required but original object is not present");
 				throw new Exception("Analysis required but original object is not present");
 			}
+			System.out.println("ASM 7");
 			OriginalFileDescriptor originalObj = attDescription.getOriginalFileDescription();
-			
+			System.out.println("ASM 9");
 			// Verify if a submitter is specified
 			CouchAuthenticationContext submitter = attDescription.getSubmitter();
-
+			System.out.println("ASM 10");
 			boolean pluginFound = false;
 			String fileClass = attDescription.getFileClass();
-
+			System.out.println("ASM 11");
 			FileConversionPlugin plugin = fileConverterFactory.getFileConversionPlugin(fileClass);
+			System.out.println("ASM 12");
 			if (plugin != null && plugin.handlesFileClass(fileClass, FileConversionPlugin.WORK_ANALYZE)) {
 				pluginFound = true;
+				System.out.println("ASM 13");
 				plugin.performWork(FileConversionPlugin.WORK_ANALYZE, attDescription);
+				System.out.println("ASM 14");
 			}
 
 			if( false == pluginFound ) {
 				logger.info("No plugin found to analyze file class: {}", fileClass);
-				
+				System.out.println("ASM 15");
 				// By default, original file is used
 				attDescription.setOriginalUpload(true);
 				attDescription.setMediaFileName(originalObj.getMediaFileName());
 				attDescription.setContentType(originalObj.getContentType());
 				attDescription.setEncodingType(originalObj.getEncodingType());
 				attDescription.setSize(originalObj.getSize());
+				System.out.println("ASM 16");
 			}
 			
 			// Update document
 			boolean shouldSendNotification = false;
 			if( CouchNunaliitUtils.hasVetterRole(submitter, settings.getAtlasName()) ) {
+				System.out.println("ASM 17");
 				// If submitter has vetter role, then no need to wait for approval
 				attDescription.setStatus(UploadConstants.UPLOAD_STATUS_APPROVED);
 			} else {
@@ -533,7 +550,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				shouldSendNotification = true;
 			}
 			conversionContext.saveDocument();
-			
+			System.out.println("ASM 18");
 			// Notify that upload is available
 			if( shouldSendNotification ) {
 				sendVettingNotification(work.getDocId(), work.getDocument(), attachmentName);
@@ -870,17 +887,20 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 					// Everything else
 					WorkDocumentDb work = new WorkDocumentDb(documentDbDesign, state, id);
 					work.setAttachmentName(attachmentName);
+					System.out.println("returning from document");
 					return work;
 				}
 			}
 		}
+
 		
 		// At this point, no work found in the document database. Look in the
 		// submission database, if present
 		if( null != submissionDbDesign ){
 			CouchQuery query = new CouchQuery();
+			// TODO: changed here
 			query.setViewName("upload-work");
-			
+			System.out.println("searching uploads");
 			CouchQueryResults results = submissionDbDesign.performQuery(query);
 			
 			for(JSONObject row : results.getRows()) {
@@ -956,7 +976,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		
 		return rowsByUploadId;
 	}
-	
+
 	private String computeEffectiveAttachmentName(String attachmentName, Integer counter){
 		String prefix = "";
 		String suffix = "";
@@ -967,7 +987,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			prefix = attachmentName.substring(0, pos);
 			suffix = attachmentName.substring(pos);
 		}
-		
+
 		// Remove leading '_' from prefix
 		while( prefix.length() > 0 && prefix.charAt(0) == '_' ){
 			prefix = prefix.substring(1);
@@ -981,7 +1001,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		} else {
 			effectiveAttachmentName = prefix + suffix;
 		}
-		
+
 		return effectiveAttachmentName;
 	}
 	

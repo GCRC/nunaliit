@@ -292,6 +292,7 @@ public class ConfigServlet extends JsonServlet {
 		return loadProperties(baseName, loadDefault, null);
 	}
 
+	// TODO 936 props are loaded here
 	private Properties loadProperties(String baseName, boolean loadDefault, Properties defaultValues) throws ServletException {
 
 		File configurationDirectory = new File(atlasDir,"config");
@@ -393,6 +394,7 @@ public class ConfigServlet extends JsonServlet {
 		}
 
 		// Load properties for atlas
+		// TODO: 936 reading atlas properties
 		try {
 			atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
 		} catch(Exception e) {
@@ -454,6 +456,10 @@ public class ConfigServlet extends JsonServlet {
 		logger.info("User database configured: "+userDb.getUrl());
 		
 		// Submission database
+		// TODO: 936
+		System.out.println("IS COUCHDB SUBMISSIONS ENABLED?");
+		if (atlasProperties.isCouchDbSubmissionDbEnabled()) System.out.println("YES");
+		else System.out.println("NO");
 		if( atlasProperties.isCouchDbSubmissionDbEnabled() ){
 			try {
 				String submissionDbName = atlasProperties.getCouchDbSubmissionDbName();
@@ -697,8 +703,14 @@ public class ConfigServlet extends JsonServlet {
 				PdfFileConverter pdfPlugin = new PdfFileConverter(props);
 				pdfPlugin.setAtlasName(atlasProperties.getAtlasName());
 			}
+			// TODO: 936
+			System.out.println("^^^^^^^^^^^^^^^^^");
 			if( null != submissionDb ){
+				if (submissionDb == null) System.out.println("^^^^^^^^^^^^^^^^ NULL");
+				else System.out.println("^^^^^^^^^^^^^^^^^ NOT NULL");
 				CouchDesignDocument submissionDbDesign = submissionDb.getDesignDocument("submission");
+				if (submissionDbDesign == null) System.out.println("^^^^^^^^^^^^^^^^ NULL 2");
+				else System.out.println("^^^^^^^^^^^^^^^^^ NOT NULL 2");
 				uploadWorker.setSubmissionDbDesign(submissionDbDesign);
 			}
 			uploadWorker.start();

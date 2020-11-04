@@ -150,7 +150,7 @@ public class CommandUpdate implements Command {
 		// Update submission database with design document
 		if( atlasProperties.isCouchDbSubmissionDbEnabled() ) {
 			CouchDb submissionCouchDb = null;
-
+			System.out.println("///////////////////BUCK DICH");
 			try {
 				submissionCouchDb = CommandSupport.createCouchDbSubmission(gs, atlasProperties);
 	
@@ -159,6 +159,7 @@ public class CommandUpdate implements Command {
 				
 				pushSubmissionDesign(gs, atlasDir, atlasProperties, updateProcessForSubmissionDb);
 			} catch(Exception e) {
+				System.out.println("##############" + e);
 				throw new Exception("Unable to upload submission design document", e);
 			}
 

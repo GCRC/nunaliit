@@ -59,17 +59,23 @@ public class CommandSupport {
 		GlobalSettings gs
 		,AtlasProperties atlasProperties
 		) throws Exception {
-		
+
+		System.out.println("###############" + "before couch client");
 		CouchClient couchClient = createCouchClient(gs, atlasProperties);
-		
+		System.out.println("###############" + "after couch client");
 		// Get database from Couch Client
 		CouchDb couchDb = null;
 		{
 			String dbName = atlasProperties.getCouchDbSubmissionDbName();
+			System.out.println("###############" + dbName);
 			if( false == couchClient.databaseExists(dbName) ) {
+				System.out.println("###############" + ">> create");
 				couchClient.createDatabase(dbName);
+				System.out.println("###############" + "<< create");
 			}
+			System.out.println("###############" + ">> get");
 			couchDb = couchClient.getDatabase(dbName);
+			System.out.println("###############" + "<< get");
 		}
 		return couchDb;
 	}
