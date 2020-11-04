@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.onUpload;
 
 import ca.carleton.gcrc.couch.client.*;
+import ca.carleton.gcrc.couch.client.impl.CouchDbException;
 import ca.carleton.gcrc.couch.onUpload.conversion.*;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachProcessor;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachProcessorImpl;
@@ -14,6 +15,7 @@ import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifier;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifierDisabled;
 import ca.carleton.gcrc.couch.onUpload.simplifyGeoms.GeometrySimplifierImpl;
 import ca.carleton.gcrc.couch.onUpload.utils.AttachmentUtils;
+import ca.carleton.gcrc.couch.onUpload.utils.ErrorUtils;
 import ca.carleton.gcrc.couch.onUpload.utils.PluginUtils;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import org.apache.tika.mime.MediaType;
@@ -24,7 +26,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -87,22 +88,57 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
         inReachProcessor = new InReachProcessorImpl();
     }
 
+    public void shutdown() {
+        logger.info("Shutting down upload worker thread");
+        isShuttingDown = true;
+    }
 
     @Override
     public void run() {
-
+        logger.info("Start upload worker thread");
+        boolean done = false;
+        do {
+            activity();
+        } while (!done);
+        logger.info("Upload worker thread exiting");
     }
 
-    private void activity() {
-
+    private synchronized void activity() {
+        Work work = null;
+        try {
+            while (getWork() == null) wait();
+            performWork(work);
+        } catch (Exception e) {
+            logger.error("Terminated with Exception: " + e);
+            handleActivityErrors(work, e);
+        }
     }
 
     @Override
     public void change(Type type, String docId, String rev, JSONObject rawChange, JSONObject doc) {
-        // why synchronized?
-        synchronized(this) {
-            docsInError.removeErrorsWithDocId(docId);
-            this.notifyAll();
+        docsInError.removeErrorsWithDocId(docId);
+        this.notifyAll();
+    }
+
+    private void handleActivityErrors(final Work work, final Exception e) {
+        boolean shouldErrorBeTakenIntoAccount = true;
+        for(Throwable t : ErrorUtils.errorAndCausesAsList(e)){
+            if( t instanceof CouchDbException){
+                CouchDbException couchDbException = (CouchDbException)t;
+                if( 409 == couchDbException.getReturnCode() ){
+                    // This is a conflict error in CouchDb. Somebody is updating the document
+                    // at the same time. Just retry the worl
+                    shouldErrorBeTakenIntoAccount = false;
+                }
+            }
+        }
+
+        logger.error("Error processing document "+work.getDocId()+" ("+work.getState()+")",e);
+
+        if (shouldErrorBeTakenIntoAccount) {
+            docsInError.addDocumentInError( work.getDocId() );
+        } else {
+            logger.info("Previous error for " + work.getDocId() + " will be ignored. Should retry shortly.");
         }
     }
 
@@ -188,16 +224,16 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
 
         } else if( UploadConstants.UPLOAD_WORK_INREACH_SUBMIT.equals(state) ) {
             performInReachSubmit(work);
-
         } else {
             throw new Exception("Unrecognized state: "+state);
         }
 
         logger.info("Upload worker completed: "+work);
+        notifyAll();
     }
 
     // TODO: refactor
-    private void performWaitingForUploadWork(Work work) throws Exception {
+    private synchronized void performWaitingForUploadWork(Work work) throws Exception {
 
         FileConversionContext conversionContext =
                 new FileConversionContextImpl(work,documentDbDesign,mediaDir);
@@ -256,7 +292,7 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
     }
 
     // TODO: refactor
-    private void performSubmittedWork(Work work) throws Exception {
+    private synchronized void performSubmittedWork(Work work) throws Exception {
         String attachmentName = work.getAttachmentName();
 
         FileConversionContext conversionContext =
@@ -353,7 +389,7 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
      * @throws Exception
      */
     // TODO: clean and refactor
-    private void performSubmittedInlineWork(Work work) throws Exception {
+    private synchronized void performSubmittedInlineWork(Work work) throws Exception {
         String attachmentName = work.getAttachmentName();
 
         FileConversionContext conversionContext =
@@ -400,7 +436,7 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
     }
 
     // TODO: clean and refactor
-    private void performAnalyzedWork(Work work) throws Exception {
+    private synchronized void performAnalyzedWork(Work work) throws Exception {
         System.out.println("ASM 1");
         String attachmentName = work.getAttachmentName();
         System.out.println("ASM 2");
@@ -476,7 +512,7 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
     }
 
     // TODO: refactor
-    private void performApprovedWork(Work work) throws Exception {
+    private synchronized void performApprovedWork(Work work) throws Exception {
         String attachmentName = work.getAttachmentName();
 
         FileConversionContext conversionContext =
@@ -528,7 +564,7 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
     }
 
     // TODO: refactor
-    private void performOrientationWork(Work work) throws Exception {
+    private synchronized void performOrientationWork(Work work) throws Exception {
         FileConversionContext conversionContext =
                 new FileConversionContextImpl(work, documentDbDesign, mediaDir);
         final AttachmentDescriptor attachmentDescriptor =
@@ -568,7 +604,7 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
         }
     }
 
-    private void performThumbnailWork(Work work) throws Exception {
+    private synchronized void performThumbnailWork(Work work) throws Exception {
         FileConversionContext conversionContext =
                 new FileConversionContextImpl(work, documentDbDesign, mediaDir);
         final AttachmentDescriptor attachmentDescriptor =
@@ -598,7 +634,7 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
         }
     }
 
-    private void performUploadOriginalImageWork(Work work) throws Exception {
+    private synchronized void performUploadOriginalImageWork(Work work) throws Exception {
         FileConversionContext conversionContext =
                 new FileConversionContextImpl(work, documentDbDesign, mediaDir);
         final AttachmentDescriptor attachmentDescriptor =
@@ -612,7 +648,7 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
         conversionContext.saveDocument();
     }
 
-    private void performRotateWork(String workType, Work work) throws Exception {
+    private synchronized void performRotateWork(String workType, Work work) throws Exception {
         FileConversionContext conversionContext =
                 new FileConversionContextImpl(work, documentDbDesign, mediaDir);
         final AttachmentDescriptor attachmentDescriptor =
@@ -626,14 +662,14 @@ public class FileUploadThread extends Thread implements CouchDbChangeListener {
         conversionContext.saveDocument();
     }
 
-    private void performSimplifyGeometryWork(Work work) throws Exception {
+    private synchronized void performSimplifyGeometryWork(Work work) throws Exception {
         FileConversionContext conversionContext =
                 new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 
         simplifier.simplifyGeometry(conversionContext);
     }
 
-    private void performInReachSubmit(Work work) throws Exception {
+    private synchronized void performInReachSubmit(Work work) throws Exception {
         FileConversionContext conversionContext =
                 new FileConversionContextImpl(work,documentDbDesign,mediaDir);
 
