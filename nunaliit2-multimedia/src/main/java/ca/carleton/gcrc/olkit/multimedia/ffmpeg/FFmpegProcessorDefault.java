@@ -121,30 +121,17 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 			}
 			logger.debug(sw.toString());
 
-			Process p = rt.exec(tokens, null, null);
-			InputStream is = p.getErrorStream();
-			InputStreamReader isr = new InputStreamReader(is);
-			BufferedReader bufReader = new BufferedReader(isr);
-			String line = bufReader.readLine();
-			while( null != line ) {
+			List<String> params = java.util.Arrays.asList(tokens);
+			ProcessBuilder processBuilder = new ProcessBuilder(params);
+			processBuilder.redirectErrorStream(true);
+			Process process = processBuilder.start();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
-				if( null != inputVideo.getDurationInSec() && null != progressTracker ) {
-					Matcher matcher = patternTime.matcher(line);
-					if( matcher.find() ) {
-						float time = Float.parseFloat( matcher.group(1) );
-						float percent = time / inputVideo.getDurationInSec().floatValue();
-						int percentInt = (int)(percent * 100) + 1;
-						if( percentInt > 100 ) {
-							percentInt = 100;
-						}
-						progressTracker.updateProgress(percentInt);
-					}
-				}
-				
-				line = bufReader.readLine();
-			}
-			
-			int exitValue = p.waitFor();
+			String line;
+			while ((line = reader.readLine()) != null)
+				System.out.println(line);
+			int exitValue = process.waitFor();
+
 			if( 0 != exitValue ){
 				logger.info("Command ("+sw.toString()+") exited with value "+exitValue);
 				throw new Exception("Process exited with value: "+exitValue);
