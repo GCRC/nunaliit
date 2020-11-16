@@ -67,7 +67,7 @@ public class WorkDocumentDb implements Work {
 	@Override
 	public JSONObject getDocument() throws Exception {
 		if( null == doc ){
-			logger.debug("Loading document "+docId);
+			logger.info("Loading document "+docId);
 
 			doc = documentDbDesign.getDatabase().getDocument(docId);
 			originalDoc = JSONSupport.copyObject(doc);
@@ -78,7 +78,7 @@ public class WorkDocumentDb implements Work {
 	@Override
 	public void saveDocument() throws Exception {
 		if( 0 != JSONSupport.compare(doc, originalDoc) ){
-			logger.debug("Saving document "+docId);
+			logger.info("Saving document "+docId);
 			
 			// Modified since loaded
 			documentDbDesign.getDatabase().updateDocument(doc);
@@ -96,7 +96,7 @@ public class WorkDocumentDb implements Work {
 		
 		saveDocument();
 
-		logger.debug("Upload "+attachmentName+" to document "+docId);
+		logger.info("Upload "+attachmentName+" to document "+docId);
 		
 		JSONObject document = getDocument();
 		documentDbDesign.getDatabase().uploadAttachment(

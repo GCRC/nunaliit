@@ -281,13 +281,14 @@ public class ConnectionUtils {
 		conn.setDoInput(true);
 		conn.setDoOutput(true);
 		conn.setRequestProperty("Content-Type", contentType);
+		conn.connect();
 		OutputStream os = conn.getOutputStream();
 		
 		StreamUtils.copyStream(is, os);
 
 		os.flush();
 		os.close();
-		conn.connect();
+		//conn.connect(); // TODO: 936
 		updateContextFromHeaderFields(ctxt,conn.getHeaderFields());
 		try {
 			checkResponseForError(conn);
