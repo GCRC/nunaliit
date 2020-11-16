@@ -120,16 +120,17 @@ public class ConnectionUtils {
 		conn.setDoInput(true);
 		if( null == jsonObj ) {
 			conn.setDoOutput(false);
+			conn.connect();
 		} else {
 			conn.setDoOutput(true);
 			conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+			conn.connect();
 			OutputStream os = conn.getOutputStream();
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 			jsonObj.write(osw);
 			osw.flush();
 			os.close();
 		}
-		conn.connect();
 		updateContextFromHeaderFields(ctxt,conn.getHeaderFields());
 		try {
 			checkResponseForError(conn);
@@ -159,16 +160,17 @@ public class ConnectionUtils {
 		conn.setDoInput(true);
 		if( null == jsonObj ) {
 			conn.setDoOutput(false);
+			conn.connect();
 		} else {
 			conn.setDoOutput(true);
 			conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+			conn.connect();
 			OutputStream os = conn.getOutputStream();
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 			jsonObj.write(osw);
 			osw.flush();
 			os.close();
 		}
-		conn.connect();
 		updateContextFromHeaderFields(ctxt,conn.getHeaderFields());
 		try {
 			checkResponseForError(conn);
@@ -198,9 +200,11 @@ public class ConnectionUtils {
 		conn.setDoInput(true);
 		if( null == form ) {
 			conn.setDoOutput(false);
+			conn.connect();
 		} else {
 			conn.setDoOutput(true);
 			conn.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
+			conn.connect();
 			OutputStream os = conn.getOutputStream();
 			OutputStreamWriter osw = new OutputStreamWriter(os, "UTF-8");
 			boolean first = true;
@@ -218,7 +222,6 @@ public class ConnectionUtils {
 			osw.flush();
 			os.close();
 		}
-		conn.connect();
 		updateContextFromHeaderFields(ctxt,conn.getHeaderFields());
 		try {
 			checkResponseForError(conn);
@@ -281,13 +284,15 @@ public class ConnectionUtils {
 		conn.setDoInput(true);
 		conn.setDoOutput(true);
 		conn.setRequestProperty("Content-Type", contentType);
+		conn.connect();
 		OutputStream os = conn.getOutputStream();
 		
 		StreamUtils.copyStream(is, os);
 
 		os.flush();
 		os.close();
-		conn.connect();
+
+		//conn.connect(); // TODO: 936
 		updateContextFromHeaderFields(ctxt,conn.getHeaderFields());
 		try {
 			checkResponseForError(conn);
