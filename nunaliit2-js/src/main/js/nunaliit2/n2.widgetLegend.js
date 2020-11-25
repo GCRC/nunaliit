@@ -110,7 +110,11 @@ POSSIBILITY OF SUCH DAMAGE.
 			};
 			var $container = $('#'+containerId);
 
+			$n2.log("Container ID: " + containerId);
+
 			this.elemId = $n2.getUniqueId();
+
+            $n2.log("Elem ID: " + this.elemId);
 
 			$('<div>')
 			.attr('id',this.elemId)
@@ -137,13 +141,15 @@ POSSIBILITY OF SUCH DAMAGE.
 			};
 		},
 
-		_refresh: function(){
+		_refresh: function() {
 			var _this = this;
 
 			var $elem = this._getElem();
 			$elem.empty();
 
 			// Make a map of styles by label
+			// TODO: 393 replaced by x.
+			/*
 			var stylesByLabel = {};
 			var atLeastOne = false;
 			for(var styleId in this.stylesInUse){
@@ -168,9 +174,29 @@ POSSIBILITY OF SUCH DAMAGE.
 					}
 				}
 			}
+            */
+
+            // TODO: 393 added x
+			var stylesByLabel = {};
+            var atLeastOne = false;
+            for(var styleId in this.stylesInUse){
+                var styleInfo = _this.stylesInUse[styleId];
+                var style = styleInfo.style;
+                if( style.label ){
+                    var effectiveLabel = _loc( style.label );
+                    var labelInfo = stylesByLabel[effectiveLabel];
+                    if( !labelInfo ){
+                        labelInfo = {};
+                        stylesByLabel[effectiveLabel] = labelInfo;
+                    };
+                    labelInfo[styleId] = styleInfo;
+                    atLeastOne = true;
+                };
+            };
 
 			// If at least one style with label, then must display
 			if( atLeastOne ){
+
 				var $outer = $('<div>')
 				.addClass('n2widgetLegend_outer')
 				.appendTo($elem);
@@ -178,6 +204,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				var labelNames = [];
 
 				if( this.labels ){
+				    $n2.log("user labels defined");
 					this.labels.forEach(function(label){
 						var effectiveLabel = _loc(label);
 						if( stylesByLabel[effectiveLabel] ){
@@ -186,6 +213,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					});
 
 				} else {
+				    $n2.log("user labels undefined");
 					for (var labelName in stylesByLabel){
 						labelNames.push(labelName);
 					};
@@ -194,6 +222,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				};
 
 				labelNames.forEach(function(labelName){
+
 					var labelInfo = stylesByLabel[labelName];
 
 					var $div = $('<div>')
@@ -236,6 +265,8 @@ POSSIBILITY OF SUCH DAMAGE.
 					styleIds.sort();
 
 					styleIds.forEach(function(styleId){
+					    $n2.log("Creating div for style: " + styleId);
+
 						var styleInfo = labelInfo[styleId];
 						var style = styleInfo.style;
 
@@ -742,6 +773,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					}
 				}
 
+
 				// If at least one style with label, then must display
 				if( atLeastOne ){
 					var $outer = $('<div>')
@@ -754,6 +786,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					//When user provides a list of label, enforce that list to be rendered,
 					//otherwise, all the conditions defined inside map.json will be drawn;
 					if( this.labels ){
+					    $n2.log("User labels defined");
 						this.labels.forEach(function(label){
 							var effectiveLabel = _loc(label);
 							if( stylesByLabel[effectiveLabel] ){
@@ -761,6 +794,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							};
 						});
 					} else {
+					    $n2.log("User labels undefined");
 						for (var labelName in stylesByLabel){
 							labelInfos.push(stylesByLabel[labelName]);
 						};
@@ -770,7 +804,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		
 					labelInfos.forEach(function(labelInfo){
 					
-						
+						$n2.log("Drawing label info for: " + labelInfo);
 						var labelId = labelInfo.labelId;
 						var labelName = labelInfo.effectivelabel
 						var $div = $('<div>')
@@ -931,8 +965,10 @@ POSSIBILITY OF SUCH DAMAGE.
 						atLeastOne = true;
 					};
 				};
-				
+
+
 				if ( atLeastOne ){
+
 					var labelNames = [];
 					for (var labelName in stylesByLabel){
 						labelNames.push(labelName);
@@ -996,8 +1032,9 @@ POSSIBILITY OF SUCH DAMAGE.
 						
 					});
 				}
-				
-				
+
+				// TODO: 939
+				this.draw();
 			},
 			
 			//=================================================================
