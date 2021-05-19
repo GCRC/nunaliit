@@ -165,6 +165,8 @@ POSSIBILITY OF SUCH DAMAGE.
 								break;
 							}
 						}
+					} else {
+						atLeastOne = true;
 					}
 				}
 			}
@@ -739,6 +741,8 @@ POSSIBILITY OF SUCH DAMAGE.
 								break;
 							}
 						}
+					} else {
+						atLeastOne = true;
 					}
 				}
 
