@@ -18,3 +18,7 @@ Thumbs.db
 *.iml
 .idea/
 /.metadata/
+
+# VSCode files #
+#######################
+.vscode/launch.json
