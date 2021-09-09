@@ -1917,12 +1917,12 @@ var AnalysisReport = $n2.Class({
 		
 		// Inline attachments are Base64 encoded
 		var jsonAtt = JSON.stringify(att);
-		var b64JsonAtt = $n2.Base64.encode(jsonAtt);
+		var b64JsonAtt = $n2.Base64.encodeMultibyte(jsonAtt);
 		if( !doc._attachments ){
 			doc._attachments = {};
 		};
 		doc._attachments['nunaliit_import'] = {
-			content_type: 'text/json'
+			content_type: 'application/json'
 			,data: b64JsonAtt
 		};
 	}

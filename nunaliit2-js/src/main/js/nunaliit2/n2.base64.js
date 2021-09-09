@@ -217,62 +217,21 @@ POSSIBILITY OF SUCH DAMAGE.
   
   $n2.Base64 = {
   
-      encode: function(input) {
-          var output = [];
-          var utf8encodedInput = utf8encode(input);
-          var index = 0;
-          while( index < utf8encodedInput.length ) {
-              var chr1 = utf8encodedInput.charCodeAt(index++);
-              var chr2 = utf8encodedInput.charCodeAt(index++);
-              var chr3 = utf8encodedInput.charCodeAt(index++);
-  
-              var enc1 = chr1 >> 2;
-              var enc2 = ((chr1 & 3) << 4) | (chr2 >> 4);
-              var enc3 = ((chr2 & 15) << 2) | (chr3 >> 6);
-              var enc4 = chr3 & 63;
-  
-              if (isNaN(chr2)) {
-                  enc3 = enc4 = 64;
-              } else if (isNaN(chr3)) {
-                  enc4 = 64;
-              }
-  
-              output.push(codex.charAt(enc1) + codex.charAt(enc2) + codex.charAt(enc3) + codex.charAt(enc4));
-          };
-  
-          return output.join('');
+      encodeMultibyte: function(input) {
+        var utf8encodedInput = utf8encode(input);
+        return btoa(utf8encodedInput)
+      }
+      ,decodeMultibyte : function(input) {
+        var output = atob(input)
+        var utf8decodedOutput = utf8encode(output);
+        return utf8decodedOutput;
+      }
+      ,encode: function(input) {
+          return btoa(input)
       }
   
       ,decode : function(input) {
-          var output = [];
-   
-                  input = input.replace(/[^A-Za-z0-9\+\/\=]/g, "");
-   
-                  var i = 0;
-                  while (i < input.length) {
-   
-                          var enc1 = codex.indexOf(input.charAt(i++));
-                          var enc2 = codex.indexOf(input.charAt(i++));
-                          var enc3 = codex.indexOf(input.charAt(i++));
-                          var enc4 = codex.indexOf(input.charAt(i++));
-   
-                          var chr1 = (enc1 << 2) | (enc2 >> 4);
-                          var chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
-                          var chr3 = ((enc3 & 3) << 6) | enc4;
-   
-                          output.push( String.fromCharCode(chr1) );
-   
-                          if (enc3 != 64) {
-                                  output.push( String.fromCharCode(chr2) );
-                          }
-                          if (enc4 != 64) {
-                                  output.push( String.fromCharCode(chr3) );
-                          }
-   
-                  }
-      var utf8decodedOutput = utf8encode(output);
-   
-                  return utf8decodedOutput;
+          return atob(input)
       }
   };
   
