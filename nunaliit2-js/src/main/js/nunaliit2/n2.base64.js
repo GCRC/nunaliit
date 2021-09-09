@@ -223,7 +223,7 @@ POSSIBILITY OF SUCH DAMAGE.
       }
       ,decodeMultibyte : function(input) {
         var output = atob(input)
-        var utf8decodedOutput = utf8encode(output);
+        var utf8decodedOutput = utf8decode(output);
         return utf8decodedOutput;
       }
       ,encode: function(input) {
