@@ -61,24 +61,6 @@ POSSIBILITY OF SUCH DAMAGE.
                   return output;
           }
   
-          // Taken from https://mths.be/punycode
-          function ucs2encode(array) {
-                  var length = array.length;
-                  var index = -1;
-                  var value;
-                  var output = '';
-                  while (++index < length) {
-                          value = array[index];
-                          if (value > 0xFFFF) {
-                                  value -= 0x10000;
-                                  output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
-                                  value = 0xDC00 | value & 0x3FF;
-                          }
-                          output += stringFromCharCode(value);
-                  }
-                  return output;
-          }
-  
           /*--------------------------------------------------------------------------*/
   
           function createByte(codePoint, shift) {
@@ -120,100 +102,121 @@ POSSIBILITY OF SUCH DAMAGE.
           }
   
           /*--------------------------------------------------------------------------*/
+          // Taken from https://mths.be/punycode
+
+/**
+ * UTF-8 Decoder is not currently used anywhere in Nunaliit, but left in commented out in case of future need.
+ */
+
+        //   function ucs2encode(array) {
+        //         var length = array.length;
+        //         var index = -1;
+        //         var value;
+        //         var output = '';
+        //         while (++index < length) {
+        //                 value = array[index];
+        //                 if (value > 0xFFFF) {
+        //                         value -= 0x10000;
+        //                         output += stringFromCharCode(value >>> 10 & 0x3FF | 0xD800);
+        //                         value = 0xDC00 | value & 0x3FF;
+        //                 }
+        //                 output += stringFromCharCode(value);
+        //         }
+        //         return output;
+        // }
   
-          function readContinuationByte() {
-                  if (byteIndex >= byteCount) {
-                          throw Error('Invalid byte index');
-                  }
+        //   function readContinuationByte() {
+        //           if (byteIndex >= byteCount) {
+        //                   throw Error('Invalid byte index');
+        //           }
   
-                  var continuationByte = byteArray[byteIndex] & 0xFF;
-                  byteIndex++;
+        //           var continuationByte = byteArray[byteIndex] & 0xFF;
+        //           byteIndex++;
   
-                  if ((continuationByte & 0xC0) == 0x80) {
-                          return continuationByte & 0x3F;
-                  }
+        //           if ((continuationByte & 0xC0) == 0x80) {
+        //                   return continuationByte & 0x3F;
+        //           }
   
-                  // If we end up here, it’s not a continuation byte
-                  throw Error('Invalid continuation byte');
-          }
+        //           // If we end up here, it’s not a continuation byte
+        //           throw Error('Invalid continuation byte');
+        //   }
   
-          function decodeSymbol() {
-                  var byte1;
-                  var byte2;
-                  var byte3;
-                  var byte4;
-                  var codePoint;
+        //   function decodeSymbol() {
+        //           var byte1;
+        //           var byte2;
+        //           var byte3;
+        //           var byte4;
+        //           var codePoint;
   
-                  if (byteIndex > byteCount) {
-                          throw Error('Invalid byte index');
-                  }
+        //           if (byteIndex > byteCount) {
+        //                   throw Error('Invalid byte index');
+        //           }
   
-                  if (byteIndex == byteCount) {
-                          return false;
-                  }
+        //           if (byteIndex == byteCount) {
+        //                   return false;
+        //           }
   
-                  // Read first byte
-                  byte1 = byteArray[byteIndex] & 0xFF;
-                  byteIndex++;
+        //           // Read first byte
+        //           byte1 = byteArray[byteIndex] & 0xFF;
+        //           byteIndex++;
   
-                  // 1-byte sequence (no continuation bytes)
-                  if ((byte1 & 0x80) == 0) {
-                          return byte1;
-                  }
+        //           // 1-byte sequence (no continuation bytes)
+        //           if ((byte1 & 0x80) == 0) {
+        //                   return byte1;
+        //           }
   
-                  // 2-byte sequence
-                  if ((byte1 & 0xE0) == 0xC0) {
-                          var byte2 = readContinuationByte();
-                          codePoint = ((byte1 & 0x1F) << 6) | byte2;
-                          if (codePoint >= 0x80) {
-                                  return codePoint;
-                          } else {
-                                  throw Error('Invalid continuation byte');
-                          }
-                  }
+        //           // 2-byte sequence
+        //           if ((byte1 & 0xE0) == 0xC0) {
+        //                   var byte2 = readContinuationByte();
+        //                   codePoint = ((byte1 & 0x1F) << 6) | byte2;
+        //                   if (codePoint >= 0x80) {
+        //                           return codePoint;
+        //                   } else {
+        //                           throw Error('Invalid continuation byte');
+        //                   }
+        //           }
   
-                  // 3-byte sequence (may include unpaired surrogates)
-                  if ((byte1 & 0xF0) == 0xE0) {
-                          byte2 = readContinuationByte();
-                          byte3 = readContinuationByte();
-                          codePoint = ((byte1 & 0x0F) << 12) | (byte2 << 6) | byte3;
-                          if (codePoint >= 0x0800) {
-                                  return codePoint;
-                          } else {
-                                  throw Error('Invalid continuation byte');
-                          }
-                  }
+        //           // 3-byte sequence (may include unpaired surrogates)
+        //           if ((byte1 & 0xF0) == 0xE0) {
+        //                   byte2 = readContinuationByte();
+        //                   byte3 = readContinuationByte();
+        //                   codePoint = ((byte1 & 0x0F) << 12) | (byte2 << 6) | byte3;
+        //                   if (codePoint >= 0x0800) {
+        //                           return codePoint;
+        //                   } else {
+        //                           throw Error('Invalid continuation byte');
+        //                   }
+        //           }
   
-                  // 4-byte sequence
-                  if ((byte1 & 0xF8) == 0xF0) {
-                          byte2 = readContinuationByte();
-                          byte3 = readContinuationByte();
-                          byte4 = readContinuationByte();
-                          codePoint = ((byte1 & 0x0F) << 0x12) | (byte2 << 0x0C) |
-                                  (byte3 << 0x06) | byte4;
-                          if (codePoint >= 0x010000 && codePoint <= 0x10FFFF) {
-                                  return codePoint;
-                          }
-                  }
+        //           // 4-byte sequence
+        //           if ((byte1 & 0xF8) == 0xF0) {
+        //                   byte2 = readContinuationByte();
+        //                   byte3 = readContinuationByte();
+        //                   byte4 = readContinuationByte();
+        //                   codePoint = ((byte1 & 0x0F) << 0x12) | (byte2 << 0x0C) |
+        //                           (byte3 << 0x06) | byte4;
+        //                   if (codePoint >= 0x010000 && codePoint <= 0x10FFFF) {
+        //                           return codePoint;
+        //                   }
+        //           }
   
-                  throw Error('Invalid UTF-8 detected');
-          }
+        //           throw Error('Invalid UTF-8 detected');
+        //   }
   
-          var byteArray;
-          var byteCount;
-          var byteIndex;
-          function utf8decode(byteString) {
-                  byteArray = ucs2decode(byteString);
-                  byteCount = byteArray.length;
-                  byteIndex = 0;
-                  var codePoints = [];
-                  var tmp;
-                  while ((tmp = decodeSymbol()) !== false) {
-                          codePoints.push(tmp);
-                  }
-                  return ucs2encode(codePoints);
-          }
-      var codex = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+        //   var byteArray;
+        //   var byteCount;
+        //   var byteIndex;
+        //   function utf8decode(byteString) {
+        //           byteArray = ucs2decode(byteString);
+        //           byteCount = byteArray.length;
+        //           byteIndex = 0;
+        //           var codePoints = [];
+        //           var tmp;
+        //           while ((tmp = decodeSymbol()) !== false) {
+        //                   codePoints.push(tmp);
+        //           }
+        //           return ucs2encode(codePoints);
+        //   }
   
   $n2.Base64 = {
   
@@ -221,11 +224,12 @@ POSSIBILITY OF SUCH DAMAGE.
         var utf8encodedInput = utf8encode(input);
         return btoa(utf8encodedInput)
       }
-      ,decodeMultibyte : function(input) {
-        var output = atob(input)
-        var utf8decodedOutput = utf8decode(output);
-        return utf8decodedOutput;
-      }
+//       Decoder is not currently used, but left in commented out in case of future need.
+//       ,decodeMultibyte : function(input) {
+//         var output = atob(input)
+//         var utf8decodedOutput = utf8decode(output);
+//         return utf8decodedOutput;
+//       }
       ,encode: function(input) {
           return btoa(input)
       }
