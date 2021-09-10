@@ -220,7 +220,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		
 		encodeMultibyte: function(input) {
 			var utf8encodedInput = utf8encode(input);
-			return btoa(utf8encodedInput)
+			return btoa(utf8encodedInput);
 		}
 		//       Decoder is not currently used, but left in commented out in case of future need.
 		//       ,decodeMultibyte : function(input) {
@@ -229,11 +229,11 @@ POSSIBILITY OF SUCH DAMAGE.
 		//         return utf8decodedOutput;
 		//       }
 		,encode: function(input) {
-			return btoa(input)
+			return btoa(input);
 		}
 		
 		,decode : function(input) {
-			return atob(input)
+			return atob(input);
 		}
 	};
 	
