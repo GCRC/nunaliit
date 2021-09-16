@@ -23,25 +23,26 @@ public class ClosureCompilerAdaptor {
 	@SuppressWarnings("unused")
 	public void verifyFiles(LibraryConfiguration config) throws Exception {
 		CompilerOptions compilerOptions = new CompilerOptions();
-		compilerOptions.setLanguage(LanguageMode.ECMASCRIPT5_STRICT);
+		compilerOptions.setLanguage(LanguageMode.ECMASCRIPT_2015);
 		compilerOptions.setChecksOnly(true);
 		
 		if( false ){
 			// Iterate over the input files
 			for(File file : config.getInputFiles()){
 				List<SourceFile> externs = Collections.emptyList();
-			    List<SourceFile> inputs = Arrays.asList(SourceFile.fromFile(file));
+				String filePath = file.getPath();
+			    List<SourceFile> inputs = Arrays.asList(SourceFile.fromFile(filePath));
 			    
 			    Compiler compiler = new Compiler();
 				Result result = compiler.compile(externs, inputs, compilerOptions);
 				
-				if( null != result.errors && result.errors.length > 0 ){
+				if( null != result.errors && result.errors.size()> 0 ){
 					for(JSError error : result.errors){
 						System.err.println(error.toString());
 					}
 					throw new Exception("Verification error");
 				}
-				if( null != result.warnings && result.warnings.length > 0 ){
+				if( null != result.warnings && result.warnings.size() > 0 ){
 					for(JSError warning : result.warnings){
 						System.err.println(warning.toString());
 					}
@@ -52,19 +53,20 @@ public class ClosureCompilerAdaptor {
 		    List<SourceFile> inputs = new Vector<SourceFile>();
 			// Iterate over the input files
 			for(File file : config.getInputFiles()){
-			    inputs.add(SourceFile.fromFile(file));
+				String filePath = file.getPath();
+			    inputs.add(SourceFile.fromFile(filePath));
 			}
 
 			Compiler compiler = new Compiler();
 			Result result = compiler.compile(externs, inputs, compilerOptions);
 			
-			if( null != result.errors && result.errors.length > 0 ){
+			if( null != result.errors && result.errors.size() > 0 ){
 				for(JSError error : result.errors){
 					System.err.println(error.toString());
 				}
 				throw new Exception("Verification error");
 			}
-			if( null != result.warnings && result.warnings.length > 0 ){
+			if( null != result.warnings && result.warnings.size() > 0 ){
 				for(JSError warning : result.warnings){
 					System.err.println(warning.toString());
 				}
@@ -74,21 +76,22 @@ public class ClosureCompilerAdaptor {
 
 	public void compress(LibraryConfiguration config, File outputFile) throws Exception {
 		CompilerOptions compilerOptions = new CompilerOptions();
-		compilerOptions.setLanguage(LanguageMode.ECMASCRIPT5_STRICT);
+		compilerOptions.setLanguage(LanguageMode.ECMASCRIPT_2015);
 		CompilationLevel.SIMPLE_OPTIMIZATIONS.setOptionsForCompilationLevel(compilerOptions);
 
 		List<SourceFile> externs = Collections.emptyList();
 	    List<SourceFile> inputs = new Vector<SourceFile>();
 		// Iterate over the input files
 		for(File file : config.getInputFiles()){
-		    inputs.add(SourceFile.fromFile(file));
+			String filePath = file.getPath();
+		    inputs.add(SourceFile.fromFile(filePath));
 		}
 
 		Compiler compiler = new Compiler();
 		Result result = compiler.compile(externs, inputs, compilerOptions);
 
 		// Report errors
-		if( null != result.errors && result.errors.length > 0 ){
+		if( null != result.errors && result.errors.size() > 0 ){
 			for(JSError error : result.errors){
 				System.err.println(error.toString());
 			}

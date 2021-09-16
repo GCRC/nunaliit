@@ -39,21 +39,33 @@ POSSIBILITY OF SUCH DAMAGE.
  * Returns a geometry object used in CouchDb given
  * a geometry obtained from OpenLayers.
  */
-function getCouchGeometry(geom) {
-
-	var bounds = geom.getBounds();
-	var wkt = geom.toString();
+function getCouchGeometry(geom, isNewOpenlayers) {
+	var _isOl3 = isNewOpenlayers || false;
+	if ( !_isOl3 ){
+		var bounds = geom.getBounds();
+		var wkt = geom.toString();
+		
+		return {
+			nunaliit_type: 'geometry'
+			,wkt: wkt
+			,bbox: [
+				bounds.left
+				,bounds.bottom
+				,bounds.right
+				,bounds.top
+			]
+		};
+	} else {
+		var bounds = geom.getExtent();
+		var wkt = geom.toString();
+		
+		return {
+			nunaliit_type: 'geometry'
+			,wkt : wkt
+			,bbox: bounds
+		}
+	}
 	
-	return {
-		nunaliit_type: 'geometry'
-		,wkt: wkt
-		,bbox: [
-			bounds.left
-			,bounds.bottom
-			,bounds.right
-			,bounds.top
-		]
-	};
 };
 
 function updateDocumentWithWktGeometry(opts_) {
@@ -107,6 +119,21 @@ function updatedGeometry(couchGeom) {
 	if( couchGeom.simplified ){
 		delete couchGeom.simplified;
 	};
+};
+
+function ol5_updatedGeometry(couchGeom) {
+	if ( $n2.n2es6.ol_format_WKT ){
+		var WKT = new $n2.n2es6.ol_format_WKT();
+		var geom = WKT.readGeometry(couchGeom.wkt);
+		if( geom ){
+			couchGeom.bbox = geom.getExtent();
+		}
+		
+	}
+	if( couchGeom.simplified ){
+		delete couchGeom.simplified;
+	}
+	
 };
 
 /*
@@ -350,6 +377,7 @@ $n2.couchGeom = {
 	getCouchGeometry: getCouchGeometry
 	,updateDocumentWithWktGeometry: updateDocumentWithWktGeometry
 	,updatedGeometry: updatedGeometry
+	,ol5_updatedGeometry : ol5_updatedGeometry
 	,getOpenLayersGeometry: getOpenLayersGeometry
 	,selectTileViewFromBounds: selectTileViewFromBounds
 	,queryGeometries: queryGeometries

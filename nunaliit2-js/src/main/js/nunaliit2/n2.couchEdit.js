@@ -46,7 +46,7 @@ function getDefaultCouchProjection(){
 	return defaultCouchProj;
 };
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 
 function isKeyEditingAllowed(obj, selectors, data) {
@@ -182,7 +182,7 @@ function searchForDocumentId(options_){
 };
 
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 var CouchSimpleDocumentEditor = $n2.Class({
 
@@ -243,6 +243,8 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		this.dispatchService = opts.dispatchService;
 		this.editors = opts.editors;
 		this.couchProj = opts.couchProj;
+		
+	//	this.ol_format_WKT = new $n2.n2es6.ol_format_WKT();
 
 		this.editedDocument = {};
 		var clonedDoc = $n2.extend(true,{},opts.doc); // deep copy
@@ -352,6 +354,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 				relationEditorNeeded = true;
 			};
 		};
+
 		if( editorCount > 1 ){
 			accordionNeeded = true;
 		};
@@ -360,7 +363,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		$div.empty();
 		
 		this.editorsContainerId = $n2.getUniqueId();
-		var $editorsContainer = $('<div id="'+this.editorsContainerId+'" class="n2CouchEditor_container"></div>');
+		var $editorsContainer = $('<div id="'+this.editorsContainerId+'" class="n2CouchEditor_container mdc-card"></div>');
 		$div.append($editorsContainer);
 
 		for(var i=0,e=this.editors.length;i<e;++i){
@@ -378,10 +381,6 @@ var CouchSimpleDocumentEditor = $n2.Class({
 						.text( _loc('Form View') )
 						.appendTo($schemaHeader);
 				};
-				
-				var $schemaContainer = $('<div class="n2CouchEditor_schema"></div>')
-					.addClass('n2CouchEditor_schema')
-					.appendTo($editorsContainer);
 				
 				this.schemaEditor = this.schemaEditorService.editDocument({
 					doc: data
@@ -628,7 +627,12 @@ var CouchSimpleDocumentEditor = $n2.Class({
 		
 		if( m.type === 'editGeometryModified' ){
 			if( m._origin !== this ){
-				this._geometryModified(m.docId, m.geom, m.proj);
+				if ( m._origin._classname === 'MapAndControls' ){
+					this._geometryModified(m.docId, m.geom, m.proj);
+				} else {
+					this._ol_geometryModified(m.docId, m.geom, m.proj);
+				}
+				
 			};
 		} else if( m.type === 'mapGeometryAdded' ){
 			this._addGeometry(m.geometry, m.projection);
@@ -717,13 +721,13 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			if( showService ){
 				showService.printBriefDescription($brief, relDocId);
 			};
-			
-			$('<button class="editorDisplayRelationButton"></button>')
-				.text( _loc('Remove') )
-				.appendTo($displayRelationDiv)
-				.button({icons:{primary:'ui-icon-trash'}})
-				.click(removeRelationFn)
-				;
+
+			new $n2.mdc.MDCButton({
+				parentElem: $displayRelationDiv,
+				mdcClasses: ['editorDisplayRelationButton'],
+				btnLabel: 'Remove',
+				onBtnClick: removeRelationFn
+			});
 		};
 	}
 	
@@ -749,7 +753,28 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			});
 		};
 	}
-
+	,_ol_geometryModified: function(docId, geom, proj) {
+		
+		var geomData = this.editedDocument.nunaliit_geom;
+		var proj_couch = new $n2.n2es6.ol_proj_Projection({code: this.couchProj.getCode()});
+		var proj_feat = proj;
+		geomData.wkt = this.ol_format_WKT.writeGeometry(geom, {
+				dataProjection: proj_couch,
+				featureProjection: proj_feat
+		});
+		
+		$n2.couchGeom.updatedGeometry(geomData);
+		this.currentGeometryWkt = geomData.wkt;
+		if( this.schemaEditor ) {
+			this.schemaEditor.refresh();
+		};
+		if( this.treeEditor ) {
+			this.treeEditor.refresh();
+		};
+		if( this.slideEditor ) {
+			this.slideEditor.refresh();
+		};
+	}
 	,_geometryModified: function(docId, geom, proj) {
 
 		if( proj.getCode() != this.couchProj.getCode() ) {
@@ -802,7 +827,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 var CouchDocumentEditor = $n2.Class({
 	
@@ -889,6 +914,8 @@ var CouchDocumentEditor = $n2.Class({
 		this.moduleEditInfo = opts.moduleEditInfo;
 		this.relatedDocProcess = opts.relatedDocProcess;
 		
+//		this.ol_format_WKT = new $n2.n2es6.ol_format_WKT();
+		
 		this.userButtons = [];
 		var label = 'button';
 		for(var key in opts) {
@@ -934,7 +961,7 @@ var CouchDocumentEditor = $n2.Class({
 		return false;
 	},
 
-	startEditingFromGeometry: function(olGeom, olProj) {
+	startEditingFromGeometry: function(olGeom, olProj, isNewOpenlayers) {
 		
 		var _this = this;
 	
@@ -958,10 +985,18 @@ var CouchDocumentEditor = $n2.Class({
 			if( olProj.getCode() != _this.couchProj.getCode() ) {
 				// Need to convert
 				var geom = olGeom.clone();
-				geom.transform(olProj,_this.couchProj);
+				if ( !isNewOpenlayers ){
+					geom.transform(olProj,_this.couchProj);
+				} else {
+					var couchProj = new $n2.n2es6.ol_proj_Projection(
+							{code: _this.couchProj.getCode()}
+							);
+					geom.transform(olProj, couchProj);
+				}
+				
 				olGeom = geom;
 			};
-			var g = $n2.couchGeom.getCouchGeometry(olGeom);
+			var g = $n2.couchGeom.getCouchGeometry(olGeom, isNewOpenlayers);
 			_this.editedDocument.nunaliit_geom = g;
 			_this.currentGeometryWkt = g.wkt;
 			
@@ -1166,6 +1201,8 @@ var CouchDocumentEditor = $n2.Class({
 	},
 
 	_displayEditor: function() {
+		var tabBar, $editorView;
+
 		var _this = this;
 		
 		var selectedSchema = this.editedDocumentSchema;
@@ -1189,141 +1226,157 @@ var CouchDocumentEditor = $n2.Class({
 		var showFormView = false;
 		var showTreeView = false;
 		var showSlideView = false;
-		var viewCount = 0;
-		var showAccordion = false;
 		var schemaEditorService = this.schemaEditorService;
-		if( !this.editorSuppressFormView 
-		 && selectedSchema 
-		 && schemaEditorService ){
+		if (!this.editorSuppressFormView 
+			&& selectedSchema 
+			&& schemaEditorService) {
 			showFormView = true;
-			++viewCount;
-		};
-		if( !this.editorSuppressTreeView ){
+		}
+		if (!this.editorSuppressTreeView) {
 			showTreeView = true;
-			++viewCount;
-		};
-		if( !this.editorSuppressTreeView ){
+		}
+		if (!this.editorSuppressTreeView) {
 			showSlideView = true;
-			++viewCount;
-		};
-		if( viewCount > 1 ){
-			showAccordion = true;
-		};
+		}
 
 		var attributeDialog = $('#'+this.panelName);
 		attributeDialog.empty();
 		
 		this.editorContainerId = $n2.getUniqueId();
-		var $editorContainer = $('<div id="'+this.editorContainerId+'" class="n2CouchEditor_container"></div>');
+		var $editorContainer = $('<div id="'+this.editorContainerId+'" class="n2CouchEditor_container mdc-card"></div>');
 		attributeDialog.append($editorContainer);
 
-		if( showFormView ) {
-			if( showAccordion ) {
-				var $schemaHeader = $('<h3>').appendTo($editorContainer);
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Form View') )
-					.appendTo($schemaHeader);
-			};
+		var openEditor = function(editorType){
+			return function(){
 
-			var $schemaContainer = $('<div>')
-				.addClass('n2CouchEditor_schema')
-				.appendTo($editorContainer);
-			
-			this.schemaEditor = schemaEditorService.editDocument({
-				doc: data
-				,schema: selectedSchema
-				,$div: $schemaContainer
-				,onChanged: function(){
-					_this._adjustInternalValues(_this.editedDocument);
-					if( _this.treeEditor ) {
-						_this.treeEditor.refresh();
-					};
-					if( _this.slideEditor ) {
-						_this.slideEditor.refresh();
-					};
-					if( _this.attachmentEditor ) {
-						_this.attachmentEditor.refresh();
-					};
-					_this._refreshRelations(data);
-					_this.onEditorObjectChanged(data);
+				// hide all types of editor
+				$editorView.children('div').css('display', 'none');
+
+				// Set all view types to false 
+				showFormView = false;
+				showTreeView = false;
+				showSlideView = false;
+
+				if (editorType === "formView") {
+					showFormView = true;
+					$editorView.find('.n2CouchEditor_schema').css('display', 'block');
+
+				} else if (editorType === "treeView") {
+					showTreeView = true;
+					$editorView.find('.n2CouchEditor_tree').css('display', 'block');
+
+				} else if (editorType === "slideView") {
+					showSlideView = true;
+					$editorView.find('.n2CouchEditor_slide').css('display', 'block');
+
+				} else {
+					showFormView = true;
+					$editorView.find('.n2CouchEditor_schema').css('display', 'block');
 				}
-			});
+			};
 		};
 
-		if( showTreeView ) {
-			if( showAccordion ) {
-				var $treeHeader = $('<h3>').appendTo($editorContainer);
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Tree View') )
-					.appendTo($treeHeader);
-			};
-			
-			var $treeContainer = $('<div>')
-				.addClass('n2CouchEditor_tree')
-				.appendTo($editorContainer);
-			var editorOptions = {
-				onObjectChanged: function() {
-					_this._adjustInternalValues(_this.editedDocument);
-					if( _this.slideEditor ) {
-						_this.slideEditor.refresh();
-					};
-					if( _this.schemaEditor ) {
-						_this.schemaEditor.refresh();
-					};
-					if( _this.attachmentEditor ) {
-						_this.attachmentEditor.refresh();
-					};
-					_this._refreshRelations(data);
-					_this.onEditorObjectChanged(data);
+		tabBar = new $n2.mdc.MDCTabBar({
+			parentElem: $editorContainer,
+			tabs: [
+				{label: 'Form View', onTabClick: openEditor('formView'), active: true},
+				{label: 'Tree View', onTabClick: openEditor('treeView')},
+				{label: 'Editor View', onTabClick: openEditor('slideView')}
+			]
+		});
+
+		// Editor View
+		$editorView = $('<div>')
+			.addClass('n2CouchEditor')
+			.appendTo($editorContainer);
+
+		// Add Form Editor View
+		var $schemaContainer = $('<div>')
+			.addClass('n2CouchEditor_schema')
+			.appendTo($editorView);
+
+		_this.schemaEditor = _this.schemaEditorService.editDocument({
+			doc: data
+			,schema: selectedSchema
+			,$div: $schemaContainer
+			,onchanged: function(){
+				_this._adjustInternalValues(_this.editedDocument);
+				if (_this.treeEditor) {
+					_this.treeEditor.refresh();
 				}
-				,isKeyEditingAllowed: isKeyEditingAllowed
-				,isValueEditingAllowed: isValueEditingAllowed
-				,isKeyDeletionAllowed: isKeyDeletionAllowed
-			};
-			var objectTree = new $n2.tree.ObjectTree($treeContainer, data, editorOptions);
-			this.treeEditor = new $n2.tree.ObjectTreeEditor(objectTree, data, editorOptions);
-		};
-		
-		if( showSlideView ) {
-			if( showAccordion ) {
-				var $slideHeader = $('<h3>').appendTo($editorContainer);
-				$('<a>')
-					.attr('href','#')
-					.text( _loc('Editor View') )
-					.appendTo($slideHeader);
-			};
-			
-			var $slideContainer = $('<div>')
-				.addClass('n2CouchEditor_slide')
-				.appendTo($editorContainer);
-			var slideEditorOptions = {
-				onObjectChanged: function() {
-					_this._adjustInternalValues(_this.editedDocument);
-					if( _this.treeEditor ) {
-						_this.treeEditor.refresh();
-					};
-					if( _this.schemaEditor ) {
-						_this.schemaEditor.refresh();
-					};
-					if( _this.attachmentEditor ) {
-						_this.attachmentEditor.refresh();
-					};
-					_this._refreshRelations(data);
-					_this.onEditorObjectChanged(data);
+
+				if (_this.slideEditor) {
+					_this.slideEditor.refresh();
 				}
-				,isKeyEditingAllowed: isKeyEditingAllowed
-				,isValueEditingAllowed: isValueEditingAllowed
-				,isKeyDeletionAllowed: isKeyDeletionAllowed
-			};
-			this.slideEditor = new $n2.slideEditor.Editor($slideContainer, data, slideEditorOptions);
+
+				if (_this.attachmentEditor) {
+					_this.attachmentEditor.refresh();
+				}
+
+				_this._refreshRelations(data);
+				_this.onEditorObjectChanged(data);
+			}
+		});
+
+		// Add Tree Editor View
+		var $treeContainer = $('<div>')
+			.addClass('n2CouchEditor_tree')
+			.css('display', 'none')
+			.appendTo($editorView);
+		var editorOptions = {
+			onObjectChanged: function() {
+				_this._adjustInternalValues(_this.editedDocument);
+				if (_this.slideEditor) {
+					_this.slideEditor.refresh();
+				}
+
+				if (_this.schemaEditor) {
+					_this.schemaEditor.refresh();
+				}
+
+				if (_this.attachmentEditor) {
+					_this.attachmentEditor.refresh();
+				}
+
+				_this._refreshRelations(data);
+				_this.onEditorObjectChanged(data);
+			}
+			,isKeyEditingAllowed: isKeyEditingAllowed
+			,isValueEditingAllowed: isValueEditingAllowed
+			,isKeyDeletionAllowed: isKeyDeletionAllowed
 		};
-		
-		if( showAccordion ) {
-			$editorContainer.accordion({ collapsible: true });
+		var objectTree = new $n2.tree.ObjectTree($treeContainer, data, editorOptions);
+		_this.treeEditor = new $n2.tree.ObjectTreeEditor(objectTree, data, editorOptions);
+
+		// Add Slide Editor View
+		var $slideContainer = $('<div>')
+			.addClass('n2CouchEditor_slide')
+			.css('display', 'none')
+			.appendTo($editorView);
+		var slideEditorOptions = {
+			onObjectChanged: function() {
+				_this._adjustInternalValues(_this.editedDocument);
+				if (_this.treeEditor) {
+					_this.treeEditor.refresh();
+				}
+
+				if (_this.schemaEditor) {
+					_this.schemaEditor.refresh();
+				}
+
+				if (_this.attachmentEditor) {
+					_this.attachmentEditor.refresh();
+				}
+
+				_this._refreshRelations(data);
+				_this.onEditorObjectChanged(data);
+			}
+			,isKeyEditingAllowed: isKeyEditingAllowed
+			,isValueEditingAllowed: isValueEditingAllowed
+			,isKeyDeletionAllowed: isKeyDeletionAllowed
 		};
-		
+		_this.slideEditor = new $n2.slideEditor.Editor($slideContainer, data, slideEditorOptions);
+
 		// Report relations
 		$('<div>')
 			.addClass('editorDisplayRelations')
@@ -1385,56 +1438,75 @@ var CouchDocumentEditor = $n2.Class({
 				$currentLocationToggle.addClass('icon-unchecked');
 			}
 		}
+		
+		var $formButtonsContainer = $('<div>')
+			.addClass('mdc-card__actions')
+			.appendTo($editorContainer);
 
-		var formButtons = $('<div class="editorButtons"></div>');
-		$editorContainer.append(formButtons);
+		var $formButtons = $('<div>')
+			.addClass('editorButtons mdc-card__action-buttons')
+			.appendTo($formButtonsContainer);
 
-		var saveBtn = $('<button class="save">'+_loc('Save')+'</button>');
-		formButtons.append(saveBtn);
-		saveBtn.button({icons:{primary:'ui-icon-check'}});
-		saveBtn.click(function(){
-			_this._save();
-			return false;
-		});
-
-		if( !this.isInsert
-		 && $n2.couchMap.canDeleteDoc(data)
-			) {
-			var deleteBtn = $('<button class="delete">'+_loc('Delete')+'</button>');
-			formButtons.append(deleteBtn);
-			deleteBtn.button({icons:{primary:'ui-icon-trash'}});
-			deleteBtn.click(function(evt){
-				if( confirm( _loc('Do you really want to delete this feature?') ) ) {
-					deletion(data);
-				};
+		new $n2.mdc.MDCButton({
+			parentElem: $formButtons,
+			mdcClasses: ['save'],
+			btnLabel: 'Save',
+			btnRaised: true,
+			onBtnClick: function(){
+				_this._save();
 				return false;
+			}
+		});
+
+		if (!this.isInsert && $n2.couchMap.canDeleteDoc(data)) {
+			new $n2.mdc.MDCButton({
+				parentElem: $formButtons,
+				mdcClasses: ['delete'],
+				btnLabel: 'Delete',
+				onBtnClick: function(evt){
+					if (confirm(_loc('Do you really want to delete this feature?'))) {
+						deletion(data);
+					}
+					return false;
+				}
 			});
-		};
-		
-		if( this.attachmentEditor ){
+		}
+
+		if (this.attachmentEditor) {
 			this.attachmentEditor.printButtons({
-				elem: formButtons
+				elem: $formButtons
 			});
-		};
+		}
 
-		var addRelationBtn = $('<button class="relation">'+_loc('Add Relation')+'</button>');
-		formButtons.append(addRelationBtn);
-		addRelationBtn.button({icons:{primary:'ui-icon-plusthick'}});
-		addRelationBtn.click(function(){ _this._addRelationDialog(); return false; });
-
-		var layersBtn = $('<button class="layers">'+_loc('Layers')+'</button>');
-		formButtons.append(layersBtn);
-		layersBtn.button({icons:{primary:'ui-icon-link'}});
-		layersBtn.click(function(){ _this._manageLayersDialog(); return false; });
-
-		var cancelBtn = $('<button class="cancel">'+_loc('Cancel')+'</button>');
-		formButtons.append(cancelBtn);
-		cancelBtn.button({icons:{primary:'ui-icon-cancel'}});
-		cancelBtn.click(function(){ 
-			_this._cancelEdit();
-			return false;
+		new $n2.mdc.MDCButton({
+			parentElem: $formButtons,
+			mdcClasses: ['relation'],
+			btnLabel: 'Add Relation',
+			onBtnClick: function(){
+				_this._addRelationDialog();
+				return false;
+			}
 		});
 		
+		new $n2.mdc.MDCButton({
+			parentElem: $formButtons,
+			mdcClasses: ['layers'],
+			btnLabel: 'Layers',
+			onBtnClick: function(){ 
+				_this._manageLayersDialog(); 
+				return false; 
+			}
+		});
+
+		new $n2.mdc.MDCButton({
+			parentElem: $formButtons,
+			mdcClasses: ['cancel'],
+			btnLabel: 'Cancel',
+			onBtnClick: function(){
+				_this._cancelEdit();
+			}
+		});
+
 		// Add user buttons
 		for(var i=0,e=this.userButtons.length; i<e; ++i) {
 			var userButton = this.userButtons[i];
@@ -1444,13 +1516,13 @@ var CouchDocumentEditor = $n2.Class({
 				$uBtn.addClass(userButton.buttonClass);
 			};
 			if( userButton.before ) {
-				var $anchor = formButtons.find('button.'+userButton.before);
+				var $anchor = $formButtons.find('button.'+userButton.before);
 				$anchor.before($uBtn);
 			} else if( userButton.after ) {
-				var $anchor = formButtons.find('button.'+userButton.after);
+				var $anchor = $formButtons.find('button.'+userButton.after);
 				$anchor.after($uBtn);
 			} else {
-				formButtons.append($uBtn);
+				$formButtons.append($uBtn);
 			};
 			$uBtn.button(userButton.options);
 			installUserButtonClick($uBtn, userButton);
@@ -2029,16 +2101,17 @@ var CouchDocumentEditor = $n2.Class({
 			var $brief = $('<span></span>')
 				.text(relDocId)
 				.appendTo($displayRelationDiv);
+
 			if( showService ){
 				showService.printBriefDescription($brief, relDocId);
 			};
-			
-			$('<button class="editorDisplayRelationButton"></button>')
-				.text( _loc('Remove') )
-				.appendTo($displayRelationDiv)
-				.button({icons:{primary:'ui-icon-trash'}})
-				.click(removeRelationFn)
-				;
+		
+			new $n2.mdc.MDCButton({
+				parentElem: $displayRelationDiv,
+				mdcClasses: ['editorDisplayRelationButton'],
+				btnLabel: 'Remove',
+				onBtnClick: removeRelationFn
+			});
 		};
 	},
 	
@@ -2076,8 +2149,29 @@ var CouchDocumentEditor = $n2.Class({
 			refreshFunction(_this.editedDocument, $editorContainer, _this);
 		});
 	},
-	
-	_geometryModified: function(docId, geom, proj) {
+	_ol_geometryModified: function(docId, geom, proj) {
+		
+		var geomData = this.editedDocument.nunaliit_geom;
+		var proj_couch = new $n2.n2es6.ol_proj_Projection({code: this.couchProj.getCode()});
+		var proj_feat = proj;
+		geomData.wkt = this.ol_format_WKT.writeGeometry(geom, {
+				dataProjection: proj_couch,
+				featureProjection: proj_feat
+		});
+		
+		$n2.couchGeom.ol5_updatedGeometry(geomData);
+		this.currentGeometryWkt = geomData.wkt;
+		if( this.schemaEditor ) {
+			this.schemaEditor.refresh();
+		};
+		if( this.treeEditor ) {
+			this.treeEditor.refresh();
+		};
+		if( this.slideEditor ) {
+			this.slideEditor.refresh();
+		};
+	}
+	,_geometryModified: function(docId, geom, proj) {
 
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
@@ -2099,7 +2193,33 @@ var CouchDocumentEditor = $n2.Class({
 			this.slideEditor.refresh();
 		};
 	},
-	
+	_ol_addGeometry: function(geom, proj){
+		if( proj.getCode() != this.couchProj.getCode() ) {
+			// Need to convert
+			geom = geom.clone();
+			geom.transform(proj.getCode(),this.couchProj.getCode());
+		};
+    	
+		var geomData = this.editedDocument.nunaliit_geom;
+		if( !geomData ){
+			geomData = {
+				nunaliit_type: 'geometry'
+			};
+			this.editedDocument.nunaliit_geom = geomData;
+		};
+		geomData.wkt = geom.toString();
+		$n2.couchGeom.ol5_updatedGeometry(geomData);
+		this.currentGeometryWkt = geomData.wkt;
+		if( this.schemaEditor ) {
+			this.schemaEditor.refresh();
+		};
+		if( this.treeEditor ) {
+			this.treeEditor.refresh();
+		};
+		if( this.slideEditor ) {
+			this.slideEditor.refresh();
+		};
+	},
 	_addGeometry: function(geom, proj) {
 		if( proj.getCode() != this.couchProj.getCode() ) {
 			// Need to convert
@@ -2166,12 +2286,23 @@ var CouchDocumentEditor = $n2.Class({
 	_handle: function(m){
 		if( m.type === 'editGeometryModified' ){
 			if( m._origin !== this ){
-				this._geometryModified(m.docId, m.geom, m.proj);
+				if ( m._origin._classname === 'MapAndControls' ){
+					this._geometryModified(m.docId, m.geom, m.proj);
+				} else {
+					this._ol_geometryModified(m.docId, m.geom, m.proj);
+				}
+				
 			};
 			
 		} else if( m.type === 'mapGeometryAdded' ){
-			this._addGeometry(m.geometry, m.projection);
-
+			if( m._origin !== this ){
+				if( m._origin._classname === 'MapAndControls' ){
+					this._addGeometry(m.geometry, m.projection);
+				} else {
+					this._ol_addGeometry( m.docId, m.geom, m.proj);
+				}
+			}
+			
 		} else if( 'historyIsHashChangePermitted' === m.type ) {
 			if( null != this.editedDocument ) {
 				if( confirm( _loc('Do you wish to leave document editor?') ) ) {
@@ -2412,15 +2543,15 @@ var CouchEditService = $n2.Class({
 		this.showDocumentForm(doc);
 	},
 	
-	_createFromGeometry: function(olGeom, olProj){
+	_createFromGeometry: function(olGeom, olProj, isNewOpenlayers){
 		var _this = this;
-		
+		var _isOl3 = isNewOpenlayers || false;
 		// Check that we are logged in
 		var authService = this.authService;
 		if( authService && false == authService.isLoggedIn() ) {
 			authService.showLoginForm({
 				onSuccess: function(result,options) {
-					_this._createFromGeometry(olGeom, olProj);
+					_this._createFromGeometry(olGeom, olProj, _isOl3);
 				}
 			});
 			return;
@@ -2432,7 +2563,7 @@ var CouchEditService = $n2.Class({
 		};
 		
 		this.currentEditor = this._createEditor();
-		this.currentEditor.startEditingFromGeometry(olGeom, olProj);
+		this.currentEditor.startEditingFromGeometry(olGeom, olProj, _isOl3);
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -2440,8 +2571,11 @@ var CouchEditService = $n2.Class({
 			this._initiateEditor(m.doc);
 			
 		} else if( 'editCreateFromGeometry' === m.type ) {
-			this._createFromGeometry(m.geometry, m.projection);
-			
+			if ( m._origin._classname === 'MapAndControls' ){
+				this._createFromGeometry(m.geometry, m.projection);
+			} else {
+				this._createFromGeometry(m.geometry, m.projection, true)
+			}
 		} else if( 'editCancel' === m.type ) {
 			this.cancelDocumentForm();
 
@@ -2470,7 +2604,7 @@ var CouchEditService = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 // Create an editor based on a schema. This
 // performs only the portion that deals with the
 // schema.
@@ -2557,7 +2691,7 @@ var SchemaEditor = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 // Schema editing service. This should be used to set
 // attributes that all schema editors should have in
 // common.
@@ -2636,7 +2770,7 @@ var SchemaEditorService = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 var AttachmentEditor = $n2.Class({
 	
@@ -2735,7 +2869,7 @@ var AttachmentEditor = $n2.Class({
 
 		this.elemId = $n2.utils.getElementIdentifier( $elem );
 
-		//load configuration
+		// load configuration
 		if( this.doc
 			&& !this.doc._rev) {
 			if(typeof this.doc.nunaliit_maxAudioRecordingLengthSeconds !== 'undefined') {
@@ -2898,19 +3032,24 @@ var AttachmentEditor = $n2.Class({
 		
 		var $elem = $(opts.elem);
 
-		var attachBtn = $('<button>')
-			.text(_loc('Add File'))
-			.appendTo($elem)
-			.click(function(){
+		var attachBtnOpts = {
+			parentElem: $elem,
+			btnLabel: 'Add File',
+			onBtnClick: function(){
 				_this._openAddFileDialog();
 				return false;
-			});
+			}
+		};
 		
-		if( opts.classNames ){
-			attachBtn.addClass(opts.classNames);
+		if( $n2.isArray(opts.classNames) ){
+			opts.classNames.forEach(function(className){
+				if( typeof className === 'string' ){
+					attachBtnOpts.mdcClasses.push(className);
+				};
+			});
 		};
 
-		attachBtn.button({icons:{primary:'ui-icon-plusthick'}});
+		new $n2.mdc.MDCButton(attachBtnOpts);
 	},
 	
 	performPreSavingActions: function(opts_){
@@ -2946,7 +3085,7 @@ var AttachmentEditor = $n2.Class({
 			return;
 		};
 
-		//Stop video capturing with close of the form
+		// Stop video capturing with close of the form
 		if(typeof _this.recordingStream !== 'undefined' && _this.recordingStream != null) {
 			_this.recordingStream.stop();
 		}
@@ -3120,7 +3259,7 @@ var AttachmentEditor = $n2.Class({
 		var $fileInput = $form.find('input[type="file"]');
 		var filename = $fileInput.val();
 		var mediaFile = null;
-		//generate file data for mp3 file.
+		// generate file data for mp3 file.
 		if(!filename) {
 			var audio = $form.find('audio');
 			if(audio.length > 0) {
@@ -3167,7 +3306,7 @@ var AttachmentEditor = $n2.Class({
 
 		function mediaTagToFile(element, mediaType, extension) {
 			var blob = dataURLtoBlob(element.src, mediaType);
-			//Check that File API Constructor is supported by this browser
+			// Check that File API Constructor is supported by this browser
 			if(typeof File === 'function' && File.length >= 2) {
 				filename = (Math.random() * new Date().getTime()).toString(36).replace( /\./g , '') + extension;
 				return new File([blob], filename, { type: mediaType });
@@ -3177,7 +3316,7 @@ var AttachmentEditor = $n2.Class({
 		}
 
 		function dataURLtoBlob(dataURL, mediaType) {
-			//Based on https://github.com/bubkoo/dataurl-to-blob (MIT License)
+			// Based on https://github.com/bubkoo/dataurl-to-blob (MIT License)
 			if (!window || window.window !== window) {
 				throw new Error('This module is only available in browser');
 			}
@@ -3219,6 +3358,7 @@ var AttachmentEditor = $n2.Class({
 
 	_openAddFileDialog: function(){
 		var _this = this;
+		var mdcDialogComponent = null;
 		
 		var $elem = this._getElem();
 		if( $elem.length < 1 ) {
@@ -3228,64 +3368,44 @@ var AttachmentEditor = $n2.Class({
 		var dialogId = $n2.getUniqueId();
 		var addFileFormId = $n2.getUniqueId();
 		
-		var $addFileDialog = $('<div>')
-			.attr('id',dialogId)
-			.addClass('attachmentEditor_dialog');
+		var addFileDialog = new $n2.mdc.MDCDialog({
+			mdcClasses: ['attachmentEditor_dialog'],
+			dialogTitle: 'Add File',
+			closeBtn: true,
+			closeBtnText: 'Cancel'
+		});
 
-		var $content = $('<div>')
-			.addClass('attachmentEditor_dialog_content')
-			.appendTo($addFileDialog);
+		var dialogContentId = addFileDialog.getContentId();
+
+		$('#' + dialogContentId).addClass('attachmentEditor_dialog_content');
+		$('#' + dialogContentId).addClass('attachmentEditor_dialog_buttons');
 
 		var $addFileForm = $('<form>')
-			.attr('id',addFileFormId)
+			.attr('id', addFileFormId)
 			.addClass('attachmentEditor_form')
-			.appendTo($content);
-		
+			.appendTo('#' + dialogContentId);
+
 		$('<input type="file">')
-			.attr('name','media')
+			.attr('name', 'media')
 			.appendTo($addFileForm);
 
-		var $buttons = $('<div>')
-			.addClass('attachmentEditor_dialog_buttons')
-			.appendTo($addFileDialog);
-
-		var $addBtn = $('<button>')
-			.text( _loc('Attach') )
-			.appendTo($buttons)
-			.click(function(){
+		new $n2.mdc.MDCButton({
+			parentElem: $('#' + addFileDialog.getFooterId()),
+			mdcClasses: ['mdc-dialog__button'],
+			btnLabel: 'Attach',
+			onBtnClick: function(){
 				var $addFileDialog = $('#'+dialogId);
 				var $addFileForm = $('#'+addFileFormId);
 				var $input = $addFileForm.find('input');
 				var filename = $input.val();
-				if( filename ) {
+				if (filename) {
 					_this._addFileForm($addFileForm);
-					$addFileDialog.dialog('close');
+					addFileDialog.closeDialog();
+					$('#' + addFileDialog.getId()).remove();
 				} else {
-					alert( _loc('You must select a file') );
+					alert (_loc('You must select a file'));
 				};
 				return false;
-			});
-		$addBtn.button({icons:{primary:'ui-icon-plusthick'}});
-
-		var $cancelBtn = $('<button>')
-			.text( _loc('Cancel') )
-			.appendTo($buttons)
-			.click(function(){
-				var $addFileDialog = $('#'+dialogId);
-				$addFileDialog.dialog('close');
-				return false;
-			});
-		$cancelBtn.button({icons:{primary:'ui-icon-cancel'}});
-		
-		$addFileDialog.dialog({
-			autoOpen: true
-			,title: _loc('Add File')
-			,modal: true
-			,width: 740
-			,close: function(event, ui){
-				var diag = $(event.target);
-				diag.dialog('destroy');
-				diag.remove();
 			}
 		});
 	},
@@ -3640,7 +3760,7 @@ var AttachmentEditor = $n2.Class({
 				}
 			}, false);
 		} else {
-			//clearfix div to prevent buttons from floating
+			// clearfix div to prevent buttons from floating
 			$('<div>')
 				.addClass('attachmentEditor_clearfix')
 				.appendTo($div);
@@ -3891,21 +4011,23 @@ var AttachmentEditor = $n2.Class({
 				.text(attName)
 				.appendTo($div);
 		};
-		
-		$('<a>')
-			.attr('href','#')
-			.attr('n2AttName',attName)
-			.addClass('attachmentEditor_delete')
-			.text( _loc('Remove') )
-			.appendTo($div)
-			.click(function(){
+
+		new $n2.mdc.MDCButton({
+			parentElem: $div,
+			mdcClasses: ['attachmentEditor_delete'],
+			mdcAttributes: {
+				'n2AttName':attName
+			},
+			btnLabel: 'Remove',
+			onBtnClick: function(){
 				var $a = $(this);
 				var attName = $a.attr('n2AttName');
 				if( attName ) {
 					_this._removeAttachment(attName);
 				};
 				return false;
-			});
+			}
+		});
 		
 		if( opts.form ) {
 			opts.form.appendTo($div);
@@ -4261,7 +4383,7 @@ var AttachmentEditor = $n2.Class({
 		var kbps = 128;
 		var mp3encoder = new lamejs.Mp3Encoder(channels, sampleRate, kbps);
 		var mp3Data = [];
-		var sampleBlockSize = 1152; //can be anything but make it a multiple of 576 to make encoders life easier
+		var sampleBlockSize = 1152; // can be anything but make it a multiple of 576 to make encoders life easier
 
 		for (var i = 0; i < samples.length; i += sampleBlockSize) {
 			var sampleChunk = samples.subarray(i, i + sampleBlockSize);
@@ -4270,7 +4392,7 @@ var AttachmentEditor = $n2.Class({
 				mp3Data.push(mp3buf);
 			}
 		}
-		var mp3buf = mp3encoder.flush();   //finish writing mp3
+		var mp3buf = mp3encoder.flush();   // finish writing mp3
 
 		if (mp3buf.length > 0) {
 			mp3Data.push(new Int8Array(mp3buf));
@@ -4280,7 +4402,7 @@ var AttachmentEditor = $n2.Class({
 	}
 });
 
-//++++++++++++++++++++++++++++++++++++++++++++++
+// ++++++++++++++++++++++++++++++++++++++++++++++
 
 $n2.couchEdit = {
 	EditService: CouchEditService

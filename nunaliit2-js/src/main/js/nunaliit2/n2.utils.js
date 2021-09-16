@@ -1139,4 +1139,178 @@ $n2.utils.escapeHtml = function(str) {
 	return str.replace(reHtmlCharSelect, htmlEscapeCharFn);
 };
 
+/**
+ * Accepts a string and returns an instance of the named class.
+ * Example: var canvasMap1 = $n2.utils.getInstance('$n2.canvasMap', opts)
+ * @name getInstance
+ * @function
+ * @memberOf nunaliit2.utils
+ * @param str {String} String of class name 
+ * @returns Instance object
+ */
+$n2.utils.getInstance = function(str, var_args ) {
+	if ( typeof(str) !== 'string'){
+		return null;
+	};
+	var arr = str.split(".");
+
+	var fn = (window || this);
+	for (var i = 0, len = arr.length; i < len; i++) {
+		if (typeof fn === 'undefined'){
+			return null;
+		}
+	    fn = fn[arr[i]];
+	}
+
+	if (typeof fn !== "function") {
+	  $n2.log("Constructor Function not found");
+	  return null;
+	}
+	
+
+	var args = new Array(arguments.length -1);
+	for (var i=1; i< arguments.length; i++) {
+		args[i-1] = arguments[i];
+	}
+	
+	var instance = new fn(var_args);
+	
+	if (typeof instance !== "object") {
+		$n2.log("Target instance object creation error");
+		return null;
+	}
+	return instance;
+};
+
+/**
+ * Accepts a string and returns a method of the named method.
+ * Example: var canvasMethod = $n2.utils.getMethod('$n2.canvasMap.handleCanvasDisplay')
+ * @name getMethod
+ * @function
+ * @memberOf nunaliit2.utils
+ * @param str {String} String of method name 
+ * @returns function 
+ */
+$n2.utils.getMethod = function(str, var_args ) {
+	if ( typeof(str) !== 'string'){
+		return null;
+	};
+	var arr = str.split(".");
+
+	var fn = (window || this);
+	for (var i = 0, len = arr.length; i < len; i++) {
+		if (typeof fn === 'undefined'){
+			return null;
+		}
+	    fn = fn[arr[i]];
+	}
+	if (typeof fn !== "function") {
+	  $n2.log("Target method is not a Function.");
+	  return null;
+	}
+	
+
+	return fn;
+};
+/**
+ * DFS
+ * @name DFS
+ * @function
+ * @memberOf nunaliit2.utils
+ * @param item {String} 
+ * @param predicate1 function return true if item is legal, false otherwise
+ * @param predicate2 function return true if item has embeded item inside itself
+ * @param callback function to call on each item
+ * @returns {void};
+ */
+$n2.utils.DFS = function(item, predicate1, predicate2, callback){
+	if(!item || item === "" || Array.isArray(item) && item.length === 0  ) return;
+	if ( typeof predicate1 === 'function'
+		&& predicate1(item)){
+		callback (item);
+		return;
+	}
+	if( typeof predicate2 === 'function'
+		&& predicate2(item)){
+		if (Array.isArray(item)){
+			for( var i = 0,e=item.length; i< e; i++){
+				var innerfst = item[i];
+				DFS(innerfst, predicate1, predicate2, callback);
+			};
+		} else if (typeof item  ===  'object'){
+			for( var innerfst in item){
+				DFS(item[innerfst], predicate1, predicate2, callback);
+			};
+		}
+
+	}
+};
+
+$n2.keys = function (obj) {
+	if (!Object.keys){
+		var arr = [];
+		for (var key in obj) {
+			if (obj.hasOwnProperty(key)) {
+				arr.push(key);
+			}
+		}
+	} else {
+		arr = Object.keys(obj);
+	}
+	return arr;
+}
+
+$n2.utils.convertSMPTEtoSeconds = function (SMPTE) {
+
+	if (typeof SMPTE !== 'string') {
+		throw new TypeError('Argument must be a string value');
+	}
+
+	SMPTE = SMPTE.replace(',', '.');
+
+	var decimalLen = ~SMPTE.indexOf('.') ? SMPTE.split('.')[1].length : 0;
+
+	var secs = 0,
+	    multiplier = 1;
+
+	SMPTE = SMPTE.split(':').reverse();
+
+	for (var i = 0, total = SMPTE.length; i < total; i++) {
+		multiplier = 1;
+		if (i > 0) {
+			multiplier = Math.pow(60, i);
+		}
+		secs += Number(SMPTE[i]) * multiplier;
+	}
+	return Number(secs.toFixed(decimalLen));
+};
+
+/**
+ * Usage: processLargeArrayAsync(veryLargeArray, myCallback);
+ * myCallback defined with args (value, index, array)
+ */
+$n2.utils.processLargeArrayAsync = function(array, fn, maxTimePerChunk, context) {
+	context = context || window;
+	maxTimePerChunk = maxTimePerChunk || 200;
+	var index = 0;
+
+	function now() {
+		return new Date().getTime();
+	}
+
+	function doChunk() {
+		var startTime = now();
+		while (index < array.length && (now() - startTime) <= maxTimePerChunk) {
+			// callback called with args (value, index, array)
+			fn.call(context, array[index], index, array);
+			++index;
+		}
+		if (index < array.length) {
+			// set Timeout for async iteration
+			setTimeout(doChunk, 1);
+		}
+	}
+	doChunk();
+}
+
 })(nunaliit2);
