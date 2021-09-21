@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/GCRC/nunaliit.png)](https://travis-ci.com/GCRC/nunaliit)
+[![Build Status](https://api.travis-ci.com/GCRC/nunaliit.svg?branch=master)](https://api.travis-ci.com/GCRC/nunaliit.svg?branch=master)
 
 Nunaliit Atlas Framework (Nunaliit) is a system for creating interactive, data-driven web atlases supporting user
 editing of documents and geometries, integrated multimedia, document relations, flexible data schemas, self-replication,
