@@ -145,6 +145,9 @@ public class CommandInReachSchemaDefs implements Command {
 				attribute.put("type", "string");
 				attribute.put("textarea", true);
 
+			} else if( InReachFormField.Type.NUMBER == fieldType) {	
+				attribute.put("type", "string");
+
 			} else {
 				throw new Exception("Unexpected field type: "+fieldType);
 			}
