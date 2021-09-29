@@ -1,0 +1,11 @@
+.n2WMSLegend > img {
+    border: 0;
+    max-height: 250px;
+    max-width: 150px;
+}
+
+.n2WMSLegend {
+    position: absolute;
+    bottom: 50px;
+    left: 10px;
+}
