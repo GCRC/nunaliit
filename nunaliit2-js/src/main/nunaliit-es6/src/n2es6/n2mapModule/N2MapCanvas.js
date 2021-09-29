@@ -20,7 +20,6 @@ import {default as N2Select} from './N2Select.js';
 import {default as N2SourceWithN2Intent} from './N2SourceWithN2Intent.js';
 
 import Map from 'ol/Map.js';
-import WebGLMap from 'ol/WebGLMap';
 import {default as VectorLayer} from 'ol/layer/Vector.js';
 import {default as LayerGroup} from 'ol/layer/Group.js';
 import {default as ImageLayer} from 'ol/layer/Image.js';
@@ -56,6 +55,7 @@ import EditBar from './EditBar';
 import Toggle from 'ol-ext/control/Toggle';
 import Timeline from 'ol-ext/control/Timeline';
 import Popup from 'ol-ext/overlay/Popup';
+
 //import timelineData from '!json-loader!../../data/fond_guerre.geojson';
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -416,6 +416,8 @@ class N2MapCanvas  {
 					this.sources.push(source);
 				}
 
+			} else if (overlay.type === VENDOR.WMS) {
+				this.sources.push(overlay)
 			} else if ('wfs' === overlay.type) {
 				$n2.logError(overlay.type + 'is constructing');
 				this.sources.push({});
@@ -653,6 +655,14 @@ class N2MapCanvas  {
 		return $elem;
 	}
 
+	_allSourceChangeResolution(sources, res, proj, extent) {
+		sources.forEach(function(source){
+			if(typeof source.onChangedResolution !== 'undefined') {
+				source.onChangedResolution(res,proj, extent);
+			}
+		});
+	}
+
 	// Create a OpenLayers Map Object
 	_drawMap() {
 		var _this = this;
@@ -693,9 +703,7 @@ class N2MapCanvas  {
 				let center = evt.frameState.viewState.center;
 				_this.resolution = res;
 				var extent = olView.calculateExtent();
-				_this.sources.forEach(function(source){
-					source.onChangedResolution(res,proj, extent);
-				});
+				_this._allSourceChangeResolution(_this.sources, res, proj, extent);
 				
 				var coor_string = center.join(',') + ',' + zoom + 'z';
 				_this.dispatchService.send(DH, {
@@ -734,9 +742,7 @@ class N2MapCanvas  {
 				_this.resolution = res;
 				_this.proj = proj;
 				var extent = olView.calculateExtent();
-				_this.sources.forEach(function(source){
-					source.onChangedResolution(res,proj, extent);
-				});
+				_this._allSourceChangeResolution(_this.sources, res, proj, extent);
 				
 				var coor_string = center.join(',') + ',' + zoom + 'z';
 				_this.dispatchService.send(DH, {
@@ -785,6 +791,40 @@ class N2MapCanvas  {
 		});
 
 		customMap.addControl(customLayerSwitcher);
+
+		/*display WMS Legends*/
+		var $container = $(`#${_this.canvasId}`);
+
+		this.elemId = $n2.getUniqueId();
+		let legendDiv = $('<div>')
+			.attr('id',this.elemId)
+			.addClass('n2WMSLegend')
+			.appendTo($container);
+
+		this.overlayInfos.forEach( (info, idx) => {
+			if(info._layerInfo.options.wmsLegend && info.visibility) {
+				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl()
+				$('<img>')
+					.attr('id', `legend${_this.overlayLayers[idx].ol_uid}`)
+					.attr('src', legendUrl)
+					.appendTo(legendDiv)
+			}
+			if(info._layerInfo.options.wmsLegend) {
+				_this.overlayLayers[idx].on('change:visible', function(e) {
+					if(e.oldValue) {
+						$(`#legend${e.target.ol_uid}`).remove()
+					} else {
+						const legendUrl = e.target.values_.source.getLegendUrl()
+						$('<img>')
+							.attr('id', `legend${e.target.ol_uid}`)
+							.attr('src', legendUrl)
+							.appendTo(legendDiv)
+					}
+				});
+			}
+		});
+		
+		//Register a change listener, when layers are shown/hidden then show/hide the associated legend
 
 		var mainbar = new Bar();
 		customMap.addControl(mainbar);
@@ -1162,6 +1202,11 @@ class N2MapCanvas  {
 			for (var i = 0, e = Sources.length; i < e; i++){
 				var overlayInfo = _this.overlayInfos[i];
 				var alphasource = Sources[i];
+				if(typeof alphasource.type !== 'undefined' && alphasource.type === 'wms') {
+					let visible = typeof alphasource.visibility === 'undefined' || alphasource.visibility ? true : false;
+					fg.push(this._createOLLayerFromDefinition(alphasource, visible));
+					continue;
+				}
 				var betaSource = alphasource;
 				if (overlayInfo.clustering) {
 					if ( typeof _this.isClustering === 'undefined'){
@@ -1249,7 +1294,8 @@ class N2MapCanvas  {
 			for (var i=0,e=bgSources.length; i<e; ++i) {
 				var layerDefiniton = bgSources[i];
 				var l = this._createOLLayerFromDefinition(layerDefiniton,
-					_computeDefaultLayer( bgSources , i)
+					_computeDefaultLayer( bgSources , i),
+					true
 				);
 
 				if( l && !bg ) bg = [];
@@ -1265,18 +1311,26 @@ class N2MapCanvas  {
 	 * in the backgrounds array. 
 	 * @param {boolean} isDefaultLayer 
 	 */
-	_createOLLayerFromDefinition(layerDefinition, isDefaultLayer) {
+	_createOLLayerFromDefinition(layerDefinition, isDefaultLayer, isBaseLayer) {
 		var name = _loc(layerDefinition.name);
 		var _this = this;
 
 		if (layerDefinition) {
-			var ol5layer = new Tile({
-				title: layerDefinition.name,
-				type: 'base',
-				visible: isDefaultLayer,
-				source: _this._createBackgroundMapSource(layerDefinition)
-			});
-			return ol5layer;
+			if(isBaseLayer) {
+				return new Tile({
+					title: layerDefinition.name,
+					type: 'base',
+					visible: isDefaultLayer,
+					source: _this._createBackgroundMapSource(layerDefinition)
+				});
+			} else {
+				return new Tile({
+					title: layerDefinition.name,
+					visible: isDefaultLayer,
+					source: _this._createBackgroundMapSource(layerDefinition)
+				});
+			}
+			
 
 		} else {
 			$n2.reportError('Bad configuration for layer: ' + name);
@@ -1325,7 +1379,6 @@ class N2MapCanvas  {
 					url: sourceOptionsInternal.url,
 					params: parameters
 				});
-
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}

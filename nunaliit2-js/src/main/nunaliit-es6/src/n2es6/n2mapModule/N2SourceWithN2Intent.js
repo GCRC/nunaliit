@@ -3,15 +3,12 @@
 */
 
 import VectorSource from 'ol/source/Vector.js';
-import {listen, unlisten, unlistenByKey} from 'ol/events.js';
+import {listen, unlistenByKey} from 'ol/events.js';
 import EventType from 'ol/events/EventType.js';
 
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.canvasMap';
-
-
-
 
 var featureStyleFunctions = {
 		getDocuments: function(){
@@ -46,6 +43,7 @@ class N2SourceWithN2Intent extends VectorSource {
 
 		
 		this.dispatchService = options.dispatchService;
+		this.listenChangeKeysByOlId = {};
 		/**
 		 * [resolution description]
 		 * @type {number|undefined}
@@ -724,9 +722,13 @@ class N2SourceWithN2Intent extends VectorSource {
 	}
 	
 	loadFeatures(extent, resolution, projection) {
-		unlisten(this.source, EventType.CHANGE, this.refresh, this);
+		if(this.listenChangeKeysByOlId[this.source.ol_uid]) {
+			unlistenByKey(this.listenChangeKeysByOlId[this.source.ol_uid]);
+			delete this.listenChangeKeysByOlId[this.source.ol_uid];
+		}
 		this.source.loadFeatures(extent, resolution, projection);
-		listen(this.source, EventType.CHANGE, this.refresh, this);
+		let listenKey = listen(this.source, EventType.CHANGE, this.refresh, this);
+		this.listenChangeKeysByOlId[this.source.ol_uid] = listenKey;
 		if (resolution !== this.resolution) {
 			this.resolution = resolution;
 			this.projection = projection;
