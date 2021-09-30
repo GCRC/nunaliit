@@ -39,7 +39,7 @@ gulp.task('babel', ['clean'], function() {
     //	 include the polyfill.js
     //   'node_modules/babel-polyfill/dist/polyfill.js',
 	    
-	    'src/**/*.js','!src/n2es6/n2core/*.js'
+	    'src/**/*.js','!src/n2es6/n2core/*.js','src/**/*.css'
 	]
     )
     
