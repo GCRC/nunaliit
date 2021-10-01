@@ -6,7 +6,8 @@ public interface InReachFormField {
 	
 	public enum Type {
 		PICKLIST("PickList"),
-		TEXT("Text");
+		TEXT("Text"),
+		NUMBER("Number");
 		
 		private String label;
 		private Type(String label){
