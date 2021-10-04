@@ -2,7 +2,7 @@ const path =require( 'path');
 module.exports = {
 	entry: './dist/index.js',
 	devtool: 'source-map',
-    mode: 'development',
+    mode: 'production',
     module: {
 	rules: [
 	    {
