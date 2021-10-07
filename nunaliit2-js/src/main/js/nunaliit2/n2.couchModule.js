@@ -461,6 +461,9 @@ var ModuleDisplay = $n2.Class({
 			d.register(DH,'editClosed',function(m){
 				_this._hideSlidingSidePanel();
 			});
+			d.register(DH,'searchInitiate',function(m){
+				_this._showSlidingSidePanel();
+			});
 			d.register(DH,'moduleGetCurrent',function(m){
 				m.moduleId = _this.getCurrentModuleId();
 
