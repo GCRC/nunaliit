@@ -285,6 +285,7 @@ class N2MapCanvas  {
 			this.dispatchService.register(DH, 'n2ViewAnimation', f);
 			this.dispatchService.register(DH, 'n2rerender', f);
 			this.dispatchService.register(DH, 'time_interval_change', f);
+			this.dispatchService.register(DH, 'renderStyledTranscript', f);
 			this.dispatchService.register(DH, 'focusOn', f);
 			this.dispatchService.register(DH, 'mapRefreshCallbackRequest', f);
 			this.dispatchService.register(DH, 'resolutionRequest', f);
@@ -1474,8 +1475,7 @@ class N2MapCanvas  {
 			//This refresh strictly execute the invoke for rerender the ol5 map
 			if (_this.n2Map){
 				_this.overlayLayers.forEach(function(overlayLayer){
-						overlayLayer.getSource().refresh();
-
+					overlayLayer.getSource().refresh();
 				});
 				//var viewExt = olmap.getView().calculateExtent(olmap.getSize());
 				//olmap.getView().fit(viewExt);
@@ -1598,6 +1598,35 @@ class N2MapCanvas  {
 				var popup = _this.popupOverlay;
 				var content = "tset";
 				//popup.show(,content);
+			}
+		} else if ('renderStyledTranscript' === type) {
+			const olmap = _this.n2Map;
+			if (_this.n2Map){
+				let lastKnownFeature = null;
+				_this.overlayLayers.forEach(function(overlayLayer){
+					const n2Source = overlayLayer.getSource();
+					if (n2Source.hasOwnProperty("features_")) {
+						const features = n2Source.features_;
+						features.sort((f1, f2) => {
+							if (f1.data._ldata.start < f2.data._ldata.start) return -1;
+							else if (f1.data._ldata.start > f2.data._ldata.start) return 1;
+							return 0;
+						});
+						if (($n2.isArray(features)) && (features.length > 0)) {
+							lastKnownFeature = features[features.length - 1];
+						}
+					}
+					n2Source.refresh();
+				});
+
+				if ((lastKnownFeature !== null) && (!(lastKnownFeature.n2ConvertedBbox === undefined))) {
+					// EPSG 3587 Bounding boxes: [xMin (left), yMin (bottom) , xMax (right), yMax (top)]
+					const boundScaler = 200000;
+					olmap.getView().fit(lastKnownFeature.n2ConvertedBbox.map((coordinate, index) => {
+						if (index < 2) return coordinate - boundScaler;
+						else return coordinate + boundScaler;
+					}));
+				}
 			}
 
 		} else if ('time_interval_change' === type){
