@@ -175,7 +175,7 @@ class N2CustomPointStyle extends RegularShape{
 	 */
 	setRadius(radius, ratio) {
 		this.radius_ = radius;
-		this.donuratio_ = ratio || this.donuratio_;
+		this.donutratio_ = ratio || this.donutratio_;
 		this.renderCanvas_();
 	}
 
