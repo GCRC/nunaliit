@@ -1621,10 +1621,13 @@ class N2MapCanvas  {
 
 				if ((lastKnownFeature !== null) && (!(lastKnownFeature.n2ConvertedBbox === undefined))) {
 					// EPSG 3587 Bounding boxes: [xMin (left), yMin (bottom) , xMax (right), yMax (top)]
-					const boundScaler = 200000;
+					const initialBboxBound = 10000;
+					const expectedScale = lastKnownFeature.data._ldata.placeZoomScale;
+					const zoomScale = (expectedScale && expectedScale > 0 && expectedScale <= 500) ? expectedScale : 10;
+					const totalBboxScalingAmount = initialBboxBound * zoomScale;
 					olmap.getView().fit(lastKnownFeature.n2ConvertedBbox.map((coordinate, index) => {
-						if (index < 2) return coordinate - boundScaler;
-						else return coordinate + boundScaler;
+						if (index < 2) return coordinate - totalBboxScalingAmount;
+						else return coordinate + totalBboxScalingAmount;
 					}));
 				}
 			}
