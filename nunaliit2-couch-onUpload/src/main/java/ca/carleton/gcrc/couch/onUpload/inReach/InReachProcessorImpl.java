@@ -171,6 +171,8 @@ public class InReachProcessorImpl implements InReachProcessor {
 					sw.write("\\d*");
 				} else if( InReachFormField.Type.TEXT == fieldType ) {
 					sw.write(".*");
+				} else if( InReachFormField.Type.NUMBER == fieldType ) {
+					sw.write("\\d*");
 				} else {
 					throw new Exception("Unexpected type: "+fieldType);
 				}
@@ -230,6 +232,17 @@ public class InReachProcessorImpl implements InReachProcessor {
 					jsonData.put(fieldName, data);
 				}
 
+			} else if( InReachFormField.Type.NUMBER == fieldType ) {
+				if( "".equals(data.trim()) && null != fieldDefaultValue ) {
+					// Not provided. But a default is provided. Use default.
+					data = fieldDefaultValue;
+				}
+				if( "".equals(data.trim()) ) {
+					// Not provided and no default: leave empty
+
+				} else {
+					jsonData.put(fieldName, Integer.parseInt(data));
+				}
 			} else {
 				throw new Exception("Unexpected type: "+fieldType);
 			}
