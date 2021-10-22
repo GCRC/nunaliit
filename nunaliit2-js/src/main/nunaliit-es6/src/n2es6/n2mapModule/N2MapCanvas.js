@@ -314,7 +314,7 @@ class N2MapCanvas  {
 			}
 		}
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styles);
-
+		this.fitMapToLatestMapTag = false;
 		this._drawMap();
 		opts.onSuccess();
 	}
@@ -847,15 +847,25 @@ class N2MapCanvas  {
 		});
 
 		// Add editing tools
-		var pedit = new Toggle({
+		/* var pedit = new Toggle({
 				html: '<i class="fa fa-map-marker" ></i>',
 				className: "edit",
 				title: 'Point',
 				interaction: this.interactionSet.drawInteraction,
 				onToggle: function(active){}
-		});
-
+		}); */
 		//nested.addControl ( pedit );
+
+		// Add a toggle for the map to fit to a place's zoom level on encounter with a new map tag from the transcript
+		const fitMapByTagCtrl = new Toggle({
+			html: '<i class="fa fa-map-marker"></i>',
+			className: "map_fit",
+			title: "Toggle map fit on latest map tag",
+			active: this.fitMapToLatestMapTag,
+			onToggle: () => { this.fitMapToLatestMapTag = !this.fitMapToLatestMapTag }
+		});
+		mainbar.addControl(fitMapByTagCtrl);
+
 		var pcluster = new Toggle({
 			html: '<i class="fa fa-map-marker" ></i>',
 			className: "cluster_toggle",
@@ -1619,7 +1629,7 @@ class N2MapCanvas  {
 					n2Source.refresh();
 				});
 
-				if ((lastKnownFeature !== null) && (!(lastKnownFeature.n2ConvertedBbox === undefined))) {
+				if (this.fitMapToLatestMapTag && lastKnownFeature !== null && (!(lastKnownFeature.n2ConvertedBbox === undefined))) {
 					// EPSG 3587 Bounding boxes: [xMin (left), yMin (bottom) , xMax (right), yMax (top)]
 					const initialBboxBound = 10000;
 					const expectedScale = lastKnownFeature.data._ldata.placeZoomScale;
