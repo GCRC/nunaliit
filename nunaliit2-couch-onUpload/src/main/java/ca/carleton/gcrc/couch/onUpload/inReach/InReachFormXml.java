@@ -15,7 +15,12 @@ public class InReachFormXml implements InReachForm {
 	private List<InReachFormField> fields = new Vector<InReachFormField>();
 
 	public InReachFormXml(Element formElem){
+
 		title = getTextElement(formElem, "title");
+		if (title != null) {
+			title = title.trim().replace(" ", "_");
+		}
+
 		destination = getTextElement(formElem, "destination");
 		prefix = getTextElement(formElem, "prefix");
 		delimiter = getTextElement(formElem, "delimiter");
