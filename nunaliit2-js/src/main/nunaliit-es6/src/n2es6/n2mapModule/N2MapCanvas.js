@@ -1629,12 +1629,12 @@ class N2MapCanvas  {
 					n2Source.refresh();
 				});
 
-				if (this.fitMapToLatestMapTag && lastKnownFeature !== null && (!(lastKnownFeature.n2ConvertedBbox === undefined))) {
+				if (this.fitMapToLatestMapTag && lastKnownFeature !== null && lastKnownFeature.n2ConvertedBbox !== undefined) {
 					// EPSG 3587 Bounding boxes: [xMin (left), yMin (bottom) , xMax (right), yMax (top)]
 					const initialBboxBound = 10000;
 					const expectedScale = lastKnownFeature.data._ldata.placeZoomScale;
-					const zoomScale = (expectedScale && expectedScale > 0 && expectedScale <= 500) ? expectedScale : 10;
-					const totalBboxScalingAmount = initialBboxBound * zoomScale;
+					const zoomScale = (expectedScale && expectedScale > 0 && expectedScale <= 100) ? expectedScale : 10;
+					const totalBboxScalingAmount = initialBboxBound * (zoomScale * 5);
 					olmap.getView().fit(lastKnownFeature.n2ConvertedBbox.map((coordinate, index) => {
 						if (index < 2) return coordinate - totalBboxScalingAmount;
 						else return coordinate + totalBboxScalingAmount;
