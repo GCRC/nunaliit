@@ -2,7 +2,6 @@
  * @module n2es6/n2mapModule/N2MapCanvas
  */
 
-import './N2MapCanvas.css';
 import 'ol/ol.css';
 import {default as CouchDbSource} from './N2CouchDbSource.js';
 import N2ModelSource from './N2ModelSource.js';
@@ -157,6 +156,11 @@ class N2MapCanvas  {
 		this.editLayerSource = undefined;
 		this.refreshCallback = null;
 
+		this.canvasName = null;
+		if( this.options ){
+			this.canvasName = this.options.canvasName;
+		}
+
 		if ( this.customService ){
 			var customService = this.customService;
 			if ( !this.refreshCallback ){
@@ -292,6 +296,7 @@ class N2MapCanvas  {
 			this.dispatchService.register(DH, 'resolutionRequest', f);
 			this.dispatchService.register(DH, 'editInitiate', f);
 			this.dispatchService.register(DH, 'editClosed', f);
+			this.dispatchService.register(DH, 'legendReady', f);
 		}
 
 		$n2.log(this._classname,this);
@@ -805,21 +810,36 @@ class N2MapCanvas  {
 		this.overlayInfos.forEach( (info, idx) => {
 			if(info._layerInfo.options.wmsLegend && info.visibility) {
 				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl()
-				$('<img>')
-					.attr('id', `legend${_this.overlayLayers[idx].ol_uid}`)
-					.attr('src', legendUrl)
-					.appendTo(legendDiv)
+				_this.dispatchService.send(DH, 
+					{
+						type: 'wmsLegendDisplay'
+						,visible: true
+						,legendUrl: legendUrl
+						,wmsId: _this.overlayLayers[idx].ol_uid
+						,canvasName: _this.canvasName
+					})
 			}
 			if(info._layerInfo.options.wmsLegend) {
+				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl()
 				_this.overlayLayers[idx].on('change:visible', function(e) {
 					if(e.oldValue) {
-						$(`#legend${e.target.ol_uid}`).remove()
-					} else {
-						const legendUrl = e.target.values_.source.getLegendUrl()
-						$('<img>')
-							.attr('id', `legend${e.target.ol_uid}`)
-							.attr('src', legendUrl)
-							.appendTo(legendDiv)
+						_this.dispatchService.send(DH, 
+							{
+								type: 'wmsLegendDisplay'
+								,visible: false
+								,legendUrl: legendUrl
+								,wmsId: e.target.ol_uid
+								,canvasName: _this.canvasName
+							})
+ 					} else {
+						_this.dispatchService.send(DH, 
+							{
+								type: 'wmsLegendDisplay'
+								,visible: true
+								,legendUrl: legendUrl
+								,wmsId: e.target.ol_uid
+								,canvasName: _this.canvasName
+							})
 					}
 				});
 			}
@@ -1680,6 +1700,20 @@ class N2MapCanvas  {
 			});
 
 			_this.lastTime = currTime;
+		} else if ('legendReady' === type && m.canvasName === this.canvasName) {
+			this.overlayInfos.forEach( (info, idx) => {
+				if(info._layerInfo.options.wmsLegend && info.visibility) {
+					const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl();
+					_this.dispatchService.send(DH, 
+						{
+							type: 'wmsLegendDisplay'
+							,visible: true
+							,legendUrl: legendUrl
+							,wmsId: _this.overlayLayers[idx].ol_uid
+							,canvasName: _this.canvasName
+						})
+				}
+			})
 		}
 	}
 	

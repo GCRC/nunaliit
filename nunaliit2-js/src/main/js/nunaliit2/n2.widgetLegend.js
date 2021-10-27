@@ -93,6 +93,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				};
 
 				this.dispatchService.register(DH,'canvasReportStylesInUse',f);
+				this.dispatchService.register(DH,'wmsLegendDisplay', f)
 
 				// Obtain current styles in use
 				var msg = {
@@ -101,6 +102,8 @@ POSSIBILITY OF SUCH DAMAGE.
 				};
 				this.dispatchService.synchronousCall(DH,msg);
 				this.stylesInUse = msg.stylesInUse;
+
+				this.dispatchService.send(DH, {type: 'legendReady', canvasName: this.sourceCanvasName});
 			};
 
 			// Get container
@@ -127,14 +130,32 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_handle: function(m, addr, dispatcher){
-			var _this = this;
-
 			if( 'canvasReportStylesInUse' === m.type ){
 				if( m.canvasName === this.sourceCanvasName ){
 					this.stylesInUse = m.stylesInUse;
 					this._throttledRefresh();
 				};
+			} else if('wmsLegendDisplay' === m.type ) {
+				if( m.canvasName === this.sourceCanvasName ){
+					this._wmsLegendDisplay(m)
+				}
 			};
+		},
+
+		_wmsLegendDisplay: function(m) {
+			const wmsLegendId = `legend${m.wmsId}`;
+			if(m.visible) {
+				if($(`#${wmsLegendId}`).length) {
+					return; //already displaying this legend image
+				}
+				let legendDiv = $(`#${this.elemId}`);
+				$('<img>')
+				.attr('id', wmsLegendId)
+				.attr('src', m.legendUrl)
+				.appendTo(legendDiv)
+			} else {
+				$(`#${wmsLegendId}`).remove()
+			}
 		},
 
 		_refresh: function(){

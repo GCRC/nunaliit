@@ -829,6 +829,12 @@ WidgetLegend2
 	vertical-align: top;
 }
 
+.nunaliit_content > .n2widgetLegend > img {
+    border: 0;
+    max-height: 350px;
+    max-width: 250px;
+}
+
 /* 
 ==============================
 Sound 
