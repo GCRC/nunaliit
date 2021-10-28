@@ -1287,19 +1287,12 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			var $transcriptElem = $('#'+transcriptElem.id);
 			//$transcriptElem.removeClass('highlight');
 
-			if (n_cur >= transcriptElem.start && n_cur < transcriptElem.fin) {
-				/* Entering a new transcript segment - highlight it. */
+			if(n_cur >= transcriptElem.start 
+				&& n_cur < transcriptElem.fin) {
 				$transcriptElem.addClass('highlight');
-				/* Check if it has a colour, if so, emit event to be able to center the view on the generated donut */
-				if (document.querySelector(`#${_this.transcriptId} > div.highlight`).hasAttribute('style')) {
-					_this.dispatchService.send(DH, {
-						type: 'renderStyledTranscript'
-					});
-				}
-
 				//scroll transcript div, so that the ongoing subtitle always stay in the viewport
-				if ($.now() - _this.lastTimeUserScroll > 5000) {
-
+				if ($.now() - _this.lastTimeUserScroll > 5000){
+				
 					_this._scrollToView($transcriptElem);
 				}
 			}
