@@ -250,7 +250,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 			this.dispatchService.register(DH, 'modelStateUpdated', f);
 			this.dispatchService.register(DH,'mediaTimeChanged',f);
-			this.dispatchService.register(DH,'renderStyledTranscript',f);
 			this.dispatchService.register(DH,'documentContent',f);
 			this.dispatchService.register(DH,'replyColorForDisplayedSentences', f);
 
