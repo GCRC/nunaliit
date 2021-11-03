@@ -285,6 +285,7 @@ class N2MapCanvas  {
 			this.dispatchService.register(DH, 'n2ViewAnimation', f);
 			this.dispatchService.register(DH, 'n2rerender', f);
 			this.dispatchService.register(DH, 'time_interval_change', f);
+			this.dispatchService.register(DH, 'renderStyledTranscript', f);
 			this.dispatchService.register(DH, 'focusOn', f);
 			this.dispatchService.register(DH, 'mapRefreshCallbackRequest', f);
 			this.dispatchService.register(DH, 'resolutionRequest', f);
@@ -313,7 +314,9 @@ class N2MapCanvas  {
 			}
 		}
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styles);
-
+		this.fitMapToLatestMapTag = false;
+		this.animateMapFitting = false;
+		this.lastFeatureZoomedTo = undefined;
 		this._drawMap();
 		opts.onSuccess();
 	}
@@ -846,15 +849,35 @@ class N2MapCanvas  {
 		});
 
 		// Add editing tools
-		var pedit = new Toggle({
+		/* var pedit = new Toggle({
 				html: '<i class="fa fa-map-marker" ></i>',
 				className: "edit",
 				title: 'Point',
 				interaction: this.interactionSet.drawInteraction,
 				onToggle: function(active){}
-		});
-
+		}); */
 		//nested.addControl ( pedit );
+
+		// Add a toggle for the map to fit to a place's zoom level on encounter with a new map tag from the transcript
+		const fitMapByTagCtrl = new Toggle({
+			html: '<i class="fa fa-map-marker"></i>',
+			className: "map_fit",
+			title: "Toggle map fit on latest map tag",
+			active: this.fitMapToLatestMapTag,
+			onToggle: () => { this.fitMapToLatestMapTag = !this.fitMapToLatestMapTag }
+		});
+		mainbar.addControl(fitMapByTagCtrl);
+
+		// Add a toggle for the map fit to animate or be instantaneous
+		const animateMapFitCtrl = new Toggle({
+			html: '<i class="fa fa-map-marker"></i>',
+			className: "animate_map_fit",
+			title: "Toggle map fit animation",
+			active: this.animateMapFitting,
+			onToggle: () => { this.animateMapFitting = !this.animateMapFitting }
+		});
+		mainbar.addControl(animateMapFitCtrl);
+
 		var pcluster = new Toggle({
 			html: '<i class="fa fa-map-marker" ></i>',
 			className: "cluster_toggle",
@@ -1474,8 +1497,7 @@ class N2MapCanvas  {
 			//This refresh strictly execute the invoke for rerender the ol5 map
 			if (_this.n2Map){
 				_this.overlayLayers.forEach(function(overlayLayer){
-						overlayLayer.getSource().refresh();
-
+					overlayLayer.getSource().refresh();
 				});
 				//var viewExt = olmap.getView().calculateExtent(olmap.getSize());
 				//olmap.getView().fit(viewExt);
@@ -1598,6 +1620,55 @@ class N2MapCanvas  {
 				var popup = _this.popupOverlay;
 				var content = "tset";
 				//popup.show(,content);
+			}
+		} else if ('renderStyledTranscript' === type) {
+			const olmap = _this.n2Map;
+			if (!olmap) return;
+
+			let lastKnownFeature = null;
+			_this.overlayLayers.forEach(function(overlayLayer){
+				const n2Source = overlayLayer.getSource();
+				if (n2Source.hasOwnProperty("features_")) {
+					const features = n2Source.features_;
+					features.sort((first, second) => {
+						const f_ldata = first.data._ldata;
+						const s_ldata = second.data._ldata;
+						if (f_ldata.start < s_ldata.start) return -1;
+						else if (f_ldata.start > s_ldata.start) return 1;
+						else {
+							if (f_ldata.timeLinkTags.placeTag < s_ldata.timeLinkTags.placeTag) return -1;
+							else if (f_ldata.timeLinkTags.placeTag > s_ldata.timeLinkTags.placeTag) return 1;
+							return 0;
+						}
+					});
+					if (($n2.isArray(features)) && (features.length > 0)) {
+						lastKnownFeature = features[features.length - 1];
+					}
+				}
+				n2Source.refresh();
+			}); 
+
+			if (this.fitMapToLatestMapTag 
+				&& lastKnownFeature !== null 
+				&& lastKnownFeature.n2ConvertedBbox !== undefined) {
+				if (this.lastFeatureZoomedTo !== undefined &&
+					(this.lastFeatureZoomedTo.data._ldata.timeLinkTags.placeTag === lastKnownFeature.data._ldata.timeLinkTags.placeTag)) return;
+				// EPSG 3587 Bounding boxes: [xMin (left), yMin (bottom) , xMax (right), yMax (top)]
+				const initialBboxBound = 10000;
+				const expectedScale = lastKnownFeature.data._ldata.placeZoomScale;
+				const zoomScale = (expectedScale && expectedScale > 0 && expectedScale <= 100) ? expectedScale : 10;
+				const totalBboxScalingAmount = initialBboxBound * (zoomScale * 5);
+
+				let mapFitDuration = 0;
+				if (this.animateMapFitting === true) {
+					mapFitDuration = 500;
+				}
+
+				olmap.getView().fit(lastKnownFeature.n2ConvertedBbox.map((coordinate, index) => {
+					if (index < 2) return coordinate - totalBboxScalingAmount;
+					else return coordinate + totalBboxScalingAmount;
+				}), { duration: mapFitDuration });
+				this.lastFeatureZoomedTo = lastKnownFeature;
 			}
 
 		} else if ('time_interval_change' === type){
