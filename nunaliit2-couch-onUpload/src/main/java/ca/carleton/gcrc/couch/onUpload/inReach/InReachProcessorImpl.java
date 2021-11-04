@@ -33,6 +33,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 		JSONObject jsonItem = null;
 		JSONObject genericInReachSchema = new JSONObject();
+		JSONObject inReachPosition = new JSONObject();
 
 		String schemaName = "inReach";
 
@@ -43,8 +44,8 @@ public class InReachProcessorImpl implements InReachProcessor {
 		// Select form
 		InReachForm form = null;
 		if( null != jsonItem ){
-			String message = jsonItem.optString("Message");
-			if( "" != message ){
+			String message = jsonItem.optString("Message", null);
+			if( null != message ){
 				genericInReachSchema.put("Message", message);
 				for(InReachForm testedForm : settings.getForms()){
 					String prefix = testedForm.getPrefix();
@@ -61,23 +62,23 @@ public class InReachProcessorImpl implements InReachProcessor {
 				genericInReachSchema.put("EmergencyState", emergencyState);
 			}
 
-			String deviceId = jsonItem.optString("DeviceId");
-			if ( deviceId != "" ){
+			String deviceId = jsonItem.optString("DeviceId", null);
+			if ( deviceId != null ){
 				genericInReachSchema.put("DeviceId", deviceId);
 			}
 
-			String messageId = jsonItem.optString("MessageId");
-			if ( messageId != "" ){
+			String messageId = jsonItem.optString("MessageId", null);
+			if ( messageId != null ){
 				genericInReachSchema.put("MessageId", messageId);
 			}
 
-			String messageType = jsonItem.optString("MessageType");
-			if ( messageType != "" ){
+			String messageType = jsonItem.optString("MessageType", null);
+			if ( messageType != null ){
 				genericInReachSchema.put("MessageType", messageType);
 			}
 
-			String recipients = jsonItem.optString("Recipients");
-			if ( recipients != "" ){
+			String recipients = jsonItem.optString("Recipients", null);
+			if ( recipients != null ){
 				genericInReachSchema.put("Recipients", recipients);
 			}
 			else {
@@ -109,11 +110,9 @@ public class InReachProcessorImpl implements InReachProcessor {
 				geomDesc.setGeometry(point);
 				geomDesc.setBoundingBox(bbox);
 
-				JSONObject inReachPosition = new JSONObject();
 				inReachPosition.put("Latitude", lat);
 				inReachPosition.put("Longitude", lon);
 
-				genericInReachSchema.put("Position", inReachPosition);
 			}
 		}
 
@@ -126,7 +125,8 @@ public class InReachProcessorImpl implements InReachProcessor {
 			
 			Date gpsDate = null;
 			if( null != gpsTimestamp ) {
-				genericInReachSchema.put("GpsTimestamp", gpsTimestamp);
+				inReachPosition.put("GpsTimestamp", gpsTimestamp);
+				genericInReachSchema.put("Position", inReachPosition);
 				try {
 					gpsDate = DateUtils.parseGpsTimestamp(gpsTimestamp);
 				} catch(Exception e) {
