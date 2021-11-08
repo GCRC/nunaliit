@@ -75,6 +75,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			this.labels = opts.labels;
 
 			this.stylesInUse = null;
+			this.wmsLegends = {};
 			this.cachedSymbols = {};
 			this._throttledRefresh = $n2.utils.throttle(this._refresh, 2000);
 
@@ -148,12 +149,21 @@ POSSIBILITY OF SUCH DAMAGE.
 				if($(`#${wmsLegendId}`).length) {
 					return; //already displaying this legend image
 				}
-				let legendDiv = $(`#${this.elemId}`);
+				var legendDiv;
+				var outerDiv = $('.n2widgetLegend_outer')
+				if(outerDiv.length > 0) {
+					legendDiv = outerDiv[0];
+				} else {
+					legendDiv = $(`#${this.elemId}`);
+				}
+				
 				$('<img>')
 				.attr('id', wmsLegendId)
 				.attr('src', m.legendUrl)
-				.appendTo(legendDiv)
+				.appendTo(legendDiv);
+				this.wmsLegends[wmsLegendId] = Object.assign({}, m);
 			} else {
+				delete this.wmsLegends[wmsLegendId];
 				$(`#${wmsLegendId}`).remove()
 			}
 		},
@@ -296,6 +306,10 @@ POSSIBILITY OF SUCH DAMAGE.
 					});
 				});
 			};
+
+			for (const key in this.wmsLegends) {
+				this._wmsLegendDisplay(this.wmsLegends[key]);
+			}
 		},
 
 		_insertSvgPreviewPoint: function($parent, style, context_){
