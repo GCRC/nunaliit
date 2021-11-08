@@ -297,6 +297,7 @@ class N2MapCanvas  {
 			this.dispatchService.register(DH, 'editInitiate', f);
 			this.dispatchService.register(DH, 'editClosed', f);
 			this.dispatchService.register(DH, 'legendReady', f);
+			this.dispatchService.register(DH, 'canvasGetStylesInUse', f);
 		}
 
 		$n2.log(this._classname,this);
@@ -727,6 +728,7 @@ class N2MapCanvas  {
 			let proj = _this.n2View.getProjection();
 			_this.resolution = res;
 			_this.proj = proj;
+			_this._updatedStylesInUse()
 		});
 		//=======================================
 	
@@ -756,6 +758,8 @@ class N2MapCanvas  {
 					,coordination: coor_string
 					,_suppressSetHash : _this._suppressSetHash
 				});
+
+				_this._updatedStylesInUse()
 			})
 		}
 		//========================================
@@ -797,15 +801,6 @@ class N2MapCanvas  {
 		});
 
 		customMap.addControl(customLayerSwitcher);
-
-		/*display WMS Legends*/
-		var $container = $(`#${_this.canvasId}`);
-
-		this.elemId = $n2.getUniqueId();
-		let legendDiv = $('<div>')
-			.attr('id',this.elemId)
-			.addClass('n2WMSLegend')
-			.appendTo($container);
 
 		this.overlayInfos.forEach( (info, idx) => {
 			if(info._layerInfo.options.wmsLegend && info.visibility) {
@@ -1162,41 +1157,7 @@ class N2MapCanvas  {
 		var _this = this;
 
 		function StyleFn(feature, resolution){
-
-			var f = feature;
-			var geomType = f.getGeometry()._n2Type;
-			if (!geomType) {
-				if (f.getGeometry()
-					.getType()
-					.indexOf('Line') >= 0){
-					geomType = f.getGeometry()._n2Type = 'line';
-
-				} else if (f.getGeometry()
-					.getType()
-					.indexOf('Polygon') >= 0){
-					geomType = f.getGeometry()._n2Type = 'polygon';
-
-				} else {
-					geomType = f.getGeometry()._n2Type = 'point';
-				}
-			}
-
-			f.n2_geometry = geomType;
-			//Deal with n2_doc tag
-			var data = f.data;
-			if (f
-				&& f.cluster
-				&& f.cluster.length === 1) {
-				data = f.cluster[0].data;
-			}
-
-			//is a cluster
-			if (!data) {
-				data = {clusterData: true};
-			}
-			//
-			f.n2_doc = data;
-
+			_this._enrichFeature(feature)
 			let style = _this.styleRules.getStyle(feature);
 			let symbolizer = style.getSymbolizer(feature);
 			var symbols = {};
@@ -1478,6 +1439,89 @@ class N2MapCanvas  {
 		}
 	}
 
+	_enrichFeature(feature) {
+		var geomType = feature.getGeometry()._n2Type;
+		if (!geomType) {
+			if (feature.getGeometry()
+				.getType()
+				.indexOf('Line') >= 0){
+				geomType = feature.getGeometry()._n2Type = 'line';
+
+			} else if (feature.getGeometry()
+				.getType()
+				.indexOf('Polygon') >= 0){
+				geomType = feature.getGeometry()._n2Type = 'polygon';
+
+			} else {
+				geomType = feature.getGeometry()._n2Type = 'point';
+			}
+		}
+
+		feature.n2_geometry = geomType;
+		//Deal with n2_doc tag
+		var data = feature.data;
+		if (feature
+			&& feature.cluster
+			&& feature.cluster.length === 1) {
+			data = feature.cluster[0].data;
+		}
+
+		if (!data) { //is a cluster
+			data = {clusterData: true};
+		}
+		feature.n2_doc = data;
+		return feature;
+	}
+
+	_getMapStylesInUse(){
+    	let mapStylesInUse = {};
+    	for(var i in this.overlayLayers){
+    		let layer = this.overlayLayers[i];
+			//if model or couch
+			if(layer && layer.values_ && layer.values_.source && layer.values_.source.features_) {
+				this._accumulateMapStylesInUse(layer.values_.source.features_, mapStylesInUse);
+			}
+    	};
+		
+		return mapStylesInUse;
+    }
+
+	_accumulateMapStylesInUse(features, stylesInUse){
+		// Loop over drawn features (do not iterate in clusters)
+		for(let i=0,e=features.length; i<e; ++i)
+		{
+			var f = features[i];
+			this._enrichFeature(f);
+			let style = this.styleRules.getStyle(f);
+			if(style && typeof style.id === 'string')
+			{
+				var styleInfo = stylesInUse[style.id];
+				if( !styleInfo ){
+					styleInfo = {
+						style: style
+					};
+					stylesInUse[style.id] = styleInfo;
+				}
+
+				var geometryType = f.n2_geometry;
+				if( geometryType && !styleInfo[geometryType] ){
+					styleInfo[geometryType] = f;
+				}
+			}
+		}
+	}
+    
+    // Called when the map detects that features have been redrawn
+    _updatedStylesInUse(){
+    	let mapStylesInUse = this._getMapStylesInUse();
+    	
+    	this._dispatch({
+    		type: 'canvasReportStylesInUse'
+    		,canvasName: this.canvasName
+    		,stylesInUse: mapStylesInUse
+    	});
+    }
+
 	_handleDispatch( m, addr, dispatcher){
 		var _this = this;
 		var type = m.type;
@@ -1714,6 +1758,10 @@ class N2MapCanvas  {
 						})
 				}
 			})
+		} else if( 'canvasGetStylesInUse' === type ) {
+			if( this.canvasName === m.canvasName ){
+				m.stylesInUse = this._getMapStylesInUse();
+			}
 		}
 	}
 	
