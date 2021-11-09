@@ -296,7 +296,6 @@ class N2MapCanvas  {
 			this.dispatchService.register(DH, 'resolutionRequest', f);
 			this.dispatchService.register(DH, 'editInitiate', f);
 			this.dispatchService.register(DH, 'editClosed', f);
-			this.dispatchService.register(DH, 'legendReady', f);
 			this.dispatchService.register(DH, 'canvasGetStylesInUse', f);
 		}
 
@@ -807,7 +806,7 @@ class N2MapCanvas  {
 				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl()
 				_this.dispatchService.send(DH, 
 					{
-						type: 'wmsLegendDisplay'
+						type: 'imageUrlLegendDisplay'
 						,visible: true
 						,legendUrl: legendUrl
 						,wmsId: _this.overlayLayers[idx].ol_uid
@@ -820,7 +819,7 @@ class N2MapCanvas  {
 					if(e.oldValue) {
 						_this.dispatchService.send(DH, 
 							{
-								type: 'wmsLegendDisplay'
+								type: 'imageUrlLegendDisplay'
 								,visible: false
 								,legendUrl: legendUrl
 								,wmsId: e.target.ol_uid
@@ -829,7 +828,7 @@ class N2MapCanvas  {
  					} else {
 						_this.dispatchService.send(DH, 
 							{
-								type: 'wmsLegendDisplay'
+								type: 'imageUrlLegendDisplay'
 								,visible: true
 								,legendUrl: legendUrl
 								,wmsId: e.target.ol_uid
@@ -1488,15 +1487,12 @@ class N2MapCanvas  {
 
 	_accumulateMapStylesInUse(features, stylesInUse){
 		// Loop over drawn features (do not iterate in clusters)
-		for(let i=0,e=features.length; i<e; ++i)
-		{
-			var f = features[i];
+		features.forEach((f) => {
 			this._enrichFeature(f);
 			let style = this.styleRules.getStyle(f);
-			if(style && typeof style.id === 'string')
-			{
+			if(style && typeof style.id === 'string') {
 				var styleInfo = stylesInUse[style.id];
-				if( !styleInfo ){
+				if( !styleInfo ) {
 					styleInfo = {
 						style: style
 					};
@@ -1504,11 +1500,11 @@ class N2MapCanvas  {
 				}
 
 				var geometryType = f.n2_geometry;
-				if( geometryType && !styleInfo[geometryType] ){
+				if( geometryType && !styleInfo[geometryType] ) {
 					styleInfo[geometryType] = f;
 				}
 			}
-		}
+		});
 	}
     
     // Called when the map detects that features have been redrawn
@@ -1744,13 +1740,14 @@ class N2MapCanvas  {
 			});
 
 			_this.lastTime = currTime;
-		} else if ('legendReady' === type && m.canvasName === this.canvasName) {
+		} else if( 'canvasGetStylesInUse' === type && this.canvasName === m.canvasName ){
+			m.stylesInUse = this._getMapStylesInUse();
 			this.overlayInfos.forEach( (info, idx) => {
 				if(info._layerInfo.options.wmsLegend && info.visibility) {
 					const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl();
 					_this.dispatchService.send(DH, 
 						{
-							type: 'wmsLegendDisplay'
+							type: 'imageUrlLegendDisplay'
 							,visible: true
 							,legendUrl: legendUrl
 							,wmsId: _this.overlayLayers[idx].ol_uid
@@ -1758,10 +1755,6 @@ class N2MapCanvas  {
 						})
 				}
 			})
-		} else if( 'canvasGetStylesInUse' === type ) {
-			if( this.canvasName === m.canvasName ){
-				m.stylesInUse = this._getMapStylesInUse();
-			}
 		}
 	}
 	

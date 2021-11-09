@@ -94,7 +94,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				};
 
 				this.dispatchService.register(DH,'canvasReportStylesInUse',f);
-				this.dispatchService.register(DH,'wmsLegendDisplay', f)
+				this.dispatchService.register(DH,'imageUrlLegendDisplay', f)
 
 				// Obtain current styles in use
 				var msg = {
@@ -103,8 +103,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				};
 				this.dispatchService.synchronousCall(DH,msg);
 				this.stylesInUse = msg.stylesInUse;
-
-				this.dispatchService.send(DH, {type: 'legendReady', canvasName: this.sourceCanvasName});
 			};
 
 			// Get container
@@ -136,14 +134,14 @@ POSSIBILITY OF SUCH DAMAGE.
 					this.stylesInUse = m.stylesInUse;
 					this._throttledRefresh();
 				};
-			} else if('wmsLegendDisplay' === m.type ) {
+			} else if('imageUrlLegendDisplay' === m.type ) {
 				if( m.canvasName === this.sourceCanvasName ){
-					this._wmsLegendDisplay(m)
+					this._imageUrlLegendDisplay(m)
 				}
 			};
 		},
 
-		_wmsLegendDisplay: function(m) {
+		_imageUrlLegendDisplay: function(m) {
 			const wmsLegendId = `legend${m.wmsId}`;
 			if(m.visible) {
 				if($(`#${wmsLegendId}`).length) {
@@ -308,7 +306,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			};
 
 			for (const key in this.wmsLegends) {
-				this._wmsLegendDisplay(this.wmsLegends[key]);
+				this._imageUrlLegendDisplay(this.wmsLegends[key]);
 			}
 		},
 
