@@ -788,20 +788,20 @@ class N2MapCanvas  {
 
 		customMap.addControl(customLayerSwitcher);
 
-		var mainbar = new Bar();
+		const mainbar = new Bar();
 		customMap.addControl(mainbar);
-		mainbar.setPosition("top");
+		mainbar.setPosition("top-left");
 
 		/* Nested toobar with one control activated at once */
-		var nested = new Bar ({ toggleOne: true, group:true });
+		/* var nested = new Bar ({ toggleOne: true, group:true }); */
 //		var selectInteraction = new SelectInteraction ();
-		mainbar.addControl (nested);
+		/* mainbar.addControl (nested); */
 
 		// Add selection tool (a toggle control with a select interaction)
-		var selectCtrl = new Toggle({
-				html: '<i class="fa fa-hand-pointer-o"></i>',
+		/* var selectCtrl = new Toggle({
+				html: "",
 				className: "select",
-				title: "Select",
+				title: "Toggle selection tool",
 				interaction: this.interactionSet.selectInteraction,
 				active:true,
 				onToggle: function(active) {}
@@ -841,12 +841,12 @@ class N2MapCanvas  {
 			}
 		}).bind(this));
 		
-		nested.addControl(selectCtrl);
+		mainbar.addControl(selectCtrl);
 
 		this.interactionSet.drawInteraction = new DrawInteraction({
 			type: 'Point',
 			source: this.overlayLayers[0].getSource()
-		});
+		}); */
 
 		// Add editing tools
 		/* var pedit = new Toggle({
@@ -858,28 +858,38 @@ class N2MapCanvas  {
 		}); */
 		//nested.addControl ( pedit );
 
-		// Add a toggle for the map to fit to a place's zoom level on encounter with a new map tag from the transcript
-		const fitMapByTagCtrl = new Toggle({
-			html: '<i class="fa fa-map-marker"></i>',
-			className: "map_fit",
-			title: "Toggle map fit on latest map tag",
-			active: this.fitMapToLatestMapTag,
-			onToggle: () => { this.fitMapToLatestMapTag = !this.fitMapToLatestMapTag }
+		const mapFitControlBar = new Bar({
+			className: "map-fit-controls",
+			controls: [
+				new Toggle({
+					// Add a toggle for the map to fit to a place's zoom level on encounter with a new map tag from the transcript
+					html: "",
+					className: "map-fit-on-new-tag",
+					title: "Toggle map fit on latest map tag",
+					active: this.fitMapToLatestMapTag,
+					onToggle: () => { this.fitMapToLatestMapTag = !this.fitMapToLatestMapTag }
+				}),
+				new Toggle({
+					// Add a toggle for the map fit to animate or be instantaneous
+					html: "",
+					className: "map-fit-animate",
+					title: "Toggle map fit animation",
+					active: this.animateMapFitting,
+					onToggle: () => { this.animateMapFitting = !this.animateMapFitting }
+				})
+			]
 		});
-		mainbar.addControl(fitMapByTagCtrl);
 
-		// Add a toggle for the map fit to animate or be instantaneous
-		const animateMapFitCtrl = new Toggle({
-			html: '<i class="fa fa-map-marker"></i>',
-			className: "animate_map_fit",
-			title: "Toggle map fit animation",
-			active: this.animateMapFitting,
-			onToggle: () => { this.animateMapFitting = !this.animateMapFitting }
-		});
-		mainbar.addControl(animateMapFitCtrl);
+		mainbar.addControl(new Toggle({
+				html: "",
+				title: "Map Fit Options",
+				active: this.fitMapToLatestMapTag || this.animateMapFitting,
+				bar: mapFitControlBar
+			})
+		);
 
 		var pcluster = new Toggle({
-			html: '<i class="fa fa-map-marker" ></i>',
+			html: "",
 			className: "cluster_toggle",
 			title: 'Toggle clustering',
 			interaction : undefined,
@@ -913,7 +923,7 @@ class N2MapCanvas  {
 				}
 			}
 		})
-		mainbar.addControl (pcluster);
+		mainbar.addControl(pcluster);
 
 		//Create editing layer
 		this.editLayerSource = new VectorSource();
