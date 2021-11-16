@@ -137,10 +137,10 @@ public class InReachProcessorTest extends TestCase {
 		}
 
 		// Look for time structure
-		JSONObject jsonItem = savedDocJson.getJSONObject("Item");
-		JSONObject jsonTimestamp = jsonItem.optJSONObject("NunaliitTimestamp");
+		JSONObject jsonItem = savedDocJson.getJSONObject("inReach");
+		JSONObject jsonTimestamp = jsonItem.optJSONObject("nunaliit_gps_datetime");
 		if( null == jsonTimestamp ){
-			fail("Can not find nunaliit timestamp");
+			fail("Can not find nunaliit_gps_datetime!");
 		} else {
 			String dateType = jsonTimestamp.getString("nunaliit_type");
 			if( false == "date".equals(dateType) ) {

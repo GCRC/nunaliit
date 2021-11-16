@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 import java.util.TimeZone;
 
 import org.json.JSONObject;
+import org.json.JSONArray;
 
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
@@ -31,6 +32,11 @@ public class InReachProcessorImpl implements InReachProcessor {
 		JSONObject doc =  conversionContext.getDoc();
 
 		JSONObject jsonItem = null;
+		JSONObject genericInReachSchema = new JSONObject();
+		JSONObject inReachPosition = new JSONObject();
+
+		String schemaName = "inReach";
+
 		if( null != doc ){
 			jsonItem = doc.optJSONObject("Item");
 		}
@@ -38,8 +44,9 @@ public class InReachProcessorImpl implements InReachProcessor {
 		// Select form
 		InReachForm form = null;
 		if( null != jsonItem ){
-			String message = jsonItem.optString("Message");
+			String message = jsonItem.optString("Message", null);
 			if( null != message ){
+				genericInReachSchema.put("Message", message);
 				for(InReachForm testedForm : settings.getForms()){
 					String prefix = testedForm.getPrefix();
 					if( null != prefix ){
@@ -47,6 +54,37 @@ public class InReachProcessorImpl implements InReachProcessor {
 							form = testedForm;
 						}
 					}
+				}
+			}
+
+			int emergencyState = jsonItem.optInt("EmergencyState", -12345);
+			if ( emergencyState != -12345 ){
+				genericInReachSchema.put("EmergencyState", emergencyState);
+			}
+
+			String deviceId = jsonItem.optString("DeviceId", null);
+			if ( deviceId != null ){
+				genericInReachSchema.put("DeviceId", deviceId);
+			}
+
+			String messageId = jsonItem.optString("MessageId", null);
+			if ( messageId != null ){
+				genericInReachSchema.put("MessageId", messageId);
+			}
+
+			String messageType = jsonItem.optString("MessageType", null);
+			if ( messageType != null ){
+				genericInReachSchema.put("MessageType", messageType);
+			}
+
+			String recipients = jsonItem.optString("Recipients", null);
+			if ( recipients != null ){
+				genericInReachSchema.put("Recipients", recipients);
+			}
+			else {
+				JSONArray recipientsAsArray = jsonItem.optJSONArray("Recipients");
+				if ( recipientsAsArray != null ){
+					genericInReachSchema.put("Recipients", recipientsAsArray);
 				}
 			}
 		}
@@ -71,6 +109,10 @@ public class InReachProcessorImpl implements InReachProcessor {
 				
 				geomDesc.setGeometry(point);
 				geomDesc.setBoundingBox(bbox);
+
+				inReachPosition.put("Latitude", lat);
+				inReachPosition.put("Longitude", lon);
+
 			}
 		}
 
@@ -83,6 +125,8 @@ public class InReachProcessorImpl implements InReachProcessor {
 			
 			Date gpsDate = null;
 			if( null != gpsTimestamp ) {
+				inReachPosition.put("GpsTimestamp", gpsTimestamp);
+				genericInReachSchema.put("Position", inReachPosition);
 				try {
 					gpsDate = DateUtils.parseGpsTimestamp(gpsTimestamp);
 				} catch(Exception e) {
@@ -107,12 +151,14 @@ public class InReachProcessorImpl implements InReachProcessor {
 				jsonDate.put("min", intervalStart_ms);
 				jsonDate.put("max", intervalEnd);
 
-				jsonItem.put("NunaliitTimestamp", jsonDate);
+				genericInReachSchema.put("nunaliit_gps_datetime", jsonDate);
 			}
 		}
 
+		// Save generic information before processing form-specific inReach data
+		doc.put(schemaName, genericInReachSchema);
+
 		// Set schema
-		String schemaName = "inReach";
 		if( null != form ){
 			if( null != form.getTitle() ){
 				schemaName = "inReach_" + form.getTitle();
