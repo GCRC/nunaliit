@@ -1,0 +1,15 @@
+.nunaliit_atlas .layer-switcher {
+    position: absolute;
+    top: 4.5em;
+    left: .5em;
+    right: unset;
+    text-align: left;
+}
+
+.nunaliit_atlas .layer-switcher button {
+    background-position: 0;
+    background-color: rgba(0,60,136,0.5);
+    background-size: 19px 19px;
+    width: 20px;
+    height: 20px;
+}

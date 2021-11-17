@@ -3,6 +3,7 @@
  */
 
 import 'ol/ol.css';
+import './N2MapCanvas.css';
 import {default as CouchDbSource} from './N2CouchDbSource.js';
 import N2ModelSource from './N2ModelSource.js';
 import {default as LayerInfo} from './N2LayerInfo';
@@ -841,24 +842,24 @@ class N2MapCanvas  {
 		
 		//Register a change listener, when layers are shown/hidden then show/hide the associated legend
 
-		var mainbar = new Bar();
-		customMap.addControl(mainbar);
-		mainbar.setPosition("top");
+		// const mainbar = new Bar();
+		// customMap.addControl(mainbar);
+		// mainbar.setPosition("top-left");
 
 		/* Nested toobar with one control activated at once */
-		var nested = new Bar ({ toggleOne: true, group:true });
+		/* var nested = new Bar ({ toggleOne: true, group:true }); */
 //		var selectInteraction = new SelectInteraction ();
-		mainbar.addControl (nested);
+		/* mainbar.addControl (nested); */
 
 		// Add selection tool (a toggle control with a select interaction)
-		var selectCtrl = new Toggle({
+		/* var selectCtrl = new Toggle({
 				html: '<i class="fa fa-hand-pointer-o"></i>',
 				className: "select",
 				title: "Select",
 				interaction: this.interactionSet.selectInteraction,
 				active:true,
 				onToggle: function(active) {}
-		});
+		});*/
 
 		this.interactionSet.selectInteraction.on("clicked", (function(e) {
 
@@ -894,7 +895,7 @@ class N2MapCanvas  {
 			}
 		}).bind(this));
 		
-		nested.addControl(selectCtrl);
+		// nested.addControl(selectCtrl);
 
 		this.interactionSet.drawInteraction = new DrawInteraction({
 			type: 'Point',
@@ -902,16 +903,16 @@ class N2MapCanvas  {
 		});
 
 		// Add editing tools
-		var pedit = new Toggle({
+		/* var pedit = new Toggle({
 				html: '<i class="fa fa-map-marker" ></i>',
 				className: "edit",
 				title: 'Point',
 				interaction: this.interactionSet.drawInteraction,
 				onToggle: function(active){}
-		});
+		});*/
 
 		//nested.addControl ( pedit );
-		var pcluster = new Toggle({
+		/*var pcluster = new Toggle({
 			html: '<i class="fa fa-map-marker" ></i>',
 			className: "cluster_toggle",
 			title: 'Toggle clustering',
@@ -946,13 +947,13 @@ class N2MapCanvas  {
 				}
 			}
 		})
-		mainbar.addControl (pcluster);
+		mainbar.addControl(pcluster);*/
 
 		//Create editing layer
 		this.editLayerSource = new VectorSource();
 		var editLayer = new VectorLayer({
-			title: 'Edit',
-			source: this.editLayerSource 
+			//no title so this is not shown in the switcher
+			source: this.editLayerSource
 		});
 		customMap.addLayer(editLayer);
 		this.overlayLayers.push(editLayer);
@@ -997,7 +998,7 @@ class N2MapCanvas  {
 		}
 
 		this.editbarControl.getInteraction('DrawPoint').on('drawend', function(e){
-			_this.editModeAddFeatureCallback( evt ); 
+			_this.editModeAddFeatureCallback( e ); 
 		});
 //		  //  tooltip.setInfo(e.oldValue ? '' : 'Click map to place a point...');
 //		  });
