@@ -798,7 +798,7 @@ class N2MapCanvas  {
 		/* mainbar.addControl (nested); */
 
 		// Add selection tool (a toggle control with a select interaction)
-		/* var selectCtrl = new Toggle({
+		var selectCtrl = new Toggle({
 				html: "",
 				className: "select",
 				title: "Toggle selection tool",
@@ -846,7 +846,7 @@ class N2MapCanvas  {
 		this.interactionSet.drawInteraction = new DrawInteraction({
 			type: 'Point',
 			source: this.overlayLayers[0].getSource()
-		}); */
+		});
 
 		// Add editing tools
 		/* var pedit = new Toggle({
@@ -926,7 +926,7 @@ class N2MapCanvas  {
 		mainbar.addControl(pcluster);
 
 		//Create editing layer
-		this.editLayerSource = new VectorSource();
+		/* this.editLayerSource = new VectorSource();
 		var editLayer = new VectorLayer({
 			title: 'Edit',
 			source: this.editLayerSource 
@@ -975,13 +975,13 @@ class N2MapCanvas  {
 
 		this.editbarControl.getInteraction('DrawPoint').on('drawend', function(e){
 			_this.editModeAddFeatureCallback( evt ); 
-		});
+		}); */
 //		  //  tooltip.setInfo(e.oldValue ? '' : 'Click map to place a point...');
 //		  });
 
-		this.editbarControl.getInteraction('DrawLine').on('drawend', function(evt){
+/* 		this.editbarControl.getInteraction('DrawLine').on('drawend', function(evt){
 			_this.editModeAddFeatureCallback( evt );
-		});
+		}); */
 
 		// tooltip.setFeature();
 //		   // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing line...');
@@ -995,10 +995,10 @@ class N2MapCanvas  {
 //		   // tooltip.setFeature(e.feature);
 //		   // tooltip.setInfo('Click to continue drawing shape...');
 //		  });
-		this.editbarControl.getInteraction('DrawPolygon').on('drawend', function(evt){
-			_this.editModeAddFeatureCallback( evt );
+/* 		this.editbarControl.getInteraction('DrawPolygon').on('drawend', function(evt){
+			_this.editModeAddFeatureCallback( evt ); */
 			// tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
-		});
+/* 		}); */
 //		  editbarControl.getInteraction('DrawHole').on('drawstart', function(e){
 //		   // tooltip.setFeature(e.feature);
 //		   // tooltip.setInfo('Click to continue drawing hole...');
