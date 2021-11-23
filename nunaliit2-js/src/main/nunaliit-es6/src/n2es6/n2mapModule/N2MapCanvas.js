@@ -48,6 +48,7 @@ import OSM from 'ol/source/OSM';
 import BingMaps from 'ol/source/BingMaps';
 import TileWMS from 'ol/source/TileWMS';
 import LayerSwitcher from 'ol-layerswitcher';
+import 'ol-layerswitcher/dist/ol-layerswitcher.css';
 
 import 'ol-ext/dist/ol-ext.css';
 import Bar from 'ol-ext/control/Bar';
@@ -768,25 +769,29 @@ class N2MapCanvas  {
 		/**
 		 * Two Groups : Overlay and Background
 		 */
-		var overlayGroup = new LayerGroup({
-			title: 'Overlays',
-			layers: this.overlayLayers
-		});
-
-		var bgGroup = new LayerGroup({
-			title: 'Background',
-			layers: this.mapLayers
-		});
-
 		customMap.set("layergroup",
-			new LayerGroup({layers: [bgGroup, overlayGroup]})
+			new LayerGroup({layers: [
+				new LayerGroup({
+					title: 'Background',
+					layers: this.mapLayers
+				}), 
+				new LayerGroup({
+					title: 'Overlays',
+					layers: this.overlayLayers
+				})
+			]})
 		);
 
-		var customLayerSwitcher = new LayerSwitcher({
-			tipLabel: 'Legend' // Optional label for button
-		});
-
-		customMap.addControl(customLayerSwitcher);
+		customMap.addControl(
+			new LayerSwitcher({
+				activationMode: "click",
+				startActive: false,
+				label: "",
+				collapseLabel: "",
+				tipLabel: "Layer Selector",
+				collapseTipLabel: "Layer Selector"
+			})
+		);
 
 		const mainbar = new Bar();
 		customMap.addControl(mainbar);
@@ -951,9 +956,9 @@ class N2MapCanvas  {
 		});	
 
 		this.editbarControl.getInteraction('ModifySelect').on('modifystart', function(e){
-			console.log('modifying features:', e.features);
+			console.log('modifying features:', e.features); */
 			//if (e.features.length===1) tooltip.setFeature(e.features[0]);
-		});
+		/* });
 
 		this.editbarControl.getInteraction('ModifySelect').on('modifyend', onModifyEnd);
 		function onModifyEnd(e){
@@ -968,9 +973,9 @@ class N2MapCanvas  {
 					,proj: new Projection({code: 'EPSG:3857'})
 					,_origin: _this
 				});
-			}
+			} */
 			//  tooltip.setFeature();
-			return false;
+/* 			return false;
 		}
 
 		this.editbarControl.getInteraction('DrawPoint').on('drawend', function(e){
@@ -1213,7 +1218,7 @@ class N2MapCanvas  {
 
 				_this.n2intentWrapper = charlieSource;
 				var vectorLayer = new VectorLayer({
-					title: "CouchDb",
+					title: "Features",
 					renderMode : 'vector',
 					source: charlieSource,
 					style: StyleFn,
