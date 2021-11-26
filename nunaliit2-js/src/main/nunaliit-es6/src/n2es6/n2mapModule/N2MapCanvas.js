@@ -1137,61 +1137,77 @@ class N2MapCanvas  {
 		var fg = [];
 		var _this = this;
 
-		function StyleFn(feature, resolution){
+		/* Generate styles read in from canvas.json */
+		function featureStyler(feature) {
 
-			var f = feature;
-			var geomType = f.getGeometry()._n2Type;
+			/* 
+				If the map is zoomed in at a certain level and features with defined zoom scales
+				are less than the map's zoom level, do not return a style for that feature.
+				Not returning a style means that the feature does not display and
+				does not have hit detection.
+
+				Example: A feature has placeZoomScale of 10 and the map is currently at
+				zoom level 20 (very zoomed in). The feature meant to be viewed at zoom level 10
+				should not display.
+			*/
+			if (feature && feature.data && feature.data._ldata &&
+				feature.data._ldata.placeZoomScale &&
+				_this.n2Map.getView().getZoom() > feature.data._ldata.placeZoomScale) {
+					return;
+			}
+
+			let geomType = feature.getGeometry()._n2Type;
 			if (!geomType) {
-				if (f.getGeometry()
+				if (feature.getGeometry()
 					.getType()
-					.indexOf('Line') >= 0){
-					geomType = f.getGeometry()._n2Type = 'line';
+					.indexOf('Line') >= 0) {
+					geomType = feature.getGeometry()._n2Type = 'line';
 
-				} else if (f.getGeometry()
+				} else if (feature.getGeometry()
 					.getType()
-					.indexOf('Polygon') >= 0){
-					geomType = f.getGeometry()._n2Type = 'polygon';
+					.indexOf('Polygon') >= 0) {
+					geomType = feature.getGeometry()._n2Type = 'polygon';
 
 				} else {
-					geomType = f.getGeometry()._n2Type = 'point';
+					geomType = feature.getGeometry()._n2Type = 'point';
 				}
 			}
 
-			f.n2_geometry = geomType;
+			feature.n2_geometry = geomType;
 			//Deal with n2_doc tag
-			var data = f.data;
-			if (f
-				&& f.cluster
-				&& f.cluster.length === 1) {
-				data = f.cluster[0].data;
+			let data = feature.data;
+			if (feature
+				&& feature.cluster
+				&& feature.cluster.length === 1) {
+				data = feature.cluster[0].data;
 			}
 
 			//is a cluster
 			if (!data) {
-				data = {clusterData: true};
+				data = { clusterData: true };
 			}
-			//
-			f.n2_doc = data;
 
-			let style = _this.styleRules.getStyle(feature);
-			let symbolizer = style.getSymbolizer(feature);
-			var symbols = {};
-			symbolizer.forEachSymbol(function(name,value){
+			feature.n2_doc = data;
+
+			const style = _this.styleRules.getStyle(feature);
+			const symbolizer = style.getSymbolizer(feature);
+			const symbols = {};
+			symbolizer.forEachSymbol(function (name, value) {
 				name = olStyleNames[name] ? olStyleNames[name] : name;
 
-				if( stringStyles[name] ){
-					if( null === value ){
+				if (stringStyles[name]) {
+					if (null === value) {
 						// Nothing
-					} else if( typeof value === 'number' ) {
+					} else if (typeof value === 'number') {
 						value = value.toString();
 					}
 				}
 				symbols[name] = value;
-			},feature);
-			
-			let n2mapStyles = _this.n2MapStyles;
-			let innerStyle = n2mapStyles.loadStyleFromN2Symbolizer(symbols,	feature);
-			innerStyle = Array.isArray(innerStyle)? innerStyle : [innerStyle];
+			}, feature);
+
+			const n2mapStyles = _this.n2MapStyles;
+			let innerStyle = n2mapStyles.loadStyleFromN2Symbolizer(symbols, feature);
+			innerStyle = Array.isArray(innerStyle) ? innerStyle : [innerStyle];
 			return innerStyle;
 		}
 		
@@ -1221,7 +1237,7 @@ class N2MapCanvas  {
 					title: "Features",
 					renderMode : 'vector',
 					source: charlieSource,
-					style: StyleFn,
+					style: featureStyler,
 					renderOrder: function(feature1, feature2){
 						var valueSelector = _this.renderOrderBasedOn;
 
