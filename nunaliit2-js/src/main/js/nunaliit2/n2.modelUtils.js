@@ -188,18 +188,14 @@ var ModelUnion = $n2.Class({
 				this.docInfosByDocId[docId] = docInfo;
 				
 				added.push(doc);
-			};
-			
-			docInfo.sources[sourceModelId] = true;
-			
-			// Check if new revision
-			if( docInfo.rev !== doc._rev ){
+			}
+			else {
 				// Modified
 				docInfo.doc = doc;
 				docInfo.rev = doc._rev;
-				
 				updated.push(doc);
-			};
+			}
+			docInfo.sources[sourceModelId] = true;
 		};
 		
 		// Loop through all removed documents
@@ -405,17 +401,7 @@ var ModelIntersect = $n2.Class({
 				this.docInfosByDocId[docId] = docInfo;
 			};
 			docInfo.sources[sourceModelId] = true;
-
-			// Check if new revision
-			var revUpdated = false;
-			if( docInfo.rev !== doc._rev ){
-				// Modified
-				docInfo.doc = doc;
-				docInfo.rev = doc._rev;
-				
-				revUpdated = true;
-			};
-
+			
 			// Check change in visibility
 			var visible = this._isDocVisible(doc);
 			if( visible && !docInfo.visible ){
@@ -423,9 +409,10 @@ var ModelIntersect = $n2.Class({
 			} else if( !visible && docInfo.visible ){
 				removed.push(doc);
 			} else if( visible && docInfo.visible ) {
-				if( revUpdated ){
-					updated.push(doc);
-				};
+				// Modified
+				docInfo.doc = doc;
+				docInfo.rev = doc._rev;
+				updated.push(doc);
 			} else {
 				// Do not worry about it
 			};
