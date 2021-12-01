@@ -1684,21 +1684,22 @@ class N2MapCanvas  {
 				&& lastKnownFeature.n2ConvertedBbox !== undefined) {
 				if (this.lastFeatureZoomedTo !== undefined &&
 					(this.lastFeatureZoomedTo.data._ldata.timeLinkTags.placeTag === lastKnownFeature.data._ldata.timeLinkTags.placeTag)) return;
-				// EPSG 3587 Bounding boxes: [xMin (left), yMin (bottom) , xMax (right), yMax (top)]
-				const initialBboxBound = 10000;
 				const expectedScale = lastKnownFeature.data._ldata.placeZoomScale;
-				const zoomScale = (expectedScale && expectedScale > 0 && expectedScale <= 100) ? expectedScale : 10;
-				const totalBboxScalingAmount = initialBboxBound * (zoomScale * 5);
+				const zoomScale = (expectedScale && expectedScale > 0 && expectedScale <= 22) ? expectedScale : 10;
 
 				let mapFitDuration = 0;
 				if (this.animateMapFitting === true) {
-					mapFitDuration = 500;
+					mapFitDuration = 1000;
 				}
 
-				olmap.getView().fit(lastKnownFeature.n2ConvertedBbox.map((coordinate, index) => {
-					if (index < 2) return coordinate - totalBboxScalingAmount;
-					else return coordinate + totalBboxScalingAmount;
-				}), { duration: mapFitDuration });
+				const areaOfFocus = [lastKnownFeature.n2ConvertedBbox[0], lastKnownFeature.n2ConvertedBbox[1]];
+
+				olmap.getView().animate({
+					center: areaOfFocus,
+					zoom: zoomScale,
+					duration: mapFitDuration
+				});
+
 				this.lastFeatureZoomedTo = lastKnownFeature;
 			}
 
