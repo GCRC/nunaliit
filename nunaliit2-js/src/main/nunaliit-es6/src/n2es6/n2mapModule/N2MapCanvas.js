@@ -57,6 +57,7 @@ import Toggle from 'ol-ext/control/Toggle';
 import Timeline from 'ol-ext/control/Timeline';
 import Popup from 'ol-ext/overlay/Popup';
 
+import {defaults as Defaults} from 'ol/control';
 //import timelineData from '!json-loader!../../data/fond_guerre.geojson';
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -674,14 +675,14 @@ class N2MapCanvas  {
 	_drawMap() {
 		var _this = this;
 
-		var olView = new View({
+		const olView = new View({
 			center: transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
 			projection: 'EPSG:3857',
 			zoom: 6
 		});
 
 		this.n2View = olView;
-		var customMap = new Map({
+		const customMap = new Map({
 			interactions: defaultsInteractionSet({mouseWheelZoom : false}).extend([
 				new mouseWheelZoom({
 					duration: 200,
@@ -689,7 +690,16 @@ class N2MapCanvas  {
 				})
 			]),
 			target : this.canvasId,
-			view: olView
+			view: olView,
+			controls: Defaults({
+				attribution: true,
+				attributionOptions: {
+					collapsible: false,
+					collapsed: false
+				},
+				rotate: false,
+				zoom: true
+			})
 		});
 
 		this.n2Map = customMap;
