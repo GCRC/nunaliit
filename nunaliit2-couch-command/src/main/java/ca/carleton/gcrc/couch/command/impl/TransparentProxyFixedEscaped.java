@@ -28,52 +28,25 @@ public class TransparentProxyFixedEscaped extends ProxyServlet.Transparent {
 		}
 		
 		return null;
-	}
+    }
 
-//    @Override
-//    protected URI rewriteURI(HttpServletRequest request)
-//    {
-//    	URI uri = super.rewriteURI(request);
-//
-//    	if( null != uri ){
-//    		String uriStr = uri.toString();
-//    		String fixedUriString = unescapeUriString(uriStr);
-//    		if( null != fixedUriString ){
-//    			try {
-//					URI fixedUri = new URI(fixedUriString);
-//					
-//					logger.debug("proxy decode "+uri+" -> "+fixedUri);
-//					
-//					uri = fixedUri;
-//					
-//				} catch (Exception e) {
-//					logger.error("Unable to decode URI: "+uri, e);
-//				}
-//    		}
-//    	}
-//    	
-//    	return uri;
-//    }
-
-	// This is the code for a later version of Jetty
-	protected String rewriteTarget(HttpServletRequest request)
-	{
+    @Override
+    protected String rewriteTarget(HttpServletRequest request){
 		String target = super.rewriteTarget(request);
 
-		if( null != target ){
-			String fixedTarget = unescapeUriString(target);
-			if( null != fixedTarget ){
-				try {
+    	if( null != target ){
+    		String fixedTarget = unescapeUriString(target);
+    		if( null != fixedTarget ){
+    			try {
 					logger.debug("proxy decode "+target+" -> "+fixedTarget);
-					
 					target = fixedTarget;
-					
-				} catch (Exception e) {
+				} 
+				catch (Exception e) {
 					logger.error("Unable to decode URI: "+target, e);
 				}
-			}
-		}
-		
+    		}
+    	}
+    	
 		return target;
 	}
 }
