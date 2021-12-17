@@ -3,8 +3,6 @@
 */
 import {Fill, RegularShape, Stroke, Style, Text} from 'ol/style.js';
 import CircleStyle from 'ol/style/Circle';
-import N2LRU from './N2LRU.js'; 
-
 
 const StyleNamesMapForAll = 
 	{
@@ -72,8 +70,6 @@ class N2MapStyles {
 	* N2MapStyles constructor
 	*/
 	constructor(){
-
-		//this.lrucache = new N2LRU(5000);
 		this._map = null;
 	}
 	setMap(map){
@@ -89,14 +85,7 @@ class N2MapStyles {
 	*/
 	loadStyleFromN2Symbolizer(symbols , feature){
 		var geometryType = feature.n2_geometry;
-		var typeLabel = {_n2type: geometryType};
-		//let key = Object.assign({}, symbols, typeLabel);
-		//let candidate = this.lrucache.get(hash(key));
-		//if (candidate){
-		//	return candidate;
-		//}
 		let candidate =  this.getOl5StyleObjFromSymbol(symbols, geometryType, feature);	
-		//this.lrucache.set(key, candidate );
 		return candidate;
 	}
 	/**
@@ -277,13 +266,6 @@ class N2MapStyles {
 					fontArr = _this.toFontArray(font);
 				}
 
-//				if (fontArr.length <= 0) {
-//					throw new Error('N2MapStyles: Bad Font Property');
-//				} else if (fontArr.length < 2 && fontArr.length > 0) {
-//					fontArr.unshift('normal', '10px');
-//				} else if (fontArr.length < 3 && fontArr.length > 1) {
-//					fontArr.unshift('normal');
-//				}
 				if (arr.length === nextlevel) {
 					return fontArr.join(' ');
 				} else if (arr.length > nextlevel){
@@ -484,14 +466,6 @@ class N2MapStyles {
 				} else {
 					fontArr = _this.toFontArray(font);
 				}
-
-//				if (fontArr.length <= 0) {
-//					throw new Error('N2MapStyles: Bad Font Property');
-//				} else if (fontArr.length < 2 && fontArr.length > 0) {
-//					fontArr.unshift('normal', '10px');
-//				} else if (fontArr.length < 3 && fontArr.length > 1) {
-//					fontArr.unshift('normal');
-//				}
 				if (arr.length === nextlevel) {
 					return fontArr.join(' ');
 				} else if (arr.length > nextlevel){

@@ -9,7 +9,7 @@ import {getTransform} from 'ol/proj.js';
 import {default as Projection} from 'ol/proj/Projection.js';
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
-var DH = 'n2.canvasMap';
+var DH = 'n2.canvas.OL6MapModel';
 
 /**
  * @classdesc
@@ -57,39 +57,10 @@ class N2ModelSource extends Vector {
 			var f = function(m, addr, dispatcher){
 				_this._handleDispatch(m, addr, dispatcher);
 			};
-
-			//this.dispatchService.register(DH,'modelGetInfo',f);
-			//this.dispatchService.register(DH,'modelStateUpdated',f);
-			//this.dispatchService.register(DH,'simplifiedGeometryReport',f);
 		}
-		
-//		var isLoading = this.modelObserver.isLoading();
-//		if( typeof isLoading === 'boolean' ){
-//			this._reportLoading(isLoading);
-//		};
-//
-//		var docs = this.modelObserver.getDocuments();
-//		for (let doc of docs){
-//			let docId = doc._id;
-//			var docInfo = this.infoByDocId[docId];
-//			if( !docInfo ){
-//				docInfo = {};
-//				this.infoByDocId[docId] = docInfo;
-//			};
-//			docInfo.doc = doc;
-//			
-//		}
 	}
 
 	refresh(){
-
-// ===========================================================
-// 2.3.0-alpha code which breaks atlascine-branch functionality
-// ===========================================================
-//		//Create editing layer
-//		this._reloadAllFeatures();
-
-		//this.changed();
 	}
 	_modelSourceUpdated (state) {
 		
@@ -138,20 +109,11 @@ class N2ModelSource extends Vector {
 				delete _this.infoByDocId[docId];
 			});
 		}
-		
-// ===========================================================
-// 2.3.0-alpha code which breaks atlascine-branch functionality
-// ===========================================================
-//		//Create editing layer
-//		this._refreshSimplifiedGeometries();
-
 		this._reloadAllFeatures();
 		
 	}
 	
 	loadFeatures(extent, resolution, projection) {
-		//this.loading = false;
-		//this._reloadAllFeatures();
 	}
 
 	_reportLoading(flag){
@@ -205,8 +167,6 @@ class N2ModelSource extends Vector {
 	 * This function is called when the map resolution is changed
 	 */
 	onChangedResolution(res, proj, extent){
-		//$n2.log('resolution',res,proj);
-
 
 		this.epsg4326Resolution = this._getResolutionInProjection(res,proj);
 		
@@ -261,93 +221,9 @@ class N2ModelSource extends Vector {
 			}
 		}
 
-//		this.dispatchService.send(DH,{
-//			type: 'simplifiedGeometryRequest'
-//				,geometriesRequested: geometriesRequested
-//				,requester: this.sourceId
-//		});
-
 		this._reloadAllFeatures();
 		
 	}
-
-// ===========================================================
-// 2.3.0-alpha code which breaks atlascine-branch functionality
-// ===========================================================
-//		//Create editing layer
-//	_refreshSimplifiedGeometries (){
-//		var _this = this;
-//		var m = {
-//				type: 'resolutionRequest'
-//				,proj: undefined
-//				,resolution: undefined
-//			}
-//		this.dispatchService.synchronousCall(DH,m);
-//		if( m.resolution ){
-//			var targetRes = m.resolution;
-//			var proj = m.proj;
-//			var res = this._getResolutionInProjection(targetRes, proj);
-//		
-//			var geometriesRequested = [];
-//
-//			for(let docId in this.infoByDocId){
-//				var docInfo = this.infoByDocId[docId];
-//
-//				var doc = docInfo.doc;
-//				if( doc && doc.nunaliit_geom
-//						&& doc.nunaliit_geom.simplified
-//						&& doc.nunaliit_geom.simplified.resolutions ){
-//					var bestAttName = undefined;
-//					var bestResolution = undefined;
-//					for(let attName in doc.nunaliit_geom.simplified.resolutions){
-//						var attRes = parseFloat(doc.nunaliit_geom.simplified.resolutions[attName]);
-//						if( attRes < res ){
-//							if( typeof bestResolution === 'undefined' ){
-//								bestResolution = attRes;
-//								bestAttName = attName;
-//							} else if( attRes > bestResolution ){
-//								bestResolution = attRes;
-//								bestAttName = attName;
-//							};
-//						};
-//					};
-//
-//					// At this point, if bestResolution is set, then this is the geometry we should
-//					// be displaying
-//					if( undefined !== bestResolution ){
-//						docInfo.simplifiedName = bestAttName;
-//						docInfo.simplifiedResolution = bestResolution;
-//					};
-//
-//					if( docInfo.simplifiedName ) {
-//						// There is a simplification needed, do I have it already?
-//						var wkt = undefined;
-//						if( docInfo.simplifications ){
-//							wkt = docInfo.simplifications[docInfo.simplifiedName];
-//						};
-//
-//						// If I do not have it, request it
-//						if( !wkt ){
-//							var geomRequest = {
-//									id: docId
-//									,attName: docInfo.simplifiedName
-//									,doc: doc
-//							};
-//							geometriesRequested.push(geomRequest);
-//						};
-//					};
-//				};
-//			};
-//
-//
-//
-//			this.dispatchService.send(DH,{
-//				type: 'simplifiedGeometryRequest'
-//					,geometriesRequested: geometriesRequested
-//					,requester: this.sourceId
-//			});
-//		}
-//	}
 
 	_getResolutionInProjection(targetResolution, proj){
 
@@ -364,19 +240,13 @@ class N2ModelSource extends Vector {
 
 		return targetResolution;
 	}
-	//TODO need to reimplemented it, too expensive for reload every feature
+
 	_reloadAllFeatures(){
 		var _this = this;
 
 		var wktFormat = new WKT();
 
 		let features = [];
-		//var docInfos = $n2.utils.values (this.infoByDocId);
-		//docInfos.sort(function(a, b){
-		//	var l = a.doc._ldata.start || 0,
-		//	r =  b.doc._ldata.start || 0;
-		//	return l-r;
-		//});
 		var proj_4326 = new Projection({code: 'EPSG:4326'});
 		for(var docId in this.infoByDocId){
 			
@@ -414,11 +284,6 @@ class N2ModelSource extends Vector {
 				} else {
 					$n2.log('Invalid feature', doc);
 				}
-
-				//docInfo.feature = feature;
-				//				if (geoJSONFeature['properties']) {
-				//					feature.setProperties(geoJSONFeature['properties']);
-				//				}
 			}
 		}
 
