@@ -9,7 +9,7 @@ import {getTransform} from 'ol/proj.js';
 import {default as Projection} from 'ol/proj/Projection.js';
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
-var DH = 'n2.canvas.OL6MapModel';
+var DH = 'n2.canvas.OL6Map.Model';
 
 /**
  * @classdesc
