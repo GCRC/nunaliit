@@ -1238,6 +1238,7 @@ class N2MapCanvas  {
 					renderMode : 'vector',
 					source: charlieSource,
 					style: featureStyler,
+					renderBuffer: 500,
 					renderOrder: function(feature1, feature2){
 						var valueSelector = _this.renderOrderBasedOn;
 
