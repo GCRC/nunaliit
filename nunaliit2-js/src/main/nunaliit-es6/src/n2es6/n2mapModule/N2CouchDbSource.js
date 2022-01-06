@@ -9,9 +9,8 @@ import Feature from 'ol/Feature.js';
 import {getTransform} from 'ol/proj.js';
 import {default as Projection} from 'ol/proj/Projection.js';
 
-//TODO still sharing the same DH='n2.canvasMap'
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
-var DH = 'n2.canvasMap';
+const DH = 'n2.canvas.OL6Map.CouchDB';
 
 /**
 * @classdesc
@@ -116,7 +115,6 @@ class N2CouchDbSource extends Vector {
 				delete _this.infoByDocId[docId];
 			});
 		}
-		//this._reloadAllFeatures();
 	}
 
 	_handleDispatch(m, addr, dispatcher){
@@ -155,7 +153,6 @@ class N2CouchDbSource extends Vector {
 	* This function is called when the map resolution is changed
 	*/
 	changedResolution(res,proj){
-		//$n2.log('resolution',res,proj);
 		this.epsg4326Resolution = this._getResolutionInProjection(res,proj);
 
 		for(var docId in this.infoByDocId){
@@ -269,11 +266,6 @@ class N2CouchDbSource extends Vector {
 				} else {
 					$n2.log('Invalid feature', doc);
 				}
-				
-				//docInfo.feature = feature;
-				//if (geoJSONFeature['properties']) {
-				//	feature.setProperties(geoJSONFeature['properties']);
-				//}
 			}
 		}
 

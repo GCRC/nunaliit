@@ -12,8 +12,6 @@ var DH = 'n2.canvasMap';
 
 var featureStyleFunctions = {
 		getDocuments: function(){
-			// this is the feature
-
 			var documents = [];
 
 			if( $n2.isArray(this.cluster) ) {
@@ -88,12 +86,11 @@ class N2SourceWithN2Intent extends VectorSource {
 			,features: []
 		};
 
-		this.interaction_ = options.interaction ;//new N2Intent({});
+		this.interaction_ = options.interaction ;
 		if (!this.interaction_) {
 			throw new Error("A valid interaction must be provided for "
 			+"this custom source");
 		}
-		//-------------------------
 		this.interactionMode = "NAVIGATE"; 
 		this.sourceChangeKey_ = null;
 		if (options.source){
@@ -101,7 +98,6 @@ class N2SourceWithN2Intent extends VectorSource {
 			this.sourceChangeKey_ =
 				listen(this.source, EventType.CHANGE, this.refresh, this);
 		}
-		//listen(this.source, EventType.CHANGE, this.refresh, this);
 		listen(this, 'sourceRefChanged', this.handleSourceRefChange, this);
 		this.userInputEventKeys = [];
 		this.bindEventListener();
@@ -177,7 +173,6 @@ class N2SourceWithN2Intent extends VectorSource {
 		}
 
 		if (this.hoverInfo.feature === selected) {
-			//no really going to happen.
 			return;
 		}
 
@@ -185,8 +180,6 @@ class N2SourceWithN2Intent extends VectorSource {
 		this.hoverInfo.feature = selected;
 
 		this._hoverFeature(selected);
-		//TODO There should be a straightforward way to create popup
-		//this._hoverFeaturePopup(selected, layer);
 
 		return true;
 	}
@@ -194,9 +187,7 @@ class N2SourceWithN2Intent extends VectorSource {
 	//clear up for hover
 	_endHover() {
 		for(var i=0,e=this.hoverInfo.endFn.length; i<e; ++i) {
-			//try{
 			this.hoverInfo.endFn[i](); 
-			//} catch(e){};
 		}
 		this.hoverInfo.feature = null;
 		this.hoverInfo.endFn = [];
@@ -507,27 +498,6 @@ class N2SourceWithN2Intent extends VectorSource {
 			this._endClicked();
 			return true;
 		}
-//		} else {
-//			this._endClicked();
-//			
-//			if ( clickedAgain ){
-//				//this._dispatch({type: 'userUnselect',
-////								docId: selected.fid
-////								});
-//			} else if ( selected 
-//					&& selected.fid ) {
-//				
-//				//clicked new feature
-//				this.clickedInfo.features = [selected];
-//
-//				this.clickedInfo.fids = {};
-//				this.clickedInfo.fids[selected.fid] = { clicked: true };
-//				this.clickedInfo.selectedId = selected.fid;
-//				
-//				selected.isClicked = true;
-//			}
-//			return true;
-//		}
 	}
 
 	//clear up for click
@@ -577,7 +547,6 @@ class N2SourceWithN2Intent extends VectorSource {
 			}
 		}
 		
-		//var features = this._getMapFeaturesIncludingFidMap(this.focusInfo.fids);
 		var features  = this._getMapFeaturesIncludeingFidMapOl5 (this.focusInfo.fids);
 		if (features && features.length > 0) {
 			for(var i=0,e=features.length; i<e; ++i){
@@ -587,8 +556,6 @@ class N2SourceWithN2Intent extends VectorSource {
 					if( opts.intent ){
 						f.n2HoverIntent = opts.intent;
 					}
-					//if( f.layer ) f.layer.drawFeature(f);
-					//if (f) f.changed();
 					this.focusInfo.features.push( f );
 				}
 			}
@@ -601,8 +568,6 @@ class N2SourceWithN2Intent extends VectorSource {
 			if( feature.isHovered ) {
 				feature.isHovered = false;
 				feature.n2HoverIntent = null;
-				//if( feature.layer ) feature.layer.drawFeature(feature);
-				//if (feature) feature.changed();
 			}
 		}
 
@@ -699,8 +664,6 @@ class N2SourceWithN2Intent extends VectorSource {
 				var f = features[i];
 				if( f ){
 					f.n2Intent = 'find';
-					//f.changed();
-					//if( f.layer ) f.layer.drawFeature(f);
 				}
 			}
 		}
@@ -712,8 +675,6 @@ class N2SourceWithN2Intent extends VectorSource {
 			var f = this.findFeatureInfo.features[i];
 			if( f ) {
 				f.n2Intent = null;
-				//f.changed();
-				//if( f.layer ) f.layer.drawFeature(f);
 			}
 		}
 		
@@ -780,8 +741,6 @@ class N2SourceWithN2Intent extends VectorSource {
 					}
 
 				} else {
-					//TODO using this to replace global source change
-					//if (f.n2_selected) f.changed();
 					f.n2_selected = false;
 				}
 
@@ -789,9 +748,7 @@ class N2SourceWithN2Intent extends VectorSource {
 					this.focusInfo.features.push(f);
 					f.isHovered = true;
 					f.n2_hovered = true;
-					//f.changed();
 				} else {
-					//if (f.n2_hovered) f.changed();
 					f.n2_hovered = false;
 				}
 
@@ -829,9 +786,7 @@ class N2SourceWithN2Intent extends VectorSource {
 							this.focusInfo.features.push(f);
 							f.isHovered = true;
 							f.n2_hovered = true;
-							//f.changed();
 						} else {
-							//if(f.n2_hovered) f.changed();
 							f.n2_hovered = false;
 						}
 
@@ -941,34 +896,9 @@ class N2SourceWithN2Intent extends VectorSource {
 			var features = this._getMapFeaturesIncludeingFidMapOl5(fid);
 			this._startFindFeature(fid, features);
 			
-			// Check if we need to turn a layer on
-//			if( doc && doc.nunaliit_layers ) {
-//				var visible = false;
-//				var olLayerToTurnOn = null;
-//				for(var i=0,e=this.infoLayers.length; i<e; ++i) {
-//					var infoLayer = this.infoLayers[i];
-//					var layerId = infoLayer.id;
-//					var olLayer = infoLayer.olLayer;
-//
-//					if( doc.nunaliit_layers.indexOf(layerId) >= 0 
-//					 && olLayer ) {
-//						if( olLayer.visibility ) {
-//							visible = true;
-//						} else {
-//							olLayerToTurnOn = olLayer;
-//						};
-//					};
-//				};
-//	
-//				// Turn on layer
-//				if( !visible && olLayerToTurnOn ){
-//					olLayerToTurnOn.setVisibility(true);
-//				};
-//			};
 			this.refresh();
 		
 		} else if ( 'findIsAvailable' === type ){
-			//TODO just a work around.Not for production.
 			m.isAvailable = true;
 		}
 	}

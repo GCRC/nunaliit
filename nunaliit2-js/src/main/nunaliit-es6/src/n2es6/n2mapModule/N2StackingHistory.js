@@ -14,7 +14,6 @@ class N2StackingHistory {
 		this._map = opts.map;
 		this._precision = opts.precision;
 		listen(this._map, 'postcompose', this.clear , this);
-		//listen(this._map, '', , this);
 	}
 
 	getStackingHistory(ext){

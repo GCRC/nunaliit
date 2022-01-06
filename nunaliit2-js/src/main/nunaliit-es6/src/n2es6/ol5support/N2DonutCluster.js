@@ -96,10 +96,8 @@ class N2DonutCluster extends VectorSource {
 	     * @protected
 	     */
 		this.features = [];
-		// this.source = options.source;
 
 		listen(this, 'sourceRefChanged', this.handleSourceRefChange, this);
-		//listen(this.source, EventType.CHANGE, this.refresh, this);
 	}
 	
 	handleSourceRefChange(){
@@ -152,36 +150,6 @@ class N2DonutCluster extends VectorSource {
 		this.addFeatures(this.features);
 		
 	}
-//	clear(opt_fast){
-//		
-//		 if (opt_fast) {
-//		      for (var featureId in this.featureChangeKeys_) {
-//		        var keys = this.featureChangeKeys_[featureId];
-//		        keys.forEach(unlistenByKey);
-//		      }
-//		      if (!this.featuresCollection_) {
-//		        this.featureChangeKeys_ = {};
-//		        this.idIndex_ = {};
-//		        this.undefIdIndex_ = {};
-//		      }
-//		    } else {
-//		      if (this.featuresRtree_) {
-//		        this.featuresRtree_.forEach(this.removeFeatureInternal, this);
-//		        for (var id in this.nullGeometryFeatures_) {
-//		          this.removeFeatureInternal(this.nullGeometryFeatures_[id]);
-//		        }
-//		      }
-//		    }
-//		    if (this.featuresCollection_) {
-//		      this.featuresCollection_.clear();
-//		    }
-//
-//		    if (this.featuresRtree_) {
-//		      this.featuresRtree_.clear();
-//		    }
-//		    this.loadedExtentsRtree_.clear();
-//		    this.nullGeometryFeatures_ = {};
-//	}
 	
 	getSource(){
 		return this.source;
@@ -278,11 +246,6 @@ class N2DonutCluster extends VectorSource {
 		scaleCoordinate(centroid, 1/count);
 
 		var centroidGeom = new Point(centroid);
-//		features.sort(function(a, b){
-//			let l = a.data._ldata.start,
-//			r = b.data._ldata.start;
-//			return l-r;
-//		})
 		
 		for (let f of features){
 			var newf = f.clone();
