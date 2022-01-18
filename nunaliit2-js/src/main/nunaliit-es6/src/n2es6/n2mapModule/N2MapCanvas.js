@@ -1160,9 +1160,11 @@ class N2MapCanvas  {
 			if (feature && feature.data && feature.data._ldata &&
 				feature.data._ldata.placeZoomScale &&
 				_this.n2Map.getView().getZoom() > feature.data._ldata.placeZoomScale) {
+					feature.set("isVisible", false, false)
 					return;
 			}
 
+			feature.set("isVisible", true, false);
 			let geomType = feature.getGeometry()._n2Type;
 			if (!geomType) {
 				if (feature.getGeometry()
@@ -1277,7 +1279,7 @@ class N2MapCanvas  {
 					title: "Links",
 					renderMode: "vector",
 					source: this.vectorLinkSource,
-					//style: null,
+					style: this.vectorLinkSource.stylerFunction,
 				}));
 			}
 		}
