@@ -60,14 +60,14 @@ class N2LinkSource extends VectorSource {
 				pointData.push({
 					coordinates: pointCoordinates,
 					isFeatureVisible: isFeatureCurrentlyShowing,
-					i: point.data._ldata.timeLinkTags.placeTag
+					i: point.data._ldata.timeLinkTags.placeTag // remove me eventually
 				});
 			}
 			else {
 				this._timeCoordinateData.set(featureStartTime, [{ 
 					coordinates: pointCoordinates,
 					isFeatureVisible: isFeatureCurrentlyShowing,
-					i: point.data._ldata.timeLinkTags.placeTag
+					i: point.data._ldata.timeLinkTags.placeTag // remove me eventually
 				}]);
 			}
 		});
@@ -123,7 +123,7 @@ class N2LinkSource extends VectorSource {
 	}
 
 	stylerFunction(feature) {
-		if (feature.get("isVisible") === false) return;
+		if (feature.get("isVisible") === false || feature.get("isVisible") === undefined) return;
 		return new Style({
 			stroke: new Stroke({
 				width: feature.get("linkStrength"),
