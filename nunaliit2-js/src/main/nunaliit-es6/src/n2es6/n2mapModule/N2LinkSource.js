@@ -28,8 +28,6 @@ class N2LinkSource extends VectorSource {
 		closely related to the point sources as possible.
 	*/
 	refreshCallback(features) {
-		console.log("N2LinkSource refreshCallback")
-		console.log(features);
 		this.clear();
 		this._pointFeatures = features;
 		this._linestringFeatures = [];
@@ -60,14 +58,14 @@ class N2LinkSource extends VectorSource {
 				pointData.push({
 					coordinates: pointCoordinates,
 					isFeatureVisible: isFeatureCurrentlyShowing,
-					i: point.data._ldata.timeLinkTags.placeTag // remove me eventually
+					i: point.data._ldata.timeLinkTags.placeTag // Not used but helpful for a human to read the place
 				});
 			}
 			else {
 				this._timeCoordinateData.set(featureStartTime, [{ 
 					coordinates: pointCoordinates,
 					isFeatureVisible: isFeatureCurrentlyShowing,
-					i: point.data._ldata.timeLinkTags.placeTag // remove me eventually
+					i: point.data._ldata.timeLinkTags.placeTag // Not used but helpful for a human to read the place
 				}]);
 			}
 		});
