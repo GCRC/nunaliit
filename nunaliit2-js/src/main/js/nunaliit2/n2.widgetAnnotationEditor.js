@@ -276,6 +276,7 @@ POSSIBILITY OF SUCH DAMAGE.
 								'starttime': start
 								,'endtime': end
 								,'tags': []
+								,'relatedImage': ''
 //								,"linkRef": {
 //									"nunaliit_type": "reference"
 //									"doc": "stock.rwanda"
@@ -284,6 +285,8 @@ POSSIBILITY OF SUCH DAMAGE.
 							matchingLinks.push(newTimeLink);
 						}
 
+						let relatedImage = "";
+
 						matchingLinks.forEach(function(e) {
 							if (e.tags) {
 								e.tags.forEach(function(t) {
@@ -291,7 +294,8 @@ POSSIBILITY OF SUCH DAMAGE.
 									totalTags[key] = t;
 								});
 							}
-
+							/* This appears to only ever return one thing... */
+							relatedImage = e.relatedImage;
 						});
 
 						// Create Sentence Record
@@ -299,6 +303,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							start: start,
 							end: end,
 							tags: totalTags,
+							relatedImage: relatedImage,
 							text: text
 						};
 
@@ -334,6 +339,8 @@ POSSIBILITY OF SUCH DAMAGE.
 	var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 
 		dispatchService: null,
+		
+		attachmentService: null,
 
 		onSaved: null,
 
@@ -356,12 +363,14 @@ POSSIBILITY OF SUCH DAMAGE.
 		initialize: function(opts_) {
 			var opts = $n2.extend({
 				dispatchService: undefined,
+				attachmentService: undefined,
 				onSaved: undefined,
 				onCancel: undefined
 			}, opts_);
 
 			var _this = this;
 			this.dispatchService = opts.dispatchService;
+			this.attachmentService = opts.attachmentService;
 			this.onSaved = opts.onSaved;
 			this.onCancel = opts.onCancel;
 			this.editorId = $n2.getUniqueId();
@@ -564,6 +573,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					var start = sd.start;
 					var end = sd.end;
 					var tagValues = sd.tags;
+					const image = sd.relatedImage;
 					if (typeof start !== "undefined"
 						&& typeof end !== "undefined"
 						&& typeof tagValues !== "undefined") {
@@ -571,20 +581,6 @@ POSSIBILITY OF SUCH DAMAGE.
 					}
 				})
 
-//  		var modified = false;
-//			$formfieldSections.each(function(){
-//				var start = $(this).find('span.n2transcript_label.label_startTimeCode')
-//					.text();
-//				var end = $(this).find('span.n2transcript_label.label_finTimeCode')
-//					.text();
-//				var tagbox =$(this).find('div.n2-tag-box > div.mdc-chip-set');
-//				var tagValues = (tagbox.first().data('tags'));
-//				if (typeof start !== "undefined"
-//					&& typeof end !== "undefined"
-//					&& typeof tagValues !== "undefined"){
-//					modified |= singleSectionUpdate (doc, tagValues, start, end);
-//				}
-//			});
 				if (modified) {
 					documentSource.updateDocument({
 						doc: doc
@@ -624,6 +620,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							'starttime': start
 							,'endtime': end
 							,'tags': []
+							,'relatedImage': ''
 //							,"linkRef": {
 //								"nunaliit_type": "reference"
 //								"doc": "stock.rwanda"
@@ -1251,125 +1248,6 @@ POSSIBILITY OF SUCH DAMAGE.
 					return;
 				}
 			});
-
-//		senData.forEach(function(opts){
-//			var $formFieldSection = $('<div>')
-//			.addClass('n2WidgetAnnotation_formfieldSection')
-//			.appendTo($formField);
-//
-//			$('<span>')
-//			.addClass('n2transcript_label_name')
-//			.text('Start: ' )
-//			.appendTo($formFieldSection);
-//
-//			$('<span>')
-//			.addClass('n2transcript_label label_startTimeCode')
-//			.text(opts.start)
-//			.appendTo($formFieldSection);
-//
-//			$('<span>')
-//			.addClass('n2transcript_label_name')
-//			.text('End: ')
-//			.appendTo($formFieldSection);
-//
-//			$('<span>')
-//			.addClass('n2transcript_label label_finTimeCode')
-//			.text(opts.end)
-//			.appendTo($formFieldSection);
-//
-//			$('<span>')
-//			.addClass('n2transcript_label label_transcriptText')
-//			.text(opts.text)
-//			.appendTo($formFieldSection);
-//
-//			$('<hr>').appendTo($formFieldSection);
-////			.appendTo($formFieldSection);
-//
-//			var doc = _this.currentDoc;
-//			var lastThemeTags = [];
-//			var lastPlaceTags = [];
-//			if( doc
-//					&& doc.atlascine_cinemap ){
-//				var timeLinks = doc.atlascine_cinemap.timeLinks;
-//				if( !timeLinks ){
-////					No timeLinks no worry
-//					return;
-//				};
-//
-//				var matchingSen = depot.getMatchingSen(opts.start, opts.end);
-//				if (matchingSen){
-//					matchingSen.forEach(function(timeLink){
-//						if (timeLink.tags){
-//							for (var tag in timeLink.tags){
-//								var tagProfile = timeLink.tags[tag];
-//								if ( 'place' ===  tagProfile.type || 'location' === tagProfile.type) {
-//									lastPlaceTags.push(tagProfile);
-//								} else {
-//									lastThemeTags.push(tagProfile);
-//								}
-//							}
-//						}
-//					});
-//				}
-//
-//				new $n2.mdc.MDCTagBox({
-//					parentElem : $formFieldSection,
-//					autoCompleteViewName : 'tags',
-//					label: 'Theme Tags',
-//					mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
-//					chips: lastThemeTags,
-//					chipsetsUpdateCallback: function(tagList, operation, target){
-//						switch(operation){
-//							case 'ADD':
-//								var value = target.chipText;
-//								var addtar = $n2.extend({value: value}, target);
-//							delete addtar['fraction'];
-//								_this.dataDepot.addPartialTag(opts.start, opts.end, addtar)
-//								$n2.log('Adding tags', target);
-//								break;
-//							case 'DELETE':
-//								var value = target.chipText;
-//								var deltar = $n2.extend({value: value}, target);
-//								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
-//								$n2.log('Deleting tags', target);
-//								break;
-//						}
-//						//$n2.log('I wonder what is this: ', tagList);
-//					}
-//				});
-//
-//				new $n2.mdc.MDCTagBox({
-//					parentElem : $formFieldSection,
-//					autoCompleteViewName: 'tags',
-//					label: 'Place Tags',
-//					mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
-//					chips:lastPlaceTags,
-//					chipsetsUpdateCallback: function(tagList, operation, target){
-//						switch(operation){
-//							case 'ADD':
-//								var value = target.chipText;
-//								var addtar = $n2.extend({value: value}, target);
-//								addtar['type'] = 'place';
-//								delete addtar['fraction'];
-//								_this.dataDepot.addPartialTag(opts.start, opts.end, addtar)
-//								$n2.log('Adding tags', addtar);
-//								break;
-//							case 'DELETE':
-//								var value = target.chipText;
-//								var deltar = $n2.extend({value: value}, target);
-//								deltar['type'] = 'place';
-//								_this.dataDepot.deletePartialTag(opts.start, opts.end, deltar);
-//								$n2.log('Deleting tags', deltar);
-//								break;
-//						}
-//						//$n2.log('I wonder what is this: ', tagList);
-//					}
-//				})
-//			} else {
-//				alert('Current document doesnot have (atlascine_cinemap) property');
-//				return;
-//			};
-//		});
 		},
 
 		/**
@@ -1575,6 +1453,40 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
+			const mdcCardSelector = "div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action > div.n2card__primary";
+
+			const getDialogSelection = function(attachmentUrl) {
+				if (attachmentUrl !== null) {
+					document.querySelector(mdcCardSelector).innerHTML = attachmentUrl;
+				}
+			}
+
+			new $n2.mdc.MDCButton({
+				parentElem: $formFieldSection,
+				btnLabel: "Select Related Image",
+				btnRaised: true,
+				onBtnClick: () => {
+					new $n2.mdc.MDCAttachmentDialog({
+						attachmentService: _this.attachmentService,
+						document: _this.currentDoc,
+						dialogTitle: "Select Related Image",
+						closeBtn: true,
+						dialogCallback: getDialogSelection,
+						scrollable: true
+					});
+				}
+			});
+
+			const relatedImageLink = senData[0].relatedImage ? senData[0].relatedImage : "No related image.";
+			new $n2.mdc.MDCCard({
+				parentElem: $formFieldSection,
+				label: relatedImageLink,
+				infoGenerator: () => { return relatedImageLink },
+				initiallyOn: false
+			});
+
+			document.querySelector("div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action").style.cursor = "default";
+
 		},
 
 		/**
@@ -1646,6 +1558,7 @@ POSSIBILITY OF SUCH DAMAGE.
 	var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 
 		dispatchService: null,
+		attachmentService: null,
 
 		elemId: null,
 
@@ -1664,12 +1577,14 @@ POSSIBILITY OF SUCH DAMAGE.
 			var opts = $n2.extend({
 				containerId: undefined
 				,dispatchService: undefined
+				,attachmentService: undefined
 				,sourceModelId: undefined
 			},opts_);
 
 			var _this = this;
 
 			this.dispatchService = opts.dispatchService;
+			this.attachmentService = opts.attachmentService;
 			this.sourceModelId = opts.sourceModelId;
 
 			// Get container
@@ -1686,6 +1601,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			// The real annotationEditor lives inside annotationWidget container
 			this.annotationEditorView = new CineAnnotationEditorView({
 				dispatchService: this.dispatchService,
+				attachmentService: this.attachmentService,
 				onSaved: function() {
 					_this._closeEditor();
 					_this.dispatchService.send(DH,{
@@ -1959,6 +1875,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			if (config && config.directory) {
 				options.dispatchService = config.directory.dispatchService;
+				options.attachmentService = config.directory.attachmentService;
 			}
 
 			new AnnotationEditorWidget(options);
