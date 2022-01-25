@@ -669,6 +669,7 @@ class N2MapCanvas  {
 		var olView = new View({
 			center: transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
 			projection: 'EPSG:3857',
+			maxZoom: 22,
 			zoom: 6
 		});
 
@@ -1248,6 +1249,7 @@ class N2MapCanvas  {
 					renderMode : 'vector',
 					source: charlieSource,
 					style: featureStyler,
+					renderBuffer: 50000000000,
 					renderOrder: function(feature1, feature2){
 						var valueSelector = _this.renderOrderBasedOn;
 
