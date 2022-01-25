@@ -53,33 +53,33 @@ class N2LinkSource extends VectorSource {
 			const isFeatureCurrentlyShowing = point.get("isVisible");
 			const pointCoordinates = [...point.getGeometry().flatCoordinates];
 
+			const featureData = {
+				coordinates: pointCoordinates,
+				isFeatureVisible: isFeatureCurrentlyShowing,
+				i: point.data._ldata.timeLinkTags.placeTag // Not used but helpful for a human to read the place
+			};
+
 			if (this._timeCoordinateData.has(featureStartTime)) {
 				let pointData = this._timeCoordinateData.get(featureStartTime);
-				pointData.push({
-					coordinates: pointCoordinates,
-					isFeatureVisible: isFeatureCurrentlyShowing,
-					i: point.data._ldata.timeLinkTags.placeTag // Not used but helpful for a human to read the place
-				});
+				pointData.push(featureData);
 			}
 			else {
-				this._timeCoordinateData.set(featureStartTime, [{ 
-					coordinates: pointCoordinates,
-					isFeatureVisible: isFeatureCurrentlyShowing,
-					i: point.data._ldata.timeLinkTags.placeTag // Not used but helpful for a human to read the place
-				}]);
+				this._timeCoordinateData.set(featureStartTime, [featureData]);
 			}
 		});
 	}
 
 	_generateLinkStrengths() {
 		let previousData = [];
-		this._timeCoordinateData.forEach((currentData, _) => {
+		this._timeCoordinateData.forEach((currentData) => {
 			for (let i = 0; i < previousData.length; i++) {
-				for (let j = 0; j < currentData.length; j++) {
-					const previousDataPoint = previousData[i];
-					const currentDataPoint = currentData[j];
 
-					const prevPointString = previousDataPoint.coordinates.toString();
+				const previousDataPoint = previousData[i];
+				const prevPointString = previousDataPoint.coordinates.toString();
+
+				for (let j = 0; j < currentData.length; j++) {
+
+					const currentDataPoint = currentData[j];
 					const currPointString = currentDataPoint.coordinates.toString();
 
 					if (prevPointString === currPointString) continue; // Not drawing a link from a point to the same point
