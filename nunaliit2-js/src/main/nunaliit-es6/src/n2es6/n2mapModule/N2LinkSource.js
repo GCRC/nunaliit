@@ -122,12 +122,22 @@ class N2LinkSource extends VectorSource {
 
 	stylerFunction(feature) {
 		if (feature.get("isVisible") === false || feature.get("isVisible") === undefined) return;
-		return new Style({
-			stroke: new Stroke({
-				width: feature.get("linkStrength"),
-				color: "blue"
+		return [
+			new Style({
+				stroke: new Stroke({
+					width: feature.get("linkStrength") + 2,
+					color: "white",
+					zIndex: 0
+				})
+			}),
+			new Style({
+				stroke: new Stroke({
+					width: feature.get("linkStrength"),
+					color: "#404040",
+					zIndex: 1
+				})
 			})
-		});
+		]
 	}
 }
 export default N2LinkSource
