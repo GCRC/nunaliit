@@ -948,6 +948,7 @@ class N2MapCanvas  {
 		mainbar.addControl(pcluster);
 
 		const notification = new Notification({
+			className: "ol-image-notification"
 		});
 		customMap.addControl(notification);
 		this.mapNotification = notification;
@@ -1774,6 +1775,7 @@ class N2MapCanvas  {
 
 	_displayNotification(featureData, thisContext) {
 		const { lineDuration, relatedImage, style: { fillColor } } = featureData;
+		thisContext.mapNotification.element.firstChild.style.backgroundColor = fillColor
 		thisContext.mapNotification.show(`<img src=./db${relatedImage}>`, lineDuration * 1000);
 	}
 	
