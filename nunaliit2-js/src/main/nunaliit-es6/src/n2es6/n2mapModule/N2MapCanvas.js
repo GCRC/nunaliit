@@ -58,6 +58,7 @@ import EditBar from './EditBar';
 import Toggle from 'ol-ext/control/Toggle';
 import Timeline from 'ol-ext/control/Timeline';
 import Popup from 'ol-ext/overlay/Popup';
+import Notification from 'ol-ext/control/Notification';
 //import timelineData from '!json-loader!../../data/fond_guerre.geojson';
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -78,6 +79,9 @@ const VENDOR =	{
 		IMAGE : 'image',
 		COUCHDB : 'couchdb'
 };
+
+const DONUT_VECTOR_LAYER_DISPLAY_NAME = "Features";
+const LINE_VECTOR_LAYER_DISPLAY_NAME = "Links";
 
 const olStyleNames = {
 	"fill": "fillColor"
@@ -320,6 +324,8 @@ class N2MapCanvas  {
 		this.fitMapToLatestMapTag = false;
 		this.animateMapFitting = false;
 		this.lastFeatureZoomedTo = undefined;
+		this.lastFeatureDisplayedImage = undefined;
+		this.mapNotification = null;
 		this._drawMap();
 		opts.onSuccess();
 	}
@@ -941,6 +947,11 @@ class N2MapCanvas  {
 		})
 		mainbar.addControl(pcluster);
 
+		const notification = new Notification({
+		});
+		customMap.addControl(notification);
+		this.mapNotification = notification;
+
 		//Create editing layer
 		/* this.editLayerSource = new VectorSource();
 		var editLayer = new VectorLayer({
@@ -1245,7 +1256,7 @@ class N2MapCanvas  {
 
 				_this.n2intentWrapper = charlieSource;
 				var vectorLayer = new VectorLayer({
-					title: "Features",
+					title: DONUT_VECTOR_LAYER_DISPLAY_NAME,
 					renderMode : 'vector',
 					source: charlieSource,
 					style: featureStyler,
@@ -1536,16 +1547,12 @@ class N2MapCanvas  {
 			},100);
 
 		} else if ('n2rerender' === type){
-			var olmap = _this.n2Map;
 			//This refresh strictly execute the invoke for rerender the ol5 map
 			if (_this.n2Map){
 				_this.overlayLayers.forEach(function(overlayLayer){
 					overlayLayer.getSource().refresh();
 				});
-				//var viewExt = olmap.getView().calculateExtent(olmap.getSize());
-				//olmap.getView().fit(viewExt);
 			}
-
 		} else if ( 'mapRefreshCallbackRequest' === type ){
 			//This refresh only execute the last invoke,
 			//the earlier invoke will be cancelled if new invoke arrived
@@ -1668,22 +1675,14 @@ class N2MapCanvas  {
 			const olmap = _this.n2Map;
 			if (!olmap) return;
 
+			this._showFeatureRelatedImage();
+
 			let lastKnownFeature = null;
 			_this.overlayLayers.forEach(function(overlayLayer){
 				const n2Source = overlayLayer.getSource();
 				if (n2Source.hasOwnProperty("features_")) {
 					const features = n2Source.features_;
-					features.sort((first, second) => {
-						const f_ldata = first.data._ldata;
-						const s_ldata = second.data._ldata;
-						if (f_ldata.start < s_ldata.start) return -1;
-						else if (f_ldata.start > s_ldata.start) return 1;
-						else {
-							if (f_ldata.timeLinkTags.placeTag < s_ldata.timeLinkTags.placeTag) return -1;
-							else if (f_ldata.timeLinkTags.placeTag > s_ldata.timeLinkTags.placeTag) return 1;
-							return 0;
-						}
-					});
+					_this._sortFeaturesByTimeAndPlaceName(features);
 					if (($n2.isArray(features)) && (features.length > 0)) {
 						lastKnownFeature = features[features.length - 1];
 					}
@@ -1734,13 +1733,48 @@ class N2MapCanvas  {
 			// 2.3.0-alpha mockingData commented out due to it causes an error 
 			// ===========================================================
 			//_this.mockingData = _this.mockingDataComplete.slice(0,_this.endIdx);
-	
+
 			_this.dispatchService.send(DH,{
 				type: 'n2rerender'
 			});
 
 			_this.lastTime = currTime;
 		}
+	}
+	_sortFeaturesByTimeAndPlaceName(features) {
+		features.sort((first, second) => {
+			const f_ldata = first.data._ldata;
+			const s_ldata = second.data._ldata;
+			if (f_ldata.start < s_ldata.start) return -1;
+			else if (f_ldata.start > s_ldata.start) return 1;
+			else {
+				if (f_ldata.timeLinkTags.placeTag < s_ldata.timeLinkTags.placeTag) return -1;
+				else if (f_ldata.timeLinkTags.placeTag > s_ldata.timeLinkTags.placeTag) return 1;
+				return 0;
+			}
+		});
+	}
+
+	_showFeatureRelatedImage() {
+		this.overlayLayers.forEach(layer => {
+			if (layer.get("title") !== DONUT_VECTOR_LAYER_DISPLAY_NAME) return;
+			const features = layer.getSource().getFeatures();
+			this._sortFeaturesByTimeAndPlaceName(features);
+			const [imageDataFeature] = features.slice(-1);
+
+			if (imageDataFeature === undefined || (this.lastFeatureDisplayedImage !== undefined && 
+				(this.lastFeatureDisplayedImage.data._ldata.timeLinkTags.placeTag === imageDataFeature.data._ldata.timeLinkTags.placeTag))) return;
+			if (imageDataFeature.data && imageDataFeature.data._ldata
+				&& imageDataFeature.data._ldata.relatedImage !== "") {
+				$n2.utils.throttle(this._displayNotification, 500)(imageDataFeature.data._ldata, this);
+				this.lastFeatureDisplayedImage = imageDataFeature;
+			}
+		});
+	}
+
+	_displayNotification(featureData, thisContext) {
+		const { lineDuration, relatedImage, style: { fillColor } } = featureData;
+		thisContext.mapNotification.show(`<img src=./db${relatedImage}>`, lineDuration * 1000);
 	}
 	
 	_getMapFeaturesIncludeingFidMapOl5(fidMap) {
