@@ -669,6 +669,17 @@ POSSIBILITY OF SUCH DAMAGE.
 							modified = true;
 						}
 					});
+
+					const mdcSelector = "div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action > div.n2card__primary";
+					const relatedImage = document.querySelector(mdcSelector) ? document.querySelector(mdcSelector).dataset.trueUrl : "";
+
+					matchingLinks.forEach(timeLink => {
+						/* I only expect this to run once */
+						if (timeLink.relatedImage !== relatedImage) {
+							timeLink.relatedImage = relatedImage;
+							modified = true;
+						}
+					});
 				}
 				return modified;
 			}
@@ -1457,7 +1468,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			const getDialogSelection = function(attachmentUrl) {
 				if (attachmentUrl !== null) {
-					document.querySelector(mdcCardSelector).innerHTML = attachmentUrl;
+					const cardDisplay = document.querySelector(mdcCardSelector)
+					cardDisplay.dataset.trueUrl = `/${_this.currentDoc._id}/${attachmentUrl}`;
+					cardDisplay.innerHTML = attachmentUrl;
 				}
 			}
 
@@ -1477,14 +1490,31 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
-			const relatedImageLink = senData[0].relatedImage ? senData[0].relatedImage : "No related image.";
-			new $n2.mdc.MDCCard({
+			new $n2.mdc.MDCButton({
 				parentElem: $formFieldSection,
-				label: relatedImageLink,
-				infoGenerator: () => { return relatedImageLink },
-				initiallyOn: false
+				btnLabel: "Remove Related Image",
+				btnRaised: true,
+				onBtnClick: () => {
+					document.querySelector(mdcCardSelector).dataset.trueUrl = "";
+					document.querySelector(mdcCardSelector).innerHTML = "";
+				}
 			});
 
+			const relatedImageLink = senData[0].relatedImage ? senData[0].relatedImage : "";
+			let displayImageLinkText = relatedImageLink.split("/");
+			if (displayImageLinkText.length > 1) {
+				displayImageLinkText = displayImageLinkText.pop();
+			}
+			else {
+				displayImageLinkText = "No related image.";
+			} 
+			new $n2.mdc.MDCCard({
+				parentElem: $formFieldSection,
+				label: displayImageLinkText,
+				infoGenerator: () => { return displayImageLinkText },
+				initiallyOn: false
+			});
+			document.querySelector(mdcCardSelector).dataset.trueUrl = relatedImageLink;
 			document.querySelector("div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action").style.cursor = "default";
 
 		},
