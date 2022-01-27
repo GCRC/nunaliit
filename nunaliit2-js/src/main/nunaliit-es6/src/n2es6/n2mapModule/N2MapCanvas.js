@@ -51,6 +51,8 @@ import TileWMS from 'ol/source/TileWMS';
 import LayerSwitcher from 'ol-layerswitcher';
 import 'ol-layerswitcher/dist/ol-layerswitcher.css';
 
+import {defaults as Defaults} from 'ol/control';
+
 import 'ol-ext/dist/ol-ext.css';
 import Bar from 'ol-ext/control/Bar';
 import EditBar from './EditBar';
@@ -666,7 +668,7 @@ class N2MapCanvas  {
 	_drawMap() {
 		var _this = this;
 
-		var olView = new View({
+		const olView = new View({
 			center: transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
 			projection: 'EPSG:3857',
 			maxZoom: 22,
@@ -674,7 +676,7 @@ class N2MapCanvas  {
 		});
 
 		this.n2View = olView;
-		var customMap = new Map({
+		const customMap = new Map({
 			interactions: defaultsInteractionSet({mouseWheelZoom : false}).extend([
 				new mouseWheelZoom({
 					duration: 200,
@@ -682,7 +684,16 @@ class N2MapCanvas  {
 				})
 			]),
 			target : this.canvasId,
-			view: olView
+			view: olView,
+			controls: Defaults({
+				attribution: true,
+				attributionOptions: {
+					collapsible: false,
+					collapsed: false
+				},
+				rotate: false,
+				zoom: true
+			})
 		});
 
 		this.n2Map = customMap;
