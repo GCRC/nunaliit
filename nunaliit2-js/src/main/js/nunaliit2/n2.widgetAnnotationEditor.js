@@ -277,6 +277,7 @@ POSSIBILITY OF SUCH DAMAGE.
 								,'endtime': end
 								,'tags': []
 								,'relatedImage': ''
+								,'notes': ''
 //								,"linkRef": {
 //									"nunaliit_type": "reference"
 //									"doc": "stock.rwanda"
@@ -286,6 +287,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						}
 
 						let relatedImage = "";
+						let notes = "";
 
 						matchingLinks.forEach(function(e) {
 							if (e.tags) {
@@ -296,6 +298,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							}
 							/* This appears to only ever return one thing... */
 							relatedImage = e.relatedImage;
+							notes = e.notes;
 						});
 
 						// Create Sentence Record
@@ -304,6 +307,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							end: end,
 							tags: totalTags,
 							relatedImage: relatedImage,
+							notes: notes,
 							text: text
 						};
 
@@ -573,7 +577,6 @@ POSSIBILITY OF SUCH DAMAGE.
 					var start = sd.start;
 					var end = sd.end;
 					var tagValues = sd.tags;
-					const image = sd.relatedImage;
 					if (typeof start !== "undefined"
 						&& typeof end !== "undefined"
 						&& typeof tagValues !== "undefined") {
@@ -621,6 +624,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							,'endtime': end
 							,'tags': []
 							,'relatedImage': ''
+							,'notes': ''
 //							,"linkRef": {
 //								"nunaliit_type": "reference"
 //								"doc": "stock.rwanda"
@@ -671,12 +675,18 @@ POSSIBILITY OF SUCH DAMAGE.
 					});
 
 					const mdcSelector = "div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action > div.n2card__primary";
+					const tagNotesSelector = "n2WidgetAnnotationEditorTaggingNotes";
 					const relatedImage = document.querySelector(mdcSelector) ? document.querySelector(mdcSelector).dataset.trueUrl : "";
+					const taggingNotes = document.getElementById(tagNotesSelector) ? document.getElementById(tagNotesSelector).value : "";
 
 					matchingLinks.forEach(timeLink => {
 						/* I only expect this to run once */
 						if (timeLink.relatedImage !== relatedImage) {
 							timeLink.relatedImage = relatedImage;
+							modified = true;
+						}
+						if (timeLink.notes !== taggingNotes) {
+							timeLink.notes = taggingNotes;
 							modified = true;
 						}
 					});
@@ -1464,6 +1474,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
+			/* Probably give this a unique ID instead of this selector */
 			const mdcCardSelector = "div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action > div.n2card__primary";
 
 			const getDialogSelection = function(attachmentUrl) {
@@ -1518,6 +1529,22 @@ POSSIBILITY OF SUCH DAMAGE.
 			document.querySelector(mdcCardSelector).dataset.trueUrl = relatedImageLink;
 			document.querySelector("div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action").style.cursor = "default";
 
+			const timeLinkTextAreaId = "n2WidgetAnnotationEditorTaggingNotes";
+			const timeLinkNotes = senData[0].notes ? senData[0].notes : "";
+			new $n2.mdc.MDCTextField({
+				txtFldLabel: "Notes",
+				txtFldInputId: timeLinkTextAreaId,
+				txtFldOutline: true,
+				txtFldArea: true,
+				txtFldFullWidth: true,
+				parentElem: $formFieldSection
+			});
+			const timeLinkNotesTextArea = document.getElementById(timeLinkTextAreaId);
+			// excellent
+			timeLinkNotesTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
+			timeLinkNotesTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") 
+			timeLinkNotesTextArea.value = timeLinkNotes;
+			timeLinkNotesTextArea.style.resize = "vertical";
 		},
 
 		/**
