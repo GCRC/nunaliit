@@ -14,6 +14,9 @@
 		<fileSet>
 			<directory>src/main/js</directory>
 			<outputDirectory></outputDirectory>
+			<excludes>
+				<exclude>**/node_modules/**</exclude>
+			</excludes>
 		</fileSet>
 	</fileSets>
 </assembly>

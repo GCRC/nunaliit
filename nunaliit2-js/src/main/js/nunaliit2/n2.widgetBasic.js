@@ -784,7 +784,7 @@ function BuildButtonWidget(m){
 };
 
 //--------------------------------------------------------------------------
-var Service = $n2.Class({
+var Service = $n2.Construct({
 	
 	config: null,
 	
@@ -801,6 +801,7 @@ var Service = $n2.Class({
 		
 		if( this.config && this.config.directory ){
 			this.dispatchService = this.config.directory.dispatchService;
+			this.showService = this.config.directory.showService;
 		};
 		
 		// Register to events
@@ -887,6 +888,10 @@ var Service = $n2.Class({
 			} else if( m.widgetType === 'button' ){
 				m.isAvailable = true;
 
+			} else if ($n2.utils.getMethod('$n2.'
+					+ m.widgetType
+					+'.HandleWidgetAvailableRequests')) {
+				m.isAvailable = true;
 			} else {
 				if( $n2.couchDbPerspective 
 				 && $n2.couchDbPerspective.HandleWidgetAvailableRequests ){
@@ -972,6 +977,11 @@ var Service = $n2.Class({
 				 && $n2.widgetTranscript.HandleWidgetAvailableRequests ){
 					$n2.widgetTranscript.HandleWidgetAvailableRequests(m);
 				};
+				
+				if( $n2.widgetAnnotationEditor 
+				 && $n2.widgetAnnotationEditor.HandleWidgetAvailableRequests ){
+					$n2.widgetAnnotationEditor.HandleWidgetAvailableRequests(m);
+				};
 			};
 
 		} else if( 'widgetDisplay' === m.type ){
@@ -987,6 +997,12 @@ var Service = $n2.Class({
 			} else if( m.widgetType === 'button' ){
 				BuildButtonWidget(m);
 
+			} else if ($n2.utils.getMethod('$n2.'
+					+ m.widgetType
+					+ '.HandleWidgetDisplayRequests')
+					) {
+				var targetWidgetDisplayFunc = $n2.utils.getMethod('$n2.'+ m.widgetType +'.HandleWidgetDisplayRequests');
+				targetWidgetDisplay.apply(this,[m]);
 			} else {
 				if( $n2.couchDbPerspective 
 				 && $n2.couchDbPerspective.HandleWidgetDisplayRequests ){
@@ -1071,6 +1087,11 @@ var Service = $n2.Class({
 				if( $n2.widgetTranscript 
 				 && $n2.widgetTranscript.HandleWidgetDisplayRequests ){
 					$n2.widgetTranscript.HandleWidgetDisplayRequests(m);
+				};
+				
+				if( $n2.widgetAnnotationEditor 
+				 && $n2.widgetAnnotationEditor.HandleWidgetDisplayRequests ){
+					$n2.widgetAnnotationEditor.HandleWidgetDisplayRequests(m);
 				};
 			};
 

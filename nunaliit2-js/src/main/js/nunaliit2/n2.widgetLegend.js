@@ -75,6 +75,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			this.labels = opts.labels;
 
 			this.stylesInUse = null;
+			this.wmsLegends = {};
 			this.cachedSymbols = {};
 			this._throttledRefresh = $n2.utils.throttle(this._refresh, 2000);
 
@@ -93,6 +94,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				};
 
 				this.dispatchService.register(DH,'canvasReportStylesInUse',f);
+				this.dispatchService.register(DH,'imageUrlLegendDisplay', f)
 
 				// Obtain current styles in use
 				var msg = {
@@ -127,14 +129,41 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_handle: function(m, addr, dispatcher){
-			var _this = this;
-
 			if( 'canvasReportStylesInUse' === m.type ){
 				if( m.canvasName === this.sourceCanvasName ){
 					this.stylesInUse = m.stylesInUse;
 					this._throttledRefresh();
 				};
+			} else if('imageUrlLegendDisplay' === m.type ) {
+				if( m.canvasName === this.sourceCanvasName ){
+					this._imageUrlLegendDisplay(m)
+				}
 			};
+		},
+
+		_imageUrlLegendDisplay: function(m) {
+			const wmsLegendId = `legend${m.wmsId}`;
+			if(m.visible) {
+				if($(`#${wmsLegendId}`).length) {
+					return; //already displaying this legend image
+				}
+				var legendDiv;
+				var outerDiv = $('.n2widgetLegend_outer')
+				if(outerDiv.length > 0) {
+					legendDiv = outerDiv[0];
+				} else {
+					legendDiv = $(`#${this.elemId}`);
+				}
+				
+				$('<img>')
+				.attr('id', wmsLegendId)
+				.attr('src', m.legendUrl)
+				.appendTo(legendDiv);
+				this.wmsLegends[wmsLegendId] = Object.assign({}, m);
+			} else {
+				delete this.wmsLegends[wmsLegendId];
+				$(`#${wmsLegendId}`).remove()
+			}
 		},
 
 		_refresh: function(){
@@ -275,6 +304,10 @@ POSSIBILITY OF SUCH DAMAGE.
 					});
 				});
 			};
+
+			for (const key in this.wmsLegends) {
+				this._imageUrlLegendDisplay(this.wmsLegends[key]);
+			}
 		},
 
 		_insertSvgPreviewPoint: function($parent, style, context_){
