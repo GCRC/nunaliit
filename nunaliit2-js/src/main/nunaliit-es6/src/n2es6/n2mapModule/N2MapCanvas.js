@@ -53,6 +53,7 @@ import Bar from 'ol-ext/control/Bar';
 import EditBar from './EditBar';
 import Timeline from 'ol-ext/control/Timeline';
 import Popup from 'ol-ext/overlay/Popup';
+import Swipe from 'ol-ext/control/Swipe';
 
 import {defaults as Defaults} from 'ol/control';
 
@@ -778,6 +779,12 @@ class N2MapCanvas  {
 
 		customMap.addControl(customLayerSwitcher);
 
+		let swipeCtrl;
+		if(this.options.layerSwipe) {
+			swipeCtrl = new Swipe();
+			customMap.addControl(swipeCtrl)
+		}
+
 		this.overlayInfos.forEach( (info, idx) => {
 			if(info._layerInfo.options.wmsLegend && info.visibility) {
 				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl()
@@ -813,6 +820,13 @@ class N2MapCanvas  {
 							})
 					}
 				});
+			}
+			if(this.options.layerSwipe && typeof info._layerInfo.swipe !== 'undefined') {
+				if(info._layerInfo.swipe === 'left') {
+					swipeCtrl.addLayer(_this.overlayLayers[idx])	
+				} else if(info._layerInfo.swipe === 'right') {
+					swipeCtrl.addLayer(_this.overlayLayers[idx], true)
+				}
 			}
 		});
 
