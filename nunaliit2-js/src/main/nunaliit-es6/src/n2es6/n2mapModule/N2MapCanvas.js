@@ -81,7 +81,7 @@ const VENDOR =	{
 		COUCHDB : 'couchdb'
 };
 
-const DONUT_VECTOR_LAYER_DISPLAY_NAME = "Features";
+const DONUT_VECTOR_LAYER_DISPLAY_NAME = "Rings";
 const LINE_VECTOR_LAYER_DISPLAY_NAME = "Links";
 
 const olStyleNames = {
@@ -1301,7 +1301,7 @@ class N2MapCanvas  {
 				fg.push(vectorLayer);
 
 				fg.push(new VectorLayer({
-					title: "Links",
+					title: LINE_VECTOR_LAYER_DISPLAY_NAME,
 					renderMode: "vector",
 					source: this.vectorLinkSource,
 					style: this.vectorLinkSource.stylerFunction,
