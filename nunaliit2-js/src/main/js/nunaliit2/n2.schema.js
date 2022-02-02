@@ -53,6 +53,7 @@ var PARENT = ':parent';
 var SELECT = '::cur-selector';
 var LOCALIZE = ':localize';
 var ARRAY = ':array';
+const TAG = ':tag';
 
 //============================================================
 // Object
@@ -498,7 +499,7 @@ function _arrayField() {
 	var options = args.pop();
 	
 	var obj = args[0];
-	
+
 	var newType = null;
 	if( args.length > 1 ){
 		newType = args[1];
@@ -569,6 +570,75 @@ function _arrayField() {
 	};
 };
 
+function _tagField() {
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	var obj = args[0];
+
+	/* newType should always be string? */
+	var newType = null;
+	if( args.length > 1 ){
+		newType = args[1];
+	};
+	
+	var r = [];
+	
+	r.push('<div class="n2schema_tag">');
+
+	if( obj && obj.length ) {
+		for(var i=0,e=obj.length; i<e; ++i){
+			var item = obj[i];
+	
+			var completeSelectors = obj[SELECT];
+			completeSelectors = completeSelectors.getChildSelector(i);
+			var cl = createClassStringFromSelector(completeSelectors);
+			
+			r.push('<div class="n2schema_tag_item">');
+			r.push('<div class="n2schema_tag_item_buttons">');
+			r.push('<div class="n2schema_tag_item_delete '+cl+'"></div>');
+			r.push('<div class="n2schema_tag_item_up '+cl+'"></div>');
+			r.push('<div class="n2schema_tag_item_down '+cl+'"></div>');
+			r.push('</div>');
+			r.push('<div class="n2schema_tag_item_wrapper">');
+			r.push( options.fn(item,{data:{n2_selector:completeSelectors}}) );
+			r.push('</div></div>');
+		};
+	};
+
+	var tagSelector = undefined;
+	if( obj ){
+		tagSelector = obj[SELECT];
+	} else if( options && options.ids && options.ids.length ){
+		var selectors = [];
+		pathFromData(options.data, selectors);
+		selectors.push(options.ids[0]);
+		tagSelector = new $n2.objectSelector.ObjectSelector(selectors);
+	};
+	if( tagSelector ){
+		var tagClass = createClassStringFromSelector(tagSelector);
+		r.push('<div class="n2schema_tag_add '+tagClass+'"');
+		if( newType ) {
+			r.push('n2_tag_new_type="'+newType+'"');
+		};
+		r.push('></div>');
+	};
+	
+	r.push('</div>');
+	
+	return r.join('');
+	
+	function pathFromData(data, path){
+		if( data._parent ){
+			pathFromData(data._parent, path);
+		};
+		if( data.contextPath ){
+			path.push(data.contextPath);
+		};
+	};
+};
+
 function _selectorField(){
 	// The arguments to handlebars block expression functions are:
 	// ([obj,]options)
@@ -619,6 +689,7 @@ if( typeof(Handlebars) !== 'undefined'
 	Handlebars.registerHelper(FIELD    ,_formField      );
 	Handlebars.registerHelper(INPUT    ,_inputField     );
 	Handlebars.registerHelper(ARRAY    ,_arrayField     );
+	Handlebars.registerHelper(TAG    ,_tagField     );
 	Handlebars.registerHelper(SELECTOR ,_selectorField  );
 } else {
 	$n2.log('Unable to register helper functions with Handlebars. Schemas will not work properly.');
@@ -1755,7 +1826,30 @@ var Form = $n2.Class({
 						_this.refresh($elem);
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
-					} else if( $clicked.hasClass('n2schema_array_item_delete') ){
+					} 
+					else if( $clicked.hasClass('n2schema_tag_add') ){
+						var newType = $clicked.attr('n2_array_new_type');
+						var ary = classInfo.selector.getValue(_this.obj);
+						if( !ary ){
+							var parentSelector = classInfo.selector.getParentSelector();
+							var parentObj = undefined;
+							if( parentSelector ){
+								parentObj = parentSelector.getValue(_this.obj);
+							};
+							if( parentObj && typeof parentObj === 'object' ){
+								classInfo.selector.setValue(_this.obj,[]);
+								ary = classInfo.selector.getValue(_this.obj);
+							};
+						};
+						if( ary && $n2.isArray(ary) ){
+							var newItem = '';
+							ary.push(newItem);
+						};
+						_this.refresh($elem);
+						_this.callback(_this.obj,classInfo.selector.selectors,ary);
+						
+					} 
+					else if( $clicked.hasClass('n2schema_array_item_delete') ){
 						var itemIndex = 1 * classInfo.selector.getKey();
 						var parentSelector = classInfo.selector.getParentSelector();
 						var ary = parentSelector.getValue(_this.obj);
@@ -1767,7 +1861,20 @@ var Form = $n2.Class({
 
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
-					} else if( $clicked.hasClass('n2schema_array_item_up') ){
+					} 
+					else if( $clicked.hasClass('n2schema_tag_item_delete') ){
+						var itemIndex = 1 * classInfo.selector.getKey();
+						var parentSelector = classInfo.selector.getParentSelector();
+						var ary = parentSelector.getValue(_this.obj);
+						ary.splice(itemIndex,1);
+						
+						var $item = $clicked.parents('.n2schema_tag_item').first();
+						$item.remove();
+
+						_this.callback(_this.obj,classInfo.selector.selectors,ary);
+						
+					}
+					else if( $clicked.hasClass('n2schema_array_item_up') ){
 						// Push item earlier in array
 						var itemIndex = 1 * classInfo.selector.getKey();
 						if( itemIndex > 0 ) {
@@ -1784,7 +1891,24 @@ var Form = $n2.Class({
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
 						
-					} else if( $clicked.hasClass('n2schema_array_item_down') ){
+					} 
+					else if( $clicked.hasClass('n2schema_tag_item_up') ){
+						var itemIndex = 1 * classInfo.selector.getKey();
+						if( itemIndex > 0 ) {
+							var parentSelector = classInfo.selector.getParentSelector();
+							var ary = parentSelector.getValue(_this.obj);
+							var removedItems = ary.splice(itemIndex,1);
+							ary.splice(itemIndex-1,0,removedItems[0]);
+							
+							var $item = $clicked.parents('.n2schema_tag_item').first();
+							var $prevItem = $item.prev();
+							$item.insertBefore($prevItem);
+
+							_this.callback(_this.obj,classInfo.selector.selectors,ary);
+						};
+						
+					}
+					else if( $clicked.hasClass('n2schema_array_item_down') ){
 						// Push item later in array
 						var itemIndex = 1 * classInfo.selector.getKey();
 						var parentSelector = classInfo.selector.getParentSelector();
@@ -1801,7 +1925,24 @@ var Form = $n2.Class({
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
 						
-					} else if( $clicked.hasClass('n2schema_referenceDelete') ){
+					} 
+					else if( $clicked.hasClass('n2schema_tag_item_down') ){
+						var itemIndex = 1 * classInfo.selector.getKey();
+						var parentSelector = classInfo.selector.getParentSelector();
+						var ary = parentSelector.getValue(_this.obj);
+						if( itemIndex < (ary.length - 1) ) {
+							var removedItems = ary.splice(itemIndex,1);
+							ary.splice(itemIndex+1,0,removedItems[0]);
+							
+							var $item = $clicked.parents('.n2schema_tag_item').first();
+							var $nextItem = $item.next();
+							$item.insertAfter($nextItem);
+
+							_this.callback(_this.obj,classInfo.selector.selectors,ary);
+						};
+						
+					}
+					else if( $clicked.hasClass('n2schema_referenceDelete') ){
 						var referenceKey = classInfo.selector.getKey();
 						var parentSelector = classInfo.selector.getParentSelector();
 						var parentObj = parentSelector.getValue(_this.obj);
