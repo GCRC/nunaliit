@@ -576,12 +576,6 @@ function _tagField() {
 	var options = args.pop();
 	
 	var obj = args[0];
-
-	/* newType should always be string? */
-	var newType = null;
-	if( args.length > 1 ){
-		newType = args[1];
-	};
 	
 	var r = [];
 	
@@ -618,10 +612,7 @@ function _tagField() {
 	};
 	if( tagSelector ){
 		var tagClass = createClassStringFromSelector(tagSelector);
-		r.push('<div class="n2schema_tag_add '+tagClass+'"');
-		if( newType ) {
-			r.push('n2_tag_new_type="'+newType+'"');
-		};
+		r.push('<div class="n2schema_tag_add '+tagClass+'"'+'n2_tag_new_type="string"');
 		r.push('></div>');
 	};
 	
@@ -1828,7 +1819,6 @@ var Form = $n2.Class({
 						
 					} 
 					else if( $clicked.hasClass('n2schema_tag_add') ){
-						var newType = $clicked.attr('n2_array_new_type');
 						var ary = classInfo.selector.getValue(_this.obj);
 						if( !ary ){
 							var parentSelector = classInfo.selector.getParentSelector();
@@ -1842,8 +1832,7 @@ var Form = $n2.Class({
 							};
 						};
 						if( ary && $n2.isArray(ary) ){
-							var newItem = '';
-							ary.push(newItem);
+							ary.push(''); // always a string
 						};
 						_this.refresh($elem);
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
@@ -2046,7 +2035,16 @@ var Form = $n2.Class({
 					$input.attr('checked',false);
 				};
 
-			} else if( 'date' === classInfo.type ) {
+			} 
+			else if ( 'tag' === classInfo.type ) {
+				$input.val(value);
+				$input.autocomplete({
+					source: ?searchSuggestionServiceCallback?, // callback params: text = current value of input, res = format of data - array or string as described in docs,
+					delay: 300,
+					minLength: 3
+				});
+			}
+			else if( 'date' === classInfo.type ) {
 				if( value ) {
 					value = value.date;
 				};
