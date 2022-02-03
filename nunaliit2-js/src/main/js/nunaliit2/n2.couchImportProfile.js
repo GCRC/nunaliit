@@ -1246,6 +1246,7 @@ var AnalysisReport = $n2.Class({
 			return 0;
 		});
 		
+		let newChanges = $();
 		// Loop over changes
 		for(var i=0,e=changes.length; i<e; ++i){
 			var change = changes[i];
@@ -1254,10 +1255,12 @@ var AnalysisReport = $n2.Class({
 			var $div = $('<div>')
 				.attr('id',change.changeId)
 				.addClass('operation')
-				.appendTo($changes);
 
 			this._refreshChangeDiv(change, $div);
+			
+			newChanges = newChanges.add($div);
 		};
+		newChanges.appendTo($changes);
 	},
 	
 	_refreshChangeDiv: function(change, $div){
@@ -1358,30 +1361,20 @@ var AnalysisReport = $n2.Class({
 					.text( 'Database ID: '+doc._id )
 					.appendTo($div);
 			};
-			var $properties = $('<div>')
+			var $properties = $('<pre>')
 				.addClass('properties')
-				.appendTo($div);
 			
+			let propertiesString = "";
+
 			// Modified properties
 			for(var propNameIndex=0,propNameEnd=modifiedPropertyNames.length; propNameIndex<propNameEnd; ++propNameIndex){
 				var propName = modifiedPropertyNames[propNameIndex];
 				var mod = change.getModifiedImportValueFromName(propName);
-				var $prop = $('<div>')
-					.addClass('property')
-					.appendTo($properties);
-				$('<div>')
-					.addClass('propertyName')
-					.text(propName)
-					.appendTo($prop);
-				$('<div>')
-					.addClass('previousValue')
-					.text( this._printValue(mod.lastImportedValue) )
-					.appendTo($prop);
-				$('<div>')
-					.addClass('newValue')
-					.text( this._printValue(mod.currentImportedValue) )
-					.appendTo($prop);
+				propertiesString += `${propName}: ${this._printValue(mod.lastImportedValue)} => ${this._printValue(mod.currentImportedValue)} \n`;
+				
 			};
+			$properties.text(propertiesString);
+			$properties.appendTo($div);
 			
 			// Report collisions
 			if( collisionOperations.length > 0 ){
@@ -1446,29 +1439,17 @@ var AnalysisReport = $n2.Class({
 			// Report copy operations
 			var copyOperations = change.getCopyOperations();
 			if( copyOperations.length > 0 ){
-				var $copyOperations = $('<div>')
+				var $copyOperations = $('<pre>')
 					.addClass('copyOperations')
-					.appendTo($div);
+				
+				let copyOperationsString = "";
+
 				copyOperations.forEach(function(copyOperation){
-					var $copy = $('<div>')
-						.addClass('copyOperation')
-						.appendTo($copyOperations);
-
-					$('<div>')
-						.addClass('selector')
-						.text( copyOperation.targetSelector.getSelectorString() )
-						.appendTo($copy);
-
-					$('<div>')
-						.addClass('currentValue')
-						.text( _this._printValue(copyOperation.targetValue) )
-						.appendTo($copy);
-
-					$('<div>')
-						.addClass('updatedValue')
-						.text( _this._printValue(copyOperation.computedValue) )
-						.appendTo($copy);
+					copyOperationsString += `${copyOperation.targetSelector.getSelectorString()}: ${_this._printValue(copyOperation.targetValue)} => ${_this._printValue(copyOperation.computedValue)} \n`;
 				});
+
+				$copyOperations.text(copyOperationsString);
+				$copyOperations.appendTo($div);
 			};
 
 		} else if( change.isDeletion ) {
