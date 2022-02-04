@@ -894,7 +894,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				return 0;
 			});
 
-			let htmlString = `<div>`;
+			let htmlString = "<div>";
 			const listHtml = timeLinks.reduce((accumulator, timeLink) => {
 				const commaTags = timeLink.tags.map(tag => tag.value).join(" ");
 				return `${accumulator}<li style="border: 1px solid #ccc; border-radius: 5px; margin-top: 0.5em; margin-bottom: 0.5em; list-style-type: none;">
