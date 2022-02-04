@@ -155,14 +155,20 @@ POSSIBILITY OF SUCH DAMAGE.
 					legendDiv = $(`#${this.elemId}`);
 				}
 				
+				var imageContainerDiv = $('<div>').attr('id', wmsLegendId).addClass('n2LegendImageContainer');
+				imageContainerDiv.appendTo(legendDiv);
+				if(m.label) {
+					$('<div>').addClass('n2LegendImageLabel').text(m.label).appendTo(imageContainerDiv);
+				}
+
 				$('<img>')
 				.attr('id', wmsLegendId)
 				.attr('src', m.legendUrl)
-				.appendTo(legendDiv);
+				.appendTo(imageContainerDiv);
 				this.wmsLegends[wmsLegendId] = Object.assign({}, m);
 			} else {
 				delete this.wmsLegends[wmsLegendId];
-				$(`#${wmsLegendId}`).remove()
+				$(`#${wmsLegendId}`).remove();
 			}
 		},
 

@@ -829,6 +829,12 @@ WidgetLegend2
 	vertical-align: top;
 }
 
+.n2LegendImageContainer {
+    display: inline-block;
+    margin: 5px;
+	max-width: 250px;
+}
+
 .nunaliit_content > .n2widgetLegend img {
     border: 0;
     max-height: 350px;
@@ -885,6 +891,10 @@ Map Legend
 .nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_symbolColumn {
 	width: 70px; /* width needed to contain four legend symbols */
 	display: inline-block;
+}
+
+.n2LegendImageLabel {
+	text-align: center;
 }
 
 .n2widgetLegend_symbolColumn_point,
