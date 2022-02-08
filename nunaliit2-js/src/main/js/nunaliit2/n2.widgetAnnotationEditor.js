@@ -897,11 +897,21 @@ POSSIBILITY OF SUCH DAMAGE.
 			let htmlString = `<div>`;
 			const listHtml = timeLinks.reduce((accumulator, timeLink) => {
 				const commaTags = timeLink.tags.map(tag => tag.value).join(" ");
+
+				let displayImageLinkText = timeLink.relatedImage ? timeLink.relatedImage.split("/") : [];
+				if (displayImageLinkText.length > 1) {
+					displayImageLinkText = displayImageLinkText.pop();
+				}
+				else {
+					displayImageLinkText = "No related image.";
+				} 
+
 				return `${accumulator}<li style="border: 1px solid #ccc; border-radius: 5px; margin-top: 0.5em; margin-bottom: 0.5em; list-style-type: none;">
 					<div style="padding: 1em;">
 						<h4>${timeLink.starttime} - ${timeLink.endtime}</h4>
 						<p>${commaTags ? commaTags : "No tags added."}</p>
 						<p>${timeLink.notes ? timeLink.notes : "No notes added."}</p>
+						<p>${displayImageLinkText}</p>
 					</div>
 				</li>		
 				`;
@@ -916,11 +926,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			new $n2.mdc.MDCButton({
 				parentElem: notesButtonContainer,
-				btnLabel: "View All Time Link Notes",
+				btnLabel: "View All Annotations",
 				btnRaised: true,
 				onBtnClick: () => {
 					new $n2.mdc.MDCDialog({
-						dialogTitle: "Time Link Notes",
+						dialogTitle: "Annotations",
 						dialogHtmlContent: htmlString,
 						closeBtn: true,
 						scrollable: true
