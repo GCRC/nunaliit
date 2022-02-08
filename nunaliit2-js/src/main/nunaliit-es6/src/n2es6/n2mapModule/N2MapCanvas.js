@@ -1763,8 +1763,12 @@ class N2MapCanvas  {
 			this._sortFeaturesByTimeAndPlaceName(features);
 			const [imageDataFeature] = features.slice(-1);
 
-			if (imageDataFeature === undefined || (this.lastFeatureDisplayedImage !== undefined && 
-				(this.lastFeatureDisplayedImage.data._ldata.timeLinkTags.placeTag === imageDataFeature.data._ldata.timeLinkTags.placeTag))) return;
+			if (imageDataFeature === undefined || (this.lastFeatureDisplayedImage !== undefined
+				&& (this.lastFeatureDisplayedImage.data._ldata.timeLinkTags.placeTag 
+					=== imageDataFeature.data._ldata.timeLinkTags.placeTag)
+				&& (this.lastFeatureDisplayedImage.data._ldata.start 
+					=== imageDataFeature.data._ldata.start)
+				)) return;
 			if (imageDataFeature.data && imageDataFeature.data._ldata
 				&& imageDataFeature.data._ldata.relatedImage !== "") {
 				$n2.utils.throttle(this._displayNotification, 500)(imageDataFeature.data._ldata, this);
@@ -1774,8 +1778,10 @@ class N2MapCanvas  {
 	}
 
 	_displayNotification(featureData, thisContext) {
-		const { lineDuration, relatedImage, style: { fillColor } } = featureData;
+		const { lineDuration, relatedImage, style: { fillColor, opacity } } = featureData;
 		thisContext.mapNotification.element.firstChild.style.backgroundColor = fillColor
+		const rgbConvertedColour = thisContext.mapNotification.element.firstChild.style.backgroundColor;
+		thisContext.mapNotification.element.firstChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
 		thisContext.mapNotification.show(`<img src=./db${relatedImage}>`, lineDuration * 1000);
 	}
 	
