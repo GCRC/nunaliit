@@ -26,6 +26,7 @@ import {default as LayerGroup} from 'ol/layer/Group.js';
 import {default as ImageLayer} from 'ol/layer/Image.js';
 import {default as View} from 'ol/View.js';
 import {default as N2DonutCluster} from '../ol5support/N2DonutCluster.js';
+import {default as N2LinkSource} from './N2LinkSource.js';
 //import {default as N2Cluster} from '../ol5support/N2Cluster.js';
 
 import {extend, isEmpty, getTopLeft, getWidth} from 'ol/extent.js';
@@ -80,7 +81,7 @@ const VENDOR =	{
 		COUCHDB : 'couchdb'
 };
 
-const DONUT_VECTOR_LAYER_DISPLAY_NAME = "Features";
+const DONUT_VECTOR_LAYER_DISPLAY_NAME = "Rings";
 const LINE_VECTOR_LAYER_DISPLAY_NAME = "Links";
 
 const olStyleNames = {
@@ -326,6 +327,11 @@ class N2MapCanvas  {
 		this.lastFeatureZoomedTo = undefined;
 		this.lastFeatureDisplayedImage = undefined;
 		this.mapNotification = null;
+
+		this.vectorLinkSource = new N2LinkSource({
+			dispatchService: this.dispatchService
+		});
+
 		this._drawMap();
 		opts.onSuccess();
 	}
@@ -671,6 +677,7 @@ class N2MapCanvas  {
 		const olView = new View({
 			center: transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
 			projection: 'EPSG:3857',
+			maxZoom: 22,
 			zoom: 6
 		});
 
@@ -927,7 +934,8 @@ class N2MapCanvas  {
 					c_source = new N2SourceWithN2Intent({
 						interaction: _this.interactionSet.selectInteraction,
 						source: b_source,
-						dispatchService: _this.dispatchService
+						dispatchService: _this.dispatchService,
+						linkCallback: _this.vectorLinkSource.refreshCallback.bind(_this.vectorLinkSource)
 					});	
 					_this.overlayLayers[0].setSource (c_source);
 					
@@ -1176,9 +1184,11 @@ class N2MapCanvas  {
 			if (feature && feature.data && feature.data._ldata &&
 				feature.data._ldata.placeZoomScale &&
 				_this.n2Map.getView().getZoom() > feature.data._ldata.placeZoomScale) {
+					feature.set("isVisible", false, false)
 					return;
 			}
 
+			feature.set("isVisible", true, false);
 			let geomType = feature.getGeometry()._n2Type;
 			if (!geomType) {
 				if (feature.getGeometry()
@@ -1252,7 +1262,8 @@ class N2MapCanvas  {
 				var charlieSource = new N2SourceWithN2Intent({
 					interaction: _this.interactionSet.selectInteraction,
 					source: betaSource,
-					dispatchService: _this.dispatchService
+					dispatchService: _this.dispatchService,
+					linkCallback: _this.vectorLinkSource.refreshCallback.bind(_this.vectorLinkSource)
 				});
 
 				_this.n2intentWrapper = charlieSource;
@@ -1261,7 +1272,7 @@ class N2MapCanvas  {
 					renderMode : 'vector',
 					source: charlieSource,
 					style: featureStyler,
-					renderBuffer: 500,
+					renderBuffer: 1000000000,
 					renderOrder: function(feature1, feature2){
 						var valueSelector = _this.renderOrderBasedOn;
 
@@ -1288,6 +1299,13 @@ class N2MapCanvas  {
 //				var layerStyleMap = createStyleMap(layerOptions._layerInfo);
 //				vectorLayer.set('styleMap', layerStyleMap);
 				fg.push(vectorLayer);
+
+				fg.push(new VectorLayer({
+					title: LINE_VECTOR_LAYER_DISPLAY_NAME,
+					renderMode: "vector",
+					source: this.vectorLinkSource,
+					style: this.vectorLinkSource.stylerFunction,
+				}));
 			}
 		}
 		return (fg);

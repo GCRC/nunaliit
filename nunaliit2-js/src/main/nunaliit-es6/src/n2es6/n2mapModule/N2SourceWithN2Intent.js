@@ -108,6 +108,8 @@ class N2SourceWithN2Intent extends VectorSource {
 		this.userInputEventKeys = [];
 		this.bindEventListener();
 
+		this.linkCallback = options.linkCallback ? options.linkCallback : null;
+
 		var _this = this;
 		if( this.dispatchService ){
 			
@@ -738,6 +740,9 @@ class N2SourceWithN2Intent extends VectorSource {
 	refresh() {
 		this.clear();
 		this.updateN2Label();
+		if (this.linkCallback != null) {
+			this.linkCallback(this.features_);
+		}
 		this.addFeatures(this.features_);
 	}
 	
