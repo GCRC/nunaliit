@@ -129,7 +129,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.appendTo($hider);
 
 				$hider.click(function() {
-					_this._getElem().fadeToggle();
+					_this._getElem().toggle();
 					$hider.toggleClass('n2widgetLegend_showhideClosed')
 					$hider.toggleClass('n2widgetLegend_showhide')
 				})
