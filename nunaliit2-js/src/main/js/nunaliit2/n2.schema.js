@@ -203,6 +203,8 @@ function _formSingleField(r,completeSelectors,options){
 		r.push('<textarea');
 	} else if( options.checkbox ){
 		r.push('<input type="checkbox"');
+	} else if(options.tag) {
+		r.push('<input type="search"');
 	} else {
 		r.push('<input type="text"');
 	};
@@ -235,7 +237,9 @@ function _formSingleField(r,completeSelectors,options){
 	} else if( options.localized ){
 		r.push(' ' + typeClassStringPrefix + 'localized');
 	
-	};
+	} else if(options.tag) {
+		r.push(' ' + typeClassStringPrefix + 'tag');
+	}
 
 	if( options.textarea ){
 		r.push('"></textarea>');
@@ -2038,8 +2042,11 @@ var Form = $n2.Class({
 			} 
 			else if ( 'tag' === classInfo.type ) {
 				$input.val(value);
+				var tagId = obj[classInfo.selector.selectors[0]][classInfo.selector.selectors[1]].id;
 				$input.autocomplete({
-					source: ?searchSuggestionServiceCallback?, // callback params: text = current value of input, res = format of data - array or string as described in docs,
+					source: function(req, res) {
+						_this.functionMap['getTagAutocomplete'](req, res, tagId)
+					}, // callback params: text = current value of input, res = format of data - array or string as described in docs,
 					delay: 300,
 					minLength: 3
 				});
