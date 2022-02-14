@@ -10,12 +10,13 @@
 	color: #ff7777;	
 }
 
-.n2schema_array_item {
+.n2schema_array_item, .n2schema_tag_item {
 	position: relative;
 	min-height: 58px;
 }
 
-.n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down, .n2schema_array_item_up {
+.n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down, .n2schema_array_item_up,
+.n2schema_tag_add, .n2schema_tag_item_delete {
 	width: 16px;
 	height: 16px;
 	margin: 0px;	
@@ -28,18 +29,18 @@
 	display: none;
 }
 
-.n2schema_array_add {
+.n2schema_array_add, .n2schema_tag_add {
 	display: inline-block;
 	background: url(tree/icons.png) no-repeat;
 	background-position: 0px 0px;
 	float: right;
 }
 
-.n2schema_array_add:hover {
+.n2schema_array_add:hover, .n2schema_tag_add:hover {
 	background-position: -16px 0px;
 }
 
-.n2schema_array_item_buttons {
+.n2schema_array_item_buttons, .n2schema_tag_item_buttons {
 	position: absolute;
 	right: 0px;
 	top: 0px;
@@ -47,12 +48,12 @@
 	z-index: 1;
 }
 
-.n2schema_array_item_delete {
+.n2schema_array_item_delete, .n2schema_tag_item_delete {
 	background: url(tree/icons.png) no-repeat;
 	background-position: -160px 0px;
 }
 
-.n2schema_array_item_delete:hover {
+.n2schema_array_item_delete:hover, .n2schema_tag_item_delete:hover {
 	background-position: -176px 0px;
 }
 
@@ -74,7 +75,7 @@
 	background-position: -80px 0px;
 }
 
-.n2schema_array_item_wrapper {
+.n2schema_array_item_wrapper, .n2schema_tag_item_wrapper {
 	margin-right: 16px;
 }
 
