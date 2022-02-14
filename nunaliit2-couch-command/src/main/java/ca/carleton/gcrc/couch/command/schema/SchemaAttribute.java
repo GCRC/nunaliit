@@ -532,6 +532,16 @@ public class SchemaAttribute {
 				throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
 			}
 
+		} else if( "tag".equals(type) ){
+			if( null != id ){
+				JSONObject tagObj = new JSONObject();
+				tagObj.put("id", id);
+				tagObj.put("nunaliit_type", "tag");
+				schemaDoc.put(id, tagObj);
+			} else {
+				throw new Exception("'id' required for attributes of type 'tag'");
+			}
+			
 		} else if( "createdBy".equals(type) ){
 			if( null != id ){
 				throw new Exception("'id' should not be specified for attributes of type 'createdBy'");
@@ -1022,6 +1032,30 @@ public class SchemaAttribute {
 				pw.println("\t\t\t\t</div>");
 				pw.println("\t\t\t{{/nunaliit_hoverSound}}");
 
+			} else if( "tag".equals(type) ){
+				if( null != id ){
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
+
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
+
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t{{#"+id+"}}");
+					pw.println("\t\t\t\t\t\t\t{{#tags}}");
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"array_element\">");
+					pw.println("\t\t\t\t\t\t\t\t\t{{.}}");
+					pw.println("\t\t\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t\t{{/tags}}");
+					pw.println("\t\t\t\t\t\t{{/"+id+"}}");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
+					
+					pw.println("\t\t\t\t</div>");
+					
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
+				}
 			} else if( "createdBy".equals(type) ){
 				if( null == label ){
 					label = "Created By";
@@ -1286,6 +1320,30 @@ public class SchemaAttribute {
 				
 				pw.println("\t\t\t</div>");
 
+			} else if ( "tag".equals(type) ) {
+				if(null == id) {
+					throw new Exception("'id' is required for attribute of type 'tag'");
+				}
+				pw.println("\t\t\t{{#"+schemaStructure+"}}");
+
+				pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
+
+				pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t\t<div class=\"value\">");
+
+				pw.println("\t\t\t\t\t\t{{#:tag "+id+"}}");
+				pw.println("\t\t\t\t\t\t\t<span>{{#:field}}.{{/:field}}</span>");
+				pw.println("\t\t\t\t\t\t{{/:tag}}");
+				pw.println("\t\t\t\t\t\t{{#"+id+"}}");
+				pw.println("\t\t\t\t\t\t\t{{#:field}}newtag,tag,tagFieldId="+id+"{{/:field}}");
+				pw.println("\t\t\t\t\t\t{{/"+id+"}}");
+				pw.println("\t\t\t\t\t</div>");
+				pw.println("\t\t\t\t\t<div class=\"end\"></div>");
+				
+				pw.println("\t\t\t\t</div>");
+				
+				
+				pw.println("\t\t\t{{/"+schemaStructure+"}}");
 			} else if( "createdBy".equals(type) ){
 				// nothing to do
 
