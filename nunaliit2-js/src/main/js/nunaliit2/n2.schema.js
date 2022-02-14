@@ -251,7 +251,9 @@ function _formSingleField(r,completeSelectors,options){
 
 	if( options.date ){
 		r.push('<div class="n2schema_help_date"></div>');
-	};
+	} else if(options.tag) {
+		r.push('<div class="n2schema_tag_add ' + selClass + ' tagatlas_tagdoc_addtag"></div>');
+	}
 	
 	if( options.wikiTransform ){
 		r.push('<div class="n2schema_help_wiki"></div>');
@@ -585,25 +587,26 @@ function _tagField() {
 	
 	r.push('<div class="n2schema_tag">');
 
-	if( obj && obj.length ) {
-		for(var i=0,e=obj.length; i<e; ++i){
-			var item = obj[i];
-	
-			var completeSelectors = obj[SELECT];
-			completeSelectors = completeSelectors.getChildSelector(i);
-			var cl = createClassStringFromSelector(completeSelectors);
-			
-			r.push('<div class="n2schema_tag_item">');
-			r.push('<div class="n2schema_tag_item_buttons">');
-			r.push('<div class="n2schema_tag_item_delete '+cl+'"></div>');
-			r.push('<div class="n2schema_tag_item_up '+cl+'"></div>');
-			r.push('<div class="n2schema_tag_item_down '+cl+'"></div>');
-			r.push('</div>');
-			r.push('<div class="n2schema_tag_item_wrapper">');
-			r.push( options.fn(item,{data:{n2_selector:completeSelectors}}) );
-			r.push('</div></div>');
-		};
-	};
+	if( obj ) {
+		var tags = obj.tags;
+		if(tags && tags.length > 0) {
+			for(var i=0,e=tags.length; i<e; ++i){
+				var item = tags[i];
+		
+				var completeSelectors = tags[SELECT];
+				completeSelectors = completeSelectors.getChildSelector(i);
+				var cl = createClassStringFromSelector(completeSelectors);
+				
+				r.push('<div class="n2schema_tag_item">');
+				r.push('<div class="n2schema_tag_item_buttons">');
+				r.push('<div class="n2schema_tag_item_delete '+cl+'"></div>');
+				r.push('</div>');
+				r.push('<div class="n2schema_tag_item_wrapper">');
+				r.push( options.fn(item,{data:{n2_selector:completeSelectors}}) );
+				r.push('</div></div>');
+			}
+		}
+	}
 
 	var tagSelector = undefined;
 	if( obj ){
@@ -613,13 +616,8 @@ function _tagField() {
 		pathFromData(options.data, selectors);
 		selectors.push(options.ids[0]);
 		tagSelector = new $n2.objectSelector.ObjectSelector(selectors);
-	};
-	if( tagSelector ){
-		var tagClass = createClassStringFromSelector(tagSelector);
-		r.push('<div class="n2schema_tag_add '+tagClass+'"'+'n2_tag_new_type="string"');
-		r.push('></div>');
-	};
-	
+	}
+
 	r.push('</div>');
 	
 	return r.join('');
@@ -1823,24 +1821,7 @@ var Form = $n2.Class({
 						
 					} 
 					else if( $clicked.hasClass('n2schema_tag_add') ){
-						var ary = classInfo.selector.getValue(_this.obj);
-						if( !ary ){
-							var parentSelector = classInfo.selector.getParentSelector();
-							var parentObj = undefined;
-							if( parentSelector ){
-								parentObj = parentSelector.getValue(_this.obj);
-							};
-							if( parentObj && typeof parentObj === 'object' ){
-								classInfo.selector.setValue(_this.obj,[]);
-								ary = classInfo.selector.getValue(_this.obj);
-							};
-						};
-						if( ary && $n2.isArray(ary) ){
-							ary.push(''); // always a string
-						};
-						_this.refresh($elem);
-						_this.callback(_this.obj,classInfo.selector.selectors,ary);
-						
+						_this._addTag($clicked, $elem);
 					} 
 					else if( $clicked.hasClass('n2schema_array_item_delete') ){
 						var itemIndex = 1 * classInfo.selector.getKey();
@@ -1956,6 +1937,28 @@ var Form = $n2.Class({
 		};
 	},
 
+	_addTag: function($target, $elem) {
+		// var $target = $(e.target);
+		var classString = $target.attr('class');
+		var classNames = null;
+		if( classString ){
+			classNames = classString.split(' ');
+		} else {
+			classNames = [];
+		};
+		var classInfo = parseClassNames(classNames);
+
+		var value = classInfo.selector.getValue(this.obj);
+		var parentSelector = classInfo.selector.getParentSelector();
+		var tags = parentSelector.getValue(this.obj).tags;
+		if( tags && $n2.isArray(tags) ){
+			tags.push(value);
+		}
+		classInfo.selector.setValue(this.obj, '');
+		this.refresh($elem);
+		this.callback(this.obj,classInfo.selector.selectors,tags);
+	},
+
 	_setHtml: function(obj) {
 		if( !obj ) return;
 		
@@ -2050,6 +2053,12 @@ var Form = $n2.Class({
 					delay: 300,
 					minLength: 3
 				});
+				$input.keypress(function(event){
+					if(event.keyCode == 13){
+						event.preventDefault();
+						_this._addTag($(event.target), $elem);
+					}
+			  });
 			}
 			else if( 'date' === classInfo.type ) {
 				if( value ) {
