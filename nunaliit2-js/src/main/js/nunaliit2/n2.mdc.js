@@ -226,7 +226,8 @@ var MDCCard = $n2.Class('MDCCard', MDC, {
 		}
 		card_info = card_info ? card_info : '';
 		media_thumb = media_thumb ? media_thumb : '';
-		$card = $($.parseHTML('<div class="mdc-card">' // Outside container for mdc-card
+		const elementId = this.getId() ? this.getId() : '';
+		$card = $($.parseHTML(`<div id=${elementId} class="mdc-card">` // Outside container for mdc-card
 								+ '<div class="mdc-card__primary-action">'// For ripple effects
 									+ media_thumb// For left column thumbnail
 									+ '<div class="n2card__primary">'
@@ -2329,6 +2330,206 @@ var MDCTopAppBar = $n2.Class('MDCTopAppBar', MDC, {
 	}
 });
 
+
+/* 
+	Class MDCAttachmentDialog
+	Description: Dialog for selecting one attachment from a document
+	Options:
+ 	attachment service 
+	document
+	options 
+ */
+var MDCAttachmentDialog = $n2.Class('MDCAttachmentDialog', MDC, {
+
+	attachmentService: null,
+	document: null,
+	dialogTitle: null,
+	scrollable: null,
+	closeBtn: null,
+	closeBtnText: null,
+	dialogCallback: null,
+	selectedAttachment: null,
+
+	initialize: function(opts_) {
+		var opts = $n2.extend({
+			attachmentService: undefined,
+			document: undefined,
+			dialogTitle: "",
+			scrollable: false,
+			closeBtn: false,
+			dialogCallback: undefined,
+			closeBtnText: "Close",
+		}, opts_);
+
+		MDC.prototype.initialize.call(this, opts);
+		
+		this.attachmentService = opts.attachmentService
+		this.document = opts.document;
+		this.dialogTitle = opts.dialogTitle;
+		this.scrollable = opts.scrollable;
+		this.dialogCallback = opts.dialogCallback;
+		this.closeBtn = opts.closeBtn;
+		this.closeBtnText = opts.closeBtnText;
+
+		this.selectedAttachment = null;
+
+		this.contentId = $n2.getUniqueId();
+		this.footerId = $n2.getUniqueId();
+
+		this._generateMDCDialog();
+	},
+
+	_generateMDCDialog: function() {
+		const _this = this;
+		this.mdcClasses.push('mdc-dialog', 'n2s_attachMDCDialog');
+
+		if (this.scrollable) {
+			this.mdcClasses.push('mdc-dialog--scrollable');
+		}
+
+		MDCDialogElement = $('<div>')
+			.attr('id', this.mdcId)
+			.attr('role', 'alertdialog')
+			.attr('aria-modal', 'true')
+			.attr('aria-labelledby', 'my-dialog-title')
+			.attr('aria-describedby', 'my-dialog-content')
+			.addClass(this.mdcClasses.join(' '));
+
+		if (this.mdcAttributes) {
+			const keys = Object.keys(this.mdcAttributes);
+			keys.forEach(function(key) {
+				MDCDialogElement.attr(key, _this.mdcAttributes[key]);
+			});
+		}
+
+		const $dialogContainer = $('<div>')
+			.addClass('mdc-dialog__container')
+			.appendTo(MDCDialogElement);
+
+		const $dialogSurface = $('<div>')
+			.addClass('mdc-dialog__surface')
+			.appendTo($dialogContainer);
+
+		$('<h2>')
+			.addClass('mdc-dialog__title')
+			.text(_loc(this.dialogTitle))
+			.appendTo($dialogSurface);
+
+	 	this.$dialogMessage = $('<div>')
+			.attr('id', this.contentId)
+			.addClass('mdc-dialog__content')
+			.appendTo($dialogSurface);
+
+		$('<footer>').attr('id', this.footerId)
+			.addClass('mdc-dialog__actions')
+			.appendTo($dialogSurface);
+
+		$('<div>').addClass('mdc-dialog__scrim')
+			.click(_this.closeDialog)
+			.appendTo(MDCDialogElement);
+
+		this._attachDialog(this.mdcId);
+
+		MDCDialogElement.appendTo($('body'));
+
+		const attachments = this.attachmentService.getAttachments(this.document)
+		if (attachments.length < 1) {
+			this.$dialogMessage.html(
+				`<p tabindex="0">${_loc("No attachments found.")}</p>`
+			);
+		}
+		else {
+			const sortedListAttachments = attachments.map((attachment, i) => {
+				const el = {
+					text: attachment.attName,
+					value: attachment.attName,
+					onItemClick: () => {
+						_this.selectedAttachment = attachment.attName;
+						_this.closeDialog();
+					}
+				}
+				if (i === 0) el.activated = true;
+				return el;
+			}).sort((a,b) => {
+				if (a.value > b.value) return 1;
+				else if (a.value < b.value) return -1;
+				return 0;
+			});
+			new MDCList({
+				parentElem: this.$dialogMessage,
+				listItems: sortedListAttachments
+			});
+		}
+
+		if (this.closeBtn) {
+			this.addCloseBtn();
+		}
+
+		if (showService) {
+			showService.fixElementAndChildren($('#' + this.mdcId));
+		}
+
+		this.openDialog();
+	},
+
+	_attachDialog: function() {
+		var dialog = MDCDialogElement[0];
+		if (dialog) {
+			MDCDialogComponent = new $mdc.dialog.MDCDialog(dialog);
+		}
+	},
+
+	getContentId: function() {
+		return this.contentId;
+	},
+
+	getFooterId: function() {
+		return this.footerId;
+	},
+
+	closeDialog: function() {
+		if (MDCDialogComponent && MDCDialogComponent.isOpen) {
+			MDCDialogComponent.close();
+			MDCDialogElement.remove();
+			/* 
+				"this" refers to the addCloseBtn's MDCButton if you click close or outside of the dialog
+				But if you click on a list element, then it will refer to the MDCAttachmentDialog "this"
+			*/
+			if (this.dialogCallback) this.dialogCallback(this.selectedAttachment);
+		}
+	},
+
+	openDialog: function() {
+		var _this = this;
+		if (MDCDialogComponent && !MDCDialogComponent.isOpen) {
+			MDCDialogComponent.open();
+
+			MDCDialogComponent.listen('MDCDialog:opened', function(event) {
+				if (event) {
+					// Slight delay before setting the scrollTop position to 0
+					// 1ms delay is required otherwise the scrollTop occurs
+					// before a scroll position is set to the bottom of the page
+					window.setTimeout(function() {
+						_this.$dialogMessage.scrollTop(0);
+					}, 1);
+				}
+			});
+		}
+	},
+
+	addCloseBtn: function() {
+		new MDCButton({
+			parentElem: $('#' + this.footerId),
+			btnLabel: this.closeBtnText,
+			onBtnClick: this.closeDialog
+		});
+	},
+
+	addFooterBtn: function(btnOpts) {
+		new MDCButton(btnOpts);
+	}
+});
+
 $n2.mdc = {
 	Service: Service,
 	MDC: MDC,
@@ -2339,6 +2540,7 @@ $n2.mdc = {
 	MDCChipSet: MDCChipSet,
 	MDCDataTable: MDCDataTable,
 	MDCDialog: MDCDialog,
+	MDCAttachmentDialog: MDCAttachmentDialog,
 	MDCDrawer: MDCDrawer,
 	MDCFormField: MDCFormField,
 	MDCList: MDCList,
