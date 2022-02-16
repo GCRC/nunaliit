@@ -1313,6 +1313,7 @@ class N2MapCanvas  {
 				fg.push(new VectorLayer({
 					title: LINE_VECTOR_LAYER_DISPLAY_NAME,
 					renderMode: "vector",
+					/*visible: false [if we do not want Links selected by default] */
 					source: this.vectorLinkSource,
 					style: this.vectorLinkSource.stylerFunction,
 				}));
