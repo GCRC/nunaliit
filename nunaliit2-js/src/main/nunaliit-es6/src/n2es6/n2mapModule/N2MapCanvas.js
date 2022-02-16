@@ -83,6 +83,8 @@ const VENDOR =	{
 
 const DONUT_VECTOR_LAYER_DISPLAY_NAME = "Rings";
 const LINE_VECTOR_LAYER_DISPLAY_NAME = "Links";
+const MAX_MAP_ZOOM_LEVEL = 22;
+const DEFAULT_MAP_FEATURE_ZOOM_LEVEL = 10;
 
 const olStyleNames = {
 	"fill": "fillColor"
@@ -323,6 +325,7 @@ class N2MapCanvas  {
 		}
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styles);
 		this.fitMapToLatestMapTag = false;
+		this.showRelatedImages = true;
 		this.animateMapFitting = false;
 		this.lastFeatureZoomedTo = undefined;
 		this.lastFeatureDisplayedImage = undefined;
@@ -915,6 +918,16 @@ class N2MapCanvas  {
 				active: this.fitMapToLatestMapTag || this.animateMapFitting,
 				bar: mapFitControlBar
 			})
+		);
+
+		mainbar.addControl(new Toggle({
+				// Add a toggle for showing related images
+				html: "",
+				className: "show-related-media-toggle",
+				title: "Toggle display of related media",
+				active: this.showRelatedImages,
+				onToggle: () => { this.showRelatedImages = !this.showRelatedImages }
+			}),
 		);
 
 		var pcluster = new Toggle({
@@ -1688,46 +1701,12 @@ class N2MapCanvas  {
 				//popup.show(,content);
 			}
 		} else if ('renderStyledTranscript' === type) {
-			const olmap = _this.n2Map;
-			if (!olmap) return;
+			if (this.showRelatedImages){
+				this._showFeatureRelatedImage();
+			}
 
-			this._showFeatureRelatedImage();
-
-			let lastKnownFeature = null;
-			_this.overlayLayers.forEach(function(overlayLayer){
-				const n2Source = overlayLayer.getSource();
-				if (n2Source.hasOwnProperty("features_")) {
-					const features = n2Source.features_;
-					_this._sortFeaturesByTimeAndPlaceName(features);
-					if (($n2.isArray(features)) && (features.length > 0)) {
-						lastKnownFeature = features[features.length - 1];
-					}
-				}
-				n2Source.refresh();
-			}); 
-
-			if (this.fitMapToLatestMapTag 
-				&& lastKnownFeature !== null 
-				&& lastKnownFeature.n2ConvertedBbox !== undefined) {
-				if (this.lastFeatureZoomedTo !== undefined &&
-					(this.lastFeatureZoomedTo.data._ldata.timeLinkTags.placeTag === lastKnownFeature.data._ldata.timeLinkTags.placeTag)) return;
-				const expectedScale = lastKnownFeature.data._ldata.placeZoomScale;
-				const zoomScale = (expectedScale && expectedScale > 0 && expectedScale <= 22) ? expectedScale : 10;
-
-				let mapFitDuration = 0;
-				if (this.animateMapFitting === true) {
-					mapFitDuration = 1000;
-				}
-
-				const areaOfFocus = [lastKnownFeature.n2ConvertedBbox[0], lastKnownFeature.n2ConvertedBbox[1]];
-
-				olmap.getView().animate({
-					center: areaOfFocus,
-					zoom: zoomScale,
-					duration: mapFitDuration
-				});
-
-				this.lastFeatureZoomedTo = lastKnownFeature;
+			if (this.fitMapToLatestMapTag) {
+				this._zoomToFeature();
 			}
 
 		} else if ('time_interval_change' === type){
@@ -1800,6 +1779,49 @@ class N2MapCanvas  {
 		thisContext.mapNotification.show(`<img src=./db${relatedImage}>`, lineDuration * 1000);
 	}
 	
+	_zoomToFeature() {
+		const olmap = this.n2Map;
+		if (!olmap) return;
+		let lastKnownFeature = null;
+		this.overlayLayers.forEach((overlayLayer) => {
+			const n2Source = overlayLayer.getSource();
+			if (n2Source.hasOwnProperty("features_")) {
+				const features = n2Source.features_;
+				this._sortFeaturesByTimeAndPlaceName(features);
+				if (($n2.isArray(features)) && (features.length > 0)) {
+					lastKnownFeature = features[features.length - 1];
+				}
+			}
+			n2Source.refresh();
+		}); 
+
+		if (lastKnownFeature !== null 
+			&& lastKnownFeature.n2ConvertedBbox !== undefined) {
+			if (this.lastFeatureZoomedTo !== undefined &&
+				(this.lastFeatureZoomedTo.data._ldata.timeLinkTags.placeTag 
+					=== lastKnownFeature.data._ldata.timeLinkTags.placeTag)) return;
+			const expectedScale = lastKnownFeature.data._ldata.placeZoomScale;
+			const zoomScale = (expectedScale 
+				&& expectedScale > 0 
+				&& expectedScale <= MAX_MAP_ZOOM_LEVEL) ? expectedScale : DEFAULT_MAP_FEATURE_ZOOM_LEVEL;
+
+			let mapFitDuration = 0;
+			if (this.animateMapFitting === true) {
+				mapFitDuration = 1000;
+			}
+
+			const areaOfFocus = [lastKnownFeature.n2ConvertedBbox[0], lastKnownFeature.n2ConvertedBbox[1]];
+
+			olmap.getView().animate({
+				center: areaOfFocus,
+				zoom: zoomScale,
+				duration: mapFitDuration
+			});
+
+			this.lastFeatureZoomedTo = lastKnownFeature;
+		}
+	}
+
 	_getMapFeaturesIncludeingFidMapOl5(fidMap) {
 		var result_features = [];
 		if( this.features_ && this.features_.length > 0 ) {
