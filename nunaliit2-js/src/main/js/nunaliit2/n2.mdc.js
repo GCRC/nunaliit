@@ -226,7 +226,8 @@ var MDCCard = $n2.Class('MDCCard', MDC, {
 		}
 		card_info = card_info ? card_info : '';
 		media_thumb = media_thumb ? media_thumb : '';
-		$card = $($.parseHTML('<div class="mdc-card">' // Outside container for mdc-card
+		const elementId = this.getId() ? this.getId() : '';
+		$card = $($.parseHTML(`<div id=${elementId} class="mdc-card">` // Outside container for mdc-card
 								+ '<div class="mdc-card__primary-action">'// For ripple effects
 									+ media_thumb// For left column thumbnail
 									+ '<div class="n2card__primary">'

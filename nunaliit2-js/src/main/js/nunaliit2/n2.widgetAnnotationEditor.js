@@ -1529,8 +1529,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
-			/* Probably give this a unique ID instead of this selector */
-			const mdcCardSelector = "div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action > div.n2card__primary";
+			const mdcCardSelector = "#relatedImageCardDisplay > div.mdc-card__primary-action > div.n2card__primary";
 
 			const getDialogSelection = function(attachmentUrl) {
 				if (attachmentUrl !== null) {
@@ -1577,12 +1576,13 @@ POSSIBILITY OF SUCH DAMAGE.
 			} 
 			new $n2.mdc.MDCCard({
 				parentElem: $formFieldSection,
+				mdcId: "relatedImageCardDisplay",
 				label: displayImageLinkText,
 				infoGenerator: () => { return displayImageLinkText },
 				initiallyOn: false
 			});
 			document.querySelector(mdcCardSelector).dataset.trueUrl = relatedImageLink;
-			document.querySelector("div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action").style.cursor = "default";
+			document.querySelector("#relatedImageCardDisplay > div.mdc-card__primary-action").style.cursor = "default";
 
 			const timeLinkTextAreaId = "n2WidgetAnnotationEditorTaggingNotes";
 			const timeLinkNotes = senData[0].notes ? senData[0].notes : "";
