@@ -956,7 +956,8 @@ class N2MapCanvas  {
 		mainbar.addControl(pcluster);
 
 		const notification = new Notification({
-			className: "ol-image-notification"
+			className: "ol-image-notification",
+			closeBox: true
 		});
 		customMap.addControl(notification);
 		this.mapNotification = notification;
@@ -1267,7 +1268,8 @@ class N2MapCanvas  {
 				});
 
 				_this.n2intentWrapper = charlieSource;
-				var vectorLayer = new VectorLayer({
+				
+				fg.push(new VectorLayer({
 					title: DONUT_VECTOR_LAYER_DISPLAY_NAME,
 					renderMode : 'vector',
 					source: charlieSource,
@@ -1294,12 +1296,7 @@ class N2MapCanvas  {
 							return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
 						}
 					}
-				});
-//				var layerOptions = _this.overlayInfos.shift();
-//				var layerStyleMap = createStyleMap(layerOptions._layerInfo);
-//				vectorLayer.set('styleMap', layerStyleMap);
-				fg.push(vectorLayer);
-
+				}));
 				fg.push(new VectorLayer({
 					title: LINE_VECTOR_LAYER_DISPLAY_NAME,
 					renderMode: "vector",
