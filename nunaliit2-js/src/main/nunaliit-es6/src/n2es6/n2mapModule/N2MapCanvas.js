@@ -804,7 +804,12 @@ class N2MapCanvas  {
 				}), 
 				new LayerGroup({
 					title: 'Overlays',
-					layers: this.overlayLayers
+					layers: [
+						new LayerGroup({
+							title: DONUT_VECTOR_LAYER_DISPLAY_NAME,
+							layers: this.overlayLayers
+						})
+					]	
 				})
 			]})
 		);
@@ -1282,8 +1287,7 @@ class N2MapCanvas  {
 
 				_this.n2intentWrapper = charlieSource;
 				
-				fg.push(new VectorLayer({
-					title: DONUT_VECTOR_LAYER_DISPLAY_NAME,
+				const ringLayer = new VectorLayer({
 					renderMode : 'vector',
 					source: charlieSource,
 					style: featureStyler,
@@ -1309,14 +1313,26 @@ class N2MapCanvas  {
 							return $n2.olUtils.ol5FeatureSorting(feature1, feature2);
 						}
 					}
-				}));
-				fg.push(new VectorLayer({
+				});
+				ringLayer.set("alias", DONUT_VECTOR_LAYER_DISPLAY_NAME, false);
+				
+				const linkLayer = new VectorLayer({
 					title: LINE_VECTOR_LAYER_DISPLAY_NAME,
 					renderMode: "vector",
 					/*visible: false [if we do not want Links selected by default] */
 					source: this.vectorLinkSource,
 					style: this.vectorLinkSource.stylerFunction,
-				}));
+				})
+				linkLayer.set("alias", LINE_VECTOR_LAYER_DISPLAY_NAME, false);
+
+				linkLayer.on("change:visible", () => {
+					if (!ringLayer.getVisible()) {
+						linkLayer.setVisible(false);
+					}
+				});
+
+				fg.push(ringLayer);
+				fg.push(linkLayer);
 			}
 		}
 		return (fg);
@@ -1753,7 +1769,7 @@ class N2MapCanvas  {
 
 	_showFeatureRelatedImage() {
 		this.overlayLayers.forEach(layer => {
-			if (layer.get("title") !== DONUT_VECTOR_LAYER_DISPLAY_NAME) return;
+			if (layer.get("alias") !== DONUT_VECTOR_LAYER_DISPLAY_NAME) return;
 			const features = layer.getSource().getFeatures();
 			this._sortFeaturesByTimeAndPlaceName(features);
 			const [imageDataFeature] = features.slice(-1);
