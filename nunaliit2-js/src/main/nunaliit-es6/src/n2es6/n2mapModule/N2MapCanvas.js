@@ -7,23 +7,14 @@ import {default as CouchDbSource} from './N2CouchDbSource.js';
 import N2ModelSource from './N2ModelSource.js';
 import {default as LayerInfo} from './N2LayerInfo';
 import {default as N2MapStyles} from './N2MapStyles.js';
-import {default as customPointStyle} from './N2CustomPointStyle.js';
-import {Fill, RegularShape, Stroke, Style, Text} from 'ol/style.js';
-import {default as Photo} from'ol-ext/style/Photo';
-import {createDefaultStyle} from 'ol/style/Style.js'
 
-import GeoJSON from 'ol/format/GeoJSON';
-import {default as ImageSource} from 'ol/source/Image.js';
 import WMTS from 'ol/source/WMTS.js';
-import {default as VectorSource } from 'ol/source/Vector.js';
 import {default as N2Select} from './N2Select.js';
 import {default as N2SourceWithN2Intent} from './N2SourceWithN2Intent.js';
 
 import Map from 'ol/Map.js';
-import WebGLMap from 'ol/WebGLMap';
 import {default as VectorLayer} from 'ol/layer/Vector.js';
 import {default as LayerGroup} from 'ol/layer/Group.js';
-import {default as ImageLayer} from 'ol/layer/Image.js';
 import {default as View} from 'ol/View.js';
 import {default as N2DonutCluster} from '../ol5support/N2DonutCluster.js';
 import {default as N2LinkSource} from './N2LinkSource.js';
@@ -36,12 +27,8 @@ import Tile from 'ol/layer/Tile.js';
 import WMTSTileGrid from 'ol/tilegrid/WMTS.js';
 import WKT from 'ol/format/WKT';
 
-import {click as clickCondition} from 'ol/events/condition.js';
 import mouseWheelZoom from 'ol/interaction/MouseWheelZoom.js';
 import {defaults as defaultsInteractionSet} from 'ol/interaction.js';
-import toString from '../ol5support/ToString';
-
-import {unByKey} from 'ol/Observable';
 
 import {default as DrawInteraction} from 'ol/interaction/Draw.js';
 import Stamen from 'ol/source/Stamen.js';
@@ -60,7 +47,6 @@ import Toggle from 'ol-ext/control/Toggle';
 import Timeline from 'ol-ext/control/Timeline';
 import Popup from 'ol-ext/overlay/Popup';
 import Notification from 'ol-ext/control/Notification';
-//import timelineData from '!json-loader!../../data/fond_guerre.geojson';
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.canvasMap';
