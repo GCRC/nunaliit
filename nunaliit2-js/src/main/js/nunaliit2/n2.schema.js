@@ -1938,7 +1938,6 @@ var Form = $n2.Class({
 	},
 
 	_addTag: function($target, $elem) {
-		// var $target = $(e.target);
 		var classString = $target.attr('class');
 		var classNames = null;
 		if( classString ){
@@ -1948,7 +1947,7 @@ var Form = $n2.Class({
 		};
 		var classInfo = parseClassNames(classNames);
 
-		var value = classInfo.selector.getValue(this.obj);
+		var value = $target[0].value;
 		var parentSelector = classInfo.selector.getParentSelector();
 		var tags = parentSelector.getValue(this.obj).tags;
 		if( !tags ){
@@ -1962,7 +1961,7 @@ var Form = $n2.Class({
 		} else {
 			$n2.log('Error adding item to tags array, no array in object and key has wrong type');
 		}
-		classInfo.selector.setValue(this.obj, '');
+		$target[0].value = '';
 		this.refresh($elem);
 		this.callback(this.obj,classInfo.selector.selectors,tags);
 		$('.'+classNames[1])[0].focus()
@@ -2649,6 +2648,8 @@ var Form = $n2.Class({
 						};
 					};
 
+				} else if( 'tag' === keyType) {
+					assignValue = false;
 				} else {
 					value = $input.val();
 				};

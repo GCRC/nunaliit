@@ -3,16 +3,17 @@ function(doc) {
 
 	// Search complete doc for outward links
 	var tagObjs = [];
-	n2utils.extractSpecificType(doc, 'tag', tagObjs);
+	n2utils.extractSpecificTypeWithKey(doc, 'root', 'tag', tagObjs);
 	for(var i=0,e=tagObjs.length; i<e; ++i) {
-		var tags = tagObjs[i].tags;
-		var group = tagObjs[i].id;
-		if(!group) {
-			group = 'undefined';
+		var key = tagObjs[i][0];
+		var obj = tagObjs[i][1];
+		var tags = obj.tags;
+		if(!key) {
+			key = 'undefined';
 		}
 		for(var tidx=0,tlen=tags.length; tidx<tlen; ++tidx) {
 			var tag = tags[tidx];
-			var tag = [group, tag];
+			var tag = [key, tag];
 			if(tag) {
 				emit(tag, 1);
 			}
