@@ -4,8 +4,8 @@
 
 /* import Feature from 'ol/Feature.js'; */
 
-const _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
-const DH = 'N2.FilterableLegendWidget';
+const _loc = function(str,args){ return $n2.loc(str,"nunaliit2",args); };
+const ALL_CHOICES = "__ALL_SELECTED__";
 
 const filterableLegends = [
     "filterableLegendWidgetWithGraphic"
@@ -19,74 +19,295 @@ const filterableLegends = [
  */
 class N2FilterableLegendWidgetWithGraphic {
 	constructor(options) {
-		this.dispatchService = options.dispatchService;
+        this.DH = "N2FilterableLegendWidgetWithGraphic";
+        this.dispatchService = options.dispatchService;
         this.showService = options.showService;
         this.sourceModelId = options.sourceModelId;
-        this.selectAllLabel = options.selectAllLabel;
         this.containerId = options.containerId;
-        this.state = {};
+        this.selectAllLabel = options.selectAllLabel;
+
+        this.eventNames = {
+            changeAvailableChoices: null,
+            changeSelectedChoices: null,
+            changeAllSelected: null,
+            setSelectedChoices: null,
+            setAllSelected: null
+        }
+
+        this.legend = null;
+
+        this.state = {
+            allSelected: true,
+            availableChoices: [],
+            selectedChoices: [],
+            selectedChoiceIdMap: {}
+        };
+
+        Object.seal(this.state);
 
         if (!this.containerId) {
-            throw new Error('containerId must be specified');
+            throw new Error("containerId must be specified");
         }
-
+        
         if (!this.sourceModelId) {
-            throw new Error('sourceModelId must be specified');
+            throw new Error("sourceModelId must be specified");
         }
+        
+        this.elementId = nunaliit2.getUniqueId();
 
-        /* this.dispatchService.register(DH, 'loadedModuleContent', f);
-        this.dispatchService.register(DH, 'modelStateUpdated', f);
+        if (this.dispatchService) {
+            const modelInfoRequest = {
+                type: 'modelGetInfo',
+                modelId: this.sourceModelId,
+                modelInfo: null
+            };
+            this.dispatchService.synchronousCall(this.DH, modelInfoRequest);
+            const { 
+                modelInfo: {
+                    parameters: {
+                        allSelected,
+                        availableChoices,
+                        selectedChoices
+                    }
+                } 
+            } = modelInfoRequest;
 
-        if (this.sourceModelId) {
-            const m = {
-                type: 'modelGetState'
-                , modelId: this.sourceModelId
+            if (availableChoices) {
+                this.eventNames.changeAvailableChoices = availableChoices.changeEvent;
+                if (availableChoices.value) {
+                    this.state.availableChoices = availableChoices.value;
+                }
+            }
+
+            if (selectedChoices) {
+                this.eventNames.changeSelectedChoices = selectedChoices.changeEvent;
+                this.eventNames.setSelectedChoices = selectedChoices.setEvent;
+                if (selectedChoices.value) {
+                    this.state.selectedChoices = selectedChoices.value;
+                    this.state.selectedChoiceIdMap = {};
+                    this.state.selectedChoices.forEach((choiceText) => {
+                        this.state.selectedChoiceIdMap[choiceText] = true;
+                    });
+                }
+            }
+
+            if (allSelected) {
+                this.eventNames.changeAllSelected = allSelected.changeEvent;
+                this.eventNames.setAllSelected = allSelected.setEvent;
+                if (typeof allSelected.value === 'boolean') {
+                    this.state.allSelected = allSelected.value;
+                }
+            }
+
+            const fn = (message, addr, dispatcher) => {
+                this._handle(message, addr, dispatcher);
             };
 
-            this.dispatchService.synchronousCall(DH, m);
-            if (m.state) {
-                this._sourceModelUpdated(m.state);
+            if (this.eventNames.changeAvailableChoices) {
+                this.dispatchService.register(this.DH, this.eventNames.changeAvailableChoices, fn);
             }
-        } 
-        if (this.availableChoicesChangeEventName) {
-            this.dispatchService.register(DH, this.availableChoicesChangeEventName, fn);
+
+            if (this.eventNames.changeSelectedChoices) {
+                this.dispatchService.register(this.DH, this.eventNames.changeSelectedChoices, fn);
+            }
+
+            if (this.eventNames.changeAllSelected) {
+                this.dispatchService.register(this.DH, this.eventNames.changeAllSelected, fn);
+            }
+
+            this.dispatchService.register(this.DH, "canvasGetStylesInUse", fn);
         }
 
-        if (this.selectedChoicesChangeEventName) {
-            this.dispatchService.register(DH, this.selectedChoicesChangeEventName, fn);
+        const legendAndGraphicContainer = document.getElementById(this.containerId)
+
+        if (legendAndGraphicContainer === null) {
+            throw new Error(`containerId ${this.containerId} could not be found`)
         }
 
-        if (this.allSelectedChangeEventName) {
-            this.dispatchService.register(DH, this.allSelectedChangeEventName, fn);
-        } */
+        const legendAndGraphic = document.createElement("div");
+        legendAndGraphic.setAttribute("id", this.elementId);
+        legendAndGraphicContainer.append(legendAndGraphic);
+
+        this._draw();
 	}
 
-    _handle (m, addr, dispatcher) {
-        var _this = this;
-
-        /* if (this.availableChoicesChangeEventName === m.type) {
-            if (m.value) {
-                this.availableChoices = m.value;
-                this._throttledAvailableChoicesUpdated();
+    _handle (message, addr, dispatcher) {
+        const { type, value } = message;
+        if (type === this.eventNames.changeAvailableChoices) {
+            if (value) {
+                this.state.availableChoices = value;
+                this._draw();
             }
-
-        } else if (this.selectedChoicesChangeEventName === m.type) {
-            if (m.value) {
-                this.selectedChoices = m.value;
-                this.selectedChoiceIdMap = {};
-                this.selectedChoices.forEach(function (choiceId) {
-                    _this.selectedChoiceIdMap[choiceId] = true;
+        } 
+        else if (type === this.eventNames.changeSelectedChoices) {
+            if (value) {
+                this.state.selectedChoices = value;
+                this.state.selectedChoiceIdMap = {};
+                this.state.selectedChoices.forEach((choiceText) => {
+                    this.state.selectedChoiceIdMap[choiceText] = true;
                 });
-
                 this._adjustSelectedItem();
             }
-
-        } else if (this.allSelectedChangeEventName === m.type) {
-            if (typeof m.value === 'boolean') {
-                this.allSelected = m.value;
+        } 
+        else if (type === this.eventNames.changeAllSelected) {
+            if (typeof value === 'boolean') {
+                if (value === this.state.allSelected) return;
+                this.state.allSelected = value;
                 this._adjustSelectedItem();
             }
-        } */
+        }
+        else if (type === "canvasGetStylesInUse") {
+            console.log("canvasGetStylesInUse handle message placeholder")
+            console.log(message);
+        }
+    }
+
+    _draw() {
+        const mainContainer = document.getElementById(this.elementId);
+        mainContainer.innerHTML = "";
+        const fragment = document.createDocumentFragment();
+
+        const legendContainer = document.createElement("div");
+        legendContainer.setAttribute("id", "n2_filterableLegendWidgetLegend")
+        legendContainer.setAttribute("class", "n2widgetLegend");
+        const legend = document.createElement("div");
+        legend.setAttribute("class", "n2widgetLegend_outer");
+        this.legend = legend; 
+        
+        let selectAllLabel = this.selectAllLabel || "All";
+        selectAllLabel = _loc(selectAllLabel);
+
+        const legendFragment = document.createDocumentFragment();
+        this._drawLegendOption(legendFragment, ALL_CHOICES, selectAllLabel, null)
+
+        this.state.availableChoices.forEach(choice => {
+            const label = choice.label || choice.id;
+            const colour = choice.color;
+            this._drawLegendOption(legendFragment, choice.id, label, colour);
+        });
+        
+        const graphic = document.createElement("div");
+        legendContainer.setAttribute("id", "n2_filterableLegendWidgetGraphic");
+        
+        legend.append(legendFragment);
+        legendContainer.append(legend);
+        fragment.append(legendContainer, graphic);
+        mainContainer.append(fragment);
+    }
+
+    _drawLegendOption(fragment, optionValue, optionLabel, colour) {
+        const optionId = nunaliit2.getUniqueId();
+        const selectionRow = document.createElement("div");
+        selectionRow.setAttribute("class", "n2widgetLegend_legendEntry")
+        selectionRow.setAttribute("class", "n2widgetLegend_optionSelected")
+        selectionRow.setAttribute("data-n2-choiceId", optionValue)
+
+        const checkbox = document.createElement("input");
+        checkbox.setAttribute("type", "checkbox");
+        checkbox.setAttribute("checked", true);
+        checkbox.setAttribute("id", optionId);
+        checkbox.addEventListener("click", () =>{
+            this._selectionChanged(optionValue);
+        });
+        selectionRow.append(checkbox);
+
+        const checkboxLabel = document.createElement("label");
+        checkboxLabel.setAttribute("for", optionId);
+        selectionRow.append(checkboxLabel);
+
+        const symbolColumn = document.createElement("div");
+        symbolColumn.setAttribute("class", "n2widgetLegend_symbolColumn");
+        checkboxLabel.append(symbolColumn);
+
+        /* Should be able to handle other icons in the future. */
+        if (colour) {
+            const svgNode = document.createElement("svg");
+            svgNode.setAttribute("viewBox", "-7 -7 14 14");
+            svgNode.setAttribute("class", "n2widgetLegend_svg");
+
+            const svgDonut = document.createElement("circle");
+            svgDonut.setAttribute("r", "5");
+            svgDonut.setAttribute("stroke", colour);
+            svgDonut.setAttribute("stroke-width", "2");
+            svgDonut.setAttribute("fill-opacity", "1");
+            svgDonut.setAttribute("stroke-opacity", "1");
+            svgDonut.setAttribute("stroke-linecap", "round");
+            svgDonut.setAttribute("stroke-dasharray", "solid");
+            svgDonut.setAttribute("pointerEvents", "visiblePainted");
+            svgDonut.setAttribute("pointer-events", "visiblePainted");
+            svgNode.append(svgDonut);
+            symbolColumn.append(svgNode);
+        }
+
+        const labelColumn = document.createElement("div");
+        labelColumn.setAttribute("class", "n2widgetLegend_labelColumn");
+        checkboxLabel.append(labelColumn);
+
+        const label = document.createElement("div");
+        label.setAttribute("class", "n2widgetLegend_label");
+        label.innerText = optionLabel;
+        labelColumn.append(label);
+
+        fragment.append(selectionRow);
+
+        this._adjustSelectedItem();
+    }
+
+    _adjustSelectedItem() {
+        if (!this.legend.hasChildNodes) return;
+        [...this.legend.children].forEach(selectionRow => {
+            const choiceId = selectionRow.dataset.n2Choiceid;
+            const checkbox = selectionRow.children[0];
+            if (this.state.allSelected || this.state.selectedChoiceIdMap[choiceId]) {
+                if (checkbox.checked !== true) {
+                    checkbox.checked = true;
+                }
+                selectionRow.children[1].style.color = "#ffffff";
+            }
+            else {
+                if (checkbox.checked) {
+                    checkbox.checked = false;
+                }
+                selectionRow.children[1].style.color = "#aaaaaa";
+            }
+        });
+    }
+
+    _selectionChanged(choiceId) {
+        if (choiceId === ALL_CHOICES) {
+            if (this.state.allSelected) {
+                this.dispatchService.send(this.DH, {
+                    type: this.eventNames.setSelectedChoices,
+                    value: []
+                });
+            }
+            else {
+                this.dispatchService.send(this.DH, {
+                    type: this.eventNames.setAllSelected,
+                    value: true
+                });
+            }
+        }
+        else {
+            let selectedChoiceIds = [];
+            if (this.state.selectedChoices.includes(choiceId)) {
+                selectedChoiceIds = this.state.selectedChoices.filter(choice => choice !== choiceId)
+            }
+            else {
+                selectedChoiceIds = [...this.state.selectedChoices, choiceId];
+            }
+            this.dispatchService.synchronousCall(this.DH, {
+                type: this.eventNames.setSelectedChoices,
+                value: selectedChoiceIds
+            });
+
+            if (this.state.selectedChoices.length === this.state.availableChoices.length) {
+                this.dispatchService.send(this.DH, {
+                    type: this.eventNames.setAllSelected,
+                    value: true
+                });
+            }
+        }
     }
 }
 
@@ -121,6 +342,8 @@ export function widgetDisplay(message) {
         new N2FilterableLegendWidgetWithGraphic(options);
     }
 }
+
+
 
 nunaliit2.filterableLegendWidget = {
     filterableLegendWidgetWithGraphic: N2FilterableLegendWidgetWithGraphic,
