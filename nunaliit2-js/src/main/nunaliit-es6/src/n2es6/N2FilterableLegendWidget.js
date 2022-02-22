@@ -11,6 +11,13 @@ const filterableLegends = [
     "filterableLegendWidgetWithGraphic"
 ];
 
+const supportedGraphicTypes = [
+    "pie",
+    "count",
+    "custom",
+    "none"
+];
+
 /**
  * @classdesc
  * A legend widget that allows one to filter out the groups of documents.
@@ -25,6 +32,7 @@ class N2FilterableLegendWidgetWithGraphic {
         this.sourceModelId = options.sourceModelId;
         this.containerId = options.containerId;
         this.selectAllLabel = options.selectAllLabel;
+        this.graphicType = options.graphicType;
 
         this.eventNames = {
             changeAvailableChoices: null,
@@ -51,6 +59,10 @@ class N2FilterableLegendWidgetWithGraphic {
         
         if (!this.sourceModelId) {
             throw new Error("sourceModelId must be specified");
+        }
+
+        if (!supportedGraphicTypes.includes(this.graphicType)) {
+            throw new Error(`graphicType ${this.graphicType} not supported`)
         }
         
         this.elementId = nunaliit2.getUniqueId();
@@ -186,12 +198,12 @@ class N2FilterableLegendWidgetWithGraphic {
             this._drawLegendOption(legendFragment, choice.id, label, colour);
         });
         
-        const graphic = document.createElement("div");
-        legendContainer.setAttribute("id", "n2_filterableLegendWidgetGraphic");
+        const graphicContainer = document.createElement("div");
+        graphicContainer.setAttribute("id", "n2_filterableLegendWidgetGraphic");
         
         legend.append(legendFragment);
         legendContainer.append(legend);
-        fragment.append(legendContainer, graphic);
+        fragment.append(legendContainer, graphicContainer);
         mainContainer.append(fragment);
     }
 
@@ -221,11 +233,11 @@ class N2FilterableLegendWidgetWithGraphic {
 
         /* Should be able to handle other icons in the future. */
         if (colour) {
-            const svgNode = document.createElement("svg");
+            const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");;
             svgNode.setAttribute("viewBox", "-7 -7 14 14");
             svgNode.setAttribute("class", "n2widgetLegend_svg");
 
-            const svgDonut = document.createElement("circle");
+            const svgDonut = document.createElementNS(svgNode.namespaceURI, "circle");
             svgDonut.setAttribute("r", "5");
             svgDonut.setAttribute("stroke", colour);
             svgDonut.setAttribute("stroke-width", "2");
@@ -259,15 +271,11 @@ class N2FilterableLegendWidgetWithGraphic {
             const choiceId = selectionRow.dataset.n2Choiceid;
             const checkbox = selectionRow.children[0];
             if (this.state.allSelected || this.state.selectedChoiceIdMap[choiceId]) {
-                if (checkbox.checked !== true) {
-                    checkbox.checked = true;
-                }
+                checkbox.checked = true;
                 selectionRow.children[1].style.color = "#ffffff";
             }
             else {
-                if (checkbox.checked) {
-                    checkbox.checked = false;
-                }
+                checkbox.checked = false;
                 selectionRow.children[1].style.color = "#aaaaaa";
             }
         });
@@ -307,6 +315,12 @@ class N2FilterableLegendWidgetWithGraphic {
                     value: true
                 });
             }
+        }
+    }
+
+    prepareGraphicData(docs) {
+        if (this.graphicType !== "none") {
+            throw new Error ("graphicTypes other than 'None' must define behaviour. Override 'prepareGraphicData'")
         }
     }
 }
