@@ -2053,7 +2053,7 @@ var Form = $n2.Class({
 			} 
 			else if ( 'tag' === classInfo.type ) {
 				$input.val(value);
-				var tagId = obj[classInfo.selector.selectors[0]][classInfo.selector.selectors[1]].id;
+				var tagId = classInfo.selector.selectors[1];
 				$input.autocomplete({
 					source: function(req, res) {
 						_this.functionMap['getTagAutocomplete'](req, res, tagId)

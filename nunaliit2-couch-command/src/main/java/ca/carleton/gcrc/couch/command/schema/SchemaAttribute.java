@@ -535,7 +535,6 @@ public class SchemaAttribute {
 		} else if( "tag".equals(type) ){
 			if( null != id ){
 				JSONObject tagObj = new JSONObject();
-				tagObj.put("id", id);
 				tagObj.put("nunaliit_type", "tag");
 				schemaDoc.put(id, tagObj);
 			} else {
