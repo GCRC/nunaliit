@@ -151,6 +151,11 @@ class N2MapCanvas  {
 		this.editLayerSource = undefined;
 		this.refreshCallback = null;
 
+		this.canvasName = null;
+		if (this.options && this.options.canvasName) {
+			this.canvasName = this.options.canvasName;
+		}
+
 		if ( this.customService ){
 			var customService = this.customService;
 			if ( !this.refreshCallback ){
@@ -287,6 +292,7 @@ class N2MapCanvas  {
 			this.dispatchService.register(DH, 'resolutionRequest', f);
 			this.dispatchService.register(DH, 'editInitiate', f);
 			this.dispatchService.register(DH, 'editClosed', f);
+			this.dispatchService.register(DH, 'canvasGetStylesInUse', f);
 		}
 
 		$n2.log(this._classname,this);
@@ -729,6 +735,7 @@ class N2MapCanvas  {
 			let proj = _this.n2View.getProjection();
 			_this.resolution = res;
 			_this.proj = proj;
+			_this._updatedStylesInUse();
 		});
 		//=======================================
 	
@@ -760,6 +767,8 @@ class N2MapCanvas  {
 					,coordination: coor_string
 					,_suppressSetHash : _this._suppressSetHash
 				});
+
+				_this._updatedStylesInUse();
 			})
 		}
 		//========================================
@@ -1189,38 +1198,7 @@ class N2MapCanvas  {
 			}
 
 			feature.set("isVisible", true, false);
-			let geomType = feature.getGeometry()._n2Type;
-			if (!geomType) {
-				if (feature.getGeometry()
-					.getType()
-					.indexOf('Line') >= 0) {
-					geomType = feature.getGeometry()._n2Type = 'line';
-
-				} else if (feature.getGeometry()
-					.getType()
-					.indexOf('Polygon') >= 0) {
-					geomType = feature.getGeometry()._n2Type = 'polygon';
-
-				} else {
-					geomType = feature.getGeometry()._n2Type = 'point';
-				}
-			}
-
-			feature.n2_geometry = geomType;
-			//Deal with n2_doc tag
-			let data = feature.data;
-			if (feature
-				&& feature.cluster
-				&& feature.cluster.length === 1) {
-				data = feature.cluster[0].data;
-			}
-
-			//is a cluster
-			if (!data) {
-				data = { clusterData: true };
-			}
-
-			feature.n2_doc = data;
+			_this._enrichFeature(feature);
 
 			const style = _this.styleRules.getStyle(feature);
 			const symbolizer = style.getSymbolizer(feature);
@@ -1496,6 +1474,83 @@ class N2MapCanvas  {
 		}
 	}
 
+	_getMapStylesInUse() {
+		const mapStylesInUse = {};
+		this.overlayLayers.forEach(layer => {
+			const layerSource = layer.getSource() ? layer.getSource() : false;
+			if (!layerSource) return;
+
+			const layerFeatures = layerSource.getFeatures() ? layerSource.getFeatures() : false;
+			if (!layerFeatures) return;
+
+			this._accumulateMapStylesInUse(layerFeatures, mapStylesInUse)
+		});
+		return mapStylesInUse;
+	}
+
+	_enrichFeature(feature) {
+		let geomType = feature.getGeometry()._n2Type;
+		if (!geomType) {
+			if (feature.getGeometry()
+				.getType()
+				.indexOf('Line') >= 0){
+				geomType = feature.getGeometry()._n2Type = 'line';
+
+			} else if (feature.getGeometry()
+				.getType()
+				.indexOf('Polygon') >= 0){
+				geomType = feature.getGeometry()._n2Type = 'polygon';
+
+			} else {
+				geomType = feature.getGeometry()._n2Type = 'point';
+			}
+		}
+
+		feature.n2_geometry = geomType;
+		//Deal with n2_doc tag
+		var data = feature.data;
+		if (feature
+			&& feature.cluster
+			&& feature.cluster.length === 1) {
+			data = feature.cluster[0].data;
+		}
+
+		if (!data) { //is a cluster
+			data = {clusterData: true};
+		}
+		feature.n2_doc = data;
+		return feature;
+	}
+
+	_accumulateMapStylesInUse(features, stylesInUse){
+		features.forEach((f) => {
+			this._enrichFeature(f);
+			let style = this.styleRules.getStyle(f);
+			if(style && typeof style.id === 'string') {
+				var styleInfo = stylesInUse[style.id];
+				if( !styleInfo ) {
+					styleInfo = {
+						style: style
+					};
+					stylesInUse[style.id] = styleInfo;
+				}
+
+				var geometryType = f.n2_geometry;
+				if( geometryType && !styleInfo[geometryType] ) {
+					styleInfo[geometryType] = f;
+				}
+			}
+		});
+	}
+
+	_updatedStylesInUse() {
+		this._dispatch({
+			type: 'canvasReportStylesInUse',
+			canvasName: this.canvasName,
+			stylesInUse: this._getMapStylesInUse()
+		});
+	}
+
 	_handleDispatch( m, addr, dispatcher){
 		var _this = this;
 		var type = m.type;
@@ -1721,6 +1776,8 @@ class N2MapCanvas  {
 			});
 
 			_this.lastTime = currTime;
+		} else if( 'canvasGetStylesInUse' === type && this.canvasName === m.canvasName){
+			m.stylesInUse = this._getMapStylesInUse();
 		}
 	}
 	_sortFeaturesByTimeAndPlaceName(features) {
