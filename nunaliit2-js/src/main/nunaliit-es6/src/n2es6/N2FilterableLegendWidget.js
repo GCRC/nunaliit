@@ -45,6 +45,7 @@ class N2FilterableLegendWidgetWithGraphic {
         this.legend = null;
 
         this.state = {
+            currentStyles: {},
             allSelected: true,
             availableChoices: [],
             selectedChoices: [],
@@ -69,7 +70,7 @@ class N2FilterableLegendWidgetWithGraphic {
 
         if (this.dispatchService) {
             const modelInfoRequest = {
-                type: 'modelGetInfo',
+                type: "modelGetInfo",
                 modelId: this.sourceModelId,
                 modelInfo: null
             };
@@ -106,7 +107,7 @@ class N2FilterableLegendWidgetWithGraphic {
             if (allSelected) {
                 this.eventNames.changeAllSelected = allSelected.changeEvent;
                 this.eventNames.setAllSelected = allSelected.setEvent;
-                if (typeof allSelected.value === 'boolean') {
+                if (typeof allSelected.value === "boolean") {
                     this.state.allSelected = allSelected.value;
                 }
             }
@@ -127,7 +128,13 @@ class N2FilterableLegendWidgetWithGraphic {
                 this.dispatchService.register(this.DH, this.eventNames.changeAllSelected, fn);
             }
 
-            this.dispatchService.register(this.DH, "canvasGetStylesInUse", fn);
+            this.dispatchService.register(this.DH, "canvasReportStylesInUse", fn);
+            const stylesRequestMessage = {
+                type: "canvasGetStylesInUse",
+                canvasName: this.canvasName
+            };
+            this.dispatchService.synchronousCall(this.DH, stylesRequestMessage);
+            this.state.currentStyles = stylesRequestMessage.stylesInUse;
         }
 
         const legendAndGraphicContainer = document.getElementById(this.containerId)
@@ -162,15 +169,16 @@ class N2FilterableLegendWidgetWithGraphic {
             }
         } 
         else if (type === this.eventNames.changeAllSelected) {
-            if (typeof value === 'boolean') {
+            if (typeof value === "boolean") {
                 if (value === this.state.allSelected) return;
                 this.state.allSelected = value;
                 this._adjustSelectedItem();
             }
         }
-        else if (type === "canvasGetStylesInUse") {
-            console.log("canvasGetStylesInUse handle message placeholder")
-            console.log(message);
+        else if (type === "canvasReportStylesInUse") {
+            const { canvasName, stylesInUse } = message;
+            this.state.currentStyles = stylesInUse;
+            // call _draw() here?
         }
     }
 
@@ -195,7 +203,7 @@ class N2FilterableLegendWidgetWithGraphic {
         this.state.availableChoices.forEach(choice => {
             const label = choice.label || choice.id;
             const colour = choice.color;
-            this._drawLegendOption(legendFragment, choice.id, label, colour);
+            this._drawLegendOption(legendFragment, choice.id, _loc(label), colour);
         });
         
         const graphicContainer = document.createElement("div");
