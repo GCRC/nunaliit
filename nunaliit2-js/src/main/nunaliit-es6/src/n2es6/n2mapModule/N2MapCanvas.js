@@ -917,13 +917,23 @@ class N2MapCanvas  {
 			]
 		});
 
-		mainbar.addControl(new Toggle({
-				html: "",
-				title: "Map Fit Options",
-				active: this.fitMapToLatestMapTag || this.animateMapFitting,
-				bar: mapFitControlBar
-			})
-		);
+		const mapFitOptionsToggle = new Toggle({
+			html: "",
+			title: "Map Fit Options",
+			active: this.fitMapToLatestMapTag || this.animateMapFitting,
+			bar: mapFitControlBar,
+			onToggle: () => {
+				const shouldBeActive = [...mapFitOptionsToggle.element.classList].includes("faux-ol-active");
+				if (!this.fitMapToLatestMapTag && shouldBeActive) {
+					mapFitOptionsToggle.element.classList.remove("faux-ol-active");
+				}
+				else if (this.fitMapToLatestMapTag && !shouldBeActive){
+					mapFitOptionsToggle.element.classList.add("faux-ol-active"); 
+				}
+			}
+		});
+
+		mainbar.addControl(mapFitOptionsToggle);
 
 		mainbar.addControl(new Toggle({
 				// Add a toggle for showing related images
