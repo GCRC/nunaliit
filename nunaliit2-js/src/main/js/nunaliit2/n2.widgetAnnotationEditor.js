@@ -1539,6 +1539,23 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			}
 
+			const timeLinkTextAreaId = "n2WidgetAnnotationEditorTaggingNotes";
+			const timeLinkNotes = senData[0].notes ? senData[0].notes : "";
+			new $n2.mdc.MDCTextField({
+				txtFldLabel: "Notes",
+				txtFldInputId: timeLinkTextAreaId,
+				txtFldOutline: true,
+				txtFldArea: true,
+				txtFldFullWidth: true,
+				parentElem: $formFieldSection
+			});
+			const timeLinkNotesTextArea = document.getElementById(timeLinkTextAreaId);
+			// excellent
+			timeLinkNotesTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
+			timeLinkNotesTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") 
+			timeLinkNotesTextArea.value = timeLinkNotes;
+			timeLinkNotesTextArea.style.resize = "vertical";
+
 			new $n2.mdc.MDCButton({
 				parentElem: $formFieldSection,
 				btnLabel: "Select Related Image",
@@ -1583,23 +1600,6 @@ POSSIBILITY OF SUCH DAMAGE.
 			});
 			document.querySelector(mdcCardSelector).dataset.trueUrl = relatedImageLink;
 			document.querySelector("#relatedImageCardDisplay > div.mdc-card__primary-action").style.cursor = "default";
-
-			const timeLinkTextAreaId = "n2WidgetAnnotationEditorTaggingNotes";
-			const timeLinkNotes = senData[0].notes ? senData[0].notes : "";
-			new $n2.mdc.MDCTextField({
-				txtFldLabel: "Notes",
-				txtFldInputId: timeLinkTextAreaId,
-				txtFldOutline: true,
-				txtFldArea: true,
-				txtFldFullWidth: true,
-				parentElem: $formFieldSection
-			});
-			const timeLinkNotesTextArea = document.getElementById(timeLinkTextAreaId);
-			// excellent
-			timeLinkNotesTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
-			timeLinkNotesTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") 
-			timeLinkNotesTextArea.value = timeLinkNotes;
-			timeLinkNotesTextArea.style.resize = "vertical";
 		},
 
 		/**
