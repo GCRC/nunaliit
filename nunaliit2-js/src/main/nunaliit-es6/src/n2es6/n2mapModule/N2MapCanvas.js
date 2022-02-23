@@ -29,6 +29,8 @@ import {default as N2DonutCluster} from '../ol5support/N2DonutCluster.js';
 import {default as N2LinkSource} from './N2LinkSource.js';
 //import {default as N2Cluster} from '../ol5support/N2Cluster.js';
 
+import Panzoom from '@panzoom/panzoom';
+
 import {extend, isEmpty, getTopLeft, getWidth} from 'ol/extent.js';
 import {transform, getTransform, transformExtent, get as getProjection} from 'ol/proj.js';
 import {default as Projection} from 'ol/proj/Projection.js';
@@ -334,6 +336,8 @@ class N2MapCanvas  {
 		this.vectorLinkSource = new N2LinkSource({
 			dispatchService: this.dispatchService
 		});
+
+		this.panzoomState = null;
 
 		this._drawMap();
 		opts.onSuccess();
@@ -1774,10 +1778,20 @@ class N2MapCanvas  {
 
 	_displayNotification(featureData, thisContext) {
 		const { lineDuration, relatedImage, style: { fillColor, opacity } } = featureData;
-		thisContext.mapNotification.element.firstChild.style.backgroundColor = fillColor
-		const rgbConvertedColour = thisContext.mapNotification.element.firstChild.style.backgroundColor;
-		thisContext.mapNotification.element.firstChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
+		thisContext.mapNotification.element.firstElementChild.style.backgroundColor = fillColor
+		/* By the way, this needs to be set like this. Browsers convert the hex into rgba. */
+		const rgbConvertedColour = thisContext.mapNotification.element.firstElementChild.style.backgroundColor;
+		thisContext.mapNotification.element.firstElementChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
 		thisContext.mapNotification.show(`<img src=./db${relatedImage}>`, lineDuration * 1000);
+
+		const imgContainer = thisContext.mapNotification.element.firstElementChild;
+		const imgTag = imgContainer.firstElementChild;
+		if (thisContext.panzoomState !== null) {
+			thisContext.panzoomState.destroy();
+			imgContainer.removeEventListener("wheel", thisContext.panzoomState.zoomWithWheel);
+		}
+		thisContext.panzoomState = Panzoom(imgTag);
+		imgContainer.addEventListener("wheel", thisContext.panzoomState.zoomWithWheel);
 	}
 	
 	_zoomToFeature() {
