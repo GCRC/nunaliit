@@ -1529,6 +1529,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
+			if (senData.length < 1) return;
 			const mdcCardSelector = "#relatedImageCardDisplay > div.mdc-card__primary-action > div.n2card__primary";
 
 			const getDialogSelection = function(attachmentUrl) {
@@ -1582,7 +1583,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
-			if (senData.length < 1) return;
 			const relatedImageLink = senData[0].relatedImage ? senData[0].relatedImage : "";
 			let displayImageLinkText = relatedImageLink.split("/");
 			if (displayImageLinkText.length > 1) {
