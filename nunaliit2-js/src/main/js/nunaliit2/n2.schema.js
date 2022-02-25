@@ -251,8 +251,6 @@ function _formSingleField(r,completeSelectors,options){
 
 	if( options.date ){
 		r.push('<div class="n2schema_help_date"></div>');
-	} else if(options.tag) {
-		r.push('<div class="n2schema_tag_add ' + selClass + ' tagatlas_tagdoc_addtag"></div>');
 	}
 	
 	if( options.wikiTransform ){
@@ -1819,9 +1817,6 @@ var Form = $n2.Class({
 						_this.refresh($elem);
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
-					} 
-					else if( $clicked.hasClass('n2schema_tag_add') ){
-						_this._addTag($clicked, $elem);
 					} 
 					else if( $clicked.hasClass('n2schema_array_item_delete') ){
 						var itemIndex = 1 * classInfo.selector.getKey();

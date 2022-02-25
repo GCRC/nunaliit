@@ -16,7 +16,7 @@
 }
 
 .n2schema_array_add, .n2schema_array_item_delete, .n2schema_array_item_down, .n2schema_array_item_up,
-.n2schema_tag_add, .n2schema_tag_item_delete {
+.n2schema_tag_item_delete {
 	width: 16px;
 	height: 16px;
 	margin: 0px;	
@@ -29,14 +29,14 @@
 	display: none;
 }
 
-.n2schema_array_add, .n2schema_tag_add {
+.n2schema_array_add {
 	display: inline-block;
 	background: url(tree/icons.png) no-repeat;
 	background-position: 0px 0px;
 	float: right;
 }
 
-.n2schema_array_add:hover, .n2schema_tag_add:hover {
+.n2schema_array_add:hover {
 	background-position: -16px 0px;
 }
 
