@@ -328,7 +328,6 @@ class N2MapCanvas  {
 		this.showRelatedImages = true;
 		this.animateMapFitting = false;
 		this.lastFeatureZoomedTo = undefined;
-		this.lastFeatureDisplayedImage = undefined;
 		this.mapNotification = null;
 
 		this.vectorLinkSource = new N2LinkSource({
@@ -1728,7 +1727,10 @@ class N2MapCanvas  {
 				//popup.show(,content);
 			}
 		} else if ('renderStyledTranscript' === type) {
-			if (this.showRelatedImages){
+			if (m.hideImage) {
+				this.mapNotification.hide();
+			}
+			else if (this.showRelatedImages){
 				this._showFeatureRelatedImage();
 			}
 
@@ -1784,26 +1786,21 @@ class N2MapCanvas  {
 			this._sortFeaturesByTimeAndPlaceName(features);
 			const [imageDataFeature] = features.slice(-1);
 
-			if (imageDataFeature === undefined || (this.lastFeatureDisplayedImage !== undefined
-				&& (this.lastFeatureDisplayedImage.data._ldata.timeLinkTags.placeTag 
-					=== imageDataFeature.data._ldata.timeLinkTags.placeTag)
-				&& (this.lastFeatureDisplayedImage.data._ldata.start 
-					=== imageDataFeature.data._ldata.start)
-				)) return;
+			if (imageDataFeature === undefined) return;
 			if (imageDataFeature.data && imageDataFeature.data._ldata
 				&& imageDataFeature.data._ldata.relatedImage !== "") {
-				$n2.utils.throttle(this._displayNotification, 500)(imageDataFeature.data._ldata, this);
+				this._displayNotificationImage(imageDataFeature.data._ldata);
 				this.lastFeatureDisplayedImage = imageDataFeature;
 			}
 		});
 	}
 
-	_displayNotification(featureData, thisContext) {
+	_displayNotificationImage(featureData) {
 		const { lineDuration, relatedImage, style: { fillColor, opacity } } = featureData;
-		thisContext.mapNotification.element.firstChild.style.backgroundColor = fillColor
-		const rgbConvertedColour = thisContext.mapNotification.element.firstChild.style.backgroundColor;
-		thisContext.mapNotification.element.firstChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
-		thisContext.mapNotification.show(`<img src=./db${relatedImage}>`, lineDuration * 1000);
+		this.mapNotification.element.firstChild.style.backgroundColor = fillColor
+		const rgbConvertedColour = this.mapNotification.element.firstChild.style.backgroundColor;
+		this.mapNotification.element.firstChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
+		this.mapNotification.show(`<img src=./db${relatedImage}>`, -1);
 	}
 	
 	_zoomToFeature() {
@@ -1824,9 +1821,11 @@ class N2MapCanvas  {
 
 		if (lastKnownFeature !== null 
 			&& lastKnownFeature.n2ConvertedBbox !== undefined) {
-			if (this.lastFeatureZoomedTo !== undefined &&
-				(this.lastFeatureZoomedTo.data._ldata.timeLinkTags.placeTag 
-					=== lastKnownFeature.data._ldata.timeLinkTags.placeTag)) return;
+			if (this.lastFeatureZoomedTo !== undefined
+				&&	(this.lastFeatureZoomedTo.data._ldata.timeLinkTags.placeTag 
+					=== lastKnownFeature.data._ldata.timeLinkTags.placeTag)
+				&& (this.lastFeatureZoomedTo.data._ldata.start 
+					=== lastKnownFeature.data._ldata.start)) return;
 			const expectedScale = lastKnownFeature.data._ldata.placeZoomScale;
 			const zoomScale = (expectedScale 
 				&& expectedScale > 0 
