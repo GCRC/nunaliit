@@ -1042,7 +1042,7 @@ public class SchemaAttribute {
 					pw.println("\t\t\t\t\t<div class=\"value\">");
 					pw.println("\t\t\t\t\t\t{{#"+id+"}}");
 					pw.println("\t\t\t\t\t\t\t{{#tags}}");
-					pw.println("\t\t\t\t\t\t\t\t<div class=\"array_element\">");
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"n2_tag_element\" title=\"{{.}}\">");
 					pw.println("\t\t\t\t\t\t\t\t\t{{.}}");
 					pw.println("\t\t\t\t\t\t\t\t</div>");
 					pw.println("\t\t\t\t\t\t\t{{/tags}}");
@@ -1329,13 +1329,14 @@ public class SchemaAttribute {
 
 				pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 				pw.println("\t\t\t\t\t<div class=\"value\">");
-
-				pw.println("\t\t\t\t\t\t{{#:tag "+id+"}}");
-				pw.println("\t\t\t\t\t\t\t<span>{{#:field}}.{{/:field}}</span>");
-				pw.println("\t\t\t\t\t\t{{/:tag}}");
-				pw.println("\t\t\t\t\t\t{{#"+id+"}}");
-				pw.println("\t\t\t\t\t\t\t{{#:field}}newtag,tag,tagFieldId="+id+"{{/:field}}");
-				pw.println("\t\t\t\t\t\t{{/"+id+"}}");
+				pw.println("\t\t\t\t\t\t<div class=\"n2schema_taginput_container\">");
+				pw.println("\t\t\t\t\t\t\t{{#:tag "+id+"}}");
+				pw.println("\t\t\t\t\t\t\t\t<span>{{#:field}}.{{/:field}}</span>");
+				pw.println("\t\t\t\t\t\t\t{{/:tag}}");
+				pw.println("\t\t\t\t\t\t\t{{#"+id+"}}");
+				pw.println("\t\t\t\t\t\t\t\t{{#:field}}newtag,tag,tagFieldId="+id+"{{/:field}}");
+				pw.println("\t\t\t\t\t\t\t{{/"+id+"}}");
+				pw.println("\t\t\t\t\t\t</div>");
 				pw.println("\t\t\t\t\t</div>");
 				pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 				

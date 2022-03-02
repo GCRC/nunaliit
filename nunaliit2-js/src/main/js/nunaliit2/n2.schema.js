@@ -204,7 +204,7 @@ function _formSingleField(r,completeSelectors,options){
 	} else if( options.checkbox ){
 		r.push('<input type="checkbox"');
 	} else if(options.tag) {
-		r.push('<input type="search"');
+		r.push('<input type="search" placeholder="' + _loc('Add a tag') + '"');
 	} else {
 		r.push('<input type="text"');
 	};
@@ -583,8 +583,6 @@ function _tagField() {
 	
 	var r = [];
 	
-	r.push('<div class="n2schema_tag">');
-
 	if( obj ) {
 		var tags = obj.tags;
 		if(tags && tags.length > 0) {
@@ -595,13 +593,10 @@ function _tagField() {
 				completeSelectors = completeSelectors.getChildSelector(i);
 				var cl = createClassStringFromSelector(completeSelectors);
 				
-				r.push('<div class="n2schema_tag_item">');
-				r.push('<div class="n2schema_tag_item_buttons">');
-				r.push('<div class="n2schema_tag_item_delete '+cl+'"></div>');
+				r.push('<div class="n2_tag_element">');
+				r.push('<span>'+item+'</span>');
+				r.push('<span aria-label="delete this tag" class="n2schema_tag_item_delete '+cl+'">&times;</span>')
 				r.push('</div>');
-				r.push('<div class="n2schema_tag_item_wrapper">');
-				r.push( options.fn(item,{data:{n2_selector:completeSelectors}}) );
-				r.push('</div></div>');
 			}
 		}
 	}
@@ -615,8 +610,6 @@ function _tagField() {
 		selectors.push(options.ids[0]);
 		tagSelector = new $n2.objectSelector.ObjectSelector(selectors);
 	}
-
-	r.push('</div>');
 	
 	return r.join('');
 	
@@ -1837,11 +1830,17 @@ var Form = $n2.Class({
 						var ary = parentSelector.getValue(_this.obj);
 						ary.splice(itemIndex,1);
 						
-						var $item = $clicked.parents('.n2schema_tag_item').first();
+						var $item = $clicked.parents('.n2_tag_element').first();
 						$item.remove();
 
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
+					}
+					else if( $clicked.hasClass('n2schema_taginput_container') ) {
+						var fieldWrapper = $clicked.children()[$clicked.children().length-1];
+						var fieldContainer = $(fieldWrapper).children[0];
+						var input = $(fieldContainer).children[0];
+						$(input).focus();
 					}
 					else if( $clicked.hasClass('n2schema_array_item_up') ){
 						// Push item earlier in array
@@ -1861,22 +1860,6 @@ var Form = $n2.Class({
 						};
 						
 					} 
-					else if( $clicked.hasClass('n2schema_tag_item_up') ){
-						var itemIndex = 1 * classInfo.selector.getKey();
-						if( itemIndex > 0 ) {
-							var parentSelector = classInfo.selector.getParentSelector();
-							var ary = parentSelector.getValue(_this.obj);
-							var removedItems = ary.splice(itemIndex,1);
-							ary.splice(itemIndex-1,0,removedItems[0]);
-							
-							var $item = $clicked.parents('.n2schema_tag_item').first();
-							var $prevItem = $item.prev();
-							$item.insertBefore($prevItem);
-
-							_this.callback(_this.obj,classInfo.selector.selectors,ary);
-						};
-						
-					}
 					else if( $clicked.hasClass('n2schema_array_item_down') ){
 						// Push item later in array
 						var itemIndex = 1 * classInfo.selector.getKey();
@@ -1895,22 +1878,6 @@ var Form = $n2.Class({
 						};
 						
 					} 
-					else if( $clicked.hasClass('n2schema_tag_item_down') ){
-						var itemIndex = 1 * classInfo.selector.getKey();
-						var parentSelector = classInfo.selector.getParentSelector();
-						var ary = parentSelector.getValue(_this.obj);
-						if( itemIndex < (ary.length - 1) ) {
-							var removedItems = ary.splice(itemIndex,1);
-							ary.splice(itemIndex+1,0,removedItems[0]);
-							
-							var $item = $clicked.parents('.n2schema_tag_item').first();
-							var $nextItem = $item.next();
-							$item.insertAfter($nextItem);
-
-							_this.callback(_this.obj,classInfo.selector.selectors,ary);
-						};
-						
-					}
 					else if( $clicked.hasClass('n2schema_referenceDelete') ){
 						var referenceKey = classInfo.selector.getKey();
 						var parentSelector = classInfo.selector.getParentSelector();
