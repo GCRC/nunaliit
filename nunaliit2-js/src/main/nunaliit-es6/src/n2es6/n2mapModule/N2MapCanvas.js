@@ -29,6 +29,8 @@ import {default as N2DonutCluster} from '../ol5support/N2DonutCluster.js';
 import {default as N2LinkSource} from './N2LinkSource.js';
 //import {default as N2Cluster} from '../ol5support/N2Cluster.js';
 
+import Panzoom from '@panzoom/panzoom';
+
 import {extend, isEmpty, getTopLeft, getWidth} from 'ol/extent.js';
 import {transform, getTransform, transformExtent, get as getProjection} from 'ol/proj.js';
 import {default as Projection} from 'ol/proj/Projection.js';
@@ -332,6 +334,8 @@ class N2MapCanvas  {
 		this.vectorLinkSource = new N2LinkSource({
 			dispatchService: this.dispatchService
 		});
+
+		this.panzoomState = null;
 
 		this._drawMap();
 		opts.onSuccess();
@@ -1783,10 +1787,20 @@ class N2MapCanvas  {
 
 	_displayNotificationImage(featureData) {
 		const { lineDuration, relatedImage, style: { fillColor, opacity } } = featureData;
-		this.mapNotification.element.firstChild.style.backgroundColor = fillColor
-		const rgbConvertedColour = this.mapNotification.element.firstChild.style.backgroundColor;
-		this.mapNotification.element.firstChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
+		this.mapNotification.element.firstElementChild.style.backgroundColor = fillColor
+    		/* By the way, this needs to be set like this. Browsers convert the hex into rgba. */
+		const rgbConvertedColour = this.mapNotification.element.firstElementChild.style.backgroundColor;
+		this.mapNotification.element.firstElementChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
 		this.mapNotification.show(`<img src=./db${relatedImage}>`, -1);
+    
+    		const imgContainer = this.mapNotification.element.firstElementChild;
+		const imgTag = imgContainer.firstElementChild;
+		if (this.panzoomState !== null) {
+			this.panzoomState.destroy();
+			imgContainer.removeEventListener("wheel", this.panzoomState.zoomWithWheel);
+		}
+		this.panzoomState = Panzoom(imgTag);
+		imgContainer.addEventListener("wheel", this.panzoomState.zoomWithWheel);
 	}
 	
 	_zoomToFeature(feature) {
@@ -1841,38 +1855,7 @@ class N2MapCanvas  {
 			map.getView().fit(extent, map.getSize() );
 		}
 	}
-	
-// ===========================================================
-// 2.3.0-alpha code which is replaced by the _getMapFeaturesIncludeingFidMapOl5
-// function in the the atlascine branch.
-// ===========================================================
-//	_getMapFeaturesIncludingFid(fid) {
-//		var result_feature = null;
-//		if (fid){
-//			if( this.sources ) {
-//				
-//				let sources = this.sources;
-//				for(let loop=0;loop<sources.length;++loop) {
-//					var source = sources[loop];
-//					result_feature = source.getFeatureById(fid);
-//					if (result_feature){
-//						break;
-//					}
-////					} else if( feature.cluster ) {
-////						for(var j=0,k=feature.cluster.length; j<k; ++j){
-////							var f = feature.cluster[j];
-////							if( f.fid && fidMap[f.fid] ){
-////								 result_features.push(f);
-////							};
-////						};
-////					};
-//				}
-//			}
-//		}
-//		
-//		return result_feature;
-//	}
-	
+		
 	/**
 	 * Compute the bounding box of the original geometry. This may differ from
 	 * the bounding box of the geometry on the feature since this can be a
