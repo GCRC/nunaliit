@@ -2,7 +2,7 @@
 * @module n2es6/N2FilterableLegendWidget
 */
 
-/* import Feature from 'ol/Feature.js'; */
+import TimelinesChart from 'timelines-chart';
 
 const _loc = function(str,args){ return $n2.loc(str,"nunaliit2",args); };
 const ALL_CHOICES = "__ALL_SELECTED__";
@@ -13,14 +13,14 @@ const filterableLegends = [
 
 const supportedGraphicTypes = [
     "pie",
-    "count",
-    "custom",
+    "timeline",
     "none"
 ];
 
 /**
  * @classdesc
  * A legend widget that allows one to filter out the groups of documents.
+ * The source model of this legend widget needs to pass through a selectable document filter.
  * It can optionally display a related graphic about the current information being displayed.
  * @api
  */
@@ -31,8 +31,10 @@ class N2FilterableLegendWidgetWithGraphic {
         this.showService = options.showService;
         this.sourceModelId = options.sourceModelId;
         this.containerId = options.containerId;
-        this.selectAllLabel = options.selectAllLabel;
+        this.designatedCanvasName = options.designatedCanvasName;
+        this.selectAllLabel = options.allLabel;
         this.graphicType = options.graphicType;
+        this.isGraphicNone = this.graphicType === "none" ? true : false;
 
         this.eventNames = {
             changeAvailableChoices: null,
@@ -42,10 +44,14 @@ class N2FilterableLegendWidgetWithGraphic {
             setAllSelected: null
         }
 
+        this.legendContainer = null;
         this.legend = null;
+
+        this.graphicContainer = null;
 
         this.state = {
             currentStyles: {},
+            sourceModelDocuments: {},
             allSelected: true,
             availableChoices: [],
             selectedChoices: [],
@@ -53,7 +59,7 @@ class N2FilterableLegendWidgetWithGraphic {
         };
 
         Object.seal(this.state);
-
+        
         if (!this.containerId) {
             throw new Error("containerId must be specified");
         }
@@ -62,12 +68,21 @@ class N2FilterableLegendWidgetWithGraphic {
             throw new Error("sourceModelId must be specified");
         }
 
+        if (!this.designatedCanvasName) {
+            throw new Error("designatedCanvasName must be specified");
+        }
+
+        if (!this.selectAllLabel) {
+            throw new Error("selectAllLabel must be specified");
+        }
+
         if (!supportedGraphicTypes.includes(this.graphicType)) {
             throw new Error(`graphicType ${this.graphicType} not supported`)
         }
         
         this.elementId = nunaliit2.getUniqueId();
 
+        /* Initial dispatcher message "modelGetInfo" to load in options and events for legend updating */
         if (this.dispatchService) {
             const modelInfoRequest = {
                 type: "modelGetInfo",
@@ -88,6 +103,10 @@ class N2FilterableLegendWidgetWithGraphic {
             if (availableChoices) {
                 this.eventNames.changeAvailableChoices = availableChoices.changeEvent;
                 if (availableChoices.value) {
+                    availableChoices.value.forEach(choice => {
+                        // throw error if unexpected format here
+                        // should expect {value/text/colour}
+                    });
                     this.state.availableChoices = availableChoices.value;
                 }
             }
@@ -128,13 +147,32 @@ class N2FilterableLegendWidgetWithGraphic {
                 this.dispatchService.register(this.DH, this.eventNames.changeAllSelected, fn);
             }
 
-            this.dispatchService.register(this.DH, "canvasReportStylesInUse", fn);
+            /* this.dispatchService.register(this.DH, "canvasReportStylesInUse", fn); */
+
+            /* Dispatch to get the current styles in use by the canvas */
             const stylesRequestMessage = {
                 type: "canvasGetStylesInUse",
-                canvasName: this.canvasName
+                canvasName: this.designatedCanvasName
             };
             this.dispatchService.synchronousCall(this.DH, stylesRequestMessage);
-            this.state.currentStyles = stylesRequestMessage.stylesInUse;
+            if (stylesRequestMessage.stylesInUse) {
+                this.state.currentStyles = stylesRequestMessage.stylesInUse;
+            }
+
+            this.dispatchService.register(this.DH, "loadedModuleContent", fn);
+
+            if (!this.isGraphicNone) {
+                this.dispatchService.register(this.DH, "modelStateUpdated", fn);
+                const modelStateMessage = {
+                    type: "modelGetState",
+                    modelId: this.sourceModelId
+                };
+    
+                this.dispatchService.synchronousCall(this.DH, modelStateMessage);
+                if (modelStateMessage.state) {
+                    this._sourceModelUpdated(modelStateMessage.state);
+                }
+            }
         }
 
         const legendAndGraphicContainer = document.getElementById(this.containerId)
@@ -151,11 +189,11 @@ class N2FilterableLegendWidgetWithGraphic {
 	}
 
     _handle (message, addr, dispatcher) {
-        const { type, value } = message;
+        const { type, value, modelId, state } = message;
         if (type === this.eventNames.changeAvailableChoices) {
             if (value) {
                 this.state.availableChoices = value;
-                this._draw();
+                this._drawLegend();
             }
         } 
         else if (type === this.eventNames.changeSelectedChoices) {
@@ -175,21 +213,69 @@ class N2FilterableLegendWidgetWithGraphic {
                 this._adjustSelectedItem();
             }
         }
-        else if (type === "canvasReportStylesInUse") {
-            const { canvasName, stylesInUse } = message;
-            this.state.currentStyles = stylesInUse;
-            // call _draw() here?
+        else if (type === "modelStateUpdated") {
+            if (modelId === this.sourceModelId) {
+                this._sourceModelUpdated(state);
+            }
         }
+        else if (type === "loadedModuleContent") {
+            this._draw();
+        }
+        /* else if (type === "canvasReportStylesInUse") {
+            const { canvasName, stylesInUse } = message;
+            if (canvasName !== this.designatedCanvasName) return;
+            this.state.currentStyles = stylesInUse;
+            this._drawLegend();
+        } */
+    }
+
+    _sourceModelUpdated(modelState) {
+        if (!modelState) return;
+        if (modelState.added) {
+            modelState.added.forEach(doc => {
+                this.state.sourceModelDocuments[doc._id] = doc;
+            });
+        }
+        if (modelState.updated) {
+            modelState.updated.forEach(doc => {
+                this.state.sourceModelDocuments[doc._id] = doc;
+            });
+        }
+        if (modelState.removed) {
+            modelState.removed.forEach(doc => {
+                delete this.state.sourceModelDocuments[doc._id];
+            });
+        }
+        if (modelState.added || modelState.updated || modelState.removed) {
+            this._drawGraphic();
+        }
+        
     }
 
     _draw() {
         const mainContainer = document.getElementById(this.elementId);
         mainContainer.innerHTML = "";
-        const fragment = document.createDocumentFragment();
-
+        mainContainer.setAttribute("class", "n2_filterableLegendWidgetWithGraphic");   
+        
         const legendContainer = document.createElement("div");
-        legendContainer.setAttribute("id", "n2_filterableLegendWidgetLegend")
+        legendContainer.setAttribute("id", "n2_filterableLegendWidgetLegend");
         legendContainer.setAttribute("class", "n2widgetLegend");
+        this.legendContainer = legendContainer;
+
+        const graphicContainer = document.createElement("div");
+        graphicContainer.setAttribute("id", "n2_filterableLegendWidgetGraphic");
+        this.graphicContainer = graphicContainer;
+
+        mainContainer.append(this.legendContainer);
+        mainContainer.append(this.graphicContainer);
+        
+        this._drawLegend();
+        this._drawGraphic();
+    }
+
+    _drawLegend() {
+        if (this.legendContainer === null) return;
+        this.legendContainer.innerHTML = "";
         const legend = document.createElement("div");
         legend.setAttribute("class", "n2widgetLegend_outer");
         this.legend = legend; 
@@ -205,14 +291,9 @@ class N2FilterableLegendWidgetWithGraphic {
             const colour = choice.color;
             this._drawLegendOption(legendFragment, choice.id, _loc(label), colour);
         });
-        
-        const graphicContainer = document.createElement("div");
-        graphicContainer.setAttribute("id", "n2_filterableLegendWidgetGraphic");
-        
+
         legend.append(legendFragment);
-        legendContainer.append(legend);
-        fragment.append(legendContainer, graphicContainer);
-        mainContainer.append(fragment);
+        this.legendContainer.append(legend);
     }
 
     _drawLegendOption(fragment, optionValue, optionLabel, colour) {
@@ -273,6 +354,39 @@ class N2FilterableLegendWidgetWithGraphic {
         this._adjustSelectedItem();
     }
 
+    _drawGraphic() {
+        if (this.graphicContainer === null) return;
+        this.graphicContainer.innerHTML = "";
+        const graphic = document.createElement("div");
+        graphic.setAttribute("class", "n2_FilterableLegendWidgetGraphicArea");
+        graphic.setAttribute("id", "filterableLegendWidgetGraphicArea");
+        this.graphicContainer.append(graphic);
+
+        if (this.graphicType === "pie") {
+            const D3V3 = window.d3;
+            if (D3V3 === undefined) throw new Error("The d3 (V3) library is not available!")
+            throw new Error("This isn't implemented yet. Come back soon!");
+        }
+        else if (this.graphicType === "timeline") {
+            const preparedData = this.prepareGraphicData(this.state.sourceModelDocuments);
+            TimelinesChart()(graphic)
+            .data(preparedData)
+            .zQualitative(true);
+            /*.width(//width of map minus some padding?)
+            .maxHeight(//legend's height)
+            .maxLineHeight(//get from legend, each row???)
+            .leftMargin(//?)
+            .rightMargin(//?)
+            .topMargin(//?)
+            .bottomMargin(//?)
+            .timeFormat(//???)
+            .xTickFormat(///the x-axis labelling)
+            .dateMarker(//?)
+            //.zQualitative or zColorScale?
+            //zDataLabel; */
+        }
+    }
+
     _adjustSelectedItem() {
         if (!this.legend.hasChildNodes) return;
         [...this.legend.children].forEach(selectionRow => {
@@ -327,7 +441,7 @@ class N2FilterableLegendWidgetWithGraphic {
     }
 
     prepareGraphicData(docs) {
-        if (this.graphicType !== "none") {
+        if (!this.isGraphicNone) {
             throw new Error ("graphicTypes other than 'None' must define behaviour. Override 'prepareGraphicData'")
         }
     }
