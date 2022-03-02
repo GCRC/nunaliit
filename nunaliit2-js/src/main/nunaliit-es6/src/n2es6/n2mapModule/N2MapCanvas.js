@@ -1787,13 +1787,13 @@ class N2MapCanvas  {
 
 	_displayNotificationImage(featureData) {
 		const { lineDuration, relatedImage, style: { fillColor, opacity } } = featureData;
-		this.mapNotification.element.firstChild.style.backgroundColor = fillColor
-    /* By the way, this needs to be set like this. Browsers convert the hex into rgba. */
-		const rgbConvertedColour = this.mapNotification.element.firstChild.style.backgroundColor;
-		this.mapNotification.element.firstChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
+		this.mapNotification.element.firstElementChild.style.backgroundColor = fillColor
+    		/* By the way, this needs to be set like this. Browsers convert the hex into rgba. */
+		const rgbConvertedColour = this.mapNotification.element.firstElementChild.style.backgroundColor;
+		this.mapNotification.element.firstElementChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
 		this.mapNotification.show(`<img src=./db${relatedImage}>`, -1);
     
-    const imgContainer = this.mapNotification.element.firstElementChild;
+    		const imgContainer = this.mapNotification.element.firstElementChild;
 		const imgTag = imgContainer.firstElementChild;
 		if (this.panzoomState !== null) {
 			this.panzoomState.destroy();
