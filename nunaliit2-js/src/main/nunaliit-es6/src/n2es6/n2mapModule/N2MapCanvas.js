@@ -327,8 +327,6 @@ class N2MapCanvas  {
 		this.fitMapToLatestMapTag = false;
 		this.showRelatedImages = true;
 		this.animateMapFitting = false;
-		this.lastFeatureZoomedTo = undefined;
-		this.lastFeatureDisplayedImage = undefined;
 		this.mapNotification = null;
 
 		this.vectorLinkSource = new N2LinkSource({
@@ -1708,32 +1706,41 @@ class N2MapCanvas  {
 			}
 			
 			this.editFeatureInfo = {};
-			this.editFeatureInfo.original = {};
-			
-			// Reload feature
-//			if( reloadRequired ){
-//				var filter = $n2.olFilter.fromFid(fid);
-//				this._reloadFeature(filter);
-//			};
-			
+			this.editFeatureInfo.original = {};	
 		} else if ('resolutionRequest' === type){
 			m.resolution = _this.resolution;
 			m.proj = _this.proj;
 
 		} else if ('focusOn' === type) {
-			
-			if (_this.popupOverlay) {
-				var popup = _this.popupOverlay;
-				var content = "tset";
-				//popup.show(,content);
-			}
 		} else if ('renderStyledTranscript' === type) {
-			if (this.showRelatedImages){
-				this._showFeatureRelatedImage();
+			const { hideImage, currentTime } = m;
+			const donutLayerFeatures = this.overlayLayers.find(layer => {
+				return layer.get("alias") === DONUT_VECTOR_LAYER_DISPLAY_NAME;
+			}).getSource().getFeatures();
+
+			if (hideImage) {
+				this.mapNotification.hide();
+			}
+			else if (this.showRelatedImages){
+				this._sortFeaturesByTimeAndPlaceName(donutLayerFeatures);
+				const actingFeature = donutLayerFeatures.find(feature => {
+					return (currentTime >= feature.data._ldata.transcriptStart 
+						&& currentTime < feature.data._ldata.transcriptEnd);
+				});
+				if (actingFeature) {
+					this._showFeatureRelatedImage(actingFeature);
+				}
 			}
 
 			if (this.fitMapToLatestMapTag) {
-				this._zoomToFeature();
+				this._sortFeaturesByTimeAndPlaceName(donutLayerFeatures);
+				const actingFeature = donutLayerFeatures.find(feature => {
+					return (currentTime >= feature.data._ldata.transcriptStart 
+						&& currentTime < feature.data._ldata.transcriptEnd);
+				});
+				if (actingFeature) {
+					this._zoomToFeature(actingFeature);
+				}
 			}
 
 		} else if ('time_interval_change' === type){
@@ -1743,19 +1750,9 @@ class N2MapCanvas  {
 			if (_this.lastTime === null){
 				_this.initialTime = currTime;
 				_this.lastTime = currTime;
-				// ===========================================================
-				// 2.3.0-alpha mockingData commented out due to it causes an error
-				// ===========================================================
-				//_this.mockingData = _this.mockingDataComplete.slice(0,1);
-
 			}
 			
 			_this.endIdx = parseInt((currTime - _this.initialTime)/incre);
-			// ===========================================================
-			// 2.3.0-alpha mockingData commented out due to it causes an error 
-			// ===========================================================
-			//_this.mockingData = _this.mockingDataComplete.slice(0,_this.endIdx);
-
 			_this.dispatchService.send(DH,{
 				type: 'n2rerender'
 			});
@@ -1777,76 +1774,41 @@ class N2MapCanvas  {
 		});
 	}
 
-	_showFeatureRelatedImage() {
-		this.overlayLayers.forEach(layer => {
-			if (layer.get("alias") !== DONUT_VECTOR_LAYER_DISPLAY_NAME) return;
-			const features = layer.getSource().getFeatures();
-			this._sortFeaturesByTimeAndPlaceName(features);
-			const [imageDataFeature] = features.slice(-1);
-
-			if (imageDataFeature === undefined || (this.lastFeatureDisplayedImage !== undefined
-				&& (this.lastFeatureDisplayedImage.data._ldata.timeLinkTags.placeTag 
-					=== imageDataFeature.data._ldata.timeLinkTags.placeTag)
-				&& (this.lastFeatureDisplayedImage.data._ldata.start 
-					=== imageDataFeature.data._ldata.start)
-				)) return;
-			if (imageDataFeature.data && imageDataFeature.data._ldata
-				&& imageDataFeature.data._ldata.relatedImage !== "") {
-				$n2.utils.throttle(this._displayNotification, 500)(imageDataFeature.data._ldata, this);
-				this.lastFeatureDisplayedImage = imageDataFeature;
-			}
-		});
+	_showFeatureRelatedImage(imageDataFeature) {
+		if (imageDataFeature.data && imageDataFeature.data._ldata
+			&& imageDataFeature.data._ldata.relatedImage !== "") {
+			this._displayNotificationImage(imageDataFeature.data._ldata);
+		}
 	}
 
-	_displayNotification(featureData, thisContext) {
+	_displayNotificationImage(featureData) {
 		const { lineDuration, relatedImage, style: { fillColor, opacity } } = featureData;
-		thisContext.mapNotification.element.firstChild.style.backgroundColor = fillColor
-		const rgbConvertedColour = thisContext.mapNotification.element.firstChild.style.backgroundColor;
-		thisContext.mapNotification.element.firstChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
-		thisContext.mapNotification.show(`<img src=./db${relatedImage}>`, lineDuration * 1000);
+		this.mapNotification.element.firstChild.style.backgroundColor = fillColor
+		const rgbConvertedColour = this.mapNotification.element.firstChild.style.backgroundColor;
+		this.mapNotification.element.firstChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
+		this.mapNotification.show(`<img src=./db${relatedImage}>`, -1);
 	}
 	
-	_zoomToFeature() {
+	_zoomToFeature(feature) {
 		const olmap = this.n2Map;
 		if (!olmap) return;
-		let lastKnownFeature = null;
-		this.overlayLayers.forEach((overlayLayer) => {
-			const n2Source = overlayLayer.getSource();
-			if (n2Source.hasOwnProperty("features_")) {
-				const features = n2Source.features_;
-				this._sortFeaturesByTimeAndPlaceName(features);
-				if (($n2.isArray(features)) && (features.length > 0)) {
-					lastKnownFeature = features[features.length - 1];
-				}
-			}
-			n2Source.refresh();
-		}); 
+		const expectedScale = feature.data._ldata.placeZoomScale;
+		const zoomScale = (expectedScale 
+			&& expectedScale > 0 
+			&& expectedScale <= MAX_MAP_ZOOM_LEVEL) ? expectedScale : DEFAULT_MAP_FEATURE_ZOOM_LEVEL;
 
-		if (lastKnownFeature !== null 
-			&& lastKnownFeature.n2ConvertedBbox !== undefined) {
-			if (this.lastFeatureZoomedTo !== undefined &&
-				(this.lastFeatureZoomedTo.data._ldata.timeLinkTags.placeTag 
-					=== lastKnownFeature.data._ldata.timeLinkTags.placeTag)) return;
-			const expectedScale = lastKnownFeature.data._ldata.placeZoomScale;
-			const zoomScale = (expectedScale 
-				&& expectedScale > 0 
-				&& expectedScale <= MAX_MAP_ZOOM_LEVEL) ? expectedScale : DEFAULT_MAP_FEATURE_ZOOM_LEVEL;
-
-			let mapFitDuration = 0;
-			if (this.animateMapFitting === true) {
-				mapFitDuration = 1000;
-			}
-
-			const areaOfFocus = [lastKnownFeature.n2ConvertedBbox[0], lastKnownFeature.n2ConvertedBbox[1]];
-
-			olmap.getView().animate({
-				center: areaOfFocus,
-				zoom: zoomScale,
-				duration: mapFitDuration
-			});
-
-			this.lastFeatureZoomedTo = lastKnownFeature;
+		let mapFitDuration = 0;
+		if (this.animateMapFitting === true) {
+			mapFitDuration = 1000;
 		}
+
+		const areaOfFocus = [feature.n2ConvertedBbox[0], feature.n2ConvertedBbox[1]];
+
+		olmap.getView().animate({
+			center: areaOfFocus,
+			zoom: zoomScale,
+			duration: mapFitDuration
+		});
 	}
 
 	_getMapFeaturesIncludeingFidMapOl5(fidMap) {
