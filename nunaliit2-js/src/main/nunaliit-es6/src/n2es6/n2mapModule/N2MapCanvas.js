@@ -1767,7 +1767,6 @@ class N2MapCanvas  {
 				this.mapNotification.hide();
 			}
 			else if (this.showRelatedImages){
-				this._sortFeaturesByTimeAndPlaceName(donutLayerFeatures);
 				const actingFeature = donutLayerFeatures.find(feature => {
 					return (currentTime >= feature.data._ldata.transcriptStart 
 						&& currentTime < feature.data._ldata.transcriptEnd);
@@ -1778,7 +1777,6 @@ class N2MapCanvas  {
 			}
 
 			if (this.fitMapToLatestMapTag) {
-				this._sortFeaturesByTimeAndPlaceName(donutLayerFeatures);
 				const actingFeature = donutLayerFeatures.find(feature => {
 					return (currentTime >= feature.data._ldata.transcriptStart 
 						&& currentTime < feature.data._ldata.transcriptEnd);
@@ -1807,19 +1805,6 @@ class N2MapCanvas  {
 			m.stylesInUse = this._getMapStylesInUse();
 		}
 	}
-	_sortFeaturesByTimeAndPlaceName(features) {
-		features.sort((first, second) => {
-			const f_ldata = first.data._ldata;
-			const s_ldata = second.data._ldata;
-			if (f_ldata.start < s_ldata.start) return -1;
-			else if (f_ldata.start > s_ldata.start) return 1;
-			else {
-				if (f_ldata.timeLinkTags.placeTag < s_ldata.timeLinkTags.placeTag) return -1;
-				else if (f_ldata.timeLinkTags.placeTag > s_ldata.timeLinkTags.placeTag) return 1;
-				return 0;
-			}
-		});
-	}
 
 	_showFeatureRelatedImage(imageDataFeature) {
 		if (imageDataFeature.data && imageDataFeature.data._ldata
@@ -1831,12 +1816,12 @@ class N2MapCanvas  {
 	_displayNotificationImage(featureData) {
 		const { lineDuration, relatedImage, style: { fillColor, opacity } } = featureData;
 		this.mapNotification.element.firstElementChild.style.backgroundColor = fillColor
-    		/* By the way, this needs to be set like this. Browsers convert the hex into rgba. */
+		/* By the way, this needs to be set like this. Browsers convert the hex into rgba. */
 		const rgbConvertedColour = this.mapNotification.element.firstElementChild.style.backgroundColor;
 		this.mapNotification.element.firstElementChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
 		this.mapNotification.show(`<img src=./db${relatedImage}>`, -1);
     
-    		const imgContainer = this.mapNotification.element.firstElementChild;
+		const imgContainer = this.mapNotification.element.firstElementChild;
 		const imgTag = imgContainer.firstElementChild;
 		if (this.panzoomState !== null) {
 			this.panzoomState.destroy();
@@ -1855,7 +1840,7 @@ class N2MapCanvas  {
 			&& expectedScale <= MAX_MAP_ZOOM_LEVEL) ? expectedScale : DEFAULT_MAP_FEATURE_ZOOM_LEVEL;
 
 		let mapFitDuration = 0;
-		if (this.animateMapFitting === true) {
+		if (this.animateMapFitting) {
 			mapFitDuration = 1000;
 		}
 
