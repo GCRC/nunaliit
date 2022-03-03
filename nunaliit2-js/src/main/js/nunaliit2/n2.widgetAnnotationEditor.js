@@ -1529,6 +1529,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
+			if (senData.length < 1) return;
 			const mdcCardSelector = "#relatedImageCardDisplay > div.mdc-card__primary-action > div.n2card__primary";
 
 			const getDialogSelection = function(attachmentUrl) {
@@ -1538,6 +1539,23 @@ POSSIBILITY OF SUCH DAMAGE.
 					cardDisplay.innerHTML = attachmentUrl;
 				}
 			}
+
+			const timeLinkTextAreaId = "n2WidgetAnnotationEditorTaggingNotes";
+			const timeLinkNotes = senData[0].notes ? senData[0].notes : "";
+			new $n2.mdc.MDCTextField({
+				txtFldLabel: "Notes",
+				txtFldInputId: timeLinkTextAreaId,
+				txtFldOutline: true,
+				txtFldArea: true,
+				txtFldFullWidth: true,
+				parentElem: $formFieldSection
+			});
+			const timeLinkNotesTextArea = document.getElementById(timeLinkTextAreaId);
+			// excellent
+			timeLinkNotesTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
+			timeLinkNotesTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") 
+			timeLinkNotesTextArea.value = timeLinkNotes;
+			timeLinkNotesTextArea.style.resize = "vertical";
 
 			new $n2.mdc.MDCButton({
 				parentElem: $formFieldSection,
@@ -1565,7 +1583,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
-			if (senData.length < 1) return;
 			const relatedImageLink = senData[0].relatedImage ? senData[0].relatedImage : "";
 			let displayImageLinkText = relatedImageLink.split("/");
 			if (displayImageLinkText.length > 1) {
@@ -1583,23 +1600,6 @@ POSSIBILITY OF SUCH DAMAGE.
 			});
 			document.querySelector(mdcCardSelector).dataset.trueUrl = relatedImageLink;
 			document.querySelector("#relatedImageCardDisplay > div.mdc-card__primary-action").style.cursor = "default";
-
-			const timeLinkTextAreaId = "n2WidgetAnnotationEditorTaggingNotes";
-			const timeLinkNotes = senData[0].notes ? senData[0].notes : "";
-			new $n2.mdc.MDCTextField({
-				txtFldLabel: "Notes",
-				txtFldInputId: timeLinkTextAreaId,
-				txtFldOutline: true,
-				txtFldArea: true,
-				txtFldFullWidth: true,
-				parentElem: $formFieldSection
-			});
-			const timeLinkNotesTextArea = document.getElementById(timeLinkTextAreaId);
-			// excellent
-			timeLinkNotesTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
-			timeLinkNotesTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") 
-			timeLinkNotesTextArea.value = timeLinkNotes;
-			timeLinkNotesTextArea.style.resize = "vertical";
 		},
 
 		/**

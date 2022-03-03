@@ -734,37 +734,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				,features: ['playpause','progress','volume','sourcechooser','fullscreen']
 			}); 
 
-			//little refine for css : specically for transcript
-			//$('.n2_content_text').css('overflow','hidden');
-			
-			/*this.transcript_array = [
-				{"start": "0.00",
-					"fin": "5.00",
-					"text": "Now that we've looked at the architecture of the internet, let's see how you might connect your personal devices to the internet inside your house."},
-				{"start": "5.01",
-					"fin": "10.00",
-					"text": "Well there are many ways to connect to the internet, and most often people connect wirelessly."},
-				{"start": "10.01",
-					"fin": "15.00",
-					"text": "Let's look at an example of how you can connect to the internet."},
-				{"start": "15.01",
-					"fin": "20.00",
-					"text": "If you live in a city or a town, you probably have a coaxial cable for cable Internet, or a phone line if you have DSL, running to the outside of your house, that connects you to the Internet Service Provider, or ISP."},
-				{"start": "20.01",
-					"fin": "25.00",
-					"text": "If you live far out in the country, you'll more likely have a dish outside your house, connecting you wirelessly to your closest ISP, or you might also use the telephone system."},
-				{"start": "25.01",
-					"fin": "30.00",
-					"text": "Whether a wire comes straight from the ISP hookup outside your house, or it travels over radio waves from your roof, the first stop a wire will make once inside your house, is at your modem."},
-			];*/
-
-			// time update function: #highlight on the span to change the color of the text
 			$video
 				.bind('timeupdate', function() {
 					var currentTime = this.currentTime;
 					_this._updateCurrentTime(currentTime, 'video');
 				})
-
 				.bind('durationchange', function(e) {
 					var duration = this.duration;
 					$n2.log('video duration changed: '+duration);
@@ -787,10 +761,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		} else {
 			_this._renderError('Can not compute URL for video');
 		}
-
-//		if (typeof _this._lastCtxTime !== 'undefined'){
-//			_this._updateCurrentTime(_this._lastCtxTime, 'savedState');
-//		}
 
 		function _rightClickCallback (e, $this, contextMenu, selections){
 			var hoveredElem = e.target;

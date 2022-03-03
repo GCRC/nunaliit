@@ -4,6 +4,7 @@
   "description": "The ESmodules for nunaliit2 project -- for ol map support",
   "main": "dist/n2es6.js",
   "dependencies": {
+    "@panzoom/panzoom": "^4.4.4",
     "ajax": "0.0.4",
     "fs": "0.0.1-security",
     "imports-loader": "^0.8.0",
