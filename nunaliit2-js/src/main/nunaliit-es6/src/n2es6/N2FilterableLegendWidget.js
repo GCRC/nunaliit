@@ -48,6 +48,7 @@ class N2FilterableLegendWidgetWithGraphic {
         this.legend = null;
 
         this.graphicContainer = null;
+        this.graphic = null;
 
         this.state = {
             currentStyles: {},
@@ -80,6 +81,12 @@ class N2FilterableLegendWidgetWithGraphic {
             throw new Error(`graphicType ${this.graphicType} not supported`)
         }
         
+        const legendAndGraphicContainer = document.getElementById(this.containerId)
+
+        if (legendAndGraphicContainer === null) {
+            throw new Error(`containerId ${this.containerId} could not be found`)
+        }
+
         this.elementId = nunaliit2.getUniqueId();
 
         /* Initial dispatcher message "modelGetInfo" to load in options and events for legend updating */
@@ -104,6 +111,7 @@ class N2FilterableLegendWidgetWithGraphic {
                 this.eventNames.changeAvailableChoices = availableChoices.changeEvent;
                 if (availableChoices.value) {
                     availableChoices.value.forEach(choice => {
+                        // TODO
                         // throw error if unexpected format here
                         // should expect {value/text/colour}
                     });
@@ -173,12 +181,7 @@ class N2FilterableLegendWidgetWithGraphic {
                     this._sourceModelUpdated(modelStateMessage.state);
                 }
             }
-        }
-
-        const legendAndGraphicContainer = document.getElementById(this.containerId)
-
-        if (legendAndGraphicContainer === null) {
-            throw new Error(`containerId ${this.containerId} could not be found`)
+            this.preloadOtherWidgetData(options);
         }
 
         const legendAndGraphic = document.createElement("div");
@@ -249,7 +252,6 @@ class N2FilterableLegendWidgetWithGraphic {
         if (modelState.added || modelState.updated || modelState.removed) {
             this._drawGraphic();
         }
-        
     }
 
     _draw() {
@@ -369,21 +371,28 @@ class N2FilterableLegendWidgetWithGraphic {
         }
         else if (this.graphicType === "timeline") {
             const preparedData = this.prepareGraphicData(this.state.sourceModelDocuments);
-            TimelinesChart()(graphic)
-            .data(preparedData)
-            .zQualitative(true);
-            /*.width(//width of map minus some padding?)
-            .maxHeight(//legend's height)
-            .maxLineHeight(//get from legend, each row???)
-            .leftMargin(//?)
-            .rightMargin(//?)
-            .topMargin(//?)
-            .bottomMargin(//?)
-            .timeFormat(//???)
-            .xTickFormat(///the x-axis labelling)
-            .dateMarker(//?)
-            //.zQualitative or zColorScale?
-            //zDataLabel; */
+            if (this.graphic !== null) {
+                this.graphic = TimelinesChart()(graphic)
+                .data(preparedData)
+                .zQualitative(true)
+                //.zColorLabel(?)
+                //.zDataLabel(?)
+                //.zScaleLabel(?)
+                //.xTickFormat(?)
+                .enableAnimations(false)
+                .enableOverview(false)
+                //.maxLineHeight(//legend, row?)
+                .maxHeight(this.legend.offsetHeight)
+                //.timeFormat(?)
+                //.dateMarker(?)
+                .onSegmentClick(segment => {
+                    console.log(segment);
+                })
+                .width(document.querySelector(".n2_content_map").offsetWidth - this.legend.offsetWidth - (10 * 2));
+            }
+            else {
+                this.graphic.data(preparedData);
+            }
         }
     }
 
@@ -440,6 +449,10 @@ class N2FilterableLegendWidgetWithGraphic {
         }
     }
 
+    preloadOtherWidgetData(options) {
+        return;
+    }
+
     prepareGraphicData(docs) {
         if (!this.isGraphicNone) {
             throw new Error ("graphicTypes other than 'None' must define behaviour. Override 'prepareGraphicData'")
@@ -478,8 +491,6 @@ export function widgetDisplay(message) {
         new N2FilterableLegendWidgetWithGraphic(options);
     }
 }
-
-
 
 nunaliit2.filterableLegendWidget = {
     filterableLegendWidgetWithGraphic: N2FilterableLegendWidgetWithGraphic,
