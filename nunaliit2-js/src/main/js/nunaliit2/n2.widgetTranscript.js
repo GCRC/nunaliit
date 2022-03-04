@@ -717,6 +717,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.attr('controls', 'controls')
 				.attr('width', '100%')
 				.attr('height', '360px')
+				.attr('preload', 'metadata')
 				.appendTo($mediaDiv);
 
 			var $videoSource = $('<source>')
@@ -740,8 +741,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					_this._updateCurrentTime(currentTime, 'video');
 				})
 				.bind('durationchange', function(e) {
-					var duration = this.duration;
-					$n2.log('video duration changed: '+duration);
+					_this.dispatchService.send(DH, {
+						type: "transcriptVideoDurationChange",
+						value: this.duration
+					});
 				});
 			
 			// If using embedded srt, remove the srt file selector
