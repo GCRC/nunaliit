@@ -532,15 +532,6 @@ public class SchemaAttribute {
 				throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
 			}
 
-		} else if( "tag".equals(type) ){
-			if( null != id ){
-				JSONObject tagObj = new JSONObject();
-				tagObj.put("nunaliit_type", "tag");
-				schemaDoc.put(id, tagObj);
-			} else {
-				throw new Exception("'id' required for attributes of type 'tag'");
-			}
-			
 		} else if( "createdBy".equals(type) ){
 			if( null != id ){
 				throw new Exception("'id' should not be specified for attributes of type 'createdBy'");
@@ -1333,9 +1324,7 @@ public class SchemaAttribute {
 				pw.println("\t\t\t\t\t\t\t{{#:tag "+id+"}}");
 				pw.println("\t\t\t\t\t\t\t\t<span>{{#:field}}.{{/:field}}</span>");
 				pw.println("\t\t\t\t\t\t\t{{/:tag}}");
-				pw.println("\t\t\t\t\t\t\t{{#"+id+"}}");
-				pw.println("\t\t\t\t\t\t\t\t{{#:field}}newtag,tag,tagFieldId="+id+"{{/:field}}");
-				pw.println("\t\t\t\t\t\t\t{{/"+id+"}}");
+				pw.println("\t\t\t\t\t\t\t{{#:field}}" + id + ",tag{{/:field}}");
 				pw.println("\t\t\t\t\t\t</div>");
 				pw.println("\t\t\t\t\t</div>");
 				pw.println("\t\t\t\t\t<div class=\"end\"></div>");

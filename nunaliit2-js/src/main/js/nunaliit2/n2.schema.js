@@ -1910,19 +1910,30 @@ var Form = $n2.Class({
 		var classInfo = parseClassNames(classNames);
 
 		var value = $target[0].value;
-		var parentSelector = classInfo.selector.getParentSelector();
-		var tags = parentSelector.getValue(this.obj).tags;
-		if( !tags ){
-			var parentObj = parentSelector.getValue(this.obj);
+		var tagObj = classInfo.selector.getValue(this.obj);
+		
+		if(!tagObj) {
+			var parentObj = classInfo.selector.getParentSelector().getValue(this.obj);
 			if( parentObj && typeof parentObj === 'object' ){
-				parentObj.tags = [value];
-				parentObj.nunaliit_type = 'tag';
-			} 
-		} else if( tags && $n2.isArray(tags) ){
-			tags.push(value);
+				tagObj = {
+					'tags': [value],
+					'nunaliit_type': 'tag'
+				}
+				parentObj[classInfo.selector.getKey()] = tagObj;
+			} else {
+				$n2.log('Error adding tags to tagobject ' + classInfo.selector.getKey() + ' no object found');	
+			}
 		} else {
-			$n2.log('Error adding item to tags array, no array in object and key has wrong type');
+			var tags = tagObj.tags;
+			if( !tags ){
+				tagObj.tags = [value];
+			} else if( tags && $n2.isArray(tags) ){
+				tags.push(value);
+			} else {
+				$n2.log('Error adding item to tags array, no array in object and key has wrong type');
+			}
 		}
+
 		$target[0].value = '';
 		this.refresh($elem);
 		this.callback(this.obj,classInfo.selector.selectors,tags);
@@ -2014,7 +2025,7 @@ var Form = $n2.Class({
 
 			} 
 			else if ( 'tag' === classInfo.type ) {
-				$input.val(value);
+				$input.val('');
 				var tagId = classInfo.selector.selectors[1];
 				$input.autocomplete({
 					source: function(req, res) {
