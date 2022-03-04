@@ -35,6 +35,8 @@ class N2FilterableLegendWidgetWithGraphic {
         this.selectAllLabel = options.allLabel;
         this.graphicType = options.graphicType;
         this.isGraphicNone = this.graphicType === "none" ? true : false;
+        this.hasPerformedInitialDraw = false;
+        this.preloadCallback = (..._) => {};
 
         this.eventNames = {
             changeAvailableChoices: null,
@@ -89,100 +91,7 @@ class N2FilterableLegendWidgetWithGraphic {
 
         this.elementId = nunaliit2.getUniqueId();
 
-        /* Initial dispatcher message "modelGetInfo" to load in options and events for legend updating */
-        if (this.dispatchService) {
-            const modelInfoRequest = {
-                type: "modelGetInfo",
-                modelId: this.sourceModelId,
-                modelInfo: null
-            };
-            this.dispatchService.synchronousCall(this.DH, modelInfoRequest);
-            const { 
-                modelInfo: {
-                    parameters: {
-                        allSelected,
-                        availableChoices,
-                        selectedChoices
-                    }
-                } 
-            } = modelInfoRequest;
-
-            if (availableChoices) {
-                this.eventNames.changeAvailableChoices = availableChoices.changeEvent;
-                if (availableChoices.value) {
-                    availableChoices.value.forEach(choice => {
-                        // TODO
-                        // throw error if unexpected format here
-                        // should expect {value/text/colour}
-                    });
-                    this.state.availableChoices = availableChoices.value;
-                }
-            }
-
-            if (selectedChoices) {
-                this.eventNames.changeSelectedChoices = selectedChoices.changeEvent;
-                this.eventNames.setSelectedChoices = selectedChoices.setEvent;
-                if (selectedChoices.value) {
-                    this.state.selectedChoices = selectedChoices.value;
-                    this.state.selectedChoiceIdMap = {};
-                    this.state.selectedChoices.forEach((choiceText) => {
-                        this.state.selectedChoiceIdMap[choiceText] = true;
-                    });
-                }
-            }
-
-            if (allSelected) {
-                this.eventNames.changeAllSelected = allSelected.changeEvent;
-                this.eventNames.setAllSelected = allSelected.setEvent;
-                if (typeof allSelected.value === "boolean") {
-                    this.state.allSelected = allSelected.value;
-                }
-            }
-
-            const fn = (message, addr, dispatcher) => {
-                this._handle(message, addr, dispatcher);
-            };
-
-            if (this.eventNames.changeAvailableChoices) {
-                this.dispatchService.register(this.DH, this.eventNames.changeAvailableChoices, fn);
-            }
-
-            if (this.eventNames.changeSelectedChoices) {
-                this.dispatchService.register(this.DH, this.eventNames.changeSelectedChoices, fn);
-            }
-
-            if (this.eventNames.changeAllSelected) {
-                this.dispatchService.register(this.DH, this.eventNames.changeAllSelected, fn);
-            }
-
-            /* this.dispatchService.register(this.DH, "canvasReportStylesInUse", fn); */
-
-            /* Dispatch to get the current styles in use by the canvas */
-            const stylesRequestMessage = {
-                type: "canvasGetStylesInUse",
-                canvasName: this.designatedCanvasName
-            };
-            this.dispatchService.synchronousCall(this.DH, stylesRequestMessage);
-            if (stylesRequestMessage.stylesInUse) {
-                this.state.currentStyles = stylesRequestMessage.stylesInUse;
-            }
-
-            this.dispatchService.register(this.DH, "loadedModuleContent", fn);
-
-            if (!this.isGraphicNone) {
-                this.dispatchService.register(this.DH, "modelStateUpdated", fn);
-                const modelStateMessage = {
-                    type: "modelGetState",
-                    modelId: this.sourceModelId
-                };
-    
-                this.dispatchService.synchronousCall(this.DH, modelStateMessage);
-                if (modelStateMessage.state) {
-                    this._sourceModelUpdated(modelStateMessage.state);
-                }
-            }
-            this.preloadOtherWidgetData(options);
-        }
+        this._performDispatcherSetup();
 
         const legendAndGraphic = document.createElement("div");
         legendAndGraphic.setAttribute("id", this.elementId);
@@ -190,6 +99,101 @@ class N2FilterableLegendWidgetWithGraphic {
 
         this._draw();
 	}
+
+    _performDispatcherSetup() {
+        /* Initial dispatcher message "modelGetInfo" to load in options and events for legend updating */
+        if (!this.dispatchService) return;
+        const modelInfoRequest = {
+            type: "modelGetInfo",
+            modelId: this.sourceModelId,
+            modelInfo: null
+        };
+        this.dispatchService.synchronousCall(this.DH, modelInfoRequest);
+        const { 
+            modelInfo: {
+                parameters: {
+                    allSelected,
+                    availableChoices,
+                    selectedChoices
+                }
+            } 
+        } = modelInfoRequest;
+
+        if (availableChoices) {
+            this.eventNames.changeAvailableChoices = availableChoices.changeEvent;
+            if (availableChoices.value) {
+                availableChoices.value.forEach(choice => {
+                    // TODO
+                    // throw error if unexpected format here
+                    // should expect {value/text/colour}
+                });
+                this.state.availableChoices = availableChoices.value;
+            }
+        }
+
+        if (selectedChoices) {
+            this.eventNames.changeSelectedChoices = selectedChoices.changeEvent;
+            this.eventNames.setSelectedChoices = selectedChoices.setEvent;
+            if (selectedChoices.value) {
+                this.state.selectedChoices = selectedChoices.value;
+                this.state.selectedChoiceIdMap = {};
+                this.state.selectedChoices.forEach((choiceText) => {
+                    this.state.selectedChoiceIdMap[choiceText] = true;
+                });
+            }
+        }
+
+        if (allSelected) {
+            this.eventNames.changeAllSelected = allSelected.changeEvent;
+            this.eventNames.setAllSelected = allSelected.setEvent;
+            if (typeof allSelected.value === "boolean") {
+                this.state.allSelected = allSelected.value;
+            }
+        }
+
+        this.dispatchHandler = (message, addr, dispatcher) => {
+            this._handle(message, addr, dispatcher);
+        };
+
+        if (this.eventNames.changeAvailableChoices) {
+            this.dispatchService.register(this.DH, this.eventNames.changeAvailableChoices, this.dispatchHandler);
+        }
+
+        if (this.eventNames.changeSelectedChoices) {
+            this.dispatchService.register(this.DH, this.eventNames.changeSelectedChoices, this.dispatchHandler);
+        }
+
+        if (this.eventNames.changeAllSelected) {
+            this.dispatchService.register(this.DH, this.eventNames.changeAllSelected, this.dispatchHandler);
+        }
+
+        /* this.dispatchService.register(this.DH, "canvasReportStylesInUse", this.dispatchHandler); */
+
+        /* Dispatch to get the current styles in use by the canvas */
+        const stylesRequestMessage = {
+            type: "canvasGetStylesInUse",
+            canvasName: this.designatedCanvasName
+        };
+        this.dispatchService.synchronousCall(this.DH, stylesRequestMessage);
+        if (stylesRequestMessage.stylesInUse) {
+            this.state.currentStyles = stylesRequestMessage.stylesInUse;
+        }
+
+        this.dispatchService.register(this.DH, "documentContent", this.dispatchHandler);
+
+        if (!this.isGraphicNone) {
+            this.dispatchService.register(this.DH, "modelStateUpdated", this.dispatchHandler);
+            const modelStateMessage = {
+                type: "modelGetState",
+                modelId: this.sourceModelId
+            };
+
+            this.dispatchService.synchronousCall(this.DH, modelStateMessage);
+            if (modelStateMessage.state) {
+                this._sourceModelUpdated(modelStateMessage.state);
+            }
+        }
+    }
 
     _handle (message, addr, dispatcher) {
         const { type, value, modelId, state } = message;
@@ -216,13 +220,10 @@ class N2FilterableLegendWidgetWithGraphic {
                 this._adjustSelectedItem();
             }
         }
-        else if (type === "modelStateUpdated") {
+        else if (type === "modelStateUpdated" && this.hasPerformedInitialDraw) {
             if (modelId === this.sourceModelId) {
                 this._sourceModelUpdated(state);
             }
-        }
-        else if (type === "loadedModuleContent") {
-            this._draw();
         }
         /* else if (type === "canvasReportStylesInUse") {
             const { canvasName, stylesInUse } = message;
@@ -250,11 +251,13 @@ class N2FilterableLegendWidgetWithGraphic {
             });
         }
         if (modelState.added || modelState.updated || modelState.removed) {
+            this.preloadCallback(this.dispatchService);
             this._drawGraphic();
         }
     }
 
     _draw() {
+        this.hasPerformedInitialDraw = true;
         const mainContainer = document.getElementById(this.elementId);
         mainContainer.innerHTML = "";
         mainContainer.setAttribute("class", "n2_filterableLegendWidgetWithGraphic");   
@@ -371,7 +374,8 @@ class N2FilterableLegendWidgetWithGraphic {
         }
         else if (this.graphicType === "timeline") {
             const preparedData = this.prepareGraphicData(this.state.sourceModelDocuments);
-            if (this.graphic !== null) {
+            if (!preparedData) return;
+            /* if (this.graphic === null) { */
                 this.graphic = TimelinesChart()(graphic)
                 .data(preparedData)
                 .zQualitative(true)
@@ -388,11 +392,12 @@ class N2FilterableLegendWidgetWithGraphic {
                 .onSegmentClick(segment => {
                     console.log(segment);
                 })
+                .sortAlpha(true)
                 .width(document.querySelector(".n2_content_map").offsetWidth - this.legend.offsetWidth - (10 * 2));
-            }
+            /* }
             else {
                 this.graphic.data(preparedData);
-            }
+            } */
         }
     }
 
@@ -447,10 +452,6 @@ class N2FilterableLegendWidgetWithGraphic {
                 });
             }
         }
-    }
-
-    preloadOtherWidgetData(options) {
-        return;
     }
 
     prepareGraphicData(docs) {
