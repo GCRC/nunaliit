@@ -2,8 +2,6 @@
 * @module n2es6/N2FilterableLegendWidget
 */
 
-import TimelinesChart from 'timelines-chart';
-
 const _loc = function(str,args){ return $n2.loc(str,"nunaliit2",args); };
 const ALL_CHOICES = "__ALL_SELECTED__";
 
@@ -13,7 +11,7 @@ const filterableLegends = [
 
 const supportedGraphicTypes = [
     "pie",
-    "timeline",
+    "custom",
     "none"
 ];
 
@@ -229,7 +227,6 @@ class N2FilterableLegendWidgetWithGraphic {
             const { canvasName, stylesInUse } = message;
             if (canvasName !== this.designatedCanvasName) return;
             this.state.currentStyles = stylesInUse;
-            this._drawLegend();
         } */
     }
 
@@ -372,49 +369,8 @@ class N2FilterableLegendWidgetWithGraphic {
             if (D3V3 === undefined) throw new Error("The d3 (V3) library is not available!")
             throw new Error("This isn't implemented yet. Come back soon!");
         }
-        else if (this.graphicType === "timeline") {
-            const preparedData = this.prepareGraphicData(this.state.sourceModelDocuments);
-            if (!preparedData || !preparedData.data) return;
-            const options = preparedData.options;
-            /* if (this.graphic === null) { */
-                this.graphic = TimelinesChart()(graphic)
-                .data(preparedData.data || [])
-                .width(options.width || window.innerWidth)
-                .maxHeight(options.maxHeight || this.legend.offsetHeight)
-                .maxLineHeight(options.maxLineHeight || 12)
-                .leftMargin(options.leftMargin || 90)
-                .rightMargin(options.rightMargin || 100)
-                .topMargin(options.topMargin || 26)
-                .bottomMargin(options.bottomMargin || 30)
-                .useUtc(options.useUtc === undefined ? false : options.useUtc)
-                .timeFormat(options.timeFormat || "%Y-%m-%d %-I:%M:%S %p")
-                .xTickFormat(options.xTickFormat || window.d3.time.format.multi([
-                    [".%L", function(d) { return d.getMilliseconds(); }],
-                    [":%S", function(d) { return d.getSeconds(); }],
-                    ["%I:%M", function(d) { return d.getMinutes(); }],
-                    ["%I %p", function(d) { return d.getHours(); }],
-                    ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
-                    ["%b %d", function(d) { return d.getDate() != 1; }],
-                    ["%B", function(d) { return d.getMonth(); }],
-                    ["%Y", function() { return true; }]
-                ]))
-                .dateMarker(options.dateMarker || null)
-                .minSegmentDuration(options.minSegmentDuration || 0)
-                .zQualitative(options.zQualitative === undefined ? false : options.zQualitative)
-                //.zColorScale(options.zColorScale || )
-                .zDataLabel(options.zDataLabel || '')
-                .zScaleLabel(options.zScaleLabel || '')
-                .sortAlpha(true)
-                .onZoom(options.onZoom || null)
-                .enableOverview(options.enableOverview === undefined ? true : options.enableOverview)
-                .enableAnimations(options.enableAnimations === undefined ? true : options.enableAnimations)
-                .onLabelClick(options.onLabelClick || null)
-                .onSegmentClick(options.onSegmentClick || null)
-                .segmentTooltipContent(options.segmentTooltipContent || null);
-            /* }
-            else {
-                this.graphic.data(preparedData);
-            } */
+        else if (this.graphicType === "custom") {
+            this.drawCustom();
         }
     }
 
@@ -469,6 +425,10 @@ class N2FilterableLegendWidgetWithGraphic {
                 });
             }
         }
+    }
+
+    drawCustom() {
+        throw new Error("The 'custom' graphicType needs to define drawing behaviour.");
     }
 
     prepareGraphicData(docs) {
