@@ -466,7 +466,10 @@ public class SchemaAttribute {
 				JSONArray arr = new JSONArray();
 				schemaDoc.put(id, arr);
 			}
-			
+		else if ( "tag".equals(type) ) {
+			if(null == id) {
+				throw new Exception("'id' is required for attribute of type 'tag'");
+			}
 		} else if( "selection".equals(type) ){
 			if( null != id ){
 				SelectionOption defOption = getDefaultOption();
