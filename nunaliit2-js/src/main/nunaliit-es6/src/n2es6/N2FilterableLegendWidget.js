@@ -123,9 +123,9 @@ class N2FilterableLegendWidgetWithGraphic {
             this.eventNames.changeAvailableChoices = availableChoices.changeEvent;
             if (availableChoices.value) {
                 availableChoices.value.forEach(choice => {
-                    // TODO
-                    // throw error if unexpected format here
-                    // should expect {value/text/colour}
+                    if (choice.id === undefined || choice.label === undefined) {
+                        throw new Error("The available choices format expected an 'id' and 'label' property. Ensure that both properties exist.");
+                    }
                 });
                 this.state.availableChoices = availableChoices.value;
             }
@@ -374,26 +374,43 @@ class N2FilterableLegendWidgetWithGraphic {
         }
         else if (this.graphicType === "timeline") {
             const preparedData = this.prepareGraphicData(this.state.sourceModelDocuments);
-            if (!preparedData) return;
+            if (!preparedData || !preparedData.data) return;
+            const options = preparedData.options;
             /* if (this.graphic === null) { */
                 this.graphic = TimelinesChart()(graphic)
-                .data(preparedData)
-                .zQualitative(true)
-                //.zColorLabel(?)
-                //.zDataLabel(?)
-                //.zScaleLabel(?)
-                //.xTickFormat(?)
-                .enableAnimations(false)
-                .enableOverview(false)
-                //.maxLineHeight(//legend, row?)
-                .maxHeight(this.legend.offsetHeight)
-                //.timeFormat(?)
-                //.dateMarker(?)
-                .onSegmentClick(segment => {
-                    console.log(segment);
-                })
+                .data(preparedData.data || [])
+                .width(options.width || window.innerWidth)
+                .maxHeight(options.maxHeight || this.legend.offsetHeight)
+                .maxLineHeight(options.maxLineHeight || 12)
+                .leftMargin(options.leftMargin || 90)
+                .rightMargin(options.rightMargin || 100)
+                .topMargin(options.topMargin || 26)
+                .bottomMargin(options.bottomMargin || 30)
+                .useUtc(options.useUtc === undefined ? false : options.useUtc)
+                .timeFormat(options.timeFormat || "%Y-%m-%d %-I:%M:%S %p")
+                .xTickFormat(options.xTickFormat || window.d3.time.format.multi([
+                    [".%L", function(d) { return d.getMilliseconds(); }],
+                    [":%S", function(d) { return d.getSeconds(); }],
+                    ["%I:%M", function(d) { return d.getMinutes(); }],
+                    ["%I %p", function(d) { return d.getHours(); }],
+                    ["%a %d", function(d) { return d.getDay() && d.getDate() != 1; }],
+                    ["%b %d", function(d) { return d.getDate() != 1; }],
+                    ["%B", function(d) { return d.getMonth(); }],
+                    ["%Y", function() { return true; }]
+                ]))
+                .dateMarker(options.dateMarker || null)
+                .minSegmentDuration(options.minSegmentDuration || 0)
+                .zQualitative(options.zQualitative === undefined ? false : options.zQualitative)
+                //.zColorScale(options.zColorScale || )
+                .zDataLabel(options.zDataLabel || '')
+                .zScaleLabel(options.zScaleLabel || '')
                 .sortAlpha(true)
-                .width(document.querySelector(".n2_content_map").offsetWidth - this.legend.offsetWidth - (10 * 2));
+                .onZoom(options.onZoom || null)
+                .enableOverview(options.enableOverview === undefined ? true : options.enableOverview)
+                .enableAnimations(options.enableAnimations === undefined ? true : options.enableAnimations)
+                .onLabelClick(options.onLabelClick || null)
+                .onSegmentClick(options.onSegmentClick || null)
+                .segmentTooltipContent(options.segmentTooltipContent || null);
             /* }
             else {
                 this.graphic.data(preparedData);
