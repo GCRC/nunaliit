@@ -363,6 +363,7 @@ class N2FilterableLegendWidgetWithGraphic {
         graphic.setAttribute("class", "n2_FilterableLegendWidgetGraphicArea");
         graphic.setAttribute("id", "filterableLegendWidgetGraphicArea");
         this.graphicContainer.append(graphic);
+        this.graphic = graphic;
 
         if (this.graphicType === "pie") {
             const D3V3 = window.d3;
@@ -370,7 +371,8 @@ class N2FilterableLegendWidgetWithGraphic {
             throw new Error("This isn't implemented yet. Come back soon!");
         }
         else if (this.graphicType === "custom") {
-            this.drawCustom();
+            this.graphic.classList.add("n2_CustomGraphic");
+            this.drawCustom(this.prepareGraphicData(this.state.sourceModelDocuments));
         }
     }
 
@@ -427,7 +429,7 @@ class N2FilterableLegendWidgetWithGraphic {
         }
     }
 
-    drawCustom() {
+    drawCustom(..._) {
         throw new Error("The 'custom' graphicType needs to define drawing behaviour.");
     }
 
