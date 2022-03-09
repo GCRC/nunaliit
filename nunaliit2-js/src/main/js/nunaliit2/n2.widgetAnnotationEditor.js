@@ -343,8 +343,8 @@ POSSIBILITY OF SUCH DAMAGE.
 	var CineAnnotationEditorView = $n2.Class('CineAnnotationEditorView',{
 
 		dispatchService: null,
-		
-		attachmentService: null,
+
+		dialogService: null,
 
 		onSaved: null,
 
@@ -374,7 +374,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			var _this = this;
 			this.dispatchService = opts.dispatchService;
-			this.attachmentService = opts.attachmentService;
+			this.dialogService = opts.dialogService;
 			this.onSaved = opts.onSaved;
 			this.onCancel = opts.onCancel;
 			this.editorId = $n2.getUniqueId();
@@ -1532,11 +1532,33 @@ POSSIBILITY OF SUCH DAMAGE.
 			if (senData.length < 1) return;
 			const mdcCardSelector = "#relatedImageCardDisplay > div.mdc-card__primary-action > div.n2card__primary";
 
-			const getDialogSelection = function(attachmentUrl) {
+			const getDialogSelection = function(doc) {
+				if (!doc) return;
+				if (!doc._id) return;
+				if (!doc.nunaliit_attachments) return;
+				if (!doc.nunaliit_attachments.files) return;
+				
+				let attachmentUrl = null;
+
+				Object.entries(doc.nunaliit_attachments.files).forEach(attachment => {
+					if (attachment[0].endsWith("_thumb.jpg")) return;
+					const {
+						attachmentName,
+						fileClass,
+						mimeType
+					} = attachment[1];
+					if (fileClass !== "image") return;
+					if (!mimeType.startsWith("image")) return;
+					attachmentUrl = attachmentName;
+				});
+
 				if (attachmentUrl !== null) {
 					const cardDisplay = document.querySelector(mdcCardSelector)
-					cardDisplay.dataset.trueUrl = `/${_this.currentDoc._id}/${attachmentUrl}`;
+					cardDisplay.dataset.trueUrl = `/${doc._id}/${attachmentUrl}`;
 					cardDisplay.innerHTML = attachmentUrl;
+				}
+				else {
+					alert("The selected document is not an image.")
 				}
 			}
 
@@ -1562,13 +1584,15 @@ POSSIBILITY OF SUCH DAMAGE.
 				btnLabel: "Select Related Image",
 				btnRaised: true,
 				onBtnClick: () => {
-					new $n2.mdc.MDCAttachmentDialog({
-						attachmentService: _this.attachmentService,
-						document: _this.currentDoc,
-						dialogTitle: "Select Related Image",
-						closeBtn: true,
-						dialogCallback: getDialogSelection,
-						scrollable: true
+					_this.dialogService.searchForDocumentId({
+						onSelected: function(docId) {
+							const docRequestMessage =  {
+								type: "requestDocument",
+								docId: docId,
+								callback: getDialogSelection
+							};
+							_this.dispatchService.send(DH, docRequestMessage)
+						}
 					});
 				}
 			});
@@ -1671,7 +1695,8 @@ POSSIBILITY OF SUCH DAMAGE.
 	var AnnotationEditorWidget = $n2.Class('AnnotationEditorWidget',{
 
 		dispatchService: null,
-		attachmentService: null,
+		
+		dialogService: null,
 
 		elemId: null,
 
@@ -1690,14 +1715,14 @@ POSSIBILITY OF SUCH DAMAGE.
 			var opts = $n2.extend({
 				containerId: undefined
 				,dispatchService: undefined
-				,attachmentService: undefined
+				,dialogService: undefined
 				,sourceModelId: undefined
 			},opts_);
 
 			var _this = this;
 
 			this.dispatchService = opts.dispatchService;
-			this.attachmentService = opts.attachmentService;
+			this.dialogService = opts.dialogService;
 			this.sourceModelId = opts.sourceModelId;
 
 			// Get container
@@ -1714,7 +1739,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			// The real annotationEditor lives inside annotationWidget container
 			this.annotationEditorView = new CineAnnotationEditorView({
 				dispatchService: this.dispatchService,
-				attachmentService: this.attachmentService,
+				dialogService: this.dialogService,
 				onSaved: function() {
 					_this._closeEditor();
 					_this.dispatchService.send(DH,{
@@ -1988,7 +2013,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			if (config && config.directory) {
 				options.dispatchService = config.directory.dispatchService;
-				options.attachmentService = config.directory.attachmentService;
+				options.dialogService = config.directory.dialogService;
 			}
 
 			new AnnotationEditorWidget(options);
