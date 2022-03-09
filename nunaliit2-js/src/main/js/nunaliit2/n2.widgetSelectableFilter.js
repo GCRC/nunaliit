@@ -1085,28 +1085,26 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 	},
 	
 	_buttonClicked: function () {
-		var $elem = this._getElem();
-		var _this = this;
+		const $elem = this._getElem();
+		const _this = this;
 
 		if ($elem.hasClass('n2widget_multiDropDownFilterSelection_selection_shown')) {
 			this._hideMultiDropDownFilterSelection($elem, this.elemId);
 		} else {
-			$elem
-				.removeClass('n2widget_multiDropDownFilterSelection_selection_hidden')
-				.addClass('n2widget_multiDropDownFilterSelection_selection_shown');
+			$elem.removeClass('n2widget_multiDropDownFilterSelection_selection_hidden')
+				 .addClass('n2widget_multiDropDownFilterSelection_selection_shown');
 
-			this.clickOutsideHandler = $(document).on("click.n2multiselectfilter_" + this.elemId, function(event) {
+			this.clickOutsideHandler = $(document).on("click.n2multiselectfilter_" + this.elemId, function (event) {
 				if (!$(event.target).closest($elem).length) {
 					_this._hideMultiDropDownFilterSelection($elem, _this.elemId);
-				}		
+				}
 			});
 		}
 	},
 
-	_hideMultiDropDownFilterSelection: function($elem, elemId) {
-		$elem
-			.removeClass('n2widget_multiDropDownFilterSelection_selection_shown')
-			.addClass('n2widget_multiDropDownFilterSelection_selection_hidden');
+	_hideMultiDropDownFilterSelection: function ($elem, elemId) {
+		$elem.removeClass('n2widget_multiDropDownFilterSelection_selection_shown')
+			 .addClass('n2widget_multiDropDownFilterSelection_selection_hidden');
 		$(document).off(".n2multiselectfilter_" + elemId);
 	},
 		
