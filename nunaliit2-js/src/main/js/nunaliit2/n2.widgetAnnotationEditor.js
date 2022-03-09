@@ -1545,8 +1545,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					const {
 						attachmentName,
 						fileClass,
-						mimeType,
-
+						mimeType
 					} = attachment[1];
 					if (fileClass !== "image") return;
 					if (!mimeType.startsWith("image")) return;
@@ -1559,7 +1558,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					cardDisplay.innerHTML = attachmentUrl;
 				}
 				else {
-					alert("The selected document was not an image.")
+					alert("The selected document is not an image.")
 				}
 			}
 
