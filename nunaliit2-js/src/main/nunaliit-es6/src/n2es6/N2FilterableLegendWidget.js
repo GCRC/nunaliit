@@ -199,6 +199,8 @@ class N2FilterableLegendWidgetWithGraphic {
             if (value) {
                 this.state.availableChoices = value;
                 this._drawLegend();
+                this._adjustSelectedItem();
+                this._drawGraphic();
             }
         } 
         else if (type === this.eventNames.changeSelectedChoices) {
@@ -372,8 +374,12 @@ class N2FilterableLegendWidgetWithGraphic {
         }
         else if (this.graphicType === "custom") {
             this.graphic.classList.add("n2_CustomGraphic");
-            this.drawCustom(this.prepareGraphicData(this.state.sourceModelDocuments));
+            this._drawCustom();
         }
+    }
+
+    _drawCustom() {
+        this.drawCustom(this.prepareGraphicData(this.state.sourceModelDocuments));
     }
 
     _adjustSelectedItem() {
@@ -415,7 +421,7 @@ class N2FilterableLegendWidgetWithGraphic {
             else {
                 selectedChoiceIds = [...this.state.selectedChoices, choiceId];
             }
-            this.dispatchService.synchronousCall(this.DH, {
+            this.dispatchService.send(this.DH, {
                 type: this.eventNames.setSelectedChoices,
                 value: selectedChoiceIds
             });
