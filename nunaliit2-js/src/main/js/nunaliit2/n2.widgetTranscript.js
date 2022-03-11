@@ -383,16 +383,16 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		*/
 
 		if( 'mediaTimeChanged' === m.type ){
-			if( m.name == this.name ){
+			if( m.name === this.name ){
 				this._timeChanged(m.currentTime, m.origin);
 			}
 			
 		} else if( 'documentContent' === m.type ){
-			if( m.docId == this.docId ){
+			if( m.docId === this.docId ){
 				if( !this.doc ){
 					this.doc = m.doc;
 					this._documentChanged();
-				} else if( this.doc._rev != m.doc._rev ){
+				} else if( this.doc._rev !== m.doc._rev ){
 					this.doc = m.doc;
 					this._documentChanged();
 				}

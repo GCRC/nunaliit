@@ -25,6 +25,7 @@ const supportedGraphicTypes = [
 class N2FilterableLegendWidgetWithGraphic {
 	constructor(options) {
         this.DH = "N2FilterableLegendWidgetWithGraphic";
+        this.name = options.name;
         this.dispatchService = options.dispatchService;
         this.showService = options.showService;
         this.sourceModelId = options.sourceModelId;
@@ -61,6 +62,10 @@ class N2FilterableLegendWidgetWithGraphic {
 
         Object.seal(this.state);
         
+        if (!this.name) {
+            throw new Error("name must be specified");
+        }
+
         if (!this.containerId) {
             throw new Error("containerId must be specified");
         }
