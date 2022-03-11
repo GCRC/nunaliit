@@ -83,6 +83,8 @@ var GridCanvas = $n2.Class('GridCanvas',{
 			,config: null
 			,moduleDisplay: null
 			,elemIdToDocId: null
+			,toggleSelection: false
+			,multiSelect: false
 			,onSuccess: function(){}
 			,onError: function(err){}
 		},opts_);
@@ -94,6 +96,10 @@ var GridCanvas = $n2.Class('GridCanvas',{
 			this.sourceModelId = opts.sourceModelId;
 			this.refreshIntervalInMs = opts.refreshIntervalInMs;
 			this.elementGenerator = opts.elementGenerator;
+			this.multiSelect = opts.multiSelect;
+			if(this.multiSelect || opts.toggleSelection) {
+				this.toggleSelection = true;
+			}
 	
 			var config = opts.config;
 			if( config ){
@@ -114,7 +120,8 @@ var GridCanvas = $n2.Class('GridCanvas',{
 				this.elementGenerator.setIntentChangedListener(function(updated){
 					_this._intentChanged(updated);
 				});
-	 		};
+				this.elementGenerator.setMultiSelect(true);
+	 		}
 	
 	 		// Register to events
 	 		if( this.dispatchService ){
@@ -174,11 +181,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
  	},
  
 	_backgroundClicked: function(){
-		if( this.dispatchService ){
-			this.dispatchService.send(DH,{
-				type: 'userUnselect'
-			});
-		};
+		this.elementGenerator.selectAllOff();
 	},
 
  	_elementsChanged: function(addedElements, updatedElements, removedElements){
@@ -292,14 +295,11 @@ var GridCanvas = $n2.Class('GridCanvas',{
 	
 	_cellClicked: function(elementId){
  		var element = this.elementsById[elementId];
- 		if( this.toggleSelection 
- 		 && this.lastElementIdSelected === elementId ){
+ 		if( this.toggleSelection && this.elementGenerator.isSelected(element)) {
  			this.elementGenerator.selectOff(element);
- 			this.lastElementIdSelected = null;
  		} else {
  			this.elementGenerator.selectOn(element);
- 			this.lastElementIdSelected = elementId;
- 		};
+ 		}
 	},
 	
 	_cellMouseOver: function(elementId){
