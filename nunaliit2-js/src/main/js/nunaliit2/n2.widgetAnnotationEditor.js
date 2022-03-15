@@ -386,8 +386,9 @@ POSSIBILITY OF SUCH DAMAGE.
 			this.editorAggregateMode = true;
 			this.dataDepot = new AnnotationEditorDataDepot({});
 			this._default_setting = {
-				globalScaleFactor: 5
-				,globalTimeOffset: 0.5
+				globalScaleFactor: 1
+				, globalTimeOffset: 0.5
+				, globalDefaultPlaceZoomLevel: 10
 			};
 
 			var f = function(m, addr, dispatcher) {
@@ -742,17 +743,20 @@ POSSIBILITY OF SUCH DAMAGE.
 			function updateDocForTagSetting (doc) {
 				var $formfieldSections = $('div.n2WidgetAnnotation_tagSettings_formfieldSection');
 				$formfieldSections.each(function() {
-					var _gsfInput = $(this).find('input.n2transcript_input.input_scaleFactor');
-					var _gtoInput = $(this).find('input.n2transcript_input.input_timeOffset');
-					if (_gsfInput.get(0) !== document || _gtoInput.get(0) !== document) {
-						var _gsfInputValue = _gsfInput.val();
-						var _gtoInputValue = _gtoInput.val();
-						if (_gsfInputValue || _gtoInputValue){
+					const _gsfInput = $(this).find('input.n2transcript_input.input_scaleFactor');
+					const _gtoInput = $(this).find('input.n2transcript_input.input_timeOffset');
+					const _gpzInput = $(this).find('input.n2transcript_input.input_defaultPlaceZoomLevel');
+					if (_gsfInput.get(0) !== document || _gtoInput.get(0) !== document || _gpzInput.get(0) !== document) {
+						const _gsfInputValue = _gsfInput.val();
+						const _gtoInputValue = _gtoInput.val();
+						const _gpzInputValue = _gpzInput.val();
+						if (_gsfInputValue || _gtoInputValue || _gpzInputValue){
 							if (typeof doc.atlascine_cinemap.settings === 'undefined') {
 								doc.atlascine_cinemap.settings = {};
 							}
 							doc.atlascine_cinemap.settings.globalScaleFactor = _gsfInputValue;
 							doc.atlascine_cinemap.settings.globalTimeOffset = _gtoInputValue;
+							doc.atlascine_cinemap.settings.globalDefaultPlaceZoomLevel = _gpzInputValue;
 							documentSource.updateDocument({
 								doc: doc
 								,onSuccess: onSaved
@@ -763,7 +767,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						}
 
 					} else {
-						alert('scaleFactor field doesnot exist');
+						alert('An error occurred when trying to save the cinemap settings.');
 					}
 				});
 			}
@@ -834,18 +838,18 @@ POSSIBILITY OF SUCH DAMAGE.
 		},
 
 		_addTagSetting: function($parent) {
-			var _this = this;
 			//current cinemap doc;
-			var doc = this.currentDoc;
+			const doc = this.currentDoc;
 			this.gloScaleFactorId = $n2.getUniqueId();
 			this.gloTimeOffsetId = $n2.getUniqueId();
-			var _setting = $n2.extend({}, _this._default_setting);
+			this.cinemapDefaultPlaceZoomLevelId = $n2.getUniqueId();
+			let _setting = $n2.extend({}, this._default_setting);
 
-			var $formFieldSection = $('<div>')
+			const $formFieldSection = $('<div>')
 				.addClass('n2WidgetAnnotation_tagSettings_formfieldSection')
 				.appendTo($parent);
 
-			var $headdiv = $('<div>')
+			$('<div>')
 				.addClass('formfieldSection_header')
 				.appendTo($formFieldSection);
 
@@ -855,29 +859,40 @@ POSSIBILITY OF SUCH DAMAGE.
 				_setting = $n2.extend(_setting, doc.atlascine_cinemap.settings);
 			}
 
-			for (var se in _setting) {
+			for (let se in _setting) {
 				if (se === 'globalScaleFactor') {
-					var _sf = _setting[se];
+					const _sf = _setting[se];
 					$('<label>')
-						.attr('for', _this.gloScaleFactorId)
+						.attr('for', this.gloScaleFactorId)
 						.html('GlobalScaleFactor')
 						.appendTo($formFieldSection);
 
 					$('<input>')
-						.attr('id', _this.gloScaleFactorId)
+						.attr('id', this.gloScaleFactorId)
 						.addClass('n2transcript_input input_scaleFactor')
 						.val(_sf)
 						.appendTo($formFieldSection);
 
 				} else if (se === 'globalTimeOffset') {
-					var _sf = _setting[se];
+					const _sf = _setting[se];
 					$('<label>')
-						.attr('for', _this.gloTimeOffsetId)
+						.attr('for', this.gloTimeOffsetId)
 						.html('GlobalTimeOffset')
 						.appendTo($formFieldSection);
 					$('<input>')
-						.attr('id', _this.gloTimeOffsetId)
+						.attr('id', this.gloTimeOffsetId)
 						.addClass('n2transcript_input input_timeOffset')
+						.val(_sf)
+						.appendTo($formFieldSection);
+				} else if (se === 'globalDefaultPlaceZoomLevel') {
+					const _sf = _setting[se];
+					$('<label>')
+						.attr('for', this.cinemapDefaultPlaceZoomLevelId)
+						.html('Default Cinemap Place Zoom Level')
+						.appendTo($formFieldSection);
+					$('<input>')
+						.attr('id', this.cinemapDefaultPlaceZoomLevelId)
+						.addClass('n2transcript_input input_defaultPlaceZoomLevel')
 						.val(_sf)
 						.appendTo($formFieldSection);
 				}
