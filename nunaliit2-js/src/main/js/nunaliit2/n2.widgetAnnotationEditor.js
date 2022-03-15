@@ -386,7 +386,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			this.editorAggregateMode = true;
 			this.dataDepot = new AnnotationEditorDataDepot({});
 			this._default_setting = {
-				globalScaleFactor: 5
+				globalScaleFactor: 1
 				, globalTimeOffset: 0.5
 				, globalDefaultPlaceZoomLevel: 10
 			};
