@@ -888,7 +888,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					const _sf = _setting[se];
 					$('<label>')
 						.attr('for', this.cinemapDefaultPlaceZoomLevelId)
-						.html('Default Cinemap Place Zoom Level')
+						.html('Default Place Zoom Level')
 						.appendTo($formFieldSection);
 					$('<input>')
 						.attr('id', this.cinemapDefaultPlaceZoomLevelId)
@@ -1546,6 +1546,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			if (senData.length < 1) return;
 			const mdcCardSelector = "#relatedImageCardDisplay > div.mdc-card__primary-action > div.n2card__primary";
+			const imageCardDisplayId = "relatedImageCardDisplay";
 
 			const getDialogSelection = function(doc) {
 				if (!doc) return;
@@ -1569,8 +1570,23 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				if (attachmentUrl !== null) {
 					const cardDisplay = document.querySelector(mdcCardSelector)
-					cardDisplay.dataset.trueUrl = `/${doc._id}/${attachmentUrl}`;
+					const trueUrl = `/${doc._id}/${attachmentUrl}`
+					const fullUrl = `./db${trueUrl}`;
+					cardDisplay.dataset.trueUrl = trueUrl;
 					cardDisplay.innerHTML = attachmentUrl;
+
+					const imgElement = cardDisplay.previousSibling;
+					if (imgElement === null) {
+						const newImg = document.createElement("img");
+						newImg.src = fullUrl
+						cardDisplay.parentNode.insertBefore(
+							newImg,
+							cardDisplay
+						)
+					}
+					else {
+						imgElement.src = fullUrl;
+					}
 				}
 				else {
 					alert("The selected document is not an image.")
@@ -1617,6 +1633,13 @@ POSSIBILITY OF SUCH DAMAGE.
 				btnLabel: "Remove Related Image",
 				btnRaised: true,
 				onBtnClick: () => {
+					const imageCard = document.getElementById(imageCardDisplayId);
+					if (imageCard) {
+						const cardImgTag = imageCard.getElementsByTagName("img");
+						if (cardImgTag.length > 0) {
+							cardImgTag[0].remove();
+						}
+					}
 					document.querySelector(mdcCardSelector).dataset.trueUrl = "";
 					document.querySelector(mdcCardSelector).innerHTML = "";
 				}
@@ -1632,13 +1655,35 @@ POSSIBILITY OF SUCH DAMAGE.
 			} 
 			new $n2.mdc.MDCCard({
 				parentElem: $formFieldSection,
-				mdcId: "relatedImageCardDisplay",
+				mdcId: imageCardDisplayId,
 				label: displayImageLinkText,
 				infoGenerator: () => { return displayImageLinkText },
+				imageGenerator: () => { 
+					if (displayImageLinkText !== "No related image.") {
+						return `<img src=./db${relatedImageLink}>`
+					}
+				 },
 				initiallyOn: false
 			});
 			document.querySelector(mdcCardSelector).dataset.trueUrl = relatedImageLink;
 			document.querySelector("#relatedImageCardDisplay > div.mdc-card__primary-action").style.cursor = "default";
+
+			const relatedImageCaptionId = "n2WidgetAnnotationEditorTaggingImageCaption";
+			const relatedMediaCaption = senData[0].mediaCaption ? senData[0].mediaCaption : "";
+			new $n2.mdc.MDCTextField({
+				txtFldLabel: "Image Caption",
+				txtFldInputId: relatedImageCaptionId,
+				txtFldOutline: true,
+				txtFldArea: true,
+				txtFldFullWidth: true,
+				parentElem: $formFieldSection
+			});
+			const relatedImageCaptionTextArea = document.getElementById(relatedImageCaptionId);
+			// excellent
+			relatedImageCaptionTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
+			relatedImageCaptionTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") 
+			relatedImageCaptionTextArea.value = relatedMediaCaption;
+			relatedImageCaptionTextArea.style.resize = "vertical";
 		},
 
 		/**
