@@ -278,6 +278,7 @@ POSSIBILITY OF SUCH DAMAGE.
 								,'tags': []
 								,'relatedImage': ''
 								,'notes': ''
+								,'mediaCaption': ''
 //								,"linkRef": {
 //									"nunaliit_type": "reference"
 //									"doc": "stock.rwanda"
@@ -288,6 +289,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 						let relatedImage = "";
 						let notes = "";
+						let mediaCaption = "";
 
 						matchingLinks.forEach(function(e) {
 							if (e.tags) {
@@ -299,16 +301,18 @@ POSSIBILITY OF SUCH DAMAGE.
 							/* This appears to only ever return one thing... */
 							relatedImage = e.relatedImage;
 							notes = e.notes;
+							mediaCaption = e.mediaCaption;
 						});
 
 						// Create Sentence Record
 						var senRec = {
-							start: start,
-							end: end,
-							tags: totalTags,
-							relatedImage: relatedImage,
-							notes: notes,
-							text: text
+							start
+							, end
+							, tags: totalTags
+							, relatedImage
+							, mediaCaption
+							, notes
+							, text
 						};
 
 						_this.focusSentences.push(senRec);
@@ -626,6 +630,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							,'tags': []
 							,'relatedImage': ''
 							,'notes': ''
+							,'mediaCaption': ''
 //							,"linkRef": {
 //								"nunaliit_type": "reference"
 //								"doc": "stock.rwanda"
@@ -677,8 +682,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 					const mdcSelector = "div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action > div.n2card__primary";
 					const tagNotesSelector = "n2WidgetAnnotationEditorTaggingNotes";
+					const mediaCaptionSelector = "n2WidgetAnnotationEditorTaggingImageCaption";
 					const relatedImage = document.querySelector(mdcSelector) ? document.querySelector(mdcSelector).dataset.trueUrl : "";
 					const taggingNotes = document.getElementById(tagNotesSelector) ? document.getElementById(tagNotesSelector).value : "";
+					const mediaCaption = document.getElementById(mediaCaptionSelector) ? document.getElementById(mediaCaptionSelector).value : "";
 
 					matchingLinks.forEach(timeLink => {
 						/* I only expect this to run once */
@@ -688,6 +695,10 @@ POSSIBILITY OF SUCH DAMAGE.
 						}
 						if (timeLink.notes !== taggingNotes) {
 							timeLink.notes = taggingNotes;
+							modified = true;
+						}
+						if (timeLink.mediaCaption !== mediaCaption) {
+							timeLink.mediaCaption = mediaCaption;
 							modified = true;
 						}
 					});
@@ -927,6 +938,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						<p>${commaTags ? commaTags : "No tags added."}</p>
 						<p>${timeLink.notes ? timeLink.notes : "No notes added."}</p>
 						<p>${displayImageLinkText}</p>
+						<p>${timeLink.mediaCaption ? timeLink.mediaCaption : "No image caption added."}</p>
 					</div>
 				</li>		
 				`;
@@ -1679,7 +1691,6 @@ POSSIBILITY OF SUCH DAMAGE.
 				parentElem: $formFieldSection
 			});
 			const relatedImageCaptionTextArea = document.getElementById(relatedImageCaptionId);
-			// excellent
 			relatedImageCaptionTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
 			relatedImageCaptionTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") 
 			relatedImageCaptionTextArea.value = relatedMediaCaption;
