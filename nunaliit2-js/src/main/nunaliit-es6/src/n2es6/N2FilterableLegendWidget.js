@@ -169,7 +169,8 @@ class N2FilterableLegendWidgetWithGraphic {
         if (this.eventNames.changeAllSelected) {
             this.dispatchService.register(this.DH, this.eventNames.changeAllSelected, this.dispatchHandler);
         }
-
+	    
+	// This event fires off so frequently that it breaks the existing implementation of the filterable legend widget.
         /* this.dispatchService.register(this.DH, "canvasReportStylesInUse", this.dispatchHandler); */
 
         /* Dispatch to get the current styles in use by the canvas */
@@ -230,6 +231,7 @@ class N2FilterableLegendWidgetWithGraphic {
                 this._sourceModelUpdated(state);
             }
         }
+	// See previous comment regarding this event. Fires off too frequently.
         /* else if (type === "canvasReportStylesInUse") {
             const { canvasName, stylesInUse } = message;
             if (canvasName !== this.designatedCanvasName) return;
