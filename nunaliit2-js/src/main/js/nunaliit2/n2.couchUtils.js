@@ -838,6 +838,47 @@ var n2utils = {
 		ancestors.pop();
 	}
 
+	,extractSpecificTypeWithKey: function(obj, key, type, result, ancestors) {
+		// Traverses an object to find all components of a
+		// given type.
+		
+		ancestors = ancestors ? ancestors : [];
+		
+		if( ancestors.indexOf(obj) >= 0 ) {
+			// already visited
+			return;
+		};
+		
+		ancestors.push(obj);
+		
+		if( null === obj ) {
+			// Nothing to do
+			
+		} else if( n2utils.isArray(obj) ) {
+			for(var i=0,e=obj.length; i<e; ++i) {
+				n2utils.extractSpecificTypeWithKey(obj[i],i,type,result,ancestors);
+			};
+
+		} else if( typeof(obj) === 'object' ) {
+			if( obj.nunaliit_type && obj.nunaliit_type === type ) {
+				// This is an object of interest
+				result.push([key, obj]);
+			} else {
+				// This is not what we are looking for. Continue searching.
+				for(var key in obj) {
+					if( '__n2Source' === key ) continue;
+					
+					var value = obj[key];
+					
+					n2utils.extractSpecificTypeWithKey(value,key,type,result,ancestors);
+				};
+			};
+		};
+		
+		ancestors.pop();
+	}
+
+
 	,extractLinks: function(obj, links) {
 		// Traverses an object to find all link elements.
 		// Return all link elements in a list.
@@ -1095,6 +1136,7 @@ if( typeof exports === 'object' ) {
 	exports.isApostropheCodeChar = n2utils.isApostropheCodeChar;
 	exports.extractTypes = n2utils.extractTypes;
 	exports.extractSpecificType = n2utils.extractSpecificType;
+	exports.extractSpecificTypeWithKey = n2utils.extractSpecificTypeWithKey;
 	exports.extractGeometries = n2utils.extractGeometries;
 	exports.getAtlasRole = n2utils.getAtlasRole;
 	exports.validateDocumentStructure = n2utils.validateDocumentStructure;
@@ -1118,6 +1160,7 @@ if( typeof nunaliit2 === 'function' ) {
 	nunaliit2.couchUtils.isApostropheCodeChar = n2utils.isApostropheCodeChar;
 	nunaliit2.couchUtils.extractTypes = n2utils.extractTypes;
 	nunaliit2.couchUtils.extractSpecificType = n2utils.extractSpecificType;
+	nunaliit2.couchUtils.extractSpecificTypeWithKey = n2utils.extractSpecificTypeWithKey;
 	nunaliit2.couchUtils.extractGeometries = n2utils.extractGeometries;
 	nunaliit2.couchUtils.getAtlasRole = n2utils.getAtlasRole;
 	nunaliit2.couchUtils.validateDocumentStructure = n2utils.validateDocumentStructure;
