@@ -383,16 +383,16 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		*/
 
 		if( 'mediaTimeChanged' === m.type ){
-			if( m.name == this.name ){
+			if( m.name === this.name ){
 				this._timeChanged(m.currentTime, m.origin);
 			}
 			
 		} else if( 'documentContent' === m.type ){
-			if( m.docId == this.docId ){
+			if( m.docId === this.docId ){
 				if( !this.doc ){
 					this.doc = m.doc;
 					this._documentChanged();
-				} else if( this.doc._rev != m.doc._rev ){
+				} else if( this.doc._rev !== m.doc._rev ){
 					this.doc = m.doc;
 					this._documentChanged();
 				}
@@ -717,6 +717,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.attr('controls', 'controls')
 				.attr('width', '100%')
 				.attr('height', '360px')
+				.attr('preload', 'metadata')
 				.appendTo($mediaDiv);
 
 			var $videoSource = $('<source>')
@@ -740,8 +741,10 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					_this._updateCurrentTime(currentTime, 'video');
 				})
 				.bind('durationchange', function(e) {
-					var duration = this.duration;
-					$n2.log('video duration changed: '+duration);
+					_this.dispatchService.send(DH, {
+						type: "transcriptVideoDurationChange",
+						value: this.duration
+					});
 				});
 			
 			// If using embedded srt, remove the srt file selector

@@ -629,7 +629,7 @@ Polar Stereographic Projection Selector
 
 /* .n2-tag-box.mdc-text-field.n2s_attachedMDCTextField.mdc-text-field--outlined {
  	width: 260px;
-*/ }
+ }*/
 
 .input_group_for_customMDC { 
   position:relative;
@@ -1353,4 +1353,55 @@ Transcript widget style rules
 
 .nunaliit_atlas.n2_display_format_tiled .n2widgetTranscript .mejs__controls {
 	right: 640px;
+}
+
+/*
+===================================
+N2FilterableLegendWidgetWithGraphic
+===================================
+*/
+div#content .n2_filterableLegendWidgetWithGraphic {
+	position: absolute;
+	display: flex;
+	bottom: 10px;
+	left: 10px;
+	margin-bottom: 30px;
+}
+
+div#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend_svg {
+	display: inline-block;
+	width: 14px;
+	height: 14px;
+}
+
+div#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend .n2widgetLegend_outer {
+	background-color: rgba(0,0,0,0.9);
+	color: #fff;
+	padding: 10px;
+	border-radius: 2px;
+	border: 1px solid #ffffff;
+	box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.25);
+}
+
+div#content .n2_filterableLegendWidgetWithGraphic div#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected {
+	display: flex;
+}
+
+div#content .n2_filterableLegendWidgetWithGraphic div#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected > label {
+	display: flex;
+}
+
+div#content .n2_filterableLegendWidgetWithGraphic div#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_labelColumn {
+	width: auto;
+	max-width: 300px;
+	vertical-align: top;
+}
+
+div#content .n2_filterableLegendWidgetWithGraphic div#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_symbolColumn {
+	width: 25px;
+	padding-left: 5px;
+}
+
+div#content .n2_filterableLegendWidgetWithGraphic div#n2_filterableLegendWidgetGraphic {
+	background-color: rgb(255, 255, 255, 0.6);
 }
