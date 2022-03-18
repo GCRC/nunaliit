@@ -995,9 +995,12 @@ class N2MapCanvas  {
 			addClasses: "relatedMediaDisplayDrawer",
 			customizedContentFn: (drawerOptions) => {
 				const {	container } = drawerOptions;
+				const imgContainer = document.createElement("div");
 				const img = document.createElement("img");
 				const caption = document.createElement("p");
-				container.append(img, caption);
+				imgContainer.setAttribute("id", "relatedMediaDisplayDrawerImageContainer");
+				imgContainer.append(img);
+				container.append(imgContainer, caption);
 				this.mediaDrawerState.image = img;
 				this.mediaDrawerState.caption = caption;
 			}
@@ -1799,15 +1802,17 @@ class N2MapCanvas  {
 	_displayNotificationImage(featureData) {
 		const { relatedImage, mediaCaption } = featureData;
 		this.mediaDrawerState.image.src = `./db${relatedImage}`;
-		this.mediaDrawerState.caption.innerText = mediaCaption;
+		this.mediaDrawerState.caption.innerText = mediaCaption || "";
 		this.mediaDrawerState.drawer.open();
 
-		/* if (this.panzoomState !== null) {
+		if (this.panzoomState !== null) {
 			this.panzoomState.destroy();
-			imgContainer.removeEventListener("wheel", this.panzoomState.zoomWithWheel);
+			this.mediaDrawerState.image.parentElement.removeEventListener("wheel", this.panzoomState.zoomWithWheel);
 		}
-		this.panzoomState = Panzoom(imgTag);
-		imgContainer.addEventListener("wheel", this.panzoomState.zoomWithWheel); */
+		this.panzoomState = Panzoom(this.mediaDrawerState.image, {
+			contain: "outside"
+		});
+		this.mediaDrawerState.image.parentElement.addEventListener("wheel", this.panzoomState.zoomWithWheel);
 	}
 	
 	_zoomToFeature(feature) {
