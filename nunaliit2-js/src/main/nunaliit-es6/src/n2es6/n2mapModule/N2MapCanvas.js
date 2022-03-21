@@ -321,12 +321,16 @@ class N2MapCanvas  {
 		this.fitMapToLatestMapTag = false;
 		this.showRelatedImages = true;
 		this.animateMapFitting = false;
-		this.mapNotification = null;
-
+		
 		this.vectorLinkSource = new N2LinkSource({
 			dispatchService: this.dispatchService
 		});
-
+		
+		this.mediaDrawerState = {
+			drawer: null,
+			image: null,
+			caption: null
+		};
 		this.panzoomState = null;
 
 		this._drawMap();
@@ -980,12 +984,22 @@ class N2MapCanvas  {
 		})
 		mainbar.addControl(pcluster);
 
-		const notification = new Notification({
-			className: "ol-image-notification",
-			closeBox: true
+		this.mediaDrawerState.drawer = new nunaliit2.ui.drawer({
+			containerId: "content",
+			width: "500px",
+			addClasses: "relatedMediaDisplayDrawer",
+			customizedContentFn: (drawerOptions) => {
+				const {	container } = drawerOptions;
+				const imgContainer = document.createElement("div");
+				const img = document.createElement("img");
+				const caption = document.createElement("p");
+				imgContainer.setAttribute("id", "relatedMediaDisplayDrawerImageContainer");
+				imgContainer.append(img);
+				container.append(imgContainer, caption);
+				this.mediaDrawerState.image = img;
+				this.mediaDrawerState.caption = caption;
+			}
 		});
-		customMap.addControl(notification);
-		this.mapNotification = notification;
 
 		//Create editing layer
 		/* this.editLayerSource = new VectorSource();
@@ -1764,7 +1778,7 @@ class N2MapCanvas  {
 			}).getSource().getFeatures();
 
 			if (hideImage) {
-				this.mapNotification.hide();
+				this.mediaDrawerState.drawer.close();
 			}
 			else if (this.showRelatedImages){
 				const actingFeature = donutLayerFeatures.find(feature => {
@@ -1814,21 +1828,19 @@ class N2MapCanvas  {
 	}
 
 	_displayNotificationImage(featureData) {
-		const { lineDuration, relatedImage, style: { fillColor, opacity } } = featureData;
-		this.mapNotification.element.firstElementChild.style.backgroundColor = fillColor
-		/* By the way, this needs to be set like this. Browsers convert the hex into rgba. */
-		const rgbConvertedColour = this.mapNotification.element.firstElementChild.style.backgroundColor;
-		this.mapNotification.element.firstElementChild.style.backgroundColor = `${rgbConvertedColour.slice(0, -1)}, ${opacity})`;
-		this.mapNotification.show(`<img src=./db${relatedImage}>`, -1);
+		const { relatedImage, mediaCaption } = featureData;
+		this.mediaDrawerState.image.src = `./db${relatedImage}`;
+		this.mediaDrawerState.caption.innerText = mediaCaption || "";
+		this.mediaDrawerState.drawer.open();
     
-		const imgContainer = this.mapNotification.element.firstElementChild;
-		const imgTag = imgContainer.firstElementChild;
 		if (this.panzoomState !== null) {
 			this.panzoomState.destroy();
-			imgContainer.removeEventListener("wheel", this.panzoomState.zoomWithWheel);
+			this.mediaDrawerState.image.parentElement.removeEventListener("wheel", this.panzoomState.zoomWithWheel);
 		}
-		this.panzoomState = Panzoom(imgTag);
-		imgContainer.addEventListener("wheel", this.panzoomState.zoomWithWheel);
+		this.panzoomState = Panzoom(this.mediaDrawerState.image, {
+			contain: "outside"
+		});
+		this.mediaDrawerState.image.parentElement.addEventListener("wheel", this.panzoomState.zoomWithWheel);
 	}
 	
 	_zoomToFeature(feature) {

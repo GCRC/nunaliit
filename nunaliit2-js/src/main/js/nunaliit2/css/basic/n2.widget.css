@@ -655,6 +655,12 @@ Polar Stereographic Projection Selector
 }
 .input_group_for_customMDC input:focus 		{ outline:none; }
 
+/* Widget Annotation Editor MDCCard Image Size */
+div#relatedImageCardDisplay > div.mdc-card__primary-action > img {
+	width: 7em;
+	height: 7em;
+}
+
 /* LABEL ======================================= */
 .input_group_for_customMDC label 				 {
   color:#999; 

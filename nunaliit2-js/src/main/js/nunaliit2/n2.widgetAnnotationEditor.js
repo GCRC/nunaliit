@@ -278,6 +278,7 @@ POSSIBILITY OF SUCH DAMAGE.
 								,'tags': []
 								,'relatedImage': ''
 								,'notes': ''
+								,'mediaCaption': ''
 //								,"linkRef": {
 //									"nunaliit_type": "reference"
 //									"doc": "stock.rwanda"
@@ -288,6 +289,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 						let relatedImage = "";
 						let notes = "";
+						let mediaCaption = "";
 
 						matchingLinks.forEach(function(e) {
 							if (e.tags) {
@@ -299,16 +301,18 @@ POSSIBILITY OF SUCH DAMAGE.
 							/* This appears to only ever return one thing... */
 							relatedImage = e.relatedImage;
 							notes = e.notes;
+							mediaCaption = e.mediaCaption;
 						});
 
 						// Create Sentence Record
 						var senRec = {
-							start: start,
-							end: end,
-							tags: totalTags,
-							relatedImage: relatedImage,
-							notes: notes,
-							text: text
+							start
+							, end
+							, tags: totalTags
+							, relatedImage
+							, mediaCaption
+							, notes
+							, text
 						};
 
 						_this.focusSentences.push(senRec);
@@ -626,6 +630,7 @@ POSSIBILITY OF SUCH DAMAGE.
 							,'tags': []
 							,'relatedImage': ''
 							,'notes': ''
+							,'mediaCaption': ''
 //							,"linkRef": {
 //								"nunaliit_type": "reference"
 //								"doc": "stock.rwanda"
@@ -677,8 +682,10 @@ POSSIBILITY OF SUCH DAMAGE.
 
 					const mdcSelector = "div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action > div.n2card__primary";
 					const tagNotesSelector = "n2WidgetAnnotationEditorTaggingNotes";
+					const mediaCaptionSelector = "n2WidgetAnnotationEditorTaggingImageCaption";
 					const relatedImage = document.querySelector(mdcSelector) ? document.querySelector(mdcSelector).dataset.trueUrl : "";
 					const taggingNotes = document.getElementById(tagNotesSelector) ? document.getElementById(tagNotesSelector).value : "";
+					const mediaCaption = document.getElementById(mediaCaptionSelector) ? document.getElementById(mediaCaptionSelector).value : "";
 
 					matchingLinks.forEach(timeLink => {
 						/* I only expect this to run once */
@@ -688,6 +695,10 @@ POSSIBILITY OF SUCH DAMAGE.
 						}
 						if (timeLink.notes !== taggingNotes) {
 							timeLink.notes = taggingNotes;
+							modified = true;
+						}
+						if (timeLink.mediaCaption !== mediaCaption) {
+							timeLink.mediaCaption = mediaCaption;
 							modified = true;
 						}
 					});
@@ -888,7 +899,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					const _sf = _setting[se];
 					$('<label>')
 						.attr('for', this.cinemapDefaultPlaceZoomLevelId)
-						.html('Default Cinemap Place Zoom Level')
+						.html('Default Place Zoom Level')
 						.appendTo($formFieldSection);
 					$('<input>')
 						.attr('id', this.cinemapDefaultPlaceZoomLevelId)
@@ -927,6 +938,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						<p>${commaTags ? commaTags : "No tags added."}</p>
 						<p>${timeLink.notes ? timeLink.notes : "No notes added."}</p>
 						<p>${displayImageLinkText}</p>
+						<p>${timeLink.mediaCaption ? timeLink.mediaCaption : "No image caption added."}</p>
 					</div>
 				</li>		
 				`;
@@ -1546,6 +1558,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			if (senData.length < 1) return;
 			const mdcCardSelector = "#relatedImageCardDisplay > div.mdc-card__primary-action > div.n2card__primary";
+			const imageCardDisplayId = "relatedImageCardDisplay";
 
 			const getDialogSelection = function(doc) {
 				if (!doc) return;
@@ -1569,8 +1582,23 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				if (attachmentUrl !== null) {
 					const cardDisplay = document.querySelector(mdcCardSelector)
-					cardDisplay.dataset.trueUrl = `/${doc._id}/${attachmentUrl}`;
+					const trueUrl = `/${doc._id}/${attachmentUrl}`
+					const fullUrl = `./db${trueUrl}`;
+					cardDisplay.dataset.trueUrl = trueUrl;
 					cardDisplay.innerHTML = attachmentUrl;
+
+					const imgElement = cardDisplay.previousSibling;
+					if (imgElement === null) {
+						const newImg = document.createElement("img");
+						newImg.src = fullUrl
+						cardDisplay.parentNode.insertBefore(
+							newImg,
+							cardDisplay
+						)
+					}
+					else {
+						imgElement.src = fullUrl;
+					}
 				}
 				else {
 					alert("The selected document is not an image.")
@@ -1617,6 +1645,13 @@ POSSIBILITY OF SUCH DAMAGE.
 				btnLabel: "Remove Related Image",
 				btnRaised: true,
 				onBtnClick: () => {
+					const imageCard = document.getElementById(imageCardDisplayId);
+					if (imageCard) {
+						const cardImgTag = imageCard.getElementsByTagName("img");
+						if (cardImgTag.length > 0) {
+							cardImgTag[0].remove();
+						}
+					}
 					document.querySelector(mdcCardSelector).dataset.trueUrl = "";
 					document.querySelector(mdcCardSelector).innerHTML = "";
 				}
@@ -1632,13 +1667,34 @@ POSSIBILITY OF SUCH DAMAGE.
 			} 
 			new $n2.mdc.MDCCard({
 				parentElem: $formFieldSection,
-				mdcId: "relatedImageCardDisplay",
+				mdcId: imageCardDisplayId,
 				label: displayImageLinkText,
 				infoGenerator: () => { return displayImageLinkText },
+				imageGenerator: () => { 
+					if (displayImageLinkText !== "No related image.") {
+						return `<img src=./db${relatedImageLink}>`
+					}
+				 },
 				initiallyOn: false
 			});
 			document.querySelector(mdcCardSelector).dataset.trueUrl = relatedImageLink;
 			document.querySelector("#relatedImageCardDisplay > div.mdc-card__primary-action").style.cursor = "default";
+
+			const relatedImageCaptionId = "n2WidgetAnnotationEditorTaggingImageCaption";
+			const relatedMediaCaption = senData[0].mediaCaption ? senData[0].mediaCaption : "";
+			new $n2.mdc.MDCTextField({
+				txtFldLabel: "Image Caption",
+				txtFldInputId: relatedImageCaptionId,
+				txtFldOutline: true,
+				txtFldArea: true,
+				txtFldFullWidth: true,
+				parentElem: $formFieldSection
+			});
+			const relatedImageCaptionTextArea = document.getElementById(relatedImageCaptionId);
+			relatedImageCaptionTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
+			relatedImageCaptionTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") 
+			relatedImageCaptionTextArea.value = relatedMediaCaption;
+			relatedImageCaptionTextArea.style.resize = "vertical";
 		},
 
 		/**
