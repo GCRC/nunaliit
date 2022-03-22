@@ -54,10 +54,8 @@ div#content > div.relatedMediaDisplayDrawer > div.n2widget_drawer_container > di
 }
 
 div#content > div.relatedMediaDisplayDrawer > div.n2widget_drawer_container > p {
-	text-align: center;
 	font-size: 18px;
-	font-weight: bold;
-	padding: 0px 1em 1em 1em;
+	padding: 1em 1.3em 1em 1.1em;
 	white-space: normal;
 	word-wrap: break-word;
 }
