@@ -1405,3 +1405,28 @@ N2FilterableLegendWidgetWithGraphic
 #n2_filterableLegendWidgetGraphic {
 	background-color: rgb(255, 255, 255, 0.6);
 }
+
+#n2_filterableLegendWidgetWithGraphicToggle {
+	position: absolute;
+	top: 0;
+	cursor: pointer;
+	padding-left: 5px;
+	padding-right: 5px;
+	border-radius: 0px 3px 3px 0px;
+}
+
+#n2_filterableLegendWidgetWithGraphicToggle.n2_filterableLegendWidgetWithGraphicMinimize:before {
+	content: '<';
+}
+
+#n2_filterableLegendWidgetWithGraphicToggle.n2_filterableLegendWidgetWithGraphicMaximize {
+	background-color: rgb(255, 255, 255, 0.6);
+}
+
+#n2_filterableLegendWidgetWithGraphicToggle.n2_filterableLegendWidgetWithGraphicMaximize:before {
+	content: '>';
+}
+
+#n2_filterableLegendWidgetGraphic #filterableLegendWidgetGraphicArea.filterableLegendWidgetGraphicAreaHidden {
+	display: none;
+}
