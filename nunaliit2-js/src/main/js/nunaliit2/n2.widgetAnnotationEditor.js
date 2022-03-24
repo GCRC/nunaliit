@@ -393,7 +393,18 @@ POSSIBILITY OF SUCH DAMAGE.
 				globalScaleFactor: 1
 				, globalTimeOffset: 0.5
 				, globalDefaultPlaceZoomLevel: 10
+				, globalInitialMapExtent: [
+					-23251423.797684122,
+					-10687036.27380429,
+					24885559.13518848,
+					18390832.27832932
+				]
 			};
+
+			this.gloScaleFactorId = $n2.getUniqueId();
+			this.gloTimeOffsetId = $n2.getUniqueId();
+			this.cinemapDefaultPlaceZoomLevelId = $n2.getUniqueId();
+			this.cinemapInitialMapViewId = $n2.getUniqueId();
 
 			var f = function(m, addr, dispatcher) {
 				_this._handle(m, addr, dispatcher);
@@ -757,17 +768,25 @@ POSSIBILITY OF SUCH DAMAGE.
 					const _gsfInput = $(this).find('input.n2transcript_input.input_scaleFactor');
 					const _gtoInput = $(this).find('input.n2transcript_input.input_timeOffset');
 					const _gpzInput = $(this).find('input.n2transcript_input.input_defaultPlaceZoomLevel');
-					if (_gsfInput.get(0) !== document || _gtoInput.get(0) !== document || _gpzInput.get(0) !== document) {
+					const _gsvInput = $(this).find('input.n2transcript_input.input_cinemapStartingView');
+					if (_gsfInput.get(0) !== document || _gtoInput.get(0) !== document
+					|| _gpzInput.get(0) !== document || _gsvInput.get(0) !== document) {
 						const _gsfInputValue = _gsfInput.val();
 						const _gtoInputValue = _gtoInput.val();
 						const _gpzInputValue = _gpzInput.val();
-						if (_gsfInputValue || _gtoInputValue || _gpzInputValue){
+						const _gsvInputValue = _gsvInput.val().split(",").map(v => Number(v));
+						if (!validateMapExtent(_gsvInputValue)) {
+							alert("The cinemap initial view format is invalid.\nIt must be 4 comma separated numbers.");
+							return;
+						}
+						if (_gsfInputValue || _gtoInputValue || _gpzInputValue || _gsvInputValue){
 							if (typeof doc.atlascine_cinemap.settings === 'undefined') {
 								doc.atlascine_cinemap.settings = {};
 							}
 							doc.atlascine_cinemap.settings.globalScaleFactor = _gsfInputValue;
 							doc.atlascine_cinemap.settings.globalTimeOffset = _gtoInputValue;
 							doc.atlascine_cinemap.settings.globalDefaultPlaceZoomLevel = _gpzInputValue;
+							doc.atlascine_cinemap.settings.globalInitialMapExtent = _gsvInputValue;
 							documentSource.updateDocument({
 								doc: doc
 								,onSuccess: onSaved
@@ -781,6 +800,19 @@ POSSIBILITY OF SUCH DAMAGE.
 						alert('An error occurred when trying to save the cinemap settings.');
 					}
 				});
+			}
+
+			function validateMapExtent(extent) {
+				return (
+					Array.isArray(extent) 
+					&& (extent.length === 4)
+					&& extent.every(coordinate => {
+						return (
+							typeof coordinate === "number"
+							&& !Number.isNaN(coordinate)
+						);
+					})
+				);
 			}
 
 			function tagGroupsIsModified(oldTagColors,
@@ -851,9 +883,6 @@ POSSIBILITY OF SUCH DAMAGE.
 		_addTagSetting: function($parent) {
 			//current cinemap doc;
 			const doc = this.currentDoc;
-			this.gloScaleFactorId = $n2.getUniqueId();
-			this.gloTimeOffsetId = $n2.getUniqueId();
-			this.cinemapDefaultPlaceZoomLevelId = $n2.getUniqueId();
 			let _setting = $n2.extend({}, this._default_setting);
 
 			const $formFieldSection = $('<div>')
@@ -871,8 +900,8 @@ POSSIBILITY OF SUCH DAMAGE.
 			}
 
 			for (let se in _setting) {
+				const _sf = _setting[se];
 				if (se === 'globalScaleFactor') {
-					const _sf = _setting[se];
 					$('<label>')
 						.attr('for', this.gloScaleFactorId)
 						.html('GlobalScaleFactor')
@@ -885,7 +914,6 @@ POSSIBILITY OF SUCH DAMAGE.
 						.appendTo($formFieldSection);
 
 				} else if (se === 'globalTimeOffset') {
-					const _sf = _setting[se];
 					$('<label>')
 						.attr('for', this.gloTimeOffsetId)
 						.html('GlobalTimeOffset')
@@ -896,7 +924,6 @@ POSSIBILITY OF SUCH DAMAGE.
 						.val(_sf)
 						.appendTo($formFieldSection);
 				} else if (se === 'globalDefaultPlaceZoomLevel') {
-					const _sf = _setting[se];
 					$('<label>')
 						.attr('for', this.cinemapDefaultPlaceZoomLevelId)
 						.html('Default Place Zoom Level')
@@ -906,7 +933,37 @@ POSSIBILITY OF SUCH DAMAGE.
 						.addClass('n2transcript_input input_defaultPlaceZoomLevel')
 						.val(_sf)
 						.appendTo($formFieldSection);
+				} else if (se === 'globalInitialMapExtent') {
+					const container = document.createElement("div");
+					container.setAttribute("id", "initialMapExtentLabel");
+					container.style.display = "flex";
+					container.style.flexDirection = "column";
+					container.style.justifyContent = "space-evenly";
+					$('<label>')
+						.attr('for', this.cinemapInitialMapViewId)
+						.html('Initial Map View*')
+						.attr('title', 'The values used here are in the EPSG:3857/Web Mercator projection.\nThe order of this bounding box is bottom left (x, y) and top right (x, y).')
+						.appendTo(container);
+					$('<button>')
+						.html('Get Current Map View')
+						.click(() => {
+							const request = {
+								type: "mapExtentRequest"
+								, value: null
+							};
+							this.dispatchService.synchronousCall(DH, request);
+							const mapViewInput = document.getElementById(this.cinemapInitialMapViewId);
+							mapViewInput.value = request.value.join(",");
+						})
+						.appendTo(container);
+					$formFieldSection.append(container);
+					$('<input>')
+						.attr('id', this.cinemapInitialMapViewId)
+						.addClass('n2transcript_input input_cinemapStartingView')
+						.val(_sf)
+						.appendTo($formFieldSection);
 				}
+				
 			}
 
 			let timeLinks = [];
