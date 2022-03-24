@@ -49,6 +49,7 @@ import Toggle from 'ol-ext/control/Toggle';
 import Timeline from 'ol-ext/control/Timeline';
 import Popup from 'ol-ext/overlay/Popup';
 import Notification from 'ol-ext/control/Notification';
+import SettingsControl from './SettingsControl.js';
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.canvasMap';
@@ -823,6 +824,16 @@ class N2MapCanvas  {
 				collapseLabel: "",
 				tipLabel: "Layer Selector",
 				collapseTipLabel: "Layer Selector"
+			})
+		);
+
+		customMap.addControl(
+			new SettingsControl({
+				dispatchService: this.dispatchService,
+				settings: [
+					"placeholder",
+					"todo: hide the 'select control'"
+				]
 			})
 		);
 
