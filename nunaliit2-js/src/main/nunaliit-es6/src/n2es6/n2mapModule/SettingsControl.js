@@ -9,24 +9,29 @@ import Control from 'ol/control/Control';
  * Custom control for other map settings.
  * Adapted/inspired by https://github.com/walkermatt/ol-layerswitcher/blob/master/src/ol-layerswitcher.ts
  * 
- * (Currently only) accepts a nested structure of labels and their (boolean) values
- * to render as a ul of checkboxes to toggle the state.
+ * (Currently only) accepts an array of objects that have the following:
+ * {
+ * 		label - Text to be displayed for the setting option
+ * 		initialState - boolean (checkboxes)
+ * 		sublevel - Appearance of the setting if it should look like a sub-setting (add left padding)
+ * 		interactionCallback - function reference to be called when the setting is interacted with
+ * }
  * @api
  */
 class SettingsControl extends Control {
 	constructor(options) {
 		const div = document.createElement("div");
+		super({ element: div });
+
 		this.shownClassName = "settings-panel-visible";
-		this.hiddenClassName = "settings-panel-hidden";
 		div.classList.add(
 			"ol-unselectable",
 			"ol-control",
-			"cinemap-to-map-settings-control",
-			this.hiddenClassName
+			"cinemap-to-map-settings-control"
 		);
-		super({ element: div });
 
 		this.dispatchService = options.dispatchService;
+		this.settings = options.settings;
 
 		this.button = document.createElement("button");
 		div.append(this.button);
@@ -35,28 +40,21 @@ class SettingsControl extends Control {
 		this.panel.classList.add("settings-control-panel");
 		div.append(this.panel);
 
+
+		// renderPanel() here 
+		const div2 = document.createElement("ul");
+		div2.innerHTML = "asddaadsd"
+		this.panel.append(div2);
+
 		this.button.addEventListener("click", (ev) => {
-			if (this.element.classList.contains(this.hiddenClassName)) {
-				this.showSettingsPanel();
+			if (!this.element.classList.contains(this.shownClassName)) {
+				this.element.classList.add(this.shownClassName);
 			}
-			else {
-				this.hideSettingsPanel();
+			else if (this.element.classList.contains(this.shownClassName)) {
+				this.element.classList.remove(this.shownClassName);
 			}
 			ev.preventDefault();
 		});
-	}
-
-	showSettingsPanel() {
-		if (!this.element.classList.contains(this.shownClassName)) {
-			this.element.classList.add(this.shownClassName);
-			this.renderPanel();
-		}
-	}
-
-	hideSettingsPanel() {
-		if (this.element.classList.contains(this.shownClassName)) {
-			this.element.classList.remove(this.shownClassName);
-		}
 	}
 
 	renderPanel() {
