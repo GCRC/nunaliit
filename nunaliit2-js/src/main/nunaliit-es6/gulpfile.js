@@ -32,7 +32,7 @@ gulp.task('cp-nunaliit-core', function() {
   .pipe(gulp.dest("./dist/n2es6/n2core"))
 });
 
-gulp.task('babel', ['clean'], function() {
+gulp.task('babel', gulp.series('clean', function() {
     return gulp.src(
 	[
     // If Supporting old IE browser is a problem, uncomment this line to
@@ -50,7 +50,7 @@ gulp.task('babel', ['clean'], function() {
 	.on('error', swallowError)
 	.pipe(gulp.dest('dist'))
 	.on('end', function(){ console.log('\x1b[32m','\n>>> Babel Terminated...','\x1b[0m')});
-});
+}));
 
 
 /* Watch for modification to recreate the dist */
@@ -58,7 +58,7 @@ gulp.task('watch', function() {
   gulp.watch(['src/**/*.js'], ['default']);
 });
 
-gulp.task('webpack', ['babel'], function(callback) {
+gulp.task('webpack', gulp.series('babel', function(callback) {
 
   // run webpack
   webpack(webpackConfig, function(err, stats) {
@@ -70,9 +70,9 @@ gulp.task('webpack', ['babel'], function(callback) {
       }
     callback();
   });
-});
+}));
 
 
 
 // The default task that will be run if no task is supplied
-gulp.task("default", ["webpack"]);
+gulp.task("default", gulp.series("webpack"));
