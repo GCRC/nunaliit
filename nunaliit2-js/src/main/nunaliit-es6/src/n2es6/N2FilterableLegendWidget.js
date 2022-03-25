@@ -313,8 +313,7 @@ class N2FilterableLegendWidgetWithGraphic {
     _drawLegendOption(fragment, optionValue, optionLabel, colour) {
         const optionId = nunaliit2.getUniqueId();
         const selectionRow = document.createElement("div");
-        selectionRow.setAttribute("class", "n2widgetLegend_legendEntry")
-        selectionRow.setAttribute("class", "n2widgetLegend_optionSelected")
+        selectionRow.classList.add("n2widgetLegend_legendEntry", "n2widgetLegend_optionSelected");
         selectionRow.setAttribute("data-n2-choiceId", optionValue)
 
         const checkbox = document.createElement("input");
