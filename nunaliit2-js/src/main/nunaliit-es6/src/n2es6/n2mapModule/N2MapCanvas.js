@@ -257,8 +257,6 @@ class N2MapCanvas {
 			};
 			this.dispatchService.register(DH, 'n2ViewAnimation', f);
 			this.dispatchService.register(DH, 'n2rerender', f);
-			this.dispatchService.register(DH, 'time_interval_change', f);
-			this.dispatchService.register(DH, 'focusOn', f);
 			this.dispatchService.register(DH, 'mapRefreshCallbackRequest', f);
 			this.dispatchService.register(DH, 'resolutionRequest', f);
 			this.dispatchService.register(DH, 'editInitiate', f);
@@ -1475,23 +1473,7 @@ class N2MapCanvas {
 		} else if ('resolutionRequest' === type) {
 			m.resolution = _this.resolution;
 			m.proj = _this.proj;
-		} else if ('focusOn' === type) {
-		} else if ('time_interval_change' === type) {
-			const currTime = m.value.min;
-			const incre = 100000000;
 
-			if (_this.lastTime === null) {
-				_this.initialTime = currTime;
-				_this.lastTime = currTime;
-			}
-
-			_this.endIdx = parseInt((currTime - _this.initialTime) / incre, 10);
-
-			_this.dispatchService.send(DH, {
-				type: 'n2rerender'
-			});
-
-			_this.lastTime = currTime;
 		} else if ('canvasGetStylesInUse' === type && this.canvasName === m.canvasName) {
 			m.stylesInUse = this._getMapStylesInUse();
 			this.overlayInfos.forEach((info, idx) => {
