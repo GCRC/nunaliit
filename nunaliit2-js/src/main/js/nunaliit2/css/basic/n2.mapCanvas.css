@@ -3,7 +3,7 @@ div.ol-overlaycontainer-stopevent > div.ol-unselectable.ol-control.ol-bar.ol-top
 	top: 6.9em;
 }
 
-/* Layer Switcher / Basemap Selector and Overlays */
+/* Layer Switcher / Basemap Selector and Overlays and Settings */
 div.ol-unselectable.ol-control.layer-switcher,
 div.ol-unselectable.ol-control.layer-switcher.shown,
 div.ol-unselectable.ol-control.layer-switcher.shown.layer-switcher-activation-mode-click {
@@ -23,10 +23,16 @@ div.ol-unselectable.ol-control.layer-switcher > button {
 	border-radius: 2px;
 }
 
+div.ol-unselectable.ol-control.cinemap-to-map-settings-control > button {
+    background-image: url('./images/config_icon.svg');
+}
+
+div.ol-unselectable.ol-control.cinemap-to-map-settings-control > button:hover,
 div.ol-unselectable.ol-control.layer-switcher > button:hover {
 	background-color: rgba(0,60,136,0.7);
 }
 
+div.ol-unselectable.ol-control.cinemap-to-map-settings-control.settings-panel-visible > button:hover,
 div.ol-unselectable.ol-control.layer-switcher.shown > button:hover {
 	box-shadow: 0 0 0 3px rgba(255,255,255,0.6);
 }
@@ -34,6 +40,11 @@ div.ol-unselectable.ol-control.layer-switcher.shown > button:hover {
 div.ol-unselectable.ol-control.layer-switcher.shown > button {
 	box-shadow: 0 0 0 3px rgba(255,255,255,0.4);
 	margin-left: 3px;
+	margin-top: 1px;
+}
+
+div.ol-unselectable.ol-control.cinemap-to-map-settings-control.settings-panel-visible > button {
+	box-shadow: 0 0 0 3px rgba(255,255,255,0.4);
 	margin-top: 1px;
 }
 
