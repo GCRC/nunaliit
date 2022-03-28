@@ -289,6 +289,8 @@ class N2MapCanvas  {
 			this.dispatchService.register(DH, 'n2rerender', f);
 			this.dispatchService.register(DH, 'time_interval_change', f);
 			this.dispatchService.register(DH, 'renderStyledTranscript', f);
+			this.dispatchService.register(DH, 'mapExtentRequest', f);
+			this.dispatchService.register(DH, 'mapFitExtent', f);
 			this.dispatchService.register(DH, 'focusOn', f);
 			this.dispatchService.register(DH, 'mapRefreshCallbackRequest', f);
 			this.dispatchService.register(DH, 'resolutionRequest', f);
@@ -1832,6 +1834,10 @@ class N2MapCanvas  {
 			_this.lastTime = currTime;
 		} else if( 'canvasGetStylesInUse' === type && this.canvasName === m.canvasName){
 			m.stylesInUse = this._getMapStylesInUse();
+		} else if ('mapExtentRequest' === type) {
+			m.value = this.n2Map.getView().calculateExtent();
+		} else if ('mapFitExtent' === type) {
+			this.n2Map.getView().fit(m.value);
 		}
 	}
 
