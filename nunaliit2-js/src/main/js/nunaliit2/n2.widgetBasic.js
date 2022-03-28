@@ -958,6 +958,11 @@ var Service = $n2.Construct({
 					$n2.widgetLegend.HandleWidgetAvailableRequests(m);
 				};
 
+				if( $n2.filterableLegendWidget 
+				 && $n2.filterableLegendWidget.widgetAvailable ){
+					$n2.filterableLegendWidget.widgetAvailable(m);
+				};
+
 				if( $n2.widgetCollapsibleContainer 
 				 && $n2.widgetCollapsibleContainer.HandleWidgetAvailableRequests ){
 					$n2.widgetCollapsibleContainer.HandleWidgetAvailableRequests(m);
@@ -1067,6 +1072,11 @@ var Service = $n2.Construct({
 				if( $n2.widgetLegend 
 				 && $n2.widgetLegend.HandleWidgetDisplayRequests ){
 					$n2.widgetLegend.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.filterableLegendWidget 
+				 && $n2.filterableLegendWidget.widgetDisplay ){
+					$n2.filterableLegendWidget.widgetDisplay(m);
 				};
 
 				if( $n2.widgetCollapsibleContainer 
