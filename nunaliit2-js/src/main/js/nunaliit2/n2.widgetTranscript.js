@@ -745,6 +745,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 						type: "transcriptVideoDurationChange",
 						value: this.duration
 					});
+					_this.dispatchService.send(DH, {
+						type: _this.intervalSetEventName
+						, value: new $n2.date.DateInterval({
+							min: 0
+							, max: this.duration
+							, ongoing: false
+						})
+					});
 				});
 			
 			// If using embedded srt, remove the srt file selector
