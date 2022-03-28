@@ -732,7 +732,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				poster: thumbnailUrl
 				,alwaysShowControls : true
 				,pauseOtherPlayers : false
-				,features: ['playpause','progress','volume','sourcechooser','fullscreen']
+				,features: ['playpause','progress','volume','sourcechooser']
 			}); 
 
 			$video
@@ -744,6 +744,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					_this.dispatchService.send(DH, {
 						type: "transcriptVideoDurationChange",
 						value: this.duration
+					});
+					_this.dispatchService.send(DH, {
+						type: _this.intervalSetEventName
+						, value: new $n2.date.DateInterval({
+							min: 0
+							, max: this.duration
+							, ongoing: false
+						})
 					});
 				});
 			
