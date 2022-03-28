@@ -1287,7 +1287,7 @@ class N2MapCanvas {
 			this._enrichFeature(f);
 			const style = this.styleRules.getStyle(f);
 			if (style && typeof style.id === 'string') {
-				const styleInfo = stylesInUse[style.id];
+				let styleInfo = stylesInUse[style.id];
 				if (!styleInfo) {
 					styleInfo = {
 						style: style
@@ -1295,7 +1295,7 @@ class N2MapCanvas {
 					stylesInUse[style.id] = styleInfo;
 				}
 
-				const geometryType = f.n2_geometry;
+				let geometryType = f.n2_geometry;
 				if (geometryType && !styleInfo[geometryType]) {
 					styleInfo[geometryType] = f;
 				}

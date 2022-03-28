@@ -3,7 +3,7 @@ var concat = require("gulp-concat");
 var babel = require("gulp-babel");
 var clean = require('gulp-clean');
 
-const gutil = require('gulp-util');
+var PluginError = require('plugin-error');
 const webpack = require('webpack');
 const webpackConfig =  require('./webpack.config');
 
@@ -63,10 +63,10 @@ gulp.task('webpack', gulp.series('babel', function(callback) {
   // run webpack
   webpack(webpackConfig, function(err, stats) {
       if (err) {
-	  throw new gutil.PluginError('webpack', err);
+	      throw new PluginError({plugin: 'webpack', message: err});
       }
       else {
-	  gutil.log('[webpack]', stats.toString());
+	      console.log('[webpack]', stats.toString());
       }
     callback();
   });
