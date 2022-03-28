@@ -831,8 +831,36 @@ class N2MapCanvas  {
 			new SettingsControl({
 				dispatchService: this.dispatchService,
 				settings: [
-					"placeholder",
-					"todo: hide the 'select control'"
+					{
+						label: "zoom",
+						initialState: "this....whatever",
+						sublevel: 0,
+						interactionCallback: () => {}
+					},
+					{
+						label: "zoom animate",
+						initialState: "..>",
+						sublevel: 1,
+						interactionCallback: () => {}
+					},
+					{
+						label: "Display media",
+						initialState: "...",
+						sublevel: 0,
+						interactionCallback: () => {}
+					},
+					{
+						label: "rings disappear on zoom",
+						initialState: "...",
+						sublevel: 0,
+						interactionCallback: () => {}
+					},
+					{
+						label: "Cluster rings",
+						initialState: "...",
+						sublevel: 0,
+						interactionCallback: () => {}
+					}
 				]
 			})
 		);
