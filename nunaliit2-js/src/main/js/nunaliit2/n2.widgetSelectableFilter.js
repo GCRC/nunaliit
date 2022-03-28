@@ -942,7 +942,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 					return false;
 				});
 		} else {
-			var $button = $('<button>')
+			$('<button>')
 				.appendTo($relDiv)
 				.text( buttonLabel )
 				.click(function(){
@@ -950,12 +950,16 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 				});
 		};
 		
-		var $position = $('<div>')
+		$('<div>')
 			.addClass('n2widget_multiDropDownFilterSelection_position')
 			.appendTo($relDiv);
 		
 		this._throttledAvailableChoicesUpdated();
 		
+		document.addEventListener('click', function(event) {
+			_this._handleClickOnDoc(event);
+		}, true);
+
 		$n2.log(this._classname, this);
 	},
 	
@@ -1084,18 +1088,28 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 		};
 	},
 	
-	_buttonClicked: function(){
-		var $elem = this._getElem();
-		
-		if( $elem.hasClass('n2widget_multiDropDownFilterSelection_selection_shown') ){
-			$elem
-				.removeClass('n2widget_multiDropDownFilterSelection_selection_shown')
-				.addClass('n2widget_multiDropDownFilterSelection_selection_hidden');
+	_buttonClicked: function () {
+		const $elem = this._getElem();
+		const _this = this;
+
+		if ($elem.hasClass('n2widget_multiDropDownFilterSelection_selection_shown')) {
+			this._hideMultiDropDownFilterSelection($elem, this.elemId);
 		} else {
-			$elem
-				.removeClass('n2widget_multiDropDownFilterSelection_selection_hidden')
-				.addClass('n2widget_multiDropDownFilterSelection_selection_shown');
-		};
+			$elem.removeClass('n2widget_multiDropDownFilterSelection_selection_hidden')
+				 .addClass('n2widget_multiDropDownFilterSelection_selection_shown');
+		}
+	},
+
+	_handleClickOnDoc: function (event) {
+		const $elem = this._getElem();
+		if (!$(event.target).closest($elem).length && $elem.hasClass('n2widget_multiDropDownFilterSelection_selection_shown')) {
+			this._hideMultiDropDownFilterSelection($elem);
+		}
+	},
+
+	_hideMultiDropDownFilterSelection: function ($elem) {
+		$elem.removeClass('n2widget_multiDropDownFilterSelection_selection_shown')
+			 .addClass('n2widget_multiDropDownFilterSelection_selection_hidden');
 	},
 		
 	_handle: function(m, addr, dispatcher){
