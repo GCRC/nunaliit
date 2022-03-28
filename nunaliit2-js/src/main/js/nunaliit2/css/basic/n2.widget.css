@@ -1360,7 +1360,7 @@ Transcript widget style rules
 N2FilterableLegendWidgetWithGraphic
 ===================================
 */
-div#content .n2_filterableLegendWidgetWithGraphic {
+#content .n2_filterableLegendWidgetWithGraphic {
 	position: absolute;
 	display: flex;
 	bottom: 10px;
@@ -1368,13 +1368,13 @@ div#content .n2_filterableLegendWidgetWithGraphic {
 	margin-bottom: 30px;
 }
 
-div#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend_svg {
+#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend_svg {
 	display: inline-block;
 	width: 14px;
 	height: 14px;
 }
 
-div#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend .n2widgetLegend_outer {
+#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend .n2widgetLegend_outer {
 	background-color: rgba(0,0,0,0.9);
 	color: #fff;
 	padding: 10px;
@@ -1383,25 +1383,50 @@ div#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend .n2widgetLegen
 	box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.25);
 }
 
-div#content .n2_filterableLegendWidgetWithGraphic div#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected {
+#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected {
 	display: flex;
 }
 
-div#content .n2_filterableLegendWidgetWithGraphic div#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected > label {
+#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected > label {
 	display: flex;
 }
 
-div#content .n2_filterableLegendWidgetWithGraphic div#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_labelColumn {
+#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_labelColumn {
 	width: auto;
 	max-width: 300px;
 	vertical-align: top;
 }
 
-div#content .n2_filterableLegendWidgetWithGraphic div#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_symbolColumn {
+#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_symbolColumn {
 	width: 25px;
 	padding-left: 5px;
 }
 
-div#content .n2_filterableLegendWidgetWithGraphic div#n2_filterableLegendWidgetGraphic {
+#n2_filterableLegendWidgetGraphic {
 	background-color: rgb(255, 255, 255, 0.6);
+}
+
+#n2_filterableLegendWidgetWithGraphicToggle {
+	position: absolute;
+	top: 0;
+	cursor: pointer;
+	padding-left: 5px;
+	padding-right: 5px;
+	border-radius: 0px 3px 3px 0px;
+}
+
+#n2_filterableLegendWidgetWithGraphicToggle.n2_filterableLegendWidgetWithGraphicMinimize:before {
+	content: '<';
+}
+
+#n2_filterableLegendWidgetWithGraphicToggle.n2_filterableLegendWidgetWithGraphicMaximize {
+	background-color: rgb(255, 255, 255, 0.6);
+}
+
+#n2_filterableLegendWidgetWithGraphicToggle.n2_filterableLegendWidgetWithGraphicMaximize:before {
+	content: '>';
+}
+
+#n2_filterableLegendWidgetGraphic #filterableLegendWidgetGraphicArea.filterableLegendWidgetGraphicAreaHidden {
+	display: none;
 }

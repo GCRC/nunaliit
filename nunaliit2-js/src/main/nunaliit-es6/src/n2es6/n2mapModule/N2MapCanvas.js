@@ -319,8 +319,9 @@ class N2MapCanvas  {
 		}
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styles);
 		this.fitMapToLatestMapTag = false;
-		this.showRelatedImages = true;
 		this.animateMapFitting = false;
+		this.showRelatedImages = true;
+		this.hideFeatureIfMapZoom = false;
 		
 		this.vectorLinkSource = new N2LinkSource({
 			dispatchService: this.dispatchService
@@ -946,6 +947,19 @@ class N2MapCanvas  {
 			}),
 		);
 
+		mainbar.addControl(new Toggle({
+				/*
+				Add a toggle for hiding features if the map zoom level
+				is greater than a place's zoom scale level
+				 */
+				html: "",
+				className: "hide-feature-map-zoom-toggle",
+				title: "Toggle hiding rings if map zoom exceeds place zoom level",
+				active: this.hideFeatureIfMapZoom,
+				onToggle: () => { this.hideFeatureIfMapZoom = !this.hideFeatureIfMapZoom }
+			}),
+		);
+
 		var pcluster = new Toggle({
 			html: "",
 			className: "cluster_toggle",
@@ -1223,6 +1237,7 @@ class N2MapCanvas  {
 			*/
 			if (feature && feature.data && feature.data._ldata &&
 				feature.data._ldata.placeZoomScale &&
+				_this.hideFeatureIfMapZoom &&
 				_this.n2Map.getView().getZoom() > feature.data._ldata.placeZoomScale) {
 					feature.set("isVisible", false, false)
 					return;
