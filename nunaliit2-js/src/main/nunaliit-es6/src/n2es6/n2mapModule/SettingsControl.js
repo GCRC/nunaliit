@@ -14,7 +14,6 @@ import Control from 'ol/control/Control';
  * 		label - Text to be displayed for the setting option
  * 		initialState - boolean (checkboxes)
  * 		sublevel - Appearance of the setting if it should look like a sub-setting (add left padding)
- * 		interactionCallback - function reference to be called when the setting is interacted with
  * }
  * @api
  */
@@ -30,8 +29,10 @@ class SettingsControl extends Control {
 			"cinemap-to-map-settings-control"
 		);
 
+		this.DH = "CinemapToMapCanvasSettingsControl";
 		this.dispatchService = options.dispatchService;
 		this.settings = options.settings;
+		this.keyControlMap = new Map();
 
 		this.button = document.createElement("button");
 		div.append(this.button);
@@ -56,8 +57,37 @@ class SettingsControl extends Control {
 	renderPanel() {
 		this.settings.forEach(setting => {
 			const ul = document.createElement("ul");
-			
+			const uid = $n2.getUniqueId();
+			const li = document.createElement("li");
+			const label = document.createElement("label");
+			const checkbox = document.createElement("input");
+
+			checkbox.type = "checkbox";
+			checkbox.id = uid;
+			checkbox.checked = setting.initialState;
+			checkbox.addEventListener("change", (ev) => {
+				this.dispatchService.send(this.DH, {
+					type: "cinemapToMapSettingsUpdate",
+					key: setting.key,
+					state: ev.target.checked
+				});
+			});
+
+			this.keyControlMap.set(setting.key, checkbox);
+
+			label.htmlFor = uid;
+			label.innerHTML = setting.label;
+			// use setting.sublevel to determine padding-left
+			li.append(checkbox, label);
+			ul.append(li);
+			this.panel.append(ul);
 		});
+	}
+
+	updateControlByKey(key, state) {
+		const control = this.keyControlMap.get(key);
+		if (control === undefined) return;
+		control.checked = state;
 	}
 }
 

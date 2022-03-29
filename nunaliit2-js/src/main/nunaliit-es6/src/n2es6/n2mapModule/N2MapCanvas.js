@@ -296,6 +296,7 @@ class N2MapCanvas  {
 			this.dispatchService.register(DH, 'editInitiate', f);
 			this.dispatchService.register(DH, 'editClosed', f);
 			this.dispatchService.register(DH, 'canvasGetStylesInUse', f);
+			this.dispatchService.register(DH, 'cinemapToMapSettingsUpdate', f);
 		}
 
 		$n2.log(this._classname,this);
@@ -323,6 +324,8 @@ class N2MapCanvas  {
 		this.showRelatedImages = true;
 		this.animateMapFitting = false;
 		
+		this.settingsControl = null;
+
 		this.vectorLinkSource = new N2LinkSource({
 			dispatchService: this.dispatchService
 		});
@@ -827,47 +830,42 @@ class N2MapCanvas  {
 			})
 		);
 
-		customMap.addControl(
-			new SettingsControl({
-				dispatchService: this.dispatchService,
-				settings: [
-					{
-						label: "zoom",
-						initialState: "this....whatever",
-						sublevel: 0
-					},
-					{
-						label: "zoom animate",
-						initialState: "..>",
-						sublevel: 1
-					},
-					{
-						label: "Display media",
-						initialState: "...",
-						sublevel: 0
-					},
-					{
-						label: "rings disappear on zoom",
-						initialState: "...",
-						sublevel: 0
-					},
-					{
-						label: "Cluster rings",
-						initialState: "...",
-						sublevel: 0
-					}
-				]
-			})
-		);
-
-		const mainbar = new Bar();
-		customMap.addControl(mainbar);
-		mainbar.setPosition("top-left");
-
-		/* Nested toobar with one control activated at once */
-		/* var nested = new Bar ({ toggleOne: true, group:true }); */
-//		var selectInteraction = new SelectInteraction ();
-		/* mainbar.addControl (nested); */
+		this.settingsControl = new SettingsControl({
+			dispatchService: this.dispatchService,
+			settings: [
+				{
+					label: "zoom",
+					key: "fitMapToLatestMapTag",
+					initialState: this.fitMapToLatestMapTag,
+					sublevel: 0
+				},
+				{
+					label: "zoom animate",
+					key: "animateMapFitting",
+					initialState: this.animateMapFitting,
+					sublevel: 1
+				},
+				{
+					label: "Display media",
+					key: "showRelatedImages",
+					initialState: this.showRelatedImages,
+					sublevel: 0
+				},
+				{
+					label: "rings disappear on zoom",
+					key: "hideFeatureIfMapZoom",
+					initialState: "...",
+					sublevel: 0
+				},
+				{
+					label: "Cluster rings",
+					key: "isClustering",
+					initialState: this.isClustering,
+					sublevel: 0
+				}
+			]
+		})
+		customMap.addControl(this.settingsControl);
 
 		// Add selection tool (a toggle control with a select interaction)
 		var selectCtrl = new Toggle({
@@ -913,110 +911,13 @@ class N2MapCanvas  {
 			}
 		}).bind(this));
 		
-		mainbar.addControl(selectCtrl);
+		// This button has been broken since who knows when but it keeps the hover popups working so leave it shoved in the corner
+		customMap.addControl(selectCtrl);
 
 		this.interactionSet.drawInteraction = new DrawInteraction({
 			type: 'Point',
 			source: this.overlayLayers[0].getSource()
 		});
-
-		// Add editing tools
-		/* var pedit = new Toggle({
-				html: '<i class="fa fa-map-marker" ></i>',
-				className: "edit",
-				title: 'Point',
-				interaction: this.interactionSet.drawInteraction,
-				onToggle: function(active){}
-		}); */
-		//nested.addControl ( pedit );
-
-		const mapFitControlBar = new Bar({
-			className: "map-fit-controls",
-			controls: [
-				new Toggle({
-					// Add a toggle for the map to fit to a place's zoom level on encounter with a new map tag from the transcript
-					html: "",
-					className: "map-fit-on-new-tag",
-					title: "Toggle map fit on latest map tag",
-					active: this.fitMapToLatestMapTag,
-					onToggle: () => { this.fitMapToLatestMapTag = !this.fitMapToLatestMapTag }
-				}),
-				new Toggle({
-					// Add a toggle for the map fit to animate or be instantaneous
-					html: "",
-					className: "map-fit-animate",
-					title: "Toggle map fit animation",
-					active: this.animateMapFitting,
-					onToggle: () => { this.animateMapFitting = !this.animateMapFitting }
-				})
-			]
-		});
-
-		const mapFitOptionsToggle = new Toggle({
-			html: "",
-			title: "Map Fit Options",
-			active: this.fitMapToLatestMapTag || this.animateMapFitting,
-			bar: mapFitControlBar,
-			onToggle: () => {
-				const shouldBeActive = [...mapFitOptionsToggle.element.classList].includes("faux-ol-active");
-				if (!this.fitMapToLatestMapTag && shouldBeActive) {
-					mapFitOptionsToggle.element.classList.remove("faux-ol-active");
-				}
-				else if (this.fitMapToLatestMapTag && !shouldBeActive){
-					mapFitOptionsToggle.element.classList.add("faux-ol-active"); 
-				}
-			}
-		});
-
-		mainbar.addControl(mapFitOptionsToggle);
-
-		mainbar.addControl(new Toggle({
-				// Add a toggle for showing related images
-				html: "",
-				className: "show-related-media-toggle",
-				title: "Toggle display of related media",
-				active: this.showRelatedImages,
-				onToggle: () => { this.showRelatedImages = !this.showRelatedImages }
-			}),
-		);
-
-		var pcluster = new Toggle({
-			html: "",
-			className: "cluster_toggle",
-			title: 'Toggle clustering',
-			interaction : undefined,
-			active: _this.isClustering ? true: false,
-			onToggle: function(active){
-				//NOTE toggle cluster button only change the clusting-setting for first overlay-layer
-				if (active && !_this.isClustering) {
-					let c_source =	_this.overlayLayers[0].getSource();
-					_this.overlayLayers[0].setSource(null);
-					let a_source = c_source.getSource();
-					let b_source = new N2DonutCluster({source: a_source});
-					b_source.setSource(a_source)
-					c_source = new N2SourceWithN2Intent({
-						interaction: _this.interactionSet.selectInteraction,
-						source: b_source,
-						dispatchService: _this.dispatchService,
-						linkCallback: _this.vectorLinkSource.refreshCallback.bind(_this.vectorLinkSource)
-					});	
-					_this.overlayLayers[0].setSource (c_source);
-					
-					_this.isClustering = true;
-
-				} else if (_this.isClustering && !active) {
-					let c_source =	_this.overlayLayers[0].getSource();
-					let b_source = c_source.getSource();
-					let a_source = b_source.getSource();
-					c_source.setSource(a_source);
-					b_source.setSource(null);
-					a_source.changed();
-					_this.isClustering = false;
-
-				}
-			}
-		})
-		mainbar.addControl(pcluster);
 
 		this.mediaDrawerState.drawer = new nunaliit2.ui.drawer({
 			containerId: "content",
@@ -1034,97 +935,6 @@ class N2MapCanvas  {
 				this.mediaDrawerState.caption = caption;
 			}
 		});
-
-		//Create editing layer
-		/* this.editLayerSource = new VectorSource();
-		var editLayer = new VectorLayer({
-			title: 'Edit',
-			source: this.editLayerSource 
-		});
-		customMap.addLayer(editLayer);
-		this.overlayLayers.push(editLayer);
-			
-		this.editbarControl = new EditBar({
-			interactions: {
-				Select : this.interactionSet.selectInteraction
-			},
-			source: editLayer.getSource()
-		});
-
-		customMap.addControl(this.editbarControl);
-		this.editbarControl.setVisible(false);
-		this.editbarControl.getInteraction('Select').on('clicked', function(e){
-			if (_this.currentMode === _this.modes.ADD_OR_SELECT_FEATURE 
-			|| _this.currentMode === _this.modes.EDIT_FEATURE ){
-				return false;
-			}
-		});	
-
-		this.editbarControl.getInteraction('ModifySelect').on('modifystart', function(e){
-			console.log('modifying features:', e.features); */
-			//if (e.features.length===1) tooltip.setFeature(e.features[0]);
-		/* });
-
-		this.editbarControl.getInteraction('ModifySelect').on('modifyend', onModifyEnd);
-		function onModifyEnd(e){
-			var features = e.features;
-			for (var i=0,e=features.length; i<e; i++){
-				var geometry = features[i].getGeometry();
-				//console.log(geometry.toString('EPSG:3857' , 'EPSG:4326'))
-				_this.dispatchService.send(DH,{
-					type: 'editGeometryModified'
-					,docId: features[i].fid
-					,geom: geometry
-					,proj: new Projection({code: 'EPSG:3857'})
-					,_origin: _this
-				});
-			} */
-			//  tooltip.setFeature();
-/* 			return false;
-		}
-
-		this.editbarControl.getInteraction('DrawPoint').on('drawend', function(e){
-			_this.editModeAddFeatureCallback( evt ); 
-		}); */
-//		  //  tooltip.setInfo(e.oldValue ? '' : 'Click map to place a point...');
-//		  });
-
-/* 		this.editbarControl.getInteraction('DrawLine').on('drawend', function(evt){
-			_this.editModeAddFeatureCallback( evt );
-		}); */
-
-		// tooltip.setFeature();
-//		   // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing line...');
-//		  });
-//		  editbarControl.getInteraction('DrawLine').on('drawstart', function(e){
-//		   // tooltip.setFeature(e.feature);
-//		   // tooltip.setInfo('Click to continue drawing line...');
-//		  });
-//		  this.editbarControl.getInteraction('DrawPolygon').on('drawstart', function(e){
-//			  e.stopPropagation();
-//		   // tooltip.setFeature(e.feature);
-//		   // tooltip.setInfo('Click to continue drawing shape...');
-//		  });
-/* 		this.editbarControl.getInteraction('DrawPolygon').on('drawend', function(evt){
-			_this.editModeAddFeatureCallback( evt ); */
-			// tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
-/* 		}); */
-//		  editbarControl.getInteraction('DrawHole').on('drawstart', function(e){
-//		   // tooltip.setFeature(e.feature);
-//		   // tooltip.setInfo('Click to continue drawing hole...');
-//		  });
-//		  editbarControl.getInteraction('DrawHole').on(['change:active','drawend'], function(e){
-//		   // tooltip.setFeature();
-//		   // tooltip.setInfo(e.oldValue ? '' : 'Click polygon to start drawing hole...');
-//		  });
-//		  editbarControl.getInteraction('DrawRegular').on('drawstart', function(e){
-//		   // tooltip.setFeature(e.feature);
-//		   // tooltip.setInfo('Move and click map to finish drawing...');
-//		  });
-//		  editbarControl.getInteraction('DrawRegular').on(['change:active','drawend'], function(e){
-//		   // tooltip.setFeature();
-//		   // tooltip.setInfo(e.oldValue ? '' : 'Click map to start drawing shape...');
-//		  });
 	}
 
 	onMoveendCallback(evt){}
@@ -1180,6 +990,37 @@ class N2MapCanvas  {
 		}
 	}
 	
+	_clusterFeatures(state) {
+		const donutLayer = this.overlayLayers.find(layer => {
+			return layer.get("alias") === DONUT_VECTOR_LAYER_DISPLAY_NAME;
+		});
+
+		if (state && this.isClustering) {
+			let c_source =	donutLayer.getSource();
+			donutLayer.setSource(null);
+			let a_source = c_source.getSource();
+			let b_source = new N2DonutCluster({source: a_source});
+			b_source.setSource(a_source)
+			c_source = new N2SourceWithN2Intent({
+				interaction: this.interactionSet.selectInteraction,
+				source: b_source,
+				dispatchService: this.dispatchService,
+				linkCallback: this.vectorLinkSource.refreshCallback.bind(this.vectorLinkSource)
+			});	
+			donutLayer.setSource(c_source);
+			this.isClustering = true;
+		}
+		else if (!state && !this.isClustering) {
+			let c_source =	donutLayer.getSource();
+			let b_source = c_source.getSource();
+			let a_source = b_source.getSource();
+			c_source.setSource(a_source);
+			b_source.setSource(null);
+			a_source.changed();
+			this.isClustering = false;
+		}
+	}
+
 	_retrivingDocsAndSendSelectedEvent(features) {
 		var _this = this;
 		var validFeatures = [];
@@ -1851,6 +1692,16 @@ class N2MapCanvas  {
 			_this.lastTime = currTime;
 		} else if( 'canvasGetStylesInUse' === type && this.canvasName === m.canvasName){
 			m.stylesInUse = this._getMapStylesInUse();
+		} else if( 'cinemapToMapSettingsUpdate' === type ){
+			const { key, state } = m;
+			this[key] = state;
+			if (key === "fitMapToLatestMapTag" && !state) {
+				this.animateMapFitting = false;
+				this.settingsControl.updateControlByKey("animateMapFitting", false);
+			}
+			else if (key === "isClustering") {
+				this._clusterFeatures(state);
+			}
 		}
 	}
 
