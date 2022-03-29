@@ -834,32 +834,27 @@ class N2MapCanvas  {
 					{
 						label: "zoom",
 						initialState: "this....whatever",
-						sublevel: 0,
-						interactionCallback: () => {}
+						sublevel: 0
 					},
 					{
 						label: "zoom animate",
 						initialState: "..>",
-						sublevel: 1,
-						interactionCallback: () => {}
+						sublevel: 1
 					},
 					{
 						label: "Display media",
 						initialState: "...",
-						sublevel: 0,
-						interactionCallback: () => {}
+						sublevel: 0
 					},
 					{
 						label: "rings disappear on zoom",
 						initialState: "...",
-						sublevel: 0,
-						interactionCallback: () => {}
+						sublevel: 0
 					},
 					{
 						label: "Cluster rings",
 						initialState: "...",
-						sublevel: 0,
-						interactionCallback: () => {}
+						sublevel: 0
 					}
 				]
 			})

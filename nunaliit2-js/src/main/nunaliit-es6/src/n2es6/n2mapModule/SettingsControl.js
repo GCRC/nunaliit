@@ -40,11 +40,7 @@ class SettingsControl extends Control {
 		this.panel.classList.add("settings-control-panel");
 		div.append(this.panel);
 
-
-		// renderPanel() here 
-		const div2 = document.createElement("ul");
-		div2.innerHTML = "asddaadsd"
-		this.panel.append(div2);
+		this.renderPanel();
 
 		this.button.addEventListener("click", (ev) => {
 			if (!this.element.classList.contains(this.shownClassName)) {
@@ -58,8 +54,10 @@ class SettingsControl extends Control {
 	}
 
 	renderPanel() {
-		const ul = document.createElement("ul");
-		this.panel.append(ul);
+		this.settings.forEach(setting => {
+			const ul = document.createElement("ul");
+			
+		});
 	}
 }
 
