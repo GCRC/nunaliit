@@ -44,21 +44,19 @@ div.ol-unselectable.ol-control.cinemap-to-map-settings-control.settings-panel-vi
 }
 
 /* Related Media Drawer */
-div#content > div.relatedMediaDisplayDrawer > div.n2widget_drawer_container > div#relatedMediaDisplayDrawerImageContainer > img {
+#relatedMediaDisplayDrawerImageContainer > img {
 	width: 100%;
 	max-height: 40em;
 }
 
-div#content > div.relatedMediaDisplayDrawer > div.n2widget_drawer_container > div#relatedMediaDisplayDrawerImageContainer {
+#relatedMediaDisplayDrawerImageContainer {
 	margin-top: 2em;
 	margin-left: 1.5em;
 }
 
-div#content > div.relatedMediaDisplayDrawer > div.n2widget_drawer_container > p {
-	text-align: center;
+#content > div.relatedMediaDisplayDrawer > div.n2widget_drawer_container > p {
 	font-size: 18px;
-	font-weight: bold;
-	padding: 0px 1em 1em 1em;
+	padding: 1em 1.3em 1em 1.1em;
 	white-space: normal;
 	word-wrap: break-word;
 }

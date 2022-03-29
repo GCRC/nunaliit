@@ -290,6 +290,8 @@ class N2MapCanvas  {
 			this.dispatchService.register(DH, 'n2rerender', f);
 			this.dispatchService.register(DH, 'time_interval_change', f);
 			this.dispatchService.register(DH, 'renderStyledTranscript', f);
+			this.dispatchService.register(DH, 'mapExtentRequest', f);
+			this.dispatchService.register(DH, 'mapFitExtent', f);
 			this.dispatchService.register(DH, 'focusOn', f);
 			this.dispatchService.register(DH, 'mapRefreshCallbackRequest', f);
 			this.dispatchService.register(DH, 'resolutionRequest', f);
@@ -321,8 +323,9 @@ class N2MapCanvas  {
 		}
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styles);
 		this.fitMapToLatestMapTag = false;
-		this.showRelatedImages = true;
 		this.animateMapFitting = false;
+		this.showRelatedImages = true;
+		this.hideFeatureIfMapZoom = false;
 		
 		this.settingsControl = null;
 
@@ -1098,6 +1101,7 @@ class N2MapCanvas  {
 			*/
 			if (feature && feature.data && feature.data._ldata &&
 				feature.data._ldata.placeZoomScale &&
+				_this.hideFeatureIfMapZoom &&
 				_this.n2Map.getView().getZoom() > feature.data._ldata.placeZoomScale) {
 					feature.set("isVisible", false, false)
 					return;
@@ -1702,6 +1706,10 @@ class N2MapCanvas  {
 			else if (key === "isClustering") {
 				this._clusterFeatures(state);
 			}
+		} else if ('mapExtentRequest' === type) {
+			m.value = this.n2Map.getView().calculateExtent();
+		} else if ('mapFitExtent' === type) {
+			this.n2Map.getView().fit(m.value);
 		}
 	}
 

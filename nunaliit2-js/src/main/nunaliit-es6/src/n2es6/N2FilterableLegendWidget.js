@@ -51,6 +51,9 @@ class N2FilterableLegendWidgetWithGraphic {
         this.graphicContainer = null;
         this.graphic = null;
 
+        this.graphicToggle = null;
+        this.graphicVisibility = true;
+
         this.state = {
             currentStyles: {},
             sourceModelDocuments: {},
@@ -310,8 +313,7 @@ class N2FilterableLegendWidgetWithGraphic {
     _drawLegendOption(fragment, optionValue, optionLabel, colour) {
         const optionId = nunaliit2.getUniqueId();
         const selectionRow = document.createElement("div");
-        selectionRow.setAttribute("class", "n2widgetLegend_legendEntry")
-        selectionRow.setAttribute("class", "n2widgetLegend_optionSelected")
+        selectionRow.classList.add("n2widgetLegend_legendEntry", "n2widgetLegend_optionSelected");
         selectionRow.setAttribute("data-n2-choiceId", optionValue)
 
         const checkbox = document.createElement("input");
@@ -374,12 +376,18 @@ class N2FilterableLegendWidgetWithGraphic {
         this.graphicContainer.append(graphic);
         this.graphic = graphic;
 
+        if (!this.graphicVisibility) {
+            this.graphic.classList.add("filterableLegendWidgetGraphicAreaHidden");
+        }
+
         if (this.graphicType === "pie") {
             const D3V3 = window.d3;
             if (D3V3 === undefined) throw new Error("The d3 (V3) library is not available!")
             throw new Error("This isn't implemented yet. Come back soon!");
         }
         else if (this.graphicType === "custom") {
+            // move the following line out of the if/else-ifs once they're implemented
+            this._drawGraphicToggle();
             this.graphic.classList.add("n2_CustomGraphic");
             this._drawCustom();
         }
@@ -387,6 +395,42 @@ class N2FilterableLegendWidgetWithGraphic {
 
     _drawCustom() {
         this.drawCustom(this.prepareGraphicData(this.state.sourceModelDocuments));
+    }
+
+    _drawGraphicToggle() {
+        const minimize = "n2_filterableLegendWidgetWithGraphicMinimize";
+        const maximize = "n2_filterableLegendWidgetWithGraphicMaximize";
+        const hideClass = "filterableLegendWidgetGraphicAreaHidden";
+        const toggleSpan = document.createElement("span");
+        toggleSpan.setAttribute("id", "n2_filterableLegendWidgetWithGraphicToggle");
+        if (this.graphicVisibility) {
+            toggleSpan.classList.add(minimize);
+        }
+        else {
+            toggleSpan.classList.add(maximize);
+        }
+        toggleSpan.addEventListener("click", () => {
+            if (toggleSpan.classList.contains(minimize)) {
+                toggleSpan.classList.remove(minimize);
+                toggleSpan.classList.add(maximize);
+                this.graphic.classList.add(hideClass);
+                this.graphicVisibility = false;
+            }
+            else {
+                toggleSpan.classList.remove(maximize);
+                toggleSpan.classList.add(minimize);
+                this.graphic.classList.remove(hideClass);
+                this.graphicVisibility = true;
+            }
+        });
+        this.graphicContainer.append(toggleSpan);
+        if (this.graphicToggle !== null) {
+            if (this.graphicToggle !== undefined) {
+                this.graphicToggle.remove();
+            }
+            this.graphicToggle = null;
+        }
+        this.graphicToggle = toggleSpan;
     }
 
     _adjustSelectedItem() {
