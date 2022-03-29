@@ -1,4 +1,4 @@
-const path =require( 'path');
+const path = require('path');
 module.exports = {
 	entry: './dist/index.js',
 	devtool: 'source-map',
@@ -28,8 +28,5 @@ module.exports = {
 		library: 'n2es6',
 		libraryTarget: 'umd',
 		libraryExport: 'default'
-	},
-    node: {
-		fs: 'empty'
 	}
 };
