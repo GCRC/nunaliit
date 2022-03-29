@@ -393,12 +393,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				globalScaleFactor: 1
 				, globalTimeOffset: 0.5
 				, globalDefaultPlaceZoomLevel: 10
-				, globalInitialMapExtent: [
-					-23251423.797684122,
-					-10687036.27380429,
-					24885559.13518848,
-					18390832.27832932
-				]
+				, globalInitialMapExtent: [0]
 			};
 
 			this.gloScaleFactorId = $n2.getUniqueId();
@@ -776,7 +771,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						const _gpzInputValue = _gpzInput.val();
 						const _gsvInputValue = _gsvInput.val().split(",").map(v => Number(v));
 						if (!validateMapExtent(_gsvInputValue)) {
-							alert("The cinemap initial view format is invalid.\nIt must be 4 comma separated numbers.");
+							alert("The cinemap initial view format is invalid.\nIt must be 4 comma separated numbers or 0 for no default view.");
 							return;
 						}
 						if (_gsfInputValue || _gtoInputValue || _gpzInputValue || _gsvInputValue){
@@ -805,13 +800,17 @@ POSSIBILITY OF SUCH DAMAGE.
 			function validateMapExtent(extent) {
 				return (
 					Array.isArray(extent) 
-					&& (extent.length === 4)
-					&& extent.every(coordinate => {
-						return (
-							typeof coordinate === "number"
-							&& !Number.isNaN(coordinate)
-						);
-					})
+					&& (
+						((extent.length === 4)
+						&& extent.every(coordinate => {
+							return (
+								typeof coordinate === "number"
+								&& !Number.isNaN(coordinate)
+							);
+						}))
+						||
+						(extent.length === 1 && extent[0] === 0)
+					)
 				);
 			}
 
@@ -942,7 +941,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					$('<label>')
 						.attr('for', this.cinemapInitialMapViewId)
 						.html('Initial Map View*')
-						.attr('title', 'The values used here are in the EPSG:3857/Web Mercator projection.\nThe order of this bounding box is bottom left (x, y) and top right (x, y).')
+						.attr('title', 'The values used here are in the EPSG:3857/Web Mercator projection.\nThe order of this bounding box is bottom left (x, y) and top right (x, y).\nUse a value of "0" if the cinemap should not have a default view.')
 						.appendTo(container);
 					$('<button>')
 						.html('Get Current Map View')
