@@ -301,6 +301,11 @@ class N2FilterableLegendWidgetWithGraphic {
         const legendFragment = document.createDocumentFragment();
         this._drawLegendOption(legendFragment, ALL_CHOICES, selectAllLabel, null)
 
+        const parsedStyles = new Map();
+        Object.values(this.state.currentStyles).forEach(style => {
+            parsedStyles.set(style.style.label, style);
+        });
+
         this.state.availableChoices.forEach(choice => {
             const label = choice.label || choice.id;
             const colour = choice.color;
@@ -337,7 +342,7 @@ class N2FilterableLegendWidgetWithGraphic {
 
         if (colour) {
             // TODO - other symbols
-            const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");;
+            const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svgNode.setAttribute("viewBox", "-7 -7 14 14");
             svgNode.setAttribute("class", "n2widgetLegend_svg");
 
