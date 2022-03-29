@@ -837,13 +837,13 @@ class N2MapCanvas  {
 			dispatchService: this.dispatchService,
 			settings: [
 				{
-					label: "zoom",
+					label: "Map fit",
 					key: "fitMapToLatestMapTag",
 					initialState: this.fitMapToLatestMapTag,
 					sublevel: 0
 				},
 				{
-					label: "zoom animate",
+					label: "Map fit animation",
 					key: "animateMapFitting",
 					initialState: this.animateMapFitting,
 					sublevel: 1
@@ -855,13 +855,13 @@ class N2MapCanvas  {
 					sublevel: 0
 				},
 				{
-					label: "rings disappear on zoom",
+					label: "Hide rings if map zoom exceeds place zoom scale",
 					key: "hideFeatureIfMapZoom",
-					initialState: "...",
+					initialState: this.hideFeatureIfMapZoom,
 					sublevel: 0
 				},
 				{
-					label: "Cluster rings",
+					label: "Clustering symbols",
 					key: "isClustering",
 					initialState: this.isClustering,
 					sublevel: 0

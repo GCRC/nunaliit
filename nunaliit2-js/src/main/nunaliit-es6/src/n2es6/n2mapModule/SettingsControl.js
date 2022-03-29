@@ -35,6 +35,7 @@ class SettingsControl extends Control {
 		this.keyControlMap = new Map();
 
 		this.button = document.createElement("button");
+		this.button.title = "Settings";
 		div.append(this.button);
 
 		this.panel = document.createElement("div");
@@ -77,7 +78,11 @@ class SettingsControl extends Control {
 
 			label.htmlFor = uid;
 			label.innerHTML = setting.label;
-			// use setting.sublevel to determine padding-left
+
+			if (setting.sublevel > 0) {
+				ul.style.paddingLeft = `${1.6 + setting.sublevel}em`;
+			}
+
 			li.append(checkbox, label);
 			ul.append(li);
 			this.panel.append(ul);
