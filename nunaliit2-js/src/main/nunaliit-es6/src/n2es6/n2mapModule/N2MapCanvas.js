@@ -1749,6 +1749,7 @@ class N2MapCanvas  {
 			mapFitDuration = 1000;
 		}
 
+		if (!feature.n2ConvertedBbox || feature.n2ConvertedBbox.length < 2) return;
 		const areaOfFocus = [feature.n2ConvertedBbox[0], feature.n2ConvertedBbox[1]];
 
 		olmap.getView().animate({
