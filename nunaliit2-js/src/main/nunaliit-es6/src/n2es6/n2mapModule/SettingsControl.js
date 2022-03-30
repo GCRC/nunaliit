@@ -78,6 +78,7 @@ class SettingsControl extends Control {
 
 			label.htmlFor = uid;
 			label.innerHTML = setting.label;
+			label.title = setting.hint;
 
 			if (setting.sublevel > 0) {
 				ul.style.paddingLeft = `${1.6 + setting.sublevel}em`;

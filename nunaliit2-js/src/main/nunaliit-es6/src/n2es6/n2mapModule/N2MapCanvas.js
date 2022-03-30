@@ -322,8 +322,8 @@ class N2MapCanvas  {
 			}
 		}
 		this.styleRules = $n2.styleRule.loadRulesFromObject(opts.styles);
-		this.fitMapToLatestMapTag = false;
-		this.animateMapFitting = false;
+		this.fitMapToLatestMapTag = true;
+		this.animateMapFitting = true;
 		this.showRelatedImages = true;
 		this.hideFeatureIfMapZoom = false;
 		
@@ -838,30 +838,35 @@ class N2MapCanvas  {
 			settings: [
 				{
 					label: "Map fit",
+					hint: "The map will zoom to fit if a place was tagged, taking its zoom scale property into consideration",
 					key: "fitMapToLatestMapTag",
 					initialState: this.fitMapToLatestMapTag,
 					sublevel: 0
 				},
 				{
 					label: "Map fit animation",
+					hint: "The map will animate its zoom to fit",
 					key: "animateMapFitting",
 					initialState: this.animateMapFitting,
 					sublevel: 1
 				},
 				{
 					label: "Display media",
+					hint: "Associated related media will display",
 					key: "showRelatedImages",
 					initialState: this.showRelatedImages,
 					sublevel: 0
 				},
 				{
-					label: "Hide rings if map zoom exceeds place zoom scale",
+					label: "Zoom threshold",
+					hint: "Symbols will hide if the map zoom level is greater than a place's zoom scale property",
 					key: "hideFeatureIfMapZoom",
 					initialState: this.hideFeatureIfMapZoom,
 					sublevel: 0
 				},
 				{
 					label: "Clustering symbols",
+					hint: "Symbols will cluster",
 					key: "isClustering",
 					initialState: this.isClustering,
 					sublevel: 0
@@ -1702,6 +1707,10 @@ class N2MapCanvas  {
 			if (key === "fitMapToLatestMapTag" && !state) {
 				this.animateMapFitting = false;
 				this.settingsControl.updateControlByKey("animateMapFitting", false);
+			}
+			else if (key === "animateMapFitting" && !this.fitMapToLatestMapTag) {
+				this.fitMapToLatestMapTag = true;
+				this.settingsControl.updateControlByKey("fitMapToLatestMapTag", true);
 			}
 			else if (key === "isClustering") {
 				this._clusterFeatures(state);
