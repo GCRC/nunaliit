@@ -13,20 +13,26 @@
 	<link rel="stylesheet" href="../nunaliit2/css/basic/nunaliit2.css" type="text/css" />
 	<link rel="stylesheet" href="../_list/css_merge/css" type="text/css" />
 	<link rel="stylesheet" href="../css/atlas.css" type="text/css" />
+	<link rel="stylesheet" href="css/bulk_upload.css" type="text/css" />
 </head>
 
 <body class="nunaliit_application nunaliit_application_browse" style="overflow: auto;">
 
 	<h1>Data Browser</h1>
 	<div id="login" class="nunaliit_login"></div>
-	<div class="newDocumentInputs">
-		<input id="selectSchemaButton" type="button" value="Select Bulk Upload Schema" />
+	<div class="uploadContainer">
+		<div class="setup">
+			<input id="selectSchemaButton" type="button" value="Select Bulk Upload Schema" />
+		</div>
+		<div class="error" id="uploadErrors"></div>
+		<form id="uploadForm" class="hiddenForm">
+			<div id="schemaValues"></div>
+			<input id="uploadFiles" type="file" multiple />
+			<input type="submit" value="Upload">
+		</form>
+		<div id="results" class="uploadResults">
+		</div>
 	</div>
-	<form id="uploadForm" class="results">
-		<div id="schemaValues"></div>
-		<input id="uploadFiles" type="file" multiple />
-		<input type="submit" value="Upload">
-	</form>
 
 
 	<script type="text/javascript" src="../js-external/js/jquery.min.js"></script>
