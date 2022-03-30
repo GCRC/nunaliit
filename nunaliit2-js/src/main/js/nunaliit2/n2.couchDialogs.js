@@ -1904,6 +1904,14 @@ var DialogService = $n2.Class({
 			});
 			this.funcMap['getDocumentFromModel'] = factory.getDialogFunction();
 		};
+
+		if( !this.funcMap['getTagAutocomplete'] ) {
+			var tagService = new $n2.tag.TagService({
+				dispatchService: this.dispatchService,
+				designDoc: this.atlasDesign
+			});
+			this.funcMap['getTagAutocomplete'] = tagService.getAutocompleteQueryFn();
+		}
 	},
 	
 	getFunctionMap: function(){
