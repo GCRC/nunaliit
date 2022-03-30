@@ -58,6 +58,7 @@ class N2FilterableLegendWidgetWithGraphic {
 
         this.state = {
             currentStyles: {},
+            stylesByKey: new Map(),
             sourceModelDocuments: {},
             allSelected: true,
             availableChoices: [],
@@ -104,6 +105,8 @@ class N2FilterableLegendWidgetWithGraphic {
         const legendAndGraphic = document.createElement("div");
         legendAndGraphic.setAttribute("id", this.elementId);
         legendAndGraphicContainer.append(legendAndGraphic);
+
+        this._debouncedDrawLegend = $n2.utils.debounce(this._drawLegend, 1000);
 
         this._draw();
 	}
@@ -208,8 +211,7 @@ class N2FilterableLegendWidgetWithGraphic {
         if (type === this.eventNames.changeAvailableChoices) {
             if (value) {
                 this.state.availableChoices = value;
-                this._drawLegend();
-                this._adjustSelectedItem();
+                this._debouncedDrawLegend();
                 this._drawGraphic();
             }
         } 
@@ -239,7 +241,7 @@ class N2FilterableLegendWidgetWithGraphic {
             const { canvasName, stylesInUse } = message;
             if (canvasName !== this.designatedCanvasName) return;
             this.state.currentStyles = stylesInUse;
-            $n2.utils.throttle(this._drawLegend(), 1000);
+            this._debouncedDrawLegend();
         }
     }
 
@@ -284,7 +286,7 @@ class N2FilterableLegendWidgetWithGraphic {
         mainContainer.append(this.legendContainer);
         mainContainer.append(this.graphicContainer);
         
-        this._drawLegend();
+        this._debouncedDrawLegend();
         this._drawGraphic();
     }
 
@@ -301,23 +303,22 @@ class N2FilterableLegendWidgetWithGraphic {
         const legendFragment = document.createDocumentFragment();
         this._drawLegendOption(legendFragment, ALL_CHOICES, selectAllLabel, null)
 
-        const parsedStyles = new Map();
+        this.state.stylesByKey.clear();
         Object.values(this.state.currentStyles).forEach(style => {
-            parsedStyles.set(style.style.label, style);
+            this.state.stylesByKey.set(style.style.label, style);
         });
 
         this.state.availableChoices.forEach(choice => {
             const label = choice.label || choice.id;
-            const colour = choice.color;
-            // TODO - shouldn't handle colour here
-            this._drawLegendOption(legendFragment, choice.id, _loc(label), colour);
+            this._drawLegendOption(legendFragment, choice.id, _loc(label));
         });
 
         legend.append(legendFragment);
         this.legendContainer.append(legend);
+        this._adjustSelectedItem();
     }
 
-    _drawLegendOption(fragment, optionValue, optionLabel, colour) {
+    _drawLegendOption(fragment, optionValue, optionLabel) {
         const optionId = nunaliit2.getUniqueId();
         const selectionRow = document.createElement("div");
         selectionRow.classList.add("n2widgetLegend_legendEntry", "n2widgetLegend_optionSelected");
@@ -340,24 +341,8 @@ class N2FilterableLegendWidgetWithGraphic {
         symbolColumn.setAttribute("class", "n2widgetLegend_symbolColumn");
         checkboxLabel.append(symbolColumn);
 
-        if (colour) {
-            // TODO - other symbols
-            const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svgNode.setAttribute("viewBox", "-7 -7 14 14");
-            svgNode.setAttribute("class", "n2widgetLegend_svg");
-
-            const svgDonut = document.createElementNS(svgNode.namespaceURI, "circle");
-            svgDonut.setAttribute("r", "5");
-            svgDonut.setAttribute("stroke", colour);
-            svgDonut.setAttribute("stroke-width", "2");
-            svgDonut.setAttribute("fill-opacity", "1");
-            svgDonut.setAttribute("stroke-opacity", "1");
-            svgDonut.setAttribute("stroke-linecap", "round");
-            svgDonut.setAttribute("stroke-dasharray", "solid");
-            svgDonut.setAttribute("pointerEvents", "visiblePainted");
-            svgDonut.setAttribute("pointer-events", "visiblePainted");
-            svgNode.append(svgDonut);
-            symbolColumn.append(svgNode);
+        if (optionValue !== ALL_CHOICES) {
+            symbolColumn.append(this._getSVGSymbol(optionLabel));
         }
 
         const labelColumn = document.createElement("div");
@@ -370,8 +355,24 @@ class N2FilterableLegendWidgetWithGraphic {
         labelColumn.append(label);
 
         fragment.append(selectionRow);
+    }
 
-        this._adjustSelectedItem();
+    _getSVGSymbol(matchingLabel) {
+        const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        // donut
+        /* svgNode.setAttribute("viewBox", "-7 -7 14 14");
+        svgNode.setAttribute("class", "n2widgetLegend_svg");
+        const svgDonut = document.createElementNS(svgNode.namespaceURI, "circle");
+        svgDonut.setAttribute("r", "5");
+        svgDonut.setAttribute("stroke", colour);
+        svgDonut.setAttribute("stroke-width", "2");
+        svgDonut.setAttribute("fill-opacity", "1");
+        svgDonut.setAttribute("stroke-opacity", "1");
+        svgDonut.setAttribute("stroke-linecap", "round");
+        svgDonut.setAttribute("stroke-dasharray", "solid");
+        svgDonut.setAttribute("pointerEvents", "visiblePainted");
+        svgDonut.setAttribute("pointer-events", "visiblePainted");
+        svgNode.append(svgDonut); */
     }
 
     _drawGraphic() {
@@ -441,7 +442,7 @@ class N2FilterableLegendWidgetWithGraphic {
     }
 
     _adjustSelectedItem() {
-        if (!this.legend.hasChildNodes) return;
+        if (!this.legend || !this.legend.hasChildNodes()) return;
         [...this.legend.children].forEach(selectionRow => {
             const choiceId = selectionRow.dataset.n2Choiceid;
             const checkbox = selectionRow.children[0];
