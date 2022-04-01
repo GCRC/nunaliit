@@ -1386,6 +1386,7 @@ N2FilterableLegendWidgetWithGraphic
 
 #n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected {
 	display: flex;
+	height: 1.2em;
 }
 
 #n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected > label {
