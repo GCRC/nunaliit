@@ -56,6 +56,8 @@ class N2FilterableLegendWidgetWithGraphic {
         this.graphicToggle = null;
         this.graphicVisibility = true;
 
+        this.cachedSymbols = {};
+
         this.state = {
             currentStyles: {},
             stylesByKey: new Map(),
@@ -305,7 +307,7 @@ class N2FilterableLegendWidgetWithGraphic {
 
         this.state.stylesByKey.clear();
         Object.values(this.state.currentStyles).forEach(style => {
-            this.state.stylesByKey.set(style.style.label, style);
+            this.state.stylesByKey.set(_loc(style.style.label), style);
         });
 
         this.state.availableChoices.forEach(choice => {
@@ -342,7 +344,7 @@ class N2FilterableLegendWidgetWithGraphic {
         checkboxLabel.append(symbolColumn);
 
         if (optionValue !== ALL_CHOICES) {
-            symbolColumn.append(this._getSVGSymbol(optionLabel));
+            symbolColumn.append(...this._getSVGSymbol(optionLabel));
         }
 
         const labelColumn = document.createElement("div");
@@ -358,21 +360,157 @@ class N2FilterableLegendWidgetWithGraphic {
     }
 
     _getSVGSymbol(matchingLabel) {
-        const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        // donut
-        /* svgNode.setAttribute("viewBox", "-7 -7 14 14");
-        svgNode.setAttribute("class", "n2widgetLegend_svg");
-        const svgDonut = document.createElementNS(svgNode.namespaceURI, "circle");
-        svgDonut.setAttribute("r", "5");
-        svgDonut.setAttribute("stroke", colour);
-        svgDonut.setAttribute("stroke-width", "2");
-        svgDonut.setAttribute("fill-opacity", "1");
-        svgDonut.setAttribute("stroke-opacity", "1");
-        svgDonut.setAttribute("stroke-linecap", "round");
-        svgDonut.setAttribute("stroke-dasharray", "solid");
-        svgDonut.setAttribute("pointerEvents", "visiblePainted");
-        svgDonut.setAttribute("pointer-events", "visiblePainted");
-        svgNode.append(svgDonut); */
+        const symbols = [];
+        const styleObj = this.state.stylesByKey.get(matchingLabel)
+        if (!styleObj) return symbols;
+        const style = styleObj.style;
+        if (!style) return symbols;
+        
+        Object.entries(styleObj).forEach(([key, value]) => {
+            if (key === "style") return;
+
+            const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svgNode.setAttribute("viewBox", "-7 -7 14 14");
+            svgNode.setAttribute("class", "n2widgetLegend_svg");
+            
+            const styleFeature = value[key];
+            const context = {
+                ...styleFeature
+                , n2_hovered: false
+                , n2_selected: false
+                , n2_found: false
+            };
+            const symbolizer = style.getSymbolizer(context);
+            let geometry = null;
+            
+            // TODO: cluster?
+            if (key === "point") {
+                const graphicName = symbolizer.getSymbolValue("graphicName", context);
+                let symbol = null;
+                if (graphicName && (symbol = this.cachedSymbols[graphicName])) {
+                    geometry = document.createElementNS(svgNode.namespaceURI, "path");
+                    geometry.setAttributeNS(null, "d", symbol);
+                }
+                else if ( graphicName && (symbol = OpenLayers.Renderer.symbol[graphicName])) {
+                    const path = this._computePathFromSymbol(symbol);
+                    this.cachedSymbols[graphicName] = path;
+                    geometry = document.createElementNS(svgNode.namespaceURI, "path");
+                    geometry.setAttributeNS(null, "d", this.cachedSymbols[graphicName]);
+                }
+                else {
+                    geometry = document.createElementNS(svgNode.namespaceURI, "circle");
+                    geometry.setAttributeNS(null, "r" , 5);
+                }
+        
+                symbolizer.forEachSymbol((name, value) => {
+                    if (name === "r") { }
+                    else if (name === "fill-opacity") {
+                        const noticeableOpacity = (value * 0.5) + 0.5;
+                        geometry.setAttributeNS(null, name, noticeableOpacity);
+                    }
+                    else {
+                        geometry.setAttributeNS(null, name, value)
+                    }
+                }, context);
+            }
+            else if (key === "line") {
+                geometry = document.createElementNS(svgNode.namespaceURI, "line");
+                geometry.setAttributeNS(null, "x1", -5);
+                geometry.setAttributeNS(null, "y1", 0);
+                geometry.setAttributeNS(null, "x2", 5);
+                geometry.setAttributeNS(null, "y2", 0);
+
+                symbolizer.forEachSymbol((name, value) => {
+                    geometry.setAttributeNS(null, name, value);
+                }, context);
+            }
+            else if (key === "polygon") {
+                geometry = document.createElementNS(svgNode.namespaceURI, "path");
+                geometry.setAttributeNS(null, "d", "M -5 -5 L -2.5 5 L 5 5 L 2.5 -5 Z");
+
+                symbolizer.forEachSymbol((name, value) => {
+                    if (name === "fill-opacity") {
+                        const noticeableOpacity = (value * 0.5) + 0.5;
+                        geometry.setAttributeNS(null, name, noticeableOpacity);
+                    }
+                    else {
+                        geometry.setAttributeNS(null, name, value)
+                    }
+                }, context);
+            }
+
+            svgNode.append(geometry);
+            symbols.push(svgNode);
+        }); 
+        return symbols;
+    }
+
+    _computePathFromSymbol(symbol) {
+        // Basically copied over from n2.widgetLegend
+        let area = 0,
+            minx = undefined,
+            maxx = undefined,
+            miny = undefined,
+            maxy = undefined;
+
+        for (let i = 0, e = symbol.length; i < e; i = i + 2) {
+            let x = symbol[i];
+            let y = symbol[i + 1];
+
+            if (typeof minx === 'undefined') {
+                minx = x;
+            } else if (minx > x) {
+                minx = x;
+            }
+
+            if (typeof maxx === 'undefined') {
+                maxx = x;
+            } else if (maxx < x) {
+                maxx = x;
+            }
+
+            if (typeof miny === 'undefined') {
+                miny = y;
+            } else if (miny > y) {
+                miny = y;
+            }
+
+            if (typeof maxy === 'undefined') {
+                maxy = y;
+            } else if (maxy < y) {
+                maxy = y;
+            }
+        }
+
+        let path = [],
+            transx = (minx + maxx) / 2,
+            transy = (miny + maxy) / 2,
+            width = maxx - minx,
+            height = maxy - miny,
+            factor = (width > height) ? width / 10 : height / 10;
+        if (factor <= 0) {
+            factor = 1;
+        }
+        for (let i = 0, e = symbol.length; i < e; i = i + 2) {
+            let x = symbol[i];
+            let y = symbol[i + 1];
+
+            let effX = (x - transx) / factor;
+            let effY = (y - transy) / factor;
+
+            effX = Math.floor(effX * 100) / 100;
+            effY = Math.floor(effY * 100) / 100;
+
+            if (i === 0) {
+                path.push('M ');
+            } else {
+                path.push('L ');
+            }
+            path.push('' + effX);
+            path.push(' ' + effY + ' ');
+        }
+        path.push('Z');
+        return path.join('');
     }
 
     _drawGraphic() {

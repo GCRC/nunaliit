@@ -23,6 +23,7 @@
 
 #n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected {
 	display: flex;
+	height: 1.3em;
 }
 
 #n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected > label {
@@ -36,8 +37,8 @@
 }
 
 #n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_symbolColumn {
-	width: 25px;
-	padding-left: 5px;
+	width: 50px;
+	padding-left: 10px;
 }
 
 #n2_filterableLegendWidgetGraphic {
