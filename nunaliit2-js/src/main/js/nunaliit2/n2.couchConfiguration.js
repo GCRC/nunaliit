@@ -683,6 +683,12 @@ function Configure(options_){
 			,createDocProcess: configuration.directory.createDocProcess
 		});
 	 	configuration.couchEditor = configuration.directory.editService; // legacy
+
+		configuration.directory.couchDocumentEditService = new $n2.couchEdit.CouchDocumentEditService({
+			documentSource: configuration.documentSource
+			,dispatchService: configuration.directory.dispatchService
+			,uploadService: configuration.directory.uploadService
+		})
 		
 	 	configuration.directory.userService = new $n2.couchUser.UserService({
 			userDb: $n2.couch.getUserDb()

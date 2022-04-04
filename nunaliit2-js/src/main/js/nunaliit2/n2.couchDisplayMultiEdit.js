@@ -40,42 +40,25 @@ var DH = 'n2.couchDisplayMultiEdit';
 var DisplayMultiEdit = $n2.Class({
 	
 	options: null
-	
 	,documentSource: null
-	
 	,displayPanelName: null
-	
 	,currentFeature: null
-	
 	,createRelatedDocProcess: null
-	
 	,defaultSchema: null
-	
 	,displayRelatedInfoProcess: null
-	
 	,displayOnlyRelatedSchemas: null
-	
 	,displayBriefInRelatedInfo: null
-	
 	,restrictAddRelatedButtonToLoggedIn: null
-	
 	,restrictReplyButtonToLoggedIn: null
-	
 	,classDisplayFunctions: null
-	
 	,showService: null
-	
 	,uploadService: null
-	
 	,customService: null
-	
 	,authService: null
-	
 	,requestService: null
-	
 	,dispatchService: null
-	
 	,schemaRepository: null
+	,couchDocumentEditService: null
 	
 	,initialize: function(opts_) {
 		var _this = this;
@@ -85,14 +68,17 @@ var DisplayMultiEdit = $n2.Class({
 			,displayPanelName: null
 			,showService: null
 			,serviceDirectory: null
+			,couchDocumentEditService: null
 			,classDisplayFunctions: {}
 		}, opts_);
 		
+		this.updateIds = [];
 		this.documentSource = opts.documentSource;
 		this.displayPanelName = opts.displayPanelName;
 		this.classDisplayFunctions = opts.classDisplayFunctions;
 		
 		if( opts.serviceDirectory ){
+			this.couchDocumentEditService = opts.serviceDirectory.couchDocumentEditService;
 			this.showService = opts.serviceDirectory.showService;
 			this.customService = opts.serviceDirectory.customService;
 			this.authService = opts.serviceDirectory.authService;			
@@ -158,22 +144,65 @@ var DisplayMultiEdit = $n2.Class({
 		return $('#'+divId);
 	}
 	
+	,_preUpdateDocuments: function(docs, field, tagValue) {
+		const _this = this;
+		this.couchDocumentEditService.checkUploadService(
+			function()  {
+				_this._updateDocs(docs, field, tagValue)
+			},
+			function() {
+				console.error('Upload service not available');
+			}
+		)
+	}
+
+	,_updateDocs: function(field, tagValue) {
+		const _this = this;
+		this.updateIds.push(...this.docIds);
+		this._formStateUpdate();
+		this.docs.forEach( doc => {
+			
+			if(!_this.couchDocumentEditService.addTagToDocument(doc, field, tagValue)) {
+				_this.updateIds = _this.updateIds.filter(function(value){ 
+					return value !== doc._id;
+				});
+			}
+		})
+		this._formStateUpdate();
+	}
+
 	,_displayForm: function($buttons){
 		const $container = this._getDisplayDiv();
 		//TODO: Don't empty the form...or save the fields and reinput...not sure
 		let $formDiv = $container.find('.n2DisplayMultiEdit_form').empty();
 		//probably should loop over all docs and check edit
 		//$n2.couchMap.canEditDoc(doc)
-		$('<input type="text">').appendTo($formDiv)
-		$('<a href="#"></a>')
+		let $tagInput = $('<input id="tagInput" type="text">').appendTo($formDiv)
+		//Hard code input field for now for KHS
+		const _this = this;
+
+		$('<input type="submit" value="' + _loc('Add Tag') + '">')
 			.addClass('n2DisplayMultiEdit_button_add')
-			.text( _loc('Add Tag') )
 			.appendTo($formDiv)
 			.click(function(){
-				console.log('clicked the add tag button');
+				_this._preUpdateDocuments('ikb_tags', $tagInput.val());
 				return false;
 			});
+
+		$('<div class="progress">Saving!</div>')
+			.hide()
+			.appendTo($formDiv);
 	}
+	,_formStateUpdate: function() {
+		if(this.updateIds.length > 0) {
+			$(".n2DisplayMultiEdit_form :input").prop('disable', true);
+			$(".n2DisplayMultiEdit_form .progress").show();
+		} else {
+			$(".n2DisplayMultiEdit_form :input").prop('disable', false);
+			$(".n2DisplayMultiEdit_form .progress").hide();
+		}
+	}
+	
 	
 	/**
 	 * This function replaces a section that is waiting for the
@@ -215,12 +244,12 @@ var DisplayMultiEdit = $n2.Class({
 		if( msg.type === 'selected' ) {
 			if( msg.doc ) {
 				this.docIds = [msg.doc._id];
-				this.docs = [msg.docs];
+				this.docs = [msg.doc];
 			} else if( msg.docId ) {
 				this.docIds = [msg.docId];
 				this.docs = null;
 			} else if( msg.docs ) {
-				this.docs = [msg.docs]
+				this.docs = msg.docs
 				this.docIds = msg.docs.map(function(doc) {
 					return doc._id;
 				})
@@ -248,9 +277,11 @@ var DisplayMultiEdit = $n2.Class({
 		} else if( msg.type === 'documentContentCreated' ) {
 			console.log('documentContentCreated: Do nothing here?');
 		} else if( msg.type === 'documentContentUpdated' ) {
-			this._refreshDocument(msg.doc);
-			this._populateWaitingDocument(msg.doc);
-		};
+			this.updateIds = this.updateIds.filter(function(value){ 
+				return value !== msg.doc._id;
+			});
+			this._formStateUpdate();
+		}
 	}
 	
 	,_updateDisplay: function() {

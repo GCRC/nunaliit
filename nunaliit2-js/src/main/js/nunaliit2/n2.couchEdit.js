@@ -4382,12 +4382,116 @@ var AttachmentEditor = $n2.Class({
 	}
 });
 
+// ++++++++++++++++++++++++++++++++++++++++++++++
+
+var CouchDocumentEditService = $n2.Class({
+	dispatchService: null
+	,uploadService: null
+	
+	,initialize: function(opts_){
+		var opts = $n2.extend({
+			dispatchService: null
+			,uploadService: null
+		},opts_);
+		
+		this.dispatchService = opts.dispatchService;
+		this.uploadService = opts.uploadService;
+		
+		this.isInsert = false;
+		
+		if( this.dispatchService ){
+			var f = function(m){ _this._handle(m); };
+			this.dispatchService.register(DH, 'editGeometryModified', f);
+			this.dispatchService.register(DH, 'mapGeometryAdded', f);
+		};
+	}
+
+	,checkUploadService: function (onSuccess, onError) {
+		if (this.uploadService) {
+			this.uploadService.getWelcome({
+				onSuccess: onSuccess
+				,onError: onError
+			});
+		} else {
+			onError();
+		}
+	}
+
+	,findSchemaFieldByName: function(schema, name) {
+		//This could be much fancier, but this should work on all IKB data.
+		return [schema, name];
+	}
+
+	,addTagToDocument: function(doc, tagField, tag) {
+		// Obtain documentSource
+		let editedDocumentSource = undefined;
+		if( this.dispatchService ){
+			var m = {
+				type: 'documentSourceFromDocument'
+				,doc: doc
+			};
+			this.dispatchService.synchronousCall(DH,m);
+			editedDocumentSource = m.documentSource;
+		}
+
+		var isSubmissionDs = false;
+		if( editedDocumentSource.isSubmissionDataSource ){
+			isSubmissionDs = true;
+		}
+
+		let editedDocument = {};
+		var clonedDoc = $n2.extend(true,{},doc); // deep copy
+		for(var key in clonedDoc){
+			// Drop information about document source so it does not
+			// appear in the editor
+			if( '__n2Source' !== key && '__n2Models' !== key){
+				editedDocument[key] = clonedDoc[key];
+			}
+		}
+
+		let tagFieldLoc = this.findSchemaFieldByName(doc.nunaliit_schema, tagField);
+		if(typeof editedDocument[tagFieldLoc[0]][tagFieldLoc[1]] === 'object' &&
+		$n2.isArray(editedDocument[tagFieldLoc[0]][tagFieldLoc[1]].tags)) {
+			let tags = editedDocument[tagFieldLoc[0]][tagFieldLoc[1]].tags;
+			if(tags.includes(tag)) {
+				return false;
+			}
+			tags.push(tag)
+		} else {
+			editedDocument[tagFieldLoc[0]][tagFieldLoc[1]] = {
+				'tags': [tag],
+				'nunaliit_type': 'tag'
+			}
+		}
+
+		//Need to refactor from editService
+		//verifyDoc(_this.editedDocument);
+		editedDocumentSource.updateDocument({
+			doc: editedDocument
+			,originalDoc: doc
+			,onSuccess: function(updatedDoc) {
+				console.log(`Updated ${updatedDoc._id} with field ${tagField}`);
+				console.log(editedDocument);
+			}
+			,onError: function(err){
+				$n2.reportErrorForced( _loc('Unable to submit document: {err}',{err:err}) );
+			}
+		});
+		return true;
+	}
+	
+	,_handle: function(m, address, dispatcher){
+		//handle events if we need to
+	}
+});
+
 //++++++++++++++++++++++++++++++++++++++++++++++
 
 $n2.couchEdit = {
 	EditService: CouchEditService
 	,SchemaEditorService: SchemaEditorService
 	,CouchSimpleDocumentEditor: CouchSimpleDocumentEditor
+	,CouchDocumentEditService: CouchDocumentEditService
 	,Constants: {
 		ALL_SCHEMAS: {}
 		,FORM_EDITOR: {}
