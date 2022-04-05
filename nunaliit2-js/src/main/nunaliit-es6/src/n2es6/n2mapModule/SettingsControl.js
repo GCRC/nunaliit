@@ -2,6 +2,8 @@
 * @module n2es6/n2mapModule/SettingsControl
 */
 
+const _loc = function(str,args){ return $n2.loc(str,"nunaliit2",args); };
+
 import Control from 'ol/control/Control';
 
 /**
@@ -77,8 +79,8 @@ class SettingsControl extends Control {
 			this.keyControlMap.set(setting.key, checkbox);
 
 			label.htmlFor = uid;
-			label.innerHTML = setting.label;
-			label.title = setting.hint;
+			label.innerHTML = _loc(setting.label);
+			label.title = _loc(setting.hint);
 
 			if (setting.sublevel > 0) {
 				ul.style.paddingLeft = `${1.6 + setting.sublevel}em`;

@@ -837,36 +837,36 @@ class N2MapCanvas  {
 			dispatchService: this.dispatchService,
 			settings: [
 				{
-					label: "Map fit",
-					hint: "The map will zoom to fit if a place was tagged, taking its zoom scale property into consideration",
+					label: "Auto-recenter map",
+					hint: "Pan and zoom map to tagged places (takes zoomScale value into consideration)",
 					key: "fitMapToLatestMapTag",
 					initialState: this.fitMapToLatestMapTag,
 					sublevel: 0
 				},
 				{
-					label: "Map fit animation",
-					hint: "The map will animate its zoom to fit",
+					label: "Animate",
+					hint: "Animate pan and zoom action",
 					key: "animateMapFitting",
 					initialState: this.animateMapFitting,
 					sublevel: 1
 				},
 				{
-					label: "Display media",
-					hint: "Associated related media will display",
+					label: "Display attached images",
+					hint: "Display image attachment pane when tagged text contains image attachment",
 					key: "showRelatedImages",
 					initialState: this.showRelatedImages,
 					sublevel: 0
 				},
 				{
 					label: "Zoom threshold",
-					hint: "Symbols will hide if the map zoom level is greater than a place's zoom scale property",
+					hint: "Map symbols associated with a given place disappear when zoom level is above the place's zoomScale value",
 					key: "hideFeatureIfMapZoom",
 					initialState: this.hideFeatureIfMapZoom,
 					sublevel: 0
 				},
 				{
-					label: "Clustering symbols",
-					hint: "Symbols will cluster",
+					label: "Cluster symbols",
+					hint: "Aggregate rings and links when zoomed out",
 					key: "isClustering",
 					initialState: this.isClustering,
 					sublevel: 0
