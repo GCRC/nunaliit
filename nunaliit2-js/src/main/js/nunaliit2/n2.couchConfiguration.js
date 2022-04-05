@@ -791,6 +791,11 @@ function Configure(options_){
 			,dispatchService: configuration.directory.dispatchService
 		});
 
+		configuration.directory.tagService = new $n2.tag.TagService({
+			dispatchService: configuration.directory.dispatchService
+			,designDoc: configuration.atlasDesign
+		});
+
 		configuration.directory.simplifiedGeometryService = new $n2.couchSimplifiedGeometries.Service({
 			url: options.simplifiedGeometryServerUrl
 			,atlasDb: configuration.atlasDb

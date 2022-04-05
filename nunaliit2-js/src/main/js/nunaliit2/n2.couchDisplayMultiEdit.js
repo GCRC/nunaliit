@@ -38,57 +38,33 @@ var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 var DH = 'n2.couchDisplayMultiEdit';
 
 var DisplayMultiEdit = $n2.Class({
-	
-	options: null
-	,documentSource: null
-	,displayPanelName: null
-	,currentFeature: null
-	,createRelatedDocProcess: null
+	displayPanelName: null
 	,defaultSchema: null
-	,displayRelatedInfoProcess: null
-	,displayOnlyRelatedSchemas: null
-	,displayBriefInRelatedInfo: null
-	,restrictAddRelatedButtonToLoggedIn: null
-	,restrictReplyButtonToLoggedIn: null
-	,classDisplayFunctions: null
-	,showService: null
-	,uploadService: null
-	,customService: null
-	,authService: null
-	,requestService: null
 	,dispatchService: null
 	,schemaRepository: null
 	,couchDocumentEditService: null
+	,tagService: null
 	
 	,initialize: function(opts_) {
 		var _this = this;
 		
 		var opts = $n2.extend({
-			documentSource: null
-			,displayPanelName: null
-			,showService: null
+			displayPanelName: null
 			,serviceDirectory: null
 			,couchDocumentEditService: null
-			,classDisplayFunctions: {}
+			,tagService: null
 		}, opts_);
 		
 		this.updateIds = [];
-		this.documentSource = opts.documentSource;
+		this.docIds = [];
+		this.docs = [];
 		this.displayPanelName = opts.displayPanelName;
-		this.classDisplayFunctions = opts.classDisplayFunctions;
 		
 		if( opts.serviceDirectory ){
 			this.couchDocumentEditService = opts.serviceDirectory.couchDocumentEditService;
-			this.showService = opts.serviceDirectory.showService;
-			this.customService = opts.serviceDirectory.customService;
-			this.authService = opts.serviceDirectory.authService;			
-			this.requestService = opts.serviceDirectory.requestService;
 			this.schemaRepository = opts.serviceDirectory.schemaRepository;
 			this.dispatchService = opts.serviceDirectory.dispatchService;
-		}
-		
-		if( !this.showService ){
-			this.showService = opts.showService;
+			this.tagService = opts.serviceDirectory.tagService;
 		}
 		
 		var dispatcher = this.dispatchService;
@@ -101,42 +77,16 @@ var DisplayMultiEdit = $n2.Class({
 			dispatcher.register(DH, 'documentDeleted', f);
 			dispatcher.register(DH, 'authLoggedIn', f);
 			dispatcher.register(DH, 'authLoggedOut', f);
-			dispatcher.register(DH, 'editClosed', f);
 			dispatcher.register(DH, 'documentContentCreated', f);
 			dispatcher.register(DH, 'documentContentUpdated', f);
 		}
 
-		if( this.requestService ){
-			this.requestService.addDocumentListener(function(doc){
-				console.log('Do something here?');
-				// _this._refreshDocument(doc);
-				// _this._populateWaitingDocument(doc);
-			});
-		}
-		
-		$('body').addClass('n2_display_multi_edit');
-		const $container = this._getDisplayDiv();
-		$('<div>')
-			.addClass('n2DisplayMultiEdit_display')
-			.appendTo($container);	
-		$('<form>')
-			.addClass('n2DisplayMultiEdit_form')
-			.appendTo($container);	
-		
 		$n2.log('DisplayMultiEdit',this);
 	}
 
 	// external
 	,setSchema: function(schema) {
 		this.defaultSchema = schema;
-	}
-	
-	,_shouldSuppressNonApprovedMedia: function(){
-		return this.showService.eliminateNonApprovedMedia;
-	}
-
-	,_shouldSuppressDeniedMedia: function(){
-		return this.showService.eliminateDeniedMedia;
 	}
 	
 	,_getDisplayDiv: function(){
@@ -171,13 +121,27 @@ var DisplayMultiEdit = $n2.Class({
 		this._formStateUpdate();
 	}
 
-	,_displayForm: function($buttons){
+	,_displayForm: function(){
 		const $container = this._getDisplayDiv();
+		const tagFieldId = 'ikb_tags';
 		//TODO: Don't empty the form...or save the fields and reinput...not sure
 		let $formDiv = $container.find('.n2DisplayMultiEdit_form').empty();
 		//probably should loop over all docs and check edit
 		//$n2.couchMap.canEditDoc(doc)
 		let $tagInput = $('<input id="tagInput" type="text">').appendTo($formDiv)
+		$tagInput.autocomplete({
+			source: function(req, res) {
+				_this.tagService.autocompleteQuery(req, res, tagFieldId, 10)
+			}, // callback params: text = current value of input, res = format of data - array or string as described in docs,
+			delay: 300,
+			minLength: 3
+		});
+		$tagInput.keypress(function(event){
+			if(event.keyCode == 13){
+				event.preventDefault();
+				_this._preUpdateDocuments(tagFieldId, $tagInput.val());
+			}
+		});
 		//Hard code input field for now for KHS
 		const _this = this;
 
@@ -185,7 +149,7 @@ var DisplayMultiEdit = $n2.Class({
 			.addClass('n2DisplayMultiEdit_button_add')
 			.appendTo($formDiv)
 			.click(function(){
-				_this._preUpdateDocuments('ikb_tags', $tagInput.val());
+				_this._preUpdateDocuments(tagFieldId, $tagInput.val());
 				return false;
 			});
 
@@ -203,32 +167,6 @@ var DisplayMultiEdit = $n2.Class({
 		}
 	}
 	
-	
-	/**
-	 * This function replaces a section that is waiting for the
-	 * appearance of a document. It replaces the section with an
-	 * actual display of the document.
-	 */
-	,_populateWaitingDocument: function(doc){
-		console.log('Do something here?');
-	}
-	
-	,_performDocumentEdit: function(data, options_) {
-		var _this = this;
-		
-		this.documentSource.getDocument({
-			docId: data._id
-			,onSuccess: function(doc){
-				_this._dispatch({
-					type: 'editInitiate'
-					,doc: doc
-				});
-			}
-			,onError: function(errorMsg){
-				$n2.log('Unable to load document: '+errorMsg);
-			}
-		});
-	}
 	
 	,_handleDispatch: function(msg, addr, dispatcher){
 		var _this = this;
@@ -256,40 +194,46 @@ var DisplayMultiEdit = $n2.Class({
 			} else if( msg.docIds ) {
 				this.docIds = msg.docIds;
 				this.docs = null;
-			};
+			}
+			this.updateIds = [];
 			this._updateDisplay()
 		} else if( msg.type === 'searchResults' ) {
-			this._displaySearchResults(msg.results);
+			console.error('search results not implemented');
 			
 		} else if( msg.type === 'documentDeleted' ) {
 			var docId = msg.docId;
 			this._handleDocumentDeletion(docId);
-			
-		} else if( msg.type === 'authLoggedIn' 
-			|| msg.type === 'authLoggedOut' ) {
-			$('.n2Display_buttons').each(function(){
-				var $elem = $(this);
-				_this._refreshButtons($elem);
-			});
-			
-		} else if( msg.type === 'editClosed' ) {
-			console.log('editClose: no action?');
-		} else if( msg.type === 'documentContentCreated' ) {
-			console.log('documentContentCreated: Do nothing here?');
+		} else if( msg.type === 'authLoggedIn' || msg.type === 'authLoggedOut' ) {
+			//Show/hide buttons?
 		} else if( msg.type === 'documentContentUpdated' ) {
 			this.updateIds = this.updateIds.filter(function(value){ 
 				return value !== msg.doc._id;
 			});
+			for(let i = 0; i < this.docs.length; i++) {
+				if(this.docs[i]._id === msg.doc._id) {
+					this.docs[i] = msg.doc;
+				}
+			}
 			this._formStateUpdate();
 		}
 	}
 	
 	,_updateDisplay: function() {
-		const len = this.docIds.length;
+		$('body').addClass('n2_display_multi_edit');
 		const $container = this._getDisplayDiv();
-		const $displayDiv = $container.find('.n2DisplayMultiEdit_display').empty();
-		$displayDiv.empty();
-		$displayDiv.append(`<div>${len}</div>`);
+		let $displayDiv = $container.find('.n2DisplayMultiEdit_display');
+		if($displayDiv.length > 0) {
+			$displayDiv.empty();
+		} else {
+			$container.empty();
+			$displayDiv = $('<div>').addClass('n2DisplayMultiEdit_display');
+			$displayDiv.appendTo($container);
+			$('<form>')
+			.addClass('n2DisplayMultiEdit_form')
+			.appendTo($container);	
+		}
+		const len = this.docIds.length;
+		$displayDiv.append(`<div>${_loc('Selected')}: ${len}</div>`);
 		this._displayForm();
 	}
 	
@@ -344,10 +288,7 @@ function HandleDisplayRenderRequest(m){
 			};
 		};
 		
-		options.documentSource = m.config.documentSource;
 		options.displayPanelName = m.displayId;
-		options.showService = m.config.directory.showService;
-		options.uploadService = m.config.directory.uploadService;
 		options.createDocProcess = m.config.directory.createDocProcess;
 		options.serviceDirectory = m.config.directory;
 		
@@ -373,7 +314,7 @@ function HandleDisplayRenderRequest(m){
 //===================================================================================
 
 // Exports
-$n2.couchDisplay = {
+$n2.couchDisplayMultiEdit = {
 	DisplayMultiEdit: DisplayMultiEdit
 	,HandleDisplayAvailableRequest: HandleDisplayAvailableRequest
 	,HandleDisplayRenderRequest: HandleDisplayRenderRequest

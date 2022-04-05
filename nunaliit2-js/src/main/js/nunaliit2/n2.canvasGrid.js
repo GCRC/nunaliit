@@ -120,7 +120,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
 				this.elementGenerator.setIntentChangedListener(function(updated){
 					_this._intentChanged(updated);
 				});
-				this.elementGenerator.setMultiSelect(true);
+				this.elementGenerator.setMultiSelect(this.multiSelect);
 	 		}
 	
 	 		// Register to events
