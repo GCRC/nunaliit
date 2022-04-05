@@ -335,7 +335,7 @@ class N2FilterableLegendWidgetWithGraphic {
 
         /* Should be able to handle other icons in the future. */
         if (colour) {
-            const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");;
+            const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
             svgNode.setAttribute("viewBox", "-7 -7 14 14");
             svgNode.setAttribute("class", "n2widgetLegend_svg");
 
@@ -434,7 +434,7 @@ class N2FilterableLegendWidgetWithGraphic {
     }
 
     _adjustSelectedItem() {
-        if (!this.legend.hasChildNodes) return;
+        if (!this.legend || !this.legend.hasChildNodes()) return;
         [...this.legend.children].forEach(selectionRow => {
             const choiceId = selectionRow.dataset.n2Choiceid;
             const checkbox = selectionRow.children[0];

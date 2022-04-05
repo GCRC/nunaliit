@@ -1625,7 +1625,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				let attachmentUrl = null;
 
 				Object.entries(doc.nunaliit_attachments.files).forEach(attachment => {
-					if (attachment[0].endsWith("_thumb.jpg")) return;
+					if (attachment[0].includes("_thumb")) return;
 					const {
 						attachmentName,
 						fileClass,
