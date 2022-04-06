@@ -4422,7 +4422,7 @@ var CouchDocumentEditService = $n2.Class({
 		return [schema, name];
 	}
 
-	,addTagToDocument: function(doc, tagField, tag) {
+	,addTagsToDocument: function(doc, tagField, tags) {
 		// Obtain documentSource
 		let editedDocumentSource = undefined;
 		if( this.dispatchService ){
@@ -4452,14 +4452,16 @@ var CouchDocumentEditService = $n2.Class({
 		let tagFieldLoc = this.findSchemaFieldByName(doc.nunaliit_schema, tagField);
 		if(typeof editedDocument[tagFieldLoc[0]][tagFieldLoc[1]] === 'object' &&
 		$n2.isArray(editedDocument[tagFieldLoc[0]][tagFieldLoc[1]].tags)) {
-			let tags = editedDocument[tagFieldLoc[0]][tagFieldLoc[1]].tags;
-			if(tags.includes(tag)) {
-				return false;
+			let curTags = editedDocument[tagFieldLoc[0]][tagFieldLoc[1]].tags;
+			for(let i = 0; i < tags.length; i++) {
+				if(curTags.includes(tags[i])) {
+					continue;
+				}
+				curTags.push(tags[i]);
 			}
-			tags.push(tag)
 		} else {
 			editedDocument[tagFieldLoc[0]][tagFieldLoc[1]] = {
-				'tags': [tag],
+				'tags': tags,
 				'nunaliit_type': 'tag'
 			}
 		}

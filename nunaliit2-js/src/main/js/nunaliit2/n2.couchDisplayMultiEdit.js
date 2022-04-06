@@ -44,6 +44,7 @@ var DisplayMultiEdit = $n2.Class({
 	,schemaRepository: null
 	,couchDocumentEditService: null
 	,tagService: null
+	,tagField: null
 	
 	,initialize: function(opts_) {
 		var _this = this;
@@ -58,7 +59,9 @@ var DisplayMultiEdit = $n2.Class({
 		this.updateIds = [];
 		this.docIds = [];
 		this.docs = [];
+		this.addTags = [];
 		this.displayPanelName = opts.displayPanelName;
+		this.tagField = opts.tagField;
 		
 		if( opts.serviceDirectory ){
 			this.couchDocumentEditService = opts.serviceDirectory.couchDocumentEditService;
@@ -81,6 +84,10 @@ var DisplayMultiEdit = $n2.Class({
 			dispatcher.register(DH, 'documentContentUpdated', f);
 		}
 
+		if(!this.tagField) {
+			throw new Error('tag field is required');
+		}
+
 		$n2.log('DisplayMultiEdit',this);
 	}
 
@@ -94,11 +101,11 @@ var DisplayMultiEdit = $n2.Class({
 		return $('#'+divId);
 	}
 	
-	,_preUpdateDocuments: function(docs, field, tagValue) {
+	,_preUpdateDocuments: function(docs, field, tags) {
 		const _this = this;
 		this.couchDocumentEditService.checkUploadService(
 			function()  {
-				_this._updateDocs(docs, field, tagValue)
+				_this._updateDocs(docs, field, tags)
 			},
 			function() {
 				console.error('Upload service not available');
@@ -106,32 +113,59 @@ var DisplayMultiEdit = $n2.Class({
 		)
 	}
 
-	,_updateDocs: function(field, tagValue) {
+	,_updateDocs: function(field, tags) {
 		const _this = this;
 		this.updateIds.push(...this.docIds);
 		this._formStateUpdate();
 		this.docs.forEach( doc => {
-			
-			if(!_this.couchDocumentEditService.addTagToDocument(doc, field, tagValue)) {
+			if(!_this.couchDocumentEditService.addTagsToDocument(doc, field, tags)) {
 				_this.updateIds = _this.updateIds.filter(function(value){ 
 					return value !== doc._id;
 				});
 			}
 		})
+		this.addTags = [];
+		this._displayTags();
 		this._formStateUpdate();
 	}
 
-	,_displayForm: function(){
-		const $container = this._getDisplayDiv();
-		const tagFieldId = 'ikb_tags';
-		//TODO: Don't empty the form...or save the fields and reinput...not sure
-		let $formDiv = $container.find('.n2DisplayMultiEdit_form').empty();
-		//probably should loop over all docs and check edit
-		//$n2.couchMap.canEditDoc(doc)
-		let $tagInput = $('<input id="tagInput" type="text">').appendTo($formDiv)
+	,_displayTags: function() {
+		const _this = this;
+		let $tags = $('#n2TagChips').empty();
+		for(let i = 0; i < this.addTags.length; i++) {
+			const $tag = $('<div>').addClass('n2_tag_element').appendTo($tags);
+			$('<span>').text(this.addTags[i]).appendTo($tag);
+			$('<span>').attr('aria-label', 'delete this tag')
+				.addClass('n2schema_tag_item_delete')
+				.text('x')
+				.click(function() {
+					_this.addTags.splice(i, 1);
+					_this._displayTags();
+					return false;
+				})
+				.appendTo($tag);
+		}
+	}
+
+	,_displayTagBox: function($formDiv) {
+		const _this = this;
+		let $tagBox = $formDiv.find('.n2schema_taginput_container');
+		if($tagBox.length > 0) {
+			$tagBox.empty();
+		} else {
+			$tagBox = $('<div>').addClass('n2schema_taginput_container').appendTo($formDiv);
+		}
+
+		$("<div id='n2TagChips'>").appendTo($tagBox)
+		this._displayTags();
+		
+		let $tagInput = $('<input id="tagInput" type="search" placeholder="Add a tag" autocomplete="off" role="textbox" aria-autocomplete="list" aria-haspopup="true">')
+			.addClass('n2schema_input').addClass('n2schema_type_tag').addClass('ui-autocomplete-input')
+			.appendTo($tagBox);
+
 		$tagInput.autocomplete({
 			source: function(req, res) {
-				_this.tagService.autocompleteQuery(req, res, tagFieldId, 10)
+				_this.tagService.autocompleteQuery(req, res, _this.tagField, 10)
 			}, // callback params: text = current value of input, res = format of data - array or string as described in docs,
 			delay: 300,
 			minLength: 3
@@ -139,24 +173,38 @@ var DisplayMultiEdit = $n2.Class({
 		$tagInput.keypress(function(event){
 			if(event.keyCode == 13){
 				event.preventDefault();
-				_this._preUpdateDocuments(tagFieldId, $tagInput.val());
+				if($tagInput.val().length > 0) {
+					_this.addTags.push($tagInput.val());
+					_this._displayTags();
+					$tagInput.val("");
+				}
 			}
 		});
-		//Hard code input field for now for KHS
-		const _this = this;
+	}
 
-		$('<input type="submit" value="' + _loc('Add Tag') + '">')
+	,_displayForm: function(){
+		const _this = this;
+		const $container = this._getDisplayDiv();
+		let $formDiv = $container.find('.n2DisplayMultiEdit_form').empty();
+		//probably should loop over all docs and check edit
+		//$n2.couchMap.canEditDoc(doc)
+		this._displayTagBox($formDiv);
+		const $buttonDiv = $('<div>').appendTo($formDiv);
+		$('<input type="submit" value="' + _loc('save') + '">')
 			.addClass('n2DisplayMultiEdit_button_add')
-			.appendTo($formDiv)
-			.click(function(){
-				_this._preUpdateDocuments(tagFieldId, $tagInput.val());
-				return false;
+			.appendTo($buttonDiv)
+			.click(function(event){
+				event.preventDefault();
+				if(_this.addTags.length > 0) {
+					_this._preUpdateDocuments(_this.tagField, _this.addTags);
+				}
 			});
 
 		$('<div class="progress">Saving!</div>')
 			.hide()
 			.appendTo($formDiv);
 	}
+
 	,_formStateUpdate: function() {
 		if(this.updateIds.length > 0) {
 			$(".n2DisplayMultiEdit_form :input").prop('disable', true);
