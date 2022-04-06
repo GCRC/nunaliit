@@ -35,14 +35,15 @@ POSSIBILITY OF SUCH DAMAGE.
 // Localization
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
 
-var DH = 'n2.couchDisplayMultiEdit';
+var DH = 'n2.displayTagAssignment';
 
-var DisplayMultiEdit = $n2.Class({
+var TagAssignment = $n2.Class({
 	displayPanelName: null
 	,defaultSchema: null
 	,dispatchService: null
 	,schemaRepository: null
 	,couchDocumentEditService: null
+	,authService: null
 	,tagService: null
 	,tagField: null
 	
@@ -68,6 +69,7 @@ var DisplayMultiEdit = $n2.Class({
 			this.schemaRepository = opts.serviceDirectory.schemaRepository;
 			this.dispatchService = opts.serviceDirectory.dispatchService;
 			this.tagService = opts.serviceDirectory.tagService;
+			this.authService = opts.serviceDirectory.authService;			
 		}
 		
 		var dispatcher = this.dispatchService;
@@ -88,7 +90,7 @@ var DisplayMultiEdit = $n2.Class({
 			throw new Error('tag field is required');
 		}
 
-		$n2.log('DisplayMultiEdit',this);
+		$n2.log('TagAssignment',this);
 	}
 
 	// external
@@ -185,13 +187,13 @@ var DisplayMultiEdit = $n2.Class({
 	,_displayForm: function(){
 		const _this = this;
 		const $container = this._getDisplayDiv();
-		let $formDiv = $container.find('.n2DisplayMultiEdit_form').empty();
+		let $formDiv = $container.find('.n2TagAssignment_form').empty();
 		//probably should loop over all docs and check edit
 		//$n2.couchMap.canEditDoc(doc)
 		this._displayTagBox($formDiv);
 		const $buttonDiv = $('<div>').appendTo($formDiv);
 		$('<input type="submit" value="' + _loc('save') + '">')
-			.addClass('n2DisplayMultiEdit_button_add')
+			.addClass('n2TagAssignment_button_add')
 			.appendTo($buttonDiv)
 			.click(function(event){
 				event.preventDefault();
@@ -207,17 +209,17 @@ var DisplayMultiEdit = $n2.Class({
 
 	,_formStateUpdate: function() {
 		if(this.updateIds.length > 0) {
-			$(".n2DisplayMultiEdit_form :input").prop('disable', true);
-			$(".n2DisplayMultiEdit_form .progress").show();
+			$(".n2TagAssignment_form :input").prop('disable', true);
+			$(".n2TagAssignment_form .progress").show();
 		} else {
-			$(".n2DisplayMultiEdit_form :input").prop('disable', false);
-			$(".n2DisplayMultiEdit_form .progress").hide();
+			$(".n2TagAssignment_form :input").prop('disable', false);
+			$(".n2TagAssignment_form .progress").hide();
 		}
 	}
 	
 	
 	,_handleDispatch: function(msg, addr, dispatcher){
-		var _this = this;
+		const _this = this;
 		
 		var $div = this._getDisplayDiv();
 		if( $div.length < 1 ){
@@ -244,7 +246,20 @@ var DisplayMultiEdit = $n2.Class({
 				this.docs = null;
 			}
 			this.updateIds = [];
-			this._updateDisplay()
+			// Check that we are logged in
+			if( this.authService && false == this.authService.isLoggedIn() ) {
+				const $container = this._getDisplayDiv();
+				$('<div>').text(_loc('Login to Continue')).appendTo($container);
+				this.authService.showLoginForm({
+					onSuccess: function() {
+						_this._updateDisplay();
+					}
+				});
+				return;
+			} else {
+				this._updateDisplay();
+			}
+			
 		} else if( msg.type === 'searchResults' ) {
 			console.error('search results not implemented');
 			
@@ -269,15 +284,15 @@ var DisplayMultiEdit = $n2.Class({
 	,_updateDisplay: function() {
 		$('body').addClass('n2_display_multi_edit');
 		const $container = this._getDisplayDiv();
-		let $displayDiv = $container.find('.n2DisplayMultiEdit_display');
+		let $displayDiv = $container.find('.n2TagAssignment_display');
 		if($displayDiv.length > 0) {
 			$displayDiv.empty();
 		} else {
 			$container.empty();
-			$displayDiv = $('<div>').addClass('n2DisplayMultiEdit_display');
+			$displayDiv = $('<div>').addClass('n2TagAssignment_display');
 			$displayDiv.appendTo($container);
 			$('<form>')
-			.addClass('n2DisplayMultiEdit_form')
+			.addClass('n2TagAssignment_form')
 			.appendTo($container);	
 		}
 		const len = this.docIds.length;
@@ -322,13 +337,13 @@ var DisplayMultiEdit = $n2.Class({
 
 //===================================================================================
 function HandleDisplayAvailableRequest(m){
-	if( m.displayType === 'multiEdit' ){
+	if( m.displayType === 'tagAssignment' ){
 		m.isAvailable = true;
 	};
 };
 
 function HandleDisplayRenderRequest(m){
-	if( m.displayType === 'multiEdit' ){
+	if( m.displayType === 'tagAssignment' ){
 		var options = {};
 		if( m.displayOptions ){
 			for(var key in m.displayOptions){
@@ -340,7 +355,7 @@ function HandleDisplayRenderRequest(m){
 		options.createDocProcess = m.config.directory.createDocProcess;
 		options.serviceDirectory = m.config.directory;
 		
-		var displayControl = new DisplayMultiEdit(options);
+		var displayControl = new TagAssignment(options);
 
 		var defaultDisplaySchemaName = 'object';
 		if( m.displayOptions && m.displayOptions.defaultSchemaName ){
@@ -362,8 +377,8 @@ function HandleDisplayRenderRequest(m){
 //===================================================================================
 
 // Exports
-$n2.couchDisplayMultiEdit = {
-	DisplayMultiEdit: DisplayMultiEdit
+$n2.displayTagAssignment = {
+	TagAssignment: TagAssignment
 	,HandleDisplayAvailableRequest: HandleDisplayAvailableRequest
 	,HandleDisplayRenderRequest: HandleDisplayRenderRequest
 };

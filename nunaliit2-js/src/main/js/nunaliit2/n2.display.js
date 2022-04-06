@@ -84,9 +84,9 @@ var Service = $n2.Class({
 				$n2.displayRibbon2.HandleDisplayAvailableRequest(m);
 			}
 
-			if( $n2.couchDisplayMultiEdit 
-				&& $n2.couchDisplayMultiEdit.HandleDisplayAvailableRequest ){
-				   $n2.couchDisplayMultiEdit.HandleDisplayAvailableRequest(m);
+			if( $n2.displayTagAssignment 
+				&& $n2.displayTagAssignment.HandleDisplayAvailableRequest ){
+				   $n2.displayTagAssignment.HandleDisplayAvailableRequest(m);
 			   }
 
 		} else if( 'displayRender' === m.type ) {
@@ -110,9 +110,9 @@ var Service = $n2.Class({
 				$n2.displayRibbon2.HandleDisplayRenderRequest(m);
 			}
 
-			if( $n2.couchDisplayMultiEdit 
-				&& $n2.couchDisplayMultiEdit.HandleDisplayRenderRequest ){
-				   $n2.couchDisplayMultiEdit.HandleDisplayRenderRequest(m);
+			if( $n2.displayTagAssignment 
+				&& $n2.displayTagAssignment.HandleDisplayRenderRequest ){
+				   $n2.displayTagAssignment.HandleDisplayRenderRequest(m);
 			   }
 		}
 	}
