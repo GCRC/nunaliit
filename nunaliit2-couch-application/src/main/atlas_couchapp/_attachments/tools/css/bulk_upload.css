@@ -15,6 +15,10 @@
 }
 
 /* table formatting */
+.uploadResults {
+    margin-top: 15px;
+}
+
 .uploadResults table {
 	border-collapse: collapse;
 	margin: 10px 0;

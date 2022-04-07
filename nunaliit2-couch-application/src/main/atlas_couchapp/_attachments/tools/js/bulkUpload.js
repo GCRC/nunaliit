@@ -2,6 +2,8 @@
 
 	var DH = 'bulkUpload.js';
 
+	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2-couch',args); };
+
 	var HASH_NEW_PREFIX = "new_";
 
 	var uploadService = null;
@@ -162,16 +164,34 @@
 		})
 	}
 
-	function refreshStateTable(createdDocs) {
+	function addDocToStateTable(docInfo) {
+		const tbody = $('#n2bulkMediaUploadTableBody')[0];
+		$(`<tr id="statusRow_${docInfo.id}")><td>${docInfo.id}</td><td>${docInfo.filename}</td><td>${docInfo.state}</td></tr>`).appendTo(tbody);
+	}
+
+	function updateDocInStateTable(docInfo) {
+		if($(`#statusRow_${docInfo.id}`).length === 0) {
+			addDocToStateTable(docInfo);
+			return;
+		}
+		const tr = $($(`#statusRow_${docInfo.id}`)[0]);
+		tr.empty();
+		$(`<td>${docInfo.id}</td>`).appendTo(tr);
+		$(`<td>${docInfo.filename}</td>`).appendTo(tr);
+		$(`<td>${docInfo.state}</td>`).appendTo(tr);
+	}
+
+	function refreshStateTable(createdDocs, import_profile) {
 		const resultsDiv = $('#results');
 		resultsDiv.html('');
+		$('<div>').text(_loc('Import Profile: ') + import_profile).appendTo(resultsDiv);
 		const table = $('<table>');
-		const tbody = $('<tbody>');
+		$('<thead><tr><th>ID</th><th>File Name</th><th>Status</th></tr></thead>').appendTo(table);
 
+		const tbody = $("<tbody id='n2bulkMediaUploadTableBody'>");
 		createdDocs.forEach(docInfo => {
-			$(`<tr><td>${docInfo.id}</td><td>${docInfo.uploadId}</td><td>${docInfo.filename}</td><td>${docInfo.state}</td></tr>`).appendTo(tbody);
+			$(`<tr><td>${docInfo.id}</td><td>${docInfo.filename}</td><td>${docInfo.state}</td></tr>`).appendTo(tbody);
 		})
-		$('<thead><tr><th>ID</th><th>Media Upload ID</th><th>File Name</th><th>Status</th></tr></thead>').appendTo(table);
 		tbody.appendTo(table);
 		table.appendTo(resultsDiv);
 	}
@@ -190,6 +210,9 @@
 		}
 
 		const attName = 'media';
+		const importProfile = `bulk_media_upload_${(new Date()).toISOString()}`;
+		refreshStateTable(createdDocs, importProfile);
+		
 		for (let i = 0; i < filesToUpload.length; i++) {
 			const uploadFile = filesToUpload[i];
 			const uploadFileId = await getUuid();
@@ -204,6 +227,11 @@
 				, uploadId: uploadFileId
 			};
 
+			newDoc.nunaliit_import = {
+				id: i
+				,profile: importProfile
+			}
+
 			let docInfo = {
 				id: '',
 				uploadId: uploadFileId,
@@ -211,22 +239,23 @@
 				state: 'creating'
 			};
 			createdDocs.push(docInfo);
-			refreshStateTable(createdDocs);
-
+			
 			try {
 				const createdDoc = await createDocument(newDoc);
 				docInfo.state = 'uploading media';
 				docInfo.id = createdDoc._id;
-				refreshStateTable(createdDocs);
+				addDocToStateTable(docInfo);
 
 				await uploadMediaFile(uploadFile, i, uploadFileId);
 				docInfo.state = 'done';
+				updateDocInStateTable(docInfo);
 			} catch (err) {
-				$('#uploadErrors').text('Error creating or uploading documents, see table for details.');
 				docInfo.state = `ERROR: ${err}`;
+				updateDocInStateTable(docInfo);
+				$('#uploadErrors').text('Error creating or uploading documents, see table for details.');
 			}
-			refreshStateTable(createdDocs);
 		}
+		refreshStateTable(createdDocs, importProfile);
 	}
 
 	function main(opts_) {
