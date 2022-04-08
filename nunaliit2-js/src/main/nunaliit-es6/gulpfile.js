@@ -18,7 +18,7 @@ function swallowError (error) {
 gulp.task('clean', function() {
 	return gulp.src([
 		'dist/n2es6'
-		], {read:false})
+    ], {read:false, allowEmpty: true})
 		.pipe(clean());
 });
 
