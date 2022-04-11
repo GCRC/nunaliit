@@ -59,7 +59,7 @@ class N2FilterableLegendWidgetWithGraphic {
         this.cachedSymbols = {};
 
         this.state = {
-            currentStyles: {},
+            allStyles: {},
             stylesByKey: new Map(),
             sourceModelDocuments: {},
             allSelected: true,
@@ -182,18 +182,6 @@ class N2FilterableLegendWidgetWithGraphic {
 	    
         this.dispatchService.register(this.DH, "canvasReportStylesInUse", this.dispatchHandler);
 
-        /* Dispatch to get the current styles in use by the canvas */
-        const stylesRequestMessage = {
-            type: "canvasGetStylesInUse",
-            canvasName: this.designatedCanvasName
-        };
-        this.dispatchService.synchronousCall(this.DH, stylesRequestMessage);
-        if (stylesRequestMessage.stylesInUse) {
-            this.state.currentStyles = stylesRequestMessage.stylesInUse;
-        }
-
-        this.dispatchService.register(this.DH, "documentContent", this.dispatchHandler);
-
         if (!this.isGraphicNone) {
             this.dispatchService.register(this.DH, "modelStateUpdated", this.dispatchHandler);
             const modelStateMessage = {
@@ -242,7 +230,10 @@ class N2FilterableLegendWidgetWithGraphic {
         else if (type === "canvasReportStylesInUse") {
             const { canvasName, stylesInUse } = message;
             if (canvasName !== this.designatedCanvasName) return;
-            this.state.currentStyles = stylesInUse;
+            this.state.allStyles = {
+                ...this.state.allStyles
+                , ...stylesInUse
+            };
             this._debouncedDrawLegend();
         }
     }
@@ -305,8 +296,7 @@ class N2FilterableLegendWidgetWithGraphic {
         const legendFragment = document.createDocumentFragment();
         this._drawLegendOption(legendFragment, ALL_CHOICES, selectAllLabel, null)
 
-        this.state.stylesByKey.clear();
-        Object.values(this.state.currentStyles).forEach(style => {
+        Object.values(this.state.allStyles).forEach(style => {
             this.state.stylesByKey.set(_loc(style.style.label), style);
         });
 
