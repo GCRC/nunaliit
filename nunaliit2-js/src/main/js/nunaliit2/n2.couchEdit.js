@@ -4418,7 +4418,6 @@ var CouchDocumentEditService = $n2.Class({
 	}
 
 	,findSchemaFieldByName: function(schema, name) {
-		//This could be much fancier, but this should work on all IKB data.
 		return [schema, name];
 	}
 
