@@ -716,10 +716,15 @@ class N2MapCanvas  {
 		//Config the initial bound on the ol5 map
 		if (this.coordinates && !this.coordinates.autoInitialBounds) {
 			let bbox = this.coordinates.initialBounds;
-			let boundInProj = transformExtent(bbox,
-					new Projection({code: 'EPSG:4326'}),
-					new Projection({code: 'EPSG:3857'})
-			);
+			let boundInProj = bbox;
+			const configSRSName = this.coordinates.srsName || "EPSG:4326";
+			const configProjection = new Projection({code: configSRSName});
+			if (configProjection.getCode() !== this.n2Map.getView().getProjection().getCode()) {
+				boundInProj = transformExtent(bbox,
+						configProjection,
+						new Projection({code: 'EPSG:3857'})
+				);
+			}
 
 			customMap.once('postrender', function(evt){
 				let res = evt.frameState.viewState.resolution;
