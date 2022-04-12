@@ -664,6 +664,51 @@ class N2MapCanvas {
 		//Everytime a change is detected. The N2CouchDbSource/N2ModelSource will be update
 		customMap.on('movestart', onMoveStart);
 
+		if(this.options.wmsGetFeatureInfo) {
+			customMap.on('singleclick', function(evt) {
+				const $dialogDivFind = $('body').find('#n2FeatureInfoDialog');
+				let $dialogDiv;
+				const calltime = Date.now();
+				const viewResolution = _this.n2View.getResolution();
+
+				if($dialogDivFind.length <= 0) {
+					$dialogDiv = $('<div>').attr('id', 'n2FeatureInfoDialog').attr('title', _loc('Feature Info')).attr('calltime', calltime).appendTo($('body'));
+				} else if($dialogDivFind[0].attributes.calltime.value != calltime) {
+					$dialogDiv = $($dialogDivFind[0]);
+					$dialogDiv.attr('calltime', calltime);
+					$dialogDiv.empty();
+					$dialogDiv.dialog('close');
+				} else {
+					$dialogDiv = $($dialogDivFind[0]);
+				}
+
+				
+				customMap.forEachLayerAtPixel(evt.pixel, function(layer) {
+					if(layer.values_.source instanceof TileWMS) {
+						const url = layer.values_.source.getFeatureInfoUrl(
+							evt.coordinate,
+							viewResolution,
+							'EPSG:3857',
+							{'INFO_FORMAT': 'application/json'}
+						);
+						if (url) {
+							fetch(url)
+							.then((response) => response.json())
+							.then((data) => {
+								if(data.features && data.features.length > 0) {
+									$('<p>').text(`${layer.values_.title}: ${data.features[0].properties.GRAY_INDEX}`).appendTo($dialogDiv);
+									$dialogDiv.dialog("option", "width", 325);
+									$dialogDiv.dialog("option", "position", [evt.originalEvent.clientX, evt.originalEvent.clientY]);
+									$dialogDiv.dialog();
+								}
+							});
+						}
+					}
+				});
+				
+			})
+		}
+
 		function onMoveStart(evt) {
 			customMap.once('moveend', function (evt) {
 				//Clearing the popup
