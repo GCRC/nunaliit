@@ -856,7 +856,7 @@ class N2MapCanvas  {
 					sublevel: 1
 				},
 				{
-					label: "Display attached images",
+					label: "Display images",
 					hint: "Display image attachment pane when tagged text contains image attachment",
 					key: "showRelatedImages",
 					initialState: this.showRelatedImages,
