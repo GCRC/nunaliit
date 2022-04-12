@@ -43,10 +43,7 @@ const N2SelectEventType = {
 class N2SelectEvent extends Event {
 
 	/**
-	 * [constructor description]
-	 * @param {N2SelectEventType} type            [description]
-	 * @param {Array|import("ol/Feature.js").default} selected        [description]
-	 * @param {import("../MapBrowserEvent.js").default} upstreamEvent|mapBrowserEvent [description]
+	 * 
 	 */
 	constructor(type, selected ,deselected, upstreamEvent) {
 		super(type);
@@ -115,7 +112,6 @@ class N2Select extends Interaction {
 }
 /**
  * handleMove_ description
- * @param  {import("../MapBrowserEvent.js").default} mapBrowserEvent   
  * @this {N2Select}
  */
 function handleEvent_(mapBrowserEvent) {
@@ -162,14 +158,6 @@ function handleEvent_(mapBrowserEvent) {
 		this.clickedFeaturesCollection.clear();
 		map.forEachFeatureAtPixel(mapBrowserEvent.pixel,
 			(
-				/**
-				 * @param {import("../Feature.js").FeatureLike}
-				 *            feature Feature.
-				 * @param {import("../layer/Layer.js").default}
-				 *            layer Layer.
-				 * @return {boolean|undefined} Continue to iterate over
-				 *         the features.
-				 */
 				function(feature, layer) {
 					if (feature) {
 						selected.push(feature);

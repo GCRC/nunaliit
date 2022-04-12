@@ -3,7 +3,7 @@ var concat = require("gulp-concat");
 var babel = require("gulp-babel");
 var clean = require('gulp-clean');
 
-const gutil = require('gulp-util');
+var PluginError = require('plugin-error');
 const webpack = require('webpack');
 const webpackConfig =  require('./webpack.config');
 
@@ -18,7 +18,7 @@ function swallowError (error) {
 gulp.task('clean', function() {
 	return gulp.src([
 		'dist/n2es6'
-		], {read:false})
+    ], {read:false, allowEmpty: true})
 		.pipe(clean());
 });
 
@@ -32,7 +32,7 @@ gulp.task('cp-nunaliit-core', function() {
   .pipe(gulp.dest("./dist/n2es6/n2core"))
 });
 
-gulp.task('babel', ['clean'], function() {
+gulp.task('babel', gulp.series('clean', function() {
     return gulp.src(
 	[
     // If Supporting old IE browser is a problem, uncomment this line to
@@ -50,7 +50,7 @@ gulp.task('babel', ['clean'], function() {
 	.on('error', swallowError)
 	.pipe(gulp.dest('dist'))
 	.on('end', function(){ console.log('\x1b[32m','\n>>> Babel Terminated...','\x1b[0m')});
-});
+}));
 
 
 /* Watch for modification to recreate the dist */
@@ -58,21 +58,21 @@ gulp.task('watch', function() {
   gulp.watch(['src/**/*.js'], ['default']);
 });
 
-gulp.task('webpack', ['babel'], function(callback) {
+gulp.task('webpack', gulp.series('babel', function(callback) {
 
   // run webpack
   webpack(webpackConfig, function(err, stats) {
       if (err) {
-	  throw new gutil.PluginError('webpack', err);
+	      throw new PluginError({plugin: 'webpack', message: err});
       }
       else {
-	  gutil.log('[webpack]', stats.toString());
+	      console.log('[webpack]', stats.toString());
       }
     callback();
   });
-});
+}));
 
 
 
 // The default task that will be run if no task is supplied
-gulp.task("default", ["webpack"]);
+gulp.task("default", gulp.series("webpack"));
