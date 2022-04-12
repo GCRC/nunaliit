@@ -131,6 +131,10 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 		this.elementsChanged = opts.elementsChanged;
 		this.intentChanged = opts.intentChanged;
 		
+		this.docs = [];
+		this.docIds = [];
+		this.multiSelect = false;
+
 		this.contextByDocId = {};
 		this.fragmentById = {};
 		this.elementById = {};
@@ -160,6 +164,10 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 	
 	setEventSource: function(eventSource){
 		this.eventSource = eventSource;
+	},
+
+	setMultiSelect: function(multiSelect) {
+		this.multiSelect = multiSelect;
 	},
 	
 	/*
@@ -255,35 +263,38 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 		if( element ){
 			var docsById = this._docsFromElement(element);
 			
-			var docIds = [];
-			var docs = [];
+			if(!this.multiSelect) {
+				this.docs = [];
+				this.docIds = [];
+			}
+
 			for(var docId in docsById){
 				var doc = docsById[docId];
-				docIds.push(docId);
-				docs.push(doc);
+				this.docIds.push(docId);
+				this.docs.push(doc);
 			};
 			
-			if( docIds.length < 1 ){
+			if( this.docIds.length < 1 ){
 				this.dispatchService.send(DH,{
 					type: 'userUnselect'
 					,_source: this.eventSource
 				});
-			} else if( docIds.length == 1 ){
+			} else if( this.docIds.length == 1 ){
 				this.dispatchService.send(DH,{
 					type: 'userSelect'
-					,docId: docIds[0]
-					,doc: docs[0]
+					,docId: this.docIds[0]
+					,doc: this.docs[0]
 					,_source: this.eventSource
 				});
-			} else if( docIds.length > 1 ){
+			} else if( this.docIds.length > 1 ){
 				this.dispatchService.send(DH,{
 					type: 'userSelect'
-					,docIds: docIds
-					,docs: docs
+					,docIds: this.docIds
+					,docs: this.docs
 					,_source: this.eventSource
 				});
-			};
-		};
+			}
+		}
 	},
 
 	/*
@@ -295,17 +306,58 @@ var ElementGenerator = $n2.Class('ElementGenerator', {
 			var docsById = this._docsFromElement(element);
 
 			for(var docId in docsById){
-				var doc = docsById[docId];
+				this.docIds = this.docIds.filter(function(arrDocId) {
+					return arrDocId !== docId;
+				})
+				this.docs = this.docs.filter(function(doc) {
+					return doc._id !== docId;
+				})
+			}
+
+			if( this.docIds.length < 1 ){
 				this.dispatchService.send(DH,{
 					type: 'userUnselect'
-					,docId: docId
-					,doc: doc
+					,docId: this.docIds[0]
+					,doc: this.docs[0]
 					,_source: this.eventSource
 				});
-			};
+			} else if( this.docIds.length == 1 ){
+				this.dispatchService.send(DH,{
+					type: 'userSelect'
+					,docId: this.docIds[0]
+					,doc: this.docs[0]
+					,_source: this.eventSource
+				});
+			} else if( this.docIds.length > 1 ){
+				this.dispatchService.send(DH,{
+					type: 'userSelect'
+					,docIds: this.docIds
+					,docs: this.docs
+					,_source: this.eventSource
+				});
+			}
+
 		};
 	},
 
+	/* This method is called by the canvas to unselect all elements */
+	selectAllOff: function() {
+		this.dispatchService.send(DH, { type: 'userUnselect' });
+		this.docIds = [];
+		this.docs = [];
+	},
+	
+	isSelected: function(element) {
+		if( element ){
+			var docsById = this._docsFromElement(element);
+			for(var docId in docsById){
+				if(this.docIds.includes(docId)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	},
 	/*
 	 * This method is called by the canvas to indicate that an element
 	 * is hovered by the user (in focus).
