@@ -683,6 +683,12 @@ function Configure(options_){
 			,createDocProcess: configuration.directory.createDocProcess
 		});
 	 	configuration.couchEditor = configuration.directory.editService; // legacy
+
+		configuration.directory.couchDocumentEditService = new $n2.couchEdit.CouchDocumentEditService({
+			documentSource: configuration.documentSource
+			,dispatchService: configuration.directory.dispatchService
+			,uploadService: configuration.directory.uploadService
+		})
 		
 	 	configuration.directory.userService = new $n2.couchUser.UserService({
 			userDb: $n2.couch.getUserDb()
@@ -783,6 +789,11 @@ function Configure(options_){
 		configuration.directory.documentListService = new $n2.couchDocumentList.DocumentListService({
 			atlasDesign: configuration.atlasDesign
 			,dispatchService: configuration.directory.dispatchService
+		});
+
+		configuration.directory.tagService = new $n2.tag.TagService({
+			dispatchService: configuration.directory.dispatchService
+			,designDoc: configuration.atlasDesign
 		});
 
 		configuration.directory.simplifiedGeometryService = new $n2.couchSimplifiedGeometries.Service({
