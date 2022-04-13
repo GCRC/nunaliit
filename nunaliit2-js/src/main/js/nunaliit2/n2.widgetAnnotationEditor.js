@@ -941,7 +941,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					$('<label>')
 						.attr('for', this.cinemapInitialMapViewId)
 						.html('Initial Map View*')
-						.attr('title', 'The values used here are in the EPSG:3857/Web Mercator projection.\nThe order of this bounding box is bottom left (x, y) and top right (x, y).\nUse a value of "0" if the cinemap should not have a default view.')
+						.attr('title', 'The order of this bounding box is bottom left (x, y) and top right (x, y).\nUse a value of "0" if the cinemap should not have a default view.')
 						.appendTo(container);
 					$('<button>')
 						.html('Get Current Map View')
