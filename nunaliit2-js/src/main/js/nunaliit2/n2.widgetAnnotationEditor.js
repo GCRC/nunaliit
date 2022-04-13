@@ -952,7 +952,11 @@ POSSIBILITY OF SUCH DAMAGE.
 							};
 							this.dispatchService.synchronousCall(DH, request);
 							const mapViewInput = document.getElementById(this.cinemapInitialMapViewId);
-							mapViewInput.value = request.value.join(",");
+							mapViewInput.value = nunaliit2.n2es6.ol_proj_transformExtent(
+								request.value,
+								new nunaliit2.n2es6.ol_proj_Projection({code: "EPSG:3857"}),
+								new nunaliit2.n2es6.ol_proj_Projection({code: "EPSG:4326"})
+							);
 						})
 						.appendTo(container);
 					$formFieldSection.append(container);
