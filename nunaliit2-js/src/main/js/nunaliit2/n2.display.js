@@ -59,7 +59,7 @@ var Service = $n2.Class({
 			};
 			this.dispatchService.register(DH,'displayIsTypeAvailable',f);
 			this.dispatchService.register(DH,'displayRender',f);
-		};
+		}
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -67,44 +67,54 @@ var Service = $n2.Class({
 			if( $n2.couchDisplay 
 			 && $n2.couchDisplay.HandleDisplayAvailableRequest ){
 				$n2.couchDisplay.HandleDisplayAvailableRequest(m);
-			};
+			}
 
 			if( $n2.couchDisplayTiles 
 			 && $n2.couchDisplayTiles.HandleDisplayAvailableRequest ){
 				$n2.couchDisplayTiles.HandleDisplayAvailableRequest(m);
-			};
+			}
 
 			if( $n2.displayRibbon 
 			 && $n2.displayRibbon.HandleDisplayAvailableRequest ){
 				$n2.displayRibbon.HandleDisplayAvailableRequest(m);
-			};
+			}
 
 			if( $n2.displayRibbon2 
 			 && $n2.displayRibbon2.HandleDisplayAvailableRequest ){
 				$n2.displayRibbon2.HandleDisplayAvailableRequest(m);
-			};
+			}
+
+			if( $n2.displayTagAssignment 
+				&& $n2.displayTagAssignment.HandleDisplayAvailableRequest ){
+				   $n2.displayTagAssignment.HandleDisplayAvailableRequest(m);
+			   }
 
 		} else if( 'displayRender' === m.type ) {
 			if( $n2.couchDisplay 
 			 && $n2.couchDisplay.HandleDisplayRenderRequest ){
 				$n2.couchDisplay.HandleDisplayRenderRequest(m);
-			};
+			}
 
 			if( $n2.couchDisplayTiles 
 			 && $n2.couchDisplayTiles.HandleDisplayRenderRequest ){
 				$n2.couchDisplayTiles.HandleDisplayRenderRequest(m);
-			};
+			}
 
 			if( $n2.displayRibbon 
 			 && $n2.displayRibbon.HandleDisplayRenderRequest ){
 				$n2.displayRibbon.HandleDisplayRenderRequest(m);
-			};
+			}
 
 			if( $n2.displayRibbon2 
 			 && $n2.displayRibbon2.HandleDisplayRenderRequest ){
 				$n2.displayRibbon2.HandleDisplayRenderRequest(m);
-			};
-		};
+			}
+
+			if( $n2.displayTagAssignment 
+				&& $n2.displayTagAssignment.HandleDisplayRenderRequest ){
+				   $n2.displayTagAssignment.HandleDisplayRenderRequest(m);
+			   }
+		}
 	}
 });
 

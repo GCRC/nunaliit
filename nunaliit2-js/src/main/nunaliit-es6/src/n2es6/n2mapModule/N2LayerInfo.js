@@ -54,6 +54,7 @@ class N2LayerInfo {
 			featurePopupHtmlFn: null,
 			featurePopupDelay: 0,
 			visibility: true,
+			swipe: undefined,
 
 			// Style Map fn - returns an OpenLayers style map to be installed
 			// on the layer.
@@ -110,6 +111,7 @@ class N2LayerInfo {
 		this.featurePopupHtmlFn = opts.featurePopupHtmlFn;
 		this.featurePopupDelay = opts.featurePopupDelay;
 		this.visibility = opts.visibility;
+		this.swipe = opts.swipe;
 		this.styleMapFn = opts.styleMapFn;
 		this.styleMap = opts.styleMap;
 		this.selectListener = opts.selectListener;

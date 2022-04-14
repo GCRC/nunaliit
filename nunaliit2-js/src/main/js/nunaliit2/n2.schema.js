@@ -53,6 +53,7 @@ var PARENT = ':parent';
 var SELECT = '::cur-selector';
 var LOCALIZE = ':localize';
 var ARRAY = ':array';
+const TAG = ':tag';
 
 //============================================================
 // Object
@@ -202,6 +203,8 @@ function _formSingleField(r,completeSelectors,options){
 		r.push('<textarea');
 	} else if( options.checkbox ){
 		r.push('<input type="checkbox"');
+	} else if(options.tag) {
+		r.push('<input type="search" placeholder="' + _loc('Add a tag') + '"');
 	} else {
 		r.push('<input type="text"');
 	};
@@ -234,7 +237,9 @@ function _formSingleField(r,completeSelectors,options){
 	} else if( options.localized ){
 		r.push(' ' + typeClassStringPrefix + 'localized');
 	
-	};
+	} else if(options.tag) {
+		r.push(' ' + typeClassStringPrefix + 'tag');
+	}
 
 	if( options.textarea ){
 		r.push('"></textarea>');
@@ -246,7 +251,7 @@ function _formSingleField(r,completeSelectors,options){
 
 	if( options.date ){
 		r.push('<div class="n2schema_help_date"></div>');
-	};
+	}
 	
 	if( options.wikiTransform ){
 		r.push('<div class="n2schema_help_wiki"></div>');
@@ -498,7 +503,7 @@ function _arrayField() {
 	var options = args.pop();
 	
 	var obj = args[0];
-	
+
 	var newType = null;
 	if( args.length > 1 ){
 		newType = args[1];
@@ -569,6 +574,55 @@ function _arrayField() {
 	};
 };
 
+function _tagField() {
+	var args = [];
+	args.push.apply(args,arguments);
+	var options = args.pop();
+	
+	var obj = args[0];
+	
+	var r = [];
+	
+	if( obj ) {
+		var tags = obj.tags;
+		if(tags && tags.length > 0) {
+			for(var i=0,e=tags.length; i<e; ++i){
+				var item = tags[i];
+		
+				var completeSelectors = tags[SELECT];
+				completeSelectors = completeSelectors.getChildSelector(i);
+				var cl = createClassStringFromSelector(completeSelectors);
+				
+				r.push('<div class="n2_tag_element">');
+				r.push('<span>'+item+'</span>');
+				r.push('<span aria-label="delete this tag" class="n2schema_tag_item_delete '+cl+'">&times;</span>')
+				r.push('</div>');
+			}
+		}
+	}
+
+	var tagSelector = undefined;
+	if( obj ){
+		tagSelector = obj[SELECT];
+	} else if( options && options.ids && options.ids.length ){
+		var selectors = [];
+		pathFromData(options.data, selectors);
+		selectors.push(options.ids[0]);
+		tagSelector = new $n2.objectSelector.ObjectSelector(selectors);
+	}
+	
+	return r.join('');
+	
+	function pathFromData(data, path){
+		if( data._parent ){
+			pathFromData(data._parent, path);
+		};
+		if( data.contextPath ){
+			path.push(data.contextPath);
+		};
+	};
+};
+
 function _selectorField(){
 	// The arguments to handlebars block expression functions are:
 	// ([obj,]options)
@@ -619,6 +673,7 @@ if( typeof(Handlebars) !== 'undefined'
 	Handlebars.registerHelper(FIELD    ,_formField      );
 	Handlebars.registerHelper(INPUT    ,_inputField     );
 	Handlebars.registerHelper(ARRAY    ,_arrayField     );
+	Handlebars.registerHelper(TAG    ,_tagField     );
 	Handlebars.registerHelper(SELECTOR ,_selectorField  );
 } else {
 	$n2.log('Unable to register helper functions with Handlebars. Schemas will not work properly.');
@@ -1755,7 +1810,8 @@ var Form = $n2.Class({
 						_this.refresh($elem);
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
-					} else if( $clicked.hasClass('n2schema_array_item_delete') ){
+					} 
+					else if( $clicked.hasClass('n2schema_array_item_delete') ){
 						var itemIndex = 1 * classInfo.selector.getKey();
 						var parentSelector = classInfo.selector.getParentSelector();
 						var ary = parentSelector.getValue(_this.obj);
@@ -1767,7 +1823,26 @@ var Form = $n2.Class({
 
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
-					} else if( $clicked.hasClass('n2schema_array_item_up') ){
+					} 
+					else if( $clicked.hasClass('n2schema_tag_item_delete') ){
+						var itemIndex = 1 * classInfo.selector.getKey();
+						var parentSelector = classInfo.selector.getParentSelector();
+						var ary = parentSelector.getValue(_this.obj);
+						ary.splice(itemIndex,1);
+						
+						var $item = $clicked.parents('.n2_tag_element').first();
+						$item.remove();
+
+						_this.callback(_this.obj,classInfo.selector.selectors,ary);
+						
+					}
+					else if( $clicked.hasClass('n2schema_taginput_container') ) {
+						var fieldWrapper = $clicked.children()[$clicked.children().length-1];
+						var fieldContainer = $(fieldWrapper).children[0];
+						var input = $(fieldContainer).children[0];
+						$(input).focus();
+					}
+					else if( $clicked.hasClass('n2schema_array_item_up') ){
 						// Push item earlier in array
 						var itemIndex = 1 * classInfo.selector.getKey();
 						if( itemIndex > 0 ) {
@@ -1784,7 +1859,8 @@ var Form = $n2.Class({
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
 						
-					} else if( $clicked.hasClass('n2schema_array_item_down') ){
+					} 
+					else if( $clicked.hasClass('n2schema_array_item_down') ){
 						// Push item later in array
 						var itemIndex = 1 * classInfo.selector.getKey();
 						var parentSelector = classInfo.selector.getParentSelector();
@@ -1801,7 +1877,8 @@ var Form = $n2.Class({
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
 						
-					} else if( $clicked.hasClass('n2schema_referenceDelete') ){
+					} 
+					else if( $clicked.hasClass('n2schema_referenceDelete') ){
 						var referenceKey = classInfo.selector.getKey();
 						var parentSelector = classInfo.selector.getParentSelector();
 						var parentObj = parentSelector.getValue(_this.obj);
@@ -1820,6 +1897,47 @@ var Form = $n2.Class({
 				});
 			};
 		};
+	},
+
+	_addTag: function($target, $elem) {
+		var classString = $target.attr('class');
+		var classNames = null;
+		if( classString ){
+			classNames = classString.split(' ');
+		} else {
+			classNames = [];
+		};
+		var classInfo = parseClassNames(classNames);
+
+		var value = $target[0].value;
+		var tagObj = classInfo.selector.getValue(this.obj);
+		
+		if(!tagObj) {
+			var parentObj = classInfo.selector.getParentSelector().getValue(this.obj);
+			if( parentObj && typeof parentObj === 'object' ){
+				tagObj = {
+					'tags': [value],
+					'nunaliit_type': 'tag'
+				}
+				parentObj[classInfo.selector.getKey()] = tagObj;
+			} else {
+				$n2.log('Error adding tags to tagobject ' + classInfo.selector.getKey() + ' no object found');	
+			}
+		} else {
+			var tags = tagObj.tags;
+			if( !tags ){
+				tagObj.tags = [value];
+			} else if( tags && $n2.isArray(tags) ){
+				tags.push(value);
+			} else {
+				$n2.log('Error adding item to tags array, no array in object and key has wrong type');
+			}
+		}
+
+		$target[0].value = '';
+		this.refresh($elem);
+		this.callback(this.obj,classInfo.selector.selectors,tags);
+		$('.'+classNames[1])[0].focus()
 	},
 
 	_setHtml: function(obj) {
@@ -1905,7 +2023,25 @@ var Form = $n2.Class({
 					$input.attr('checked',false);
 				};
 
-			} else if( 'date' === classInfo.type ) {
+			} 
+			else if ( 'tag' === classInfo.type ) {
+				$input.val('');
+				var tagId = classInfo.selector.selectors[1];
+				$input.autocomplete({
+					source: function(req, res) {
+						_this.functionMap['getTagAutocomplete'](req, res, tagId)
+					}, // callback params: text = current value of input, res = format of data - array or string as described in docs,
+					delay: 300,
+					minLength: 3
+				});
+				$input.keypress(function(event){
+					if(event.keyCode == 13){
+						event.preventDefault();
+						_this._addTag($(event.target), $elem);
+					}
+			  });
+			}
+			else if( 'date' === classInfo.type ) {
 				if( value ) {
 					value = value.date;
 				};
@@ -2485,6 +2621,8 @@ var Form = $n2.Class({
 						};
 					};
 
+				} else if( 'tag' === keyType) {
+					assignValue = false;
 				} else {
 					value = $input.val();
 				};

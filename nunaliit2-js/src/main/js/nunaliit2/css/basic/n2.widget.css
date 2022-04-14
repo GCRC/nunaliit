@@ -823,13 +823,19 @@ WidgetLegend2
 	font-weight: bold;
 }
 
-.nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_checkboxColumn {
+.nunaliit_content .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_checkboxColumn {
 	min-width: 100px; /* width needed to contain four legend symbols */
 	display: inline-block;
 	vertical-align: top;
 }
 
-.nunaliit_content > .n2widgetLegend img {
+.n2LegendImageContainer {
+    display: inline-block;
+    margin: 5px;
+	max-width: 250px;
+}
+
+.nunaliit_content .n2widgetLegend img {
     border: 0;
     max-height: 350px;
     max-width: 250px;
@@ -860,13 +866,13 @@ Map Legend
 }
 
 /* Styling when added to nunaliit_content */
-.nunaliit_content > .n2widgetLegend {
+.nunaliit_content .n2widgetLegend {
 	position: absolute;
 	bottom: 10px;
 	left: 10px;
 }
 
-.nunaliit_content > .n2widgetLegend .n2widgetLegend_outer {
+.nunaliit_content .n2widgetLegend .n2widgetLegend_outer {
 	background-color: rgba(0,0,0,0.9);
 	color: #fff;
 	padding: 10px;
@@ -875,16 +881,62 @@ Map Legend
 	box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.25);
 }
 
-.nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_labelColumn {
+.nunaliit_content .n2widgetLegend .n2widgetLegend_hideable .n2widgetLegend_outer {
+	border-top: none;
+}
+
+.nunaliit_content .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_labelColumn {
 	width: auto;
 	max-width: 300px;
 	display: inline-block;
 	vertical-align: top;
 }
 
-.nunaliit_content > .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_symbolColumn {
+.nunaliit_content .n2widgetLegend .n2widgetLegend_outer .n2widgetLegend_symbolColumn {
 	width: 70px; /* width needed to contain four legend symbols */
 	display: inline-block;
+}
+
+.nunaliit_content .n2widgetLegend_showhideClosed {
+	background-color: rgba(0,0,0,0.9);
+	color: #fff;
+	border: 1px solid #FFFFFF;
+	cursor: pointer;
+	text-align: right;
+    min-width: 75px;
+	min-height: 16px;
+}
+
+.nunaliit_content .n2widgetLegend_showhide {
+	background-color: rgba(0,0,0,0.9);
+	color: #fff;
+	border-top: 1px solid #FFFFFF;
+	border-left: 1px solid #FFFFFF;
+	border-right: 1px solid #FFFFFF;
+	cursor: pointer;
+	text-align: right;
+    min-width: 75px;
+}
+
+.n2widgetLegend_showhideicon {
+	background-position: -8px -7px;
+    background-repeat: no-repeat;
+	position: absolute;
+	right: 2px;
+	height: 16px;
+	width: 16px;
+}
+
+.nunaliit_content .n2widgetLegend_showhide .n2widgetLegend_showhideicon {
+	background-image: url(images/bullet_minus.png);
+}
+
+.nunaliit_content .n2widgetLegend_showhideClosed .n2widgetLegend_showhideicon {
+    background-image: url(images/bullet_add.png);
+}
+
+.n2LegendImageLabel {
+	text-align: center;
 }
 
 .n2widgetLegend_symbolColumn_point,
