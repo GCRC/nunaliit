@@ -41,6 +41,7 @@ import 'ol-layerswitcher/src/ol-layerswitcher.css';
 import 'ol-ext/dist/ol-ext.css';
 import EditBar from './EditBar';
 import Popup from 'ol-ext/overlay/Popup';
+import Swipe from 'ol-ext/control/Swipe';
 
 import { defaults as Defaults } from 'ol/control';
 
@@ -589,6 +590,9 @@ class N2MapCanvas {
 		});
 	}
 
+	onSingleClick(evt) {
+	}
+
 	_drawMap() {
 		const _this = this;
 
@@ -663,6 +667,10 @@ class N2MapCanvas {
 		//Everytime a change is detected. The N2CouchDbSource/N2ModelSource will be update
 		customMap.on('movestart', onMoveStart);
 
+		customMap.on('singleclick', function(evt) {
+			_this.onSingleClick(evt);
+		});
+		
 		function onMoveStart(evt) {
 			customMap.once('moveend', function (evt) {
 				//Clearing the popup
@@ -728,41 +736,36 @@ class N2MapCanvas {
 
 		customMap.addControl(customLayerSwitcher);
 
-		this.overlayInfos.forEach((info, idx) => {
-			if (info._layerInfo.options.wmsLegend && info.visibility) {
-				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl()
-				_this.dispatchService.send(DH,
-					{
-						type: 'imageUrlLegendDisplay'
-						, visible: true
-						, legendUrl: legendUrl
-						, wmsId: _this.overlayLayers[idx].ol_uid
-						, canvasName: _this.canvasName
-					})
+		let swipeCtrl;
+		if(this.options.layerSwipe) {
+			swipeCtrl = new Swipe();
+			customMap.addControl(swipeCtrl);
+		}
+
+		this.overlayInfos.forEach( (info, idx) => {
+			if(info._layerInfo.options.wmsLegend && info.visibility) {
+				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl();
+				const imagePayload = this._createImageLegendPaylod(legendUrl, _this.overlayLayers[idx].ol_uid, _this.canvasName, _this.options.layerSwipe, info, true)
+				_this.dispatchService.send(DH, imagePayload)
 			}
 			if (info._layerInfo.options.wmsLegend) {
 				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl()
-				_this.overlayLayers[idx].on('change:visible', function (e) {
-					if (e.oldValue) {
-						_this.dispatchService.send(DH,
-							{
-								type: 'imageUrlLegendDisplay'
-								, visible: false
-								, legendUrl: legendUrl
-								, wmsId: e.target.ol_uid
-								, canvasName: _this.canvasName
-							})
-					} else {
-						_this.dispatchService.send(DH,
-							{
-								type: 'imageUrlLegendDisplay'
-								, visible: true
-								, legendUrl: legendUrl
-								, wmsId: e.target.ol_uid
-								, canvasName: _this.canvasName
-							})
+				_this.overlayLayers[idx].on('change:visible', function(e) {
+					if(e.oldValue) {
+						const imagePayload = _this._createImageLegendPaylod(legendUrl, e.target.ol_uid, _this.canvasName, _this.options.layerSwipe, info, false)
+						_this.dispatchService.send(DH, imagePayload);
+ 					} else {
+						const imagePayload = _this._createImageLegendPaylod(legendUrl, e.target.ol_uid, _this.canvasName, _this.options.layerSwipe, info, true)
+						_this.dispatchService.send(DH, imagePayload);
 					}
 				});
+			}
+			if(this.options.layerSwipe && typeof info._layerInfo.swipe !== 'undefined') {
+				if(info._layerInfo.swipe === 'left') {
+					swipeCtrl.addLayer(_this.overlayLayers[idx]);	
+				} else if(info._layerInfo.swipe === 'right') {
+					swipeCtrl.addLayer(_this.overlayLayers[idx], true);
+				}
 			}
 		});
 
@@ -871,10 +874,32 @@ class N2MapCanvas {
 		this._centerMapOnFeature(feature);
 	}
 
-	_dispatch(m) {
+	_createImageLegendPaylod(legendUrl, ol_uid, canvasName, layerSwipe, info, visible) {
+		var imagePayload = {
+			type: 'imageUrlLegendDisplay'
+			,visible: visible
+			,legendUrl: legendUrl
+			,wmsId: ol_uid
+			,canvasName: canvasName
+		};
+		if(layerSwipe) {
+			if(info._layerInfo.swipe === 'left') {
+				imagePayload.label = info.name + '(left side)';
+			} else if(info._layerInfo.swipe === 'right') {
+				imagePayload.label = info.name + '(right side)';
+			} else {
+				imagePayload.label = info.name + '(both sides)';
+			}
+		} else {
+			imagePayload.label = info.name;
+		}
+		return imagePayload
+	}
+
+	_dispatch(m){
 		const dispatcher = this._getDispatchService();
-		if (dispatcher) {
-			dispatcher.send(DH, m);
+		if( dispatcher ) {
+			dispatcher.send(DH,m);
 		}
 	}
 
@@ -1476,17 +1501,11 @@ class N2MapCanvas {
 
 		} else if ('canvasGetStylesInUse' === type && this.canvasName === m.canvasName) {
 			m.stylesInUse = this._getMapStylesInUse();
-			this.overlayInfos.forEach((info, idx) => {
-				if (info._layerInfo.options.wmsLegend && info.visibility) {
-					const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl();
-					_this.dispatchService.send(DH,
-						{
-							type: 'imageUrlLegendDisplay'
-							, visible: true
-							, legendUrl: legendUrl
-							, wmsId: _this.overlayLayers[idx].ol_uid
-							, canvasName: _this.canvasName
-						})
+			this.overlayInfos.forEach( (info, idx) => {
+				if(info._layerInfo.options.wmsLegend && info.visibility) {
+					const imagePayload = this._createImageLegendPaylod(_this.overlayLayers[idx].values_.source.getLegendUrl(), 
+					_this.overlayLayers[idx].ol_uid, _this.canvasName, _this.options.layerSwipe, info, true);
+					_this.dispatchService.send(DH, imagePayload)
 				}
 			})
 		}

@@ -73,6 +73,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			this.dispatchService = opts.dispatchService;
 			this.sourceCanvasName = opts.sourceCanvasName;
 			this.labels = opts.labels;
+			this.hideable = opts.hideable;
 
 			this.stylesInUse = null;
 			this.wmsLegends = {};
@@ -114,10 +115,35 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			this.elemId = $n2.getUniqueId();
 
-			$('<div>')
-			.attr('id',this.elemId)
-			.addClass('n2widgetLegend')
-			.appendTo($container);
+			if(_this.hideable) {
+				var legendContainer = $('<div>')
+				.addClass('n2widgetLegend')
+				.appendTo($container)
+
+				var $hider = $('<div>')
+				.addClass('n2widgetLegend_showhide')
+				.appendTo(legendContainer);
+
+				$('<span>')
+				.addClass('n2widgetLegend_showhideicon')
+				.appendTo($hider);
+
+				$hider.click(function() {
+					_this._getElem().toggle();
+					$hider.toggleClass('n2widgetLegend_showhideClosed')
+					$hider.toggleClass('n2widgetLegend_showhide')
+				})
+
+				$('<div>')
+				.addClass('n2widgetLegend_hideable')
+				.attr('id',this.elemId)
+				.appendTo(legendContainer);
+			} else {
+				$('<div>')
+				.attr('id',this.elemId)
+				.addClass('n2widgetLegend')
+				.appendTo($container);
+			}
 
 			$n2.log(this._classname, this);
 
@@ -155,14 +181,20 @@ POSSIBILITY OF SUCH DAMAGE.
 					legendDiv = $(`#${this.elemId}`);
 				}
 				
+				var imageContainerDiv = $('<div>').attr('id', wmsLegendId).addClass('n2LegendImageContainer');
+				imageContainerDiv.appendTo(legendDiv);
+				if(m.label) {
+					$('<div>').addClass('n2LegendImageLabel').text(m.label).appendTo(imageContainerDiv);
+				}
+
 				$('<img>')
 				.attr('id', wmsLegendId)
 				.attr('src', m.legendUrl)
-				.appendTo(legendDiv);
+				.appendTo(imageContainerDiv);
 				this.wmsLegends[wmsLegendId] = Object.assign({}, m);
 			} else {
 				delete this.wmsLegends[wmsLegendId];
-				$(`#${wmsLegendId}`).remove()
+				$(`#${wmsLegendId}`).remove();
 			}
 		},
 

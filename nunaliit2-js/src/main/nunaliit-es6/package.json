@@ -4,8 +4,6 @@
   "description": "The ESmodules for nunaliit2 project -- for ol map support",
   "main": "dist/n2es6.js",
   "dependencies": {
-    "ajax": "0.0.4",
-    "fs": "0.0.1-security",
     "imports-loader": "^0.8.0",
     "jsdoc": "^3.6.10",
     "jsdoc-plugin-typescript": "^2.0.6",
