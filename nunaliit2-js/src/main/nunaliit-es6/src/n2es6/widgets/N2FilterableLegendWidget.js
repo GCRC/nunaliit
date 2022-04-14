@@ -505,6 +505,7 @@ class N2FilterableLegendWidgetWithGraphic {
 
     _drawGraphic() {
         if (this.graphicContainer === null) return;
+        if (this.isGraphicNone) return;
         this.graphicContainer.innerHTML = "";
         const graphic = document.createElement("div");
         graphic.setAttribute("class", "n2_FilterableLegendWidgetGraphicArea");
@@ -512,18 +513,17 @@ class N2FilterableLegendWidgetWithGraphic {
         this.graphicContainer.append(graphic);
         this.graphic = graphic;
 
+        this._drawGraphicToggle();
         if (!this.graphicVisibility) {
             this.graphic.classList.add("filterableLegendWidgetGraphicAreaHidden");
         }
-
+        
         if (this.graphicType === "pie") {
             const D3V3 = window.d3;
             if (D3V3 === undefined) throw new Error("The d3 (V3) library is not available!")
             throw new Error("This isn't implemented yet. Come back soon!");
         }
         else if (this.graphicType === "custom") {
-            // move the following line out of the if/else-ifs once they're implemented
-            this._drawGraphicToggle();
             this.graphic.classList.add("n2_CustomGraphic");
             this._drawCustom();
         }
