@@ -6,6 +6,10 @@
 	margin-bottom: 30px;
 }
 
+#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend {
+	position: static;
+}
+
 #content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend_svg {
 	display: inline-block;
 	width: 14px;
@@ -21,12 +25,12 @@
 	box-shadow: 3px 3px 3px 0 rgba(0,0,0,0.25);
 }
 
-#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected {
+#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_legendEntry {
 	display: flex;
 	height: 1.3em;
 }
 
-#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_optionSelected > label {
+#n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_legendEntry > label {
 	display: flex;
 }
 
