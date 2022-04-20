@@ -70,14 +70,22 @@ public class ContentTypeDetector
 			TikaConfig tika;
 			Metadata metadata = new Metadata();
 			metadata.set(Metadata.RESOURCE_NAME_KEY, file.getName());
+			TikaInputStream tis = null;
 			try {
 				tika = new TikaConfig();
-				mediaType = tika.getDetector().detect(TikaInputStream.get(file.toURI()), metadata);
-
+				tis = TikaInputStream.get(file.toURI());
+				mediaType = tika.getDetector().detect(tis, metadata);
 				log.debug("File {} has mime type {}", file.getName(), mediaType);
 			}
 			catch (TikaException | IOException e) {
 				log.warn("Problem detecting file type: {}", e.getMessage());
+			}
+			if(tis != null) {
+				try {
+					tis.close();
+				} catch (IOException e) {
+					log.debug("Unable to close TikaInputStream", e);
+				}
 			}
 		}
 		else {
@@ -98,12 +106,21 @@ public class ContentTypeDetector
 
 		XmlRootExtractor rootExtractor = new XmlRootExtractor();
 		QName qName;
+		FileInputStream fis = null;
 		try {
-			qName = rootExtractor.extractRootElement(new FileInputStream(file));
-			isGpx = "gpx".equalsIgnoreCase(qName.getLocalPart());
-		}
+			fis = new FileInputStream(file);
+			qName = rootExtractor.extractRootElement(fis);
+			isGpx = "gpx".equalsIgnoreCase(qName.getLocalPart());		}
 		catch (FileNotFoundException e) {
 			log.warn("Problem parsing file for XML root element, possibly not an XML file: {}. Error: {}", file.getName(), e.getMessage());
+		}
+
+		if(fis != null) {
+			try {
+				fis.close();
+			} catch (IOException e) {
+				log.debug("Unable to close GPX FileInputStream", e);
+			}
 		}
 
 		return isGpx;
@@ -117,8 +134,12 @@ public class ContentTypeDetector
 	 */
 	public static boolean isGeoJson(File file) {
 		boolean isGeoJson = false;
-		try (FileInputStream fis = new FileInputStream(file);
-			 InputStreamReader reader = new InputStreamReader(fis, StandardCharsets.UTF_8)) {
+		FileInputStream fis = null;
+		InputStreamReader reader = null;
+
+		try {
+			fis = new FileInputStream(file);
+			reader = new InputStreamReader(fis, StandardCharsets.UTF_8);
 			GeoJsonParser parser = new GeoJsonParser();
 			try {
 				parser.parse(reader);
@@ -131,8 +152,16 @@ public class ContentTypeDetector
 		catch (FileNotFoundException e) {
 			log.error("File not found", e);
 		}
-		catch (IOException e) {
-			log.error("Error reading file", e);
+
+		try {
+			if(reader != null) {
+				reader.close();
+			} 
+			if(fis != null) {
+				fis.close();
+			}
+		} catch (IOException e) {
+			log.debug("Unable to close file handle for geo file check", e);
 		}
 
 		return isGeoJson;
