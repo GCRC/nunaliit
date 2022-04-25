@@ -1573,13 +1573,14 @@ POSSIBILITY OF SUCH DAMAGE.
 				chips: lastThemeTags,
 				chipsetsUpdateCallback: (tagList, operation, target) => {
 					var addtar, deltar;
+					const themeTagBox = document.querySelector(aggregateThemeTagBoxSelector);
 					const value = target.chipText;
 					let validTag = findColourFromTag(value);
 					switch (operation) {
 						case 'ADD':
 							if (validTag) {
 								const lineColour = tagColors[validTag[0]];
-								document.querySelector(aggregateThemeTagBoxSelector).style.boxShadow = `inset 0em -0.7em ${lineColour}`;
+								themeTagBox.style.boxShadow = `inset 0em -0.7em ${lineColour}`;
 							}
 							addtar = $n2.extend({value: value}, target);
 							_this.dataDepot.addFullTag(addtar);
@@ -1588,13 +1589,18 @@ POSSIBILITY OF SUCH DAMAGE.
 						case 'DELETE':
 							deltar = $n2.extend({value: value}, target);
 							_this.dataDepot.deleteTag(deltar);
-							const lastTheme = _this._buildThemeTagProfiles(_this.dataDepot.getData()).at(-1);
-							if (lastTheme) {
-								validTag = findColourFromTag(lastTheme.chipText);
-								if (validTag) {
-									const lineColour = tagColors[validTag[0]];
-									document.querySelector(aggregateThemeTagBoxSelector).style.boxShadow = `inset 0em -0.7em ${lineColour}`;
+							const themeTagProfiles =  _this._buildThemeTagProfiles(_this.dataDepot.getData());
+							for (let i = -1; i >= -Math.abs(themeTagProfiles.length); i--) {
+								const lastTheme = themeTagProfiles.at(i);
+								if (lastTheme) {
+									validTag = findColourFromTag(lastTheme.chipText);
+									if (validTag) {
+										const lineColour = tagColors[validTag[0]];
+										themeTagBox.style.boxShadow = `inset 0em -0.7em ${lineColour}`;
+										break;
+									}
 								}
+								themeTagBox.style.boxShadow = "";
 							}
 							$n2.log('Deleting tags', target);
 							break;
@@ -1641,11 +1647,19 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 			});
 
-			const lastTagValue = lastThemeTags.at(-1) ? lastThemeTags.at(-1).chipText : "";
-			const validTag = findColourFromTag(lastTagValue);
-			if (validTag) {
-				const lineColour = tagColors[validTag[0]];
-				document.querySelector(aggregateThemeTagBoxSelector).style.boxShadow = `inset 0em -0.7em ${lineColour}`;
+			const themeTagBox = document.querySelector(aggregateThemeTagBoxSelector);
+
+			for (let i = -1; i >= -Math.abs(lastThemeTags.length); i--) {
+				const lastTheme = lastThemeTags.at(i);
+				if (lastTheme) {
+					const validTag = findColourFromTag(lastTheme.chipText);
+					if (validTag) {
+						const lineColour = tagColors[validTag[0]];
+						themeTagBox.style.boxShadow = `inset 0em -0.7em ${lineColour}`;
+						break;
+					}
+				}
+				themeTagBox.style.boxShadow = "";
 			}
 
 			if (senData.length < 1) return;
