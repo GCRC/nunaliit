@@ -1550,6 +1550,20 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			$('<hr>').appendTo($formFieldSection);
 
+			const aggregateThemeTagBoxSelector = `#${_this.innerFormId} > div.n2WidgetAnnotation_formfieldSection > div:nth-of-type(1)`;
+			const { 
+				atlascine_cinemap: {
+					tagColors,
+					tagGroups
+				}
+			} = this.currentDoc;
+
+			const findColourFromTag = (tagValue) => {
+				return Object.entries(tagGroups).find(entry => {
+					return entry[1].includes(tagValue)
+				})
+			};
+
 			// Add theme tags tagbox component.
 			new $n2.mdc.MDCTagBox({
 				parentElem: $formFieldSection,
@@ -1557,25 +1571,36 @@ POSSIBILITY OF SUCH DAMAGE.
 				label: 'Theme Tags',
 				mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 				chips: lastThemeTags,
-				chipsetsUpdateCallback: function(tagList, operation, target) {
-					var value, addtar, deltar;
+				chipsetsUpdateCallback: (tagList, operation, target) => {
+					var addtar, deltar;
+					const value = target.chipText;
+					let validTag = findColourFromTag(value);
 					switch (operation) {
-					case 'ADD':
-						value = target.chipText;
-						addtar = $n2.extend({value: value}, target);
-						_this.dataDepot.addFullTag(addtar);
-						$n2.log('Adding tags', target);
-						break;
-					case 'DELETE':
-						value = target.chipText;
-						deltar = $n2.extend({value: value}, target);
-						_this.dataDepot.deleteTag(deltar);
-						$n2.log('Deleting tags', target);
-						break;
-					default:
-						break;
+						case 'ADD':
+							if (validTag) {
+								const lineColour = tagColors[validTag[0]];
+								document.querySelector(aggregateThemeTagBoxSelector).style.boxShadow = `inset 0em -0.7em ${lineColour}`;
+							}
+							addtar = $n2.extend({value: value}, target);
+							_this.dataDepot.addFullTag(addtar);
+							$n2.log('Adding tags', target);
+							break;
+						case 'DELETE':
+							deltar = $n2.extend({value: value}, target);
+							_this.dataDepot.deleteTag(deltar);
+							const lastTheme = _this._buildThemeTagProfiles(_this.dataDepot.getData()).at(-1);
+							if (lastTheme) {
+								validTag = findColourFromTag(lastTheme.chipText);
+								if (validTag) {
+									const lineColour = tagColors[validTag[0]];
+									document.querySelector(aggregateThemeTagBoxSelector).style.boxShadow = `inset 0em -0.7em ${lineColour}`;
+								}
+							}
+							$n2.log('Deleting tags', target);
+							break;
+						default:
+							break;
 					}
-				// $n2.log('I wonder what is this: ', tagList);
 				}
 			});
 
@@ -1615,6 +1640,13 @@ POSSIBILITY OF SUCH DAMAGE.
 				// $n2.log('I wonder what is this: ', tagList);
 				}
 			});
+
+			const lastTagValue = lastThemeTags.at(-1) ? lastThemeTags.at(-1).chipText : "";
+			const validTag = findColourFromTag(lastTagValue);
+			if (validTag) {
+				const lineColour = tagColors[validTag[0]];
+				document.querySelector(aggregateThemeTagBoxSelector).style.boxShadow = `inset 0em -0.7em ${lineColour}`;
+			}
 
 			if (senData.length < 1) return;
 			const mdcCardSelector = "#relatedImageCardDisplay > div.mdc-card__primary-action > div.n2card__primary";
