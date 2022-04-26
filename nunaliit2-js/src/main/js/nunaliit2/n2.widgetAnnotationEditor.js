@@ -1602,6 +1602,9 @@ POSSIBILITY OF SUCH DAMAGE.
 								}
 								themeTagBox.style.boxShadow = "";
 							}
+							if (themeTagProfiles.length === 0) {
+								themeTagBox.style.boxShadow = "";
+							}
 							$n2.log('Deleting tags', target);
 							break;
 						default:
