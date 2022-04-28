@@ -461,6 +461,8 @@ public class SchemaAttribute {
 		} else if( "custom".equals(type) ){
 			// leave custom attributes as undefined
 			
+		} else if( "numeric".equals(type) ){
+			// leave numeric attributes as undefined
 		} else if( "array".equals(type) ){
 			if( null != id ){
 				JSONArray arr = new JSONArray();
@@ -556,7 +558,7 @@ public class SchemaAttribute {
 		if( includedInBrief ){
 			if( "title".equals(type) ){
 				
-			} else if( "string".equals(type) ){
+			} else if( "string".equals(type) || "numeric".equals(type) ){
 				if( null != id ){
 					pw.println("\t{{#"+schemaStructure+"}}");
 					pw.println("\t\t{{#if "+id+"}}");
@@ -743,7 +745,8 @@ public class SchemaAttribute {
 				pw.println("\t\t\t</div>");
 				
 			} else if( "string".equals(type)
-			 || "localized".equals(type) ){
+			 || "localized".equals(type) 
+			 || "numeric".equals(type) ){
 				if( null != id ){
 					pw.println("\t\t\t{{#"+schemaStructure+"}}");
 					pw.println("\t\t\t\t{{#if "+id+"}}");
@@ -1121,7 +1124,8 @@ public class SchemaAttribute {
 			 || "reference".equals(type) 
 			 || "custom".equals(type) 
 			 || "checkbox".equals(type) 
-			 || "date".equals(type) ){
+			 || "date".equals(type) 
+			 || "numeric".equals(type)){
 				if( null != id ){
 					String fieldType = "";
 					if( "localized".equals(type) ){
@@ -1134,6 +1138,8 @@ public class SchemaAttribute {
 						fieldType = ",custom="+encodeFieldParameter(customType);
 					} else if( "checkbox".equals(type) ){
 						fieldType = ",checkbox";
+					} else if( "numeric".equals(type) ){
+						fieldType = ",numeric";
 					}
 
 					if( isTextarea() ){
@@ -1360,6 +1366,13 @@ public class SchemaAttribute {
 			attrExport.put("select", schemaName+"."+id);
 			attrExport.put("label", id);
 			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+
+		} else if( "numeric".equals(type) ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("label", id);
+			attrExport.put("type", "number");
 			exportArr.put(attrExport);
 
 		} else if( "localized".equals(type) ){
