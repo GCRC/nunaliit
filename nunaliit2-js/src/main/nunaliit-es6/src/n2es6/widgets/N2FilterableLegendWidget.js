@@ -12,7 +12,6 @@ const filterableLegends = [
 ];
 
 const supportedGraphicTypes = [
-    "pie",
     "custom",
     "none"
 ];
@@ -516,12 +515,6 @@ class N2FilterableLegendWidgetWithGraphic {
         this._drawGraphicToggle();
         if (!this.graphicVisibility) {
             this.graphic.classList.add("filterableLegendWidgetGraphicAreaHidden");
-        }
-        
-        if (this.graphicType === "pie") {
-            const D3V3 = window.d3;
-            if (D3V3 === undefined) throw new Error("The d3 (V3) library is not available!")
-            throw new Error("This isn't implemented yet. Come back soon!");
         }
         else if (this.graphicType === "custom") {
             this.graphic.classList.add("n2_CustomGraphic");
