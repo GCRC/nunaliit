@@ -82,7 +82,7 @@ class N2FilterableLegendWidgetWithGraphic {
         }
 
         if (!this.designatedCanvasName) {
-            throw new Error("designatedCanvasName must be specified");
+            throw new Error("sourceCanvasName must be specified");
         }
 
         if (!this.selectAllLabel) {
