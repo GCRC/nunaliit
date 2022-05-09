@@ -372,7 +372,6 @@ class N2FilterableLegendWidgetWithGraphic {
             const symbolizer = style.getSymbolizer(context);
             let geometry = null;
             
-            // TODO: cluster?
             if (key === "point") {
                 const graphicName = symbolizer.getSymbolValue("graphicName", context);
                 let symbol = null;
