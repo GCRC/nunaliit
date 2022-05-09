@@ -31,7 +31,7 @@ class N2FilterableLegendWidgetWithGraphic {
         this.showService = options.showService;
         this.sourceModelId = options.sourceModelId;
         this.containerId = options.containerId;
-        this.designatedCanvasName = options.designatedCanvasName;
+        this.designatedCanvasName = options.sourceCanvasName;
         this.selectAllLabel = options.allLabel;
         this.graphicType = options.graphicType;
         this.isGraphicNone = this.graphicType === "none" ? true : false;
