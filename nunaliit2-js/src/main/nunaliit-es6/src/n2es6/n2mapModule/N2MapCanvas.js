@@ -46,9 +46,7 @@ import 'ol-ext/dist/ol-ext.css';
 import Bar from 'ol-ext/control/Bar';
 import EditBar from './EditBar';
 import Toggle from 'ol-ext/control/Toggle';
-import Timeline from 'ol-ext/control/Timeline';
 import Popup from 'ol-ext/overlay/Popup';
-import Notification from 'ol-ext/control/Notification';
 import SettingsControl from './SettingsControl.js';
 
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
@@ -340,6 +338,9 @@ class N2MapCanvas  {
 		};
 		this.panzoomState = null;
 
+		this.initialFeatureDisplayType = opts.initialFeatureDisplay || "all";
+		this.initialCinemapToMapSettings = opts.initialCinemapToMapSettings;
+		this._setInitialCinemapToMapSettings();
 		this._drawMap();
 		opts.onSuccess();
 	}
@@ -1210,6 +1211,15 @@ class N2MapCanvas  {
 					}
 				});
 
+				/* "all" is the default case where everything shows initially */
+				if (this.initialFeatureDisplayType === "none") {
+					ringLayer.setVisible(false);
+					linkLayer.setVisible(false);
+				}
+				else if (this.initialFeatureDisplayType === "donut") {
+					linkLayer.setVisible(false);
+				}
+
 				fg.push(ringLayer);
 				fg.push(linkLayer);
 			}
@@ -1771,6 +1781,32 @@ class N2MapCanvas  {
 			zoom: zoomScale,
 			duration: mapFitDuration
 		});
+	}
+
+	_setInitialCinemapToMapSettings() {
+		if (!this.initialCinemapToMapSettings) return;
+		const {
+			fitMap,
+			animateFitMap,
+			displayMedia,
+			zoomThreshold
+		} = this.initialCinemapToMapSettings
+
+		if (fitMap !== undefined && typeof fitMap === "boolean") {
+			this.fitMapToLatestMapTag = fitMap;
+		}
+		if (animateFitMap !== undefined && typeof animateFitMap === "boolean") {
+			this.animateMapFitting = animateFitMap;
+			if (this.animateMapFitting) {
+				this.fitMapToLatestMapTag = true;
+			}
+		}
+		if (displayMedia !== undefined && typeof displayMedia === "boolean") {
+			this.showRelatedImages = displayMedia;
+		}
+		if (zoomThreshold !== undefined && typeof zoomThreshold === "boolean") {
+			this.hideFeatureIfMapZoom = zoomThreshold;
+		}
 	}
 
 	_getMapFeaturesIncludeingFidMapOl5(fidMap) {
