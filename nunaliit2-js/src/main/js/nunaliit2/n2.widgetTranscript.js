@@ -887,7 +887,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.appendTo(document.body);
 
 			//drawing all the sentence and binding event for click and right click
-			tagsBySentenceSpanIds = {};
+			const tagsBySentenceSpanIds = {};
 			for (var i = 0,e = transcript_array.length; i < e; i++) {
 				var transcriptElem = transcript_array[i];
 				//hack to seperate single click and double click
