@@ -891,14 +891,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.appendTo(document.body);
 
 			//drawing all the sentence and binding event for click and right click
-			var tagsBySentenceSpanIds = {};
+			_this.tagsBySentenceSpanIds = {};
 			for (var i = 0,e = transcript_array.length; i < e; i++) {
 				var transcriptElem = transcript_array[i];
 				//hack to seperate single click and double click
 				var DELAY = 300, clicks = 0, timer = null;
 				var id = $n2.getUniqueId();
 				transcriptElem.id = id;
-				tagsBySentenceSpanIds [id] = {
+				_this.tagsBySentenceSpanIds[id] = {
 					start:transcriptElem.startTimeCode
 					,end : transcriptElem.finTimeCode
 				}
@@ -988,7 +988,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			
 			_this.dispatchService.send(DH, {
 				type: 'resetDisplayedSentences'
-				,data: tagsBySentenceSpanIds
+				,data: _this.tagsBySentenceSpanIds
 			})
 			
 			// Deal with scrolling, the scrolling should close the annotationEditor
