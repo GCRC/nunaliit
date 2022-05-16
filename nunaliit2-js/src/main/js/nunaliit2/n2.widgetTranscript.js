@@ -114,6 +114,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	 */
 	timeTable: null,
 
+	tagsBySentenceSpanIds: null,
+
 	isInsideContentTextPanel : null,
 
 	initialize: function(opts_){
@@ -176,6 +178,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.subtitleSelectionDivId = $n2.getUniqueId();
 		this.srtSelectionId = $n2.getUniqueId();
 		this.srtSelector = undefined;
+
+		this.tagsBySentenceSpanIds = {};
 		
 		if (this.isInsideContentTextPanel) {
 			var $elem = $('<div>')
