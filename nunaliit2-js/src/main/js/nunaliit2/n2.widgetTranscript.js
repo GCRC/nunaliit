@@ -1013,10 +1013,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	_color_transcript: function(colorMap){
 		var $set = this._getTranscriptDiv();
 		if ( $set ){
-			$set.find('.n2widgetTranscript_transcript').each(function(){
-				var $elem = $(this);
-				$elem.css({"background-color" : 'transparent'});
-			})
+			[...$set[0].children].forEach(child => {
+				child.style.backgroundColor = "";
+			});
 		}
 
 		for (var id in colorMap) {
