@@ -727,15 +727,13 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.attr('height', '360px');
 
 				subtitles.style.height = "55vh";
-				subtitles.style.overflowY = "scroll";
 			}
 			else if (mediaType === "audio") {
 				$video
 				.attr('width', '0px')
 				.attr('height', '0px');
 
-				subtitles.style.height = "auto";
-				subtitles.style.overflowY = "visible";
+				subtitles.style.height = "75vh";
 			}
 
 			var $videoSource = $('<source>')
