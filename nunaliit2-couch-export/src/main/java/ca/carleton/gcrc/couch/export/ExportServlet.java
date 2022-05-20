@@ -45,6 +45,7 @@ public class ExportServlet extends JsonServlet {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	private ExportConfiguration configuration;
+	private ServletConfig servletConfig;
 	
 	public ExportServlet() {
 		
@@ -63,6 +64,8 @@ public class ExportServlet extends JsonServlet {
 		} else {
 			throw new ServletException("Invalid class for configuration: "+configurationObj.getClass().getName());
 		}
+
+		servletConfig = config;
 	}
 	
 	public void destroy() {
@@ -102,10 +105,10 @@ public class ExportServlet extends JsonServlet {
 			
 			if( "definition".equalsIgnoreCase(path) ) {
 				doPostDefinition(request, response);
-
 			} else if( "records".equalsIgnoreCase(path) ) {
 				doPostRecords(request, response);
-					
+			} else if("complete".equalsIgnoreCase(path)) {
+				doPostComplete(request, response);	
 			} else {
 				throw new Exception("Unknown request: "+path);
 			}
@@ -113,6 +116,19 @@ public class ExportServlet extends JsonServlet {
 		} catch (Exception e) {
 			reportError(e, response);
 		}
+	}
+
+	protected void doPostComplete(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		//get output folder 
+		// Figure out root file
+		String realRootPath = servletConfig.getServletContext().getRealPath(".");
+		try {
+			ExportFullAtlas export = new ExportFullAtlas(realRootPath, configuration.getCouchDb());
+			export.createExport();
+		} catch (Exception e) {
+			//TODO: need to return error to API call
+		}
+		//TODO: need to return sucess
 	}
 
 	protected void doPostDefinition(HttpServletRequest request, HttpServletResponse response) throws ServletException {
