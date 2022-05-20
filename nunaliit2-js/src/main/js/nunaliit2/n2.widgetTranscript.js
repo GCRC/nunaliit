@@ -78,8 +78,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 	docId: null,
 
-	videoAttName: null,
-
 	srtAttName: null,
 
 	doc: null,
@@ -568,8 +566,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			//return;
 
 		} else if( !this.transcript ){
-		
-			this._loadVideoFile();
+			this._loadMediaFile();
 			this._loadTranscript(this.doc);
 			//return;
 
@@ -657,35 +654,34 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			return;
 		}
 
-		if ( !this.transcript || !this.transcript.videoAttName ){
+		if ( !this.transcript || !this.transcript.mediaAttName ){
 			//Blocking method to load video file first;
-			//this._loadVideoFile();
 			return;
 		}
 
-		var attVideoName = undefined;
+		var attMediaName = undefined;
 		if( this.transcript ){
-			attVideoName = this.transcript.videoAttName;
+			attMediaName = this.transcript.mediaAttName;
 		}
 
-		var attVideoDesc = null;
+		var attMediaDesc = null;
 		var data = this.doc; // shorthand
 		if( data 
 			&& data.nunaliit_attachments
 			&& data.nunaliit_attachments.files
-			&& attVideoName ) {
-			attVideoDesc = data.nunaliit_attachments.files[attVideoName];
+			&& attMediaName ) {
+			attMediaDesc = data.nunaliit_attachments.files[attMediaName];
 
-			if( attVideoDesc
-				&& attVideoDesc.fileClass !== 'video' ){
-				attVideoDesc = undefined;
+			if( attMediaDesc
+				&& (attMediaDesc.fileClass !== 'video' && attMediaDesc.fileClass !== 'audio')){
+				attMediaDesc = undefined;
 			}
 		}
 
 		var thumbnailUrl = null;
-		if( attVideoDesc
-			&& attVideoDesc.thumbnail ){
-			var attThumb = this.attachmentService.getAttachment(this.doc, attVideoDesc.thumbnail);
+		if( attMediaDesc
+			&& attMediaDesc.thumbnail ){
+			var attThumb = this.attachmentService.getAttachment(this.doc, attMediaDesc.thumbnail);
 
 			if( attThumb ){
 				thumbnailUrl = attThumb.computeUrl();
@@ -693,9 +689,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 
 		var attVideoUrl = undefined;
-		if( attVideoDesc 
-			&& attVideoDesc.status === 'attached' ) {
-			var attVideo = this.attachmentService.getAttachment(this.doc, attVideoName);
+		if( attMediaDesc 
+			&& attMediaDesc.status === 'attached' ) {
+			var attVideo = this.attachmentService.getAttachment(this.doc, attMediaName);
 
 			if( attVideo ){
 				attVideoUrl = attVideo.computeUrl();
@@ -724,8 +720,8 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.attr('src', attVideoUrl)
 				.appendTo($video);
 
-			if( attVideoDesc.mimeType ){
-				$videoSource.attr('type', attVideoDesc.mimeType);
+			if( attMediaDesc.mimeType ){
+				$videoSource.attr('type', attMediaDesc.mimeType);
 			}
 	
 			$video.mediaelementplayer({
@@ -1053,12 +1049,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		return m.available;
 	},
 
-	_loadVideoFile: function(){
-		var mediaDocId = this.docId;
-		var mediaAttName = this._findVideoAttachmentName(this.doc);
+	_loadMediaFile: function(){
+		var mediaAttName = this._findMediaAttachmentName(this.doc);
 		if ( mediaAttName ){
 			this.transcript = {};
-			this.transcript.videoAttName = mediaAttName;
+			this.transcript.mediaAttName = mediaAttName;
 			//_this._documentChanged();
 
 		} else {	
@@ -1208,7 +1203,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		return undefined;
 	},
 	
-	_findVideoAttachmentName: function(doc){
+	_findMediaAttachmentName: function(doc){
 		if( doc 
 			&& doc.nunaliit_attachments 
 			&& doc.nunaliit_attachments.files ){
