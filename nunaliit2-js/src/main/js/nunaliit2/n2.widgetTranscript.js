@@ -1231,8 +1231,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			&& doc.nunaliit_attachments.files ){
 			for(var attName in doc.nunaliit_attachments.files){
 				var att = doc.nunaliit_attachments.files[attName];
-				if( (att.fileClass === 'video'|| att.fileClass === 'audio')
-					&& att.conversionPerformed){
+				if (att.fileClass === 'video'|| att.fileClass === 'audio'){
 					return attName;
 				}
 			}
