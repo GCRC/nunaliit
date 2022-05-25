@@ -178,6 +178,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		if (this.isInsideContentTextPanel) {
 			var $elem = $('<div>')
 				.attr('id',this.elemId)
+				.css({"height": "100%"})
 				.appendTo($container);
 			
 			$('<div>')
@@ -203,6 +204,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		} else {
 			$('<div>')
 			.attr('id',this.elemId)
+			.css({"height": "100%"})
 			.addClass('n2widgetTranscript')
 			.appendTo($container);
 		}
@@ -642,13 +644,18 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 	_refresh: function(){
 		var _this = this;
-		var $subtitleSelectionDiv = this._getSubtitleSelectionDiv();
 		
 		// this $elem is the media and subtitle div
 		var $elem = this._getMediaDiv();
 		$elem.empty();
 		$elem = this._getSubtitleDiv();
 		$elem.empty();
+
+		this._getMediaAndSubtitleDiv().css({
+			"display": "flex",
+			"flex-direction": "column",
+			"height": "100%"
+		});
 
 		if( !this.doc || this.docId !== this.doc._id ){
 			return;
@@ -703,8 +710,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 
 		if( attVideoUrl ) {
-			//this.mediaDivId = $n2.getUniqueId();
-			var mediaDivId = this.mediaDivId;
 			this.videoId = $n2.getUniqueId();
 			this.transcriptId = this.subtitleDivId;
 
@@ -725,15 +730,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				$video
 				.attr('width', '100%')
 				.attr('height', '360px');
-
-				subtitles.style.height = "55vh";
 			}
 			else if (mediaType === "audio") {
 				$video
 				.attr('width', '0px')
 				.attr('height', '0px');
-
-				subtitles.style.height = "75vh";
 			}
 
 			var $videoSource = $('<source>')
