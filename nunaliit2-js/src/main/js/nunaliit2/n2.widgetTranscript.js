@@ -174,7 +174,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.subtitleSelectionDivId = $n2.getUniqueId();
 		this.srtSelectionId = $n2.getUniqueId();
 		this.srtSelector = undefined;
-		
+
 		if (this.isInsideContentTextPanel) {
 			var $elem = $('<div>')
 				.attr('id',this.elemId)
@@ -903,14 +903,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.appendTo(document.body);
 
 			//drawing all the sentence and binding event for click and right click
-			var tagsBySentenceSpanIds = {};
+			const tagsBySentenceSpanIds = {};
 			for (var i = 0,e = transcript_array.length; i < e; i++) {
 				var transcriptElem = transcript_array[i];
 				//hack to seperate single click and double click
 				var DELAY = 300, clicks = 0, timer = null;
 				var id = $n2.getUniqueId();
 				transcriptElem.id = id;
-				tagsBySentenceSpanIds [id] = {
+				tagsBySentenceSpanIds[id] = {
 					start:transcriptElem.startTimeCode
 					,end : transcriptElem.finTimeCode
 				}
@@ -1025,10 +1025,9 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	_color_transcript: function(colorMap){
 		var $set = this._getTranscriptDiv();
 		if ( $set ){
-			$set.find('.n2widgetTranscript_transcript').each(function(){
-				var $elem = $(this);
-				$elem.css({"background-color" : 'transparent'});
-			})
+			[...$set[0].children].forEach(child => {
+				child.style.backgroundColor = "";
+			});
 		}
 
 		for (var id in colorMap) {
