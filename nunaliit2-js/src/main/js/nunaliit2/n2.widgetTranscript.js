@@ -715,14 +715,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.attr('id', this.videoId)
 				.attr('controls', 'controls')
 				.attr('width', '100%')
-				.attr('height', '360px')
+				.attr('height', '240px')
 				.attr('preload', 'metadata')
 				.appendTo($mediaDiv);
 			
 			if (mediaType === "video") {
 				$video
 				.attr('width', '100%')
-				.attr('height', '360px');
+				.attr('height', '240px');
 			}
 			else if (mediaType === "audio") {
 				$video
