@@ -651,12 +651,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		$elem = this._getSubtitleDiv();
 		$elem.empty();
 
-		this._getMediaAndSubtitleDiv().css({
-			"display": "flex",
-			"flex-direction": "column",
-			"height": "100%"
-		});
-
 		if( !this.doc || this.docId !== this.doc._id ){
 			return;
 		}
@@ -725,7 +719,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.attr('preload', 'metadata')
 				.appendTo($mediaDiv);
 			
-			const subtitles = document.getElementById(this.subtitleDivId);
 			if (mediaType === "video") {
 				$video
 				.attr('width', '100%')
