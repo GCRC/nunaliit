@@ -20,10 +20,7 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.rolling.RollingFileAppender;
 import org.apache.log4j.rolling.TimeBasedRollingPolicy;
 import org.eclipse.jetty.proxy.ProxyServlet;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -137,15 +134,7 @@ public class CommandRun implements Command {
 		File mediaDir = new File(atlasDir, "media");
 
 		// Create server
-		// Server server = new Server(atlasProperties.getServerPort());
-		Server server = new Server();
-		HttpConfiguration conf = new HttpConfiguration();
-		conf.setRequestHeaderSize(25000);
-		conf.setResponseHeaderSize(25000);
-		HttpConnectionFactory connFactory = new HttpConnectionFactory(conf);
-		ServerConnector connector = new ServerConnector(server, -1, -1, connFactory);
-        connector.setPort(atlasProperties.getServerPort());
-		server.addConnector(connector);
+		Server server = new Server(atlasProperties.getServerPort());
 		
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
@@ -283,6 +272,7 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new TransparentWithRedirectServlet());
         	servletHolder.setInitParameter("proxyTo", siteRedirect.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/");
+        	servletHolder.setInitParameter("requestBufferSize", "16384");
         	context.addServlet(servletHolder,"/*");
         }
 
