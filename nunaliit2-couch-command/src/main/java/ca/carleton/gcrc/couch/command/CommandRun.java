@@ -34,6 +34,7 @@ import java.net.URL;
 import java.util.EnumSet;
 
 public class CommandRun implements Command {
+	public static final String REQ_BUFFER_SIZE = "16384";
 
 	@Override
 	public String getCommandString() {
@@ -155,6 +156,7 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new TransparentProxyFixedEscaped());
         	servletHolder.setInitParameter("proxyTo", serverUrl.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/server");
+        	servletHolder.setInitParameter("requestBufferSize", REQ_BUFFER_SIZE);
         	context.addServlet(servletHolder,"/server/*");
         }
 
@@ -163,6 +165,7 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new TransparentProxyFixedEscaped());
         	servletHolder.setInitParameter("proxyTo", dbUrl.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/db");
+        	servletHolder.setInitParameter("requestBufferSize", REQ_BUFFER_SIZE);
         	context.addServlet(servletHolder,"/db/*");
         }
 
@@ -174,6 +177,7 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new ProxyServlet.Transparent());
         	servletHolder.setInitParameter("proxyTo", submissionDbUrl.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/submitDb");
+        	servletHolder.setInitParameter("requestBufferSize", REQ_BUFFER_SIZE);
         	context.addServlet(servletHolder,"/submitDb/*");
         }
 
@@ -272,6 +276,7 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new TransparentWithRedirectServlet());
         	servletHolder.setInitParameter("proxyTo", siteRedirect.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/");
+        	servletHolder.setInitParameter("requestBufferSize", REQ_BUFFER_SIZE);
         	context.addServlet(servletHolder,"/*");
         }
 
