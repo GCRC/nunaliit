@@ -272,6 +272,7 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new TransparentWithRedirectServlet());
         	servletHolder.setInitParameter("proxyTo", siteRedirect.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/");
+        	servletHolder.setInitParameter("requestBufferSize", "16384");
         	context.addServlet(servletHolder,"/*");
         }
 
