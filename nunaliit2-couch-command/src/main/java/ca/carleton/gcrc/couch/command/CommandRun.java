@@ -155,7 +155,7 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new TransparentProxyFixedEscaped());
         	servletHolder.setInitParameter("proxyTo", serverUrl.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/server");
-			servletHolder.setInitParameter("requestBufferSize", "16384");
+        	servletHolder.setInitParameter("requestBufferSize", "16384");
         	context.addServlet(servletHolder,"/server/*");
         }
 
@@ -164,7 +164,7 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new TransparentProxyFixedEscaped());
         	servletHolder.setInitParameter("proxyTo", dbUrl.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/db");
-			servletHolder.setInitParameter("requestBufferSize", "16384");
+        	servletHolder.setInitParameter("requestBufferSize", "16384");
         	context.addServlet(servletHolder,"/db/*");
         }
 
@@ -176,7 +176,7 @@ public class CommandRun implements Command {
         	ServletHolder servletHolder = new ServletHolder(new ProxyServlet.Transparent());
         	servletHolder.setInitParameter("proxyTo", submissionDbUrl.toExternalForm());
         	servletHolder.setInitParameter("prefix", "/submitDb");
-			servletHolder.setInitParameter("requestBufferSize", "16384");
+        	servletHolder.setInitParameter("requestBufferSize", "16384");
         	context.addServlet(servletHolder,"/submitDb/*");
         }
 
