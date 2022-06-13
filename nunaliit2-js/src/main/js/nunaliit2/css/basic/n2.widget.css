@@ -494,6 +494,7 @@ Polar Stereographic Projection Selector
 	transition: all 0.1s ease-in;
 /* 	line-height: 1.8; */
 /* 	font-family: "Times New Roman", Times, serif; */
+	overflow-wrap: break-word;
 	font-size: 1.4em; 
 	display: inline;
 
