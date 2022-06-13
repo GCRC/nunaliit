@@ -181,9 +181,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.css({"height": "100%"})
 				.appendTo($container);
 			
-			$('<div>')
-				.attr('id', this.subtitleSelectionDivId)
-				.appendTo($elem);
+			const titleBar = document.getElementById("module_title_bar");
+			const subLangDiv = document.createElement("div");
+			subLangDiv.setAttribute("id", this.subtitleSelectionDivId);
+			subLangDiv.setAttribute("class", "cinemapTranscriptLanguageDiv");
+			titleBar.insertBefore(subLangDiv, titleBar.children[titleBar.children.length - 1]);
 			
 			var $mediaAndSubtitleDiv = $('<div>')
 				.attr('id', this.mediaAndSubtitleDivId)
@@ -322,24 +324,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 		
 		if (menOpts.length > 0){
-			this.srtSelector = new $n2.mdc.MDCSelect({
-				selectId: _this.srtSelectionId,
-				menuOpts: menOpts,
-				parentElem: $elem,
-				preSelected: true,
-				menuLabel: 'Language',
-				menuChgFunction:function(){
-					var $sel = $(this)
-						.find('li.mdc-list-item--selected');
-
-					var selectValue;
-					if ($sel[0] && $sel[0].dataset && $sel[0].dataset.value) {
-						selectValue = $sel[0].dataset.value;
-					}
-					$n2.log('Change Subtitle File: ' + selectValue);
-					_this._handleSrtSelectionChanged(selectValue);
-				}
-			})
+			const subSelect = document.createElement("select");
+			menOpts.forEach(option => {
+				subSelect.add(new Option(option.text, option.value));
+			});
+			subSelect.onchange = function() {
+				_this._handleSrtSelectionChanged(this.value)
+			}
+			this.srtSelector = subSelect;
+			$elem.append(this.srtSelector);
 		}
 	},
 	
@@ -1099,7 +1092,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			var selectSrtDocId;
 
 			if (this.srtSelector) {
-				selectSrtDocId = this.srtSelector.getSelectedValue();
+				selectSrtDocId = this.srtSelector.value;
 			}
 
 			if (!selectSrtDocId) {
