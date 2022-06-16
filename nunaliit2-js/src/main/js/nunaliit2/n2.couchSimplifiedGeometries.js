@@ -107,19 +107,28 @@ var SimplifiedGeometryService = $n2.Class({
 			if( !$n2.isArray(m.geometriesRequested) ){
 				throw new Error('Event simplifiedGeometryRequest should have an array for "geometriesRequested"');
 			};
+			const geometriesRequested = [];
 			m.geometriesRequested.forEach(function(geometryRequest){
 				if( typeof geometryRequest !== 'object' ){
 					throw new Error('In event simplifiedGeometryRequest, geometriesRequested[*] should be an object');
-				};
+				}
 				if( typeof geometryRequest.id !== 'string' ){
 					throw new Error('In event simplifiedGeometryRequest, geometriesRequested[*].id should be a string');
-				};
+				}
 				if( typeof geometryRequest.attName !== 'string' ){
 					throw new Error('In event simplifiedGeometryRequest, geometriesRequested[*].attName should be a string');
-				};
+				}
+				if (geometryRequest
+					&& geometryRequest.doc
+					&& geometryRequest.doc.nunaliit_geom
+					&& geometryRequest.doc.nunaliit_geom.wkt
+					&& geometryRequest.doc.nunaliit_geom.wkt.startsWith('POINT(')) {
+						return;
+					}
+				geometriesRequested.push(geometryRequest);
 			});
-			this._handleRequest(requesterId, m.geometriesRequested);
-		};
+			this._handleRequest(requesterId, geometriesRequested);
+		}
 	},
 	
 	_handleRequest: function(requesterId, geometriesRequested){
