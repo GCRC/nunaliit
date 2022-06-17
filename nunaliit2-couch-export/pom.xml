@@ -24,6 +24,11 @@
   		<artifactId>commons-io</artifactId>
   		<version>${commons-io.version}</version>
   	</dependency>
+	<dependency>
+  		<groupId>org.apache.commons</groupId>
+  		<artifactId>commons-compress</artifactId>
+  		<version>${commons-compress.version}</version>
+  	</dependency>
    	<dependency>
   		<groupId>junit</groupId>
   		<artifactId>junit</artifactId>
