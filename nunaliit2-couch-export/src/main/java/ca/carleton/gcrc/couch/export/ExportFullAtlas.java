@@ -19,6 +19,7 @@ import org.json.JSONObject;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
@@ -42,6 +43,23 @@ public class ExportFullAtlas {
 	}
 
 	public void createExport() {
+		File exportDir = getExportDir();
+		exportData(exportDir);
+		exportMedia(exportDir);
+
+		try {
+			compress(exportDir.getAbsolutePath() + ".tar.gz", exportDir);
+		} catch (IOException e) {
+			logger.error("Error writing export tar.gz", e);
+		}
+		try {
+			FileUtils.deleteDirectory(exportDir);
+		} catch (IOException e) {
+			logger.error("Error deleting export directory " + exportDir.getAbsolutePath() + " after compressing", e);
+		}
+	}
+
+	private File getExportDir() {
 		File exportDir = null;
 		{
 			Calendar calendar = Calendar.getInstance();
@@ -53,7 +71,10 @@ public class ExportFullAtlas {
 			exportDir.mkdirs();
 		}
 		logger.debug("Writing export " + exportDir.getAbsolutePath());
+		return exportDir;
+	}
 
+	private void exportData(File exportDir) {
 		// Find schemas that need to be exported
 		CouchQuery query = new CouchQuery();
 		query.setViewName("schemas");
@@ -114,7 +135,9 @@ public class ExportFullAtlas {
 			logger.error("Error fetching schema docs and writing results", e);
 			return;
 		}
+	}
 
+	private void exportMedia(File exportDir) {
 		String mediaDir = new File(atlasRootPath, "media").getAbsolutePath();
 		String exportDirPath = exportDir.getAbsolutePath() + "/media";
 		try {
@@ -131,48 +154,44 @@ public class ExportFullAtlas {
 		} catch (IOException e) {
 			logger.error("Error copying media directoy for export", e);
 		}
-		try {
-			compress(exportDir.getAbsolutePath() + ".tar.gz", exportDir);
-		} catch (IOException e) {
-			logger.error("Error writing export tar.gz", e);
+	}
+
+	private void compress(String name, File... files) throws IOException {
+		try (TarArchiveOutputStream out = getTarArchiveOutputStream(name)) {
+			for (File file : files) {
+				addToArchiveCompression(out, file, ".");
+			}
 		}
 	}
 
-	public void compress(String name, File... files) throws IOException {
-        try (TarArchiveOutputStream out = getTarArchiveOutputStream(name)){
-            for (File file : files){
-                addToArchiveCompression(out, file, ".");
-            }
-        }
-    }
+	private TarArchiveOutputStream getTarArchiveOutputStream(String name) throws IOException {
+		TarArchiveOutputStream taos = new TarArchiveOutputStream(
+				new GzipCompressorOutputStream(new FileOutputStream(name)));
+		// TAR has an 8 gig file limit by default, this gets around that
+		taos.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_STAR);
+		// TAR originally didn't support long file names, so enable the support for it
+		taos.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
+		taos.setAddPaxHeadersForNonAsciiNames(true);
+		return taos;
+	}
 
-    private TarArchiveOutputStream getTarArchiveOutputStream(String name) throws IOException {
-		TarArchiveOutputStream taos = new TarArchiveOutputStream(new GzipCompressorOutputStream(new FileOutputStream(name)));
-        // TAR has an 8 gig file limit by default, this gets around that
-        taos.setBigNumberMode(TarArchiveOutputStream.BIGNUMBER_STAR);
-        // TAR originally didn't support long file names, so enable the support for it
-        taos.setLongFileMode(TarArchiveOutputStream.LONGFILE_GNU);
-        taos.setAddPaxHeadersForNonAsciiNames(true);
-        return taos;
-    }
-
-    private void addToArchiveCompression(TarArchiveOutputStream out, File file, String dir) throws IOException {
-        String entry = dir + File.separator + file.getName();
-        if (file.isFile()){
-            out.putArchiveEntry(new TarArchiveEntry(file, entry));
-            try (FileInputStream in = new FileInputStream(file)){
-                IOUtils.copy(in, out);
-            }
-            out.closeArchiveEntry();
-        } else if (file.isDirectory()) {
-            File[] children = file.listFiles();
-            if (children != null){
-                for (File child : children){
-                    addToArchiveCompression(out, child, entry);
-                }
-            }
-        } else {
-            System.out.println(file.getName() + " is not supported");
-        }
-    }
+	private void addToArchiveCompression(TarArchiveOutputStream out, File file, String dir) throws IOException {
+		String entry = dir + File.separator + file.getName();
+		if (file.isFile()) {
+			out.putArchiveEntry(new TarArchiveEntry(file, entry));
+			try (FileInputStream in = new FileInputStream(file)) {
+				IOUtils.copy(in, out);
+			}
+			out.closeArchiveEntry();
+		} else if (file.isDirectory()) {
+			File[] children = file.listFiles();
+			if (children != null) {
+				for (File child : children) {
+					addToArchiveCompression(out, child, entry);
+				}
+			}
+		} else {
+			System.out.println(file.getName() + " is not supported");
+		}
+	}
 }
