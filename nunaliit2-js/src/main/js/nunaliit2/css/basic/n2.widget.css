@@ -481,7 +481,7 @@ Polar Stereographic Projection Selector
 .n2widgetTranscript_transcript {
 	overflow-y: scroll;
 	margin-top: 1em;
-	height: 55vh;
+	height: auto;
 	transform: translateZ(0);
 	-webkit-transform: translateZ(0);
 	-moz-backface-visibility: hidden;
@@ -494,9 +494,16 @@ Polar Stereographic Projection Selector
 	transition: all 0.1s ease-in;
 /* 	line-height: 1.8; */
 /* 	font-family: "Times New Roman", Times, serif; */
+	overflow-wrap: break-word;
 	font-size: 1.4em; 
 	display: inline;
 
+}
+
+.n2widgetTranscript.n2widgetTranscript_insideTextPanel {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
 }
 
 .n2widgetTranscript_transcript div:hover {

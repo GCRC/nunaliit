@@ -114,11 +114,8 @@ var LanguageSwitcher = $n2.Class({
 		var $elem = this._getElem();
 		
 		$elem.empty();
-		
-		$('<a>')
-			.text( _loc('Language') )
-			.attr('href','#')
-			.appendTo($elem)
+		$elem
+			.attr('href', '#')
 			.click(function(){
 				_this._dialog();
 				// Material Design library has styling for radio buttons in focus. Initially

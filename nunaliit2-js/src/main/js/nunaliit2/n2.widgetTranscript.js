@@ -178,11 +178,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		if (this.isInsideContentTextPanel) {
 			var $elem = $('<div>')
 				.attr('id',this.elemId)
+				.css({"height": "100%"})
 				.appendTo($container);
 			
-			$('<div>')
-				.attr('id', this.subtitleSelectionDivId)
-				.appendTo($elem);
+			const titleBar = document.getElementById("module_title_bar");
+			const subLangDiv = document.createElement("div");
+			subLangDiv.setAttribute("id", this.subtitleSelectionDivId);
+			subLangDiv.setAttribute("class", "cinemapTranscriptLanguageDiv");
+			titleBar.insertBefore(subLangDiv, titleBar.children[titleBar.children.length - 1]);
 			
 			var $mediaAndSubtitleDiv = $('<div>')
 				.attr('id', this.mediaAndSubtitleDivId)
@@ -203,6 +206,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		} else {
 			$('<div>')
 			.attr('id',this.elemId)
+			.css({"height": "100%"})
 			.addClass('n2widgetTranscript')
 			.appendTo($container);
 		}
@@ -320,24 +324,15 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 		
 		if (menOpts.length > 0){
-			this.srtSelector = new $n2.mdc.MDCSelect({
-				selectId: _this.srtSelectionId,
-				menuOpts: menOpts,
-				parentElem: $elem,
-				preSelected: true,
-				menuLabel: 'Language',
-				menuChgFunction:function(){
-					var $sel = $(this)
-						.find('li.mdc-list-item--selected');
-
-					var selectValue;
-					if ($sel[0] && $sel[0].dataset && $sel[0].dataset.value) {
-						selectValue = $sel[0].dataset.value;
-					}
-					$n2.log('Change Subtitle File: ' + selectValue);
-					_this._handleSrtSelectionChanged(selectValue);
-				}
-			})
+			const subSelect = document.createElement("select");
+			menOpts.forEach(option => {
+				subSelect.add(new Option(option.text, option.value));
+			});
+			subSelect.onchange = function() {
+				_this._handleSrtSelectionChanged(this.value)
+			}
+			this.srtSelector = subSelect;
+			$elem.append(this.srtSelector);
 		}
 	},
 	
@@ -642,7 +637,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 	_refresh: function(){
 		var _this = this;
-		var $subtitleSelectionDiv = this._getSubtitleSelectionDiv();
 		
 		// this $elem is the media and subtitle div
 		var $elem = this._getMediaDiv();
@@ -703,8 +697,6 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		}
 
 		if( attVideoUrl ) {
-			//this.mediaDivId = $n2.getUniqueId();
-			var mediaDivId = this.mediaDivId;
 			this.videoId = $n2.getUniqueId();
 			this.transcriptId = this.subtitleDivId;
 
@@ -716,24 +708,19 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				.attr('id', this.videoId)
 				.attr('controls', 'controls')
 				.attr('width', '100%')
-				.attr('height', '360px')
+				.attr('height', '240px')
 				.attr('preload', 'metadata')
 				.appendTo($mediaDiv);
 			
-			const subtitles = document.getElementById(this.subtitleDivId);
 			if (mediaType === "video") {
 				$video
 				.attr('width', '100%')
-				.attr('height', '360px');
-
-				subtitles.style.height = "55vh";
+				.attr('height', '240px');
 			}
 			else if (mediaType === "audio") {
 				$video
 				.attr('width', '0px')
 				.attr('height', '0px');
-
-				subtitles.style.height = "75vh";
 			}
 
 			var $videoSource = $('<source>')
@@ -1105,7 +1092,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			var selectSrtDocId;
 
 			if (this.srtSelector) {
-				selectSrtDocId = this.srtSelector.getSelectedValue();
+				selectSrtDocId = this.srtSelector.value;
 			}
 
 			if (!selectSrtDocId) {
