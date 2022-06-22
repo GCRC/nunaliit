@@ -721,7 +721,7 @@ class N2MapCanvas {
 		 */
 		const overlayGroup = new LayerGroup({
 			title: 'Overlays',
-			layers: this.overlayLayersoverlayGroup
+			layers: this.overlayLayers
 		});
 
 		const bgGroup = new LayerGroup({
@@ -731,6 +731,7 @@ class N2MapCanvas {
 
 		customMap.set("layergroup",
 			new LayerGroup({ layers: [bgGroup, overlayGroup] })
+			//new LayerGroup({ layers: [overlayGroup] })
 		);
 
 		const customLayerSwitcher = new LayerSwitcher({
@@ -756,7 +757,7 @@ class N2MapCanvas {
 		// need to put listeners somewhere, should probably move to just after custom Map definition.
 		let radius = 100;
 		
-		document.addEventListener('keydown', function (evt) {  // this needs to be document or else it doesnt work
+		document.addEventListener('keydown', function (evt) { 
 			if (evt.which === 38) {
 			radius = Math.min(radius + 5, 1000);
 			customMap.render();
@@ -788,9 +789,9 @@ class N2MapCanvas {
 		});
 		
 		// before rendering the layer, do some clipping
-		this.mapLayers.forEach(ml => {
+		this.overlayLayers.forEach(ml => {   // loops through all 5 options for backgrounds //mapLayers
 			ml.on('prerender', function (event) {
-				const ctx = event.context;  //  -------- is ctx this doing what its meant to.
+				const ctx = event.context;
 				ctx.save();
 				ctx.beginPath();
 				if (mousePosition) {
@@ -817,8 +818,6 @@ class N2MapCanvas {
 				ctx.restore();
 			});	
 		} );
-		
-	 
 
 		this.overlayInfos.forEach( (info, idx) => {
 			if(info._layerInfo.options.wmsLegend && info.visibility) {
