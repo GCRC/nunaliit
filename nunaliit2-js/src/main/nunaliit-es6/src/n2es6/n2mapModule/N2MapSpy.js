@@ -1,57 +1,67 @@
-import {getRenderPixel} from 'ol/render'
-class N2MapSpy{
-	constructor(opt_options) { 
-		this.options = $n2.extend({  
-			elem : undefined,
-			radius : 100,
-			overlayLayers : undefined,
-		},opt_options);
-	}
-		setMap = function(customMap) { 
-			let this_ = this;
+/**
+ * @module n2es6/n2mapModule/N2MapSpy
+ */
 
-			document.addEventListener('keydown', function (evt) { 
-				if (evt.key === "ArrowUp") {
-				this_.options.radius = Math.min	(this_.options.radius + 5, 1000);
+import { getRenderPixel } from 'ol/render'
+
+/**
+ * @classdesc
+ * The N2MapSpy class enables the ability to compare tile layers 
+ * with a spyglass feature in OpenLayers 6
+ * @api
+ */
+
+class N2MapSpy {
+	constructor(opt_options) {
+		this.options = $n2.extend({
+			elem: undefined,
+			radius: 100,
+			overlayLayers: undefined,
+		}, opt_options);
+	}
+	setMap = function (customMap) {
+		const this_ = this;
+
+		document.addEventListener('keydown', function (evt) {
+			if (evt.key === "ArrowUp") {
+				this_.options.radius = Math.min(this_.options.radius + 5, 1000);
 				customMap.render();
 				evt.preventDefault();
-				} else if (evt.key === "ArrowDown") { 
-				this_.options.radius = Math.max	(this_.options.radius - 5, 1);
+			} else if (evt.key === "ArrowDown") {
+				this_.options.radius = Math.max(this_.options.radius - 5, 1);
 				customMap.render();
 				evt.preventDefault();
-				} else if (evt.key === " "){ 
+			} else if (evt.key === " ") {
 				this_.options.radius = 100;
 				customMap.render();
 				evt.preventDefault();
-				}
-			});
-			
-			// get the pixel position with every move
-			
-			let mousePosition = null;
-			
-			this_.options.elem.addEventListener('mousemove', function (event) {
-				mousePosition = customMap.getEventPixel(event);
-				customMap.render();
-			});
-			
-			this_.options.elem.addEventListener('mouseout', function () {
-				mousePosition = null;
-				customMap.render();
-			});
-			
-			// before rendering the layer, do some clipping
-			// might need _this = this
-			this_.options.overlayLayers.forEach(ml => {  
-				ml.on('prerender', function (event) {
-					const ctx = event.context;
-					ctx.save();
-					ctx.beginPath();
-					if (mousePosition) {
+			}
+		});
+
+		// get the pixel position with every move
+		let mousePosition = null;
+
+		this_.options.elem.addEventListener('mousemove', function (event) {
+			mousePosition = customMap.getEventPixel(event);
+			customMap.render();
+		});
+
+		this_.options.elem.addEventListener('mouseout', function () {
+			mousePosition = null;
+			customMap.render();
+		});
+
+		// before rendering the layer, do some clipping
+		this_.options.overlayLayers.forEach(ml => {
+			ml.on('prerender', function (event) {
+				const ctx = event.context;
+				ctx.save();
+				ctx.beginPath();
+				if (mousePosition) {
 					// only show a circle around the mouse
 					const pixel = getRenderPixel(event, mousePosition);
 					const offset = getRenderPixel(event, [
-						mousePosition[0] +	this_.options.radius,
+						mousePosition[0] + this_.options.radius,
 						mousePosition[1],
 					]);
 					const canvasRadius = Math.sqrt(
@@ -61,18 +71,18 @@ class N2MapSpy{
 					ctx.lineWidth = (5 * canvasRadius) / this_.options.radius;
 					ctx.strokeStyle = 'rgba(0,0,0,0.5)';
 					ctx.stroke();
-					}
-					ctx.clip();
-				});
-		
-				// after rendering the layer, restore the canvas context
-				ml.on('postrender', function (event) {
-					const ctx = event.context;
-					ctx.restore();
-				});	
-			} );
-		}
+				}
+				ctx.clip();
+			});
+
+			// after rendering the layer, restore the canvas context
+			ml.on('postrender', function (event) {
+				const ctx = event.context;
+				ctx.restore();
+			});
+		});
 	}
+}
 
 
 export default N2MapSpy

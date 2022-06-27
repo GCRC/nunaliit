@@ -658,7 +658,7 @@ class N2MapCanvas {
 
 		//Getting the resolution whenever a frame finish rendering;
 		customMap.on('postrender', function (evt) {
-			const res = evt.frameState.viewState.resolution; //is null for some reason 
+			const res = evt.frameState.viewState.resolution; 
 			const proj = _this.n2View.getProjection();
 			_this.resolution = res;
 			_this.proj = proj;
@@ -730,7 +730,6 @@ class N2MapCanvas {
 
 		customMap.set("layergroup",
 			new LayerGroup({ layers: [bgGroup, overlayGroup] })
-			//new LayerGroup({ layers: [overlayGroup] })
 		);
 
 		const customLayerSwitcher = new LayerSwitcher({
@@ -746,9 +745,9 @@ class N2MapCanvas {
 		}
 
 		let spyCtrl;
-		if (this.options.layerSpy){ // need to enable layer Spy just like swipe was
-			let data = { elem : this._getElem()[0] , radius : 100 , overlayLayers : this.overlayLayers};
-			spyCtrl = new N2MapSpy(data); // placeholder needs to be an array of the images we get, not sure how ill make that
+		if (this.options.layerSpy){ 
+			const data = { elem : this._getElem()[0] , radius : 100 , overlayLayers : this.overlayLayers};
+			spyCtrl = new N2MapSpy(data); 
 			customMap.addControl(spyCtrl);
 		}
 
