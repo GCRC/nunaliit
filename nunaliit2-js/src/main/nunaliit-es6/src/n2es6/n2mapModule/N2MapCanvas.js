@@ -45,8 +45,7 @@ import Swipe from 'ol-ext/control/Swipe';
 
 import { defaults as Defaults } from 'ol/control';
 
-//import N2MapSpy from './N2MapSpy';
-import {getRenderPixel} from 'ol/render';
+import N2MapSpy from './N2MapSpy';
 
 const _loc = function (str, args) { return $n2.loc(str, 'nunaliit2', args); };
 const DH = 'n2.canvasMap';
@@ -746,78 +745,12 @@ class N2MapCanvas {
 			customMap.addControl(swipeCtrl);
 		}
 
-		// by calling this it creates an error saying "TypeError: t.element.setMap"
-		// let spyCtrl;
-		// if (this.options.layerSpy){ // need to enable layer Spy just like swipe was
-		// 	spyCtrl = new N2MapSpy(); // placeholder needs to be an array of the images we get, not sure how ill make that
-		// 	//customMap.addControl(spyCtrl);
-		// 	// write a set map function
-		// }
-
-		// need to put listeners somewhere, should probably move to just after custom Map definition.
-		let radius = 100;
-		
-		document.addEventListener('keydown', function (evt) { 
-			if (evt.which === 38) {
-			radius = Math.min(radius + 5, 1000);
-			customMap.render();
-			evt.preventDefault();
-			} else if (evt.which === 40) {
-			radius = Math.max(radius - 5, 1);
-			customMap.render();
-			evt.preventDefault();
-			} else if (evt.which === 32){
-			radius = 100;
-			customMap.render();
-			evt.preventDefault();
-			}
-		});
-		
-		
-		// get the pixel position with every move
-		
-		let mousePosition = null;
-		
-		this._getElem()[0].addEventListener('mousemove', function (event) {
-			mousePosition = customMap.getEventPixel(event);
-			customMap.render();
-		});
-		
-		this._getElem()[0].addEventListener('mouseout', function () {
-			mousePosition = null;
-			customMap.render();
-		});
-		
-		// before rendering the layer, do some clipping
-		this.overlayLayers.forEach(ml => {   // loops through all 5 options for backgrounds //mapLayers
-			ml.on('prerender', function (event) {
-				const ctx = event.context;
-				ctx.save();
-				ctx.beginPath();
-				if (mousePosition) {
-				// only show a circle around the mouse
-				const pixel = getRenderPixel(event, mousePosition);
-				const offset = getRenderPixel(event, [
-					mousePosition[0] + radius,
-					mousePosition[1],
-				]);
-				const canvasRadius = Math.sqrt(
-					Math.pow(offset[0] - pixel[0], 2) + Math.pow(offset[1] - pixel[1], 2)
-				);
-				ctx.arc(pixel[0], pixel[1], canvasRadius, 0, 2 * Math.PI);
-				ctx.lineWidth = (5 * canvasRadius) / radius;
-				ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-				ctx.stroke();
-				}
-				ctx.clip();
-			});
-	
-			// after rendering the layer, restore the canvas context
-			ml.on('postrender', function (event) {
-				const ctx = event.context;
-				ctx.restore();
-			});	
-		} );
+		let spyCtrl;
+		if (this.options.layerSpy){ // need to enable layer Spy just like swipe was
+			let data = { elem : this._getElem()[0] , radius : 100 , overlayLayers : this.overlayLayers};
+			spyCtrl = new N2MapSpy(data); // placeholder needs to be an array of the images we get, not sure how ill make that
+			customMap.addControl(spyCtrl);
+		}
 
 		this.overlayInfos.forEach( (info, idx) => {
 			if(info._layerInfo.options.wmsLegend && info.visibility) {
