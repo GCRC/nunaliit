@@ -1,90 +1,78 @@
-
-
-//import ol_control_Control from 'ol/control/Control'
-
-
+import {getRenderPixel} from 'ol/render'
 class N2MapSpy{
-	constructor(opt_options) {
-		var options = $n2.extend({
+	constructor(opt_options) { 
+		this.options = $n2.extend({  
+			elem : undefined,
+			radius : 100,
+			overlayLayers : undefined,
+		},opt_options);
+	}
+		setMap = function(customMap) { 
+			let this_ = this;
+
+			document.addEventListener('keydown', function (evt) { 
+				if (evt.key === "ArrowUp") {
+				this_.options.radius = Math.min	(this_.options.radius + 5, 1000);
+				customMap.render();
+				evt.preventDefault();
+				} else if (evt.key === "ArrowDown") { 
+				this_.options.radius = Math.max	(this_.options.radius - 5, 1);
+				customMap.render();
+				evt.preventDefault();
+				} else if (evt.key === " "){ 
+				this_.options.radius = 100;
+				customMap.render();
+				evt.preventDefault();
+				}
+			});
 			
-		}, opt_options);
-
-	}
-	render_(){
+			// get the pixel position with every move
+			
+			let mousePosition = null;
+			
+			this_.options.elem.addEventListener('mousemove', function (event) {
+				mousePosition = customMap.getEventPixel(event);
+				customMap.render();
+			});
+			
+			this_.options.elem.addEventListener('mouseout', function () {
+				mousePosition = null;
+				customMap.render();
+			});
+			
+			// before rendering the layer, do some clipping
+			// might need _this = this
+			this_.options.overlayLayers.forEach(ml => {  
+				ml.on('prerender', function (event) {
+					const ctx = event.context;
+					ctx.save();
+					ctx.beginPath();
+					if (mousePosition) {
+					// only show a circle around the mouse
+					const pixel = getRenderPixel(event, mousePosition);
+					const offset = getRenderPixel(event, [
+						mousePosition[0] +	this_.options.radius,
+						mousePosition[1],
+					]);
+					const canvasRadius = Math.sqrt(
+						Math.pow(offset[0] - pixel[0], 2) + Math.pow(offset[1] - pixel[1], 2)
+					);
+					ctx.arc(pixel[0], pixel[1], canvasRadius, 0, 2 * Math.PI);
+					ctx.lineWidth = (5 * canvasRadius) / this_.options.radius;
+					ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+					ctx.stroke();
+					}
+					ctx.clip();
+				});
 		
+				// after rendering the layer, restore the canvas context
+				ml.on('postrender', function (event) {
+					const ctx = event.context;
+					ctx.restore();
+				});	
+			} );
+		}
 	}
-}
 
-		//container = document.getElementById('map');
-
-// 		{ol.layer} options.layers[j] // want an array of layers length i 
-// 		// for (var i = 0; i < j; ++j){
-// 		// 	addLayer(images[i]);
-
-// N2MapSpy.prototype.setMap = function(map) {
-// 	var i;
-// 	var l;
-  
-
-
-
-// 	if (this.getMap()) {
-// 	  for (i=0; i<this.layers.length; i++) {
-// 		l = this.layers[i];
-// 		if (l.right) l.layer.un(['precompose','prerender'], this.precomposeRight_);
-// 		else l.layer.un(['precompose','prerender'], this.precomposeLeft_);
-// 		l.layer.un(['postcompose','postrender'], this.postcompose_);
-// 	  }
-// 	  this.getMap().renderSync();
-// 	}
-  
-// 	N2MapSpy.prototype.setMap.call(this, map);
-  
-// 	if (map) {
-// 	  this._listener = [];
-// 	  for (i=0; i<this.layers.length; i++) {
-// 		l = this.layers[i];
-// 		if (l.right) l.layer.on(['precompose','prerender'], this.precomposeRight_);
-// 		else l.layer.on(['precompose','prerender'], this.precomposeLeft_);
-// 		l.layer.on(['postcompose','postrender'], this.postcompose_);
-// 	  }
-// 	  map.renderSync();
-// 	}
-//   };
-
-  
 
 export default N2MapSpy
-
-	
-
-	// isLayer_ = function(layer){
-	// 	for (var k=0; k<this.layers.length; k++) {
-	// 	  if (this.layers[k].layer === layer) return k;
-	// 	}
-	// 	return -1;
-	//   };
-
-	//   addLayer = function(layers) {
-	// 	if (!(layers instanceof Array)) options.layers = [layers];
-	// 	for (var i=0; i<layers.length; i++) {
-	// 	  var l = layers[i];
-	// 	  if (this.isLayer_(l) < 0) {
-	// 		this.options.layers.push({ layer:l }); // if push() allocates more memory for the array should I initiall define the array as just 1 element
-	// 	  }
-	// 	}
-	//   };
-
-// 	  MakeMap = function(){
-// 		// map is made elsewhere 
-
-// 		// map = new Map({
-// 		// layers: options.layers,
-// 		// target: container,
-// 		// view: new View({
-// 		// 	center: fromLonLat([-161, 61]), // we still need to either edit the view feature out or change it
-// 		// 	zoom: 7,
-// 		// }),
-// 		// });
-
-// }
