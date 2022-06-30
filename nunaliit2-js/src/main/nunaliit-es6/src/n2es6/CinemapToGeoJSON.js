@@ -114,10 +114,21 @@ class CinemapToGeoJSON {
                 placeTags.forEach(place => {
                     const foundPlace = places[place.value.trim().toLowerCase()];
                     if (foundPlace) {
-                        geometry.coordinates.push(
-                            foundPlace.nunaliit_geom.bbox.slice(0,2).reverse()
-                        );
-                        isValidPlace = true
+                        if (foundPlace.nunaliit_geom.bbox) {
+                            geometry.coordinates.push(
+                                foundPlace.nunaliit_geom.bbox.slice(0,2).reverse()
+                            );
+                            isValidPlace = true;
+                        }
+                        else if (!("bbox" in foundPlace.nunaliit_geom)) {
+                            const point = /POINT\(-?(\d{1,2}.\d+) -?(\d{1,2}.\d+)\)/.exec(foundPlace.nunaliit_geom.wkt);
+                            if (point !== null) {
+                                geometry.coordinates.push(
+                                    point.slice(1).reverse()
+                                )
+                                isValidPlace = true;
+                            }
+                        }
                         // If 2 places but one is not real, single MULTIPOINT is generated
                     }
                 });
