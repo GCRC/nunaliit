@@ -14,8 +14,10 @@ class CinemapToGeoJSON {
         this.dispatch = options.dispatch;
         this.export = null;
         this.origin = "CinemapToGeoJSONExport";
+        this.address = null;
 
-        this.dispatch.register(this.origin,
+        this.address = this.dispatch.register(
+            this.origin,
             "PlaceUtility--replyPlaceDocIdMap",
             (message) => {
                 const places = message.map;
@@ -26,6 +28,9 @@ class CinemapToGeoJSON {
                 this.saveTemplateAsFile(
                     `${options.cinemap._id}.geojson`,
                     fullExport
+                );
+                this.dispatch.deregister(
+                    this.address
                 );
             }
         );
@@ -83,13 +88,14 @@ class CinemapToGeoJSON {
                 , tags: line.tags.map(tag => {
                     return {
                         value: tag.value
-                        , type: tag.type
+                        , type: (tag.type === "unknown") ? "theme" : tag.type
                     }
                 })
             };
             feature.properties = properties;
             const placeTags = line.tags.filter(tag => {
-                return (tag.type && tag.type === "place")
+                return (tag.type && (tag.type === "place"
+                 || tag.type === "location"))
             });
             const placeCount = placeTags.length;
             if (placeCount > 0) {
@@ -104,16 +110,21 @@ class CinemapToGeoJSON {
                     geomType = "MultiPoint";
                 }
                 geometry.type = geomType;
+                let isValidPlace = false;
                 placeTags.forEach(place => {
-                    geometry.coordinates.push(
-                        places[place.value.trim().toLowerCase()].nunaliit_geom.bbox.slice(0,2).reverse()
-                    );
+                    const foundPlace = places[place.value.trim().toLowerCase()];
+                    if (foundPlace) {
+                        geometry.coordinates.push(
+                            foundPlace.nunaliit_geom.bbox.slice(0,2).reverse()
+                        );
+                        isValidPlace = true
+                        // If 2 places but one is not real, single MULTIPOINT is generated
+                    }
                 });
-                feature.geometry = geometry;
+                if (isValidPlace) feature.geometry = geometry;
             }            
             features.push(feature);
         });
-        // reference error here, don't modify baseExport
         const exportWithFeatures = {
             ...restOfExport,
             features
