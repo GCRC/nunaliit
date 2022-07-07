@@ -740,7 +740,7 @@ class N2SourceWithN2Intent extends VectorSource {
 	refresh() {
 		this.clear();
 		this.updateN2Label();
-		if (this.linkCallback != null) {
+		if (this.linkCallback !== null) {
 			this.linkCallback(this.features_);
 		}
 		this.addFeatures(this.features_);
