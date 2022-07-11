@@ -1960,7 +1960,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			$('<div>')
 				.attr('id', this.loaderDivId)
-				.addClass('n2AnnotationEditorLoader')
+				.addClass('loading')
 				.appendTo($annotationEditor);
 
 			$('<div>')
@@ -2002,7 +2002,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			return $('#' + this.elemId);
 		},
 
-		// Get the element id of the loader div.n2AnnotationEditorLoader
+		// Get the element id of the loader
 		_getLoaderDiv: function() {
 			return $("#" + this.loaderDivId);
 		},
