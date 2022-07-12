@@ -539,7 +539,7 @@ Polar Stereographic Projection Selector
 
 /* For Widget Annotation Editor*/
 
-.n2AnnotationEditorLoader {
+.loading {
   position: absolute;
   left: 50%;
   top: 50%;
