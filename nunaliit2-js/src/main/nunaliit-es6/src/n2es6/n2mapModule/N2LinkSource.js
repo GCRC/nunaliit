@@ -79,15 +79,24 @@ class N2LinkSource extends VectorSource {
 					for (let n = m; n < currentData.length - 1; n++) {
 						const placeA = currentData[m];
 						const placeB = currentData[n+1];
+						const placeAStr = placeA.coordinates.toString();
+						const placeBStr = placeB.coordinates.toString();
+						if (placeAStr === placeBStr) return;
 						const dashedLinkVisibility = (placeA.isFeatureVisible && placeB.isFeatureVisible);
-						const sameTimePlaceKey = `${placeA.coordinates.toString()} ${placeB.coordinates.toString()}`;
-						this._linkStrengths.set(sameTimePlaceKey, {
-							start: placeA.coordinates,
-							end: placeB.coordinates,
-							isLinkVisible: dashedLinkVisibility,
-							strength: 1,
-							style: [10, 20]
-						});
+						const sameTimePlaceKey = `${placeAStr} ${placeBStr} dashed`;
+						if (this._linkStrengths.has(sameTimePlaceKey)) {
+							this._linkStrengths.get(sameTimePlaceKey).isLinkVisible = dashedLinkVisibility;
+						}
+						else {
+							this._linkStrengths.set(sameTimePlaceKey, {
+								start: placeA.coordinates,
+								end: placeB.coordinates,
+								places: [placeA.name, placeB.name],
+								isLinkVisible: dashedLinkVisibility,
+								strength: 1,
+								style: [10, 20]
+							});
+						}
 					}
 				}
 			}
@@ -105,9 +114,9 @@ class N2LinkSource extends VectorSource {
 					/* Not drawing a link from a point to the same point */
 					if (prevPointString === currPointString) continue;
 
-					let linkStrengthKey = `${prevPointString} ${currPointString}`;
+					let linkStrengthKey = `${prevPointString} ${currPointString} default`;
 					if (prevPointString > currPointString) {
-						linkStrengthKey = `${currPointString} ${prevPointString}`;
+						linkStrengthKey = `${currPointString} ${prevPointString} default`;
 					}
 
 					const lineStringVisibility = (previousDataPoint.isFeatureVisible && currentDataPoint.isFeatureVisible);
@@ -120,6 +129,7 @@ class N2LinkSource extends VectorSource {
 						this._linkStrengths.set(linkStrengthKey, {
 							start: previousDataPoint.coordinates,
 							end: currentDataPoint.coordinates,
+							places: [currentDataPoint.name, previousDataPoint.name],
 							isLinkVisible: lineStringVisibility,
 							strength: 1,
 							style: null
@@ -140,6 +150,7 @@ class N2LinkSource extends VectorSource {
 			lineStringFeature.set("isVisible", lineData.isLinkVisible, false);
 			lineStringFeature.set("linkStrength", lineData.strength, false);
 			lineStringFeature.set("linkStyle", lineData.style, false);
+			lineStringFeature.set("places", lineData.places, false);
 			this._linestringFeatures.push(lineStringFeature);
 		});
 	}
@@ -147,6 +158,7 @@ class N2LinkSource extends VectorSource {
 	stylerFunction(feature) {
 		if (feature.get("isVisible") === false || feature.get("isVisible") === undefined) return;
 		const linkStyle = feature.get("linkStyle");
+		const defaultZ = linkStyle === null ? 5 : 0;
 		return [
 			new Style({
 				stroke: new Stroke({
@@ -154,7 +166,7 @@ class N2LinkSource extends VectorSource {
 					color: "white",
 					lineDash: linkStyle
 				}),
-				zIndex: 0
+				zIndex: defaultZ + 0
 			}),
 			new Style({
 				stroke: new Stroke({
@@ -162,7 +174,7 @@ class N2LinkSource extends VectorSource {
 					color: "#404040",
 					lineDash: linkStyle
 				}),
-				zIndex: 1
+				zIndex: defaultZ + 1
 			})
 		]
 	}
