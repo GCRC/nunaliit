@@ -56,7 +56,7 @@ class N2LinkSource extends VectorSource {
 			const featureData = {
 				coordinates: pointCoordinates,
 				isFeatureVisible: isFeatureCurrentlyShowing,
-				i: point.data._ldata.timeLinkTags.placeTag // Not used but helpful for a human to read the place
+				name: point.data._ldata.timeLinkTags.placeTag
 			};
 
 			if (this._timeCoordinateData.has(featureStartTime)) {
@@ -72,6 +72,35 @@ class N2LinkSource extends VectorSource {
 	_generateLinkStrengths() {
 		let previousData = [];
 		this._timeCoordinateData.forEach((currentData) => {
+			
+			/* Generating same time links */
+			if (currentData.length > 1) {
+				for (let m = 0; m < currentData.length - 1; m++) {
+					for (let n = m; n < currentData.length - 1; n++) {
+						const placeA = currentData[m];
+						const placeB = currentData[n+1];
+						const placeAStr = placeA.coordinates.toString();
+						const placeBStr = placeB.coordinates.toString();
+						if (placeAStr === placeBStr) return;
+						const dashedLinkVisibility = (placeA.isFeatureVisible && placeB.isFeatureVisible);
+						const sameTimePlaceKey = `${placeAStr} ${placeBStr} dashed`;
+						if (this._linkStrengths.has(sameTimePlaceKey)) {
+							this._linkStrengths.get(sameTimePlaceKey).isLinkVisible = dashedLinkVisibility;
+						}
+						else {
+							this._linkStrengths.set(sameTimePlaceKey, {
+								start: placeA.coordinates,
+								end: placeB.coordinates,
+								places: [placeA.name, placeB.name],
+								isLinkVisible: dashedLinkVisibility,
+								strength: 1,
+								style: [10, 20]
+							});
+						}
+					}
+				}
+			}
+
 			for (let i = 0; i < previousData.length; i++) {
 
 				const previousDataPoint = previousData[i];
@@ -82,10 +111,12 @@ class N2LinkSource extends VectorSource {
 					const currentDataPoint = currentData[j];
 					const currPointString = currentDataPoint.coordinates.toString();
 
-					if (prevPointString === currPointString) continue; // Not drawing a link from a point to the same point
-					let linkStrengthKey = `${prevPointString} ${currPointString}`;
+					/* Not drawing a link from a point to the same point */
+					if (prevPointString === currPointString) continue;
+
+					let linkStrengthKey = `${prevPointString} ${currPointString} default`;
 					if (prevPointString > currPointString) {
-						linkStrengthKey = `${currPointString} ${prevPointString}`;
+						linkStrengthKey = `${currPointString} ${prevPointString} default`;
 					}
 
 					const lineStringVisibility = (previousDataPoint.isFeatureVisible && currentDataPoint.isFeatureVisible);
@@ -98,8 +129,10 @@ class N2LinkSource extends VectorSource {
 						this._linkStrengths.set(linkStrengthKey, {
 							start: previousDataPoint.coordinates,
 							end: currentDataPoint.coordinates,
+							places: [currentDataPoint.name, previousDataPoint.name],
 							isLinkVisible: lineStringVisibility,
-							strength: 1
+							strength: 1,
+							style: null
 						});
 					}
 				}
@@ -116,28 +149,34 @@ class N2LinkSource extends VectorSource {
 			lineStringFeature.setId(key);
 			lineStringFeature.set("isVisible", lineData.isLinkVisible, false);
 			lineStringFeature.set("linkStrength", lineData.strength, false);
+			lineStringFeature.set("linkStyle", lineData.style, false);
+			lineStringFeature.set("places", lineData.places, false);
 			this._linestringFeatures.push(lineStringFeature);
 		});
 	}
 
 	stylerFunction(feature) {
 		if (feature.get("isVisible") === false || feature.get("isVisible") === undefined) return;
+		const linkStyle = feature.get("linkStyle");
+		const defaultZ = linkStyle === null ? 5 : 0;
 		return [
 			new Style({
 				stroke: new Stroke({
 					width: feature.get("linkStrength") + 2,
 					color: "white",
-					zIndex: 0
-				})
+					lineDash: linkStyle
+				}),
+				zIndex: defaultZ + 0
 			}),
 			new Style({
 				stroke: new Stroke({
 					width: feature.get("linkStrength"),
 					color: "#404040",
-					zIndex: 1
-				})
+					lineDash: linkStyle
+				}),
+				zIndex: defaultZ + 1
 			})
 		]
 	}
 }
-export default N2LinkSource
+export default N2LinkSource;
