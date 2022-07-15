@@ -634,25 +634,25 @@ export function widgetAvailable(message) {
 
 export function widgetDisplay(message) {
     const { widgetType, widgetOptions, containerId, config } = message;
-    if (!filterableLegends.includes(widgetType)) return;
-    let options = {};
-
-    if (widgetOptions) {
-        const { sourceModelId } = widgetOptions;
-        if (typeof sourceModelId !== "string") {
-            throw new Error("sourceModelId must be a string!")
-        }
-        options = { ...widgetOptions };
-    }
-
-    options.containerId = containerId;
-
-    if (config && config.directory) {
-        options.dispatchService = config.directory.dispatchService;
-        options.showService = config.directory.showService;
-    }
 
     if (widgetType === "filterableLegendWidgetWithGraphic"){
+        if (!filterableLegends.includes(widgetType)) return;
+        let options = {};
+
+        if (widgetOptions) {
+            const { sourceModelId } = widgetOptions;
+            if (typeof sourceModelId !== "string") {
+                throw new Error("sourceModelId must be a string!")
+            }
+            options = { ...widgetOptions };
+        }
+
+        options.containerId = containerId;
+
+        if (config && config.directory) {
+            options.dispatchService = config.directory.dispatchService;
+            options.showService = config.directory.showService;
+        }
         new N2FilterableLegendWidgetWithGraphic(options);
     }
 }
