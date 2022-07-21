@@ -56,7 +56,9 @@ class N2ModelExportWidget {
         widgetAnchor.innerHTML = _loc(this.label);
         widgetAnchor.href = "#";
         widgetAnchor.addEventListener("click", (ev) => {
+            this._preDownload();
             this._download();
+            this._postDownload();
         });
 
         container.append(widgetDiv);
@@ -106,6 +108,14 @@ class N2ModelExportWidget {
             type: "text/json"
         });
         saveAs(blob, `${this._formatDate()}_${this.moduleInfo.moduleId}.json`)
+    }
+
+    _preDownload() {
+        return;
+    }
+
+    _postDownload() {
+        return;
     }
 
     _formatDate() {
