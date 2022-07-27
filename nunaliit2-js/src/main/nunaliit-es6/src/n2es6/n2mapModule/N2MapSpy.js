@@ -52,7 +52,10 @@ class N2MapSpy {
 		});
 
 		// before rendering the layer, do some clipping
+		let i = 0;
 		this_.options.overlayLayers.forEach(ml => {
+			++i;
+			if (i > 1) {
 			ml.on('prerender', function (event) {
 				const ctx = event.context;
 				ctx.save();
@@ -73,6 +76,7 @@ class N2MapSpy {
 					ctx.stroke();
 				}
 				ctx.clip();
+			
 			});
 
 			// after rendering the layer, restore the canvas context
@@ -80,6 +84,7 @@ class N2MapSpy {
 				const ctx = event.context;
 				ctx.restore();
 			});
+		}	
 		});
 	}
 }

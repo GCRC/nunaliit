@@ -718,13 +718,16 @@ class N2MapCanvas {
 		/**
 		 * Two Groups : Overlay and Background
 		 */
+
+		const overlayTitle = this.options.overlayTitle ? this.options.overlayTitle : 'Overlays'
 		const overlayGroup = new LayerGroup({
-			title: 'Overlays',
+			title: overlayTitle, //Overlays renames beyond just spy
 			layers: this.overlayLayers
 		});
 
+		const bgTitle = (this.options.overlayTitle) ? this.options.backgroundTitle : 'Background'
 		const bgGroup = new LayerGroup({
-			title: 'Background',
+			title: bgTitle, //Background
 			layers: this.mapLayers
 		});
 
