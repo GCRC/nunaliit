@@ -719,15 +719,15 @@ class N2MapCanvas {
 		 * Two Groups : Overlay and Background
 		 */
 
-		const overlayTitle = this.options.overlayTitle ? this.options.overlayTitle : 'Overlays'
+		const overlayTitle = this.options.overlayTitle ? this.options.overlayTitle : 'Overlays';
 		const overlayGroup = new LayerGroup({
-			title: overlayTitle, //Overlays renames beyond just spy
+			title: overlayTitle, 
 			layers: this.overlayLayers
 		});
 
-		const bgTitle = (this.options.overlayTitle) ? this.options.backgroundTitle : 'Background'
+		const bgTitle = this.options.backgroundTitle ? this.options.backgroundTitle : 'Background';
 		const bgGroup = new LayerGroup({
-			title: bgTitle, //Background
+			title: bgTitle, 
 			layers: this.mapLayers
 		});
 
@@ -749,7 +749,11 @@ class N2MapCanvas {
 
 		let spyCtrl;
 		if (this.options.layerSpy){ 
-			const data = { elem : this._getElem()[0] , radius : 100 , overlayLayers : this.overlayLayers};
+			const data = { 
+				elem : this._getElem()[0],
+				radius : 100,
+				overlayLayers : this.overlayLayers
+			};
 			spyCtrl = new N2MapSpy(data); 
 			customMap.addControl(spyCtrl);
 		}
