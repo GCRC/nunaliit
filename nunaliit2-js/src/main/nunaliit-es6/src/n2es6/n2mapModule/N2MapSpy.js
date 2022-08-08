@@ -56,35 +56,35 @@ class N2MapSpy {
 		this_.options.overlayLayers.forEach(ml => {
 			++i;
 			if (i > 1) {
-			ml.on('prerender', function (event) {
-				const ctx = event.context;
-				ctx.save();
-				ctx.beginPath();
-				if (mousePosition) {
-					// only show a circle around the mouse
-					const pixel = getRenderPixel(event, mousePosition);
-					const offset = getRenderPixel(event, [
-						mousePosition[0] + this_.options.radius,
-						mousePosition[1],
-					]);
-					const canvasRadius = Math.sqrt(
-						Math.pow(offset[0] - pixel[0], 2) + Math.pow(offset[1] - pixel[1], 2)
-					);
-					ctx.arc(pixel[0], pixel[1], canvasRadius, 0, 2 * Math.PI);
-					ctx.lineWidth = (5 * canvasRadius) / this_.options.radius;
-					ctx.strokeStyle = 'rgba(0,0,0,0.5)';
-					ctx.stroke();
-				}
-				ctx.clip();
-			
-			});
+				ml.on('prerender', function (event) {
+					const ctx = event.context;
+					ctx.save();
+					ctx.beginPath();
+					if (mousePosition) {
+						// only show a circle around the mouse
+						const pixel = getRenderPixel(event, mousePosition);
+						const offset = getRenderPixel(event, [
+							mousePosition[0] + this_.options.radius,
+							mousePosition[1],
+						]);
+						const canvasRadius = Math.sqrt(
+							Math.pow(offset[0] - pixel[0], 2) + Math.pow(offset[1] - pixel[1], 2)
+						);
+						ctx.arc(pixel[0], pixel[1], canvasRadius, 0, 2 * Math.PI);
+						ctx.lineWidth = (5 * canvasRadius) / this_.options.radius;
+						ctx.strokeStyle = 'rgba(0,0,0,0.5)';
+						ctx.stroke();
+					}
+					ctx.clip();
 
-			// after rendering the layer, restore the canvas context
-			ml.on('postrender', function (event) {
-				const ctx = event.context;
-				ctx.restore();
-			});
-		}	
+				});
+
+				// after rendering the layer, restore the canvas context
+				ml.on('postrender', function (event) {
+					const ctx = event.context;
+					ctx.restore();
+				});
+			}
 		});
 	}
 }
