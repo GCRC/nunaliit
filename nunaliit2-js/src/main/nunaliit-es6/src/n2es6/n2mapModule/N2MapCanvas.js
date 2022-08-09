@@ -45,6 +45,8 @@ import Swipe from 'ol-ext/control/Swipe';
 
 import { defaults as Defaults } from 'ol/control';
 
+import N2MapSpy from './N2MapSpy';
+
 const _loc = function (str, args) { return $n2.loc(str, 'nunaliit2', args); };
 const DH = 'n2.canvasMap';
 
@@ -656,7 +658,7 @@ class N2MapCanvas {
 
 		//Getting the resolution whenever a frame finish rendering;
 		customMap.on('postrender', function (evt) {
-			const res = evt.frameState.viewState.resolution;
+			const res = evt.frameState.viewState.resolution; 
 			const proj = _this.n2View.getProjection();
 			_this.resolution = res;
 			_this.proj = proj;
@@ -716,13 +718,16 @@ class N2MapCanvas {
 		/**
 		 * Two Groups : Overlay and Background
 		 */
+
+		const overlayTitle = this.options.overlayTitle ? this.options.overlayTitle : 'Overlays';
 		const overlayGroup = new LayerGroup({
-			title: 'Overlays',
+			title: overlayTitle, 
 			layers: this.overlayLayers
 		});
 
+		const bgTitle = this.options.backgroundTitle ? this.options.backgroundTitle : 'Background';
 		const bgGroup = new LayerGroup({
-			title: 'Background',
+			title: bgTitle, 
 			layers: this.mapLayers
 		});
 
@@ -740,6 +745,17 @@ class N2MapCanvas {
 		if(this.options.layerSwipe) {
 			swipeCtrl = new Swipe();
 			customMap.addControl(swipeCtrl);
+		}
+
+		let spyCtrl;
+		if (this.options.layerSpy === true || this.options.layerSpy === "true"){ 
+			const data = { 
+				elem : this._getElem()[0],
+				radius : 150,
+				overlayLayers : this.overlayLayers
+			};
+			spyCtrl = new N2MapSpy(data); 
+			customMap.addControl(spyCtrl);
 		}
 
 		this.overlayInfos.forEach( (info, idx) => {
