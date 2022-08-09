@@ -903,7 +903,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				if (se === 'globalScaleFactor') {
 					$('<label>')
 						.attr('for', this.gloScaleFactorId)
-						.html('GlobalScaleFactor')
+						.html(_loc('Global Scale Factor'))
 						.appendTo($formFieldSection);
 
 					$('<input>')
@@ -915,7 +915,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				} else if (se === 'globalTimeOffset') {
 					$('<label>')
 						.attr('for', this.gloTimeOffsetId)
-						.html('GlobalTimeOffset')
+						.html(_loc('Global Time Offset'))
 						.appendTo($formFieldSection);
 					$('<input>')
 						.attr('id', this.gloTimeOffsetId)
@@ -925,7 +925,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				} else if (se === 'globalDefaultPlaceZoomLevel') {
 					$('<label>')
 						.attr('for', this.cinemapDefaultPlaceZoomLevelId)
-						.html('Default Place Zoom Level')
+						.html(_loc('Default Place Zoom Level'))
 						.appendTo($formFieldSection);
 					$('<input>')
 						.attr('id', this.cinemapDefaultPlaceZoomLevelId)
@@ -940,11 +940,11 @@ POSSIBILITY OF SUCH DAMAGE.
 					container.style.justifyContent = "space-evenly";
 					$('<label>')
 						.attr('for', this.cinemapInitialMapViewId)
-						.html('Initial Map View*')
-						.attr('title', 'The order of this bounding box is bottom left (x, y) and top right (x, y).\nUse a value of "0" if the cinemap should not have a default view.')
+						.html(_loc('Initial Map View*'))
+						.attr('title', _loc('The order of this bounding box is bottom left (x, y) and top right (x, y).\nUse a value of "0" if the cinemap should not have a default view.'))
 						.appendTo(container);
 					$('<button>')
-						.html('Get Current Map View')
+						.html(_loc('Get Current Map View'))
 						.click(() => {
 							const request = {
 								type: "mapExtentRequest"
@@ -989,16 +989,16 @@ POSSIBILITY OF SUCH DAMAGE.
 					displayImageLinkText = displayImageLinkText.pop();
 				}
 				else {
-					displayImageLinkText = "No related image.";
+					displayImageLinkText = _loc("No related image.");
 				} 
 
 				return `${accumulator}<li style="border: 1px solid #ccc; border-radius: 5px; margin-top: 0.5em; margin-bottom: 0.5em; list-style-type: none;">
 					<div style="padding: 1em;">
 						<h4>${timeLink.starttime} - ${timeLink.endtime}</h4>
-						<p>${commaTags ? commaTags : "No tags added."}</p>
-						<p>${timeLink.notes ? timeLink.notes : "No notes added."}</p>
+						<p>${commaTags ? commaTags : _loc("No tags added.")}</p>
+						<p>${timeLink.notes ? timeLink.notes : _loc("No notes added.")}</p>
 						<p>${displayImageLinkText}</p>
-						<p>${timeLink.mediaCaption ? timeLink.mediaCaption : "No image caption added."}</p>
+						<p>${timeLink.mediaCaption ? timeLink.mediaCaption : _loc("No image caption added.")}</p>
 					</div>
 				</li>		
 				`;
@@ -1013,7 +1013,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			new $n2.mdc.MDCButton({
 				parentElem: notesButtonContainer,
-				btnLabel: "View All Annotations",
+				btnLabel: _loc("View All Annotations"),
 				btnRaised: true,
 				onBtnClick: () => {
 					new $n2.mdc.MDCDialog({
@@ -1021,6 +1021,23 @@ POSSIBILITY OF SUCH DAMAGE.
 						dialogHtmlContent: htmlString,
 						closeBtn: true,
 						scrollable: true
+					});
+				}
+			});
+
+			const exportAsGeoJSONButtonContainer = $("<div>")
+				.attr("id", "exportGeoJSONButtonContainer")
+				.addClass('n2WidgetAnnotation_formfieldSection')
+				.appendTo($parent);
+
+			new $n2.mdc.MDCButton({
+				parentElem: exportAsGeoJSONButtonContainer,
+				btnLabel: _loc("Export Cinemap as GeoJSON"),
+				btnRaised: true,
+				onBtnClick: () => {
+					new nunaliit2.exports.CinemapToGeoJSON({
+						dispatch: this.dispatchService
+						, cinemap: doc
 					});
 				}
 			});
@@ -1943,7 +1960,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			$('<div>')
 				.attr('id', this.loaderDivId)
-				.addClass('n2AnnotationEditorLoader')
+				.addClass('loading')
 				.appendTo($annotationEditor);
 
 			$('<div>')
@@ -1985,7 +2002,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			return $('#' + this.elemId);
 		},
 
-		// Get the element id of the loader div.n2AnnotationEditorLoader
+		// Get the element id of the loader
 		_getLoaderDiv: function() {
 			return $("#" + this.loaderDivId);
 		},

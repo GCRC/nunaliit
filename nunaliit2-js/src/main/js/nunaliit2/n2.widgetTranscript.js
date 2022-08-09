@@ -174,6 +174,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.subtitleSelectionDivId = $n2.getUniqueId();
 		this.srtSelectionId = $n2.getUniqueId();
 		this.srtSelector = undefined;
+		this.loadingDiv = null;
 
 		if (this.isInsideContentTextPanel) {
 			var $elem = $('<div>')
@@ -194,21 +195,31 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			
 			$('<div>')
 				.attr('id', this.mediaDivId)
-				.appendTo($mediaAndSubtitleDiv);
+				.appendTo($container);
 			
 			$('<div>')
 				.attr('id', this.subtitleDivId)
 				.addClass('n2widgetTranscript_transcript')
 				.appendTo($mediaAndSubtitleDiv);
-			
+		
+			this.loadingDiv = document.createElement("div");
+			this.loadingDiv.setAttribute("id", $n2.getUniqueId());
+			this.loadingDiv.setAttribute("class", "loading");
+			$mediaAndSubtitleDiv.append(this.loadingDiv);
+
 			this._reInstallSubtitleSel();
 
 		} else {
 			$('<div>')
-			.attr('id',this.elemId)
-			.css({"height": "100%"})
-			.addClass('n2widgetTranscript')
-			.appendTo($container);
+				.attr('id',this.elemId)
+				.css({"height": "100%"})
+				.addClass('n2widgetTranscript')
+				.appendTo($container);
+		
+			this.loadingDiv = document.createElement("div");
+			this.loadingDiv.setAttribute("id", $n2.getUniqueId());
+			this.loadingDiv.setAttribute("class", "loading");
+			$container.append(this.loadingDiv);
 		}
 
 		// Set up dispatcher
@@ -409,6 +420,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				// Check if cinemap selection changed;
 				var mediaDocChanged = this._cinemapUpdated(m.state);
 				if (mediaDocChanged){
+					this.loadingDiv.style.display = "";
 					this.timeTable = [];
 					this.transcript = undefined;
 					this.srtData = undefined;
@@ -744,6 +756,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					_this._updateCurrentTime(currentTime, 'video');
 				})
 				.bind('durationchange', function(e) {
+					_this.loadingDiv.style.display = "none";
 					_this.dispatchService.send(DH, {
 						type: "transcriptVideoDurationChange",
 						value: this.duration

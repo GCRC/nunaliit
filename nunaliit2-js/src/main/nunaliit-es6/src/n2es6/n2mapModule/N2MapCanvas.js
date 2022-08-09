@@ -142,7 +142,6 @@ class N2MapCanvas  {
 		this.initialTime = null;
 		this.endIdx = 0;
 		this.refreshCnt = undefined;
-		this._retrivingDocsAndPaintPopupthrottled = $n2.utils.debounce(this._retrivingDocsAndPaintPopup, 30);
 		this.isClustering = undefined;
 		this.n2View = undefined;
 		this.n2Map = undefined;
@@ -921,7 +920,7 @@ class N2MapCanvas  {
 				popup.hide();
 			}
 			if (e.selected) {
-				this._retrivingDocsAndPaintPopupthrottled(e.selected, mapBrowserEvent);
+				this._showPopup(e.selected, mapBrowserEvent);
 			}
 		}).bind(this));
 		
@@ -968,38 +967,28 @@ class N2MapCanvas  {
 		}
 	}
 
-	_retrivingDocsAndPaintPopup(feature, mapBrowserEvent){
-		var _this = this;
+	_showPopup(feature, mapBrowserEvent) {
+		const _this = this;
 		if (_this.popupOverlay) {
-			var popup = _this.popupOverlay;
-			var featurePopupHtmlFn;
-			if (! $n2.isArray(feature)){
-				if (_this.customService){
-					var cb = _this.customService.getOption('mapFeaturePopupCallback');
-					if( typeof cb === 'function' ) {
+			const popup = _this.popupOverlay;
+			let featurePopupHtmlFn = null;
+			if (!$n2.isArray(feature)) {
+				if (_this.customService) {
+					const cb = _this.customService.getOption('mapFeaturePopupCallback');
+					if (typeof cb === 'function') {
 						featurePopupHtmlFn = cb;
 					}
 				}
-
-				//var contentArr = feature.data._ldata.tags;
-				if( featurePopupHtmlFn ){
+				if (featurePopupHtmlFn) {
 					featurePopupHtmlFn({
 						feature: feature
-						,onSuccess: function( content ){
+						, onSuccess: function (content) {
 							var mousepoint = mapBrowserEvent.coordinate;
 							popup.show(mousepoint, content);
 						}
-						,onError: function(){}//ignore
+						, onError: () => {}
 					});
-					
-					//var content = featurePopupHtmlFn
-					//	if (contentArr && $n2.isArray(contentArr)){
-					//		content = contentArr.join(', ');
-					//	}
 				}
-
-			} else {
-				//n2es6 does not support multi hover, so does nunaliit2 
 			}
 		}
 	}
