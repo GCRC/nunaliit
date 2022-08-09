@@ -44,7 +44,7 @@ POSSIBILITY OF SUCH DAMAGE.
 		TAGSETTING: 'tagsetting'
 	};
 
-	var context_menu_text = ['Tag Selection...', 'Map Tags...', 'Settings...'];
+	var context_menu_text = ['Tag Selection...', 'Group Tags...', 'Settings...'];
 
 	// Find the time links based on start & end time link values.
 	function findTimeLink(timeLinks, startTime, endTime) {
@@ -1585,7 +1585,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			new $n2.mdc.MDCTagBox({
 				parentElem: $formFieldSection,
 				autoCompleteViewName: 'tags',
-				label: 'Theme Tags',
+				label: _loc('Theme Tags'),
 				mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 				chips: lastThemeTags,
 				chipsetsUpdateCallback: (tagList, operation, target) => {
@@ -1633,7 +1633,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			// Add place tags tagbox component
 			new $n2.mdc.MDCTagBox({
 				parentElem: $formFieldSection,
-				label: 'Place Tags',
+				label: _loc('Place Tags'),
 				autoCompleteViewName: 'tags',
 				mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
 				chips: lastPlaceTags,
@@ -1727,14 +1727,14 @@ POSSIBILITY OF SUCH DAMAGE.
 					}
 				}
 				else {
-					alert("The selected document is not an image.")
+					alert(_loc("The selected document is not an image."))
 				}
 			}
 
 			const timeLinkTextAreaId = "n2WidgetAnnotationEditorTaggingNotes";
 			const timeLinkNotes = senData[0].notes ? senData[0].notes : "";
 			new $n2.mdc.MDCTextField({
-				txtFldLabel: "Notes",
+				txtFldLabel: _loc("Notes"),
 				txtFldInputId: timeLinkTextAreaId,
 				txtFldOutline: true,
 				txtFldArea: true,
@@ -1750,7 +1750,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			new $n2.mdc.MDCButton({
 				parentElem: $formFieldSection,
-				btnLabel: "Select Related Image",
+				btnLabel: _loc("Select Related Image"),
 				btnRaised: true,
 				onBtnClick: () => {
 					_this.dialogService.searchForDocumentId({
@@ -1768,7 +1768,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			new $n2.mdc.MDCButton({
 				parentElem: $formFieldSection,
-				btnLabel: "Remove Related Image",
+				btnLabel: _loc("Remove Related Image"),
 				btnRaised: true,
 				onBtnClick: () => {
 					const imageCard = document.getElementById(imageCardDisplayId);
@@ -1794,8 +1794,8 @@ POSSIBILITY OF SUCH DAMAGE.
 			new $n2.mdc.MDCCard({
 				parentElem: $formFieldSection,
 				mdcId: imageCardDisplayId,
-				label: displayImageLinkText,
-				infoGenerator: () => { return displayImageLinkText },
+				label: _loc(displayImageLinkText),
+				infoGenerator: () => { return _loc(displayImageLinkText) },
 				imageGenerator: () => { 
 					if (displayImageLinkText !== "No related image.") {
 						return `<img src=./db${relatedImageLink}>`
@@ -1809,7 +1809,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			const relatedImageCaptionId = "n2WidgetAnnotationEditorTaggingImageCaption";
 			const relatedMediaCaption = senData[0].mediaCaption ? senData[0].mediaCaption : "";
 			new $n2.mdc.MDCTextField({
-				txtFldLabel: "Image Caption",
+				txtFldLabel: _loc("Image Caption"),
 				txtFldInputId: relatedImageCaptionId,
 				txtFldOutline: true,
 				txtFldArea: true,
