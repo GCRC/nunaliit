@@ -35,6 +35,7 @@ import {defaults as defaultsInteractionSet} from 'ol/interaction.js';
 import {default as DrawInteraction} from 'ol/interaction/Draw.js';
 import Stamen from 'ol/source/Stamen.js';
 import OSM from 'ol/source/OSM';
+import XYZ from 'ol/source/XYZ';
 import BingMaps from 'ol/source/BingMaps';
 import TileWMS from 'ol/source/TileWMS';
 import LayerSwitcher from 'ol-layerswitcher';
@@ -63,6 +64,7 @@ const VENDOR =	{
 		WMS : 'wms',
 		WMTS: 'wmts',
 		OSM : 'osm',
+		XYZ: 'xyz',
 		STAMEN : 'stamen',
 		IMAGE : 'image',
 		COUCHDB : 'couchdb'
@@ -142,7 +144,6 @@ class N2MapCanvas  {
 		this.initialTime = null;
 		this.endIdx = 0;
 		this.refreshCnt = undefined;
-		this._retrivingDocsAndPaintPopupthrottled = $n2.utils.debounce(this._retrivingDocsAndPaintPopup, 30);
 		this.isClustering = undefined;
 		this.n2View = undefined;
 		this.n2Map = undefined;
@@ -921,7 +922,7 @@ class N2MapCanvas  {
 				popup.hide();
 			}
 			if (e.selected) {
-				this._retrivingDocsAndPaintPopupthrottled(e.selected, mapBrowserEvent);
+				this._showPopup(e.selected, mapBrowserEvent);
 			}
 		}).bind(this));
 		
@@ -968,38 +969,28 @@ class N2MapCanvas  {
 		}
 	}
 
-	_retrivingDocsAndPaintPopup(feature, mapBrowserEvent){
-		var _this = this;
+	_showPopup(feature, mapBrowserEvent) {
+		const _this = this;
 		if (_this.popupOverlay) {
-			var popup = _this.popupOverlay;
-			var featurePopupHtmlFn;
-			if (! $n2.isArray(feature)){
-				if (_this.customService){
-					var cb = _this.customService.getOption('mapFeaturePopupCallback');
-					if( typeof cb === 'function' ) {
+			const popup = _this.popupOverlay;
+			let featurePopupHtmlFn = null;
+			if (!$n2.isArray(feature)) {
+				if (_this.customService) {
+					const cb = _this.customService.getOption('mapFeaturePopupCallback');
+					if (typeof cb === 'function') {
 						featurePopupHtmlFn = cb;
 					}
 				}
-
-				//var contentArr = feature.data._ldata.tags;
-				if( featurePopupHtmlFn ){
+				if (featurePopupHtmlFn) {
 					featurePopupHtmlFn({
 						feature: feature
-						,onSuccess: function( content ){
+						, onSuccess: function (content) {
 							var mousepoint = mapBrowserEvent.coordinate;
 							popup.show(mousepoint, content);
 						}
-						,onError: function(){}//ignore
+						, onError: () => {}
 					});
-					
-					//var content = featurePopupHtmlFn
-					//	if (contentArr && $n2.isArray(contentArr)){
-					//		content = contentArr.join(', ');
-					//	}
 				}
-
-			} else {
-				//n2es6 does not support multi hover, so does nunaliit2 
 			}
 		}
 	}
@@ -1392,6 +1383,26 @@ class N2MapCanvas  {
 				return new OSM({
 					url : sourceOptionsInternal.url
 				});
+
+			} else {
+				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
+			}
+
+		} else if ( sourceTypeInternal == VENDOR.XYZ) {
+			if (sourceOptionsInternal
+				&& sourceOptionsInternal.url ){
+					const {
+						url,
+						maxZoom,
+						minZoom,
+						wrapX
+					} = sourceOptionsInternal;
+					return new XYZ({
+						url: url,
+						maxZoom: maxZoom ? maxZoom : 42,
+						minZoom: minZoom ? minZoom : 0,
+						wrapX: typeof wrapX === "boolean" ? wrapX : true
+					});
 
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
