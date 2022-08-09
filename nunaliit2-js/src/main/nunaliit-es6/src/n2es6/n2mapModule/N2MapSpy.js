@@ -32,7 +32,7 @@ class N2MapSpy {
 				customMap.render();
 				evt.preventDefault();
 			} else if (evt.key === " ") {
-				this_.options.radius = 100;
+				this_.options.radius = 150;
 				customMap.render();
 				evt.preventDefault();
 			}

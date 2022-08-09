@@ -748,10 +748,10 @@ class N2MapCanvas {
 		}
 
 		let spyCtrl;
-		if (this.options.layerSpy){ 
+		if (this.options.layerSpy === true || this.options.layerSpy === "true"){ 
 			const data = { 
 				elem : this._getElem()[0],
-				radius : 100,
+				radius : 150,
 				overlayLayers : this.overlayLayers
 			};
 			spyCtrl = new N2MapSpy(data); 
