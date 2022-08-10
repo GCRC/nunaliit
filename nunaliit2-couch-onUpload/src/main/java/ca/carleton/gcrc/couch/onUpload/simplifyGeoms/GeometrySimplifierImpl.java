@@ -2,10 +2,12 @@ package ca.carleton.gcrc.couch.onUpload.simplifyGeoms;
 
 import java.io.StringWriter;
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 
 import org.json.JSONObject;
 
@@ -181,7 +183,10 @@ public class GeometrySimplifierImpl implements GeometrySimplifier {
 				for(int i=0; i<numberOfDecimals; ++i){
 					pattern += "#";
 				}
-				return new DecimalFormat(pattern);
+				NumberFormat nf = NumberFormat.getNumberInstance(Locale.forLanguageTag("en-US"));
+				DecimalFormat decimalFormat = (DecimalFormat)nf;
+				decimalFormat.applyPattern(pattern);
+				return decimalFormat;
 			}
 			
 		} else {
