@@ -81,7 +81,7 @@ class N2LinkSource extends VectorSource {
 						const placeB = currentData[n+1];
 						const placeAStr = placeA.coordinates.toString();
 						const placeBStr = placeB.coordinates.toString();
-						if (placeAStr === placeBStr) return;
+						if (placeAStr === placeBStr) continue;
 						const dashedLinkVisibility = (placeA.isFeatureVisible && placeB.isFeatureVisible);
 						const sameTimePlaceKey = `${placeAStr} ${placeBStr} dashed`;
 						if (this._linkStrengths.has(sameTimePlaceKey)) {
