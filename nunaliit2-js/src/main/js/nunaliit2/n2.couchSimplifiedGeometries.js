@@ -121,8 +121,10 @@ var SimplifiedGeometryService = $n2.Class({
 				if (geometryRequest
 					&& geometryRequest.doc
 					&& geometryRequest.doc.nunaliit_geom
-					&& geometryRequest.doc.nunaliit_geom.wkt
-					&& geometryRequest.doc.nunaliit_geom.wkt.startsWith('POINT(')) {
+					&& (!geometryRequest.doc.nunaliit_geom.simplified 
+						|| !geometryRequest.doc.nunaliit_geom.simplified.resolutions
+						|| Object.keys(geometryRequest.doc.nunaliit_geom.simplified.resolutions).length <= 0)
+					) {
 						return;
 					}
 				geometriesRequested.push(geometryRequest);
