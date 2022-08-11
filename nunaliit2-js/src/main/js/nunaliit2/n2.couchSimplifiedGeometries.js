@@ -118,13 +118,9 @@ var SimplifiedGeometryService = $n2.Class({
 				if( typeof geometryRequest.attName !== 'string' ){
 					throw new Error('In event simplifiedGeometryRequest, geometriesRequested[*].attName should be a string');
 				}
-				if (geometryRequest
-					&& geometryRequest.doc
-					&& geometryRequest.doc.nunaliit_geom
-					&& geometryRequest.doc.nunaliit_geom.wkt
-					&& geometryRequest.doc.nunaliit_geom.wkt.startsWith('POINT(')) {
-						return;
-					}
+				const resolutions = geometryRequest?.doc?.nunaliit_geom?.simplified?.resolutions;
+				if (resolutions === undefined) return;
+				if (Object.keys(resolutions).length < 1) return;
 				geometriesRequested.push(geometryRequest);
 			});
 			this._handleRequest(requesterId, geometriesRequested);
