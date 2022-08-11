@@ -1,0 +1,10 @@
+.nunaliit_atlas .nunaliit_header #module_title_bar div.n2ModelExportWidget {
+    float: right;
+    padding: 8px 20px;
+}
+
+.nunaliit_atlas .nunaliit_header #module_title_bar div.n2ModelExportWidget a {
+    cursor: pointer;
+    text-decoration: none;
+    color: #fff;
+}

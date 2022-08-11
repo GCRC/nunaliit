@@ -21,6 +21,8 @@ import org.apache.log4j.rolling.RollingFileAppender;
 import org.apache.log4j.rolling.TimeBasedRollingPolicy;
 import org.eclipse.jetty.proxy.ProxyServlet;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -32,6 +34,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.EnumSet;
+import java.util.logging.Handler;
 
 public class CommandRun implements Command {
 	public static final String REQ_BUFFER_SIZE = "16384";
@@ -139,17 +142,11 @@ public class CommandRun implements Command {
 		
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
-
-		// GZip
-		{
-			GzipFilter gzipFilter = new GzipFilter();
-			FilterHolder gzipFilterHolder = new FilterHolder(gzipFilter);
-			gzipFilterHolder.setInitParameter("methods", "GET,POST");
-			EnumSet<DispatcherType> dispatches = EnumSet.of(DispatcherType.REQUEST);
-			context.addFilter(gzipFilterHolder, "/*", dispatches);
-		}
-        
-		server.setHandler(context);
+		
+		GzipHandler gzipHandler = new GzipHandler();
+		gzipHandler.setIncludedMethods("GET", "POST");
+		gzipHandler.setHandler(context);
+		server.setHandler(gzipHandler);
 
         // Proxy to server
         {
