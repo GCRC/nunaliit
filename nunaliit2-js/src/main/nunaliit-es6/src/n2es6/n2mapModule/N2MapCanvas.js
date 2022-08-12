@@ -735,8 +735,12 @@ class N2MapCanvas {
 			new LayerGroup({ layers: [bgGroup, overlayGroup] })
 		);
 
+		const legendActivationMode = this.options.legendActivationMode ? this.options.legendActivationMode : 'mouseover';
+		const legendStartActive = this.options.legendStartActive ? this.options.legendStartActive : false;
 		const customLayerSwitcher = new LayerSwitcher({
-			tipLabel: 'Legend' // Optional label for button
+			tipLabel: 'Legend', // Optional label for button
+			activationMode: legendActivationMode,
+			startActive: legendStartActive
 		});
 
 		customMap.addControl(customLayerSwitcher);
@@ -752,7 +756,8 @@ class N2MapCanvas {
 			const data = { 
 				elem : this._getElem()[0],
 				radius : 150,
-				overlayLayers : this.overlayLayers
+				overlayLayers : this.overlayLayers,
+				overlayInfos : this.overlayInfos
 			};
 			spyCtrl = new N2MapSpy(data); 
 			customMap.addControl(spyCtrl);

@@ -17,6 +17,7 @@ class N2MapSpy {
 			elem: undefined,
 			radius: 100,
 			overlayLayers: undefined,
+			overlayInfos: undefined
 		}, opt_options);
 	}
 	setMap = function (customMap) {
@@ -51,11 +52,9 @@ class N2MapSpy {
 			customMap.render();
 		});
 
-		// before rendering the layer, do some clipping
-		let i = 0;
-		this_.options.overlayLayers.forEach(ml => {
-			++i;
-			if (i > 1) {
+		this_.options.overlayLayers.forEach((ml, idx) => {
+			// doesnt clip layer if layerSpyIgnore config option === true 
+			if (this_.options.overlayInfos[idx]._layerInfo && this_.options.overlayInfos[idx]._layerInfo.layerSpyIgnore !== true) {
 				ml.on('prerender', function (event) {
 					const ctx = event.context;
 					ctx.save();
@@ -84,7 +83,7 @@ class N2MapSpy {
 					const ctx = event.context;
 					ctx.restore();
 				});
-			}
+			}	
 		});
 	}
 }
