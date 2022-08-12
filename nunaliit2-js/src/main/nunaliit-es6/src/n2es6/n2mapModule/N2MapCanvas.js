@@ -751,6 +751,18 @@ class N2MapCanvas {
 			customMap.addControl(swipeCtrl);
 		}
 
+		let spyCtrl;
+		if (this.options.layerSpy === true || this.options.layerSpy === "true"){ 
+			const data = { 
+				elem : this._getElem()[0],
+				radius : 150,
+				overlayLayers : this.overlayLayers,
+				overlayInfos : this.overlayInfos
+			};
+			spyCtrl = new N2MapSpy(data); 
+			customMap.addControl(spyCtrl);
+		}
+
 		this.overlayInfos.forEach( (info, idx) => {
 			if(info._layerInfo.options.wmsLegend && info.visibility) {
 				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl();
