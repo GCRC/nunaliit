@@ -1235,8 +1235,8 @@ class N2MapCanvas  {
 				}
 
 				fg.push(ringLayer);
-				fg.push(solidLinkLayer);
 				fg.push(dottedLinkLayer);
+				fg.push(solidLinkLayer);
 			}
 		}
 		return (fg);
