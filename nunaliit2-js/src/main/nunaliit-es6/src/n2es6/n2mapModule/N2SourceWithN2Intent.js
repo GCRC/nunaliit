@@ -846,8 +846,7 @@ class N2SourceWithN2Intent extends VectorSource {
 							f.n2_found = false;
 						}
 					}
-				}
-					
+				}	
 				this.features_.push(f);
 			}
 		}

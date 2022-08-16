@@ -17,8 +17,8 @@ import {default as VectorLayer} from 'ol/layer/Vector.js';
 import {default as LayerGroup} from 'ol/layer/Group.js';
 import {default as View} from 'ol/View.js';
 import {default as N2DonutCluster} from '../ol5support/N2DonutCluster.js';
-import {default as N2LinkSource} from './N2LinkSource.js';
 //import {default as N2Cluster} from '../ol5support/N2Cluster.js';
+import { N2SolidLinkSource, N2DottedLinkSource } from './N2LinkSource.js';
 
 import Panzoom from '@panzoom/panzoom';
 
@@ -35,6 +35,7 @@ import {defaults as defaultsInteractionSet} from 'ol/interaction.js';
 import {default as DrawInteraction} from 'ol/interaction/Draw.js';
 import Stamen from 'ol/source/Stamen.js';
 import OSM from 'ol/source/OSM';
+import XYZ from 'ol/source/XYZ';
 import BingMaps from 'ol/source/BingMaps';
 import TileWMS from 'ol/source/TileWMS';
 import LayerSwitcher from 'ol-layerswitcher';
@@ -63,13 +64,15 @@ const VENDOR =	{
 		WMS : 'wms',
 		WMTS: 'wmts',
 		OSM : 'osm',
+		XYZ: 'xyz',
 		STAMEN : 'stamen',
 		IMAGE : 'image',
 		COUCHDB : 'couchdb'
 };
 
 const DONUT_VECTOR_LAYER_DISPLAY_NAME = "Rings";
-const LINE_VECTOR_LAYER_DISPLAY_NAME = "Links";
+const SOLID_LINE_VECTOR_LAYER_DISPLAY_NAME = "Solid Links";
+const DASHED_LINE_VECTOR_LAYER_DISPLAY_NAME = "Dotted Links";
 const MAX_MAP_ZOOM_LEVEL = 22;
 const DEFAULT_MAP_FEATURE_ZOOM_LEVEL = 10;
 
@@ -326,9 +329,8 @@ class N2MapCanvas  {
 		
 		this.settingsControl = null;
 
-		this.vectorLinkSource = new N2LinkSource({
-			dispatchService: this.dispatchService
-		});
+		this.solidLinkSource = new N2SolidLinkSource();
+		this.dottedLinkSource = new N2DottedLinkSource();
 		
 		this.mediaDrawerState = {
 			drawer: null,
@@ -1008,7 +1010,10 @@ class N2MapCanvas  {
 				interaction: this.interactionSet.selectInteraction,
 				source: b_source,
 				dispatchService: this.dispatchService,
-				linkCallback: this.vectorLinkSource.refreshCallback.bind(this.vectorLinkSource)
+				linkCallback: (features) => {
+					this.solidLinkSource.refreshCallback(features);
+					this.dottedLinkSource.refreshCallback(features);
+				}
 			});	
 			donutLayer.setSource(c_source);
 			this.isClustering = true;
@@ -1151,7 +1156,10 @@ class N2MapCanvas  {
 					interaction: _this.interactionSet.selectInteraction,
 					source: betaSource,
 					dispatchService: _this.dispatchService,
-					linkCallback: _this.vectorLinkSource.refreshCallback.bind(_this.vectorLinkSource)
+					linkCallback: (features) => {
+						this.solidLinkSource.refreshCallback(features);
+						this.dottedLinkSource.refreshCallback(features);
+					}
 				});
 
 				_this.n2intentWrapper = charlieSource;
@@ -1185,32 +1193,50 @@ class N2MapCanvas  {
 				});
 				ringLayer.set("alias", DONUT_VECTOR_LAYER_DISPLAY_NAME, false);
 				
-				const linkLayer = new VectorLayer({
-					title: LINE_VECTOR_LAYER_DISPLAY_NAME,
+				const solidLinkLayer = new VectorLayer({
+					title: SOLID_LINE_VECTOR_LAYER_DISPLAY_NAME,
 					renderMode: "vector",
 					/*visible: false [if we do not want Links selected by default] */
-					source: this.vectorLinkSource,
-					style: this.vectorLinkSource.stylerFunction,
-				})
-				linkLayer.set("alias", LINE_VECTOR_LAYER_DISPLAY_NAME, false);
+					source: this.solidLinkSource,
+					style: this.solidLinkSource.stylerFunction,
+				});
 
-				linkLayer.on("change:visible", () => {
+				const dottedLinkLayer = new VectorLayer({
+					title: DASHED_LINE_VECTOR_LAYER_DISPLAY_NAME,
+					renderMode: "vector",
+					/*visible: false [if we do not want Links selected by default] */
+					source: this.dottedLinkSource,
+					style: this.dottedLinkSource.stylerFunction,
+				});
+
+				solidLinkLayer.set("alias", SOLID_LINE_VECTOR_LAYER_DISPLAY_NAME, false);
+				dottedLinkLayer.set("alias", DASHED_LINE_VECTOR_LAYER_DISPLAY_NAME, false);
+
+				solidLinkLayer.on("change:visible", () => {
 					if (!ringLayer.getVisible()) {
-						linkLayer.setVisible(false);
+						solidLinkLayer.setVisible(false);
+					}
+				});
+				dottedLinkLayer.on("change:visible", () => {
+					if (!ringLayer.getVisible()) {
+						dottedLinkLayer.setVisible(false);
 					}
 				});
 
 				/* "all" is the default case where everything shows initially */
 				if (this.initialFeatureDisplayType === "none") {
 					ringLayer.setVisible(false);
-					linkLayer.setVisible(false);
+					solidLinkLayer.setVisible(false);
+					dottedLinkLayer.setVisible(false);
 				}
 				else if (this.initialFeatureDisplayType === "donut") {
-					linkLayer.setVisible(false);
+					solidLinkLayer.setVisible(false);
+					dottedLinkLayer.setVisible(false);
 				}
 
 				fg.push(ringLayer);
-				fg.push(linkLayer);
+				fg.push(dottedLinkLayer);
+				fg.push(solidLinkLayer);
 			}
 		}
 		return (fg);
@@ -1381,6 +1407,26 @@ class N2MapCanvas  {
 				return new OSM({
 					url : sourceOptionsInternal.url
 				});
+
+			} else {
+				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
+			}
+
+		} else if ( sourceTypeInternal == VENDOR.XYZ) {
+			if (sourceOptionsInternal
+				&& sourceOptionsInternal.url ){
+					const {
+						url,
+						maxZoom,
+						minZoom,
+						wrapX
+					} = sourceOptionsInternal;
+					return new XYZ({
+						url: url,
+						maxZoom: maxZoom ? maxZoom : 42,
+						minZoom: minZoom ? minZoom : 0,
+						wrapX: typeof wrapX === "boolean" ? wrapX : true
+					});
 
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );

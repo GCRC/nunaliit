@@ -14,9 +14,8 @@ import Feature from 'ol/Feature.js';
  * @api
  */
 class N2LinkSource extends VectorSource {
-	constructor(options) {
-		super(options);
-		this._dispatchService = options.dispatchService;
+	constructor() {
+		super();
 		this._pointFeatures = [];
 		this._linestringFeatures = [];
 		this._timeCoordinateData = new Map();
@@ -28,23 +27,24 @@ class N2LinkSource extends VectorSource {
 		closely related to the point sources as possible.
 	*/
 	refreshCallback(features) {
-		this.clear();
-		this._pointFeatures = features;
-		this._linestringFeatures = [];
-		this._timeCoordinateData.clear();
-		this._linkStrengths.clear();
+		const self = this;
+		self.clear();
+		self._pointFeatures = features;
+		self._linestringFeatures = [];
+		self._timeCoordinateData.clear();
+		self._linkStrengths.clear();
 
-		if (this._pointFeatures.length < 2) return;
-		this._pointFeatures.sort((featureA, featureB) => {
+		if (self._pointFeatures.length < 2) return;
+		self._pointFeatures.sort((featureA, featureB) => {
 			const timeA = featureA.data._ldata.start;
 			const timeB = featureB.data._ldata.start;
 			return ((timeA > timeB) ? 1 : (timeA < timeB) ? -1 : 0);
 		});
 
-		this._collectTimeCoordinateData();
-		this._generateLinkStrengths();
-		this._generateLineStringFeatures();
-		this.addFeatures(this._linestringFeatures);
+		self._collectTimeCoordinateData();
+		self._generateLinkStrengths();
+		self._generateLineStringFeatures();
+		self.addFeatures(self._linestringFeatures);
 	}
 
 	_collectTimeCoordinateData() {
@@ -81,7 +81,7 @@ class N2LinkSource extends VectorSource {
 						const placeB = currentData[n+1];
 						const placeAStr = placeA.coordinates.toString();
 						const placeBStr = placeB.coordinates.toString();
-						if (placeAStr === placeBStr) return;
+						if (placeAStr === placeBStr) continue;
 						const dashedLinkVisibility = (placeA.isFeatureVisible && placeB.isFeatureVisible);
 						const sameTimePlaceKey = `${placeAStr} ${placeBStr} dashed`;
 						if (this._linkStrengths.has(sameTimePlaceKey)) {
@@ -179,4 +179,92 @@ class N2LinkSource extends VectorSource {
 		]
 	}
 }
+
+class N2SolidLinkSource extends N2LinkSource {
+	constructor() {
+		super();
+	}
+
+	_generateLinkStrengths() {
+		let previousData = [];
+		this._timeCoordinateData.forEach((currentData) => {
+			for (let i = 0; i < previousData.length; i++) {
+
+				const previousDataPoint = previousData[i];
+				const prevPointString = previousDataPoint.coordinates.toString();
+
+				for (let j = 0; j < currentData.length; j++) {
+
+					const currentDataPoint = currentData[j];
+					const currPointString = currentDataPoint.coordinates.toString();
+
+					/* Not drawing a link from a point to the same point */
+					if (prevPointString === currPointString) continue;
+
+					let linkStrengthKey = `${prevPointString} ${currPointString} default`;
+					if (prevPointString > currPointString) {
+						linkStrengthKey = `${currPointString} ${prevPointString} default`;
+					}
+
+					const lineStringVisibility = (previousDataPoint.isFeatureVisible && currentDataPoint.isFeatureVisible);
+
+					if (this._linkStrengths.has(linkStrengthKey)) {
+						this._linkStrengths.get(linkStrengthKey).strength += 1;
+						this._linkStrengths.get(linkStrengthKey).isLinkVisible = lineStringVisibility;
+					}
+					else {
+						this._linkStrengths.set(linkStrengthKey, {
+							start: previousDataPoint.coordinates,
+							end: currentDataPoint.coordinates,
+							places: [currentDataPoint.name, previousDataPoint.name],
+							isLinkVisible: lineStringVisibility,
+							strength: 1,
+							style: null
+						});
+					}
+				}
+			}
+			previousData = currentData;
+		});
+	}
+}
+
+class N2DottedLinkSource extends N2LinkSource {
+	constructor() {
+		super();
+	}
+
+	_generateLinkStrengths() {
+		this._timeCoordinateData.forEach((currentData) => {
+			if (currentData.length > 1) {
+				for (let m = 0; m < currentData.length - 1; m++) {
+					for (let n = m; n < currentData.length - 1; n++) {
+						const placeA = currentData[m];
+						const placeB = currentData[n+1];
+						const placeAStr = placeA.coordinates.toString();
+						const placeBStr = placeB.coordinates.toString();
+						if (placeAStr === placeBStr) continue;
+						const dashedLinkVisibility = (placeA.isFeatureVisible && placeB.isFeatureVisible);
+						const sameTimePlaceKey = `${placeAStr} ${placeBStr} dashed`;
+						if (this._linkStrengths.has(sameTimePlaceKey)) {
+							this._linkStrengths.get(sameTimePlaceKey).isLinkVisible = dashedLinkVisibility;
+						}
+						else {
+							this._linkStrengths.set(sameTimePlaceKey, {
+								start: placeA.coordinates,
+								end: placeB.coordinates,
+								places: [placeA.name, placeB.name],
+								isLinkVisible: dashedLinkVisibility,
+								strength: 1,
+								style: [10, 20]
+							});
+						}
+					}
+				}
+			}
+		});
+	}
+}
+
+export { N2SolidLinkSource, N2DottedLinkSource };
 export default N2LinkSource;
