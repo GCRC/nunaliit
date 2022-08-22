@@ -2494,6 +2494,7 @@ var Show = $n2.Class({
 
 				// Are documents provided?
 				if( m.docs && m.docs.length > 0 ){
+					const docFrag = document.createDocumentFragment();
 					for(var i=0,e=m.docs.length; i<e; ++i){
 						var doc = m.docs[i];
 						var docId = doc._id;
@@ -2502,19 +2503,20 @@ var Show = $n2.Class({
 							.addClass('n2show_documentList_item')
 							.addClass('n2s_userEvents')
 							.attr('nunaliit-document',docId)
-							.appendTo($elem);
+							.appendTo(docFrag);
 						
 						var $a = $('<a>')
 							.attr('href','#')
 							.appendTo($doc);
 	
 						_this._displayDocumentBrief($a, doc);
-					};
-
+					}
+					$elem.append(docFrag);
 					_this.fixElementAndChildren($elem, {}, null);
 					
 				// If documents are not provided, docIds are compulsory
 				} else if( m.docIds && m.docIds.length > 0 ){
+					const docFrag = document.createDocumentFragment();
 					for(var i=0,e=m.docIds.length; i<e; ++i){
 						var docId = m.docIds[i];
 						
@@ -2522,7 +2524,7 @@ var Show = $n2.Class({
 							.addClass('n2show_documentList_item')
 							.addClass('n2s_userEvents')
 							.attr('nunaliit-document',docId)
-							.appendTo($elem);
+							.appendTo(docFrag);
 						
 						var $a = $('<a>')
 							.attr('href','#')
@@ -2530,8 +2532,8 @@ var Show = $n2.Class({
 							.attr('nunaliit-document',docId)
 							.text(docId)
 							.appendTo($doc);
-					};
-					
+					}
+					$elem.append(docFrag);
 					_this.fixElementAndChildren($elem, {}, null);
 					
 				// If empty, set class to report it
