@@ -116,7 +116,7 @@ class CinemapToGeoJSON {
                     if (foundPlace) {
                         if (foundPlace.nunaliit_geom.bbox) {
                             geometry.coordinates.push(
-                                foundPlace.nunaliit_geom.bbox.slice(0,2).reverse()
+                                foundPlace.nunaliit_geom.bbox.slice(0,2)
                             );
                             isValidPlace = true;
                         }
@@ -124,12 +124,15 @@ class CinemapToGeoJSON {
                             const point = /POINT\(-?(\d{1,2}.\d+) -?(\d{1,2}.\d+)\)/.exec(foundPlace.nunaliit_geom.wkt);
                             if (point !== null) {
                                 geometry.coordinates.push(
-                                    point.slice(1).reverse()
+                                    point.slice(1)
                                 )
                                 isValidPlace = true;
                             }
                         }
                         // If 2 places but one is not real, single MULTIPOINT is generated
+                    }
+                    if (geomType === "Point") {
+                        geometry.coordinates = geometry.coordinates.flat();
                     }
                 });
                 if (isValidPlace) feature.geometry = geometry;
