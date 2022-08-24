@@ -971,7 +971,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			let timeLinks = [];
 			if (doc && doc.atlascine_cinemap && doc.atlascine_cinemap.timeLinks) {
-				timeLinks = doc.atlascine_cinemap.timeLinks;
+				timeLinks = [...doc.atlascine_cinemap.timeLinks];
 			}
 
 			timeLinks.sort((a,b) => {
