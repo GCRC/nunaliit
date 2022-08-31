@@ -247,6 +247,7 @@ class N2DottedLinkSource extends N2LinkSource {
 						const dashedLinkVisibility = (placeA.isFeatureVisible && placeB.isFeatureVisible);
 						const sameTimePlaceKey = `${placeAStr} ${placeBStr} dashed`;
 						if (this._linkStrengths.has(sameTimePlaceKey)) {
+							this._linkStrengths.get(sameTimePlaceKey).strength += 1;
 							this._linkStrengths.get(sameTimePlaceKey).isLinkVisible = dashedLinkVisibility;
 						}
 						else {
