@@ -329,9 +329,11 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 			_this.mediaDocIdToSrtDocs[this.docId].forEach(function(srtDoc){
 				menOpts.push({
 					value: srtDoc._id,
-					text: srtDoc.atlascine_subtitle.language
+					text: srtDoc.atlascine_subtitle.language,
+					lastUpdated: srtDoc.nunaliit_last_updated.time
 				})
 			});
+			menOpts.sort((a,b) => b.lastUpdated - a.lastUpdated);
 		}
 		
 		if (menOpts.length > 0){
