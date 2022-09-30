@@ -26,6 +26,7 @@ import { default as Projection } from 'ol/proj/Projection.js';
 import Tile from 'ol/layer/Tile.js';
 import WMTSTileGrid from 'ol/tilegrid/WMTS.js';
 import WKT from 'ol/format/WKT';
+import { getArea, getLength, getDistance } from 'ol/sphere';
 
 import mouseWheelZoom from 'ol/interaction/MouseWheelZoom.js';
 import { defaults as defaultsInteractionSet } from 'ol/interaction.js';
@@ -1670,6 +1671,9 @@ nunaliit2.n2es6 = {
 	ol_proj_transformExtent: transformExtent,
 	ol_extent_extend: extend,
 	ol_extent_isEmpty: isEmpty,
+	ol_sphere_getArea: getArea,
+	ol_sphere_getLength: getLength,
+	ol_sphere_getDistance: getDistance,
 	ol_format_WKT: WKT
 };
 
