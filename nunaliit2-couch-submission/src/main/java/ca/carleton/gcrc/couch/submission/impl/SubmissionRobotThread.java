@@ -44,6 +44,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 	private String vetterRole = "vetter";
 	private int noWorkDelay = DELAY_NO_WORK_POLLING;
 	private String atlasName = null;
+	private boolean autoApproveNewPublicDoc = true;
 	
 	public SubmissionRobotThread(SubmissionRobotSettings settings) throws Exception {
 		this.submissionDbDesignDocument = settings.getSubmissionDesignDocument();
@@ -209,7 +210,8 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		try {
 			currentDoc = documentDb.getDocument(docId);
 		} catch(Exception e) {
-			// ignore
+			//Will result in null currentDoc which is handled in if below
+			logger.error("Failed to get current document with id " + docId, e);
 		}
 		if( null == currentDoc 
 		 && null != revision ) {
@@ -240,6 +242,8 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 
 	public void performSubmittedWork(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
 		// Find roles associated with the user who submitted the change
+		String currentDocOwner = null;
+		String submittedDocOwner = null;
 		List<String> roles = new Vector<String>();
 		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
 		JSONArray jsonRoles = submissionInfo.optJSONArray("submitter_roles");
@@ -254,77 +258,86 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		JSONArray nunaliitLayers = null;
 		if( null != submittedDoc ){
 			nunaliitLayers = submittedDoc.optJSONArray("nunaliit_layers");
+			JSONObject subCreated = submittedDoc.optJSONObject("nunaliit_created");
+			if (null != subCreated) {
+				submittedDocOwner = subCreated.getString("name");
+			}
+		}
+
+		if(currentDoc != null) {
+			JSONObject nunaliitCreated = currentDoc.optJSONObject("nunaliit_created");
+			if (null != nunaliitCreated) {
+				currentDocOwner = nunaliitCreated.getString("name");
+			}
 		}
 
 		// Check if submission should be automatically approved
-		boolean approved = false;
 		for(String role : roles){
 			if( "_admin".equals(role) ){
-				approved = true;
-				break;
+				approveSubmission(submissionDoc);
+				return;
 			} else if( "administrator".equals(role) ){
-				approved = true;
-				break;
+				approveSubmission(submissionDoc);
+				return;
 			} else if( "vetter".equals(role) ){
-				approved = true;
-				break;
+				approveSubmission(submissionDoc);
+				return;
 			} else if( adminRole.equals(role) ){
-				approved = true;
-				break;
+				approveSubmission(submissionDoc);
+				return;
 			} else if( vetterRole.equals(role) ){
-				approved = true;
-				break;
+				approveSubmission(submissionDoc);
+				return;
 			}
 		}
 		
 		// Check if all layer roles are satisfied
-		if( !approved ){
-			boolean atLeastOneLayer = false;
-			boolean allLayerRoles = true;
-			
-			if( null != nunaliitLayers ){
-				for(int i=0;i<nunaliitLayers.length(); ++i){
-					String layerId = nunaliitLayers.optString(i);
-					if( null != layerId ){
-						if( "public".equals(layerId) ){
-							//atLeastOneLayer = true;
-							// Public layer, ignore
-						} else if( layerId.startsWith("public_") ){
-							//atLeastOneLayer = true;
-							// Public layer, ignore
-						} else {
-							atLeastOneLayer = true;
-							
-							if( rolesHaveAccessToLayerId(roles, layerId) ){
-								// OK
-							} else {
-								allLayerRoles = false;
-							}
+		boolean atLeastOneLayer = false;
+		boolean allLayerRoles = true;
+		boolean publicAndOwner = false;
+		
+		if( null != nunaliitLayers ){
+			for(int i=0;i<nunaliitLayers.length(); ++i){
+				String layerId = nunaliitLayers.optString(i);
+				if( null != layerId ){
+					if( "public".equals(layerId)  || layerId.startsWith("public_")){
+						String submitterName = submissionInfo.optString("submitter_name");
+						if((null != currentDocOwner && null != submitterName && currentDocOwner.equals(submitterName))
+							|| (autoApproveNewPublicDoc && null == currentDoc && null != submittedDocOwner && submittedDocOwner.equals(submitterName))) {
+							publicAndOwner = true;
+						}
+					} else {
+						atLeastOneLayer = true;
+						if( !rolesHaveAccessToLayerId(roles, layerId) ){
+							allLayerRoles = false;
 						}
 					}
 				}
 			}
-
-			// If the document is on a controlled layer and the user
-			// has access to all those layers, the we can automatically approve
-			if( atLeastOneLayer && allLayerRoles ){
-				approved = true;
-			};
 		}
 
-		if( approved ) {
-			CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+		// If the document is on a controlled layer and the user
+		// has access to all those layers, the we can automatically approve
+		// Or if document ownder by submitter and only public layers
+		if( atLeastOneLayer && allLayerRoles 
+			|| !atLeastOneLayer && publicAndOwner){
+			approveSubmission(submissionDoc);
+			return;
+		};
+
+		CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+		submissionDoc.getJSONObject("nunaliit_submission")
+			.put("state", "waiting_for_approval");
+		submissionDb.updateDocument(submissionDoc);
+		
+		this.mailNotifier.sendSubmissionWaitingForApprovalNotification(submissionDoc);
+	}
+
+	private void approveSubmission(JSONObject submissionDoc) throws Exception{
+		CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
 			submissionDoc.getJSONObject("nunaliit_submission")
 				.put("state", "approved");
 			submissionDb.updateDocument(submissionDoc);
-		} else {
-			CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
-			submissionDoc.getJSONObject("nunaliit_submission")
-				.put("state", "waiting_for_approval");
-			submissionDb.updateDocument(submissionDoc);
-			
-			this.mailNotifier.sendSubmissionWaitingForApprovalNotification(submissionDoc);
-		}
 	}
 
 	public void performApprovedWork(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
