@@ -981,24 +981,26 @@ POSSIBILITY OF SUCH DAMAGE.
 			const listHtml = timeLinks.reduce((accumulator, timeLink) => {
 				const commaTags = timeLink.tags.map(tag => tag.value).join(" ");
 
-				let displayImageLinkText = timeLink.relatedImage ? timeLink.relatedImage.split("/") : [];
-				if (displayImageLinkText.length > 1) {
-					displayImageLinkText = displayImageLinkText.pop();
+				let images = [];
+				if (typeof timeLink.relatedImage === "string") {
+					if (timeLink.relatedImage !== "") images = [{image: timeLink.relatedImage, caption: ""}];
 				}
 				else {
-					displayImageLinkText = _loc("No related image.");
-				} 
+					images = timeLink.relatedImage || [];
+				}
+				let tlImageHtml = images.reduce((acc, image) => {
+					let string = "";
+					if (image.image) string += `<p>${image.image.split('/').pop()}</p>`
+					if (image.caption) string += `<p style="white-space: pre-line;">${image.caption}</p>`
+					return acc + string;
+				}, "");
 
-				/*
-				fix here
-				*/
 				return `${accumulator}<li style="border: 1px solid #ccc; border-radius: 5px; margin-top: 0.5em; margin-bottom: 0.5em; list-style-type: none;">
 					<div style="padding: 1em;">
 						<h4>${timeLink.starttime} - ${timeLink.endtime}</h4>
 						<p>${commaTags ? commaTags : _loc("No tags added.")}</p>
 						<p>${timeLink.notes ? timeLink.notes : _loc("No notes added.")}</p>
-						<p>${displayImageLinkText}</p>
-						<p>${timeLink.mediaCaption ? timeLink.mediaCaption : _loc("No image caption added.")}</p>
+						${tlImageHtml}
 					</div>
 				</li>		
 				`;
