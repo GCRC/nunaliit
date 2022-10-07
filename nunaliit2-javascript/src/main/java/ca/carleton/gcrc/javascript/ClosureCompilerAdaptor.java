@@ -23,7 +23,7 @@ public class ClosureCompilerAdaptor {
 	@SuppressWarnings("unused")
 	public void verifyFiles(LibraryConfiguration config) throws Exception {
 		CompilerOptions compilerOptions = new CompilerOptions();
-		compilerOptions.setLanguage(LanguageMode.ECMASCRIPT_2015);
+		compilerOptions.setLanguage(LanguageMode.ECMASCRIPT_2020);
 		compilerOptions.setChecksOnly(true);
 		
 		if( false ){
@@ -76,7 +76,7 @@ public class ClosureCompilerAdaptor {
 
 	public void compress(LibraryConfiguration config, File outputFile) throws Exception {
 		CompilerOptions compilerOptions = new CompilerOptions();
-		compilerOptions.setLanguage(LanguageMode.ECMASCRIPT_2015);
+		compilerOptions.setLanguage(LanguageMode.ECMASCRIPT_2020);
 		CompilationLevel.SIMPLE_OPTIMIZATIONS.setOptionsForCompilationLevel(compilerOptions);
 
 		List<SourceFile> externs = Collections.emptyList();
