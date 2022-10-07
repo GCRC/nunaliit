@@ -276,9 +276,8 @@ POSSIBILITY OF SUCH DAMAGE.
 								'starttime': start
 								,'endtime': end
 								,'tags': []
-								,'relatedImage': ''
+								,'relatedImage': []
 								,'notes': ''
-								,'mediaCaption': ''
 //								,"linkRef": {
 //									"nunaliit_type": "reference"
 //									"doc": "stock.rwanda"
@@ -287,9 +286,8 @@ POSSIBILITY OF SUCH DAMAGE.
 							matchingLinks.push(newTimeLink);
 						}
 
-						let relatedImage = "";
+						let relatedImage = [];
 						let notes = "";
-						let mediaCaption = "";
 
 						matchingLinks.forEach(function(e) {
 							if (e.tags) {
@@ -301,7 +299,6 @@ POSSIBILITY OF SUCH DAMAGE.
 							/* This appears to only ever return one thing... */
 							relatedImage = e.relatedImage;
 							notes = e.notes;
-							mediaCaption = e.mediaCaption;
 						});
 
 						// Create Sentence Record
@@ -310,7 +307,6 @@ POSSIBILITY OF SUCH DAMAGE.
 							, end
 							, tags: totalTags
 							, relatedImage
-							, mediaCaption
 							, notes
 							, text
 						};
@@ -634,9 +630,8 @@ POSSIBILITY OF SUCH DAMAGE.
 							'starttime': start
 							,'endtime': end
 							,'tags': []
-							,'relatedImage': ''
+							,'relatedImage': []
 							,'notes': ''
-							,'mediaCaption': ''
 //							,"linkRef": {
 //								"nunaliit_type": "reference"
 //								"doc": "stock.rwanda"
@@ -679,32 +674,34 @@ POSSIBILITY OF SUCH DAMAGE.
 						}
 					}
 
-					// Check and verify adding new tag(s)
-					matchingLinks.forEach(function(timeLink) {
+					const tagNotesSelector = "n2WidgetAnnotationEditorTaggingNotes";
+					const newImages = [];
+					[...document.getElementsByClassName("n2WidgetAnnotationEditorTaggingImages")].forEach(container => {
+						[...container.children].forEach(imageSection => {
+							const newImage = {};
+							[...imageSection.children].forEach((child, index) => {
+								if (index === 0) {
+									newImage.image = child?.children[0]?.children[1]?.dataset.trueUrl;
+								}
+								else if (index === 1) {
+									newImage.caption = child?.children[0].value;
+								}
+							});
+							newImages.push(newImage);
+						});
+					});
+					const taggingNotes = document.getElementById(tagNotesSelector) ? document.getElementById(tagNotesSelector).value : "";
+
+					matchingLinks.forEach(timeLink => {
 						if (updateTimeLinkWithTags(timeLink, tagValues)) {
 							modified = true;
 						}
-					});
-
-					const mdcSelector = "div.n2WidgetAnnotation_formfieldSection > div.mdc-card > div.mdc-card__primary-action > div.n2card__primary";
-					const tagNotesSelector = "n2WidgetAnnotationEditorTaggingNotes";
-					const mediaCaptionSelector = "n2WidgetAnnotationEditorTaggingImageCaption";
-					const relatedImage = document.querySelector(mdcSelector) ? document.querySelector(mdcSelector).dataset.trueUrl : "";
-					const taggingNotes = document.getElementById(tagNotesSelector) ? document.getElementById(tagNotesSelector).value : "";
-					const mediaCaption = document.getElementById(mediaCaptionSelector) ? document.getElementById(mediaCaptionSelector).value : "";
-
-					matchingLinks.forEach(timeLink => {
-						/* I only expect this to run once */
-						if (timeLink.relatedImage !== relatedImage) {
-							timeLink.relatedImage = relatedImage;
+						if (timeLink.relatedImage !== newImages) {
+							timeLink.relatedImage = newImages;
 							modified = true;
 						}
 						if (timeLink.notes !== taggingNotes) {
 							timeLink.notes = taggingNotes;
-							modified = true;
-						}
-						if (timeLink.mediaCaption !== mediaCaption) {
-							timeLink.mediaCaption = mediaCaption;
 							modified = true;
 						}
 					});
@@ -992,6 +989,9 @@ POSSIBILITY OF SUCH DAMAGE.
 					displayImageLinkText = _loc("No related image.");
 				} 
 
+				/*
+				fix here
+				*/
 				return `${accumulator}<li style="border: 1px solid #ccc; border-radius: 5px; margin-top: 0.5em; margin-bottom: 0.5em; list-style-type: none;">
 					<div style="padding: 1em;">
 						<h4>${timeLink.starttime} - ${timeLink.endtime}</h4>
@@ -1682,11 +1682,67 @@ POSSIBILITY OF SUCH DAMAGE.
 				themeTagBox.style.boxShadow = "";
 			}
 
-			if (senData.length < 1) return;
-			const mdcCardSelector = "#relatedImageCardDisplay > div.mdc-card__primary-action > div.n2card__primary";
-			const imageCardDisplayId = "relatedImageCardDisplay";
+			const getRelatedImages = (senData) => {
+				if (senData.length > 0) {
+					const field = senData[0]?.relatedImage;
+					if (typeof field === "string" && field !== "") return [{image: field, caption: ""}];
+					else if (Array.isArray(field)) return field;
+					else return [];
+				}
+				return [];
+			};
+			const getNotes = (senData) => {
+				if (senData.length > 0) {
+					return senData[0]?.notes || "";
+				}
+				return "";
+			};
 
-			const getDialogSelection = function(doc) {
+			const createImageCard = (imageData) => {
+				const container = document.createElement("div");
+				
+				let displayImageText = imageData.image.split("/");
+				if (displayImageText.length > 1) displayImageText = displayImageText.pop();
+
+				const cardId = $n2.getUniqueId();
+				new $n2.mdc.MDCCard({
+					parentElem: container,
+					mdcId: cardId, 
+					label: displayImageText,
+					infoGenerator: () => { return displayImageText },
+					imageGenerator: () => { return `<img src=./db${imageData.image}>` },
+					initiallyOn: false
+				});
+
+				const imageCaptionField = new $n2.mdc.MDCTextField({
+					txtFldLabel: _loc("Image Caption"),
+					txtFldOutline: true,
+					txtFldArea: true,
+					txtFldFullWidth: true,
+					prefilled: imageData?.caption || "",
+					parentElem: container
+				});
+				
+				new $n2.mdc.MDCButton({
+					parentElem: container,
+					btnLabel: _loc("Remove Image"),
+					btnRaised: true,
+					onBtnClick: () => {
+						container.remove();
+					}
+				});
+
+				imagesContainer.append(container);
+
+				const relatedImageCaptionTextArea = imageCaptionField.getTextInput()[0];
+				relatedImageCaptionTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
+				relatedImageCaptionTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") ;
+				relatedImageCaptionTextArea.style.resize = "vertical";
+				document.querySelector(`#${cardId} > div.mdc-card__primary-action`).style.cursor = "default";
+				document.querySelector(`#${cardId} > div.mdc-card__primary-action > div.n2card__primary`).dataset.trueUrl = imageData.image;
+			};
+
+			const getDialogSelection = (doc) => {
 				if (!doc) return;
 				if (!doc._id) return;
 				if (!doc.nunaliit_attachments) return;
@@ -1707,50 +1763,36 @@ POSSIBILITY OF SUCH DAMAGE.
 				});
 
 				if (attachmentUrl !== null) {
-					const cardDisplay = document.querySelector(mdcCardSelector)
-					const trueUrl = `/${doc._id}/${attachmentUrl}`
-					const fullUrl = `./db${trueUrl}`;
-					cardDisplay.dataset.trueUrl = trueUrl;
-					cardDisplay.innerHTML = attachmentUrl;
-
-					const imgElement = cardDisplay.previousSibling;
-					if (imgElement === null) {
-						const newImg = document.createElement("img");
-						newImg.src = fullUrl
-						cardDisplay.parentNode.insertBefore(
-							newImg,
-							cardDisplay
-						)
-					}
-					else {
-						imgElement.src = fullUrl;
-					}
+					createImageCard({
+						image: `/${doc._id}/${attachmentUrl}`,
+						caption: "" // create the new caption
+					})
 				}
 				else {
 					alert(_loc("The selected document is not an image."))
 				}
 			}
 
+			/* Notes Area */
 			const timeLinkTextAreaId = "n2WidgetAnnotationEditorTaggingNotes";
-			const timeLinkNotes = senData[0].notes ? senData[0].notes : "";
 			new $n2.mdc.MDCTextField({
 				txtFldLabel: _loc("Notes"),
 				txtFldInputId: timeLinkTextAreaId,
 				txtFldOutline: true,
 				txtFldArea: true,
 				txtFldFullWidth: true,
+				prefilled: getNotes(senData),
 				parentElem: $formFieldSection
 			});
 			const timeLinkNotesTextArea = document.getElementById(timeLinkTextAreaId);
-			// excellent
 			timeLinkNotesTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
 			timeLinkNotesTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") 
-			timeLinkNotesTextArea.value = timeLinkNotes;
 			timeLinkNotesTextArea.style.resize = "vertical";
+			/* Notes Area */
 
 			new $n2.mdc.MDCButton({
 				parentElem: $formFieldSection,
-				btnLabel: _loc("Select Related Image"),
+				btnLabel: _loc("Add Image"),
 				btnRaised: true,
 				onBtnClick: () => {
 					_this.dialogService.searchForDocumentId({
@@ -1765,62 +1807,13 @@ POSSIBILITY OF SUCH DAMAGE.
 					});
 				}
 			});
+			const imagesContainer = document.createElement("div");
+			imagesContainer.classList.add("n2WidgetAnnotationEditorTaggingImages");
+			$formFieldSection.append(imagesContainer);
 
-			new $n2.mdc.MDCButton({
-				parentElem: $formFieldSection,
-				btnLabel: _loc("Remove Related Image"),
-				btnRaised: true,
-				onBtnClick: () => {
-					const imageCard = document.getElementById(imageCardDisplayId);
-					if (imageCard) {
-						const cardImgTag = imageCard.getElementsByTagName("img");
-						if (cardImgTag.length > 0) {
-							cardImgTag[0].remove();
-						}
-					}
-					document.querySelector(mdcCardSelector).dataset.trueUrl = "";
-					document.querySelector(mdcCardSelector).innerHTML = "";
-				}
+			getRelatedImages(senData).forEach(image => {
+				createImageCard(image);
 			});
-
-			const relatedImageLink = senData[0].relatedImage ? senData[0].relatedImage : "";
-			let displayImageLinkText = relatedImageLink.split("/");
-			if (displayImageLinkText.length > 1) {
-				displayImageLinkText = displayImageLinkText.pop();
-			}
-			else {
-				displayImageLinkText = "No related image.";
-			} 
-			new $n2.mdc.MDCCard({
-				parentElem: $formFieldSection,
-				mdcId: imageCardDisplayId,
-				label: _loc(displayImageLinkText),
-				infoGenerator: () => { return _loc(displayImageLinkText) },
-				imageGenerator: () => { 
-					if (displayImageLinkText !== "No related image.") {
-						return `<img src=./db${relatedImageLink}>`
-					}
-				 },
-				initiallyOn: false
-			});
-			document.querySelector(mdcCardSelector).dataset.trueUrl = relatedImageLink;
-			document.querySelector("#relatedImageCardDisplay > div.mdc-card__primary-action").style.cursor = "default";
-
-			const relatedImageCaptionId = "n2WidgetAnnotationEditorTaggingImageCaption";
-			const relatedMediaCaption = senData[0].mediaCaption ? senData[0].mediaCaption : "";
-			new $n2.mdc.MDCTextField({
-				txtFldLabel: _loc("Image Caption"),
-				txtFldInputId: relatedImageCaptionId,
-				txtFldOutline: true,
-				txtFldArea: true,
-				txtFldFullWidth: true,
-				parentElem: $formFieldSection
-			});
-			const relatedImageCaptionTextArea = document.getElementById(relatedImageCaptionId);
-			relatedImageCaptionTextArea.nextSibling.classList.add("mdc-notched-outline--notched");
-			relatedImageCaptionTextArea.nextSibling.children[1].children[0].classList.add("mdc-floating-label--float-above") 
-			relatedImageCaptionTextArea.value = relatedMediaCaption;
-			relatedImageCaptionTextArea.style.resize = "vertical";
 		},
 
 		/**
