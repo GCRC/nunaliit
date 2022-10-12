@@ -722,6 +722,13 @@ Polar Stereographic Projection Selector
 	height: 7em;
 }
 
+.n2WidgetAnnotationEditorTaggingImages > div > * {
+	margin-bottom: 0.35em;
+}
+.n2WidgetAnnotationEditorTaggingImages > div > button.n2s_attachMDCButton {
+	background-color: #b00020;
+}
+
 /* active state */
 .input_group_for_customMDC input:focus ~ .bar:before, input:focus ~ .bar:after {
   width:50%;
