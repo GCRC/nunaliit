@@ -101,11 +101,11 @@ div.ol-unselectable.ol-control.cinemap-to-map-settings-control .settings-control
 
 
 /* Related Media Drawer */
-#relatedMediaDisplayDrawerImageContainer > img {
+.relatedMediaDisplayDrawerImageContainer > img {
 	width: 100%;
 }
 
-#relatedMediaDisplayDrawerImageContainer {
+.relatedMediaDisplayDrawerImageContainer {
 	margin-top: 2em;
 	margin-left: 1.5em;
 }
