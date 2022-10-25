@@ -1772,7 +1772,7 @@ class N2MapCanvas  {
 	}
 
 	_displayNotificationImage(featureData) {
-		const { relatedImage } = featureData;
+		let { relatedImage } = featureData;
 
 		this.mediaDrawerState.imageStates.forEach(state => {
 			state.pzState.destroy();
@@ -1782,6 +1782,7 @@ class N2MapCanvas  {
 		const container = this.mediaDrawerState.containerElement[0];
 		while (container.firstChild && container.removeChild(container.firstChild));
 
+		if (typeof relatedImage === "string") relatedImage = [{image: relatedImage}];
 		relatedImage.forEach(image => {
 			this._mediaDrawerRender(image);
 		});
