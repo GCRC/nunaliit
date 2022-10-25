@@ -1765,10 +1765,16 @@ POSSIBILITY OF SUCH DAMAGE.
 				});
 
 				if (attachmentUrl !== null) {
+					const media = doc?.atlascine_media;
+					let defaultCaption = "";
+					if (media.name) defaultCaption += media.name + "\n";
+					if (media.caption) defaultCaption += media.caption + "\n";
+					if (media.credit) defaultCaption += media.credit;
+					if (defaultCaption.slice(-1) === "\n") defaultCaption = defaultCaption.slice(0, -1);
 					createImageCard({
 						image: `/${doc._id}/${attachmentUrl}`,
-						caption: "" // create the new caption
-					})
+						caption: defaultCaption
+					});
 				}
 				else {
 					alert(_loc("The selected document is not an image."))
