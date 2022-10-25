@@ -1550,6 +1550,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.appendTo($formField);
 			var depot = this.dataDepot;
 			var senData = depot.getData();
+			let addImageButton = null;
 
 			var lastThemeTags = this._buildThemeTagProfiles(senData);
 			lastThemeTags = lastThemeTags || [];
@@ -1581,6 +1582,16 @@ POSSIBILITY OF SUCH DAMAGE.
 				return Object.entries(tagGroups).find(entry => {
 					return entry[1].includes(tagValue)
 				})
+			};
+
+			const checkIfPlacesPresent = (sentences) => {
+				for (const s of sentences) {
+					if (s.tags) {
+						return Object.keys(s.tags).some(k => {
+							return k.slice(-5) === "place"
+						});
+					}
+				}
 			};
 
 			// Add theme tags tagbox component.
@@ -1651,6 +1662,9 @@ POSSIBILITY OF SUCH DAMAGE.
 						addtar['type'] = 'place';
 						_this.dataDepot.addFullTag(addtar);
 						$n2.log('Adding tags', addtar);
+						if (checkIfPlacesPresent(_this.dataDepot.getData())) {
+							addImageButton.setDisabled(false);
+						}
 						break;
 					case 'DELETE':
 						value = target.chipText;
@@ -1661,6 +1675,9 @@ POSSIBILITY OF SUCH DAMAGE.
 						deltar['type'] = 'place';
 						_this.dataDepot.deleteTag(deltar);
 						$n2.log('Deleting tags', deltar);
+						if (!checkIfPlacesPresent(_this.dataDepot.getData())) {
+							addImageButton.setDisabled(true);
+						}
 						break;
 					default:
 						break;
@@ -1798,7 +1815,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			timeLinkNotesTextArea.style.resize = "vertical";
 			/* Notes Area */
 
-			new $n2.mdc.MDCButton({
+			addImageButton = new $n2.mdc.MDCButton({
 				parentElem: $formFieldSection,
 				btnLabel: _loc("Add Image"),
 				btnRaised: true,
@@ -1818,6 +1835,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			const imagesContainer = document.createElement("div");
 			imagesContainer.classList.add("n2WidgetAnnotationEditorTaggingImages");
 			$formFieldSection.append(imagesContainer);
+			if (lastPlaceTags.length < 1) addImageButton.setDisabled(true);
 
 			getRelatedImages(senData).forEach(image => {
 				createImageCard(image);

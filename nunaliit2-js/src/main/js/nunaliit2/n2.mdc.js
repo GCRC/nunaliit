@@ -143,6 +143,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		this.btnLabel = opts.btnLabel;
 		this.btnRaised = opts.btnRaised;
 		this.onBtnClick = opts.onBtnClick;
+		this.btn = null;
 
 		if (!this.parentElem) {
 			throw new Error('parentElem must be provided, to add a Material Design Button Component');
@@ -164,6 +165,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		$btn = $('<button>')
 			.attr('id', this.mdcId)
 			.addClass(this.mdcClasses.join(' '));
+		this.btn = $btn;
 
 		$('<div>').addClass('mdc-button__ripple')
 			.appendTo($btn);
@@ -190,6 +192,10 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 		if (showService) {
 			showService.fixElementAndChildren($('#' + this.mdcId));
 		}
+	},
+
+	setDisabled(bool) {
+		this.btn.get(0).disabled = bool;
 	}
 });
 
