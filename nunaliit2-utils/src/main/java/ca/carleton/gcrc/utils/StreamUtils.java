@@ -71,7 +71,6 @@ public class StreamUtils {
 		int bytesRead = reader.read(buffer);
 		while( bytesRead >= 0 ) {
 			writer.write(buffer, 0, bytesRead);
-
 			bytesRead = reader.read(buffer);
 		}
 	}

@@ -1727,10 +1727,8 @@ var Database = $n2.Class('couch.Database',{
 var UserDb = $n2.Class('couch.UserDb',Database,{
 	
 	initialize: function(server_,dbName_){
-		if( !dbName_ ){
-			dbName = '_users';
-		};
-		Database.prototype.initialize.call(this,{dbName:dbName_},server_);
+		var dbName = !dbName_ ? '_users' : dbName_;
+		Database.prototype.initialize.call(this,{dbName:dbName},server_);
 	}
 	
 	,createUser: function(opts_) {

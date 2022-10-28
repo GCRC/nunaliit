@@ -66,13 +66,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 				request.getInFileSizeMb());
 
 		// Report length and dimensions
-		if( null == videoInfo.getDurationInSec() ) {
-			request.setInDurationInSec( (float)0.0 );
-		} else {
-			request.setInDurationInSec(videoInfo.getDurationInSec());
-		}
-		request.setInHeight(videoInfo.getHeight().intValue());
-		request.setInWidth(videoInfo.getWidth().intValue());
+		populateMediaDimensionsParams(request, videoInfo);
 		
 		FFmpegMediaInfo outVideoInfo = null;
 		if( false == conversionRequired ) {
@@ -95,13 +89,7 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 			request.setConversionPerformed(true);
 
 			outVideoInfo = ffmpeg.getMediaInfo( outFile );
-			if( null == outVideoInfo.getDurationInSec() ) {
-				request.setOutDurationInSec( (float)0.0 );
-			} else {
-				request.setOutDurationInSec( outVideoInfo.getDurationInSec() );
-				request.setOutHeight(outVideoInfo.getHeight().intValue());
-				request.setOutWidth(outVideoInfo.getWidth().intValue());
-			}
+			populateMediaDimensionsParams(request, outVideoInfo);
 		}
 		
 		// Create thumbnail
@@ -444,4 +432,23 @@ public class MultimediaConverterImpl implements MultimediaConverter {
 		}
 		return null;
 	}
+
+	private void populateMediaDimensionsParams(final MultimediaConversionRequest request, FFmpegMediaInfo videoInfo) {
+		if( null == videoInfo.getDurationInSec() ) {
+			request.setInDurationInSec( (float)0.0 );
+		} else {
+			request.setInDurationInSec(videoInfo.getDurationInSec());
+		}
+		if (null == videoInfo.getHeight()) {
+			request.setInHeight(0);
+		} else {
+			request.setInHeight(videoInfo.getHeight().intValue());
+		}
+		if (null == videoInfo.getWidth()) {
+			request.setInWidth(0);
+		} else {
+			request.setInWidth(videoInfo.getWidth().intValue());
+		}
+	}
+
 }

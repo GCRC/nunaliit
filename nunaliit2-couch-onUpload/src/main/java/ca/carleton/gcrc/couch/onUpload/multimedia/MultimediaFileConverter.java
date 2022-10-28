@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Map;
 import java.util.Properties;
 
+import ca.carleton.gcrc.couch.onUpload.parser.ContentTypeDetector;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,13 +120,15 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 		try {
 
 			SystemFile sf = SystemFile.getSystemFile(file);
-			String mimeType = sf.getMimeType();
+			MediaType mediaType = ContentTypeDetector.detectMimeType(sf.getFile());
+			String mimeType = mediaType.toString();
 			String mimeEncoding = sf.getMimeEncoding();
 			result.setMimeType(mimeType);
 			result.setMimeEncoding(mimeEncoding);
-	
+
 			// Is it a known MIME type?
-			MultimediaClass aClass = MimeUtils.getMultimediaClassFromMimeType(sf.getMimeType());
+			MultimediaClass aClass = MimeUtils.getMultimediaClassFromMimeType(mimeType);
+
 			if( MultimediaClass.AUDIO == aClass 
 			 || MultimediaClass.VIDEO == aClass 
 			 || MultimediaClass.IMAGE == aClass 
@@ -262,10 +265,7 @@ public class MultimediaFileConverter implements FileConversionPlugin {
 	}
 
 	@Override
-	public void performWork(
-		String work
-		,AttachmentDescriptor attDescription
-		) throws Exception {
+	public void performWork(String work, AttachmentDescriptor attDescription) throws Exception {
 
 		if( FileConversionPlugin.WORK_ANALYZE.equalsIgnoreCase(work) ) {
 			analyzeFile(attDescription);
