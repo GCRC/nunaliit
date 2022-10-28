@@ -291,6 +291,7 @@ public class ConnectionUtils {
 
 		os.flush();
 		os.close();
+		//conn.connect(); // TODO: 936
 		updateContextFromHeaderFields(ctxt,conn.getHeaderFields());
 		try {
 			checkResponseForError(conn);

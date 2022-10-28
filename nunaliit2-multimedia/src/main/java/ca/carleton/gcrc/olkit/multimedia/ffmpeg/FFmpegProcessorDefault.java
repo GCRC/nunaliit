@@ -129,7 +129,7 @@ public class FFmpegProcessorDefault implements FFmpegProcessor {
 
 			String line;
 			while ((line = reader.readLine()) != null)
-				System.out.println(line);
+				;
 			int exitValue = process.waitFor();
 
 			if( 0 != exitValue ){
