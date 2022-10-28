@@ -334,10 +334,9 @@ class N2MapCanvas  {
 		
 		this.mediaDrawerState = {
 			drawer: null,
-			image: null,
-			caption: null
+			containerElement: null,
+			imageStates: []
 		};
-		this.panzoomState = null;
 
 		this.initialFeatureDisplayType = opts.initialFeatureDisplay || "all";
 		this.initialCinemapToMapSettings = opts.initialCinemapToMapSettings;
@@ -940,14 +939,7 @@ class N2MapCanvas  {
 			addClasses: "relatedMediaDisplayDrawer",
 			customizedContentFn: (drawerOptions) => {
 				const {	container } = drawerOptions;
-				const imgContainer = document.createElement("div");
-				const img = document.createElement("img");
-				const caption = document.createElement("p");
-				imgContainer.setAttribute("id", "relatedMediaDisplayDrawerImageContainer");
-				imgContainer.append(img);
-				container.append(imgContainer, caption);
-				this.mediaDrawerState.image = img;
-				this.mediaDrawerState.caption = caption;
+				this.mediaDrawerState.containerElement = container;
 			}
 		});
 	}
@@ -1772,29 +1764,51 @@ class N2MapCanvas  {
 		}
 	}
 
-	_showFeatureRelatedImage(imageDataFeature) {
-		if (imageDataFeature.data && imageDataFeature.data._ldata
-			&& imageDataFeature.data._ldata.relatedImage !== "") {
-			this._displayNotificationImage(imageDataFeature.data._ldata);
+	_showFeatureRelatedImage(feature) {
+		if (feature && feature.data &&
+			feature.data._ldata && feature.data._ldata.relatedImage !== "" && feature.data._ldata.relatedImage.length > 0) {
+			this._displayNotificationImage(feature.data._ldata);
 		}
 	}
 
 	_displayNotificationImage(featureData) {
-		const { relatedImage, mediaCaption } = featureData;
-		this.mediaDrawerState.image.src = `./db${relatedImage}`;
-		this.mediaDrawerState.caption.innerText = mediaCaption || "";
-		this.mediaDrawerState.drawer.open();
-    
-		if (this.panzoomState !== null) {
-			this.panzoomState.destroy();
-			this.mediaDrawerState.image.parentElement.removeEventListener("wheel", this.panzoomState.zoomWithWheel);
-		}
-		this.panzoomState = Panzoom(this.mediaDrawerState.image, {
-			contain: "outside"
+		let { relatedImage } = featureData;
+
+		this.mediaDrawerState.imageStates.forEach(state => {
+			state.pzState.destroy();
+			state.element.parentElement.removeEventListener("wheel", state.pzState.zoomWithWheel);
 		});
-		this.mediaDrawerState.image.parentElement.addEventListener("wheel", this.panzoomState.zoomWithWheel);
+
+		const container = this.mediaDrawerState.containerElement[0];
+		while (container.firstChild && container.removeChild(container.firstChild));
+
+		if (typeof relatedImage === "string") relatedImage = [{image: relatedImage}];
+		relatedImage.forEach(image => {
+			this._mediaDrawerRender(image);
+		});
+
+		this.mediaDrawerState.drawer.open();
 	}
 	
+	_mediaDrawerRender(image) {
+		const container = this.mediaDrawerState.containerElement;
+		const imgContainer = document.createElement("div");
+		const imgEl = document.createElement("img");
+		imgEl.src = `./db${image.image}`
+		const captionEl = document.createElement("p");
+		captionEl.innerText = image.caption || "";
+		imgContainer.setAttribute("class", "relatedMediaDisplayDrawerImageContainer");
+		imgContainer.append(imgEl);
+		container.append(imgContainer, captionEl);
+
+		const pzState = Panzoom(imgEl, { contain: "outside" });
+		imgEl.parentElement.addEventListener("wheel", pzState.zoomWithWheel);
+		this.mediaDrawerState.imageStates.push({
+			element: imgEl,
+			pzState
+		});
+	}
+
 	_zoomToFeature(feature) {
 		const olmap = this.n2Map;
 		if (!olmap) return;

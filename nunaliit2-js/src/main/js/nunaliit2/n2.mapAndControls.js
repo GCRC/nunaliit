@@ -1302,6 +1302,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		    			type: 'mapGeometryAdded'
 		        		,geometry: feature.geometry
 		        		,projection: proj
+		        		,_origin: _this
 		    		});
 				}
 			}
