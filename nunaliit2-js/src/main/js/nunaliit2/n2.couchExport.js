@@ -59,6 +59,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 			,logger: null
 			,docIds: null
 			,docs: null
+			,enableGetExportSettings: true
 		},opts_);
 
 		var _this = this;
@@ -68,6 +69,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		this.atlasDesign = opts.atlasDesign;
 		this.config = opts.config;
 		this.logger = opts.logger;
+		this.enableGetExportSettings = opts.enableGetExportSettings;
 
 		// Accumulate docs and doc ids
 		this.docIds = [];
@@ -87,7 +89,9 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		} else {
 			this.exportService.checkAvailable({
 				onAvailable: function(){
-					_this._getExportSettings();
+					if(_this.enableGetExportSettings) {
+						_this._getExportSettings();
+					}
 				}
 				,onNotAvailable: function(){
 					_this._reportError( _loc('Export service is not available') );
