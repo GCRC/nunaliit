@@ -2175,10 +2175,10 @@ var AuthWidgetMenu = $n2.Class({
 
 			var protocol = window.location.protocol;
 			var host = window.location.host;
-
+			const subAtlas = window.location.pathname.slice(0, window.location.pathname.lastIndexOf("/"));
 			$('<a>')
 				.text(_loc('Tools'))
-				.attr('href', protocol + '//' + host + '/tools/index.html')
+				.attr('href', protocol + '//' + host + subAtlas + '/tools/index.html')
 				.appendTo(toolsPageLink);
 		};
 
