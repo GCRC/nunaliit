@@ -454,7 +454,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			// Add switch for aggregation
 			new $n2.mdc.MDCSwitch({
 				parentElem: $switchContainer,
-				label: 'Aggregation',
+				label: _loc('Aggregation'),
 				initiallyOn: _this.editorAggregateMode,
 				onChangeCallBack: function(checked) {
 					_this.dispatchService.send(DH, {
@@ -479,7 +479,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			// Add Save and Cancel Control Buttons.
 			new $n2.mdc.MDCButton({
 				parentElem: $formField,
-				btnLabel: 'Save',
+				btnLabel: _loc('Save'),
 				onBtnClick: function() {
 					_this._clickedSave();
 				}
@@ -488,7 +488,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			if (this.onCancel) {
 				new $n2.mdc.MDCButton({
 					parentElem: $formField,
-					btnLabel: 'Cancel',
+					btnLabel: _loc('Cancel'),
 					onBtnClick: function() {
 						_this._clickedCancel();
 					}
@@ -1019,7 +1019,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				btnRaised: true,
 				onBtnClick: () => {
 					new $n2.mdc.MDCDialog({
-						dialogTitle: "Annotations",
+						dialogTitle: _loc("Annotations"),
 						dialogHtmlContent: htmlString,
 						closeBtn: true,
 						scrollable: true
@@ -1083,7 +1083,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			new $n2.mdc.MDCButton({
 				parentElem: $parent,
 				mdcClasses: ['n2WidgetAnnotation_tagGroup_addNewGroupBtn'],
-				btnLabel: 'Add new tag group',
+				btnLabel: _loc('Add new tag group'),
 				onBtnClick: function() {
 					var $taggroupContainer = $('<div>')
 						.addClass('n2WidgetAnnotation_tagGroup_container')
@@ -1168,7 +1168,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					.appendTo($mdcColorInputDiv);
 
 				$('<label>')
-					.text('Color')
+					.text(_loc('Color'))
 					.appendTo($mdcColorInputDiv);
 
 				var $mdcTagInputDiv = $('<div>')
@@ -1189,19 +1189,19 @@ POSSIBILITY OF SUCH DAMAGE.
 					.appendTo($mdcTagInputDiv);
 
 				$('<label>')
-					.text('Tag Name')
+					.text(_loc('Tag Name'))
 					.appendTo($mdcTagInputDiv);
 
 				new $n2.mdc.MDCTagBox({
 					parentElem: $rightdiv,
-					label: 'TagGroupMember',
+					label: _loc('Tag Group Member'),
 					mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
 					chips: taginfo.children
 				});
 
 				new $n2.mdc.MDCButton({
 					parentElem: $footerdiv,
-					btnLabel: 'Delete',
+					btnLabel: _loc('Delete'),
 					onBtnClick: function() {
 						$formFieldSection.remove();
 					}
@@ -1256,7 +1256,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.appendTo($mdcInputDiv);
 
 			$('<label>')
-				.text('Color')
+				.text(_loc('Color'))
 				.appendTo($mdcInputDiv);
 
 			var $mdcInputDiv = $('<div>')
@@ -1276,19 +1276,19 @@ POSSIBILITY OF SUCH DAMAGE.
 				.appendTo($mdcInputDiv);
 
 			$('<label>')
-				.text('Tag Name')
+				.text(_loc('Tag Name'))
 				.appendTo($mdcInputDiv);
 
 			new $n2.mdc.MDCTagBox({
 				parentElem: $rightdiv,
-				label: 'TagGroupMember',
+				label: _loc('Tag Group Member'),
 				mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
 				chips: []
 			});
 
 			new $n2.mdc.MDCButton({
 				parentElem: $formFieldSection,
-				btnLabel: 'Delete',
+				btnLabel: _loc('Delete'),
 				onBtnClick: function() {
 					$formFieldSection.remove();
 				}
@@ -1315,7 +1315,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				$('<span>')
 					.addClass('n2transcript_label_name')
-					.text('Start: ')
+					.text(_loc('Start: '))
 					.appendTo($formFieldSection);
 
 				$('<span>')
@@ -1325,7 +1325,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				$('<span>')
 					.addClass('n2transcript_label_name')
-					.text('End: ')
+					.text(_loc('End: '))
 					.appendTo($formFieldSection);
 
 				$('<span>')
@@ -1370,7 +1370,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					new $n2.mdc.MDCTagBox({
 						parentElem: $formFieldSection,
 						autoCompleteViewName: 'tags',
-						label: 'Theme Tags',
+						label: _loc('Theme Tags'),
 						mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 						chips: lastThemeTags,
 						chipsetsUpdateCallback: function(tagList, operation, target) {
@@ -1399,7 +1399,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					new $n2.mdc.MDCTagBox({
 						parentElem: $formFieldSection,
 						autoCompleteViewName: 'tags',
-						label: 'Place Tags',
+						label: _loc('Place Tags'),
 						mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
 						chips: lastPlaceTags,
 						chipsetsUpdateCallback: function(tagList, operation, target) {
