@@ -37,7 +37,7 @@ class SettingsControl extends Control {
 		this.keyControlMap = new Map();
 
 		this.button = document.createElement("button");
-		this.button.title = "Settings";
+		this.button.title = _loc("Settings");
 		div.append(this.button);
 
 		this.panel = document.createElement("div");
