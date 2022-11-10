@@ -1323,7 +1323,7 @@ function addHamburgerMenu(){
 	// Tools Drawer
 	new $n2.mdc.MDCDrawer({
 		anchorBtnId: 'hamburger_menu_btn',
-		navHeaderTitle: 'Nunaliit Tools',
+		navHeaderTitle: 'Administrator Tools',
 		navItems: [
 			{"text": "User Management", "href": "./users.html", "activated": true},
 			{"text": "Approval for Uploaded Files", "href": "./upload.html"},
