@@ -514,8 +514,8 @@ var ExportApplication = $n2.Class('ExportApplication',{
 			progressDialog.close();
 			
 			new $n2.couchDialogs.AlertDialog({
-				title: _loc('Warning')
-				,message: _loc('Please, wait until download starts. It might take a while.')
+				title: _loc('Note')
+				,message: _loc('Please wait until download starts. This may take a while.')
 			});
 		};
 		
