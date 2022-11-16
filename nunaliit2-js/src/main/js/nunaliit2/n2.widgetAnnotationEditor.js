@@ -901,6 +901,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					$('<label>')
 						.attr('for', this.gloScaleFactorId)
 						.html(_loc('Global Scale Factor'))
+						.attr('title', _loc('global.scale.factor.tooltip'))
 						.appendTo($formFieldSection);
 
 					$('<input>')
@@ -913,6 +914,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					$('<label>')
 						.attr('for', this.gloTimeOffsetId)
 						.html(_loc('Global Time Offset'))
+						.attr('title', _loc('global.time.offset.tooltip'))
 						.appendTo($formFieldSection);
 					$('<input>')
 						.attr('id', this.gloTimeOffsetId)
@@ -923,6 +925,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					$('<label>')
 						.attr('for', this.cinemapDefaultPlaceZoomLevelId)
 						.html(_loc('Default Place Zoom Level'))
+						.attr('title', _loc('global.default.place.zoom.level.tooltip'))
 						.appendTo($formFieldSection);
 					$('<input>')
 						.attr('id', this.cinemapDefaultPlaceZoomLevelId)
