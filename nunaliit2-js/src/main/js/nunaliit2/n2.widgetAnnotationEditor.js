@@ -903,23 +903,23 @@ POSSIBILITY OF SUCH DAMAGE.
 						.html(_loc('Global Scale Factor'))
 						.attr('title', _loc('global.scale.factor.tooltip'))
 						.appendTo($formFieldSection);
-
 					$('<input>')
 						.attr('id', this.gloScaleFactorId)
 						.addClass('n2transcript_input input_scaleFactor')
 						.val(_sf)
 						.appendTo($formFieldSection);
-
 				} else if (se === 'globalTimeOffset') {
 					$('<label>')
 						.attr('for', this.gloTimeOffsetId)
 						.html(_loc('Global Time Offset'))
 						.attr('title', _loc('global.time.offset.tooltip'))
+						.css("display", "none")
 						.appendTo($formFieldSection);
 					$('<input>')
 						.attr('id', this.gloTimeOffsetId)
 						.addClass('n2transcript_input input_timeOffset')
 						.val(_sf)
+						.css("display", "none")
 						.appendTo($formFieldSection);
 				} else if (se === 'globalDefaultPlaceZoomLevel') {
 					$('<label>')
