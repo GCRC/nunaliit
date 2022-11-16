@@ -707,7 +707,11 @@ class N2MapCanvas  {
 					collapsed: false
 				},
 				rotate: false,
-				zoom: true
+				zoom: true,
+				zoomOptions: {
+					zoomInTipLabel: _loc("Zoom In"),
+					zoomOutTipLabel: _loc("Zoom Out")
+				}
 			})
 		});
 

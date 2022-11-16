@@ -172,7 +172,7 @@ var MDCButton = $n2.Class('MDCButton', MDC, {
 
 		$('<span>')
 			.addClass('mdc-button__label')
-			.text(this.btnLabel)
+			.text(_loc(this.btnLabel))
 			.appendTo($btn);
 
 		if (this.onBtnClick) {
