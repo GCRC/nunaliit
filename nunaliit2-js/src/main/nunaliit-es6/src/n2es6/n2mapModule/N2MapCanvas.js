@@ -707,7 +707,11 @@ class N2MapCanvas  {
 					collapsed: false
 				},
 				rotate: false,
-				zoom: true
+				zoom: true,
+				zoomOptions: {
+					zoomInTipLabel: _loc("Zoom In"),
+					zoomOutTipLabel: _loc("Zoom Out")
+				}
 			})
 		});
 
@@ -813,14 +817,14 @@ class N2MapCanvas  {
 		customMap.set("layergroup",
 			new LayerGroup({layers: [
 				new LayerGroup({
-					title: 'Background',
+					title: _loc('Background'),
 					layers: this.mapLayers
 				}), 
 				new LayerGroup({
-					title: 'Overlays',
+					title: _loc('Overlays'),
 					layers: [
 						new LayerGroup({
-							title: DONUT_VECTOR_LAYER_DISPLAY_NAME,
+							title: _loc(DONUT_VECTOR_LAYER_DISPLAY_NAME),
 							layers: this.overlayLayers
 						})
 					]	
@@ -834,8 +838,8 @@ class N2MapCanvas  {
 				startActive: false,
 				label: "",
 				collapseLabel: "",
-				tipLabel: "Layer Selector",
-				collapseTipLabel: "Layer Selector"
+				tipLabel: _loc("Layer Selector"),
+				collapseTipLabel: _loc("Layer Selector")
 			})
 		);
 
@@ -843,36 +847,36 @@ class N2MapCanvas  {
 			dispatchService: this.dispatchService,
 			settings: [
 				{
-					label: "Auto-recenter map",
-					hint: "Pan and zoom map to tagged places (takes zoomScale value into consideration)",
+					label: _loc("Auto-recenter map"),
+					hint: _loc("Pan and zoom map to tagged places (takes zoomScale value into consideration)"),
 					key: "fitMapToLatestMapTag",
 					initialState: this.fitMapToLatestMapTag,
 					sublevel: 0
 				},
 				{
-					label: "Animate",
-					hint: "Animate pan and zoom action",
+					label: _loc("Animate"),
+					hint: _loc("Animate pan and zoom action"),
 					key: "animateMapFitting",
 					initialState: this.animateMapFitting,
 					sublevel: 1
 				},
 				{
-					label: "Display images",
-					hint: "Display image attachment pane when tagged text contains image attachment",
+					label: _loc("Display images"),
+					hint: _loc("Display image attachment pane when tagged text contains image attachment"),
 					key: "showRelatedImages",
 					initialState: this.showRelatedImages,
 					sublevel: 0
 				},
 				{
-					label: "Zoom threshold",
-					hint: "Map symbols associated with a given place disappear when zoom level is above the place's zoomScale value",
+					label: _loc("Zoom threshold"),
+					hint: _loc("Map symbols associated with a given place disappear when zoom level is above the place's zoomScale value"),
 					key: "hideFeatureIfMapZoom",
 					initialState: this.hideFeatureIfMapZoom,
 					sublevel: 0
 				},
 				{
-					label: "Cluster symbols",
-					hint: "Aggregate rings and links when zoomed out",
+					label: _loc("Cluster symbols"),
+					hint: _loc("Aggregate rings and links when zoomed out"),
 					key: "isClustering",
 					initialState: this.isClustering,
 					sublevel: 0
@@ -1186,7 +1190,7 @@ class N2MapCanvas  {
 				ringLayer.set("alias", DONUT_VECTOR_LAYER_DISPLAY_NAME, false);
 				
 				const solidLinkLayer = new VectorLayer({
-					title: SOLID_LINE_VECTOR_LAYER_DISPLAY_NAME,
+					title: _loc(SOLID_LINE_VECTOR_LAYER_DISPLAY_NAME),
 					renderMode: "vector",
 					/*visible: false [if we do not want Links selected by default] */
 					source: this.solidLinkSource,
@@ -1194,7 +1198,7 @@ class N2MapCanvas  {
 				});
 
 				const dottedLinkLayer = new VectorLayer({
-					title: DASHED_LINE_VECTOR_LAYER_DISPLAY_NAME,
+					title: _loc(DASHED_LINE_VECTOR_LAYER_DISPLAY_NAME),
 					renderMode: "vector",
 					/*visible: false [if we do not want Links selected by default] */
 					source: this.dottedLinkSource,
