@@ -22,6 +22,10 @@
         '          "url": ""\n' +
         '        },\n' +
         '        "dateCreated": "",\n' +
+        '        "datePublished": "",\n' +
+        '        "identifier": "",\n' +
+        '        "inLanguage": "",\n' +
+        '        "isAccessibleForFree": "",\n' +
         '        "keywords": [],\n' +
         '        "temporalCoverage": "",\n' +
         '        "@type": "Dataset",\n' +
@@ -35,7 +39,7 @@
         '          "@type": "Place"\n' +
         '        },\n' +
         '        "@context": {\n' +
-        '          "@vocab": "http://schema.org/"\n' +
+        '          "@vocab": "https://schema.org/"\n' +
         '        },\n' +
         '        "url": ""\n' +
         '      }');

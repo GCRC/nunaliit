@@ -20,6 +20,10 @@
         "url": ""
       },
       "dateCreated": "",
+      "datePublished": "",
+      "identifier": "",
+      "inLanguage": [],
+      "isAccessibleForFree": "",
       "keywords": [
       ],
       "temporalCoverage": "",
@@ -34,7 +38,7 @@
         "@type": "Place"
       },
       "@context": {
-        "@vocab": "http://schema.org/"
+        "@vocab": "https://schema.org/"
       },
       "url": ""
     }
