@@ -24,7 +24,7 @@
         '        "dateCreated": "",\n' +
         '        "datePublished": "",\n' +
         '        "identifier": "",\n' +
-        '        "inLanguage": "",\n' +
+        '        "inLanguage": [],\n' +
         '        "isAccessibleForFree": "",\n' +
         '        "keywords": [],\n' +
         '        "temporalCoverage": "",\n' +
