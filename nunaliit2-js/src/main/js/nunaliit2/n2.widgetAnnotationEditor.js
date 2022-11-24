@@ -456,7 +456,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.appendTo($formField);
 
 			// Add switch for aggregation
-			new $n2.mdc.MDCSwitch({
+			/*new $n2.mdc.MDCSwitch({
 				parentElem: $switchContainer,
 				label: _loc('Aggregation'),
 				initiallyOn: _this.editorAggregateMode,
@@ -472,7 +472,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						});
 					}, 0);
 				}
-			});
+			});*/
 
 			// Add container div for theme tag box, place tag box, and
 			// comments text box.
