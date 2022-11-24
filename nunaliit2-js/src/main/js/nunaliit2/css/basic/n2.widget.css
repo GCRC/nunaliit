@@ -605,9 +605,8 @@ Polar Stereographic Projection Selector
     	"left right"
     	"left right"
     	"left right"
-    	"left right"
     	"footer footer";
-    grid-template-rows: 10px 1fr 1fr 1fr 2fr 10px;
+    grid-template-rows: 10px 1fr 1fr 2fr 10px;
     grid-template-columns: 2fr 1fr;
     grid-gap: 10px;
     margin-left: 20px;
