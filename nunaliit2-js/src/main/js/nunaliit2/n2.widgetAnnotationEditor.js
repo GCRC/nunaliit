@@ -44,7 +44,11 @@ POSSIBILITY OF SUCH DAMAGE.
 		TAGSETTING: 'tagsetting'
 	};
 
-	var context_menu_text = ['Tag Selection...', 'Group Tags...', 'Settings...'];
+	var context_menu_text = [
+		'widget.annotationEditor.contextMenu.timeLink',
+		'widget.annotationEditor.contextMenu.mapThemes',
+		'widget.annotationEditor.contextMenu.settings'
+	];
 
 	// Find the time links based on start & end time link values.
 	function findTimeLink(timeLinks, startTime, endTime) {
@@ -1001,7 +1005,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				return `${accumulator}<li style="border: 1px solid #ccc; border-radius: 5px; margin-top: 0.5em; margin-bottom: 0.5em; list-style-type: none;">
 					<div style="padding: 1em;">
 						<h4>${timeLink.starttime} - ${timeLink.endtime}</h4>
-						<p>${commaTags ? commaTags : _loc("No tags added.")}</p>
+						<p>${commaTags ? commaTags : _loc("widget.annotationEditor.settingsViewAllTimelinksNoAnnotationsText")}</p>
 						<p>${timeLink.notes ? timeLink.notes : _loc("No notes added.")}</p>
 						${tlImageHtml}
 					</div>
@@ -1086,7 +1090,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			new $n2.mdc.MDCButton({
 				parentElem: $parent,
 				mdcClasses: ['n2WidgetAnnotation_tagGroup_addNewGroupBtn'],
-				btnLabel: _loc('Add new tag group'),
+				btnLabel: _loc('widget.annotationEditor.mapThemeAddNewTheme'),
 				onBtnClick: function() {
 					var $taggroupContainer = $('<div>')
 						.addClass('n2WidgetAnnotation_tagGroup_container')
@@ -1192,12 +1196,12 @@ POSSIBILITY OF SUCH DAMAGE.
 					.appendTo($mdcTagInputDiv);
 
 				$('<label>')
-					.text(_loc('Tag Name'))
+					.text(_loc('widget.annotationEditor.mapThemeName'))
 					.appendTo($mdcTagInputDiv);
 
 				new $n2.mdc.MDCTagBox({
 					parentElem: $rightdiv,
-					label: _loc('Tag Group Member'),
+					label: _loc('widget.annotationEditor.mapThemeAssociatedTags'),
 					mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
 					chips: taginfo.children
 				});
@@ -1279,12 +1283,12 @@ POSSIBILITY OF SUCH DAMAGE.
 				.appendTo($mdcInputDiv);
 
 			$('<label>')
-				.text(_loc('Tag Name'))
+				.text(_loc('widget.annotationEditor.mapThemeName'))
 				.appendTo($mdcInputDiv);
 
 			new $n2.mdc.MDCTagBox({
 				parentElem: $rightdiv,
-				label: _loc('Tag Group Member'),
+				label: _loc('widget.annotationEditor.mapThemeAssociatedTags'),
 				mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
 				chips: []
 			});
