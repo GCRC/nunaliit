@@ -368,7 +368,7 @@ var GazetteerProcess = $n2.Class({
 		var dialogOptions = {
 			autoOpen: true
 			,modal: true
-			,title: _loc('Create feature from name')
+			,title: _loc('gazetteer.dialog.title')
 			,width: 'auto'
 			,close: function(event, ui){
 				var diag = $(event.target);
