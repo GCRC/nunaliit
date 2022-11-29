@@ -1201,8 +1201,8 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		
 		
 		
-		var addOrEditLabel = _loc('Add or Edit a Map Feature');
-		var cancelLabel = _loc('Cancel Feature Editing');
+		var addOrEditLabel = _loc('mapAndControls.feature.addOrEdit.label');
+		var cancelLabel = _loc('mapAndControls.feature.cancelEdit.label');
 		
 		this.refreshCallback = null;
 		var customService = this._getCustomService();
