@@ -368,7 +368,7 @@ var GazetteerProcess = $n2.Class({
 		var dialogOptions = {
 			autoOpen: true
 			,modal: true
-			,title: _loc('Create feature from name')
+			,title: _loc('gazetteer.dialog.title')
 			,width: 'auto'
 			,close: function(event, ui){
 				var diag = $(event.target);
@@ -1201,8 +1201,8 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		
 		
 		
-		var addOrEditLabel = _loc('Add or Edit a Map Feature');
-		var cancelLabel = _loc('Cancel Feature Editing');
+		var addOrEditLabel = _loc('mapAndControls.feature.addOrEdit.label');
+		var cancelLabel = _loc('mapAndControls.feature.cancelEdit.label');
 		
 		this.refreshCallback = null;
 		var customService = this._getCustomService();

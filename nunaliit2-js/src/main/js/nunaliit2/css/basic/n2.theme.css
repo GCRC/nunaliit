@@ -378,11 +378,11 @@
 .nunaliit_atlas .nunaliit_header_language {
 	background-image: url(./images/language_switcher.svg);
 	background-repeat: no-repeat;
-	background-size: 4em;
-	height: 3.2em;
+	background-size: 2em;
+	height: 2em;
 	cursor: pointer;
 	filter: invert(1);
-	padding: 6px 26px;
+	padding: 0px 20px;
 }
 .nunaliit_atlas .nunaliit_header_language a
 ,.nunaliit_atlas .nunaliit_header_language a:visited {

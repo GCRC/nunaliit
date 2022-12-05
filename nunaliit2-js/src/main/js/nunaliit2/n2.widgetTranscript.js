@@ -60,7 +60,11 @@ var DH = 'n2.widgetTranscript';
 //    }
 // }
  
-var context_menu_text = ['Tag Selection...', 'Group Tags...', 'Settings...'];
+var context_menu_text = [
+	'widget.annotationEditor.contextMenu.timeLink',
+	'widget.annotationEditor.contextMenu.mapThemes',
+	'widget.annotationEditor.contextMenu.settings'
+];
 //--------------------------------------------------------------------------
 var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	
