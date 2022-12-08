@@ -359,6 +359,9 @@ var GazetteerProcess = $n2.Class({
 			.addClass('n2MapAndControls_gazette_dialog');
 		
 		this.inputId = $n2.getUniqueId();
+		$(`<div><span>${_loc("gazetteer.dialog.subtitle.part1")}<a href="https://www.geonames.org/">${_loc("gazetteer.dialog.subtitle.urlText")}</a>${_loc("gazetteer.dialog.subtitle.part2")}</span></div>`)
+			.appendTo($dialog);
+
 		$('<div><input id="'+this.inputId+'" type="text"/></div>')
 			.appendTo($dialog);
 
