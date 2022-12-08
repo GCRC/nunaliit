@@ -1618,6 +1618,8 @@ POSSIBILITY OF SUCH DAMAGE.
 							if (validTag) {
 								const lineColour = tagColors[validTag[0]];
 								themeTagBox.style.boxShadow = `inset 0em -0.7em ${lineColour}`;
+								const chipHolder = themeTagBox.children[1].children;
+								chipHolder[chipHolder.length - 2].style.borderColor = lineColour;
 							}
 							addtar = $n2.extend({value: value}, target);
 							_this.dataDepot.addFullTag(addtar);
@@ -1707,6 +1709,16 @@ POSSIBILITY OF SUCH DAMAGE.
 				}
 				themeTagBox.style.boxShadow = "";
 			}
+
+			const chipHolder = themeTagBox.children[1].children;
+			
+			lastThemeTags.forEach((theme, index) => {
+				const validTag = findColourFromTag(theme.chipText);
+				if (validTag) {
+					const lineColour = tagColors[validTag[0]];
+					chipHolder[index].style.borderColor = lineColour;
+				}
+			});
 
 			const getRelatedImages = (senData) => {
 				if (senData.length > 0) {
