@@ -582,6 +582,7 @@ Polar Stereographic Projection Selector
 	max-width: 420px;
 	margin: 10px;
     border: 1px solid #ccc!important;
+	border-radius: 5px;
     padding: 10px;
     display: grid;
     grid-template-areas:
@@ -713,7 +714,7 @@ Polar Stereographic Projection Selector
 }
 
 .n2WidgetAnnotationEditorTaggingImages > div > * {
-	margin-bottom: 0.25em;
+	margin-bottom: 1.65em;
 }
 
 .n2WidgetAnnotationEditorTaggingImages > div > div > div.mdc-card__primary-action > img {
