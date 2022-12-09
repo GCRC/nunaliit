@@ -36,6 +36,40 @@
                     <div class="end"></div>
                 </div>
                 <div>
+                    <div class="label n2s_localize">Date Published</div>
+                    <div class="value">{{#:field}}datePublished,placeholder=YYYY-MM-DD{{/:field}}</div>
+                    <div class="end"></div>
+                </div>
+                <div>
+                    <div class="label n2s_localize">Identifier</div>
+                    <div class="value">{{#:field}}identifier,placeholder=Uniquely%20Identifying%20Value{{/:field}}</div>
+                    <div class="end"></div>
+                </div>
+                <div>
+                    <div class="label n2s_localize">Keywords</div></br>
+                    {{#:array keywords}}
+                        <div class="value">{{#:field}}.{{/:field}}</div>
+                    {{/:array}}
+                    <div class="end"></div>
+                </div>
+                <div>
+                    <div class="label n2s_localize">In Language</div></br>
+                    {{#:array inLanguage}}
+                        <div class="value">{{#:field}}.{{/:field}}</div>
+                    {{/:array}}
+                    <div class="end"></div>
+                </div>
+                <div style="padding: 5px 0px;">
+                    <div class="label n2s_localize">Is Accessible For Free</div>
+                    <div class="value">
+                        <select class="{{#:input}}isAccessibleForFree{{/:input}}">
+                            <option class="n2s_localize" value="True">True</option>
+                            <option class="n2s_localize" value="False">False</option>
+                        </select>
+                    </div>
+                    <div class="end"></div>
+                </div>
+                <div>
                     <div class="label n2s_localize">Temporal Coverage</div>
                     <div class="value">{{#:field}}temporalCoverage,placeholder=YYYY-MM-DD/..%20or%20YYYY-MM-DD/YYYY-MM-DD{{/:field}}</div>
                     <div class="end"></div>

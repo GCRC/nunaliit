@@ -71,8 +71,8 @@ public class ThresholdTest extends TestCase
 		assertTrue("Unexpected ogg/250000", audioThreshold.isConversionRequired(
 				null, null, "ogg", 250000L, null, null, 10L));
 
-		assertTrue("Unexpected aac/250001", audioThreshold.isConversionRequired(
-				null, null, DefaultThresholdAudio.DEFAULT_REQUIRED_AUDIO_ENCODING, 250001L, null, null, 10L));
+		assertFalse("MP3 should always return false and never be converted", audioThreshold.isConversionRequired(
+				null, null, "mp3", 250001L, null, null, 10L));
 	}
 
 	public void testVideoThreshold() {
