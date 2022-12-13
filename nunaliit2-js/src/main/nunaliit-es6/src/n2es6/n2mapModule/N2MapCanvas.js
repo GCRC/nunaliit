@@ -1151,6 +1151,7 @@ class N2MapCanvas  {
 				var charlieSource = new N2SourceWithN2Intent({
 					interaction: _this.interactionSet.selectInteraction,
 					source: betaSource,
+					wrapX: false,
 					dispatchService: _this.dispatchService,
 					linkCallback: (features) => {
 						this.solidLinkSource.refreshCallback(features);
