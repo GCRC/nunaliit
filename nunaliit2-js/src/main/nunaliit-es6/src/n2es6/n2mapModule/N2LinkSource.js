@@ -15,7 +15,7 @@ import Feature from 'ol/Feature.js';
  */
 class N2LinkSource extends VectorSource {
 	constructor() {
-		super();
+		super({wrapX: false});
 		this._pointFeatures = [];
 		this._linestringFeatures = [];
 		this._timeCoordinateData = new Map();

@@ -341,6 +341,7 @@ class N2FilterableLegendWidgetWithGraphic {
 
             const svgDonut = document.createElementNS(svgNode.namespaceURI, "circle");
             svgDonut.setAttribute("r", "5");
+            svgDonut.setAttribute("fill", "none");
             svgDonut.setAttribute("stroke", colour);
             svgDonut.setAttribute("stroke-width", "2");
             svgDonut.setAttribute("fill-opacity", "1");
