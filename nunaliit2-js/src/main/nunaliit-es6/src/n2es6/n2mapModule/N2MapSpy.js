@@ -59,10 +59,9 @@ class N2MapSpy {
 		});
 
 		// before rendering the layer, do some clipping
-		let i = 0;
-		this_.options.overlayLayers.forEach(ml => {
-			++i;
-			if (i > 1) {
+		this_.overlayLayers.forEach((ml, idx) => {
+			// doesnt clip layer if layerSpyIgnore config option === true 
+			if (this_.overlayInfos[idx]._layerInfo && this_.overlayInfos[idx]._layerInfo.layerSpyIgnore !== true) {
 				ml.on('prerender', function (event) {
 					const ctx = event.context;
 					ctx.save();
