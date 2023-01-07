@@ -537,6 +537,11 @@ public class SchemaAttribute {
 				throw new Exception("'id' should not be specified for attributes of type 'hover_sound'");
 			}
 
+		} else if( "key_media_ref".equals(type) ){
+			if( null != id ){
+				throw new Exception("'id' should not be specified for attributes of type 'key_media_ref'");
+			}
+
 		} else if( "createdBy".equals(type) ){
 			if( null != id ){
 				throw new Exception("'id' should not be specified for attributes of type 'createdBy'");
@@ -708,6 +713,22 @@ public class SchemaAttribute {
 				pw.println("\t\t\t</span>");
 				pw.println("\t\t{{/if}}");
 				pw.println("\t{{/nunaliit_hoverSound}}");
+
+			} else if( "key_media_ref".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'key_media_ref'");
+				}
+
+				pw.println("\t{{#nunaliit_key_media_ref}}");
+				pw.println("\t\t{{#if doc}}");
+				pw.println("\t\t\t<span class=\"nunaliit_key_media_ref "+schemaClass+"_key_media_ref\">");
+				pw.print("\t\t\t\t{{#doc}}");
+				if( !isFirst ) pw.print(" ");
+				pw.println("\t\t\t\t\t<span class=\"n2s_briefDisplay\">{{.}}</span>");
+				pw.println("\t\t\t\t{{/doc}}");
+				pw.println("\t\t\t</span>");
+				pw.println("\t\t{{/if}}");
+				pw.println("\t{{/nunaliit_key_media_ref}}");
 
 			} else if( "createdBy".equals(type) ){
 				pw.println("\t{{#nunaliit_created}}");
@@ -1028,6 +1049,19 @@ public class SchemaAttribute {
 				pw.println("\t\t\t\t</div>");
 				pw.println("\t\t\t{{/nunaliit_hoverSound}}");
 
+			} else if( "key_media_ref".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'key_media_ref'");
+				}
+
+				pw.println("\t\t\t{{#nunaliit_key_media_ref}}");
+				pw.println("\t\t\t\t<div class=\"nunaliit_key_media_ref\">");
+				pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{doc}}</a></div>");
+				pw.println("\t\t\t\t\t<div class=\"end\"></div>");
+				pw.println("\t\t\t\t</div>");
+				pw.println("\t\t\t{{/nunaliit_key_media_ref}}");
+
 			} else if( "tag".equals(type) ){
 				if( null != id ){
 					pw.println("\t\t\t{{#"+schemaStructure+"}}");
@@ -1319,6 +1353,24 @@ public class SchemaAttribute {
 				
 				pw.println("\t\t\t</div>");
 
+			} else if( "key_media_ref".equals(type) ){
+				if( null != id ){
+					throw new Exception("'id' should not be specified for attributes of type 'key_media_ref'");
+				}
+
+				String searchFunctionString = ",search=getRelatedMedia"; 
+				if( null != searchFunction ){
+					searchFunctionString = ",search="+encodeFieldParameter(searchFunction);
+				}
+
+				pw.println("\t\t\t<div class=\"nunaliit_key_media_ref\">");
+
+				pw.println("\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t<div class=\"value\">{{#:field}}nunaliit_key_media_ref,reference"+searchFunctionString+"{{/:field}}</div>");
+				pw.println("\t\t\t\t<div class=\"end\"></div>");
+				
+				pw.println("\t\t\t</div>");
+
 			} else if ( "tag".equals(type) ) {
 				if(null == id) {
 					throw new Exception("'id' is required for attribute of type 'tag'");
@@ -1407,6 +1459,13 @@ public class SchemaAttribute {
 			JSONObject attrExport = new JSONObject();
 			attrExport.put("select", "nunaliit_hoverSound.doc");
 			attrExport.put("label", "nunaliit_hoverSound");
+			attrExport.put("type", "text");
+			exportArr.put(attrExport);
+			
+		} else if( "key_media_ref".equals(type) ){
+			JSONObject attrExport = new JSONObject();
+			attrExport.put("select", "nunaliit_key_media_ref.doc");
+			attrExport.put("label", "nunaliit_key_media_ref");
 			attrExport.put("type", "text");
 			exportArr.put(attrExport);
 			
