@@ -23,6 +23,7 @@ define(function(require) {
 	, n2attributecreatedby = require('text!templates/snippet/n2attributecreatedby.json')
 	, n2attributecreatedtime = require('text!templates/snippet/n2attributecreatedtime.json')
 	, n2attributehoversound = require('text!templates/snippet/n2attributehoversound.json')
+	, n2attributekeymediaref = require('text!templates/snippet/n2attributekeymediaref.json')
   return {
 		n2attributedefault : n2attributedefault,
 		n2attributedefaulthtml : n2attributedefaulthtml,
@@ -46,7 +47,7 @@ define(function(require) {
 		n2attributegeometry : n2attributegeometry + n2attributeboolean,
 		n2attributecreatedby : n2attributecreatedby + n2attributeboolean,
 		n2attributecreatedtime : n2attributecreatedtime + n2attributeboolean,
-		n2attributehoversound : n2attributehoversound + n2attributeboolean
-
+		n2attributehoversound : n2attributehoversound + n2attributeboolean,
+		n2attributekeymediaref : n2attributekeymediaref + n2attributeboolean
   }
 });
