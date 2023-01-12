@@ -1,12 +1,8 @@
 package ca.carleton.gcrc.couch.onUpload.parser;
 
 import ca.carleton.gcrc.geom.geojson.GeoJsonParser;
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.Tika;
 import org.apache.tika.detect.XmlRootExtractor;
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.TikaInputStream;
-import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
