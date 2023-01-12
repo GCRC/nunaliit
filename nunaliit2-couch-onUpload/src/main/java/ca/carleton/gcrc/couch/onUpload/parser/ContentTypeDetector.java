@@ -2,6 +2,7 @@ package ca.carleton.gcrc.couch.onUpload.parser;
 
 import ca.carleton.gcrc.geom.geojson.GeoJsonParser;
 import org.apache.tika.config.TikaConfig;
+import org.apache.tika.Tika;
 import org.apache.tika.detect.XmlRootExtractor;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
@@ -67,16 +68,14 @@ public class ContentTypeDetector
 	public static MediaType detectMimeType(File file) {
 		MediaType mediaType = null;
 		if (file != null) {
-			TikaConfig tika;
-			Metadata metadata = new Metadata();
-			metadata.set(Metadata.RESOURCE_NAME_KEY, file.getName());
+
 			try {
-				tika = new TikaConfig();
-				mediaType = tika.getDetector().detect(TikaInputStream.get(file.toURI()), metadata);
+				Tika tika = new Tika();
+				mediaType = MediaType.parse(tika.detect(file.getName()));
 
 				log.debug("File {} has mime type {}", file.getName(), mediaType);
 			}
-			catch (TikaException | IOException e) {
+			catch ( Exception e) {
 				log.warn("Problem detecting file type: {}", e.getMessage());
 			}
 		}
