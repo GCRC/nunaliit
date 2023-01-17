@@ -765,12 +765,11 @@ class N2MapCanvas {
 			customMap.addControl(spyCtrl);
 		}
 
-		let scaleCtrl;
 		if (this.options.scaleLine === true || this.options.scaleLine === "true"){
 			const data = {
 				unit : this.options.scaleUnit
 			};
-			scaleCtrl = new N2MapScale(data);
+			const scaleCtrl = new N2MapScale(data);
 			customMap.addControl(scaleCtrl);
 		}
 
