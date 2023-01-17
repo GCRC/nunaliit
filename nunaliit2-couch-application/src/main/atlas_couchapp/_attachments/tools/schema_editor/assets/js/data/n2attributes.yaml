@@ -272,6 +272,21 @@
       type : input
       value : Label
 -
+  title: n2 attribute key media
+  fields:
+    type:
+      label : type
+      type : string
+      value : key_media_ref
+    n2id:
+      label: Id
+      type : input
+      value :
+    label:
+      label : label
+      type : input
+      value : Label
+-
   title: n2 attribute createdBy
   fields:
     type:
