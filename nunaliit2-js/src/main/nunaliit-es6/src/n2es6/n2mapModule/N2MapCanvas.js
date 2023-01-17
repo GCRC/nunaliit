@@ -47,6 +47,7 @@ import Swipe from 'ol-ext/control/Swipe';
 import { defaults as Defaults } from 'ol/control';
 
 import N2MapSpy from './N2MapSpy';
+import N2MapScale from './N2MapScale';
 
 const _loc = function (str, args) { return $n2.loc(str, 'nunaliit2', args); };
 const DH = 'n2.canvasMap';
@@ -762,6 +763,15 @@ class N2MapCanvas {
 			};
 			spyCtrl = new N2MapSpy(data); 
 			customMap.addControl(spyCtrl);
+		}
+
+		let scaleCtrl;
+		if (this.options.scaleLine === true || this.options.scaleLine === "true"){
+			const data = {
+				unit : this.options.scaleUnit
+			};
+			scaleCtrl = new N2MapScale(data);
+			customMap.addControl(scaleCtrl);
 		}
 
 		this.overlayInfos.forEach( (info, idx) => {
