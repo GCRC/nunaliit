@@ -804,8 +804,7 @@ class N2MapCanvas  {
 		var customPopup= new Popup({
 			popupClass: "",
 			positioning: 'auto',
-			autoPan: true,
-			autoPanAnimation: {duration: 250}
+			autoPan: false
 		});
 
 		this.popupOverlay = customPopup;
