@@ -10,16 +10,15 @@ public class DefaultThresholdAudio implements MultimediaConversionThreshold {
 	@Override
 	public boolean isConversionRequired(String videoFormat, Long videoRate, String audioFormat, Long audioRate,
 										Long imageWidth, Long imageHeight, Long fileSizeMb) {
-		boolean isConversionRequired = false;
-
-		if (audioRate == null
+		if (audioFormat.equals("mp3")) {
+			return false;
+		} else if (audioRate == null
 				|| audioRate > DEFAULT_MAX_BITRATE
 				|| !DEFAULT_REQUIRED_AUDIO_ENCODING.equalsIgnoreCase(audioFormat)
 		) {
-			isConversionRequired = true;
+			return true;
 		}
-
-		return isConversionRequired;
+		return false;
 	}
 
 	@Override

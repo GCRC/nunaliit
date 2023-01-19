@@ -943,6 +943,11 @@ var Service = $n2.Construct({
 					$n2.widgetExport.HandleWidgetAvailableRequests(m);
 				};
 
+				if( $n2.modelExportWidget 
+					&& $n2.modelExportWidget.widgetAvailable ){
+					   $n2.modelExportWidget.widgetAvailable(m);
+				   };
+
 				if( $n2.widgetModelBrowser 
 				 && $n2.widgetModelBrowser.HandleWidgetAvailableRequests ){
 					$n2.widgetModelBrowser.HandleWidgetAvailableRequests(m);
@@ -1058,6 +1063,11 @@ var Service = $n2.Construct({
 				 && $n2.widgetExport.HandleWidgetDisplayRequests ){
 					$n2.widgetExport.HandleWidgetDisplayRequests(m);
 				};
+
+				if( $n2.modelExportWidget 
+					&& $n2.modelExportWidget.widgetDisplay ){
+					   $n2.modelExportWidget.widgetDisplay(m);
+				   };
 
 				if( $n2.widgetModelBrowser 
 				 && $n2.widgetModelBrowser.HandleWidgetDisplayRequests ){
