@@ -39,6 +39,9 @@ import ca.carleton.gcrc.couch.export.records.ExportRecordsGeoJson;
 import ca.carleton.gcrc.couch.export.records.JSONArrayReaderIterator;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 
+import org.apache.jena.rdf.model.*;
+import org.apache.jena.vocabulary.*;
+
 @SuppressWarnings("serial")
 public class ExportServlet extends JsonServlet {
 
@@ -105,7 +108,9 @@ public class ExportServlet extends JsonServlet {
 
 			} else if( "records".equalsIgnoreCase(path) ) {
 				doPostRecords(request, response);
-					
+				
+			} else if( "rdf".equalsIgnoreCase(path)) {
+				doPostRdf(request, response);
 			} else {
 				throw new Exception("Unknown request: "+path);
 			}
@@ -113,6 +118,36 @@ public class ExportServlet extends JsonServlet {
 		} catch (Exception e) {
 			reportError(e, response);
 		}
+	}
+
+	protected void doPostRdf(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+			String personURI    = "http://somewhere/JohnSmith";
+			String givenName    = "John";
+			String familyName   = "Smith";
+			String fullName     = givenName + " " + familyName;
+			// create an empty model
+			Model model = ModelFactory.createDefaultModel();
+	
+			// create the resource
+			//   and add the properties cascading style
+			model.createResource(personURI)
+					 .addProperty(VCARD.FN, fullName)
+					 .addProperty(VCARD.N, 
+								  model.createResource()
+									   .addProperty(VCARD.Given, givenName)
+									   .addProperty(VCARD.Family, familyName));
+			
+			// now write the model in XML form to a file
+			try {
+			OutputStream os = response.getOutputStream();
+			model.write(os);
+
+		
+			os.flush();
+		} catch (Exception e) {
+			//swallow
+		}
+		
 	}
 
 	protected void doPostDefinition(HttpServletRequest request, HttpServletResponse response) throws ServletException {
