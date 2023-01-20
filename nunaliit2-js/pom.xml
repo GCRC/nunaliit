@@ -90,12 +90,11 @@
 						<goal>install-node-and-npm</goal>
 					</goals>
 					<configuration>
-						<nodeVersion>v11.2.0</nodeVersion>
-						<npmVersion>6.5.0</npmVersion>
+						<nodeVersion>v16.14.2</nodeVersion>
+						<npmVersion>8.5.0</npmVersion>
 						<installDirectory>tools</installDirectory>
 					</configuration>
 				</execution>
-	
 				<execution>
 					<id>npm-install-dependency</id>
                     <phase>generate-sources</phase>
@@ -104,7 +103,20 @@
 					</goals>
 					<!-- Optional configuration which provides for running any npm command -->
 					<configuration>
-						<arguments>install</arguments>
+						<arguments>install --no-audit</arguments>
+						<installDirectory>tools</installDirectory>
+						<workingDirectory>src/main/nunaliit-es6</workingDirectory>
+					</configuration>
+				</execution>
+				<execution>
+					<id>npm-audit-prod</id>
+                    <phase>generate-sources</phase>
+					<goals>
+						<goal>npm</goal>
+					</goals>
+					<!-- Optional configuration which provides for running any npm command -->
+					<configuration>
+						<arguments>audit --production</arguments>
 						<installDirectory>tools</installDirectory>
 						<workingDirectory>src/main/nunaliit-es6</workingDirectory>
 					</configuration>

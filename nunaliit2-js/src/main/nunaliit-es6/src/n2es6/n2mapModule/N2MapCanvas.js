@@ -26,6 +26,7 @@ import { default as Projection } from 'ol/proj/Projection.js';
 import Tile from 'ol/layer/Tile.js';
 import WMTSTileGrid from 'ol/tilegrid/WMTS.js';
 import WKT from 'ol/format/WKT';
+import { getArea, getLength, getDistance } from 'ol/sphere';
 
 import mouseWheelZoom from 'ol/interaction/MouseWheelZoom.js';
 import { defaults as defaultsInteractionSet } from 'ol/interaction.js';
@@ -41,8 +42,12 @@ import 'ol-layerswitcher/src/ol-layerswitcher.css';
 import 'ol-ext/dist/ol-ext.css';
 import EditBar from './EditBar';
 import Popup from 'ol-ext/overlay/Popup';
+import Swipe from 'ol-ext/control/Swipe';
 
 import { defaults as Defaults } from 'ol/control';
+
+import N2MapSpy from './N2MapSpy';
+import N2MapScale from './N2MapScale';
 
 const _loc = function (str, args) { return $n2.loc(str, 'nunaliit2', args); };
 const DH = 'n2.canvasMap';
@@ -589,6 +594,9 @@ class N2MapCanvas {
 		});
 	}
 
+	onSingleClick(evt) {
+	}
+
 	_drawMap() {
 		const _this = this;
 
@@ -652,7 +660,7 @@ class N2MapCanvas {
 
 		//Getting the resolution whenever a frame finish rendering;
 		customMap.on('postrender', function (evt) {
-			const res = evt.frameState.viewState.resolution;
+			const res = evt.frameState.viewState.resolution; 
 			const proj = _this.n2View.getProjection();
 			_this.resolution = res;
 			_this.proj = proj;
@@ -663,6 +671,10 @@ class N2MapCanvas {
 		//Everytime a change is detected. The N2CouchDbSource/N2ModelSource will be update
 		customMap.on('movestart', onMoveStart);
 
+		customMap.on('singleclick', function(evt) {
+			_this.onSingleClick(evt);
+		});
+		
 		function onMoveStart(evt) {
 			customMap.once('moveend', function (evt) {
 				//Clearing the popup
@@ -708,13 +720,16 @@ class N2MapCanvas {
 		/**
 		 * Two Groups : Overlay and Background
 		 */
+
+		const overlayTitle = this.options.overlayTitle ? this.options.overlayTitle : 'Overlays';
 		const overlayGroup = new LayerGroup({
-			title: 'Overlays',
+			title: overlayTitle, 
 			layers: this.overlayLayers
 		});
 
+		const bgTitle = this.options.backgroundTitle ? this.options.backgroundTitle : 'Background';
 		const bgGroup = new LayerGroup({
-			title: 'Background',
+			title: bgTitle, 
 			layers: this.mapLayers
 		});
 
@@ -722,47 +737,66 @@ class N2MapCanvas {
 			new LayerGroup({ layers: [bgGroup, overlayGroup] })
 		);
 
+		const legendActivationMode = this.options.legendActivationMode ? this.options.legendActivationMode : 'mouseover';
+		const legendStartActive = this.options.legendStartActive ? this.options.legendStartActive : false;
 		const customLayerSwitcher = new LayerSwitcher({
-			tipLabel: 'Legend' // Optional label for button
+			tipLabel: 'Legend', // Optional label for button
+			activationMode: legendActivationMode,
+			startActive: legendStartActive
 		});
 
 		customMap.addControl(customLayerSwitcher);
 
-		this.overlayInfos.forEach((info, idx) => {
-			if (info._layerInfo.options.wmsLegend && info.visibility) {
-				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl()
-				_this.dispatchService.send(DH,
-					{
-						type: 'imageUrlLegendDisplay'
-						, visible: true
-						, legendUrl: legendUrl
-						, wmsId: _this.overlayLayers[idx].ol_uid
-						, canvasName: _this.canvasName
-					})
+		let swipeCtrl;
+		if(this.options.layerSwipe) {
+			swipeCtrl = new Swipe();
+			customMap.addControl(swipeCtrl);
+		}
+
+		let spyCtrl;
+		if (this.options.layerSpy === true || this.options.layerSpy === "true"){ 
+			const data = { 
+				elem : this._getElem()[0],
+				radius : 150,
+				overlayLayers : this.overlayLayers,
+				overlayInfos : this.overlayInfos
+			};
+			spyCtrl = new N2MapSpy(data); 
+			customMap.addControl(spyCtrl);
+		}
+
+		if (this.options.scaleLine === true || this.options.scaleLine === "true"){
+			const data = {
+				unit : this.options.scaleUnit
+			};
+			const scaleCtrl = new N2MapScale(data);
+			customMap.addControl(scaleCtrl);
+		}
+
+		this.overlayInfos.forEach( (info, idx) => {
+			if(info._layerInfo.options.wmsLegend && info.visibility) {
+				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl();
+				const imagePayload = this._createImageLegendPaylod(legendUrl, _this.overlayLayers[idx].ol_uid, _this.canvasName, _this.options.layerSwipe, info, true)
+				_this.dispatchService.send(DH, imagePayload)
 			}
 			if (info._layerInfo.options.wmsLegend) {
 				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl()
-				_this.overlayLayers[idx].on('change:visible', function (e) {
-					if (e.oldValue) {
-						_this.dispatchService.send(DH,
-							{
-								type: 'imageUrlLegendDisplay'
-								, visible: false
-								, legendUrl: legendUrl
-								, wmsId: e.target.ol_uid
-								, canvasName: _this.canvasName
-							})
-					} else {
-						_this.dispatchService.send(DH,
-							{
-								type: 'imageUrlLegendDisplay'
-								, visible: true
-								, legendUrl: legendUrl
-								, wmsId: e.target.ol_uid
-								, canvasName: _this.canvasName
-							})
+				_this.overlayLayers[idx].on('change:visible', function(e) {
+					if(e.oldValue) {
+						const imagePayload = _this._createImageLegendPaylod(legendUrl, e.target.ol_uid, _this.canvasName, _this.options.layerSwipe, info, false)
+						_this.dispatchService.send(DH, imagePayload);
+ 					} else {
+						const imagePayload = _this._createImageLegendPaylod(legendUrl, e.target.ol_uid, _this.canvasName, _this.options.layerSwipe, info, true)
+						_this.dispatchService.send(DH, imagePayload);
 					}
 				});
+			}
+			if(this.options.layerSwipe && typeof info._layerInfo.swipe !== 'undefined') {
+				if(info._layerInfo.swipe === 'left') {
+					swipeCtrl.addLayer(_this.overlayLayers[idx]);	
+				} else if(info._layerInfo.swipe === 'right') {
+					swipeCtrl.addLayer(_this.overlayLayers[idx], true);
+				}
 			}
 		});
 
@@ -871,10 +905,32 @@ class N2MapCanvas {
 		this._centerMapOnFeature(feature);
 	}
 
-	_dispatch(m) {
+	_createImageLegendPaylod(legendUrl, ol_uid, canvasName, layerSwipe, info, visible) {
+		var imagePayload = {
+			type: 'imageUrlLegendDisplay'
+			,visible: visible
+			,legendUrl: legendUrl
+			,wmsId: ol_uid
+			,canvasName: canvasName
+		};
+		if(layerSwipe) {
+			if(info._layerInfo.swipe === 'left') {
+				imagePayload.label = info.name + '(left side)';
+			} else if(info._layerInfo.swipe === 'right') {
+				imagePayload.label = info.name + '(right side)';
+			} else {
+				imagePayload.label = info.name + '(both sides)';
+			}
+		} else {
+			imagePayload.label = info.name;
+		}
+		return imagePayload
+	}
+
+	_dispatch(m){
 		const dispatcher = this._getDispatchService();
-		if (dispatcher) {
-			dispatcher.send(DH, m);
+		if( dispatcher ) {
+			dispatcher.send(DH,m);
 		}
 	}
 
@@ -1476,17 +1532,11 @@ class N2MapCanvas {
 
 		} else if ('canvasGetStylesInUse' === type && this.canvasName === m.canvasName) {
 			m.stylesInUse = this._getMapStylesInUse();
-			this.overlayInfos.forEach((info, idx) => {
-				if (info._layerInfo.options.wmsLegend && info.visibility) {
-					const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl();
-					_this.dispatchService.send(DH,
-						{
-							type: 'imageUrlLegendDisplay'
-							, visible: true
-							, legendUrl: legendUrl
-							, wmsId: _this.overlayLayers[idx].ol_uid
-							, canvasName: _this.canvasName
-						})
+			this.overlayInfos.forEach( (info, idx) => {
+				if(info._layerInfo.options.wmsLegend && info.visibility) {
+					const imagePayload = this._createImageLegendPaylod(_this.overlayLayers[idx].values_.source.getLegendUrl(), 
+					_this.overlayLayers[idx].ol_uid, _this.canvasName, _this.options.layerSwipe, info, true);
+					_this.dispatchService.send(DH, imagePayload)
 				}
 			})
 		}
@@ -1630,6 +1680,9 @@ nunaliit2.n2es6 = {
 	ol_proj_transformExtent: transformExtent,
 	ol_extent_extend: extend,
 	ol_extent_isEmpty: isEmpty,
+	ol_sphere_getArea: getArea,
+	ol_sphere_getLength: getLength,
+	ol_sphere_getDistance: getDistance,
 	ol_format_WKT: WKT
 };
 
