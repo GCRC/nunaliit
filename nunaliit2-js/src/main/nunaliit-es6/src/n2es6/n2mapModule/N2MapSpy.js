@@ -58,6 +58,7 @@ class N2MapSpy {
 			customMap.render();
 		});
 
+		// before rendering the layer, do some clipping
 		this_.overlayLayers.forEach((ml, idx) => {
 			// doesnt clip layer if layerSpyIgnore config option === true 
 			if (this_.overlayInfos[idx]._layerInfo && this_.overlayInfos[idx]._layerInfo.layerSpyIgnore !== true) {
@@ -89,7 +90,7 @@ class N2MapSpy {
 					const ctx = event.context;
 					ctx.restore();
 				});
-			}
+			}	
 		});
 	}
 }
