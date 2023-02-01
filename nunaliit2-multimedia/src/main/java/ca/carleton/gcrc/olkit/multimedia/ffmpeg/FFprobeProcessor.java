@@ -19,13 +19,13 @@ public class FFprobeProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(FFprobeProcessor.class);
 
-    static public String ffprobeCommand = "ffprobe -v quiet -print_format json -show_streams %s";
+    private static final String FFPROBE_COMMAND = "ffprobe -v quiet -print_format json -show_streams %s";
 
     private FFprobeProcessor() {
     }
 
     public static List<FileStream> getFileStreams(File file) {
-        String cmd = String.format(ffprobeCommand, file.getPath());
+        String cmd = String.format(FFPROBE_COMMAND, file.getPath());
         Process process = null;
         try {
             process = Runtime.getRuntime().exec(cmd);
