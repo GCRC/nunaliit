@@ -2,7 +2,7 @@ package ca.carleton.gcrc.olkit.multimedia.ffmpeg;
 
 public class FileStream {
 
-    public String codecType;
+    private String codecType;
 
     public void setCodecType(String codecType) {
         this.codecType = codecType;

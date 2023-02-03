@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.stream.IntStream;
 
 public class FFprobeProcessor {
 
@@ -34,12 +35,14 @@ public class FFprobeProcessor {
             JSONObject json = new JSONObject(output);
             JSONArray streams = json.getJSONArray("streams");
 
-            List<FileStream> fileStreams = new ArrayList<FileStream>();
-            for (int i = 0; i < streams.length(); i++) {
-                FileStream fileStream = new FileStream();
-                fileStream.setCodecType(streams.getJSONObject(i).getString("codec_type"));
-                fileStreams.add(fileStream);
-            }
+            List<FileStream> fileStreams = IntStream.range(0, streams.length())
+                        .mapToObj(i -> {
+                            FileStream fileStream = new FileStream();
+                            fileStream.setCodecType(streams.getJSONObject(i).getString("codec_type"));
+                            return fileStream;
+                        })
+                        .collect(Collectors.toList());
+
             return fileStreams;
         } catch (IOException e) {
             log.warn("Problem getting file streams: {}", e.getMessage());

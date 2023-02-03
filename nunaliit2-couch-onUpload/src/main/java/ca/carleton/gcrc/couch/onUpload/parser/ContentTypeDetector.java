@@ -88,7 +88,7 @@ public class ContentTypeDetector {
             if (MultimediaClass.AUDIO == aClass || MultimediaClass.VIDEO == aClass) {
                 List<FileStream> fileStreams = FFprobeProcessor.getFileStreams(file);
                 if(fileStreams == null) {
-                    log.debug("Multimedia file doesn't have stream, filepath: {}", file.toPath());
+                    log.warn("Multimedia file doesn't have stream, filepath: {}", file.toPath());
                     return null;
                 }
                 for (FileStream stream: fileStreams) {
