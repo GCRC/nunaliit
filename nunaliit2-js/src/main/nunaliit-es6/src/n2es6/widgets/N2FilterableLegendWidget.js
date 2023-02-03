@@ -28,7 +28,6 @@ class N2FilterableLegendWidgetWithGraphic {
         this.DH = "N2FilterableLegendWidgetWithGraphic";
         this.name = options.name;
         this.dispatchService = options.dispatchService;
-        this.showService = options.showService;
         this.sourceModelId = options.sourceModelId;
         this.containerId = options.containerId;
         this.designatedCanvasName = options.sourceCanvasName;
@@ -179,7 +178,7 @@ class N2FilterableLegendWidgetWithGraphic {
             this.dispatchService.register(this.DH, this.eventNames.changeAllSelected, this.dispatchHandler);
         }
 	    
-        this.dispatchService.register(this.DH, "canvasReportStylesInUse", this.dispatchHandler);
+        //this.dispatchService.register(this.DH, "canvasReportStylesInUse", this.dispatchHandler);
 
         if (!this.isGraphicNone) {
             this.dispatchService.register(this.DH, "modelStateUpdated", this.dispatchHandler);
@@ -192,6 +191,16 @@ class N2FilterableLegendWidgetWithGraphic {
             if (modelStateMessage.state) {
                 this._sourceModelUpdated(modelStateMessage.state);
             }
+        }
+        const allStylesMsg = {
+            type: "canvasGetAllStyles",
+            canvasName: this.designatedCanvasName
+        };
+        this.dispatchService.synchronousCall(this.DH, allStylesMsg);
+        if (allStylesMsg.allCanvasStyles) {
+            this.state.allStyles = {
+                ...allStylesMsg.allCanvasStyles
+            };
         }
     }
 
@@ -226,7 +235,7 @@ class N2FilterableLegendWidgetWithGraphic {
                 this._sourceModelUpdated(state);
             }
         }
-        else if (type === "canvasReportStylesInUse") {
+        /*else if (type === "canvasReportStylesInUse") {
             const { canvasName, stylesInUse } = message;
             if (canvasName !== this.designatedCanvasName) return;
             this.state.allStyles = {
@@ -234,7 +243,7 @@ class N2FilterableLegendWidgetWithGraphic {
                 , ...stylesInUse
             };
             this._debouncedDrawLegend();
-        }
+        }*/
     }
 
     _sourceModelUpdated(modelState) {
@@ -651,7 +660,6 @@ export function widgetDisplay(message) {
 
         if (config && config.directory) {
             options.dispatchService = config.directory.dispatchService;
-            options.showService = config.directory.showService;
         }
         new N2FilterableLegendWidgetWithGraphic(options);
     }
