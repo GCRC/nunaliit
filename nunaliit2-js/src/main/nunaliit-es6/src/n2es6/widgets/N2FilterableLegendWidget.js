@@ -353,7 +353,6 @@ class N2FilterableLegendWidgetWithGraphic {
         const styleObjs = Object.values(this.state.allStyles).filter(s => s?.style?.label === matchingLabel);
         if (styleObjs.length === 0) return symbols;
         styleObjs.sort((a, b) => {
-            // a?.style?.id?.localeCompare(b?.style?.id)
             const aSum = a?.style?.id?.split("+")?.map(v => parseInt(v, 10))?.reduce((sum, v) => sum + v, 0);
             const bSum = b?.style?.id?.split("+")?.map(v => parseInt(v, 10))?.reduce((sum, v) => sum + v, 0);
             if (aSum && bSum) return aSum - bSum;
