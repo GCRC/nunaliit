@@ -3,7 +3,6 @@
 */
 import {Fill, RegularShape, Stroke, Style, Text} from 'ol/style.js';
 import CircleStyle from 'ol/style/Circle';
-import N2LRU from './N2LRU.js'; 
 
 
 const StyleNamesMapForAll = 
@@ -73,7 +72,6 @@ class N2MapStyles {
 	*/
 	constructor(){
 
-		//this.lrucache = new N2LRU(5000);
 		this._map = null;
 	}
 	setMap(map){
