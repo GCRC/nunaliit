@@ -2003,7 +2003,8 @@ nunaliit2.n2es6 = {
 		ol_proj_transformExtent : transformExtent,
 		ol_extent_extend : extend,
 		ol_extent_isEmpty : isEmpty,
-		ol_format_WKT: WKT
+		ol_format_WKT: WKT,
+		panzoom: Panzoom
 };
 
 nunaliit2.canvasMap = {
