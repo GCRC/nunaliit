@@ -28,6 +28,7 @@ public class FFprobeProcessor {
     public static List<FileStream> getFileStreams(File file) {
         String cmd = String.format(FFPROBE_COMMAND, file.getPath());
         Process process = null;
+        List<FileStream> fileStreams = null;
         try {
             process = Runtime.getRuntime().exec(cmd);
             BufferedReader br = new BufferedReader(new InputStreamReader(process.getInputStream()));
@@ -35,23 +36,22 @@ public class FFprobeProcessor {
             JSONObject json = new JSONObject(output);
             JSONArray streams = json.getJSONArray("streams");
 
-            List<FileStream> fileStreams = IntStream.range(0, streams.length())
+            fileStreams = IntStream.range(0, streams.length())
                         .mapToObj(i -> {
                             FileStream fileStream = new FileStream();
                             fileStream.setCodecType(streams.getJSONObject(i).getString("codec_type"));
                             return fileStream;
                         })
                         .collect(Collectors.toList());
-
-            return fileStreams;
         } catch (IOException e) {
             log.warn("Problem getting file streams: {}", e.getMessage());
-            return null;
         } finally {
             if (process != null) {
                 process.destroy();
             }
         }
+
+        return fileStreams;
     }
 
 }
