@@ -719,34 +719,73 @@ POSSIBILITY OF SUCH DAMAGE.
 				var oldTagGroups = doc.atlascine_cinemap.tagGroups;
 				var newTagColors = {};
 				var newTagGroups = {};
+
+				let invalidColour = false;
+				const hexColourRegex = /#(?:[0-9a-fA-F]{6})/;
+				const invalidColours = [];
+				let missingTags = false;
+				let invalidGroupTagName = false;
+				const invalidGroupTagNames = [];
+
 				$formfieldSections.each(function() {
 					var color = $(this).find('input.n2transcript_input.input_colorpicker').val();
 					var name = $(this).find('input.n2transcript_input.input_tagname').val();
 					var tagbox = $(this).find('div.n2-tag-box > div.mdc-chip-set');
 					var tagValues = (tagbox.first().data('tags'));
+					if (typeof name !== "undefined"
+						&& (name.length === 0
+							|| name.trim().length === 0)) {
+						invalidGroupTagName = true;
+						invalidGroupTagNames.push(name);
+					}
 					if (typeof color !== "undefined"
 						&& color.length === 7
+						&& hexColourRegex.test(color)
 						&& typeof name !== "undefined") {
 						newTagColors[name] = color;
+					}
+					else {
+						invalidColour = true;
+						invalidColours.push(color);
 					}
 
 					if (typeof tagValues !== "undefined"
 						&& Array.isArray(tagValues)
-						&& tagValues.length > 0) {
+						&& tagValues.length > 0
+						&& typeof name !== "undefined") {
 						newTagGroups[name] = tagValues;
 					}
+					else {
+						missingTags = true;
+					}
 				});
-
-				modified = tagGroupsIsModified(oldTagColors, oldTagGroups, newTagColors, newTagGroups);
-
-				if (tagGroupAndColourKeysMismatch(newTagGroups, newTagColors)) {
+				
+				if (invalidGroupTagName) {
 					new $n2.mdc.MDCDialog({
-						dialogHtmlContent: `${_loc("widget.annotationeditor.grouptag.colour.mismatch")}`
+						dialogHtmlContent: `${_loc("widget.annotationeditor.grouptag.invalid.name")}<br>${invalidGroupTagNames.toString()}`
 						, closeBtn: true
 					});
 					return;
 				}
 
+				if (invalidColour) {
+					new $n2.mdc.MDCDialog({
+						dialogHtmlContent: `${_loc("widget.annotationeditor.grouptag.invalid.colour")}<br>${invalidColours.toString()}`
+						, closeBtn: true
+					});
+					return;
+				}
+
+				if (missingTags) {
+					new $n2.mdc.MDCDialog({
+						dialogHtmlContent: `${_loc("widget.annotationeditor.grouptag.missing.tags")}`
+						, closeBtn: true
+					});
+					return;
+				}
+
+				modified = tagGroupsIsModified(oldTagColors, oldTagGroups, newTagColors, newTagGroups);
+				
 				if (modified) {
 					doc.atlascine_cinemap.tagColors = newTagColors;
 					doc.atlascine_cinemap.tagGroups = newTagGroups;
@@ -759,6 +798,13 @@ POSSIBILITY OF SUCH DAMAGE.
 							$n2.reportErrorForced(_loc('Unable to submit document: {err}',{err: err}));
 						}
 					});
+				}
+				else {
+					new $n2.mdc.MDCDialog({
+						dialogHtmlContent: `${_loc("widget.annotationeditor.grouptag.unmodified")}`
+						, closeBtn: true
+					});
+					return;
 				}
 			}
 
@@ -817,10 +863,6 @@ POSSIBILITY OF SUCH DAMAGE.
 						(extent.length === 1 && extent[0] === 0)
 					)
 				);
-			}
-
-			function tagGroupAndColourKeysMismatch(groups, colours) {
-				return (Object.keys(groups).sort().toString() === Object.keys(colours).sort().toString())
 			}
 
 			function tagGroupsIsModified(oldTagColors,
