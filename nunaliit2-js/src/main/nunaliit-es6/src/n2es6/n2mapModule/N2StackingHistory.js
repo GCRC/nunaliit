@@ -2,7 +2,6 @@
 * @module n2es6/n2mapModule/N2StackingHistory
 */
 import {listen, unlisten} from 'ol/events.js';
-import hash from 'object-hash';
 class N2StackingHistory {
 
 	constructor(opt_options){
