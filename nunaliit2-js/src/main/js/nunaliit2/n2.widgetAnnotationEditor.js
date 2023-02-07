@@ -566,7 +566,6 @@ POSSIBILITY OF SUCH DAMAGE.
 						break;
 					case CineAnnotationEditorMode.TAGGROUPING:
 						updateDocForTagGrouping(doc);
-						alert('Tag group info has been saved');
 						break;
 					case CineAnnotationEditorMode.TAGSETTING:
 						updateDocForTagSetting(doc);
@@ -740,6 +739,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				modified = tagGroupsIsModified(oldTagColors, oldTagGroups, newTagColors, newTagGroups);
 
+				if (tagGroupAndColourKeysMismatch(newTagGroups, newTagColors)) {
+					new $n2.mdc.MDCDialog({
+						dialogHtmlContent: `${_loc("widget.annotationeditor.grouptag.colour.mismatch")}`
+						, closeBtn: true
+					});
+					return;
+				}
+
 				if (modified) {
 					doc.atlascine_cinemap.tagColors = newTagColors;
 					doc.atlascine_cinemap.tagGroups = newTagGroups;
@@ -752,9 +759,6 @@ POSSIBILITY OF SUCH DAMAGE.
 							$n2.reportErrorForced(_loc('Unable to submit document: {err}',{err: err}));
 						}
 					});
-
-				} else {
-					alert('Nothing has been changed!');
 				}
 			}
 
@@ -813,6 +817,10 @@ POSSIBILITY OF SUCH DAMAGE.
 						(extent.length === 1 && extent[0] === 0)
 					)
 				);
+			}
+
+			function tagGroupAndColourKeysMismatch(groups, colours) {
+				return (Object.keys(groups).sort().toString() === Object.keys(colours).sort().toString())
 			}
 
 			function tagGroupsIsModified(oldTagColors,
