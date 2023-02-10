@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-nunaliit:
+  build-nunaliit-and-release:
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v3
@@ -21,3 +21,5 @@ jobs:
         run: echo "LATEST_TAG=$(git describe --tags $(git rev-list --branches=master --tags --max-count=1))" >> $GITHUB_ENV
       - name: Create release with GitHub CLI
         run: gh release create $LATEST_TAG nunaliit2-couch-sdk/target/*.tar.gz nunaliit2-couch-sdk/target/*.zip --generate-notes --latest --target master --verify-tag 
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
