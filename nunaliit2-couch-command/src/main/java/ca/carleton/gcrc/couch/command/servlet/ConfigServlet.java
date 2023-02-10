@@ -654,7 +654,7 @@ public class ConfigServlet extends JsonServlet {
 		if( false == mediaDir.exists() || false == mediaDir.isDirectory() ){
 			boolean created = mediaDir.mkdir();
 			if( false == created ){
-				throw new ServletException("Unable to media directory: "+ mediaDir.getAbsolutePath());
+				throw new ServletException("Unable to create media directory: "+ mediaDir.getAbsolutePath());
 			} else {
 				logger.info("Created media directory: "+ mediaDir.getAbsolutePath());
 			}

@@ -396,7 +396,7 @@ public class CommandConfig implements Command {
 		if( false == destExtra.exists() ){
 			boolean created = destExtra.mkdir();
 			if( false == created ){
-				throw new Exception("Unable to create directory: "+ destExtra.getAbsolutePath());
+				throw new Exception("Unable to create extra directory: "+ destExtra.getAbsolutePath());
 			} else {
 				log.info("Created extra directory: "+ destExtra.getAbsolutePath());
 			}
