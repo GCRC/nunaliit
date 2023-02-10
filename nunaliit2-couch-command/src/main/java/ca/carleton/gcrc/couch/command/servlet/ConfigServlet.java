@@ -101,7 +101,7 @@ public class ConfigServlet extends JsonServlet {
 	    }
 	    return new String(hexChars);
 	}
-	
+
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private File atlasDir = null;
@@ -124,22 +124,22 @@ public class ConfigServlet extends JsonServlet {
 	private TextAttachmentChangeListener robotsChangeListener;
 	private ModuleMetadataChangeListener moduleMetadataChangeListener;
 	private SecureRandom rng = null;
-	
+
 	public ConfigServlet() {
-		
+
 	}
 
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
-		
+
 		logger.info("Initializing Couch Configuration");
-		
+
 		// Build RNG
 		{
 			RngFactory rngFactory = new RngFactory();
 			rng = rngFactory.createRng();
 		}
-		
+
 		ServletContext servletContext = config.getServletContext();
 
 		// Figure out configuration directories
@@ -149,7 +149,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while computing configuration directories",e);
 			throw e;
 		}
-		
+
 		// Instantiate CouchDb client
 		try {
 			initCouchDbClient(servletContext);
@@ -157,7 +157,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while initializing couch client",e);
 			throw e;
 		}
-		
+
 		// Upload design documents for atlas server
 		try {
 			initServerDesignDocument(servletContext);
@@ -165,7 +165,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while updating server design document",e);
 			throw e;
 		}
-		
+
 		// Upload design documents for _users database
 		try {
 			initUserDesignDocument(servletContext);
@@ -173,7 +173,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while updating user design document",e);
 			throw e;
 		}
-		
+
 		// Configure multimedia
 		try {
 			initMultimedia(servletContext);
@@ -204,7 +204,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while initializing submission robot",e);
 			throw e;
 		}
-		
+
 		// Configure submission servlet
 		try {
 			initSubmission(servletContext);
@@ -212,7 +212,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while configuring submission servlet",e);
 			throw e;
 		}
-		
+
 		// Configure vetter daily notifications
 		try {
 			initVetterDailyNotifications(servletContext);
@@ -220,7 +220,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while initializing daily vetter notifications",e);
 			throw e;
 		}
-		
+
 		// Configure export
 		try {
 			initExport(servletContext);
@@ -228,7 +228,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while initializing export service",e);
 			throw e;
 		}
-		
+
 		// Configure date
 		try {
 			initDate(servletContext);
@@ -236,7 +236,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while initializing date service",e);
 			throw e;
 		}
-		
+
 		// Configure simplifiedGeometry
 		try {
 			initSimplifiedGeometry(servletContext);
@@ -244,7 +244,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while initializing simplified geometry service",e);
 			throw e;
 		}
-		
+
 		// Configure user
 		try {
 			initUser(servletContext);
@@ -252,7 +252,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error while initializing user service",e);
 			throw e;
 		}
-		
+
 		// Configure actions
 		try {
 			initActions(servletContext);
@@ -296,13 +296,13 @@ public class ConfigServlet extends JsonServlet {
 
 		File configurationDirectory = new File(atlasDir,"config");
 		File fallbackConfigurationDirectory = new File("/etc/nunaliit2");
-		
+
 		Properties props = new Properties();
 		boolean atLeastOneFileFound = false;
 
 		if( null != defaultValues ) {
 			atLeastOneFileFound = true;
-			
+
 			Enumeration<?> propNameEnum = defaultValues.propertyNames();
 			while(propNameEnum.hasMoreElements()){
 				Object keyObj = propNameEnum.nextElement();
@@ -313,8 +313,8 @@ public class ConfigServlet extends JsonServlet {
 				}
 			}
 		}
-		
-		
+
+
 		// Attempt to load default properties
 		if( loadDefault ){
 			File propFile = new File(fallbackConfigurationDirectory, baseName);
@@ -338,7 +338,7 @@ public class ConfigServlet extends JsonServlet {
 				}
 			}
 		}
-		
+
 		// Load up atlas-specific properties (overriding default properties)
 		{
 			File propFile = new File(configurationDirectory, baseName);
@@ -362,21 +362,21 @@ public class ConfigServlet extends JsonServlet {
 				}
 			}
 		}
-		
+
 		// Return null if nothing was read
 		if( false == atLeastOneFileFound ) {
 			props = null;
 		}
-		
+
 		return props;
 	}
-	
+
 	private void computeConfigurationDirectories(ServletConfig config) throws ServletException {
-		
+
 		if( null == config ) {
 			throw new ServletException("No servlet configuration provided");
 		}
-		
+
 		// Find directory for atlas
 		{
 			String atlasDirString = config.getInitParameter("atlasDir");
@@ -398,7 +398,7 @@ public class ConfigServlet extends JsonServlet {
 		} catch(Exception e) {
 			throw new ServletException("Problem reading atlas properties",e);
 		}
-		
+
 		// Pick up installation location
 		{
 			String installDirString = config.getInitParameter("installDir");
@@ -416,24 +416,24 @@ public class ConfigServlet extends JsonServlet {
 	}
 
 	private void initCouchDbClient(ServletContext servletContext) throws ServletException {
-		
+
 		// Load up configuration information
 		Properties props = new Properties();
-		
+
 		props.setProperty("couchdb.server", atlasProperties.getCouchDbUrl().toExternalForm());
 		props.setProperty("couchdb.user", atlasProperties.getCouchDbAdminUser());
 		props.setProperty("couchdb.password", atlasProperties.getCouchDbAdminPassword());
-		
+
 		// Create Couch Server from properties
 		CouchFactory factory = new CouchFactory();
 		try {
 			couchClient = factory.getClient(props);
-			
+
 		} catch(Exception e) {
 			logger.error("Unable to get Couch Server",e);
 			throw new ServletException("Unable to get Couch Server",e);
 		}
-		
+
 		// Create database
 		documentDatabaseName = atlasProperties.getCouchDbName();
 		try {
@@ -452,7 +452,7 @@ public class ConfigServlet extends JsonServlet {
 			throw new ServletException("Unable to connect to _users database",e);
 		}
 		logger.info("User database configured: "+userDb.getUrl());
-		
+
 		// Submission database
 		if( atlasProperties.isCouchDbSubmissionDbEnabled() ){
 			try {
@@ -485,7 +485,7 @@ public class ConfigServlet extends JsonServlet {
 		} catch(Exception e){
 			throw new ServletException("Unable to read server design document",e);
 		}
-		
+
 		// Update document
 		try {
 			DocumentUpdateProcess updateProcess = new DocumentUpdateProcess(documentDatabase);
@@ -493,7 +493,7 @@ public class ConfigServlet extends JsonServlet {
 		} catch(Exception e) {
 			throw new ServletException("Unable to update server design document",e);
 		}
-		
+
 		try {
 			couchDd = documentDatabase.getDesignDocument("server");
 		} catch (Exception e) {
@@ -511,7 +511,7 @@ public class ConfigServlet extends JsonServlet {
 	}
 
 	private void initMultimedia(ServletContext servletContext) throws ServletException {
-		
+
 		// Load up configuration information
 		Properties props = loadProperties("multimedia.properties", true);
 		if( null == props ){
@@ -524,12 +524,12 @@ public class ConfigServlet extends JsonServlet {
 	private void initMail(ServletContext servletContext) throws ServletException {
 		try {
 			MailDelivery mailDelivery = null;
-			
+
 			MailServiceRecipients mailServiceRecipients = new MailServiceRecipientsCouchDb(
-					atlasProperties.getAtlasName(), 
+					atlasProperties.getAtlasName(),
 					UserDesignDocumentImpl.getUserDesignDocument(couchClient)
 					);
-			
+
 			// Load up configuration information
 			Properties sensitiveProps = loadProperties("sensitive.properties", true);
 			Properties props = loadProperties("mail.properties", true, sensitiveProps);
@@ -537,14 +537,14 @@ public class ConfigServlet extends JsonServlet {
 				logger.error("Unable to load mail.properties");
 				mailNotification = new MailNotificationNull();
 				this.submissionNotifier = new SubmissionMailNotifierNull();
-				
+
 				mailDelivery = new MailDeliveryNull();
-				
+
 			} else {
 				// Create mail notification
 				MailNotificationImpl mail = null;
 				SubmissionMailNotifierImpl submissionNotifier = null;
-				
+
 				// Mail delivery
 				{
 					MailDeliveryImpl mailDeliveryImpl = new MailDeliveryImpl();
@@ -559,7 +559,7 @@ public class ConfigServlet extends JsonServlet {
 					,couchDd.getDatabase()
 					);
 				mail.setMailProperties(props);
-				
+
 				// Mail templates
 				{
 					MailMessageGenerator template = new UploadNotificationGenerator();
@@ -586,7 +586,7 @@ public class ConfigServlet extends JsonServlet {
 					,couchDd.getDatabase()
 					);
 				submissionNotifier.parseMailProperties(props);
-				
+
 				// Mail templates
 				{
 					MailMessageGenerator template = new SubmissionApprovalGenerator();
@@ -606,7 +606,7 @@ public class ConfigServlet extends JsonServlet {
 						);
 					submissionNotifier.setRejectionGenerator(couchdbTemplate);
 				}
-				
+
 				mailNotification = mail;
 				this.submissionNotifier = submissionNotifier;
 
@@ -632,7 +632,7 @@ public class ConfigServlet extends JsonServlet {
 
 				servletContext.setAttribute(MailServletConfiguration.CONFIGURATION_KEY, mailServletConfiguration);
 			}
-			
+
 		} catch(Exception e) {
 			mailNotification = new MailNotificationNull();
 			this.submissionNotifier = new SubmissionMailNotifierNull();
@@ -643,35 +643,40 @@ public class ConfigServlet extends JsonServlet {
 	}
 
 	private void initUpload(ServletContext servletContext) throws ServletException {
-		
+
 		Properties props = loadProperties("upload.properties", true);
 		if( null == props ){
 			props = new Properties();
 		}
-		
+
 		// Hard coded media dir overwrites user selection
 		File mediaDir = new File(atlasDir, "media");
 		if( false == mediaDir.exists() || false == mediaDir.isDirectory() ){
-			throw new ServletException("Invalid media directory: "+mediaDir.getAbsolutePath());
+			boolean created = mediaDir.mkdir();
+			if( false == created ){
+				throw new ServletException("Unable to media directory: "+ mediaDir.getAbsolutePath());
+			} else {
+				logger.info("Created media directory: "+ mediaDir.getAbsolutePath());
+			}
 		}
 		props.setProperty("upload.repository.dir", mediaDir.getAbsolutePath());
-		
+
 		servletContext.setAttribute(UploadUtils.PROPERTIES_ATTRIBUTE, props);
 
 		// Repository directory (this is where files are sent to)
 		File repositoryDir = UploadUtils.getMediaDir(servletContext);
-		
+
 		UploadListener uploadListener = new UploadListener(couchDd,repositoryDir);
 		servletContext.setAttribute(UploadServlet.OnUploadedListenerAttributeName, uploadListener);
 		OnUploadedListenerSingleton.configure(uploadListener);
-		
+
 		try {
 			UploadWorkerSettings settings = new UploadWorkerSettings(props);
 			settings.setAtlasName(atlasProperties.getAtlasName());
 			if( atlasProperties.isGeometrySimplificationDisabled() ){
 				settings.setGeometrySimplificationDisabled(true);
 			}
-			
+
 			// InReach configuration
 			File configDir = new File(atlasDir, "config");
 			if( configDir.exists() && configDir.isDirectory() ){
@@ -682,7 +687,7 @@ public class ConfigServlet extends JsonServlet {
 					InReachConfiguration.setInReachSettings(inReachSettings);
 				}
 			}
-			
+
 			uploadWorker = new UploadWorker(settings);
 			uploadWorker.setDocumentDbDesign(couchDd);
 			uploadWorker.setMediaDir(repositoryDir);
@@ -709,7 +714,7 @@ public class ConfigServlet extends JsonServlet {
 	}
 
 	private void initSubmissionRobot(ServletContext servletContext) throws ServletException {
-		
+
 		try {
 			// Is submission DB enabled
 			if( null != submissionDb ){
@@ -721,11 +726,11 @@ public class ConfigServlet extends JsonServlet {
 				settings.setSubmissionDesignDocument(submissionDesign);
 				settings.setUserDb(userDb);
 				settings.setMailNotifier(submissionNotifier);
-				
+
 				submissionRobot = new SubmissionRobot(settings);
-				
+
 				submissionRobot.start();
-				
+
 			} else {
 				logger.info("Submission database is not enabled");
 			}
@@ -737,7 +742,7 @@ public class ConfigServlet extends JsonServlet {
 	}
 
 	private void initVetterDailyNotifications(ServletContext servletContext) throws ServletException {
-		
+
 		try {
 			vetterDailyTask = MailVetterDailyNotificationTask.scheduleTask(
 				couchDd
@@ -796,7 +801,7 @@ public class ConfigServlet extends JsonServlet {
 	}
 
 	private void initUser(ServletContext servletContext) throws ServletException {
-		
+
 		try {
 			servletContext.setAttribute(UserServlet.ConfigAttributeName_UserDb, userDb);
 			servletContext.setAttribute(
@@ -804,7 +809,7 @@ public class ConfigServlet extends JsonServlet {
 				,atlasProperties.getAtlasName()
 				);
 			servletContext.setAttribute(UserServlet.ConfigAttributeName_DocumentDb, documentDatabase);
-			
+
 			byte[] serverKey = atlasProperties.getServerKey();
 			if( null != serverKey ) {
 				ByteBuffer serverKeyBuffer = ByteBuffer.wrap( serverKey );
@@ -836,7 +841,7 @@ public class ConfigServlet extends JsonServlet {
 			logger.error("Error configuring submission servlet",e);
 			throw new ServletException("Error configuring submission servlet",e);
 		}
-		
+
 		try {
 			servletContext.setAttribute(UserServlet.ConfigAttributeName_UserDb, userDb);
 			servletContext.setAttribute(
@@ -844,7 +849,7 @@ public class ConfigServlet extends JsonServlet {
 				,atlasProperties.getAtlasName()
 				);
 			servletContext.setAttribute(UserServlet.ConfigAttributeName_DocumentDb, documentDatabase);
-			
+
 			byte[] serverKey = atlasProperties.getServerKey();
 			if( null != serverKey ) {
 				ByteBuffer serverKeyBuffer = ByteBuffer.wrap( serverKey );
@@ -860,7 +865,7 @@ public class ConfigServlet extends JsonServlet {
 	}
 
 	private void initActions(ServletContext servletContext) throws ServletException {
-		
+
 		try {
 			this.actions = new ConfigServletActions(documentDatabase, documentDatabaseName);
 			this.actions.setSubmissionDbEnabled( atlasProperties.isCouchDbSubmissionDbEnabled() );
@@ -939,19 +944,19 @@ public class ConfigServlet extends JsonServlet {
 		} catch (Exception e) {
 			logger.error("Unable to shutdown daily vetter notifications", e);
 		}
-		
+
 		try {
 			documentDatabase.getChangeMonitor().shutdown();
 		} catch(Exception e) {
 			logger.error("Unable to shutdown change monitor on document database", e);
 		}
-		
+
 		try {
 			userDb.getChangeMonitor().shutdown();
 		} catch(Exception e) {
 			logger.error("Unable to shutdown change monitor on user database", e);
 		}
-		
+
 		try {
 			if( null != submissionDb ) {
 				submissionDb.getChangeMonitor().shutdown();
@@ -1002,97 +1007,97 @@ public class ConfigServlet extends JsonServlet {
 		HttpServletRequest req
 		,HttpServletResponse resp
 		) throws ServletException, IOException {
-		
+
 		try {
 			List<String> path = computeRequestPath(req);
-			
-			
+
+
 			if( path.size() < 1 ) {
 				JSONObject result = actions.getWelcome();
 				sendJsonResponse(resp, result);
 
-			} else if( path.size() == 1 
+			} else if( path.size() == 1
 			 && "getAtlases".equals(path.get(0)) ) {
 				List<AtlasInfo> atlases = actions.getNunaliitAtlases();
-				
+
 				JSONObject result = new JSONObject();
 				result.put("ok", true);
-				
+
 				JSONArray jsonAtlases = new JSONArray();
 				for(AtlasInfo info : atlases){
 					jsonAtlases.put( info.toJSON() );
 				}
 				result.put("atlases", jsonAtlases);
-				
+
 				sendJsonResponse(resp, result);
 
-			} else if( path.size() == 1 
+			} else if( path.size() == 1
 			 && "getServerRoles".equals(path.get(0)) ) {
 				Collection<String> roles = actions.getNunaliitServerRoles();
-				
+
 				JSONObject result = new JSONObject();
 				result.put("ok", true);
-				
+
 				JSONArray jsonRoles = new JSONArray();
 				for(String role : roles){
 					jsonRoles.put( role );
 				}
 				result.put("roles", jsonRoles);
-				
+
 				sendJsonResponse(resp, result);
 
-			} else if( path.size() == 1 
+			} else if( path.size() == 1
 			 && "getAtlasRoles".equals(path.get(0)) ) {
 				AtlasInfo currentInfo = actions.getCurrentAtlasInfo();
-				
+
 				Collection<String> roles = actions.getNunaliitAtlasRoles(currentInfo);
-				
+
 				JSONObject result = new JSONObject();
 				result.put("ok", true);
-				
+
 				JSONArray jsonRoles = new JSONArray();
 				for(String role : roles){
 					jsonRoles.put( role );
 				}
 				result.put("roles", jsonRoles);
-				
+
 				sendJsonResponse(resp, result);
 
-			} else if( path.size() == 1 
+			} else if( path.size() == 1
 			 && "testChannel".equals(path.get(0)) ) {
 				// This call should always return a different answer.
 				// It is used by clients to test if it is sitting behind
 				// a proxy that does not respect caching headings
-				
+
 				JSONObject result = new JSONObject();
 				result.put("ok", true);
-				
+
 				{
 					String version = VersionUtils.getVersion();
 					if( null != version ){
 						result.put("version", version);
 					}
 				}
-				
+
 				{
 					String buildStr = VersionUtils.getBuildString();
 					if( null != buildStr ){
 						result.put("build", buildStr);
 					}
 				}
-				
+
 				// Get 128 random bits
 				byte[] bytes = new byte[16];
 				rng.nextBytes(bytes);
 				String hexBytes = bytesToHex(bytes);
 				result.put("random", hexBytes);
-				
+
 				// Do not use sendJsonResponse. Instead, imitate CouchDB response headers
 				// sendJsonResponse(resp, result);
 				resp.setContentType("application/json");
 				resp.setCharacterEncoding("utf-8");
 				resp.addHeader("Cache-Control", "must-revalidate");
-				
+
 				OutputStreamWriter osw = new OutputStreamWriter(resp.getOutputStream(), "UTF-8");
 				result.write(osw);
 				osw.flush();
@@ -1100,7 +1105,7 @@ public class ConfigServlet extends JsonServlet {
 			} else {
 				throw new Exception("Invalid action requested");
 			}
-			
+
 		} catch(Exception e) {
 			reportError(e, resp);
 		}

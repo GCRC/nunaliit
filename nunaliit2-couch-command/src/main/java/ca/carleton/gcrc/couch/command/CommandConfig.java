@@ -9,6 +9,9 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import org.apache.commons.codec.binary.Base64;
 
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
@@ -16,7 +19,8 @@ import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.security.rng.RngFactory;
 
 public class CommandConfig implements Command {
-	
+
+	private static final Logger log = LoggerFactory.getLogger(CommandConfig.class);
 	final static private Pattern patternAtlasName = Pattern.compile("^[a-zA-Z][a-zA-Z0-9_]*$");
 	final static private Pattern patternDbName = Pattern.compile("^[a-z][a-z0-9]*$");
 
@@ -69,39 +73,39 @@ public class CommandConfig implements Command {
 		GlobalSettings gs
 		,Options options
 		) throws Exception {
-		
+
 		if( options.getArguments().size() > 1 ){
 			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
 		}
-		
+
 		// Check that atlas directory exists
 		File atlasDir = gs.getAtlasDir();
-		
+
 		// Load up properties
 		Properties props = getDefaultProperties();
 		AtlasProperties.readProperties(atlasDir, props);
-		
+
 		// Create a server key, if one does not exist
 		String serverKey = props.getProperty("server.key",null);
 		if( null == serverKey ){
 			SecureRandom rng = (new RngFactory()).createRng();
 			byte[] key = new byte[16];
 			rng.nextBytes(key);
-			
+
 			serverKey = Base64.encodeBase64String(key);
 			props.setProperty("server.key", serverKey);
 		}
-		
+
 		// Get user to enter properties
 		userInputProperties(gs, props);
-		
+
 		// Write properties
 		AtlasProperties.writeProperties(atlasDir, props);
 		writeExtras(gs, atlasDir, props);
 	}
-	
+
 	private void userInputProperties(GlobalSettings gs, Properties props) throws Exception {
-		
+
 		// Atlas Name
 		{
 			String atlasName = null;
@@ -123,7 +127,7 @@ public class CommandConfig implements Command {
 			}
 			props.put("atlas.name", atlasName);
 		}
-		
+
 		// CouchDB protocol
 		{
 			URL url = null;
@@ -180,7 +184,7 @@ public class CommandConfig implements Command {
 			submissionDbEnabled = getUserBooleanInput(gs, "Do you wish to manually verify each document submission?", defaultValue);
 			props.put("couchdb.submission.enabled", ""+submissionDbEnabled);
 		}
-		
+
 		// CouchDB submission database name
 		if( submissionDbEnabled ){
 			String dbName = null;
@@ -207,7 +211,7 @@ public class CommandConfig implements Command {
 			}
 			props.put("couchdb.submission.dbName", dbName);
 		}
-		
+
 		// CouchDB admin name
 		{
 			String adminName = null;
@@ -219,7 +223,7 @@ public class CommandConfig implements Command {
 			}
 			props.put("couchdb.admin.user", adminName);
 		}
-		
+
 		// CouchDB admin password
 		{
 			String adminPassword = null;
@@ -248,7 +252,7 @@ public class CommandConfig implements Command {
 					} catch(Exception e){
 						portString = null;
 					}
-					
+
 					if( null == portString ) {
 						gs.getErrStream().println("Invalid port. It must be a positive integer up to 65535");
 					}
@@ -260,15 +264,15 @@ public class CommandConfig implements Command {
 		// Google Map API key
 		{
 			String key = getUserStringInput(
-				gs, 
-				"Enter a Google Map API key (empty if not using)", 
-				props, 
+				gs,
+				"Enter a Google Map API key (empty if not using)",
+				props,
 				"google.mapapi.key"
 			);
 			props.put("google.mapapi.key", key);
 		}
 	}
-	
+
 	private String getUserStringInput(GlobalSettings gs, String prompt, Properties props, String propName) throws Exception {
 		String defaultValue = props.getProperty(propName);
 		return getUserStringInput(gs, prompt, defaultValue);
@@ -285,7 +289,7 @@ public class CommandConfig implements Command {
 			gs.getOutStream().print("]");
 		}
 		gs.getOutStream().print(": ");
-		
+
 		// Read answer
 		String line = null;
 		try {
@@ -308,7 +312,7 @@ public class CommandConfig implements Command {
 				userString = line;
 			}
 		}
-		
+
 		return userString;
 	}
 
@@ -328,7 +332,7 @@ public class CommandConfig implements Command {
 				gs.getOutStream().print(" [N]");
 			}
 			gs.getOutStream().print(": ");
-			
+
 			String line = null;
 			try {
 				line = reader.readLine();
@@ -360,25 +364,25 @@ public class CommandConfig implements Command {
 					}
 				}
 			}
-			
+
 			if( !validResponse ){
 				gs.getErrStream().println("A valid response must be provided: Y, N or blank to accept previous value.");
 			}
 		}
-		
+
 		return response;
 	}
 
 	private Properties getDefaultProperties() {
 		Properties props = new Properties();
-		
+
 		return props;
 	}
-	
+
 	private void writeExtras(GlobalSettings gs, File atlasDir, Properties props) throws Exception {
 		CopyMachine copyMachine = new CopyMachine();
 		copyMachine.setAcceptFileFilter(gs.getFsEntryNameFilter());
-		
+
 		File binDir = PathComputer.computeBinDir(gs.getInstallDir());
 		if( null != binDir ) {
 			copyMachine.addTextConversion("NUNALIIT_BIN_DIR", binDir.getAbsolutePath());
@@ -389,8 +393,15 @@ public class CommandConfig implements Command {
 		File templateDir = PathComputer.computeTemplatesDir( gs.getInstallDir() );
 		File sourceExtra = new File(templateDir, "extra");
 		File destExtra = new File(atlasDir, "extra");
+		if( false == destExtra.exists() ){
+			boolean created = destExtra.mkdir();
+			if( false == created ){
+				throw new Exception("Unable to create directory: "+ destExtra.getAbsolutePath());
+			} else {
+				log.info("Created extra directory: "+ destExtra.getAbsolutePath());
+			}
+		}
+
 		copyMachine.copyDir(new FSEntryFile(sourceExtra), destExtra);
-		
-		
 	}
 }
