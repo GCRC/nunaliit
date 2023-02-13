@@ -23,6 +23,8 @@ jobs:
           git fetch --tags
           echo "LATEST_TAG=$(git describe --tags $(git rev-list --branches=master --tags --max-count=1))" >> $GITHUB_ENV
       - name: Create release with GitHub CLI
-        run: gh release create $LATEST_TAG nunaliit2-couch-sdk/target/*.tar.gz nunaliit2-couch-sdk/target/*.zip --generate-notes --latest --target master --verify-tag 
+        run: |
+          gh release delete $LATEST_TAG --yes
+          gh release create $LATEST_TAG nunaliit2-couch-sdk/target/*.tar.gz nunaliit2-couch-sdk/target/*.zip --generate-notes --latest --target master --verify-tag 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
