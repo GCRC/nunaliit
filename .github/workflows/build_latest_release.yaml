@@ -15,10 +15,13 @@ jobs:
         with:
           java-version: '11.0.12'
           distribution: 'temurin'
+          cache: 'maven'
       - name: Build Nunaliit with Maven
         run: mvn clean install
       - name: Get latest tag across all branches
-        run: echo "LATEST_TAG=$(git describe --tags $(git rev-list --branches=master --tags --max-count=1))" >> $GITHUB_ENV
+        run: |
+          git fetch --tags
+          echo "LATEST_TAG=$(git describe --tags $(git rev-list --branches=master --tags --max-count=1))" >> $GITHUB_ENV
       - name: Create release with GitHub CLI
         run: gh release create $LATEST_TAG nunaliit2-couch-sdk/target/*.tar.gz nunaliit2-couch-sdk/target/*.zip --generate-notes --latest --target master --verify-tag 
         env:
