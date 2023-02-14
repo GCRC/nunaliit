@@ -753,7 +753,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				poster: thumbnailUrl
 				,alwaysShowControls : true
 				,pauseOtherPlayers : false
-				,features: ['volume', 'playpause', 'progress','sourcechooser']
+				,features: ['volume', 'playpause', 'current', 'duration', 'progress']
 			}); 
 
 			$video
