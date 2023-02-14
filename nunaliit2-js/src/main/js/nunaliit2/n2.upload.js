@@ -149,6 +149,7 @@ var Upload = $n2.Class({
 			// Add progress div, if required
 			if( progressKey ) {
 				var progressDiv = $('<div id="n2UploadProgress_'+progressKey+'" class="n2UploadProgress">'
+										+ _loc("upload.buildForm.progress.text")
 						               +'<div class="n2UploadProgressBarBackground">'
 						                  +'<div class="n2UploadProgressBar">'
 						             +'</div></div></div>');
@@ -240,6 +241,7 @@ var Upload = $n2.Class({
 			// Add progress div, if required
 			if( progressKey ) {
 				var progressDiv = $('<div id="n2UploadProgress_'+progressKey+'" class="n2UploadProgress">'
+										+ _loc("upload.submitForm.progress.text")
 						               +'<div class="n2UploadProgressBarBackground">'
 						                  +'<div class="n2UploadProgressBar">'
 						             +'</div></div></div>');
