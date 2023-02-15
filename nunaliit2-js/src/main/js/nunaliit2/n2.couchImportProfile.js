@@ -1777,9 +1777,12 @@ var AnalysisReport = $n2.Class({
 			if( !doc.nunaliit_layers ){
 				doc.nunaliit_layers = [];
 			};
-			if( doc.nunaliit_layers.indexOf(layerName) < 0 ){
-				doc.nunaliit_layers.push(layerName);
-			};
+			const layersToAdd = Array.isArray(layerName) ? layerName : [layerName];
+			layersToAdd.forEach(layer => {
+				if (!doc.nunaliit_layers.includes(layer)) {
+					doc.nunaliit_layers.push(layer);
+				}
+			});
 		};
 		
 		// Install import entry data to attachment
