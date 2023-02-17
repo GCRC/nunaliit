@@ -54,6 +54,10 @@ define([
           fields[name]["value"] = JSON.parse(JSON.stringify(value))
           this.set("fields", fields);
           break;
+        case "tag":
+          fields[name]["value"] = value
+          this.set("fields", fields);
+          break;
         case "textarea-split":
           var checkboxvalarr = _.map(value, function (t) { return $.trim(t["label"]) })
           fields[name]["value"] = checkboxvalarr
