@@ -12,10 +12,15 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.utils.PropertiesWriter;
 
 public class AtlasProperties {
 
+	static final private Logger logger = LoggerFactory.getLogger(AtlasProperties.class);
+	
 	static public AtlasProperties fromAtlasDir(File atlasDir) throws Exception {
 		Properties props = new Properties();
 		readProperties(atlasDir, props);
@@ -117,6 +122,7 @@ public class AtlasProperties {
 			InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
 			props.load(reader);
 		} catch(Exception e) {
+			logger.error("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
 			throw new Exception("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
 		} finally {
 			if( null != fis ){
