@@ -102,52 +102,25 @@ public class AtlasProperties {
 
 	static public void readProperties(File atlasDir, Properties props) throws Exception {
 		// install.properties
-		{
-			File installPropFile = new File(atlasDir,"config/install.properties");
-			if( installPropFile.exists() && installPropFile.isFile() ){
-				FileInputStream fis = null;
-				try {
-					fis = new FileInputStream(installPropFile);
-					InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
-					props.load(reader);
-
-				} catch(Exception e) {
-					throw new Exception("Unable to read config properties from: "+installPropFile.getAbsolutePath(), e);
-
-				} finally {
-					if( null != fis ){
-						try{
-							fis.close();
-						} catch(Exception e) {
-							// Ignore
-						}
-					}
-				}
-			}
-		}
+		File installPropFile = new File(atlasDir,"config/install.properties");
+		readConfigFile(installPropFile, props);
 
 		// sensitive.properties
-		{
-			File sensitivePropFile = new File(atlasDir,"config/sensitive.properties");
-			if( sensitivePropFile.exists() && sensitivePropFile.isFile() ){
-				FileInputStream fis = null;
-				try {
-					fis = new FileInputStream(sensitivePropFile);
-					InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
-					props.load(reader);
+		File sensitivePropFile = new File(atlasDir,"config/sensitive.properties");
+		readConfigFile(sensitivePropFile, props);
+	}
 
-				} catch(Exception e) {
-					throw new Exception("Unable to read config properties from: "+sensitivePropFile.getAbsolutePath(), e);
-
-				} finally {
-					if( null != fis ){
-						try{
-							fis.close();
-						} catch(Exception e) {
-							// Ignore
-						}
-					}
-				}
+	static public void readConfigFile(File configFile, Properties props) throws Exception {
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(configFile);
+			InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
+			props.load(reader);
+		} catch(Exception e) {
+			throw new Exception("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
+		} finally {
+			if( null != fis ){
+				fis.close();
 			}
 		}
 	}
