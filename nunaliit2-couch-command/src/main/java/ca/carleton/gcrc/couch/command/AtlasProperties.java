@@ -120,7 +120,11 @@ public class AtlasProperties {
 			throw new Exception("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
 		} finally {
 			if( null != fis ){
-				fis.close();
+				try {
+					fis.close();
+				} catch (Exception e) {
+					// Ignore
+				}
 			}
 		}
 	}
