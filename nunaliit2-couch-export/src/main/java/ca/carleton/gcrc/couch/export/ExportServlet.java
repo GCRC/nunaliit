@@ -96,12 +96,12 @@ public class ExportServlet extends JsonServlet {
 				path = paths.get(0);
 			}
 			
-			if( "welcome".equalsIgnoreCase(path) ) {
+			if ("welcome".equalsIgnoreCase(path)) {
 				doGetWelcome(request, response);
-				
-			} else if( "test".equalsIgnoreCase(path) ) {
+			} else if ("test".equalsIgnoreCase(path)) {
 				doGetTest(request, response);
-					
+			} else if( "rdf".equalsIgnoreCase(path)) {
+				doGetRDF(request, response);
 			} else {
 				throw new Exception("Unknown request");
 			}
@@ -115,20 +115,18 @@ public class ExportServlet extends JsonServlet {
 		try {
 			List<String> paths = computeRequestPath(request);
 			String path = null;
-			if( paths.size() > 0 ){
+			if (paths.size() > 0) {
 				path = paths.get(0);
 			}
-			
-			if( "definition".equalsIgnoreCase(path) ) {
+
+			if ("definition".equalsIgnoreCase(path)) {
 				doPostDefinition(request, response);
 
-			} else if( "records".equalsIgnoreCase(path) ) {
+			} else if ("records".equalsIgnoreCase(path)) {
 				doPostRecords(request, response);
-				
-			} else if( "rdf".equalsIgnoreCase(path)) {
-				doPostRdf(request, response);
+
 			} else {
-				throw new Exception("Unknown request: "+path);
+				throw new Exception("Unknown request: " + path);
 			}
 
 		} catch (Exception e) {
@@ -136,7 +134,7 @@ public class ExportServlet extends JsonServlet {
 		}
 	}
 
-	protected void doPostRdf(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+	protected void doGetRDF(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		try {
 			Method method = null;
 			{
@@ -153,6 +151,25 @@ public class ExportServlet extends JsonServlet {
 					throw new Exception("Unknown method");
 				}
 				logger.debug("Export Method: " + method.name());
+			}
+
+			Lang language = Lang.TURTLE;
+			{
+				String langParam = request.getParameter("language");
+				if (null != langParam) {
+					if (langParam.equals("turtle") || langParam.equals("ttl")) {
+						language = Lang.TURTLE;
+					}
+					else if (langParam.equals("jsonld")) {
+						language = Lang.JSONLD;
+					}
+					else if (langParam.equals("rdf") || langParam.equals("rdfxml")) {
+						language = Lang.RDFXML;
+					}
+					else {
+						throw new Exception("Unsupported language for response");
+					}
+				}
 			}
 
 			String identifier = null;
@@ -195,7 +212,7 @@ public class ExportServlet extends JsonServlet {
 				throw new Exception("RDF Export Failure Message 1", e);
 			}
 
-			String defaultNs    = "http://testatlas/#";
+			String defaultNs = "http://testatlas/#"; // TODO: get atlas name or something
 			Model graph = ModelFactory.createDefaultModel();
 			graph.setNsPrefix("nunaliit", defaultNs);
 
@@ -232,7 +249,7 @@ public class ExportServlet extends JsonServlet {
 			}
 
 			OutputStream os = response.getOutputStream();
-			RDFDataMgr.write(os, graph, Lang.TURTLE);
+			RDFDataMgr.write(os, graph, language);
 			os.flush();
 		} catch(Exception e) {
 			reportError(e,response);
