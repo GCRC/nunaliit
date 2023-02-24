@@ -107,7 +107,7 @@ class N2FilterableLegendWidgetWithGraphic {
         legendAndGraphic.setAttribute("id", this.elementId);
         legendAndGraphicContainer.append(legendAndGraphic);
 
-        this._debouncedDrawLegend = $n2.utils.debounce(this._drawLegend, 1000);
+        this._debouncedDrawLegend = $n2.utils.debounce(this._drawLegend, 500);
 
         this._draw();
 	}
@@ -350,86 +350,95 @@ class N2FilterableLegendWidgetWithGraphic {
 
     _getSVGSymbol(matchingLabel) {
         const symbols = [];
-        const styleObj = this.state.stylesByKey.get(matchingLabel)
-        if (!styleObj) return symbols;
-        const style = styleObj.style;
-        if (!style) return symbols;
+        const styleObjs = Object.values(this.state.allStyles).filter(s => s?.style?.label === matchingLabel);
+        if (styleObjs.length === 0) return symbols;
+        styleObjs.sort((a, b) => {
+            const aSum = a?.style?.id?.split("+")?.map(v => parseInt(v, 10))?.reduce((sum, v) => sum + v, 0);
+            const bSum = b?.style?.id?.split("+")?.map(v => parseInt(v, 10))?.reduce((sum, v) => sum + v, 0);
+            if (aSum && bSum) return aSum - bSum;
+            else return 0;
+        });
         
-        Object.entries(styleObj).forEach(([key, value]) => {
-            if (key === "style") return;
+        for (let i = 0; i < styleObjs.length; i++) {
+            const style = styleObjs[i].style;
+            if (!style) return symbols;
 
-            const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-            svgNode.setAttribute("viewBox", "-7 -7 14 14");
-            svgNode.setAttribute("class", "n2widgetLegend_svg");
-            
-            const styleFeature = value[key];
-            const context = {
-                ...styleFeature
-                , n2_hovered: false
-                , n2_selected: false
-                , n2_found: false
-            };
-            const symbolizer = style.getSymbolizer(context);
-            let geometry = null;
-            
-            if (key === "point") {
-                const graphicName = symbolizer.getSymbolValue("graphicName", context);
-                let symbol = null;
-                if (graphicName && (symbol = this.cachedSymbols[graphicName])) {
-                    geometry = document.createElementNS(svgNode.namespaceURI, "path");
-                    geometry.setAttributeNS(null, "d", symbol);
-                }
-                else if ( graphicName && (symbol = OpenLayers.Renderer.symbol[graphicName])) {
-                    const path = this._computePathFromSymbol(symbol);
-                    this.cachedSymbols[graphicName] = path;
-                    geometry = document.createElementNS(svgNode.namespaceURI, "path");
-                    geometry.setAttributeNS(null, "d", this.cachedSymbols[graphicName]);
-                }
-                else {
-                    geometry = document.createElementNS(svgNode.namespaceURI, "circle");
-                    geometry.setAttributeNS(null, "r" , 5);
-                }
-        
-                symbolizer.forEachSymbol((name, value) => {
-                    if (name === "r") { }
-                    else if (name === "fill-opacity") {
-                        const noticeableOpacity = (value * 0.5) + 0.5;
-                        geometry.setAttributeNS(null, name, noticeableOpacity);
+            Object.entries(styleObjs[i]).forEach(([key, value]) => {
+                if (key === "style") return;
+    
+                const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svgNode.setAttribute("viewBox", "-7 -7 14 14");
+                svgNode.setAttribute("class", "n2widgetLegend_svg");
+                
+                const styleFeature = value[key];
+                const context = {
+                    ...styleFeature
+                    , n2_hovered: false
+                    , n2_selected: false
+                    , n2_found: false
+                };
+                const symbolizer = style.getSymbolizer(context);
+                let geometry = null;
+                
+                if (key === "point") {
+                    const graphicName = symbolizer.getSymbolValue("graphicName", context);
+                    let symbol = null;
+                    if (graphicName && (symbol = this.cachedSymbols[graphicName])) {
+                        geometry = document.createElementNS(svgNode.namespaceURI, "path");
+                        geometry.setAttributeNS(null, "d", symbol);
+                    }
+                    else if ( graphicName && (symbol = OpenLayers.Renderer.symbol[graphicName])) {
+                        const path = this._computePathFromSymbol(symbol);
+                        this.cachedSymbols[graphicName] = path;
+                        geometry = document.createElementNS(svgNode.namespaceURI, "path");
+                        geometry.setAttributeNS(null, "d", this.cachedSymbols[graphicName]);
                     }
                     else {
-                        geometry.setAttributeNS(null, name, value)
+                        geometry = document.createElementNS(svgNode.namespaceURI, "circle");
+                        geometry.setAttributeNS(null, "r" , 5);
                     }
-                }, context);
-            }
-            else if (key === "line") {
-                geometry = document.createElementNS(svgNode.namespaceURI, "line");
-                geometry.setAttributeNS(null, "x1", -5);
-                geometry.setAttributeNS(null, "y1", 0);
-                geometry.setAttributeNS(null, "x2", 5);
-                geometry.setAttributeNS(null, "y2", 0);
-
-                symbolizer.forEachSymbol((name, value) => {
-                    geometry.setAttributeNS(null, name, value);
-                }, context);
-            }
-            else if (key === "polygon") {
-                geometry = document.createElementNS(svgNode.namespaceURI, "path");
-                geometry.setAttributeNS(null, "d", "M -5 -5 L -2.5 5 L 5 5 L 2.5 -5 Z");
-
-                symbolizer.forEachSymbol((name, value) => {
-                    if (name === "fill-opacity") {
-                        const noticeableOpacity = (value * 0.5) + 0.5;
-                        geometry.setAttributeNS(null, name, noticeableOpacity);
-                    }
-                    else {
-                        geometry.setAttributeNS(null, name, value)
-                    }
-                }, context);
-            }
-
-            svgNode.append(geometry);
-            symbols.push(svgNode);
-        }); 
+            
+                    symbolizer.forEachSymbol((name, value) => {
+                        if (name === "r") { }
+                        else if (name === "fill-opacity") {
+                            const noticeableOpacity = (value * 0.5) + 0.5;
+                            geometry.setAttributeNS(null, name, noticeableOpacity);
+                        }
+                        else {
+                            geometry.setAttributeNS(null, name, value)
+                        }
+                    }, context);
+                }
+                else if (key === "line") {
+                    geometry = document.createElementNS(svgNode.namespaceURI, "line");
+                    geometry.setAttributeNS(null, "x1", -5);
+                    geometry.setAttributeNS(null, "y1", 0);
+                    geometry.setAttributeNS(null, "x2", 5);
+                    geometry.setAttributeNS(null, "y2", 0);
+    
+                    symbolizer.forEachSymbol((name, value) => {
+                        geometry.setAttributeNS(null, name, value);
+                    }, context);
+                }
+                else if (key === "polygon") {
+                    geometry = document.createElementNS(svgNode.namespaceURI, "path");
+                    geometry.setAttributeNS(null, "d", "M -5 -5 L -2.5 5 L 5 5 L 2.5 -5 Z");
+    
+                    symbolizer.forEachSymbol((name, value) => {
+                        if (name === "fill-opacity") {
+                            const noticeableOpacity = (value * 0.5) + 0.5;
+                            geometry.setAttributeNS(null, name, noticeableOpacity);
+                        }
+                        else {
+                            geometry.setAttributeNS(null, name, value)
+                        }
+                    }, context);
+                }
+    
+                svgNode.append(geometry);
+                symbols.push(svgNode);
+            });
+        }
         return symbols;
     }
 
