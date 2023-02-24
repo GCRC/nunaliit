@@ -39,7 +39,19 @@ import ca.carleton.gcrc.couch.export.records.ExportRecordsGeoJson;
 import ca.carleton.gcrc.couch.export.records.JSONArrayReaderIterator;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 
+/**
+ * temp imports start
+ */
+import ca.carleton.gcrc.couch.app.Document;
+import ca.carleton.gcrc.couch.utils.NunaliitDocument;
+import ca.carleton.gcrc.couch.export.SchemaExportInfo;
+import ca.carleton.gcrc.couch.export.SchemaExportProperty;
+ /**
+  * temp imports end
+  */
+
 import org.apache.jena.rdf.model.*;
+import org.apache.jena.*;
 import org.apache.jena.vocabulary.*;
 
 @SuppressWarnings("serial")
@@ -121,33 +133,106 @@ public class ExportServlet extends JsonServlet {
 	}
 
 	protected void doPostRdf(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-			String personURI    = "http://somewhere/JohnSmith";
-			String givenName    = "John";
-			String familyName   = "Smith";
-			String fullName     = givenName + " " + familyName;
-			// create an empty model
-			Model model = ModelFactory.createDefaultModel();
-	
-			// create the resource
-			//   and add the properties cascading style
-			model.createResource(personURI)
-					 .addProperty(VCARD.FN, fullName)
-					 .addProperty(VCARD.N, 
-								  model.createResource()
-									   .addProperty(VCARD.Given, givenName)
-									   .addProperty(VCARD.Family, familyName));
-			
-			// now write the model in XML form to a file
-			try {
-			OutputStream os = response.getOutputStream();
-			model.write(os);
+		try {
+			Method method = null;
+			{
+				String methodStr = request.getParameter("method");
+				if (null != methodStr) {
+					for (Method m : Method.values()) {
+						// Only do schema for now
+						if (m.matches(methodStr) && methodStr.equalsIgnoreCase("schema")) {
+							method = m;
+						}
+					}
+				}
+				if (null == method) {
+					throw new Exception("Unknown method");
+				}
+				logger.debug("Export Method: " + method.name());
+			}
 
-		
+			String identifier = null;
+			List<String> identifiers = new Vector<String>();
+			{
+				String[] ids = request.getParameterValues("name");
+				if (null != ids) {
+					for (String id : ids) {
+						identifiers.add(id);
+					}
+				}
+
+				if (identifiers.size() > 0) {
+					identifier = identifiers.get(0);
+				}
+
+				if (null == identifier) {
+					throw new Exception("Unknown name");
+				}
+				logger.debug("Export Name: " + identifier);
+			}
+
+			DocumentRetrieval docRetrieval = null;
+			if (Method.SCHEMA == method) {
+				try {
+					docRetrieval = DocumentRetrievalSchema.create(configuration.getCouchDb(), identifier);
+				} catch (Exception e) {
+					throw new Exception("Problem retrieving documents from schema: " + identifier, e);
+				}
+			}
+			else {
+				throw new Exception("Do not know how to handle method: " + method.name());
+			}
+
+			SchemaCache schemaCache = null;
+			try {
+				schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
+				// outputFormat = new ExportFormatCSV(schemaCache, docRetrieval);
+			} catch (Exception e) {
+				throw new Exception("RDF Export Failure Message 1", e);
+			}
+
+			String defaultNs    = "http://testatlas/#";
+			Model graph = ModelFactory.createDefaultModel();
+			graph.setNsPrefix("nunaliit", defaultNs);
+
+			while (docRetrieval.hasNext()) {
+				Document doc = docRetrieval.getNext();
+				if (doc == null) break;
+				try {
+					/* start of function probably */
+					NunaliitDocument nunaliitDoc = new NunaliitDocument(doc);
+					JSONObject json = nunaliitDoc.getJSONObject();
+					String schemaName = json.optString("nunaliit_schema");
+					if (schemaName == null)
+						continue;
+					SchemaExportInfo exportInfo = schemaCache.getExportInfo(schemaName);
+					if (exportInfo == null)
+						continue;
+					Resource type = graph.createResource(defaultNs + schemaName);
+					Resource blankInstance = graph.createResource();
+					graph.add(blankInstance, RDF.type, type);
+					for (SchemaExportProperty exportProperty : exportInfo.getProperties()) {
+						Object value = exportProperty.select(json);
+						if (null != value) {
+							// put into map
+							Property schemaProperty = graph.createProperty(defaultNs + exportProperty.getLabel());
+
+							// does not consider if value is another object
+							graph.add(blankInstance, schemaProperty, graph.createLiteral(value.toString(), false));
+						}
+					}
+					/* end */
+				} catch (Exception e) {
+					throw new Exception("RDF Export Failure Message 2: " + doc.getId(), e);
+				}
+			}
+
+			OutputStream os = response.getOutputStream();
+			graph.write(os);
 			os.flush();
-		} catch (Exception e) {
-			//swallow
+		} catch(Exception e) {
+			reportError(e,response);
 		}
-		
 	}
 
 	protected void doPostDefinition(HttpServletRequest request, HttpServletResponse response) throws ServletException {
