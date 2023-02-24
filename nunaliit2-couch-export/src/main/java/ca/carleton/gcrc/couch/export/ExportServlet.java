@@ -50,9 +50,13 @@ import ca.carleton.gcrc.couch.export.SchemaExportProperty;
   * temp imports end
   */
 
-import org.apache.jena.rdf.model.*;
-import org.apache.jena.*;
-import org.apache.jena.vocabulary.*;
+import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.rdf.model.Property;
+import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.vocabulary.RDF;
+import org.apache.jena.riot.RDFDataMgr;
+import org.apache.jena.riot.Lang;
 
 @SuppressWarnings("serial")
 public class ExportServlet extends JsonServlet {
@@ -214,21 +218,21 @@ public class ExportServlet extends JsonServlet {
 					for (SchemaExportProperty exportProperty : exportInfo.getProperties()) {
 						Object value = exportProperty.select(json);
 						if (null != value) {
-							// put into map
+							// TODO: put into map because you probably don't need to remake this property for each instance of the schema doc
 							Property schemaProperty = graph.createProperty(defaultNs + exportProperty.getLabel());
 
 							// does not consider if value is another object
 							graph.add(blankInstance, schemaProperty, graph.createLiteral(value.toString(), false));
 						}
 					}
-					/* end */
+					/* end of probable function */
 				} catch (Exception e) {
 					throw new Exception("RDF Export Failure Message 2: " + doc.getId(), e);
 				}
 			}
 
 			OutputStream os = response.getOutputStream();
-			graph.write(os);
+			RDFDataMgr.write(os, graph, Lang.TURTLE);
 			os.flush();
 		} catch(Exception e) {
 			reportError(e,response);
