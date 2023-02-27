@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -62,8 +63,10 @@ import org.apache.jena.riot.Lang;
 public class ExportServlet extends JsonServlet {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
-	
+	public static final String ConfigAttributeName_AtlasName = "ExportServlet_AtlasName";
+
 	private ExportConfiguration configuration;
+	private String atlasName = null;
 	
 	public ExportServlet() {
 		
@@ -72,8 +75,20 @@ public class ExportServlet extends JsonServlet {
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		
+		ServletContext context = config.getServletContext();
+		
+		Object obj = context.getAttribute(ConfigAttributeName_AtlasName);
+		if (null == obj) {
+			throw new ServletException("Atlas name is not specified (" + ConfigAttributeName_AtlasName + ")");
+		}
+		if (obj instanceof String) {
+			atlasName = (String) obj;
+		} else {
+			throw new ServletException("Unexpected object for atlas name: " + obj.getClass().getName());
+		}
+
 		// Pick up configuration
-		Object configurationObj = config.getServletContext().getAttribute(ExportConfiguration.CONFIGURATION_KEY);
+		Object configurationObj = context.getAttribute(ExportConfiguration.CONFIGURATION_KEY);
 		if( null == configurationObj ) {
 			throw new ServletException("Can not find configuration object");
 		}
@@ -206,9 +221,9 @@ public class ExportServlet extends JsonServlet {
 				throw new Exception("RDF Export Failure Message 1", e);
 			}
 
-			String defaultNs = "http://testatlas/#"; // TODO: get atlas name or something
+			String defaultNs = "http://" + atlasName + "/ontology/#";
 			Model graph = ModelFactory.createDefaultModel();
-			graph.setNsPrefix("nunaliit", defaultNs);
+			graph.setNsPrefix(atlasName, defaultNs);
 
 			while (docRetrieval.hasNext()) {
 				Document doc = docRetrieval.getNext();
