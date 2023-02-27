@@ -148,7 +148,7 @@ public class ExportServlet extends JsonServlet {
 					}
 				}
 				if (null == method) {
-					throw new Exception("Unknown method");
+					throw new Exception("Unknown method for RDF export");
 				}
 				logger.debug("Export Method: " + method.name());
 			}
@@ -159,15 +159,12 @@ public class ExportServlet extends JsonServlet {
 				if (null != langParam) {
 					if (langParam.equals("turtle") || langParam.equals("ttl")) {
 						language = Lang.TURTLE;
-					}
-					else if (langParam.equals("jsonld")) {
+					} else if (langParam.equals("jsonld")) {
 						language = Lang.JSONLD;
-					}
-					else if (langParam.equals("rdf") || langParam.equals("rdfxml")) {
+					} else if (langParam.equals("rdf") || langParam.equals("rdfxml")) {
 						language = Lang.RDFXML;
-					}
-					else {
-						throw new Exception("Unsupported language for response");
+					} else {
+						throw new Exception("Unsupported language for RDF export: " + langParam);
 					}
 				}
 			}
@@ -181,13 +178,11 @@ public class ExportServlet extends JsonServlet {
 						identifiers.add(id);
 					}
 				}
-
 				if (identifiers.size() > 0) {
 					identifier = identifiers.get(0);
 				}
-
 				if (null == identifier) {
-					throw new Exception("Unknown name");
+					throw new Exception("Unknown name for RDF export");
 				}
 				logger.debug("Export Name: " + identifier);
 			}
@@ -199,9 +194,8 @@ public class ExportServlet extends JsonServlet {
 				} catch (Exception e) {
 					throw new Exception("Problem retrieving documents from schema: " + identifier, e);
 				}
-			}
-			else {
-				throw new Exception("Do not know how to handle method: " + method.name());
+			} else {
+				throw new Exception("Unhandled method: " + method.name());
 			}
 
 			SchemaCache schemaCache = null;
@@ -218,7 +212,8 @@ public class ExportServlet extends JsonServlet {
 
 			while (docRetrieval.hasNext()) {
 				Document doc = docRetrieval.getNext();
-				if (doc == null) break;
+				if (doc == null)
+					break;
 				try {
 					/* start of function probably */
 					NunaliitDocument nunaliitDoc = new NunaliitDocument(doc);
@@ -235,9 +230,7 @@ public class ExportServlet extends JsonServlet {
 					for (SchemaExportProperty exportProperty : exportInfo.getProperties()) {
 						Object value = exportProperty.select(json);
 						if (null != value) {
-							// TODO: put into map because you probably don't need to remake this property for each instance of the schema doc
 							Property schemaProperty = graph.createProperty(defaultNs + exportProperty.getLabel());
-
 							// does not consider if value is another object
 							graph.add(blankInstance, schemaProperty, graph.createLiteral(value.toString(), false));
 						}
@@ -251,8 +244,8 @@ public class ExportServlet extends JsonServlet {
 			OutputStream os = response.getOutputStream();
 			RDFDataMgr.write(os, graph, language);
 			os.flush();
-		} catch(Exception e) {
-			reportError(e,response);
+		} catch (Exception e) {
+			reportError(e, response);
 		}
 	}
 
