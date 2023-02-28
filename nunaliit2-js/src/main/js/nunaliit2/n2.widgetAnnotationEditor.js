@@ -1252,6 +1252,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				new $n2.mdc.MDCTagBox({
 					parentElem: $rightdiv,
 					label: _loc('widget.annotationEditor.mapThemeAssociatedTags'),
+					placeholder: _loc('widget.annotationEditor.mapThemeTagBoxPlaceholder'),
 					mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
 					chips: taginfo.children
 				});
@@ -1339,6 +1340,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			new $n2.mdc.MDCTagBox({
 				parentElem: $rightdiv,
 				label: _loc('widget.annotationEditor.mapThemeAssociatedTags'),
+				placeholder: _loc('widget.annotationEditor.mapThemeTagBoxPlaceholder'),
 				mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
 				chips: []
 			});
@@ -1428,6 +1430,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						parentElem: $formFieldSection,
 						autoCompleteViewName: 'tags',
 						label: _loc('Theme Tags'),
+						placeholder: _loc('widget.annotationEditor.timeLinkTagBoxPlaceholder'),
 						mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 						chips: lastThemeTags,
 						chipsetsUpdateCallback: function(tagList, operation, target) {
@@ -1457,6 +1460,7 @@ POSSIBILITY OF SUCH DAMAGE.
 						parentElem: $formFieldSection,
 						autoCompleteViewName: 'tags',
 						label: _loc('Place Tags'),
+						placeholder: _loc('widget.annotationEditor.timeLinkTagBoxPlaceholder'),
 						mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
 						chips: lastPlaceTags,
 						chipsetsUpdateCallback: function(tagList, operation, target) {
@@ -1656,6 +1660,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				parentElem: $formFieldSection,
 				autoCompleteViewName: 'tags',
 				label: _loc('Theme Tags'),
+				placeholder: _loc('widget.annotationEditor.timeLinkTagBoxPlaceholder'),
 				mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
 				chips: lastThemeTags,
 				chipsetsUpdateCallback: (tagList, operation, target) => {
@@ -1706,6 +1711,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			new $n2.mdc.MDCTagBox({
 				parentElem: $formFieldSection,
 				label: _loc('Place Tags'),
+				placeholder: _loc('widget.annotationEditor.timeLinkTagBoxPlaceholder'),
 				autoCompleteViewName: 'tags',
 				mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
 				chips: lastPlaceTags,
