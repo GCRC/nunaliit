@@ -156,7 +156,7 @@ public class ExportServlet extends JsonServlet {
 				String methodStr = request.getParameter("method");
 				if (null != methodStr) {
 					for (Method m : Method.values()) {
-						// Only do schema for now
+						// TODO: Only do schema for now
 						if (m.matches(methodStr) && methodStr.equalsIgnoreCase("schema")) {
 							method = m;
 						}
@@ -222,6 +222,8 @@ public class ExportServlet extends JsonServlet {
 			}
 
 			String defaultNs = "http://" + atlasName + "/ontology/#";
+			String geoSPARQLNs = "http://www.opengis.net/ont/geosparql#";
+			boolean isGeoSPARQLNsSet = false;
 			Model graph = ModelFactory.createDefaultModel();
 			graph.setNsPrefix(atlasName, defaultNs);
 
@@ -234,14 +236,34 @@ public class ExportServlet extends JsonServlet {
 					NunaliitDocument nunaliitDoc = new NunaliitDocument(doc);
 					JSONObject json = nunaliitDoc.getJSONObject();
 					String schemaName = json.optString("nunaliit_schema");
-					if (schemaName == null)
+					if (schemaName.equals(""))
 						continue;
 					SchemaExportInfo exportInfo = schemaCache.getExportInfo(schemaName);
 					if (exportInfo == null)
 						continue;
+					
 					Resource type = graph.createResource(defaultNs + schemaName);
 					Resource blankInstance = graph.createResource();
 					graph.add(blankInstance, RDF.type, type);
+
+					/* If it has a nunaliit_geom.wkt, write it out */
+					JSONObject nunaliitGeom = json.optJSONObject("nunaliit_geom");
+					if (nunaliitGeom != null) {
+						String wkt = nunaliitGeom.optString("wkt");
+						if (!wkt.equals("")) {
+							if (!isGeoSPARQLNsSet) {
+								isGeoSPARQLNsSet = true;
+								graph.setNsPrefix("geo", geoSPARQLNs);
+							}
+							graph.add(blankInstance, RDF.type, graph.createResource(geoSPARQLNs + "Feature"));
+							Property hasGeometry = graph.createProperty(geoSPARQLNs + "hasGeometry");
+							Resource blankWKTNode = graph.createResource();
+							graph.add(blankInstance, hasGeometry, blankWKTNode);
+							Property asWKT = graph.createProperty(geoSPARQLNs + "asWKT");
+							// TODO: make it a typed literal (geo:wktLiteral)? https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html#C.1.1.2.2
+							graph.add(blankWKTNode, asWKT, graph.createLiteral(wkt.toString(), false));
+						}
+					}
 					for (SchemaExportProperty exportProperty : exportInfo.getProperties()) {
 						Object value = exportProperty.select(json);
 						if (null != value) {
