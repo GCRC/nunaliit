@@ -1709,6 +1709,7 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 		this.label = opts.label;
 		this.inputId = $n2.getUniqueId();
 		this.initialChipFull = opts.initialChipFull;
+		this.placeholder = opts.placeholder;
 		this.chipsetsUpdateCallback = opts.chipsetsUpdateCallback;
 		this.autoCompleteViewName = opts.autoCompleteViewName;
 		MDC.prototype.initialize.call(this, opts);
@@ -1728,6 +1729,7 @@ var MDCTagBox = $n2.Class('MDCTagBox', MDC, {
 			mdcClasses: ['n2-tag-box'],
 			txtFldInputId: this.inputId,
 			txtFldLabel: this.label,
+			placeholder: this.placeholder,
 			autoCompleteViewName: this.autoCompleteViewName
 		});
 
@@ -2018,6 +2020,7 @@ var LookAheadService = $n2.Class({
 //  - txtFldInputId (String): Defines the id of input or text-area element.
 //  - txtFldArea (Boolean): Defines if the text-field input should be a text-field-area (default = false).
 //  - passwordFld (Boolean): Sets the text-field type as password if true (default = false).
+//	- placeholder (String): The placeholder value of the input field
 //  - prefilled (String): Sets a prefilled value for the text field.
 //  - inputRequired (Boolean): Defines if the text-field is required field or not (default = false).
 var MDCTextField = $n2.Class('MDCTextField', MDC, {
@@ -2028,6 +2031,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 	txtFldFullWidth: null,
 	txtFldInputId: null,
 	passwordFld: null,
+	placeholder: null,
 	prefilled: null,
 	inputRequired: null,
 	autoCompleteViewName: null,
@@ -2040,6 +2044,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			txtFldArea: false,
 			txtFldFullWidth: null,
 			passwordFld: false,
+			placeholder: "",
 			prefilled: null,
 			inputRequired: false,
 			autoCompleteViewName: null
@@ -2053,6 +2058,7 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 		this.txtFldArea = opts.txtFldArea;
 		this.txtFldFullWidth = opts.txtFldFullWidth;
 		this.passwordFld = opts.passwordFld;
+		this.placeholder = opts.placeholder;
 		this.prefilled = opts.prefilled;
 		this.inputRequired = opts.inputRequired;
 		this._autoCompleteServiceViewName = opts.autoCompleteViewName
@@ -2130,6 +2136,10 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 
 		if (this.passwordFld) {
 			$txtFldInput.attr('type', 'password');
+		}
+
+		if (this.placeholder) {
+			$txtFldInput.attr("placeholder", this.placeholder);
 		}
 
 		if (this.prefilled) {
