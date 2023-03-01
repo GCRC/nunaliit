@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Vector;
@@ -34,31 +35,12 @@ import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalLayer;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatCSV;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatGeoJson;
+import ca.carleton.gcrc.couch.export.impl.ExportFormatRDF;
 import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
 import ca.carleton.gcrc.couch.export.records.ExportRecordsCSV;
 import ca.carleton.gcrc.couch.export.records.ExportRecordsGeoJson;
 import ca.carleton.gcrc.couch.export.records.JSONArrayReaderIterator;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
-
-/**
- * temp imports start
- */
-import ca.carleton.gcrc.couch.app.Document;
-import ca.carleton.gcrc.couch.utils.NunaliitDocument;
-import ca.carleton.gcrc.couch.export.SchemaExportInfo;
-import ca.carleton.gcrc.couch.export.SchemaExportProperty;
- /**
-  * temp imports end
-  */
-
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.rdf.model.Property;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.vocabulary.RDF;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.riot.Lang;
-
 @SuppressWarnings("serial")
 public class ExportServlet extends JsonServlet {
 
@@ -67,6 +49,13 @@ public class ExportServlet extends JsonServlet {
 
 	private ExportConfiguration configuration;
 	private String atlasName = null;
+	private static final List<String> ACCEPTED_RDF_LANGS = Arrays.asList(
+		"turtle",
+			"ttl",
+			"jsonld",
+			"rdf",
+			"rdfxml"
+	);
 	
 	public ExportServlet() {
 		
@@ -168,19 +157,11 @@ public class ExportServlet extends JsonServlet {
 				logger.debug("Export Method: " + method.name());
 			}
 
-			Lang language = Lang.TURTLE;
-			{
-				String langParam = request.getParameter("language");
-				if (null != langParam) {
-					if (langParam.equals("turtle") || langParam.equals("ttl")) {
-						language = Lang.TURTLE;
-					} else if (langParam.equals("jsonld")) {
-						language = Lang.JSONLD;
-					} else if (langParam.equals("rdf") || langParam.equals("rdfxml")) {
-						language = Lang.RDFXML;
-					} else {
-						throw new Exception("Unsupported language for RDF export: " + langParam);
-					}
+			String langParam = request.getParameter("language");
+			if (null != langParam) {
+				langParam = langParam.toLowerCase();
+				if (!ACCEPTED_RDF_LANGS.contains(langParam)) {
+					throw new Exception("Unsupported language for RDF export: " + langParam);
 				}
 			}
 
@@ -214,73 +195,24 @@ public class ExportServlet extends JsonServlet {
 			}
 
 			SchemaCache schemaCache = null;
+			ExportFormat outputFormat = null;
 			try {
 				schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
-				// outputFormat = new ExportFormatCSV(schemaCache, docRetrieval);
+				outputFormat = new ExportFormatRDF(
+						schemaCache,
+						docRetrieval,
+						langParam,
+						atlasName);
 			} catch (Exception e) {
-				throw new Exception("RDF Export Failure Message 1", e);
+				throw new Exception("Failed to initialize RDF export format: ", e);
 			}
 
-			String defaultNs = "http://" + atlasName + "/ontology/#";
-			String geoSPARQLNs = "http://www.opengis.net/ont/geosparql#";
-			boolean isGeoSPARQLNsSet = false;
-			Model graph = ModelFactory.createDefaultModel();
-			graph.setNsPrefix(atlasName, defaultNs);
+			response.setCharacterEncoding(outputFormat.getCharacterEncoding());
+			response.setContentType(outputFormat.getMimeType());
+			response.setHeader("Cache-Control", "no-cache,must-revalidate");
+			response.setDateHeader("Expires", (new Date()).getTime());
 
-			while (docRetrieval.hasNext()) {
-				Document doc = docRetrieval.getNext();
-				if (doc == null)
-					break;
-				try {
-					/* start of function probably */
-					NunaliitDocument nunaliitDoc = new NunaliitDocument(doc);
-					JSONObject json = nunaliitDoc.getJSONObject();
-					String schemaName = json.optString("nunaliit_schema");
-					if (schemaName.equals(""))
-						continue;
-					SchemaExportInfo exportInfo = schemaCache.getExportInfo(schemaName);
-					if (exportInfo == null)
-						continue;
-					
-					Resource type = graph.createResource(defaultNs + schemaName);
-					Resource blankInstance = graph.createResource();
-					graph.add(blankInstance, RDF.type, type);
-
-					/* If it has a nunaliit_geom.wkt, write it out */
-					JSONObject nunaliitGeom = json.optJSONObject("nunaliit_geom");
-					if (nunaliitGeom != null) {
-						String wkt = nunaliitGeom.optString("wkt");
-						if (!wkt.equals("")) {
-							if (!isGeoSPARQLNsSet) {
-								isGeoSPARQLNsSet = true;
-								graph.setNsPrefix("geo", geoSPARQLNs);
-							}
-							graph.add(blankInstance, RDF.type, graph.createResource(geoSPARQLNs + "Feature"));
-							Property hasGeometry = graph.createProperty(geoSPARQLNs + "hasGeometry");
-							Resource blankWKTNode = graph.createResource();
-							graph.add(blankInstance, hasGeometry, blankWKTNode);
-							Property asWKT = graph.createProperty(geoSPARQLNs + "asWKT");
-							// TODO: make it a typed literal (geo:wktLiteral)? https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html#C.1.1.2.2
-							graph.add(blankWKTNode, asWKT, graph.createLiteral(wkt.toString(), false));
-						}
-					}
-					for (SchemaExportProperty exportProperty : exportInfo.getProperties()) {
-						Object value = exportProperty.select(json);
-						if (null != value) {
-							Property schemaProperty = graph.createProperty(defaultNs + exportProperty.getLabel());
-							// does not consider if value is another object
-							graph.add(blankInstance, schemaProperty, graph.createLiteral(value.toString(), false));
-						}
-					}
-					/* end of probable function */
-				} catch (Exception e) {
-					throw new Exception("RDF Export Failure Message 2: " + doc.getId(), e);
-				}
-			}
-
-			OutputStream os = response.getOutputStream();
-			RDFDataMgr.write(os, graph, language);
-			os.flush();
+			outputFormat.outputExport(response.getOutputStream());
 		} catch (Exception e) {
 			reportError(e, response);
 		}
