@@ -50,15 +50,14 @@ public class ExportServlet extends JsonServlet {
 	private ExportConfiguration configuration;
 	private String atlasName = null;
 	private static final List<String> ACCEPTED_RDF_LANGS = Arrays.asList(
-		"turtle",
+			"turtle",
 			"ttl",
 			"jsonld",
 			"rdf",
-			"rdfxml"
-	);
-	
+			"rdfxml");
+
 	public ExportServlet() {
-		
+
 	}
 	
 	public void init(ServletConfig config) throws ServletException {
