@@ -10,6 +10,7 @@ import org.slf4j.LoggerFactory;
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.export.DocumentRetrieval;
 import ca.carleton.gcrc.couch.export.ExportFormat;
+import ca.carleton.gcrc.couch.export.rdf.GeoSPARQLDatatype;
 import ca.carleton.gcrc.couch.export.SchemaCache;
 import ca.carleton.gcrc.couch.export.SchemaExportInfo;
 import ca.carleton.gcrc.couch.export.SchemaExportProperty;
@@ -133,16 +134,13 @@ public class ExportFormatRDF implements ExportFormat {
 				Resource blankWKTNode = graph.createResource();
 				graph.add(blankInstance, hasGeometry, blankWKTNode);
 				Property asWKT = graph.createProperty(geoSPARQLNs + "asWKT");
-				// TODO: make it a typed literal (geo:wktLiteral)?
-				// https://opengeospatial.github.io/ogc-geosparql/geosparql11/spec.html#C.1.1.2.2
-				graph.add(blankWKTNode, asWKT, graph.createLiteral(wkt.toString(), false));
+				graph.add(blankWKTNode, asWKT, graph.createTypedLiteral(wkt.toString(), GeoSPARQLDatatype.GeoSPARQLWKTLiteral));
 			}
 		}
 		for (SchemaExportProperty exportProperty : exportInfo.getProperties()) {
 			Object value = exportProperty.select(json);
 			if (null != value) {
 				Property schemaProperty = graph.createProperty(defaultNs + exportProperty.getLabel());
-				// TODO: does not consider if value is another object
 				graph.add(blankInstance, schemaProperty, graph.createLiteral(value.toString(), false));
 			}
 		}
