@@ -141,6 +141,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.sourceModelId = opts.sourceModelId;
 		this.subtitleModelId = opts.subtitleModelId;
 		this._contextMenuClass = 'transcript-context-menu';
+		this.currentTime = 0;
 		
 		this.isInsideContentTextPanel = opts.isInsideContentTextPanel;
 
@@ -431,6 +432,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 					this.transcript = undefined;
 					this.srtData = undefined;
 					this.subtitleFormat = undefined;
+					this.currentTime = 0;
 					this._refresh();
 					this._documentChanged();
 				}
@@ -789,6 +791,14 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 			} else {
 				//this._documentChanged();
+			}
+			if (this.currentTime !== 0) {
+				this.dispatchService.send(DH, {
+					type: "mediaTimeChanged",
+					name: this.name,
+					currentTime: this.currentTime,
+					origin: "text"
+				});
 			}
 
 		} else {
@@ -1246,6 +1256,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 	 * Receives the current time as video time
 	 */
 	_updateCurrentTime: function(currentTime, origin){
+		if (currentTime !== 0) this.currentTime = currentTime;
 		// Send notice to dispatcher
 		
 		this.dispatchService.send(DH,{
@@ -1363,25 +1374,27 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 		this.lastTimeUserScroll = $.now();
 	},
 	
-	_scrollToView: function($dst) {
-		var _this = this;
-		var parent_height = $dst.parent().innerHeight();
-		var curr_pos = $dst.offset().top - $dst.parent().offset().top;
-		if (curr_pos > parent_height *2 / 3 || curr_pos < 0){
-			$('#'+ this.transcriptId).off("scroll", _this._onUserScrollAction.bind(_this));
-			var oldOffset = $dst.parent().scrollTop();
-			$dst.parent().scrollTop(oldOffset + curr_pos);
-			
-			var inid = setInterval(function(){
-				var curOffset = $dst.parent().scrollTop();
-				if(curOffset !== oldOffset) {
-					
-				} else {
-					$('#'+ _this.transcriptId).on("scroll", _this._onUserScrollAction.bind(_this));
-					clearInterval(inid);
+	_scrollToView: function ($dst) {
+		if ($dst) {
+			const _this = this;
+			const parent_height = $dst.parent().innerHeight();
+			if ($dst.offset() && $dst.parent()) {
+				const curr_pos = $dst.offset().top - $dst.parent().offset().top;
+				if (curr_pos > parent_height * 2 / 3 || curr_pos < 0) {
+					$('#' + this.transcriptId).off("scroll", _this._onUserScrollAction.bind(_this));
+					const oldOffset = $dst.parent().scrollTop();
+					$dst.parent().scrollTop(oldOffset + curr_pos);
+					const inid = setInterval(function () {
+						const curOffset = $dst.parent().scrollTop();
+						if (curOffset !== oldOffset) {
+						} else {
+							$('#' + _this.transcriptId).on("scroll", _this._onUserScrollAction.bind(_this));
+							clearInterval(inid);
+						}
+						oldOffset = curOffset;
+					}, 100);
 				}
-				oldOffset = curOffset;
-			},100);
+			}
 		}
 	},
 	
