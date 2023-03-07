@@ -83,7 +83,12 @@ public class CommandConfig implements Command {
 
 		// Load up properties
 		Properties props = getDefaultProperties();
-		AtlasProperties.readProperties(atlasDir, props);
+		try {
+			AtlasProperties.readProperties(atlasDir, props);
+		} catch (Exception e) {
+			//AtlasProperties.readProperties throws exception if there is missing sensitive.properites file.
+			//We pass the exception as the file is auto-genereated in further steps
+		}
 
 		// Create a server key, if one does not exist
 		String serverKey = props.getProperty("server.key",null);
