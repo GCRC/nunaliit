@@ -1,53 +1,53 @@
 define([
-       "jquery" , "underscore" , "backbone", "helper/pubsub"
-       , "models/snippet"
-       , "collections/snippets"
-    , "views/my-form-snippet"
-    , "text!data/n2attributeboolean.json"
-    , "text!data/n2.json" , "text!data/n2attributes.json"
-], function(
-  $, _, Backbone,PubSub
+  "jquery", "underscore", "backbone", "helper/pubsub"
+  , "models/snippet"
+  , "collections/snippets"
+  , "views/my-form-snippet"
+  , "text!data/n2attributeboolean.json"
+  , "text!data/n2.json", "text!data/n2attributes.json"
+], function (
+  $, _, Backbone, PubSub
   , SnippetModel
   , SnippetsCollection
-    , MyFormSnippetView
-    , n2AttrBoolean
-    ,n2mandatoryJSON , attributesJSON
-    
-){
+  , MyFormSnippetView
+  , n2AttrBoolean
+  , n2mandatoryJSON, attributesJSON
+
+) {
   return SnippetsCollection.extend({
     model: SnippetModel
-    , initialize: function() {
+    , initialize: function () {
       this.counter = {};
       this.on("add", this.giveUniqueIdandN2boolean);
 
     }
-    , giveUniqueIdandN2boolean: function(snippet){
-	if(!snippet.get("fresh")) {
+    , giveUniqueIdandN2boolean: function (snippet) {
+      if (!snippet.get("fresh")) {
         return;
       }
       snippet.set("fresh", false);
       var snippetType = snippet.attributes.fields.type.value;
 
-      if(typeof this.counter[snippetType] === "undefined") {
+      if (typeof this.counter[snippetType] === "undefined") {
         this.counter[snippetType] = 0;
       } else {
         this.counter[snippetType] += 1;
       }
 
       snippet.setField("n2id", "nunaliit-" + snippetType + "-" + this.counter[snippetType]);
-      if(typeof snippet.get("fields")["id2"] !== "undefined") {
+      if (typeof snippet.get("fields")["id2"] !== "undefined") {
         snippet.setField("id2", snippetType + "2-" + this.counter[snippetType]);
       }
-    	snippet.mergeField(new Backbone.Model(JSON.parse(n2AttrBoolean)[0]))
+      snippet.mergeField(new Backbone.Model(JSON.parse(n2AttrBoolean)[0]))
     }
-    , giveUniqueId: function(snippet){
-      if(!snippet.get("fresh")) {
+    , giveUniqueId: function (snippet) {
+      if (!snippet.get("fresh")) {
         return;
       }
       snippet.set("fresh", false);
       var snippetType = snippet.attributes.fields.type.value;
 
-      if(typeof this.counter[snippetType] === "undefined") {
+      if (typeof this.counter[snippetType] === "undefined") {
         this.counter[snippetType] = 0;
       } else {
         this.counter[snippetType] += 1;
@@ -55,31 +55,31 @@ define([
 
       snippet.setField("n2id", "nunaliit-" + snippetType + "-" + this.counter[snippetType]);
 
-      if(typeof snippet.get("fields")["id2"] !== "undefined") {
+      if (typeof snippet.get("fields")["id2"] !== "undefined") {
         snippet.setField("id2", snippetType + "2-" + this.counter[snippetType]);
       }
     }
-    , containsFileType: function(){
-      return !(typeof this.find(function(snippet){
+    , containsFileType: function () {
+      return !(typeof this.find(function (snippet) {
         return snippet.attributes.title === "File Button"
       }) === "undefined");
     }
-    , readRapeSnippets: function(modelJSON){
+    , readRapeSnippets: function (modelJSON) {
 
-	    this.reset();
+      this.reset();
       var rapeSnippets = modelJSON;
       var infoSnippetJson = JSON.parse(n2mandatoryJSON);
       var attrSnippetJson = JSON.parse(attributesJSON);
-      var attrBoolSnippetInstance = JSON.parse(n2AttrBoolean) [0]
+      var attrBoolSnippetInstance = JSON.parse(n2AttrBoolean)[0]
       var that = this;
       //adding info-snippet
-      _.each( infoSnippetJson, function(infoSnippetInstance){
+      _.each(infoSnippetJson, function (infoSnippetInstance) {
         var infoSnippet = new SnippetModel(infoSnippetInstance)
-          infoSnippet.set("fresh", false);
-	  infoSnippet.set("fromDb", true);
-        _.each(_.keys(rapeSnippets), function(fieldname){
-          if(fieldname !== "attributes"){
-            fieldnameDecorated = fieldname === "id"? "n2id" : fieldname;
+        infoSnippet.set("fresh", false);
+        infoSnippet.set("fromDb", true);
+        _.each(_.keys(rapeSnippets), function (fieldname) {
+          if (fieldname !== "attributes") {
+            fieldnameDecorated = fieldname === "id" ? "n2id" : fieldname;
             infoSnippet.setFieldFromJson(fieldnameDecorated, rapeSnippets[fieldname])
           }
         })
@@ -88,29 +88,29 @@ define([
       });
       //adding attributes-Snippets
       var attrs = rapeSnippets["attributes"];
-      _.each( attrs, function(attr){
-        var candidateSnippetModel = _.find(attrSnippetJson, function(n2attr) {
+      _.each(attrs, function (attr) {
+        var candidateSnippetModel = _.find(attrSnippetJson, function (n2attr) {
           return n2attr["fields"]["type"]["value"] === attr["type"]
         })
-        if(typeof candidateSnippetModel  !== "undefined"){
+        if (typeof candidateSnippetModel !== "undefined") {
 
-          var newCandidateSnippetModel =JSON.parse(JSON.stringify(candidateSnippetModel))
+          var newCandidateSnippetModel = JSON.parse(JSON.stringify(candidateSnippetModel))
           var candidateSnippetInstance = new SnippetModel(newCandidateSnippetModel);
           candidateSnippetInstance.set("fresh", false);
           candidateSnippetInstance.set("fromDb", true);
           var newAttrBoolSnippetInstance = JSON.parse(JSON.stringify(attrBoolSnippetInstance))
           candidateSnippetInstance.mergeField(new Backbone.Model(newAttrBoolSnippetInstance));
-          _.each(_.keys(attr), function(fieldname){
-            if(typeof candidateSnippetInstance.get("fields")[fieldname] !== "undefined" ||
-             fieldname === "id"
-          ){
-              fieldnameDecorated = fieldname === "id"? "n2id" : fieldname;
-              candidateSnippetInstance.setFieldFromJson( fieldnameDecorated, attr[fieldname]);
+          _.each(_.keys(attr), function (fieldname) {
+            if (typeof candidateSnippetInstance.get("fields")[fieldname] !== "undefined" ||
+              fieldname === "id"
+            ) {
+              fieldnameDecorated = fieldname === "id" ? "n2id" : fieldname;
+              candidateSnippetInstance.setFieldFromJson(fieldnameDecorated, attr[fieldname]);
             }
           })
-        }else{
-          alert("CAUSION: the type: " + attr["type"] +" is not a valid type.\n" +
-          		" The cause can be either a deprecated type or an error in the database.");
+        } else {
+          alert("CAUSION: the type: " + attr["type"] + " is not a valid type.\n" +
+            " The cause can be either a deprecated type or an error in the database.");
         }
         that.push(candidateSnippetInstance);
         PubSub.trigger("rapeSnippetsDecre");
@@ -122,15 +122,15 @@ define([
     }
 
 
-    , renderAll: function(){
+    , renderAll: function () {
 
-      return this.map(function(snippet){
-        return new MyFormSnippetView({model: snippet}).render(true);
+      return this.map(function (snippet) {
+        return new MyFormSnippetView({ model: snippet }).render(true);
       })
     }
-    , renderAllClean: function(){
-      return this.map(function(snippet){
-        return new MyFormSnippetView({model: snippet}).render(false);
+    , renderAllClean: function () {
+      return this.map(function (snippet) {
+        return new MyFormSnippetView({ model: snippet }).render(false);
       });
     }
   });

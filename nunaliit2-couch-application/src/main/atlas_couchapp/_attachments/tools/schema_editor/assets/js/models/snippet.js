@@ -1,15 +1,15 @@
 define([
-      'jquery', 'underscore', 'backbone'
-], function($, _, Backbone) {
+  'jquery', 'underscore', 'backbone'
+], function ($, _, Backbone) {
   return Backbone.Model.extend({
-    initialize: function() {
+    initialize: function () {
       this.set("fresh", true);
       this.set("fromDb", false);
     }
-    , getValues: function(){
-      return _.reduce(this.get("fields"), function(o, v, k){
+    , getValues: function () {
+      return _.reduce(this.get("fields"), function (o, v, k) {
         if (v["type"] == "select") {
-          o[k] = _.find(v["value"], function(o){return o.selected})["value"];
+          o[k] = _.find(v["value"], function (o) { return o.selected })["value"];
         } else {
           o[k] = v["value"];
         }
@@ -17,23 +17,23 @@ define([
       }, {});
     }
 
-    , idFriendlyTitle: function(){
-      return this.get("title").replace(/\W/g,'').toLowerCase();
+    , idFriendlyTitle: function () {
+      return this.get("title").replace(/\W/g, '').toLowerCase();
     }
-    , setField: function(name, value) {
+    , setField: function (name, value) {
       var fields = this.get("fields")
       fields[name]["value"] = value;
       this.set("fields", fields);
     }
-    , setFieldFromJson: function(name, value){
+    , setFieldFromJson: function (name, value) {
 
       var fields = this.get("fields")
-      if(typeof fields[name] === "undefined") {
+      if (typeof fields[name] === "undefined") {
         console.log("CAUTION: one of the field is missing in ", name)
         return;
       }
       var type = fields[name]["type"]
-      switch(type) {
+      switch (type) {
         case "string":
           fields[name]["value"] = value
           this.set("fields", fields);
@@ -43,33 +43,39 @@ define([
           this.set("fields", fields);
           break;
         case "input":
-          if(fields[name]["hide"] !== "undefined" && fields[name]["hide"]) {
+          if (fields[name]["hide"] !== "undefined" && fields[name]["hide"]) {
 
           } else {
-             fields[name]["value"] = value
-             this.set("fields", fields);
+            fields[name]["value"] = value
+            this.set("fields", fields);
           }
           break;
         case "textarea":
           fields[name]["value"] = JSON.parse(JSON.stringify(value))
           this.set("fields", fields);
           break;
+        case "tag":
+          fields[name]["value"] = value
+          this.set("fields", fields);
+          break;
         case "textarea-split":
-          var checkboxvalarr = _.map(value, function(t){return $.trim(t["label"])})
+          var checkboxvalarr = _.map(value, function (t) { return $.trim(t["label"]) })
           fields[name]["value"] = checkboxvalarr
           this.set("fields", fields);
           break;
         case "select":
-          var valmatch = _.find(fields[name]["value"], function(v){
+          var valmatch = _.find(fields[name]["value"], function (v) {
             return value.startsWith(v["value"])
           });
-          var valarr = _.map(fields[name]["value"], function(v){
-            return {value: v["value"], label: v["label"], selected: value.startsWith(v["value"])
-                    ,needExtra :  v["needExtra"]  }
+          var valarr = _.map(fields[name]["value"], function (v) {
+            return {
+              value: v["value"], label: v["label"], selected: value.startsWith(v["value"])
+              , needExtra: v["needExtra"]
+            }
           });
 
-          if(typeof valmatch["needExtra"] !=="undefined" && valmatch["needExtra"]) {
-            fields["customField"]["value"] = value.substring(value.indexOf("(")+2, value.lastIndexOf(")")-1)
+          if (typeof valmatch["needExtra"] !== "undefined" && valmatch["needExtra"]) {
+            fields["customField"]["value"] = value.substring(value.indexOf("(") + 2, value.lastIndexOf(")") - 1)
           }
           fields[name]["value"] = valarr;
           this.set("fields", fields);
@@ -78,12 +84,12 @@ define([
 
 
     }
-    , mergeField: function(snippet){
-	    var fields = this.get("fields")
-	    var thatFields = snippet.get("fields")
-	    this.set("fields", _.extend(fields, thatFields))
+    , mergeField: function (snippet) {
+      var fields = this.get("fields")
+      var thatFields = snippet.get("fields")
+      this.set("fields", _.extend(fields, thatFields))
 
-      }
+    }
 
   });
 });
