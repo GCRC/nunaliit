@@ -1114,14 +1114,7 @@ var DomStyler = $n2.Class({
 				mediaOptions.vttFiles = vttFileNames.map(vttFullFileName => {
 					const vttFileName = vttFullFileName.substring(0, vttFullFileName.lastIndexOf('.vtt'));
 					const languageCode = vttFileName.substring(vttFileName.lastIndexOf('_') + 1).toLowerCase();
-					let label = languageCode;
-					if(languageCode === 'en') {
-						label = 'English';
-					} else if(languageCode === 'fr') {
-						label = 'French';
-					} else if(languageCode === 'yp') {
-						label = 'Yugtun';
-					}
+					let label = _loc(languageCode);
 
 					return {
 						dbUrl: _this.db.getAttachmentUrl(doc, vttFullFileName),
