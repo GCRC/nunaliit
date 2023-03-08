@@ -1382,7 +1382,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 				const curr_pos = $dst.offset().top - $dst.parent().offset().top;
 				if (curr_pos > parent_height * 2 / 3 || curr_pos < 0) {
 					$('#' + this.transcriptId).off("scroll", _this._onUserScrollAction.bind(_this));
-					const oldOffset = $dst.parent().scrollTop();
+					let oldOffset = $dst.parent().scrollTop();
 					$dst.parent().scrollTop(oldOffset + curr_pos);
 					const inid = setInterval(function () {
 						const curOffset = $dst.parent().scrollTop();
