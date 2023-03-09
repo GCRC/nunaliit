@@ -1428,7 +1428,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 					new $n2.mdc.MDCTagBox({
 						parentElem: $formFieldSection,
-						autoCompleteViewName: 'tags',
+						autoCompleteViewName: 'theme',
 						label: _loc('Theme Tags'),
 						placeholder: _loc('widget.annotationEditor.timeLinkTagBoxPlaceholder'),
 						mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
@@ -1458,7 +1458,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 					new $n2.mdc.MDCTagBox({
 						parentElem: $formFieldSection,
-						autoCompleteViewName: 'tags',
+						autoCompleteViewName: 'place',
 						label: _loc('Place Tags'),
 						placeholder: _loc('widget.annotationEditor.timeLinkTagBoxPlaceholder'),
 						mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
@@ -1658,7 +1658,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			// Add theme tags tagbox component.
 			new $n2.mdc.MDCTagBox({
 				parentElem: $formFieldSection,
-				autoCompleteViewName: 'tags',
+				autoCompleteViewName: 'theme',
 				label: _loc('Theme Tags'),
 				placeholder: _loc('widget.annotationEditor.timeLinkTagBoxPlaceholder'),
 				mdcClasses: ['n2transcript_label','label_tagbox_themetags'],
@@ -1712,7 +1712,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				parentElem: $formFieldSection,
 				label: _loc('Place Tags'),
 				placeholder: _loc('widget.annotationEditor.timeLinkTagBoxPlaceholder'),
-				autoCompleteViewName: 'tags',
+				autoCompleteViewName: 'place',
 				mdcClasses: ['n2transcript_label','label_tagbox_placetags'],
 				chips: lastPlaceTags,
 				chipsetsUpdateCallback: function(tagList, operation, target) {

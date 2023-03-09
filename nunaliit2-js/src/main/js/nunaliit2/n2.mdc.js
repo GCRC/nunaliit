@@ -1844,6 +1844,16 @@ var LookAheadService = $n2.Class({
 		};*/
 
 		// Figure out start and end keys
+		/*
+		Note: \u9999 is a character that occurs after most of the other unicode characters.
+		Adding it here allows for partial searching of terms, for example, 'com\u9999' would get
+		[com, coma, community, compete] back, whereas 'com' would only get [com] back
+		- com 
+		- coma
+		- community
+		- compete
+		- contrail
+		 */
 		var startKey = prefix;
 		var endKey = prefix + '\u9999';
 		if( this.constraint ){
