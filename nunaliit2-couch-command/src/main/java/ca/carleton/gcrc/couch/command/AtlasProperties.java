@@ -20,7 +20,7 @@ import ca.carleton.gcrc.utils.PropertiesWriter;
 public class AtlasProperties {
 
 	static final private Logger logger = LoggerFactory.getLogger(AtlasProperties.class);
-	
+
 	static public AtlasProperties fromAtlasDir(File atlasDir) throws Exception {
 		Properties props = new Properties();
 		readProperties(atlasDir, props);
@@ -35,7 +35,17 @@ public class AtlasProperties {
 		atlasProps.setCouchDbName( props.getProperty("couchdb.dbName") );
 		atlasProps.setCouchDbSubmissionDbName( props.getProperty("couchdb.submission.dbName") );
 		atlasProps.setCouchDbAdminUser( props.getProperty("couchdb.admin.user") );
-		atlasProps.setCouchDbAdminPassword( props.getProperty("couchdb.admin.password") );
+
+		// CouchDb password
+		try {
+			String couchDbPass = props.getProperty("couchdb.admin.password");
+			if(null == couchDbPass) {
+				throw new Exception("Couchdb password not set. Run config command");
+			}
+			atlasProps.setCouchDbAdminPassword(couchDbPass);
+		} catch(Exception e) {
+			throw new Exception("Unable to interpret couchdb password",e);
+		}
 
 		// CouchDb URL
 		try {
@@ -116,14 +126,17 @@ public class AtlasProperties {
 	}
 
 	static public void readConfigFile(File configFile, Properties props) throws Exception {
+		Commands commandToExecute = Commands.getInstance();
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(configFile);
 			InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
 			props.load(reader);
 		} catch(Exception e) {
-			logger.error("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
-			throw new Exception("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
+			if(!commandToExecute.getCommand().equals(commandToExecute.CONFIG_COMMAND)) {
+				logger.error("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
+				throw new Exception("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
+			}
 		} finally {
 			if( null != fis ){
 				try {
