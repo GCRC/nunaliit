@@ -36,6 +36,8 @@ var UserManagementApplication = $n2.Class({
 		this.userDb = $n2.couch.getUserDb();
 	 	
 		this.authService = config.directory.authService;
+
+		this.atlasName = config.atlasDbName;
 		
 		$n2.log('config',config);
 
@@ -279,6 +281,7 @@ var UserManagementApplication = $n2.Class({
 			_this.userDb.createUser({
 				name: userName
 				,password: pw
+				,roles: [`${_this.atlasName}_layer_${userName}`]
 				,display: userName
 				,onSuccess: function() { 
 					loginUser(userName, pw); 
