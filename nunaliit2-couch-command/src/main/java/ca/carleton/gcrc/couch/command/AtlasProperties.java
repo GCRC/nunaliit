@@ -126,14 +126,14 @@ public class AtlasProperties {
 	}
 
 	static public void readConfigFile(File configFile, Properties props) throws Exception {
-		Commands commandToExecute = Commands.getInstance();
+		CommandScanario commandToExecute = CommandScanario.getInstance();
 		FileInputStream fis = null;
 		try {
 			fis = new FileInputStream(configFile);
 			InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
 			props.load(reader);
 		} catch(Exception e) {
-			if(!commandToExecute.getCommand().equals(commandToExecute.CONFIG_COMMAND)) {
+			if(!commandToExecute.getCommand().equals(CommandScanario.CONFIG_COMMAND)) {
 				logger.error("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
 				throw new Exception("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
 			}
