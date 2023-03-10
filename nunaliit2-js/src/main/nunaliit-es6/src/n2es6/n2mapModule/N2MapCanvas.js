@@ -148,6 +148,11 @@ class N2MapCanvas {
 			this.canvasName = this.options.canvasName;
 		}
 
+		this.couchDbSourceTitle = 'CouchDB';
+		if (this.options && this.options.couchDbSourceTitle) {
+			this.couchDbSourceTitle = this.options.couchDbSourceTitle;
+		}
+
 		if (this.customService) {
 			if (!this.refreshCallback) {
 				const cb = this.customService.getOption('mapRefreshCallback');
@@ -1073,7 +1078,7 @@ class N2MapCanvas {
 
 				_this.n2intentWrapper = charlieSource;
 				const vectorLayer = new VectorLayer({
-					title: "CouchDB",
+					title: this.couchDbSourceTitle,
 					renderMode: 'vector',
 					source: charlieSource,
 					style: StyleFn,
