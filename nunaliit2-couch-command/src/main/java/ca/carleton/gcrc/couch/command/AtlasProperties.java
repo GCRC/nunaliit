@@ -134,7 +134,7 @@ public class AtlasProperties {
 			props.load(reader);
 		} catch(Exception e) {
 			if(!commandToExecute.getCommand().equals(CommandScanario.CONFIG_COMMAND)) {
-				logger.error("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
+				logger.error("Unable to read config properties from: " + configFile.getAbsolutePath());
 				throw new Exception("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
 			}
 		} finally {
