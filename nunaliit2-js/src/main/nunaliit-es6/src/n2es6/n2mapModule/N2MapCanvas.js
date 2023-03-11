@@ -152,6 +152,7 @@ class N2MapCanvas {
 		if (this.options && this.options.couchDbSourceTitle) {
 			this.couchDbSourceTitle = this.options.couchDbSourceTitle;
 		}
+		this.couchDbSourceTitle = _loc(this.couchDbSourceTitle);
 
 		if (this.customService) {
 			if (!this.refreshCallback) {
