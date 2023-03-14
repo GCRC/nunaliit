@@ -6,6 +6,14 @@ import java.io.PrintStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.Scanner;
+import java.util.List;
+import java.util.ArrayList;
+import java.io.IOException;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import ca.carleton.gcrc.couch.command.schema.SchemaDefinition;
+
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachConfiguration;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachForm;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachFormField;
@@ -72,7 +80,7 @@ public class CommandInReachSchemaDefs implements Command {
 		File atlasDir = gs.getAtlasDir();
 
 		// Load properties for atlas
-//		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
+		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
 
 		// InReach configuration
 		File configDir = new File(atlasDir, "config");
@@ -87,13 +95,48 @@ public class CommandInReachSchemaDefs implements Command {
 
 		// Iterate over each inReach form
 		InReachSettings inReachSettings = InReachConfiguration.getInReachSettings();
+		File docsDir = new File(atlasDir, "docs");
+		String groupName = atlasProperties.getAtlasName();
+		Scanner scanner = new Scanner(System.in);
 		for(InReachForm form : inReachSettings.getForms()){
 			JSONObject jsonDef = schemaDefinitionFromForm(form);
+			String id = form.getPrefix().replace("-", "_") + form.getTitle();
 
-			// Pretty print
-			gs.getOutStream().println(jsonDef.toString(3));
-			gs.getOutStream().println();
+			System.out.print("Do you want to create a schema for the "+ id +" definition? (yes/no): ");
+			String response = scanner.next().toLowerCase();
+			if (response.equals("yes")) {
+				SchemaDefinition schemaDef = new SchemaDefinition(groupName, id);
+
+				// Save schema definition to disk
+				schemaDef.saveToDocsDir(docsDir);
+				File schemaDir = new File(docsDir, schemaDef.getDocumentIdentifier());
+
+				// Write JSON to file
+				File file = new File(schemaDir, "definition.json");
+				try (FileOutputStream fos = new FileOutputStream(file);
+					OutputStreamWriter osw = new OutputStreamWriter(fos)) {
+					osw.write(jsonDef.toString(4).replace("    ", "\t"));
+					osw.flush();
+					gs.getOutStream().println("Schema written to "+schemaDir.getAbsolutePath());
+
+					Options newOptions = new Options();
+					List<String> args = new ArrayList<String>();
+					args.add("update-schema");
+					args.add("--name");
+					args.add(groupName + "_" + id);
+					newOptions.parseOptions(args);
+					CommandUpdateSchema cmdUpdateSchems = new CommandUpdateSchema();
+					cmdUpdateSchems.runCommand(gs, newOptions);
+				} catch (IOException e) {
+					gs.getOutStream().println("Could not write schema definition to "+file.getAbsolutePath());
+				}
+			} else {
+				// Pretty print
+				gs.getOutStream().println(jsonDef.toString(3));
+				gs.getOutStream().println();
+			}
 		}
+		scanner.close();
 	}
 
 	private JSONObject schemaDefinitionFromForm(InReachForm form) throws Exception {
