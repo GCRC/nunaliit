@@ -64,7 +64,7 @@ public class CommandInReachSchemaDefs implements Command {
 		GlobalSettings gs
 		,Options options
 		) throws Exception {
-		
+
 		if( options.getArguments().size() > 1 ){
 			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
 		}
@@ -89,7 +89,7 @@ public class CommandInReachSchemaDefs implements Command {
 		InReachSettings inReachSettings = InReachConfiguration.getInReachSettings();
 		for(InReachForm form : inReachSettings.getForms()){
 			JSONObject jsonDef = schemaDefinitionFromForm(form);
-			
+
 			// Pretty print
 			gs.getOutStream().println(jsonDef.toString(3));
 			gs.getOutStream().println();
@@ -98,14 +98,14 @@ public class CommandInReachSchemaDefs implements Command {
 
 	private JSONObject schemaDefinitionFromForm(InReachForm form) throws Exception {
 		JSONObject jsonDef = new JSONObject();
-		
+
 		jsonDef.put("group", "inReach");
 		jsonDef.put("id", form.getTitle());
 		jsonDef.put("label", "InReach "+form.getTitle());
-		
+
 		JSONArray attributes = new JSONArray();
 		jsonDef.put("attributes", attributes);
-		
+
 		// Title
 		{
 			JSONObject attribute = new JSONObject();
@@ -115,24 +115,24 @@ public class CommandInReachSchemaDefs implements Command {
 			attribute.put("type", "title");
 			attribute.put("includedInBrief", true);
 		}
-		
+
 		for(InReachFormField field : form.getFields()){
 			JSONObject attribute = new JSONObject();
 			attributes.put(attribute);
-			
+
 			String label = field.getName();
 			String id = escapeJsonAttribute( field.getName() );
-			
+
 			attribute.put("label", label);
 			attribute.put("id", id);
-			
+
 			InReachFormField.Type fieldType = field.getType();
 			if( InReachFormField.Type.PICKLIST == fieldType ){
 				attribute.put("type", "selection");
 
 				JSONArray options = new JSONArray();
 				attribute.put("options", options);
-				
+
 				for(String v : field.getValues()){
 					JSONObject option = new JSONObject();
 					options.put(option);
@@ -140,25 +140,25 @@ public class CommandInReachSchemaDefs implements Command {
 					option.put("label", v);
 					option.put("value", v);
 				}
-				
+
 			} else if( InReachFormField.Type.TEXT == fieldType ) {
 				attribute.put("type", "string");
 				attribute.put("textarea", true);
 
-			} else if( InReachFormField.Type.NUMBER == fieldType) {	
+			} else if( InReachFormField.Type.NUMBER == fieldType) {
 				attribute.put("type", "string");
 
 			} else {
 				throw new Exception("Unexpected field type: "+fieldType);
 			}
 		}
-		
+
 		return jsonDef;
 	}
 
 	private String escapeJsonAttribute(String fieldName) {
 		StringBuilder sb = new StringBuilder();
-		
+
 		for(char c : fieldName.toCharArray()){
 			if( c >= '0' &&  c <= '9' ){
 				sb.append(c);
@@ -172,7 +172,7 @@ public class CommandInReachSchemaDefs implements Command {
 				// skip
 			}
 		}
-		
+
 		return sb.toString();
 	}
 }
