@@ -15,6 +15,7 @@ import ca.carleton.gcrc.couch.command.AtlasProperties;
 import ca.carleton.gcrc.couch.command.impl.PathComputer;
 import ca.carleton.gcrc.couch.date.DateServletConfiguration;
 import ca.carleton.gcrc.couch.export.ExportConfiguration;
+import ca.carleton.gcrc.couch.export.ExportServlet;
 import ca.carleton.gcrc.couch.fsentry.FSEntry;
 import ca.carleton.gcrc.couch.fsentry.FSEntryFile;
 import ca.carleton.gcrc.couch.metadata.IndexServlet;
@@ -763,6 +764,7 @@ public class ConfigServlet extends JsonServlet {
 			CouchDesignDocument atlasDesign = couchDb.getDesignDocument("atlas");
 			config.setAtlasDesignDocument(atlasDesign);
 			servletContext.setAttribute(ExportConfiguration.CONFIGURATION_KEY, config);
+			servletContext.setAttribute(ExportServlet.ConfigAttributeName_AtlasName, atlasProperties.getAtlasName());
 
 		} catch(Exception e) {
 			logger.error("Error configuring export service",e);
