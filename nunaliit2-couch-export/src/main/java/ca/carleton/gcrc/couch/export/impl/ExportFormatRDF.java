@@ -85,7 +85,6 @@ public class ExportFormatRDF implements ExportFormat {
 		Model graph = ModelFactory.createDefaultModel();
 		outputExport(graph);
 		RDFDataMgr.write(os, graph, language);
-		os.flush();
 	}
 
 	public void outputExport(Model graph) throws Exception {
