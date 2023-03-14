@@ -5,6 +5,9 @@ public class ExportUtils {
 	public enum Format {
 		GEOJSON("geojson")
 		,CSV("csv")
+		,RDFXML("rdfxml")
+		,TURTLE("turtle")
+		,JSONLD("jsonld")
 		;
 		
 		private String label;
