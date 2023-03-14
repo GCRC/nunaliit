@@ -49,12 +49,6 @@ public class ExportServlet extends JsonServlet {
 
 	private ExportConfiguration configuration;
 	private String atlasName = null;
-	private static final List<String> ACCEPTED_RDF_LANGS = Arrays.asList(
-			"turtle",
-			"ttl",
-			"jsonld",
-			"rdf",
-			"rdfxml");
 
 	public ExportServlet() {
 
@@ -103,8 +97,6 @@ public class ExportServlet extends JsonServlet {
 				doGetWelcome(request, response);
 			} else if ("test".equalsIgnoreCase(path)) {
 				doGetTest(request, response);
-			} else if( "rdf".equalsIgnoreCase(path)) {
-				doGetRDF(request, response);
 			} else {
 				throw new Exception("Unknown request");
 			}
@@ -124,10 +116,8 @@ public class ExportServlet extends JsonServlet {
 
 			if ("definition".equalsIgnoreCase(path)) {
 				doPostDefinition(request, response);
-
 			} else if ("records".equalsIgnoreCase(path)) {
 				doPostRecords(request, response);
-
 			} else {
 				throw new Exception("Unknown request: " + path);
 			}
@@ -137,33 +127,63 @@ public class ExportServlet extends JsonServlet {
 		}
 	}
 
-	protected void doGetRDF(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+	protected void doPostDefinition(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		// Ignore final path. Allows client to set any download file name
+
 		try {
+			// Parse format
+			Format format = null;
+			{
+				String formatStr = request.getParameter("format");
+				if (null == formatStr) {
+					format = Format.GEOJSON;
+				} else {
+					for (Format f : Format.values()) {
+						if (f.matches(formatStr)) {
+							format = f;
+						}
+					}
+				}
+				if (null == format) {
+					throw new Exception("Unknown format");
+				}
+				logger.debug("Export Format: " + format.name());
+			}
+
+			// Parse filter
+			Filter filter = null;
+			{
+				String filterStr = request.getParameter("filter");
+				if (null != filterStr) {
+					for (Filter f : Filter.values()) {
+						if (f.matches(filterStr)) {
+							filter = f;
+						}
+					}
+				}
+				if (null != filter) {
+					logger.debug("Export Filter: " + filter.name());
+				}
+			}
+
+			// Parse method
 			Method method = null;
 			{
 				String methodStr = request.getParameter("method");
 				if (null != methodStr) {
 					for (Method m : Method.values()) {
-						// TODO: Only do schema for now
-						if (m.matches(methodStr) && methodStr.equalsIgnoreCase("schema")) {
+						if (m.matches(methodStr)) {
 							method = m;
 						}
 					}
 				}
 				if (null == method) {
-					throw new Exception("Unknown method for RDF export");
+					throw new Exception("Unknown method");
 				}
 				logger.debug("Export Method: " + method.name());
 			}
 
-			String langParam = request.getParameter("language");
-			if (null != langParam) {
-				langParam = langParam.toLowerCase();
-				if (!ACCEPTED_RDF_LANGS.contains(langParam)) {
-					throw new Exception("Unsupported language for RDF export: " + langParam);
-				}
-			}
-
+			// Parse identifier
 			String identifier = null;
 			List<String> identifiers = new Vector<String>();
 			{
@@ -177,222 +197,113 @@ public class ExportServlet extends JsonServlet {
 					identifier = identifiers.get(0);
 				}
 				if (null == identifier) {
-					throw new Exception("Unknown name for RDF export");
+					throw new Exception("Unknown name");
 				}
 				logger.debug("Export Name: " + identifier);
 			}
 
+			// Parse contentType
+			String contentType = null;
+			{
+				String[] contentTypes = request.getParameterValues("contentType");
+				if (null != contentTypes) {
+					for (String t : contentTypes) {
+						contentType = t;
+					}
+				}
+				if (null != contentType) {
+					logger.debug("Content-Type: " + contentType);
+				}
+			}
+
+			// Build doc retrieval based on method
 			DocumentRetrieval docRetrieval = null;
-			if (Method.SCHEMA == method) {
+			if (Method.LAYER == method) {
+				try {
+					docRetrieval = DocumentRetrievalLayer.create(configuration.getCouchDb(), identifier);
+				} catch (Exception e) {
+					throw new Exception("Problem retrieving documents from layer: " + identifier, e);
+				}
+			} else if (Method.SCHEMA == method) {
 				try {
 					docRetrieval = DocumentRetrievalSchema.create(configuration.getCouchDb(), identifier);
 				} catch (Exception e) {
 					throw new Exception("Problem retrieving documents from schema: " + identifier, e);
 				}
-			} else {
-				throw new Exception("Unhandled method: " + method.name());
-			}
-
-			SchemaCache schemaCache = null;
-			ExportFormat outputFormat = null;
-			try {
-				schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
-				outputFormat = new ExportFormatRDF(
-						schemaCache,
-						docRetrieval,
-						langParam,
-						atlasName);
-			} catch (Exception e) {
-				throw new Exception("Failed to initialize RDF export format: ", e);
-			}
-
-			response.setCharacterEncoding(outputFormat.getCharacterEncoding());
-			response.setContentType(outputFormat.getMimeType());
-			response.setHeader("Cache-Control", "no-cache,must-revalidate");
-			response.setDateHeader("Expires", (new Date()).getTime());
-
-			outputFormat.outputExport(response.getOutputStream());
-		} catch (Exception e) {
-			reportError(e, response);
-		}
-	}
-
-	protected void doPostDefinition(HttpServletRequest request, HttpServletResponse response) throws ServletException {
-		// Ignore final path. Allows client to set any download file name
-		
-		try {
-			// Parse format
-			Format format = null;
-			{
-				String formatStr = request.getParameter("format");
-				if( null == formatStr ) {
-					format = Format.GEOJSON;
-				} else {
-					for(Format f : Format.values()){
-						if( f.matches(formatStr) ){
-							format = f;
-						}
-					}
-				}
-				
-				if( null == format ) {
-					throw new Exception("Unknown format");
-				}
-				logger.debug("Export Format: "+format.name());
-			}
-			
-			// Parse filter
-			Filter filter = null;
-			{
-				String filterStr = request.getParameter("filter");
-				if( null != filterStr ) {
-					for(Filter f : Filter.values()){
-						if( f.matches(filterStr) ){
-							filter = f;
-						}
-					}
-				}
-				
-				if( null != filter ) {
-					logger.debug("Export Filter: "+filter.name());
-				}
-			}
-			
-			// Parse method
-			Method method = null;
-			{
-				String methodStr = request.getParameter("method");
-				if( null != methodStr ) {
-					for(Method m : Method.values()){
-						if( m.matches(methodStr) ){
-							method = m;
-						}
-					}
-				}
-				
-				if( null == method ) {
-					throw new Exception("Unknown method");
-				}
-				logger.debug("Export Method: "+method.name());
-			}
-			
-			// Parse identifier
-			String identifier = null;
-			List<String> identifiers = new Vector<String>();
-			{
-				String[] ids = request.getParameterValues("name");
-				if( null != ids ) {
-					for(String id : ids){
-						identifiers.add(id);
-					}
-				}
-				
-				if( identifiers.size() > 0 ) {
-					identifier = identifiers.get(0);
-				}
-				
-				if( null == identifier ) {
-					throw new Exception("Unknown name");
-				}
-				logger.debug("Export Name: "+identifier);
-			}
-			
-			// Parse contentType
-			String contentType = null;
-			{
-				String[] contentTypes = request.getParameterValues("contentType");
-				if( null != contentTypes ) {
-					for(String t : contentTypes){
-						contentType = t;
-					}
-				}
-				
-				if( null != contentType ) {
-					logger.debug("Content-Type: "+contentType);
-				}
-			}
-			
-			// Build doc retrieval based on method
-			DocumentRetrieval docRetrieval = null;
-			if( Method.LAYER == method ) {
-				try {
-					docRetrieval = DocumentRetrievalLayer.create(configuration.getCouchDb(), identifier);
-				} catch (Exception e) {
-					throw new Exception("Problem retrieving documents from layer: "+identifier,e);
-				}
-				
-			} else if( Method.SCHEMA == method ) {
-				try {
-					docRetrieval = DocumentRetrievalSchema.create(configuration.getCouchDb(), identifier);
-				} catch (Exception e) {
-					throw new Exception("Problem retrieving documents from schema: "+identifier,e);
-				}
-				
-			} else if( Method.DOC_ID == method ) {
+			} else if (Method.DOC_ID == method) {
 				try {
 					docRetrieval = DocumentRetrievalId.create(configuration.getCouchDb(), identifiers);
 				} catch (Exception e) {
-					throw new Exception("Problem retrieving documents from doc ids: "+identifiers,e);
+					throw new Exception("Problem retrieving documents from doc ids: " + identifiers, e);
 				}
-				
 			} else {
-				throw new Exception("Do not know how to handle method: "+method.name());
+				throw new Exception("Do not know how to handle method: " + method.name());
 			}
-			
+
 			// Build document filter based on filter type
-			if( null != filter ){
+			if (null != filter) {
 				DocumentFilter docFilter = new DocumentFilterGeometryType(filter);
-				DocumentRetrievalFiltered filteredRetrieval = 
-						new DocumentRetrievalFiltered(docRetrieval, docFilter);
+				DocumentRetrievalFiltered filteredRetrieval = new DocumentRetrievalFiltered(docRetrieval, docFilter);
 				docRetrieval = filteredRetrieval;
 			}
-			
+
 			ExportFormat outputFormat = null;
-			if( Format.GEOJSON == format ) {
+			if (Format.GEOJSON == format) {
 				try {
 					SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
 					outputFormat = new ExportFormatGeoJson(schemaCache, docRetrieval);
 				} catch (Exception e) {
-					throw new Exception("Problem setting up format: "+format.name(),e);
+					throw new Exception("Problem setting up format: " + format.name(), e);
 				}
-	
-			} else if( Format.CSV == format ) {
+			} else if (Format.CSV == format) {
 				try {
 					SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
 					outputFormat = new ExportFormatCSV(schemaCache, docRetrieval);
 				} catch (Exception e) {
-					throw new Exception("Problem setting up format: "+format.name(),e);
+					throw new Exception("Problem setting up format: " + format.name(), e);
 				}
-			
+			} else if (Format.RDFXML == format ||
+					Format.TURTLE == format ||
+					Format.JSONLD == format) {
+				try {
+					SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
+					outputFormat = new ExportFormatRDF(
+						schemaCache,
+						docRetrieval,
+						format.getLabel(),
+						atlasName);
+				} catch (Exception e) {
+					throw new Exception("Problem setting up format: " + format.name(), e);
+				}
 			} else {
-				throw new Exception("Do not know how to handle format: "+format.name());
+				throw new Exception("Do not know how to handle format: " + format.name());
 			}
-			
+
 			String charEncoding = outputFormat.getCharacterEncoding();
-			if( null != charEncoding ) {
-				response.setCharacterEncoding( charEncoding );
+			if (null != charEncoding) {
+				response.setCharacterEncoding(charEncoding);
 			}
-			if( null == contentType ) {
+			if (null == contentType) {
 				contentType = outputFormat.getMimeType();
 			}
-			if( null != contentType ) {
+			if (null != contentType) {
 				response.setContentType(contentType);
 			}
 			response.setHeader("Cache-Control", "no-cache,must-revalidate");
 			response.setDateHeader("Expires", (new Date()).getTime());
-			
+
 			OutputStream os = response.getOutputStream();
-			
+
 			try {
 				outputFormat.outputExport(os);
 			} catch (Exception e) {
-				throw new Exception("Error during export process",e);
+				throw new Exception("Error during export process", e);
 			}
-			
+
 			os.flush();
 
-		} catch(Exception e) {
-			reportError(e,response);
+		} catch (Exception e) {
+			reportError(e, response);
 		}
 	}
 
