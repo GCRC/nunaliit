@@ -1302,6 +1302,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		    			type: 'mapGeometryAdded'
 		        		,geometry: feature.geometry
 		        		,projection: proj
+		        		,_origin: _this
 		    		});
 				}
 			}
@@ -5601,9 +5602,15 @@ var MapAndControls = $n2.Class('MapAndControls',{
 					if( doc.nunaliit_layers.indexOf(layerId) >= 0 ){
 						m.isAvailable = true;
 						break;
-					};
-				};
-			};
+					}
+				}
+			}
+
+			if(!m.isAvailable) {
+				if(this._getMapFeaturesIncludingFid(m.docId).length > 0) {
+					m.isAvailable = true;
+				}
+			}
 			
 		} else if( 'find' === type ) {
 			var doc = m.doc;

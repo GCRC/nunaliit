@@ -979,7 +979,21 @@ var TiledDisplay = $n2.Class({
 			
 			_this._displayDocumentButtons(doc, _this.currentDetails.schema);
 		});
-		
+
+		if(doc.nunaliit_key_media_ref && doc.nunaliit_key_media_ref.doc) {
+			//Use the key media document to display the tile image
+			this.documentSource.getDocument({
+				docId: doc.nunaliit_key_media_ref.doc
+				,onSuccess: function(key_media_doc){
+					_this._receiveDocumentContentMediaDisplayTile(key_media_doc, $set, doc._id);
+				}
+			});
+		} else {
+			this._receiveDocumentContentMediaDisplayTile(doc, $set, doc._id)
+		}
+	},
+
+	_receiveDocumentContentMediaDisplayTile: function(doc, $set, containerDocId) {
 		// Set tile classes based on media associated with document, and schema name
 		var includesImage = false;
 		var includesAudio = false;
@@ -1009,7 +1023,7 @@ var TiledDisplay = $n2.Class({
 		if( doc.nunaliit_schema ){
 			schemaName = doc.nunaliit_schema;
 		};
-		$set.find('.n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId)).each(function(){
+		$set.find('.n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(containerDocId)).each(function(){
 			var $tile = $(this);
 			
 			$tile.removeClass('n2DisplayTiled_tile_image n2DisplayTiled_tile_audio n2DisplayTiled_tile_video');
@@ -1028,7 +1042,7 @@ var TiledDisplay = $n2.Class({
 		if( thumbnailName ){
 			// Check that thumbnail is attached
 			if( doc.nunaliit_attachments.files[thumbnailName]
-			 && doc.nunaliit_attachments.files[thumbnailName].status === 'attached' ){
+			&& doc.nunaliit_attachments.files[thumbnailName].status === 'attached' ){
 				// OK
 			} else {
 				thumbnailName = null;
@@ -1037,7 +1051,7 @@ var TiledDisplay = $n2.Class({
 		if( thumbnailName ){
 			var url = this.documentSource.getDocumentAttachmentUrl(doc,thumbnailName);
 			if( url ){
-				$set.find('.n2DisplayTiled_wait_thumb_' + $n2.utils.stringToHtmlId(docId)).each(function(){
+				$set.find('.n2DisplayTiled_wait_thumb_' + $n2.utils.stringToHtmlId(containerDocId)).each(function(){
 					var $div = $(this);
 					$div.empty();
 					$('<img>')
@@ -1046,28 +1060,29 @@ var TiledDisplay = $n2.Class({
 				});
 			};
 		};
-		
+
 
 		// Obtain the schema associated with the document
+		var _this = this;
 		if( doc.nunaliit_schema 
-		 && this.schemaRepository ){
+		&& this.schemaRepository ){
 			this.schemaRepository.getSchema({
 				name: doc.nunaliit_schema
 				,onSuccess: function(schema){
-					schemaLoaded(doc, schema);
+					_this._schemaLoaded(doc, schema);
 				}
 				,onError: function(err){
-					schemaLoaded(doc, null);
+					_this._schemaLoaded(doc, null);
 				}
 			});
 		} else {
-			schemaLoaded(doc, null);
+			this._schemaLoaded(doc, null);
 		};
-		
+
 		// Check if the given document contains links to the currently
 		// displayed document
 		if( this.currentDetails.doc 
-		 && doc._id !== this.currentDetails.docId ){
+		&& doc._id !== this.currentDetails.docId ){
 			
 			this.relatedDocumentDiscoveryProcess.areDocumentsRelated({
 				selectedDoc: this.currentDetails.doc
@@ -1115,27 +1130,27 @@ var TiledDisplay = $n2.Class({
 				}
 			});
 		};
+	},
 		
-		function schemaLoaded(doc, schema){
-			if( _this.currentDetails.docId === doc._id ){
-				// This is the schema associated with the current
-				// document.
-				if( schema && !_this.currentDetails.schema ){
-					_this.currentDetails.schema = schema;
-					_this._displayDocumentButtons(doc, schema);
-					
-				} else if( _this.currentDetails.schema && !schema ) {
-					_this.currentDetails.schema = null;
-					_this._displayDocumentButtons(doc, null);
+	_schemaLoaded: function(doc, schema) {
+		if( this.currentDetails.docId === doc._id ){
+			// This is the schema associated with the current
+			// document.
+			if( schema && !this.currentDetails.schema ){
+				this.currentDetails.schema = schema;
+				this._displayDocumentButtons(doc, schema);
 				
-				} else if( _this.currentDetails.schema 
-				 && schema
-				 && _this.currentDetails.schema.name !== schema.name
-				 ) {
-					// Schema is changed
-					_this.currentDetails.schema = schema;
-					_this._displayDocumentButtons(doc, schema);
-				};
+			} else if( this.currentDetails.schema && !schema ) {
+				this.currentDetails.schema = null;
+				this._displayDocumentButtons(doc, null);
+			
+			} else if( this.currentDetails.schema 
+				&& schema
+				&& this.currentDetails.schema.name !== schema.name
+				) {
+				// Schema is changed
+				this.currentDetails.schema = schema;
+				this._displayDocumentButtons(doc, schema);
 			};
 		};
 	},

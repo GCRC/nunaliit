@@ -943,6 +943,11 @@ var Service = $n2.Construct({
 					$n2.widgetExport.HandleWidgetAvailableRequests(m);
 				};
 
+				if( $n2.modelExportWidget 
+					&& $n2.modelExportWidget.widgetAvailable ){
+					   $n2.modelExportWidget.widgetAvailable(m);
+				   };
+
 				if( $n2.widgetModelBrowser 
 				 && $n2.widgetModelBrowser.HandleWidgetAvailableRequests ){
 					$n2.widgetModelBrowser.HandleWidgetAvailableRequests(m);
@@ -956,6 +961,11 @@ var Service = $n2.Construct({
 				if( $n2.widgetLegend 
 				 && $n2.widgetLegend.HandleWidgetAvailableRequests ){
 					$n2.widgetLegend.HandleWidgetAvailableRequests(m);
+				};
+
+				if( $n2.filterableLegendWidget 
+				 && $n2.filterableLegendWidget.widgetAvailable ){
+					$n2.filterableLegendWidget.widgetAvailable(m);
 				};
 
 				if( $n2.widgetCollapsibleContainer 
@@ -1054,6 +1064,11 @@ var Service = $n2.Construct({
 					$n2.widgetExport.HandleWidgetDisplayRequests(m);
 				};
 
+				if( $n2.modelExportWidget 
+					&& $n2.modelExportWidget.widgetDisplay ){
+					   $n2.modelExportWidget.widgetDisplay(m);
+				   };
+
 				if( $n2.widgetModelBrowser 
 				 && $n2.widgetModelBrowser.HandleWidgetDisplayRequests ){
 					$n2.widgetModelBrowser.HandleWidgetDisplayRequests(m);
@@ -1067,6 +1082,11 @@ var Service = $n2.Construct({
 				if( $n2.widgetLegend 
 				 && $n2.widgetLegend.HandleWidgetDisplayRequests ){
 					$n2.widgetLegend.HandleWidgetDisplayRequests(m);
+				};
+
+				if( $n2.filterableLegendWidget 
+				 && $n2.filterableLegendWidget.widgetDisplay ){
+					$n2.filterableLegendWidget.widgetDisplay(m);
 				};
 
 				if( $n2.widgetCollapsibleContainer 

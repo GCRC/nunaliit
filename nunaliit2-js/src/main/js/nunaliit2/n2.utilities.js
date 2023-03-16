@@ -39,66 +39,72 @@ var
  ;
 
 //--------------------------------------------------------------------------
-var AssignLayerOnDocumentCreation = $n2.Class({
-		
-	layerId: null,
-	
-	onlyWithGeometries: null,
+	const AssignLayerOnDocumentCreation = $n2.Class({
+		layerId: null,
+		onlyWithGeometries: null,
+		dispatchService: null,
 
-	dispatchService: null,
-	
-	initialize: function(opts_){
-		var opts = $n2.extend({
-			layerId: null
-			,onlyWithGeometries: false
-			,dispatchService: null
-		},opts_);
-		
-		var _this = this;
-		
-		this.layerId = opts.layerId;
-		this.onlyWithGeometries = opts.onlyWithGeometries;
-		this.dispatchService = opts.dispatchService;
-			
-		// Register to events
-		if( this.dispatchService ){
-			var f = function(m, addr, dispatcher){
-				_this._handle(m, addr, dispatcher);
-			};
+		initialize: function (opts_) {
+			const opts = $n2.extend({
+				layerId: null
+				, onlyWithGeometries: false
+				, dispatchService: null
+			}, opts_);
 
-			this.dispatchService.register(DH,'preDocCreation',f);
-		};
-		
-		$n2.log('AssignLayerOnDocumentCreation', this);
-	},
-	
-	_handle: function(m, addr, dispatcher){
-		if( 'preDocCreation' === m.type ){
-			var createdDoc = m.doc;
-			
-			var addLayer = true;
-			if( this.onlyWithGeometries ){
-				if( createdDoc.nunaliit_geom ){
-					
-				} else {
-					addLayer = false;
-				};
-			};
+			const _this = this;
 
-			if( addLayer ){
-				if( !createdDoc.nunaliit_layers ){
-					createdDoc.nunaliit_layers = [];
+			this.layerId = opts.layerId;
+			this.onlyWithGeometries = opts.onlyWithGeometries;
+			this.dispatchService = opts.dispatchService;
+
+			const isArrayOfLayers = Array.isArray(this.layerId);
+			if (typeof this.layerId !== "string" && !isArrayOfLayers) {
+				throw new Error("Utility AssignLayerOnDocumentCreation's layerId must be a string or an array of strings");
+			}
+			if (isArrayOfLayers) {
+				if (!this.layerId.every(layer => typeof layer === "string")) {
+					throw new Error("Utility AssignLayerOnDocumentCreation's layerId contains a value that is not a string");
+				}
+			}
+
+			// Register to events
+			if (this.dispatchService) {
+				const f = function (m, addr, dispatcher) {
+					_this._handle(m, addr, dispatcher);
 				};
-				
-				if( this.layerId ){
-					if( createdDoc.nunaliit_layers.indexOf(this.layerId) < 0 ){
-						createdDoc.nunaliit_layers.push(this.layerId);
-					};
-				};
-			};
-		};
-	}
-});
+				this.dispatchService.register(DH, 'preDocCreation', f);
+			}
+
+			$n2.log('AssignLayerOnDocumentCreation', this);
+		},
+
+		_handle: function (m, addr, dispatcher) {
+			if ('preDocCreation' === m.type) {
+				const createdDoc = m.doc;
+				let addLayer = true;
+
+				if (this.onlyWithGeometries) {
+					if (!createdDoc.hasOwnProperty("nunaliit_geom")) {
+						addLayer = false;
+					}
+				}
+
+				if (addLayer) {
+					if (!createdDoc.nunaliit_layers) {
+						createdDoc.nunaliit_layers = [];
+					}
+
+					if (this.layerId) {
+						let layers = this.layerId;
+						if (typeof layers === "string") layers = [layers];
+						createdDoc.nunaliit_layers = [...new Set(
+							[...createdDoc.nunaliit_layers, ...layers]
+						)];
+					}
+				}
+			}
+		}
+	});
 
 //--------------------------------------------------------------------------
 var SelectDocumentOnModuleIntroduction = $n2.Class({

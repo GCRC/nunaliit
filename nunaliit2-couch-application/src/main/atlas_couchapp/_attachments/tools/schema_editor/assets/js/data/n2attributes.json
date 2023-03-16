@@ -363,6 +363,26 @@
     }
   },
   {
+    "title": "n2 attribute key media",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "key_media_ref"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
     "title": "n2 attribute createdBy",
     "fields": {
       "type": {
@@ -429,6 +449,26 @@
         "label": "type",
         "type": "string",
         "value": "textarea"
+      },
+      "n2id": {
+        "label": "Id",
+        "type": "input",
+        "value": null
+      },
+      "label": {
+        "label": "label",
+        "type": "input",
+        "value": "Label"
+      }
+    }
+  },
+  {
+    "title": "n2 attribute tag",
+    "fields": {
+      "type": {
+        "label": "type",
+        "type": "string",
+        "value": "tag"
       },
       "n2id": {
         "label": "Id",

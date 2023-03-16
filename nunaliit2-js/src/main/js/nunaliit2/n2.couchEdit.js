@@ -4400,7 +4400,7 @@ var CouchDocumentEditService = $n2.Class({
 		this.isInsert = false;
 		
 		if( this.dispatchService ){
-			var f = function(m){ _this._handle(m); };
+			var f = (m) => { this._handle(m); };
 			this.dispatchService.register(DH, 'editGeometryModified', f);
 			this.dispatchService.register(DH, 'mapGeometryAdded', f);
 		};
