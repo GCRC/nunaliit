@@ -63,6 +63,9 @@ public class CommandInReachSchemaDefs implements Command {
 		ps.println("  nunaliit schemas-for-inreach <options>");
 		ps.println();
 		ps.println("options:");
+		ps.println("  "+Options.OPTION_ADD_SCHEMA);
+		ps.println("    When specified, generates schemas for inReach forms.");
+		ps.println("    Form prefix and title will used as the id of the schema.");
 		ps.println();
 		CommandHelp.reportGlobalOptions(ps, getExpectedOptions());
 	}
@@ -96,16 +99,15 @@ public class CommandInReachSchemaDefs implements Command {
 		// Iterate over each inReach form
 		InReachSettings inReachSettings = InReachConfiguration.getInReachSettings();
 		Boolean shouldAddSchema = options.getAddSchema();
-		String userResponse = "";
+		Scanner scanner = new Scanner(System.in);
 		for (InReachForm form : inReachSettings.getForms()) {
+			String userResponse = "";
 			JSONObject jsonDef = schemaDefinitionFromForm(form);
-			String schemaId = form.getPrefix().replace("-", "_") + form.getTitle();
+			String schemaId = form.getPrefix().replace("-", "_") + form.getTitle().replace(" ", "_");
 			if(null == shouldAddSchema) {
 				//if --add-schema flag not provided, ask user if they want to create schema or not
-				Scanner scanner = new Scanner(System.in);
 				System.out.print("Do you want to create a schema for: " + schemaId + "? (yes/no): ");
 				userResponse = scanner.next().toLowerCase();
-				scanner.close();
 			}
 
 			if(null != shouldAddSchema || userResponse.equals("yes")) {
@@ -116,6 +118,7 @@ public class CommandInReachSchemaDefs implements Command {
 			gs.getOutStream().println(jsonDef.toString(3));
 			gs.getOutStream().println();
 		}
+		scanner.close();
 	}
 
 	private void createSchema(GlobalSettings gs, File atlasDir, String schemaId, JSONObject formDefinition) throws Exception {
@@ -153,7 +156,7 @@ public class CommandInReachSchemaDefs implements Command {
 		JSONObject jsonDef = new JSONObject();
 
 		jsonDef.put("group", "inReach");
-		jsonDef.put("id", form.getPrefix().replace("-", "_") + form.getTitle());
+		jsonDef.put("id", form.getPrefix().replace("-", "_") + form.getTitle().replace(" ", "_"));
 		jsonDef.put("label", "InReach "+form.getTitle());
 
 		JSONArray attributes = new JSONArray();
