@@ -101,13 +101,18 @@ public class CommandInReachSchemaDefs implements Command {
 		Boolean shouldAddSchema = options.getAddSchema();
 		Scanner scanner = new Scanner(System.in);
 		for (InReachForm form : inReachSettings.getForms()) {
-			String userResponse = "n";
+			String userResponse = null;
 			JSONObject jsonDef = schemaDefinitionFromForm(form);
 			String schemaId = form.getPrefix().replace("-", "_") + form.getTitle().replace(" ", "_");
 			if(null == shouldAddSchema) {
 				// if --generate-schema flag not provided, ask user if they want to create schema or not
-				System.out.print("Do you want to generate the schema for: " + schemaId + "? (Y/N) [Default: N]: ");
-				userResponse = scanner.nextLine().toLowerCase();
+				do {
+					System.out.print("Do you want to generate the schema for: " + schemaId + "? (Y/N) [Default: N]: ");
+					userResponse = scanner.nextLine().trim().toLowerCase();
+					if (!userResponse.matches("[yn]|")) {
+						System.out.println("A valid response must be provided: Y, N or blank to accept default value.");
+					}
+				} while (!userResponse.matches("[yn]|"));
 			}
 
 			if(null != shouldAddSchema || userResponse.equals("y")) {
