@@ -64,7 +64,8 @@ public class CommandInReachSchemaDefs implements Command {
 		ps.println();
 		ps.println("options:");
 		ps.println("  "+Options.OPTION_GENERATE_SCHEMA);
-		ps.println("    When specified, automatically creates or updates all schemas derived from the current inReach form.");
+		ps.println("    When specified, automatically creates or updates");
+		ps.println("    all schemas derived from the current inReach form.");
 		ps.println();
 		CommandHelp.reportGlobalOptions(ps, getExpectedOptions());
 	}
@@ -104,8 +105,8 @@ public class CommandInReachSchemaDefs implements Command {
 			JSONObject jsonDef = schemaDefinitionFromForm(form);
 			String schemaId = form.getPrefix().replace("-", "_") + form.getTitle().replace(" ", "_");
 			if(null == shouldAddSchema) {
-				//if --add-schema flag not provided, ask user if they want to create schema or not
-				System.out.print("Do you want to generate schema for: " + schemaId + "?[N]: ");
+				// if --generate-schema flag not provided, ask user if they want to create schema or not
+				System.out.print("Do you want to generate the schema for: " + schemaId + "? (Y/N) [Default: N]: ");
 				userResponse = scanner.nextLine().toLowerCase();
 			}
 
