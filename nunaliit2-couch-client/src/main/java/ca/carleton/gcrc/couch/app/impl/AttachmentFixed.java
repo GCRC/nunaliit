@@ -24,11 +24,10 @@ public class AttachmentFixed implements Attachment {
 		this.contentType = contentType;
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		OutputStreamWriter osw = new OutputStreamWriter(baos,"UTF-8");
-		osw.write(content);
-		osw.flush();
-		osw.close();
-		
+		try (
+		OutputStreamWriter osw = new OutputStreamWriter(baos,"UTF-8");) {
+			osw.write(content);
+		}
 		this.content = baos.toByteArray();
 	}
 	

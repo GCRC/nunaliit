@@ -1,10 +1,8 @@
 package ca.carleton.gcrc.couch.onUpload.parser;
 
 import ca.carleton.gcrc.geom.geojson.GeoJsonParser;
-import org.apache.tika.Tika;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.XmlRootExtractor;
-import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -15,8 +13,6 @@ import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFprobeProcessor;
 
 import javax.xml.namespace.QName;
 import java.io.File;
-import java.io.InputStream;
-import java.io.DataInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -119,12 +115,14 @@ public class ContentTypeDetector {
 
         XmlRootExtractor rootExtractor = new XmlRootExtractor();
         QName qName;
-        try {
-            qName = rootExtractor.extractRootElement(new FileInputStream(file));
+        try(FileInputStream inputFile = new FileInputStream(file)) {
+            qName = rootExtractor.extractRootElement(inputFile);
             isGpx = "gpx".equalsIgnoreCase(qName.getLocalPart());
         } catch (FileNotFoundException e) {
             log.warn("Problem parsing file for XML root element, possibly not an XML file: {}. Error: {}",
                     file.getName(), e.getMessage());
+        } catch (IOException e) {
+            log.error("Exception checking if GPX file", e);
         }
 
         return isGpx;

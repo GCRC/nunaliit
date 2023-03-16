@@ -74,10 +74,11 @@ public class DigestComputerSha1 implements DigestComputer {
 			JSONObject convertedJsonObj = converter.convertObject(jsonObj);
 			
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8");
-			JSONWriter builder = new JSONWriter(osw);
-			this.writeObject(convertedJsonObj, builder);
-			osw.flush();
+			try (OutputStreamWriter osw = new OutputStreamWriter(baos,"UTF-8")) {
+				JSONWriter builder = new JSONWriter(osw);
+				this.writeObject(convertedJsonObj, builder);
+				osw.flush();	
+			}
 			
 			// Perform SHA-1 digest
 			MessageDigest md = MessageDigest.getInstance("SHA-1");
@@ -86,11 +87,13 @@ public class DigestComputerSha1 implements DigestComputer {
 
 			// B64
 			byte[] encoded = Base64.encodeBase64(sigBytes);
-			ByteArrayInputStream bais = new ByteArrayInputStream(encoded);
-			InputStreamReader isr = new InputStreamReader(bais, "UTF-8");
-			BufferedReader br = new BufferedReader(isr);
-			mainDigest = br.readLine();
-
+			try (
+				ByteArrayInputStream bais = new ByteArrayInputStream(encoded);
+				InputStreamReader isr = new InputStreamReader(bais, "UTF-8");
+				BufferedReader br = new BufferedReader(isr);
+			) {
+				mainDigest = br.readLine();
+			}
 		} catch(Exception e) {
 			throw new Exception("Unable to compute main digest on document", e);
 		}
@@ -165,14 +168,15 @@ public class DigestComputerSha1 implements DigestComputer {
 			byte[] digestBytes = md.digest();
 
 			byte[] encoded = Base64.encodeBase64(digestBytes);
-			ByteArrayInputStream bais = new ByteArrayInputStream(encoded);
-			InputStreamReader isr = new InputStreamReader(bais, "UTF-8");
-			BufferedReader br = new BufferedReader(isr);
-			digest = br.readLine();
-			
+			try (
+				ByteArrayInputStream bais = new ByteArrayInputStream(encoded);
+				InputStreamReader isr = new InputStreamReader(bais, "UTF-8");
+				BufferedReader br = new BufferedReader(isr);
+			) {
+				digest = br.readLine();
+			}
 		} catch(Exception e) {
 			throw new Exception("Error computing digest on attachment: "+attachment.getName(), e);
-			
 		} finally {
 			if( null != is ) {
 				try {

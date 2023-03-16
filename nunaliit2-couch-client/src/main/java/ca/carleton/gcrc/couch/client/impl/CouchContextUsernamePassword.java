@@ -27,19 +27,22 @@ public class CouchContextUsernamePassword extends CouchContextBase {
 		synchronized(this) {
 			if( null == value ) {
 				ByteArrayOutputStream baos = new ByteArrayOutputStream();
-				OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8");
-				osw.write(username);
-				osw.write(":");
-				osw.write(password);
-				osw.flush();
+				try(OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8")) {
+					osw.write(username);
+					osw.write(":");
+					osw.write(password);
+					osw.flush();
+				}
 				
 				byte[] encoded = Base64.encodeBase64(baos.toByteArray());
 				
-				ByteArrayInputStream bais = new ByteArrayInputStream(encoded);
-				InputStreamReader isr = new InputStreamReader(bais, "UTF-8");
-				BufferedReader br = new BufferedReader(isr);
-				
-				value = "Basic " + br.readLine();
+				try(
+					ByteArrayInputStream bais = new ByteArrayInputStream(encoded);
+					InputStreamReader isr = new InputStreamReader(bais, "UTF-8");
+					BufferedReader br = new BufferedReader(isr);
+				) {
+					value = "Basic " + br.readLine();
+				}
 			}
 			
 			v = value;

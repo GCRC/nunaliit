@@ -71,9 +71,10 @@ public class FSEntryBuffer implements FSEntry {
 		this.name = name;
 		
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8");
-		osw.write(content);
-		osw.flush();
+		try(OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8")) {
+			osw.write(content);
+			osw.flush();
+		}
 		this.content = baos.toByteArray();
 	}
 	

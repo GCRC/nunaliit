@@ -67,17 +67,14 @@ public class FileConversionContextImpl implements FileConversionContext {
 
 	public void downloadFile(String attachmentName, File outputFile) throws Exception {
 
-		FileOutputStream fos = new FileOutputStream(outputFile);
-		
-		JSONObject doc = getDoc();
-		dd.getDatabase().downloadAttachment(
-			doc
-			,attachmentName
-			,fos
-			);
-		
-		fos.flush();
-		fos.close();
+		try(FileOutputStream fos = new FileOutputStream(outputFile)) {
+			JSONObject doc = getDoc();
+			dd.getDatabase().downloadAttachment(
+				doc
+				,attachmentName
+				,fos
+				);
+		}
 	}
 
 	@Override

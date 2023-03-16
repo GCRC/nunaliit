@@ -84,9 +84,10 @@ public class CouchDbDocumentBuilder {
 			String content
 			) throws Exception {
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8");
-		osw.write(content);
-		osw.flush();
+		try(OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8")) {
+			osw.write(content);
+			osw.flush();
+		}
 		
 		byte[] contentBytes = baos.toByteArray();
 		
