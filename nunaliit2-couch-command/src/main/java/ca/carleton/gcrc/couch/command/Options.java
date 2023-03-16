@@ -40,7 +40,7 @@ public class Options {
 	static final public String OPTION_SCHEMA = "--schema";
 	static final public String OPTION_LAYER = "--layer";
 	static final public String OPTION_NAME = "--name";
-	static final public String OPTION_ADD_SCHEMA = "--add-schema";
+	static final public String OPTION_GENERATE_SCHEMA = "--generate-schema";
 
 	static final public String OPTION_SET_LOGGER = "--set-logger";
 	static final public String OPTION_DEBUG = "--debug";
@@ -241,7 +241,7 @@ public class Options {
 
 					name = argumentStack.pop();
 
-				} else if (OPTION_ADD_SCHEMA.equals(arg)) {
+				} else if (OPTION_GENERATE_SCHEMA.equals(arg)) {
 					addSchema = Boolean.TRUE;
 				} else {
 					throw new Exception("Unrecognized option: "+arg);

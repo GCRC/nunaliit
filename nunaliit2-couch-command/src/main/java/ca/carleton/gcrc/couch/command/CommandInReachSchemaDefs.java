@@ -63,9 +63,8 @@ public class CommandInReachSchemaDefs implements Command {
 		ps.println("  nunaliit schemas-for-inreach <options>");
 		ps.println();
 		ps.println("options:");
-		ps.println("  "+Options.OPTION_ADD_SCHEMA);
-		ps.println("    When specified, generates schemas for inReach forms.");
-		ps.println("    Form prefix and title will used as the id of the schema.");
+		ps.println("  "+Options.OPTION_GENERATE_SCHEMA);
+		ps.println("    When specified, automatically creates or updates all schemas derived from the current inReach form.");
 		ps.println();
 		CommandHelp.reportGlobalOptions(ps, getExpectedOptions());
 	}
@@ -101,16 +100,16 @@ public class CommandInReachSchemaDefs implements Command {
 		Boolean shouldAddSchema = options.getAddSchema();
 		Scanner scanner = new Scanner(System.in);
 		for (InReachForm form : inReachSettings.getForms()) {
-			String userResponse = "";
+			String userResponse = "n";
 			JSONObject jsonDef = schemaDefinitionFromForm(form);
 			String schemaId = form.getPrefix().replace("-", "_") + form.getTitle().replace(" ", "_");
 			if(null == shouldAddSchema) {
 				//if --add-schema flag not provided, ask user if they want to create schema or not
-				System.out.print("Do you want to create a schema for: " + schemaId + "? (yes/no): ");
-				userResponse = scanner.next().toLowerCase();
+				System.out.print("Do you want to generate schema for: " + schemaId + "?[N]: ");
+				userResponse = scanner.nextLine().toLowerCase();
 			}
 
-			if(null != shouldAddSchema || userResponse.equals("yes")) {
+			if(null != shouldAddSchema || userResponse.equals("y")) {
 				createSchema(gs, atlasDir, schemaId, jsonDef);
 			}
 
@@ -137,6 +136,8 @@ public class CommandInReachSchemaDefs implements Command {
 			OutputStreamWriter osw = new OutputStreamWriter(fos);
 			osw.write(formDefinition.toString(4).replace("    ", "\t"));
 			osw.flush();
+			fos.flush();
+			fos.close();
 			gs.getOutStream().println("Schema written to " + schemaDir.getAbsolutePath());
 
 			Options newOptions = new Options();
@@ -145,8 +146,8 @@ public class CommandInReachSchemaDefs implements Command {
 			args.add("--name");
 			args.add(groupName + "_" + schemaId);
 			newOptions.parseOptions(args);
-			CommandUpdateSchema cmdUpdateSchems = new CommandUpdateSchema();
-			cmdUpdateSchems.runCommand(gs, newOptions);
+			CommandUpdateSchema cmdUpdateSchema = new CommandUpdateSchema();
+			cmdUpdateSchema.runCommand(gs, newOptions);
 		} catch (IOException e) {
 			gs.getOutStream().println("Could not write schema definition to " + file.getAbsolutePath());
 		}
