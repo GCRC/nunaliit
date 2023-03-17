@@ -137,26 +137,24 @@ public class CommandInReachSchemaDefs implements Command {
 
 		// Write JSON to file
 		File file = new File(schemaDir, "definition.json");
-		try {
-			FileOutputStream fos = new FileOutputStream(file);
-			OutputStreamWriter osw = new OutputStreamWriter(fos);
+		try(FileOutputStream fos = new FileOutputStream(file);
+			OutputStreamWriter osw = new OutputStreamWriter(fos)) 
+		{
 			osw.write(formDefinition.toString(4).replace("    ", "\t"));
-			osw.flush();
-			fos.flush();
-			fos.close();
 			gs.getOutStream().println("Schema written to " + schemaDir.getAbsolutePath());
-
-			Options newOptions = new Options();
-			List<String> args = new ArrayList<String>();
-			args.add("update-schema");
-			args.add("--name");
-			args.add(groupName + "_" + schemaId);
-			newOptions.parseOptions(args);
-			CommandUpdateSchema cmdUpdateSchema = new CommandUpdateSchema();
-			cmdUpdateSchema.runCommand(gs, newOptions);
 		} catch (IOException e) {
 			gs.getOutStream().println("Could not write schema definition to " + file.getAbsolutePath());
+			throw new Exception("Could not write schema definition to " + file.getAbsolutePath());
 		}
+		
+		Options newOptions = new Options();
+		List<String> args = new ArrayList<String>();
+		args.add("update-schema");
+		args.add("--name");
+		args.add(groupName + "_" + schemaId);
+		newOptions.parseOptions(args);
+		CommandUpdateSchema cmdUpdateSchema = new CommandUpdateSchema();
+		cmdUpdateSchema.runCommand(gs, newOptions);
 	}
 
 	private JSONObject schemaDefinitionFromForm(InReachForm form) throws Exception {
