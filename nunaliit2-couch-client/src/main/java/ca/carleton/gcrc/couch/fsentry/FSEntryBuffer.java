@@ -70,11 +70,14 @@ public class FSEntryBuffer implements FSEntry {
 	public FSEntryBuffer(String name, String content) throws Exception {
 		this.name = name;
 		
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8");
-		osw.write(content);
-		osw.flush();
-		this.content = baos.toByteArray();
+		try(
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8")
+			) {
+			osw.write(content);
+			osw.flush();
+			this.content = baos.toByteArray();
+		}
 	}
 	
 	public FSEntryBuffer(String name, byte[] content) {
