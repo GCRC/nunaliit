@@ -83,13 +83,16 @@ public class CouchDbDocumentBuilder {
 			String contentType,
 			String content
 			) throws Exception {
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		try(OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8")) {
+		
+		byte[] contentBytes;
+		try(
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			OutputStreamWriter osw = new OutputStreamWriter(baos, "UTF-8");
+			) {
 			osw.write(content);
 			osw.flush();
+			contentBytes = baos.toByteArray();
 		}
-		
-		byte[] contentBytes = baos.toByteArray();
 		
 		return addInlineAttachment(name, contentType, contentBytes);
 	}

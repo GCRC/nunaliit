@@ -450,14 +450,16 @@ public class UserServletActions {
 				Object emailObj = emailArray.get(i);
 				if( emailObj instanceof String ){
 					String email = (String)emailObj;
-					
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					OutputStreamWriter osw = new OutputStreamWriter(baos,"UTF-8");
-					osw.write(email);
-					osw.flush();
-					
 					MessageDigest md = MessageDigest.getInstance("MD5");
-					md.update(baos.toByteArray());
+					try(
+						ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						OutputStreamWriter osw = new OutputStreamWriter(baos,"UTF-8");
+					) {
+						osw.write(email);
+						osw.flush();
+						md.update(baos.toByteArray());
+					}
+					
 					byte[] digest = md.digest();
 
 					StringBuilder sb = new StringBuilder(digest.length * 2);

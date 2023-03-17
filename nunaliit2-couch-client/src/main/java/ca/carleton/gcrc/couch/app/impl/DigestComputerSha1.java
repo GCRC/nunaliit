@@ -72,17 +72,19 @@ public class DigestComputerSha1 implements DigestComputer {
 			// While computing the digest, do not include all the keys
 			JSONObjectConverter converter = JSONObjectConverter.getConverterNunaliit();
 			JSONObject convertedJsonObj = converter.convertObject(jsonObj);
-			
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			try (OutputStreamWriter osw = new OutputStreamWriter(baos,"UTF-8")) {
+			MessageDigest md = MessageDigest.getInstance("SHA-1");
+
+			try (
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				OutputStreamWriter osw = new OutputStreamWriter(baos,"UTF-8");
+			) {
 				JSONWriter builder = new JSONWriter(osw);
 				this.writeObject(convertedJsonObj, builder);
 				osw.flush();	
+				md.update(baos.toByteArray());
 			}
 			
 			// Perform SHA-1 digest
-			MessageDigest md = MessageDigest.getInstance("SHA-1");
-			md.update(baos.toByteArray());
 			byte[] sigBytes = md.digest();
 
 			// B64
