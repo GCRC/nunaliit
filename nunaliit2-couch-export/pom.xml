@@ -63,5 +63,11 @@
   		<artifactId>nunaliit2-couch-utils</artifactId>
   		<version>${project.version}</version>
   	</dependency>
+	<dependency>
+		<groupId>org.apache.jena</groupId>
+		<artifactId>apache-jena-libs</artifactId>
+		<type>pom</type>
+		<version>${jena.version}</version>
+	</dependency>
   </dependencies>
 </project>
