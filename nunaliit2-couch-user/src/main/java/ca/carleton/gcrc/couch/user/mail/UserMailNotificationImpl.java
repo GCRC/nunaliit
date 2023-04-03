@@ -21,10 +21,13 @@ public class UserMailNotificationImpl implements UserMailNotification {
 
 	private MailDelivery mailDelivery;
 	private boolean sendNotice = false;
+	private boolean notifyAdmin = false;
 	private String createUserUrl = null;
+	private String userMgmtURL = null;
 	private String passwordRecoveryUrl = null;
 	private MailRecipient fromAddress = null;
 	private MailMessageGenerator userCreationGenerator = new UserCreationGenerator();
+	private MailMessageGenerator userRegistrationGenerator = new UserRegistrationGenerator();
 	private MailMessageGenerator passwordRecoveryGenerator = new PasswordRecoveryGenerator();
 	private MailMessageGenerator passwordReminderGenerator = new PasswordReminderGenerator();
 	
@@ -44,6 +47,17 @@ public class UserMailNotificationImpl implements UserMailNotification {
 			}
 		}
 		
+		// Send Notification to admin
+		{
+			String value = props.getProperty("admin.notify.userCreation",null);
+			if( value != null ) {
+				boolean send = Boolean.parseBoolean(value);
+				if( send ){
+					notifyAdmin = true;
+				}
+			}
+		}
+
 		// Sender Address
 		{
 			String value = props.getProperty("user.sender",null);
@@ -60,6 +74,14 @@ public class UserMailNotificationImpl implements UserMailNotification {
 			}
 		}
 		
+		// User management URL
+		{
+			String value = props.getProperty("user.url.management",null);
+			if( value != null ){
+				userMgmtURL = value;
+			}
+		}
+
 		// Recovery URL
 		{
 			String value = props.getProperty("user.url.passwordRecovery",null);
@@ -145,6 +167,42 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		} catch (Exception e) {
 			logger.error("Unable to send user creation notification",e);
 			throw new Exception("Unable to send user creation notification",e);
+		}
+	}
+
+	@Override
+	public void sendUserCreationNoticeToAdmin(List<MailRecipient> recipients, String userEmail) throws Exception {
+
+		if( true == notifyAdmin && 0 < recipients.size()) {
+			logger.info("Sending user registration notification to "+recipients);
+	
+			Map<String,String> parameters = new HashMap<String,String>();
+			{
+				// Compute link
+				parameters.put("link", userMgmtURL);
+				parameters.put("userEmail", userEmail);
+			}
+	
+			try {
+				MailMessage message = new MailMessage();
+	
+				// From
+				message.setFromAddress(fromAddress);
+	
+				// To
+				for(MailRecipient recipient : recipients){
+					message.addToRecipient( recipient );
+				}
+	
+				userRegistrationGenerator.generateMessage(message, parameters);
+	
+				// Send message
+				mailDelivery.sendMessage(message);
+	
+			} catch (Exception e) {
+				logger.error("Unable to send user registration notification",e);
+				throw new Exception("Unable to send user registration notification",e);
+			}
 		}
 	}
 

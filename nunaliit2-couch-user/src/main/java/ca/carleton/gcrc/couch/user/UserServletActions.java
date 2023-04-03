@@ -7,6 +7,7 @@ import java.security.SecureRandom;
 import java.util.Date;
 import java.util.Collection;
 import java.util.Formatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -19,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.mail.MailRecipient;
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
 import ca.carleton.gcrc.couch.user.agreement.AgreementUtils;
 import ca.carleton.gcrc.couch.user.db.UserRepository;
@@ -280,6 +282,23 @@ public class UserServletActions {
 		
 		// Get user
 		JSONObject userDoc = userRepository.getUserFromName(name);
+		
+		List<String> roles = new ArrayList<String>(2);
+		roles.add("administrator"); // global administrators
+		roles.add(atlasName+"_administrator"); // atlas administrators
+		
+		Collection<UserDocument> admins = userRepository.getUsersWithRoles(roles);
+	
+		List<MailRecipient> recipients = new ArrayList<MailRecipient>(admins.size());
+		for(UserDocument user : admins){
+			String display = user.getDisplayName();
+			Collection<String> emails = user.getEmails();
+			for(String email : emails){
+				recipients.add( new MailRecipient(email) );
+			}
+		}
+		userMailNotification.sendUserCreationNoticeToAdmin(recipients, emailAddress);
+
 		JSONObject publicUserDoc = getPublicUserFromUser(userDoc);
 		result.put("doc", publicUserDoc);
 		
