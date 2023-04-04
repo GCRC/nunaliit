@@ -54,7 +54,7 @@ function showDocs(opts_){
 	} else if( layerId ) {
 		exportService.exportByLayerId({
 			layerId: layerId
-			,format: 'csv'
+			,format: format
 			,onSuccess: function(csv){
 				$('.exportResult').empty();
 				var $textarea = $('<textarea class="exportCsv"></textarea>');
@@ -82,17 +82,16 @@ function downloadDocs(opts_){
 
 	var schema = opts.schema;
 	var layerId = opts.layerId;
-	
-	var format = 'csv';
-	var fileName = 'export.csv';
-	if (opts.format) {
-		format = opts.format;
-		
-		if (format === 'geojson') {
-			fileName = 'export.geojson';
-		};
-	};
 
+	const format = opts.format || 'csv';
+	let fileName = 'export.';
+	if ('csv' === format) fileName += 'csv';
+	else if ('geojson' === format) fileName += 'geojson';
+	else if ('turtle' === format) fileName += 'ttl';
+	else if ('jsonld' === format) fileName += 'jsonld';
+	else if ('rdfxml' === format) fileName += 'rdf';
+	else fileName = fileName.slice(0, -1);
+	
 	var windowId = $n2.getUniqueId();
 	
 	// Open a new iframe to get results
@@ -218,6 +217,18 @@ function showButtons(opts_){
 			{
 				"value": "geojson",
 				"text": "geojson"
+			},
+			{
+				"value": "turtle",
+				"text": "turtle"
+			},
+			{
+				"value": "jsonld",
+				"text": "jsonld"
+			},
+			{
+				"value": "rdfxml",
+				"text": "rdfxml"
 			}
 		]
 	});
