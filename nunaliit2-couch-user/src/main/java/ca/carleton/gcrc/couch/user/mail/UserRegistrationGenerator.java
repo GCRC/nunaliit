@@ -29,8 +29,10 @@ class UserRegistrationGenerator implements MailMessageGenerator {
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 		pw.println("<html><head><title>Nunaliit User Registration</title></head><body><h1>Nunaliit User Registration</h1>");
-		pw.println("<p>A new user <b>" +userEmail +"</b> has been created for Nunaliit Atlas. ");
-		pw.println("<p><a href=\""+link+"\">"+link+"</a></p>");
+		pw.println("<p>A new user <b>" +userEmail +"</b> has registered with the atlas. ");
+		if( null !=  link) {
+			pw.println("<p><a href=\""+link+"\">"+link+"</a></p>");
+		}
 		pw.println("</body></html>");
 		pw.flush();
 		message.setHtmlContent(sw.toString());

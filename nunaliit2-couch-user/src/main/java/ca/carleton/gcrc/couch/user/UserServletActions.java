@@ -291,7 +291,6 @@ public class UserServletActions {
 	
 		List<MailRecipient> recipients = new ArrayList<MailRecipient>(admins.size());
 		for(UserDocument user : admins){
-			String display = user.getDisplayName();
 			Collection<String> emails = user.getEmails();
 			for(String email : emails){
 				recipients.add( new MailRecipient(email) );
