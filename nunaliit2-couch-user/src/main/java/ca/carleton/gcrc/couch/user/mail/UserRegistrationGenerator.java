@@ -9,7 +9,7 @@ import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 
 class UserRegistrationGenerator implements MailMessageGenerator {
 
-    public UserRegistrationGenerator(){
+	public UserRegistrationGenerator(){
 
 	}
 
@@ -36,5 +36,5 @@ class UserRegistrationGenerator implements MailMessageGenerator {
 		pw.println("</body></html>");
 		pw.flush();
 		message.setHtmlContent(sw.toString());
-    }
+	}
 }
