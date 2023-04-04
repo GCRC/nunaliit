@@ -8,6 +8,7 @@ import javax.servlet.http.Cookie;
 import org.json.JSONObject;
 
 import ca.carleton.gcrc.couch.client.CouchAuthenticationContext;
+import ca.carleton.gcrc.couch.user.UserDocument;
 
 public interface UserRepository {
 
@@ -28,4 +29,6 @@ public interface UserRepository {
 	CouchAuthenticationContext getRolesFromAuthentication(Cookie[] cookies) throws Exception;
 
 	void computeUserPassword(JSONObject userDoc, String password) throws Exception;
+	
+	Collection<UserDocument> getUsersWithRoles(List<String> roles) throws Exception;
 }
