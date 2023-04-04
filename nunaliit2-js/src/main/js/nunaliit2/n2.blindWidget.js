@@ -57,6 +57,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				,onAfterOpen: noopFn
 				,onBeforeClose: noopFn
 				,onAfterClose: noopFn
+				,classes: []
 			},opts_);
 			
 			var id = $elem.attr('id');
@@ -70,6 +71,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			var $div = $header.next();
 			
 			$elem.addClass('n2Blind ui-accordion ui-widget ui-helper-reset ui-accordion-icons');
+			$elem.addClass(this.options.classes);
 			
 			var headerText = $header.text();
 			$header.empty()
