@@ -1659,6 +1659,12 @@ var CouchDocumentEditor = $n2.Class({
 					return;
 				}
 			}
+			if (doc && doc.nunaliit_geom && doc.nunaliit_geom.wkt) {
+				$n2.couchGeom.updateDocumentWithWktGeometry({
+					doc: doc,
+					wkt: doc.nunaliit_geom.wkt
+				});
+			}
 		};
 		function updateDocument() {
 			var isSubmissionDs = false;
