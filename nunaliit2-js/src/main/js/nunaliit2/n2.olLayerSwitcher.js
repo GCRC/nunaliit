@@ -114,6 +114,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         OpenLayers.Control.prototype.initialize.apply(this, arguments);
         this.layerStates = [];
         this.cachedSymbols = {};
+        this.simulatingClick = false;
 
         // Callback for base layer radio buttons
         this.__baseFn = function(e){
@@ -210,18 +211,22 @@ OpenLayers.Control.NunaliitLayerSwitcher =
     },
 
       _suppressedClick: function (e) {
-          this._onButtonClick(e);
+            if (this.simulatingClick) {
+                this._onButtonClick(e);
+                this.simulatingClick = false;
+            }
 
-          if (e.stopPropagation) {
-              e.stopPropagation();
-          } else {
-              e.cancelBubble = true;
-          }
-          return true;
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            } else {
+                e.cancelBubble = true;
+            }
+            return true;
       },
 
     _simulateClick: function(ev) {
-        ev?.buttonElement.click();
+        this.simulatingClick = true;
+        ev?.buttonElement?.click();
     },
 
     _onButtonClick: function(evt) {    	
