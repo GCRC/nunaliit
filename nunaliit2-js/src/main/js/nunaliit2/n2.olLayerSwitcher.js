@@ -114,6 +114,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         OpenLayers.Control.prototype.initialize.apply(this, arguments);
         this.layerStates = [];
         this.cachedSymbols = {};
+        this.simulatingClick = false;
 
         // Callback for base layer radio buttons
         this.__baseFn = function(e){
@@ -164,6 +165,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
             changebaselayer: this.redraw,
             scope: this
         });
+        this.map.events.register("buttonclick", this, this._simulateClick);
     },
 
     /**
@@ -191,17 +193,9 @@ OpenLayers.Control.NunaliitLayerSwitcher =
 
         // Do not let click events leave the control and reach the map
         // This allows the html elements to function properly
-		$(this.div).click(function(e){
-			var $elem = $(this);
-        	_this._onButtonClick($elem,e);
-
-        	if (e.stopPropagation) {
-				e.stopPropagation();
-			} else {
-				e.cancelBubble = true;
-			};
-			return true;
-		});
+		$(this.div).click((ev) => {
+            this._suppressedClick(ev)
+        });
 
 		// Suppress double click
 		$(this.div).dblclick(function(e){
@@ -216,16 +210,33 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         return this.div;
     },
 
-    _onButtonClick: function($elem,evt) {
-    	var $elem = $(evt.target);
-    	var layerSwitcherAttr = $elem.attr('_layer_switcher');
-    	
-        if( $elem.hasClass('minimizeDiv') ) {
+      _suppressedClick: function (e) {
+            if (this.simulatingClick) {
+                this._onButtonClick(e);
+                this.simulatingClick = false;
+            }
+
+            if (e.stopPropagation) {
+                e.stopPropagation();
+            } else {
+                e.cancelBubble = true;
+            }
+            return true;
+      },
+
+    _simulateClick: function(ev) {
+        this.simulatingClick = true;
+        ev?.buttonElement?.click();
+    },
+
+    _onButtonClick: function(evt) {    	
+        const target = $(evt.target);
+
+        if (target.hasClass('minimizeDiv')) {
             this.minimizeControl();
-            
-        } else if( $elem.hasClass('maximizeDiv') ) {
+        } else if (target.hasClass('maximizeDiv')) {
             this.maximizeControl();
-        };
+        }
     },
     
     _onBaseLayerChanged: function($elem, e){
