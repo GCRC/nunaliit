@@ -350,7 +350,7 @@ class N2FilterableLegendWidgetWithGraphic {
 
     _getSVGSymbol(matchingLabel) {
         const symbols = [];
-        const styleObjs = Object.values(this.state.allStyles).filter(s => s?.style?.label === matchingLabel);
+        const styleObjs = Object.values(this.state.allStyles).filter(s => _loc(s?.style?.label) === matchingLabel);
         if (styleObjs.length === 0) return symbols;
         styleObjs.sort((a, b) => {
             const aSum = a?.style?.id?.split("+")?.map(v => parseInt(v, 10))?.reduce((sum, v) => sum + v, 0);
