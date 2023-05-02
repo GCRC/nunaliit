@@ -154,11 +154,12 @@ public class Main {
 		if( arguments.size() < 1 ){
 			throw new Exception("No command provided. Try 'help'.");
 		}
+		CommandScenario cmdScenario = CommandScenario.getInstance();
 		String commandKeyword = arguments.get(0);
 		for(Command command : getCommands()){
 			if( command.matchesKeyword(commandKeyword) ) {
 				// Found the command in question
-
+				cmdScenario.setCommand(commandKeyword);
 				// Check options for this command
 				String[] expectedOptions = command.getExpectedOptions();
 				options.validateExpectedOptions(expectedOptions);

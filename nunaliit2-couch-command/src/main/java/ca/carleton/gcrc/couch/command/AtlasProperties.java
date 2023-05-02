@@ -12,26 +12,41 @@ import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.utils.PropertiesWriter;
 
 public class AtlasProperties {
 
+	static final private Logger logger = LoggerFactory.getLogger(AtlasProperties.class);
+
 	static public AtlasProperties fromAtlasDir(File atlasDir) throws Exception {
 		Properties props = new Properties();
 		readProperties(atlasDir, props);
-		
+
 		return fromProperties(props);
 	}
 
 	static public AtlasProperties fromProperties(Properties props) throws Exception {
 		AtlasProperties atlasProps = new AtlasProperties();
-		
+
 		atlasProps.setAtlasName( props.getProperty("atlas.name") );
 		atlasProps.setCouchDbName( props.getProperty("couchdb.dbName") );
 		atlasProps.setCouchDbSubmissionDbName( props.getProperty("couchdb.submission.dbName") );
 		atlasProps.setCouchDbAdminUser( props.getProperty("couchdb.admin.user") );
-		atlasProps.setCouchDbAdminPassword( props.getProperty("couchdb.admin.password") );
-		
+
+		// CouchDb password
+		try {
+			String couchDbPass = props.getProperty("couchdb.admin.password");
+			if(null == couchDbPass) {
+				throw new Exception("Couchdb password not set. Run config command");
+			}
+			atlasProps.setCouchDbAdminPassword(couchDbPass);
+		} catch(Exception e) {
+			throw new Exception("Unable to interpret couchdb password",e);
+		}
+
 		// CouchDb URL
 		try {
 			String urlStr = props.getProperty("couchdb.url");
@@ -40,7 +55,7 @@ public class AtlasProperties {
 		} catch(Exception e) {
 			throw new Exception("Unable to decode CouchDB URL",e);
 		}
-		
+
 		// Server port
 		try {
 			String portString = props.getProperty("servlet.url.port");
@@ -72,7 +87,7 @@ public class AtlasProperties {
 		} catch(Exception e) {
 			throw new Exception("Unable to interpret server key",e);
 		}
-		
+
 		// Submission DB enabled
 		{
 			String enabledString = props.getProperty("couchdb.submission.enabled","false");
@@ -96,62 +111,43 @@ public class AtlasProperties {
 			String key = props.getProperty("google.mapapi.key","");
 			atlasProps.setGoogleMapApiKey(key);
 		}
-		
+
 		return atlasProps;
 	}
 
 	static public void readProperties(File atlasDir, Properties props) throws Exception {
 		// install.properties
-		{
-			File installPropFile = new File(atlasDir,"config/install.properties");
-			if( installPropFile.exists() && installPropFile.isFile() ){
-				FileInputStream fis = null;
-				try {
-					fis = new FileInputStream(installPropFile);
-					InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
-					props.load(reader);
-					
-				} catch(Exception e) {
-					throw new Exception("Unable to read config properties from: "+installPropFile.getAbsolutePath(), e);
-					
-				} finally {
-					if( null != fis ){
-						try{
-							fis.close();
-						} catch(Exception e) {
-							// Ignore
-						}
-					}
-				}
-			}
-		}
+		File installPropFile = new File(atlasDir,"config/install.properties");
+		readConfigFile(installPropFile, props);
 
 		// sensitive.properties
-		{
-			File sensitivePropFile = new File(atlasDir,"config/sensitive.properties");
-			if( sensitivePropFile.exists() && sensitivePropFile.isFile() ){
-				FileInputStream fis = null;
+		File sensitivePropFile = new File(atlasDir,"config/sensitive.properties");
+		readConfigFile(sensitivePropFile, props);
+	}
+
+	static public void readConfigFile(File configFile, Properties props) throws Exception {
+		CommandScenario commandToExecute = CommandScenario.getInstance();
+		FileInputStream fis = null;
+		try {
+			fis = new FileInputStream(configFile);
+			InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
+			props.load(reader);
+		} catch(Exception e) {
+			if(!commandToExecute.getCommand().equals(CommandScenario.CONFIG_COMMAND)) {
+				logger.error("Unable to read config properties from: " + configFile.getAbsolutePath());
+				throw new Exception("Unable to read config properties from: " + configFile.getAbsolutePath(), e);
+			}
+		} finally {
+			if( null != fis ){
 				try {
-					fis = new FileInputStream(sensitivePropFile);
-					InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
-					props.load(reader);
-					
-				} catch(Exception e) {
-					throw new Exception("Unable to read config properties from: "+sensitivePropFile.getAbsolutePath(), e);
-					
-				} finally {
-					if( null != fis ){
-						try{
-							fis.close();
-						} catch(Exception e) {
-							// Ignore
-						}
-					}
+					fis.close();
+				} catch (Exception e) {
+					// Ignore
 				}
 			}
 		}
 	}
-	
+
 	static public void writeProperties(File atlasDir, Properties props) throws Exception {
 		// Create config directory, if needed
 		File configDir = new File(atlasDir,"config");
@@ -164,14 +160,14 @@ public class AtlasProperties {
 		} catch(Exception e) {
 			throw new Exception("Unable to create config directory",e);
 		}
-		
+
 		// Figure out which properties are saved in the sensitive file
 		Set<String> sensitivePropertyNames = new HashSet<String>();
 		{
 			sensitivePropertyNames.add("couchdb.admin.password");
 			sensitivePropertyNames.add("server.key");
 			sensitivePropertyNames.add("google.mapapi.key");
-			
+
 			File sensitivePropFile = new File(atlasDir,"config/sensitive.properties");
 			if( sensitivePropFile.exists() && sensitivePropFile.isFile() ){
 				FileInputStream fis = null;
@@ -181,7 +177,7 @@ public class AtlasProperties {
 					fis = new FileInputStream(sensitivePropFile);
 					InputStreamReader reader = new InputStreamReader(fis,"UTF-8");
 					sensitivePropsCopy.load(reader);
-					
+
 					Enumeration<?> keyEnum = sensitivePropsCopy.propertyNames();
 					while( keyEnum.hasMoreElements() ){
 						Object keyObj = keyEnum.nextElement();
@@ -190,10 +186,10 @@ public class AtlasProperties {
 							sensitivePropertyNames.add(key);
 						}
 					}
-					
+
 				} catch(Exception e) {
 					// Just ignore
-					
+
 				} finally {
 					if( null != fis ){
 						try{
@@ -205,11 +201,11 @@ public class AtlasProperties {
 				}
 			}
 		}
-		
+
 		// Divide public and sensitive properties
 		Properties publicProps = new Properties();
 		Properties sensitiveProps = new Properties();
-		
+
 		Enumeration<?> namesEnum = props.propertyNames();
 		while( namesEnum.hasMoreElements() ){
 			Object keyObj = namesEnum.nextElement();
@@ -223,7 +219,7 @@ public class AtlasProperties {
 				}
 			}
 		}
-		
+
 		// Write public file
 		{
 			File installPropFile = new File(configDir,"install.properties");
@@ -233,12 +229,12 @@ public class AtlasProperties {
 				OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
 				PropertiesWriter propWriter = new PropertiesWriter(osw);
 				propWriter.write(publicProps);
-				
+
 				osw.flush();
-				
+
 			} catch(Exception e) {
 				throw new Exception("Unable to write config properties to: "+installPropFile.getAbsolutePath(), e);
-				
+
 			} finally {
 				if( null != fos ){
 					try{
@@ -249,7 +245,7 @@ public class AtlasProperties {
 				}
 			}
 		}
-		
+
 		// Write sensitive file
 		{
 			File sensitivePropFile = new File(configDir,"sensitive.properties");
@@ -259,12 +255,12 @@ public class AtlasProperties {
 				OutputStreamWriter osw = new OutputStreamWriter(fos,"UTF-8");
 				PropertiesWriter propWriter = new PropertiesWriter(osw);
 				propWriter.write(sensitiveProps);
-				
+
 				osw.flush();
-				
+
 			} catch(Exception e) {
 				throw new Exception("Unable to write config properties to: "+sensitivePropFile.getAbsolutePath(), e);
-				
+
 			} finally {
 				if( null != fos ){
 					try{
@@ -276,7 +272,7 @@ public class AtlasProperties {
 			}
 		}
 	}
-	
+
 	private String atlasName;
 	private URL couchDbUrl;
 	private String couchDbName;
@@ -296,7 +292,7 @@ public class AtlasProperties {
 	public void setAtlasName(String atlasName) {
 		this.atlasName = atlasName;
 	}
-	
+
 	public URL getCouchDbUrl() {
 		return couchDbUrl;
 	}
@@ -345,7 +341,7 @@ public class AtlasProperties {
 	public void setServerPort(int serverPort) {
 		this.serverPort = serverPort;
 	}
-	
+
 	public boolean isRestricted() {
 		return restricted;
 	}

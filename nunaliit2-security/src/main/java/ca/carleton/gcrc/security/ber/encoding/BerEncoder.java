@@ -144,13 +144,17 @@ public class BerEncoder {
 		}
 
 		if( berStr.getType() == BerObject.UniversalTypes.UTF8_STRING.getCode() ) {
-			ByteArrayOutputStream baos = new ByteArrayOutputStream();
-			OutputStreamWriter osw = new OutputStreamWriter(baos,"UTF-8");
+			byte[] result;
+			try(
+				ByteArrayOutputStream baos = new ByteArrayOutputStream();
+				OutputStreamWriter osw = new OutputStreamWriter(baos,"UTF-8");
+			) {
+				osw.write(value);
+				osw.flush();
+				
+				result = baos.toByteArray();
+			}
 			
-			osw.write(value);
-			osw.flush();
-			
-			byte[] result = baos.toByteArray();
 			return result;
 		} else {
 			throw new Exception("Unknown string encoding for type: "+berStr.getType());

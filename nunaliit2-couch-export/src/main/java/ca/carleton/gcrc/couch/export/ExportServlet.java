@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Vector;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -33,29 +34,44 @@ import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalLayer;
 import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatCSV;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatGeoJson;
+import ca.carleton.gcrc.couch.export.impl.ExportFormatRDF;
 import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
 import ca.carleton.gcrc.couch.export.records.ExportRecordsCSV;
 import ca.carleton.gcrc.couch.export.records.ExportRecordsGeoJson;
 import ca.carleton.gcrc.couch.export.records.JSONArrayReaderIterator;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
-
 @SuppressWarnings("serial")
 public class ExportServlet extends JsonServlet {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
-	
+	public static final String ConfigAttributeName_AtlasName = "ExportServlet_AtlasName";
+
 	private ExportConfiguration configuration;
 	private ServletConfig servletConfig;
 	
+	private String atlasName = null;
+
 	public ExportServlet() {
-		
+
 	}
 	
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
 		
+		ServletContext context = config.getServletContext();
+		
+		Object obj = context.getAttribute(ConfigAttributeName_AtlasName);
+		if (null == obj) {
+			throw new ServletException("Atlas name is not specified (" + ConfigAttributeName_AtlasName + ")");
+		}
+		if (obj instanceof String) {
+			atlasName = (String) obj;
+		} else {
+			throw new ServletException("Unexpected object for atlas name: " + obj.getClass().getName());
+		}
+
 		// Pick up configuration
-		Object configurationObj = config.getServletContext().getAttribute(ExportConfiguration.CONFIGURATION_KEY);
+		Object configurationObj = context.getAttribute(ExportConfiguration.CONFIGURATION_KEY);
 		if( null == configurationObj ) {
 			throw new ServletException("Can not find configuration object");
 		}
@@ -80,12 +96,10 @@ public class ExportServlet extends JsonServlet {
 				path = paths.get(0);
 			}
 			
-			if( "welcome".equalsIgnoreCase(path) ) {
+			if ("welcome".equalsIgnoreCase(path)) {
 				doGetWelcome(request, response);
-				
-			} else if( "test".equalsIgnoreCase(path) ) {
+			} else if ("test".equalsIgnoreCase(path)) {
 				doGetTest(request, response);
-					
 			} else {
 				throw new Exception("Unknown request");
 			}
@@ -99,7 +113,7 @@ public class ExportServlet extends JsonServlet {
 		try {
 			List<String> paths = computeRequestPath(request);
 			String path = null;
-			if( paths.size() > 0 ){
+			if (paths.size() > 0) {
 				path = paths.get(0);
 			}
 			
@@ -110,7 +124,7 @@ public class ExportServlet extends JsonServlet {
 			} else if("complete".equalsIgnoreCase(path)) {
 				doPostComplete(request, response);	
 			} else {
-				throw new Exception("Unknown request: "+path);
+				throw new Exception("Unknown request: " + path);
 			}
 
 		} catch (Exception e) {
@@ -133,180 +147,181 @@ public class ExportServlet extends JsonServlet {
 
 	protected void doPostDefinition(HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		// Ignore final path. Allows client to set any download file name
-		
+
 		try {
 			// Parse format
 			Format format = null;
 			{
 				String formatStr = request.getParameter("format");
-				if( null == formatStr ) {
+				if (null == formatStr) {
 					format = Format.GEOJSON;
 				} else {
-					for(Format f : Format.values()){
-						if( f.matches(formatStr) ){
+					for (Format f : Format.values()) {
+						if (f.matches(formatStr)) {
 							format = f;
 						}
 					}
 				}
-				
-				if( null == format ) {
+				if (null == format) {
 					throw new Exception("Unknown format");
 				}
-				logger.debug("Export Format: "+format.name());
+				logger.debug("Export Format: " + format.name());
 			}
-			
+
 			// Parse filter
 			Filter filter = null;
 			{
 				String filterStr = request.getParameter("filter");
-				if( null != filterStr ) {
-					for(Filter f : Filter.values()){
-						if( f.matches(filterStr) ){
+				if (null != filterStr) {
+					for (Filter f : Filter.values()) {
+						if (f.matches(filterStr)) {
 							filter = f;
 						}
 					}
 				}
-				
-				if( null != filter ) {
-					logger.debug("Export Filter: "+filter.name());
+				if (null != filter) {
+					logger.debug("Export Filter: " + filter.name());
 				}
 			}
-			
+
 			// Parse method
 			Method method = null;
 			{
 				String methodStr = request.getParameter("method");
-				if( null != methodStr ) {
-					for(Method m : Method.values()){
-						if( m.matches(methodStr) ){
+				if (null != methodStr) {
+					for (Method m : Method.values()) {
+						if (m.matches(methodStr)) {
 							method = m;
 						}
 					}
 				}
-				
-				if( null == method ) {
+				if (null == method) {
 					throw new Exception("Unknown method");
 				}
-				logger.debug("Export Method: "+method.name());
+				logger.debug("Export Method: " + method.name());
 			}
-			
+
 			// Parse identifier
 			String identifier = null;
 			List<String> identifiers = new Vector<String>();
 			{
 				String[] ids = request.getParameterValues("name");
-				if( null != ids ) {
-					for(String id : ids){
+				if (null != ids) {
+					for (String id : ids) {
 						identifiers.add(id);
 					}
 				}
-				
-				if( identifiers.size() > 0 ) {
+				if (identifiers.size() > 0) {
 					identifier = identifiers.get(0);
 				}
-				
-				if( null == identifier ) {
+				if (null == identifier) {
 					throw new Exception("Unknown name");
 				}
-				logger.debug("Export Name: "+identifier);
+				logger.debug("Export Name: " + identifier);
 			}
-			
+
 			// Parse contentType
 			String contentType = null;
 			{
 				String[] contentTypes = request.getParameterValues("contentType");
-				if( null != contentTypes ) {
-					for(String t : contentTypes){
+				if (null != contentTypes) {
+					for (String t : contentTypes) {
 						contentType = t;
 					}
 				}
-				
-				if( null != contentType ) {
-					logger.debug("Content-Type: "+contentType);
+				if (null != contentType) {
+					logger.debug("Content-Type: " + contentType);
 				}
 			}
-			
+
 			// Build doc retrieval based on method
 			DocumentRetrieval docRetrieval = null;
-			if( Method.LAYER == method ) {
+			if (Method.LAYER == method) {
 				try {
 					docRetrieval = DocumentRetrievalLayer.create(configuration.getCouchDb(), identifier);
 				} catch (Exception e) {
-					throw new Exception("Problem retrieving documents from layer: "+identifier,e);
+					throw new Exception("Problem retrieving documents from layer: " + identifier, e);
 				}
-				
-			} else if( Method.SCHEMA == method ) {
+			} else if (Method.SCHEMA == method) {
 				try {
 					docRetrieval = DocumentRetrievalSchema.create(configuration.getCouchDb(), identifier);
 				} catch (Exception e) {
-					throw new Exception("Problem retrieving documents from schema: "+identifier,e);
+					throw new Exception("Problem retrieving documents from schema: " + identifier, e);
 				}
-				
-			} else if( Method.DOC_ID == method ) {
+			} else if (Method.DOC_ID == method) {
 				try {
 					docRetrieval = DocumentRetrievalId.create(configuration.getCouchDb(), identifiers);
 				} catch (Exception e) {
-					throw new Exception("Problem retrieving documents from doc ids: "+identifiers,e);
+					throw new Exception("Problem retrieving documents from doc ids: " + identifiers, e);
 				}
-				
 			} else {
-				throw new Exception("Do not know how to handle method: "+method.name());
+				throw new Exception("Do not know how to handle method: " + method.name());
 			}
-			
+
 			// Build document filter based on filter type
-			if( null != filter ){
+			if (null != filter) {
 				DocumentFilter docFilter = new DocumentFilterGeometryType(filter);
-				DocumentRetrievalFiltered filteredRetrieval = 
-						new DocumentRetrievalFiltered(docRetrieval, docFilter);
+				DocumentRetrievalFiltered filteredRetrieval = new DocumentRetrievalFiltered(docRetrieval, docFilter);
 				docRetrieval = filteredRetrieval;
 			}
-			
+
 			ExportFormat outputFormat = null;
-			if( Format.GEOJSON == format ) {
+			if (Format.GEOJSON == format) {
 				try {
 					SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
 					outputFormat = new ExportFormatGeoJson(schemaCache, docRetrieval);
 				} catch (Exception e) {
-					throw new Exception("Problem setting up format: "+format.name(),e);
+					throw new Exception("Problem setting up format: " + format.name(), e);
 				}
-	
-			} else if( Format.CSV == format ) {
+			} else if (Format.CSV == format) {
 				try {
 					SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
 					outputFormat = new ExportFormatCSV(schemaCache, docRetrieval);
 				} catch (Exception e) {
-					throw new Exception("Problem setting up format: "+format.name(),e);
+					throw new Exception("Problem setting up format: " + format.name(), e);
 				}
-			
+			} else if (Format.RDFXML == format ||
+					Format.TURTLE == format ||
+					Format.JSONLD == format) {
+				try {
+					SchemaCache schemaCache = new SchemaCacheCouchDb(configuration.getCouchDb());
+					outputFormat = new ExportFormatRDF(
+						schemaCache,
+						docRetrieval,
+						format.getLabel(),
+						atlasName);
+				} catch (Exception e) {
+					throw new Exception("Problem setting up format: " + format.name(), e);
+				}
 			} else {
-				throw new Exception("Do not know how to handle format: "+format.name());
+				throw new Exception("Do not know how to handle format: " + format.name());
 			}
-			
+
 			String charEncoding = outputFormat.getCharacterEncoding();
-			if( null != charEncoding ) {
-				response.setCharacterEncoding( charEncoding );
+			if (null != charEncoding) {
+				response.setCharacterEncoding(charEncoding);
 			}
-			if( null == contentType ) {
+			if (null == contentType) {
 				contentType = outputFormat.getMimeType();
 			}
-			if( null != contentType ) {
+			if (null != contentType) {
 				response.setContentType(contentType);
 			}
 			response.setHeader("Cache-Control", "no-cache,must-revalidate");
 			response.setDateHeader("Expires", (new Date()).getTime());
-			
+
 			OutputStream os = response.getOutputStream();
-			
+
 			try {
 				outputFormat.outputExport(os);
 			} catch (Exception e) {
-				throw new Exception("Error during export process",e);
+				throw new Exception("Error during export process", e);
 			}
-			
+
 			os.flush();
 
-		} catch(Exception e) {
-			reportError(e,response);
+		} catch (Exception e) {
+			reportError(e, response);
 		}
 	}
 

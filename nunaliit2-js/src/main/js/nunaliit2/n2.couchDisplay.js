@@ -1490,6 +1490,7 @@ function _displayRelatedDocuments(display_, contId, relatedSchemaName, relatedDo
 	var bw = $n2.blindWidget($blindWidget,{
 		data: relatedDocIds
 		,onBeforeOpen: beforeOpen
+		,classes: ['blindWidget_' + relatedSchemaName]
 	});
 	bw.setHtml('<span class="_n2DisplaySchemaName"></span> (<span class="_n2DisplayDocCount"></span>)');
 	if( null == relatedSchemaName ) {

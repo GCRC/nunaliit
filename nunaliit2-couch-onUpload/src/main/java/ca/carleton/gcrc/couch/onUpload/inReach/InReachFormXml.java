@@ -18,7 +18,7 @@ public class InReachFormXml implements InReachForm {
 
 		title = getTextElement(formElem, "title");
 		if (title != null) {
-			title = title.trim().replace(" ", "_");
+			title = title.trim();
 		}
 
 		destination = getTextElement(formElem, "destination");

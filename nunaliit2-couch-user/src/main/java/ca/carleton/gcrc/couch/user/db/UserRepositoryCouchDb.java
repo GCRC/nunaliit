@@ -11,6 +11,8 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.couch.user.UserDocument;
+import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 import ca.carleton.gcrc.couch.client.CouchFactory;
@@ -153,5 +155,15 @@ public class UserRepositoryCouchDb implements UserRepository {
 	@Override
 	public void computeUserPassword(JSONObject userDoc, String password) throws Exception {
 		userDb.computeUserPassword(userDoc, password);
+	}
+	
+	@Override
+	public Collection<UserDocument> getUsersWithRoles(List<String> roles) throws Exception {
+		Collection<UserDocument> usersWithRoles = new Vector<UserDocument>();
+		{
+			UserDesignDocumentImpl userDesignDocument = UserDesignDocumentImpl.getUserDesignDocument(userDb);
+			usersWithRoles = userDesignDocument.getUsersWithRoles(roles);
+		}
+		return usersWithRoles;
 	}
 }

@@ -1107,6 +1107,21 @@ var DomStyler = $n2.Class({
 				 && attDesc.data.title ) {
 					mediaOptions.title = attDesc.data.title;
 				};
+
+				//Associated VTT files
+				const videoFileName = attachmentName.substring(0, attachmentName.lastIndexOf('.'));
+				const vttFileNames = Object.keys(doc._attachments).filter(att => { return att.startsWith(videoFileName) && att.toLowerCase().endsWith('.vtt')})
+				mediaOptions.vttFiles = vttFileNames.map(vttFullFileName => {
+					const vttFileName = vttFullFileName.substring(0, vttFullFileName.lastIndexOf('.vtt'));
+					const languageCode = vttFileName.substring(vttFileName.lastIndexOf('_') + 1).toLowerCase();
+					let label = _loc(languageCode);
+
+					return {
+						dbUrl: _this.db.getAttachmentUrl(doc, vttFullFileName),
+						languageCode,
+						label
+					}
+				})
 				
 				// Height and width
 				if( attDesc ){

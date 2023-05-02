@@ -117,28 +117,13 @@ public class DocumentStoreProcessImpl implements DocumentStoreProcess {
 				}
 				
 				if( fileUpdateRequired ) {
-					FileOutputStream fos = null;
-					try {
-						fos = new FileOutputStream(idFile);
-						OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-		
+					try(FileOutputStream fos = new FileOutputStream(idFile);
+						OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8"); 
+						) {
 						osw.write(id);
-						osw.flush();
-						
-						fos.close();
-						fos = null;
-						
 					} catch(Exception e) {
 						throw new Exception("Unable to write _id.txt for: "+id+" at: "+dir.getAbsolutePath());
 						
-					} finally {
-						if( null != fos ){
-							try {
-								fos.close();
-							} catch(Exception e){
-								// Ignore
-							}
-						}
 					}
 				}
 			}
@@ -321,11 +306,11 @@ public class DocumentStoreProcessImpl implements DocumentStoreProcess {
 		}
 
 		if( fileUpdateRequired ){
-			FileOutputStream fos = null;
-			try {
-				fos = new FileOutputStream(valueFile);
+			
+			try (
+				FileOutputStream fos = new FileOutputStream(valueFile);
 				OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
-
+			) {
 				if( value instanceof JSONObject ){
 					JSONObject valueObj = (JSONObject)value;
 					osw.write(valueObj.toString(3));
@@ -338,22 +323,8 @@ public class DocumentStoreProcessImpl implements DocumentStoreProcess {
 					String valueStr = JSONSupport.valueToString(value);
 					osw.write(valueStr);
 				}
-				osw.flush();
-				
-				fos.close();
-				fos = null;
-				
 			} catch(Exception e) {
 				throw new Exception("Unable to write JSON value for: "+key);
-				
-			} finally {
-				if( null != fos ){
-					try {
-						fos.close();
-					} catch(Exception e){
-						// Ignore
-					}
-				}
 			}
 		}
 	}

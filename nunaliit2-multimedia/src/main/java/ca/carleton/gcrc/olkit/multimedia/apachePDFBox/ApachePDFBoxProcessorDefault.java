@@ -106,12 +106,8 @@ public class ApachePDFBoxProcessorDefault implements ApachePDFBoxProcessor {
 	}
 	private boolean _writeImage (BufferedImage resizedImage, File thumbnailFile, int dpi) throws Exception {
 		boolean success = true;
-		try {
-			FileOutputStream output = new FileOutputStream(thumbnailFile);
-		
+		try(FileOutputStream output = new FileOutputStream(thumbnailFile)) {
 			success &= ImageIOUtil.writeImage(resizedImage, IMAGEFORMAT, output, dpi, QUALITY, "");
-			
-			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}

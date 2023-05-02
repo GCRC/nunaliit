@@ -9,7 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import ca.carleton.gcrc.couch.user.UserDocument;
 import javax.servlet.http.Cookie;
 
 import org.json.JSONArray;
@@ -190,5 +190,12 @@ public class MockUserRepository implements UserRepository {
 	@Override
 	public void computeUserPassword(JSONObject userDoc, String password) throws Exception {
 		userDoc.put("password", password);		
+	}
+	
+	@Override
+	public Collection<UserDocument> getUsersWithRoles(List<String> roles) throws Exception {
+		List<UserDocument> users = new ArrayList<UserDocument>();
+		
+		return users;
 	}
 }

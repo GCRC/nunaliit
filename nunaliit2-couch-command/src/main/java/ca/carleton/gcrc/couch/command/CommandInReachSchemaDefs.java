@@ -6,6 +6,14 @@ import java.io.PrintStream;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.util.Scanner;
+import java.util.List;
+import java.util.ArrayList;
+import java.io.IOException;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import ca.carleton.gcrc.couch.command.schema.SchemaDefinition;
+
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachConfiguration;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachForm;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachFormField;
@@ -55,6 +63,9 @@ public class CommandInReachSchemaDefs implements Command {
 		ps.println("  nunaliit schemas-for-inreach <options>");
 		ps.println();
 		ps.println("options:");
+		ps.println("  "+Options.OPTION_GENERATE_SCHEMA);
+		ps.println("    When specified, automatically creates or updates");
+		ps.println("    all schemas derived from the current inReach form.");
 		ps.println();
 		CommandHelp.reportGlobalOptions(ps, getExpectedOptions());
 	}
@@ -64,7 +75,7 @@ public class CommandInReachSchemaDefs implements Command {
 		GlobalSettings gs
 		,Options options
 		) throws Exception {
-		
+
 		if( options.getArguments().size() > 1 ){
 			throw new Exception("Unexpected argument: "+options.getArguments().get(1));
 		}
@@ -72,7 +83,7 @@ public class CommandInReachSchemaDefs implements Command {
 		File atlasDir = gs.getAtlasDir();
 
 		// Load properties for atlas
-//		AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
+		// AtlasProperties atlasProperties = AtlasProperties.fromAtlasDir(atlasDir);
 
 		// InReach configuration
 		File configDir = new File(atlasDir, "config");
@@ -87,25 +98,75 @@ public class CommandInReachSchemaDefs implements Command {
 
 		// Iterate over each inReach form
 		InReachSettings inReachSettings = InReachConfiguration.getInReachSettings();
-		for(InReachForm form : inReachSettings.getForms()){
+		Boolean shouldAddSchema = options.getAddSchema();
+		Scanner scanner = new Scanner(System.in);
+		for (InReachForm form : inReachSettings.getForms()) {
+			String userResponse = null;
 			JSONObject jsonDef = schemaDefinitionFromForm(form);
-			
+			String schemaId = form.getPrefix().replace("-", "_") + form.getTitle().replace(" ", "_");
+			if(null == shouldAddSchema) {
+				// if --generate-schema flag not provided, ask user if they want to create schema or not
+				do {
+					System.out.print("Do you want to generate the schema for: " + schemaId + "? (Y/N) [Default: N]: ");
+					userResponse = scanner.nextLine().trim().toLowerCase();
+					if (!userResponse.matches("[yn]|")) {
+						System.out.println("A valid response must be provided: Y, N or blank to accept default value.");
+					}
+				} while (!userResponse.matches("[yn]|"));
+			}
+
+			if(null != shouldAddSchema || userResponse.equals("y")) {
+				createSchema(gs, atlasDir, schemaId, jsonDef);
+			}
+
 			// Pretty print
 			gs.getOutStream().println(jsonDef.toString(3));
 			gs.getOutStream().println();
 		}
+		scanner.close();
+	}
+
+	private void createSchema(GlobalSettings gs, File atlasDir, String schemaId, JSONObject formDefinition) throws Exception {
+		File docsDir = new File(atlasDir, "docs");
+		String groupName = "inReach";
+		SchemaDefinition schemaDef = new SchemaDefinition(groupName, schemaId);
+
+		// Save schema definition to disk
+		schemaDef.saveToDocsDir(docsDir);
+		File schemaDir = new File(docsDir, schemaDef.getDocumentIdentifier());
+
+		// Write JSON to file
+		File file = new File(schemaDir, "definition.json");
+		try(FileOutputStream fos = new FileOutputStream(file);
+			OutputStreamWriter osw = new OutputStreamWriter(fos)) 
+		{
+			osw.write(formDefinition.toString(4).replace("    ", "\t"));
+			gs.getOutStream().println("Schema written to " + schemaDir.getAbsolutePath());
+		} catch (IOException e) {
+			gs.getOutStream().println("Could not write schema definition to " + file.getAbsolutePath());
+			throw new Exception("Could not write schema definition to " + file.getAbsolutePath());
+		}
+		
+		Options newOptions = new Options();
+		List<String> args = new ArrayList<String>();
+		args.add("update-schema");
+		args.add("--name");
+		args.add(groupName + "_" + schemaId);
+		newOptions.parseOptions(args);
+		CommandUpdateSchema cmdUpdateSchema = new CommandUpdateSchema();
+		cmdUpdateSchema.runCommand(gs, newOptions);
 	}
 
 	private JSONObject schemaDefinitionFromForm(InReachForm form) throws Exception {
 		JSONObject jsonDef = new JSONObject();
-		
+
 		jsonDef.put("group", "inReach");
-		jsonDef.put("id", form.getTitle());
+		jsonDef.put("id", form.getPrefix().replace("-", "_") + form.getTitle().replace(" ", "_"));
 		jsonDef.put("label", "InReach "+form.getTitle());
-		
+
 		JSONArray attributes = new JSONArray();
 		jsonDef.put("attributes", attributes);
-		
+
 		// Title
 		{
 			JSONObject attribute = new JSONObject();
@@ -115,24 +176,24 @@ public class CommandInReachSchemaDefs implements Command {
 			attribute.put("type", "title");
 			attribute.put("includedInBrief", true);
 		}
-		
+
 		for(InReachFormField field : form.getFields()){
 			JSONObject attribute = new JSONObject();
 			attributes.put(attribute);
-			
+
 			String label = field.getName();
 			String id = escapeJsonAttribute( field.getName() );
-			
+
 			attribute.put("label", label);
 			attribute.put("id", id);
-			
+
 			InReachFormField.Type fieldType = field.getType();
 			if( InReachFormField.Type.PICKLIST == fieldType ){
 				attribute.put("type", "selection");
 
 				JSONArray options = new JSONArray();
 				attribute.put("options", options);
-				
+
 				for(String v : field.getValues()){
 					JSONObject option = new JSONObject();
 					options.put(option);
@@ -140,25 +201,25 @@ public class CommandInReachSchemaDefs implements Command {
 					option.put("label", v);
 					option.put("value", v);
 				}
-				
+
 			} else if( InReachFormField.Type.TEXT == fieldType ) {
 				attribute.put("type", "string");
 				attribute.put("textarea", true);
 
-			} else if( InReachFormField.Type.NUMBER == fieldType) {	
+			} else if( InReachFormField.Type.NUMBER == fieldType) {
 				attribute.put("type", "string");
 
 			} else {
 				throw new Exception("Unexpected field type: "+fieldType);
 			}
 		}
-		
+
 		return jsonDef;
 	}
 
 	private String escapeJsonAttribute(String fieldName) {
 		StringBuilder sb = new StringBuilder();
-		
+
 		for(char c : fieldName.toCharArray()){
 			if( c >= '0' &&  c <= '9' ){
 				sb.append(c);
@@ -172,7 +233,7 @@ public class CommandInReachSchemaDefs implements Command {
 				// skip
 			}
 		}
-		
+
 		return sb.toString();
 	}
 }

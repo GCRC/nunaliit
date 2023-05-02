@@ -83,7 +83,7 @@ public class DigestComputerSha1Test extends TestCase {
 
 		// Attachments should not affect main digest
 		if( false == "GpdypqVzGwRMDoQQpnWQOcMHSL4=".equals(digest.getDocDigest()) ){
-			fail("Unexpected digest");
+			fail("main digest " + digest.getDocDigest() + " doesn't equal expected GpdypqVzGwRMDoQQpnWQOcMHSL4=");
 		}
 		
 		// Check attachments
@@ -92,12 +92,12 @@ public class DigestComputerSha1Test extends TestCase {
 		} else {
 			String attDigest1 = digest.getAttachmentDigest(att1.getName());
 			if( false == "QL0AFWMIX8NRZTKeof9cXsvbvu8=".equals(attDigest1) ) {
-				fail("Unexpected digest for att1");
+				fail("Unexpected digest for att1 " + attDigest1 + " doesn't equal expected QL0AFWMIX8NRZTKeof9cXsvbvu8=");
 			}
 
 			String attDigest2 = digest.getAttachmentDigest(att2.getName());
 			if( false == "xbQXiZMbguab94OYV+glfi6LO7k=".equals(attDigest2) ) {
-				fail("Unexpected digest for att2");
+				fail("Unexpected digest for att2 " + attDigest2 + " doesn't equal expected xbQXiZMbguab94OYV+glfi6LO7k=");
 			}
 		}
 	}

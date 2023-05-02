@@ -147,7 +147,7 @@ var ExportWidget = $n2.Class({
 		if( this._atLeastOneDocumentAvailable() ){
 			$('<a>')
 				.attr('href','Export Documents')
-				.text( this.label )
+				.text( _loc(this.label) )
 				.appendTo( $elem )
 				.click(function(){
 					try {

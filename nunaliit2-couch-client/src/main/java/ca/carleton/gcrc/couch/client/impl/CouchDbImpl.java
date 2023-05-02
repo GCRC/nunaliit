@@ -392,22 +392,12 @@ public class CouchDbImpl implements CouchDb {
 		,String contentType
 		) throws Exception {
 		
-		FileInputStream fis = null;
-		try {
+		try (FileInputStream fis = new FileInputStream(file) ) {
 			long size = file.length();
-			fis = new FileInputStream(file);
-			uploadAttachment(doc, name, fis, contentType, size);
-					
+			
+			uploadAttachment(doc, name, fis, contentType, size);					
 		} catch (Exception e) {
 			throw e;
-		} finally {
-			if( null != fis ) {
-				try {
-					fis.close();
-				} catch (Exception e) {
-					// Ignore
-				}
-			}
 		}
 	}
 

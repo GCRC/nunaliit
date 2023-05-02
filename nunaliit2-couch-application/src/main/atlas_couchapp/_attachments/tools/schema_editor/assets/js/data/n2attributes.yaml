@@ -341,7 +341,22 @@
     n2id:
       label : Id
       type : input
-      value : 
+      value :
+    label:
+      label : label
+      type : input
+      value : Label
+-
+  title: n2 attribute tag
+  fields:
+    type:
+      label : type
+      type : string
+      value : tag
+    n2id:
+      label : Id
+      type : input
+      value :
     label:
       label : label
       type : input

@@ -356,6 +356,11 @@ $n2.MediaDisplay = $n2.Class({
 			mkup.push(' type="'+opts.mimeType+'"');
 		};
 		mkup.push('>');
+		if(opts.vttFiles) {
+			opts.vttFiles.forEach(track => {
+				mkup.push(`<track kind="captions" srclang="${track.languageCode}" src="${track.dbUrl}" label="${track.label}">`);
+			});
+		}
 		
 		mkup.push('</video>');
 		
@@ -377,9 +382,14 @@ $n2.MediaDisplay = $n2.Class({
 		);
 		
 		$mediaDialog.dialog(dialogOptions);
-		
+		let features = ['playpause','progress','volume','sourcechooser'];
+		if(opts.vttFiles) {
+			features.push('tracks');
+		}
+		features.push('fullscreen');
+
 		$('#'+videoId).mediaelementplayer({
-			features: ['playpause','progress','volume','sourcechooser','fullscreen']
+			features: features
 		});
 	}
 
