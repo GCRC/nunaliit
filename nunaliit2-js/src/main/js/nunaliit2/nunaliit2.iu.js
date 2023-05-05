@@ -5,7 +5,7 @@
 
     $n2.l10n.addLocalizedStrings('iu',{
         // Language: iu
-        ,"definition (":"ᑐᑭᓕᐅᕐᓂᖅ ("
+        "definition (":"ᑐᑭᓕᐅᕐᓂᖅ ("
         ,"definition (index: ":"ᑐᑭᓕᐅᕐᓂᖅ (ᐃᓗᓕᖏᑦ: "
         ,"definition null and skipped.":"ᑐᑭᐅᔪᖅ ᐱᑕᖃᙱᑦᑐᖅ ᐊᒻᒪᓗ ᖄᖏᖅᑕᐅᔪᖅ."
         ,"definition: ":"ᑐᑭᓕᐅᕐᓂᖅ: "
@@ -412,6 +412,7 @@
         ,"Required fields missing for ":"ᐱᔭᕆᐊᖃᖅᑐᑦ ᐃᓪᓕᕆᕝᕕᐅᓗᑎᒃ ᐱᑕᖃᙱᑦᑐᖅ ᐅᕗᖓ "
         ,"Reset":"ᐊᓯᐊᙳᕐᓗᒍ"
         ,"Reset Password":"ᐊᓯᐊᙳᕐᓗᒍ ᑕᐃᑯᙵᕈᖕᓇᐅᑎ"
+        ,"Reset password?":"ᐊᓯᐊᙳᕐᓗᒍ ᑕᐃᑯᙵᕈᖕᓇᐅᑎ?"
         ,"Resolution":"ᐱᖁᔨᕗᖔᒧᑦ ᓈᓴᐅᑎ"
         ,"Revision":"ᐋᖅᕿᒋᐊᖅᓯᓂᖅ"
         ,"Roles":"ᐱᓕᕆᐊᑦ"
