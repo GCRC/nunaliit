@@ -133,7 +133,6 @@ input[type="text"], input[type="password"], textarea {
 	background-position: center right;
 }
 .nunaliit_atlas .nunaliit_header-nav>ul>li>ul>li>a:hover {
-	cursor: default;
 	text-decoration: none;
 }
 .nunaliit_atlas .nunaliit_header-nav>ul>li>a {
