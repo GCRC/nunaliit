@@ -473,6 +473,10 @@ var ForceGraph = $n2.Class({
  	lastElementIdSelected: null,
  	
  	sticky: null,
+
+	nodeLabelOffsetX: null,
+
+	nodeLabelOffsetY: null,
  	
  	initialize: function(opts_){
  		var opts = $n2.extend({
@@ -489,6 +493,8 @@ var ForceGraph = $n2.Class({
 			,elementGeneratorType: 'default'
 			,elementGeneratorOptions: null
 			,elementGenerator: null
+			,nodeLabelOffsetX: 0
+			,nodeLabelOffsetY: 0
  			,onSuccess: function(){}
  			,onError: function(err){}
  		},opts_);
@@ -501,6 +507,14 @@ var ForceGraph = $n2.Class({
  		this.background = opts.background;
  		this.toggleSelection = opts.toggleSelection;
  		this.elementGenerator = opts.elementGenerator;
+		if (isNaN(Number(opts.nodeLabelOffsetX))) {
+			throw new Error("nodeLabelOffsetX must be a valid number")
+		}
+		if (isNaN(Number(opts.nodeLabelOffsetY))) {
+			throw new Error("nodeLabelOffsetY must be a valid number")
+		}
+		this.nodeLabelOffsetX = Number(opts.nodeLabelOffsetX);
+		this.nodeLabelOffsetY = Number(opts.nodeLabelOffsetY);
  		
  		this.modelId = $n2.getUniqueId('forceGraph');
  		
@@ -1049,8 +1063,8 @@ var ForceGraph = $n2.Class({
  				});		
 
  			selectedLabels
-				.attr('x', function(d) { return d.x; })
-				.attr('y', function(d) { return d.y; });
+				.attr('x', function(d) { return d.x + _this.nodeLabelOffsetX ; })
+				.attr('y', function(d) { return d.y + _this.nodeLabelOffsetY ; });
  		});
  	},
  	
