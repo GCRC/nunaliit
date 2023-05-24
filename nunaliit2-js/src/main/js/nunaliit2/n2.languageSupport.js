@@ -41,12 +41,16 @@ var DH = 'n2.languageSupport';
 var DEFAULT_LANGUAGES = [
 	 {
 		 code: 'en'
-		 ,name: 'English'
-	 }
-	 ,{
+		 , name: 'English'
+	 },
+	 {
 		 code: 'fr'
-		 ,name: 'Français'
-	 }
+		 , name: 'Français'
+	 },
+	 {
+		code: 'iu'
+		, name: 'ᐃᓄᒃᑎᑐᑦ'
+	}
 ];
 
 var g_LanguageService = undefined;

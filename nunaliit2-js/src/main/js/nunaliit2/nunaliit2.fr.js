@@ -431,6 +431,7 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"Required fields missing for ":"Champs nécessaires manquants pour "
 	,"Reset":"Redémarrer"
 	,"Reset Password":"Remise à zéro du mot de passe"
+	,"Reset password?":"Remise à zéro du mot de passe?"
 	,"Resolution":"Résolution"
 	,"Revision":"Version"
 	,"Roles":"Roles"
