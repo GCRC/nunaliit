@@ -151,7 +151,7 @@ var ReferenceBrowserCanvas = $n2.Class({
 				});
 			
 			$('<button>')
-				.text('Export CSV')
+				.text(_loc('Export CSV'))
 				.appendTo($elem)
 				.click(function(){
 					_this._exportCsv();
