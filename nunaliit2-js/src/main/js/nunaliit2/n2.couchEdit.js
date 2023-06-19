@@ -1559,6 +1559,14 @@ var CouchDocumentEditor = $n2.Class({
 
 	_save: function(){
 		var _this = this;
+
+		const msg = {
+			type: 'editBeforeSave'
+			, doc: this.editedDocument
+			, shouldContinue: true
+		}
+		this.dispatchService.synchronousCall(DH, msg);
+		if (!msg?.shouldContinue) return false;
 		
 		if (window.cordova) {
 			// alert if media documents are missing the attachment
@@ -1945,7 +1953,7 @@ var CouchDocumentEditor = $n2.Class({
 			return;
 		};
 	
-		this._save();
+		return this._save();
 	},
 
 	_discardEditor: function(opts_) {
@@ -2511,8 +2519,8 @@ var CouchEditService = $n2.Class({
 	
 	saveDocumentForm: function(opts){
 		if( null != this.currentEditor ) {
-			this.currentEditor.performSave(opts);
-			this.currentEditor = null;
+			const res = this.currentEditor.performSave(opts);
+			if (res) this.currentEditor = null;
 		};
 	},
 
