@@ -2639,6 +2639,8 @@ var SchemaEditor = $n2.Class({
 
 	showService: null,
 
+	dispatchService: null,
+
 	initialize: function(opts_) {
 		var opts = $n2.extend({
 			doc: null
@@ -2648,6 +2650,7 @@ var SchemaEditor = $n2.Class({
 			,funcMap: null
 			,postProcessFns: null
 			,showService: null
+			,dispatchService: null
 		},opts_);
 		
 		var _this = this;
@@ -2659,6 +2662,7 @@ var SchemaEditor = $n2.Class({
 		this.onChanged = opts.onChanged;
 		this.postProcessFns = opts.postProcessFns;
 		this.showService = opts.showService;
+		this.dispatchService = opts.dispatchService;
 		
 		this.formEditor = this.schema.form(
 			this.doc
@@ -2671,6 +2675,11 @@ var SchemaEditor = $n2.Class({
 				};
 				
 				_this.onChanged();
+				_this.dispatchService.synchronousCall(DH, {
+					type: "editRefreshCompleted",
+					element: _this.$div,
+					doc: _this.doc
+				})
 			}
 			,opts.funcMap
 		);
@@ -2772,6 +2781,7 @@ var SchemaEditorService = $n2.Class({
 			,funcMap: this.funcMap
 			,postProcessFns: this.postProcessFunctions
 			,showService: this.showService
+			,dispatchService: this.dispatchService
 		});
 		
 		return editor;
