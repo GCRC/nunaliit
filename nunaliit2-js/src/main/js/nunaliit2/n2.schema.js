@@ -2054,6 +2054,7 @@ var Form = $n2.Class({
 						,gotoCurrent: true
 						,changeYear: true
 						,constrainInput: false
+						,yearRange: "c-50:c+50"
 						,onSelect: function(){
 							var $input = $(this);
 							changeHandler.call($input);
