@@ -215,6 +215,10 @@
 /*
 	Common layout
 */
+.nunaliit_language_iu .olControlEditingToolbar {
+    right: 20%;
+}
+
 .olControlEditingToolbar {
 	position: absolute;
 	right: 185px;
