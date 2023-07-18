@@ -166,4 +166,23 @@ public class UserRepositoryCouchDb implements UserRepository {
 		}
 		return usersWithRoles;
 	}
+
+	@Override
+	public boolean isEmailAddressInUse(String email) throws Exception {
+		try {
+			CouchQuery query = new CouchQuery();
+			query.setViewName("validated-emails");
+			query.setStartKey(email);
+			query.setEndKey(email);
+
+			CouchQueryResults results = nunaliitUserDesignDocument.performQuery(query);
+			List<JSONObject> rows = results.getRows();
+			if (rows.size() > 0) {
+				return true;
+			}
+			return false;
+		} catch (Exception e) {
+			throw new Exception("Error querying users for existing email: "+email,e);
+		}
+	}
 }
