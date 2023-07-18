@@ -271,7 +271,7 @@ public class UserServlet extends HttpServlet {
 				} else if( null != emailStrings && emailStrings.length > 0 ){
 					// Request by e-mail
 					String emailAddress = emailStrings[0];
-					JSONObject result = actions.getUserFromEmailAddress(emailAddress);
+					JSONObject result = actions.getUserFromEmailAddress(emailAddress.toLowerCase());
 					sendJsonResponse(resp, result);
 				}
 
@@ -343,7 +343,7 @@ public class UserServlet extends HttpServlet {
 					throw new Exception("'email' parameter must be specified exactly once");
 				}
 				
-				JSONObject result = actions.initUserCreation(emailStrings[0]);
+				JSONObject result = actions.initUserCreation(emailStrings[0].toLowerCase());
 				sendJsonResponse(resp, result);
 
 			} else if( path.size() == 1 && path.get(0).equals("validateUserCreation") ) {
@@ -369,7 +369,7 @@ public class UserServlet extends HttpServlet {
 					throw new Exception("'email' parameter must be specified exactly once");
 				}
 				
-				JSONObject result = actions.initPasswordRecovery(emailStrings[0]);
+				JSONObject result = actions.initPasswordRecovery(emailStrings[0].toLowerCase());
 				sendJsonResponse(resp, result);
 
 			} else if( path.size() == 1 && path.get(0).equals("validatePasswordRecovery") ) {

@@ -357,7 +357,7 @@ var AuthService = $n2.Class({
 		    	,async: true
 		    	,traditional: true
 		    	,data: {
-		    		email: username
+		    		email: username.toLowerCase()
 		    	}
 		    	,dataType: 'json'
 		    	,success: function(userDoc) {
