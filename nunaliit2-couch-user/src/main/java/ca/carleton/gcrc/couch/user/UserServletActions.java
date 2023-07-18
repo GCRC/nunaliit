@@ -109,20 +109,19 @@ public class UserServletActions {
 	}
 
 	public JSONObject getUserFromEmailAddress(String emailAddress) throws Exception {
-		JSONObject doc = userRepository.getUserFromEmailAddress(emailAddress.toLowerCase());
+		JSONObject doc = userRepository.getUserFromEmailAddress(emailAddress);
 		JSONObject result = getPublicUserFromUser(doc);
 		return result;
 	}
 	
 	public JSONObject initUserCreation(String emailAddr) throws Exception {
-		String lowercaseEmailAddress = emailAddr.toLowerCase();
 		JSONObject result = new JSONObject();
 		result.put("message", "User creation email was sent to the given address");
 
 		// Create token
 		CreationToken creationToken = new CreationToken();
 		{
-			creationToken.setEmailAddress(lowercaseEmailAddress);
+			creationToken.setEmailAddress(emailAddr);
 			long now = (new Date()).getTime();
 			long thirtyDaysMs = 30L * 24L * 60L * 60L * 1000L;
 			long thirtyDaysFromNowMs = now + thirtyDaysMs;
@@ -145,7 +144,7 @@ public class UserServletActions {
 			throw new Exception("Error while encoding token (b64)", e);
 		}		
 		
-		userMailNotification.sendUserCreationNotice(lowercaseEmailAddress,b64Token);
+		userMailNotification.sendUserCreationNotice(emailAddr,b64Token);
 		
 		return result;
 	}
