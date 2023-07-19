@@ -1545,7 +1545,7 @@ var ModuleDisplay = $n2.Class({
 					if( doc
 						&& doc.nunaliit_help ){
 						$n2.help.InstallHelpInfo('main',doc.nunaliit_help);
-						installHelpButton();
+						installHelpButton(moduleInfo.help?.label);
 					} else {
 						$n2.log('Do not know how to interpret help document');
 						$elem.attr('n2_error','Do not know how to interpret help document');
@@ -1562,10 +1562,11 @@ var ModuleDisplay = $n2.Class({
 			$elem.attr('n2_error','Do not know how to handle help information');
 		};
 
-		function installHelpButton(){
+		function installHelpButton(label){
 
 			var $a = $('<a class="nunaliit_module_help_button" href="#"></a>');
-			$a.text( _loc('Help') );
+			const helpLabel = label || 'Help'
+			$a.text( _loc(helpLabel));
 
 			$('#'+_this.helpButtonName)
 				.empty()
