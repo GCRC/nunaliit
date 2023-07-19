@@ -115,7 +115,14 @@ public class UserServletActions {
 	}
 	
 	public JSONObject initUserCreation(String emailAddr) throws Exception {
+		boolean isEmailInUse = userRepository.isEmailAddressInUse(emailAddr);
 		JSONObject result = new JSONObject();
+
+		if (isEmailInUse) {
+			result.put("error", "Email is already associated with an existing user");
+			return result;
+		}
+
 		result.put("message", "User creation email was sent to the given address");
 
 		// Create token

@@ -195,7 +195,11 @@ public class MockUserRepository implements UserRepository {
 	@Override
 	public Collection<UserDocument> getUsersWithRoles(List<String> roles) throws Exception {
 		List<UserDocument> users = new ArrayList<UserDocument>();
-		
 		return users;
+	}
+
+	@Override
+	public boolean isEmailAddressInUse(String email) throws Exception {
+		return false;
 	}
 }
