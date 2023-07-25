@@ -1233,6 +1233,7 @@ function HandleWidgetDisplayRequests(m){
 //--------------------------------------------------------------------------
 $n2.widgetSelectableFilter = {
 	SingleFilterSelectionWidget: SingleFilterSelectionWidget
+	,MultiFilterSelectionWidget: MultiFilterSelectionWidget
 	,MultiFilterSelectionDropDownWidget: MultiFilterSelectionDropDownWidget
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
