@@ -64,9 +64,9 @@ public class CouchDesignDocumentImpl implements CouchDesignDocument {
 		// Clear to null so it doesn't become part of URL
 		query.resetKeys();
 		URL effectiveUrl = computeUrlFromQuery(query);
-
 		JSONObject postBody = new JSONObject();
 		JSONArray keys = new JSONArray(keysForPostBody);
+		query.setKeys(keys);
 		postBody.put("keys", keys);
 
 		JSONObject jsonResponse = ConnectionUtils.postJsonResource(getContext(), effectiveUrl, postBody);
