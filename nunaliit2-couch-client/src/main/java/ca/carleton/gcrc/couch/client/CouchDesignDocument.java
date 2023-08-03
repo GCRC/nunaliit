@@ -14,6 +14,8 @@ public interface CouchDesignDocument {
 	
 	CouchQueryResults performQuery(CouchQuery query) throws Exception;
 
+	CouchQueryResults performQueryAsPost(CouchQuery query) throws Exception;
+	
 	ConnectionStreamResult performQueryRaw(CouchQuery query) throws Exception;
 	
 	<T> T performQuery(CouchQuery query, Class<T> expectedClass) throws Exception;
