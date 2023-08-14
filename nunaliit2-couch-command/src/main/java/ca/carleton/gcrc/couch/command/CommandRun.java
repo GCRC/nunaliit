@@ -20,21 +20,17 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.rolling.RollingFileAppender;
 import org.apache.log4j.rolling.TimeBasedRollingPolicy;
 import org.eclipse.jetty.proxy.ProxyServlet;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
-import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.GzipFilter;
 
-import javax.servlet.DispatcherType;
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
-import java.util.EnumSet;
-import java.util.logging.Handler;
 
 public class CommandRun implements Command {
 	public static final String REQ_BUFFER_SIZE = "16384";
@@ -138,7 +134,11 @@ public class CommandRun implements Command {
 		File mediaDir = new File(atlasDir, "media");
 
 		// Create server
-		Server server = new Server(atlasProperties.getServerPort());
+		Server server = new Server();
+		ServerConnector serverConnector = new ServerConnector(server);
+		serverConnector.setPort(atlasProperties.getServerPort());
+		serverConnector.setIdleTimeout(300000L);
+		server.setConnectors(new Connector[]{serverConnector});
 		
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
