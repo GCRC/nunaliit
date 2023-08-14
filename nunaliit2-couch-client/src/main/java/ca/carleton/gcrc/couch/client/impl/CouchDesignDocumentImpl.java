@@ -4,6 +4,7 @@ import java.net.URL;
 import java.util.List;
 import java.util.Vector;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import ca.carleton.gcrc.couch.client.CouchContext;
@@ -48,6 +49,37 @@ public class CouchDesignDocumentImpl implements CouchDesignDocument {
 			throw new Exception("Error while parsing query response",e);
 		}
 		
+		return results;
+	}
+
+	@Override
+	public CouchQueryResults performQueryAsPost(CouchQuery query) throws Exception {
+		if (null == query) {
+			throw new Exception("Must provide a query object during a query");
+		}
+		if (null == query.getViewName()) {
+			throw new Exception("Must specify a view name during a query");
+		}
+		String keysForPostBody = query.getKeys();
+		// Clear to null so it doesn't become part of URL
+		query.resetKeys();
+		URL effectiveUrl = computeUrlFromQuery(query);
+		JSONObject postBody = new JSONObject();
+		JSONArray keys = new JSONArray(keysForPostBody);
+		query.setKeys(keys);
+		postBody.put("keys", keys);
+
+		JSONObject jsonResponse = ConnectionUtils.postJsonResource(getContext(), effectiveUrl, postBody);
+
+		ConnectionUtils.captureReponseErrors(jsonResponse, "Error while querying view " + effectiveUrl.toString() + ": ");
+
+		CouchQueryResultsImpl results;
+		try {
+			results = new CouchQueryResultsImpl(jsonResponse);
+		} catch (Exception e) {
+			throw new Exception("Error while parsing query response", e);
+		}
+
 		return results;
 	}
 

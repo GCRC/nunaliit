@@ -43,7 +43,7 @@ if( !$n2.l10n.strings ) $n2.l10n.strings = {};
 if( !$n2.l10n.strings['en'] ) $n2.l10n.strings['en'] = {};
 
 var reLangCountry = /^([a-z][a-z])-([a-zA-Z][a-zA-Z])$/;
-var reLang = /^([a-z][a-z])$/;
+var reLang = /^([a-z][a-z][a-z]?)$/;
 
 // Short-cut
 var strings = $n2.l10n.strings;

@@ -66,6 +66,9 @@ public class CouchQuery {
 	public void setKeys(Object keys) throws Exception {
 		this.keys = JSONSupport.valueToString(keys);
 	}
+	public void resetKeys() {
+		this.keys = null;
+	}
 	
 	public String getLimit() {
 		return limit;
