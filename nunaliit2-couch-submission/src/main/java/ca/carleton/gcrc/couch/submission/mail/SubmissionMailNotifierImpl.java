@@ -36,6 +36,7 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 	private String submissionPageLink = null;
 	private MailMessageGenerator approvalGenerator = new SubmissionApprovalGenerator();
 	private MailMessageGenerator rejectionGenerator = new SubmissionRejectionGenerator();
+	private MailMessageGenerator documentCreatedGenerator = new DocumentCreatedGenerator();
 
 	public SubmissionMailNotifierImpl(
 		String atlasName
@@ -224,4 +225,75 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 		}
 	}
 
+	@Override
+	public void sendDocumentCreatedNotification(JSONObject submissionDoc) throws Exception {
+
+		// Get list of users to receive notification
+		List<UserDocument> users = new Vector<UserDocument>();
+		{
+			List<String> roles = new ArrayList<String>(2);
+			roles.add("vetter"); // global vetters
+			roles.add(atlasName+"_vetter"); // atlas vetters
+			roles.add("administrator"); // global administrators
+			roles.add(atlasName+"_administrator"); // atlas administrators
+
+			Collection<UserDocument> usersWithRoles = userDesignDocument.getUsersWithRoles(roles);
+			for(UserDocument user : usersWithRoles){
+				logger.debug("User: "+user);
+				if( user.isReceivingVetterInstantNotifications() ){
+					users.add(user);
+				}
+			}
+		}
+
+		// Get list of recipients
+		List<MailRecipient> recipients = new ArrayList<MailRecipient>(users.size());
+		for(UserDocument user : users){
+			String display = user.getDisplayName();
+			Collection<String> emails = user.getEmails();
+			for(String email : emails){
+				if( null == display ) {
+					recipients.add( new MailRecipient(email) );
+				} else {
+					recipients.add( new MailRecipient(email,display) );
+				}
+			}
+		}
+
+		// Check if anything to do
+		if( recipients.size() < 1 ) {
+			logger.info("Upload notification not sent because there are no recipients");
+			return;
+		}
+
+		logger.info("Sending documnet created mail notification for "
+				+submissionDoc.optString("_id", "<unknown>")
+				+" to "
+				+recipients
+				);
+
+		try {
+			MailMessage message = new MailMessage();
+			// From
+			message.setFromAddress(fromAddress);
+
+			// To
+			for(MailRecipient recipient : recipients){
+				message.addToRecipient( recipient );
+			}
+
+			// Generate message
+			Map<String,String> parameters = new HashMap<String,String>();
+			parameters.put("submissionDocId", submissionDoc.optString("_id",null));
+			parameters.put("schemaName", submissionDoc.optString("nunaliit_schema", null));
+			documentCreatedGenerator.generateMessage(message, parameters);
+
+			// Send message
+			mailDelivery.sendMessage(message);
+
+		} catch (Exception e) {
+			logger.error("Unable to send document created notification.",e);
+			throw new Exception("Unable to send document created notification.",e);
+		}
+	}
 }

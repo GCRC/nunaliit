@@ -19,4 +19,9 @@ public class SubmissionMailNotifierNull implements SubmissionMailNotifier {
 			List<MailRecipient> recipients) throws Exception {
 	}
 
+	@Override
+	public void sendDocumentCreatedNotification(
+			JSONObject submissionDoc) throws Exception {
+	}
+
 }
