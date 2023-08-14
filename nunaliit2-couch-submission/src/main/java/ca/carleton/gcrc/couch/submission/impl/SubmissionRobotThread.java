@@ -330,7 +330,6 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		if( null == currentDoc ) {
 			boolean emailOnCreate = submissionInfo.optBoolean("email_on_create");
 			if( emailOnCreate ) {
-				// this.mailNotifier.sendDocumentCreatedNotification(submissionDoc);
 				sendDocumentCreatedEmail(submissionDoc, currentDoc);
 			}
 		}
