@@ -22,6 +22,8 @@ import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailMessage;
 import ca.carleton.gcrc.mail.MailRecipient;
 import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
+import java.util.HashSet;
+import java.util.Set;
 
 public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 
@@ -226,45 +228,42 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 	}
 
 	@Override
-	public void sendDocumentCreatedNotification(JSONObject submissionDoc) throws Exception {
+	public void sendDocumentCreatedNotification(
+		JSONObject submissionDoc,
+		UserDocument currentUser
+		) throws Exception {
 
-		// Get list of users to receive notification
-		List<UserDocument> users = new Vector<UserDocument>();
-		{
-			List<String> roles = new ArrayList<String>(2);
-			roles.add("vetter"); // global vetters
-			roles.add(atlasName+"_vetter"); // atlas vetters
-			roles.add("administrator"); // global administrators
-			roles.add(atlasName+"_administrator"); // atlas administrators
+		List<UserDocument> users = new ArrayList<>();
 
-			Collection<UserDocument> usersWithRoles = userDesignDocument.getUsersWithRoles(roles);
-			for(UserDocument user : usersWithRoles){
-				logger.debug("User: "+user);
-				if( user.isReceivingVetterInstantNotifications() ){
-					users.add(user);
+		if( null != currentUser ) {
+			users.add(currentUser);
+		}
+
+		List<String> roles = new ArrayList<String>(2);
+		roles.add("vetter"); // global vetters
+		roles.add(atlasName+"_vetter"); // atlas vetters
+		roles.add("administrator"); // global administrator
+		roles.add(atlasName+"administrator"); // atlas administrator
+
+		users.addAll(new ArrayList<>(userDesignDocument.getUsersWithRoles(roles)));
+
+		List<MailRecipient> recipients = new ArrayList<>();
+
+		Set<String> userIds = new HashSet<>();
+
+		for (UserDocument user : users) {
+			if (userIds.add(user.getId())) {
+				String display = user.getDisplayName();
+				for (String email : user.getEmails()) {
+					recipients.add(display == null ? new MailRecipient(email) : new MailRecipient(email, display));
 				}
 			}
-		}
+        }
 
-		// Get list of recipients
-		List<MailRecipient> recipients = new ArrayList<MailRecipient>(users.size());
-		for(UserDocument user : users){
-			String display = user.getDisplayName();
-			Collection<String> emails = user.getEmails();
-			for(String email : emails){
-				if( null == display ) {
-					recipients.add( new MailRecipient(email) );
-				} else {
-					recipients.add( new MailRecipient(email,display) );
-				}
-			}
-		}
-
-		// Check if anything to do
-		if( recipients.size() < 1 ) {
-			logger.info("Upload notification not sent because there are no recipients");
-			return;
-		}
+		if (recipients.isEmpty()) {
+            logger.info("Document created notification not sent because there are no recipients");
+            return;
+        }
 
 		logger.info("Sending documnet created mail notification for "
 				+submissionDoc.optString("_id", "<unknown>")
@@ -282,10 +281,13 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 				message.addToRecipient( recipient );
 			}
 
+			JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+			JSONObject submittedDoc = submissionInfo.optJSONObject("submitted_doc");
+
 			// Generate message
 			Map<String,String> parameters = new HashMap<String,String>();
 			parameters.put("submissionDocId", submissionDoc.optString("_id",null));
-			parameters.put("schemaName", submissionDoc.optString("nunaliit_schema", null));
+			parameters.put("schemaName", submittedDoc.optString("nunaliit_schema", null));
 			documentCreatedGenerator.generateMessage(message, parameters);
 
 			// Send message

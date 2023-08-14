@@ -6,6 +6,8 @@ import org.json.JSONObject;
 
 import ca.carleton.gcrc.mail.MailRecipient;
 
+import ca.carleton.gcrc.couch.user.UserDocument;
+
 public class SubmissionMailNotifierNull implements SubmissionMailNotifier {
 
 	@Override
@@ -21,7 +23,8 @@ public class SubmissionMailNotifierNull implements SubmissionMailNotifier {
 
 	@Override
 	public void sendDocumentCreatedNotification(
-			JSONObject submissionDoc) throws Exception {
+			JSONObject submissionDoc,
+			UserDocument currentUser) throws Exception {
 	}
 
 }

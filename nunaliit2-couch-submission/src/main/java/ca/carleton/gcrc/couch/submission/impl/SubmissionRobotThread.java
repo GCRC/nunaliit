@@ -25,6 +25,7 @@ import ca.carleton.gcrc.couch.utils.SubmissionUtils;
 import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.json.patcher.JSONPatcher;
 import ca.carleton.gcrc.mail.MailRecipient;
+import ca.carleton.gcrc.couch.user.UserDocument;
 
 public class SubmissionRobotThread extends Thread implements CouchDbChangeListener {
 	
@@ -325,6 +326,14 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			
 			this.mailNotifier.sendSubmissionWaitingForApprovalNotification(submissionDoc);
 		}
+		
+		if( null == currentDoc ) {
+			boolean emailOnCreate = submissionInfo.optBoolean("email_on_create");
+			if( emailOnCreate ) {
+				// this.mailNotifier.sendDocumentCreatedNotification(submissionDoc);
+				sendDocumentCreatedEmail(submissionDoc, currentDoc);
+			}
+		}
 	}
 
 	public void performApprovedWork(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
@@ -482,6 +491,35 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
 		denial_email.put("sent", true);
 		submissionDb.updateDocument(submissionDoc);
+	}
+
+	public void sendDocumentCreatedEmail(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
+		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+
+		// Find user that submitted the update
+		String userId = submissionInfo.optString("submitter_name");
+
+		// Get current user document
+		CouchUserDocContext userDocContext = null;
+		if( null != userId ){
+			try {
+				userDocContext = userDb.getUserFromName(userId);
+			} catch(Exception e) {
+				// Ignore if we can not find user
+			}
+		}
+
+		// Get list of e-mails
+		List<String> emails = new Vector<String>();
+		UserDocument currentUser = null;
+
+		if( null != userDocContext ){
+			JSONObject userDoc = userDocContext.getUserDoc();
+			currentUser = new UserDocument(userDoc);
+		}
+
+		// Send notification
+		mailNotifier.sendDocumentCreatedNotification(submissionDoc, currentUser);
 	}
 
 	private boolean waitMillis(int millis) {

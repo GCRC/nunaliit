@@ -30,8 +30,6 @@ import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.utils.StreamUtils;
-import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierImpl;
-import ca.carleton.gcrc.mail.MailDelivery;
 import java.io.File;
 
 @SuppressWarnings("serial")
@@ -110,25 +108,7 @@ public class SubmissionServlet extends JsonServlet {
 				throw new ServletException("Unexpected object for submission design document: "+obj.getClass().getName());
 			}
 		}
-		
-		// Mail Delivery
-		SubmissionMailNotifierImpl submissionMailNotification = null;
-		{
-			Object obj = context.getAttribute(MailDelivery.ConfigAttributeName_MailDelivery);
-			if(null == obj) {
-				throw new ServletException("Mail delivery is not specified ("+MailDelivery.ConfigAttributeName_MailDelivery+")");
-			}
-			try {
-				if(obj instanceof MailDelivery) {
-					MailDelivery mailDelivery = (MailDelivery)obj;
-					submissionMailNotification = new SubmissionMailNotifierImpl(atlasName, mailDelivery, documentDesign.getDatabase());
-				} else {
-					throw new ServletException("Unexpected object for mail delivery: "+obj.getClass().getName());
-				}
-			} catch (Exception e) {
-				System.out.println("Exception occured: "+ e);
-			}
-		}
+
 		{
 			Object obj = context.getAttribute(ConfigAttributeName_AtlasDir);
 			if( null == obj ){
@@ -176,7 +156,7 @@ public class SubmissionServlet extends JsonServlet {
 			throw new ServletException("Error while adjusting member roles on submission database", e);
 		}
 		
-		actions = new SubmissionServletActions(atlasName, submissionDesign, documentDesign.getDatabase(), submissionMailNotification, atlasDirString);
+		actions = new SubmissionServletActions(atlasName, submissionDesign, documentDesign.getDatabase(), atlasDirString);
 
 		logger.info(this.getClass().getSimpleName()+" servlet initialization - completed");
 	}
