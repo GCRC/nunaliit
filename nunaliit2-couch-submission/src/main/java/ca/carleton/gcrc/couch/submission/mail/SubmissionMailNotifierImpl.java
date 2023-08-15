@@ -261,9 +261,9 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
         }
 
 		if (recipients.isEmpty()) {
-            logger.info("Document created notification not sent because there are no recipients");
-            return;
-        }
+			logger.info("Document created notification not sent because there are no recipients");
+			return;
+		}
 
 		logger.info("Sending document created mail notification for "
 				+submissionDoc.optString("_id", "<unknown>")
