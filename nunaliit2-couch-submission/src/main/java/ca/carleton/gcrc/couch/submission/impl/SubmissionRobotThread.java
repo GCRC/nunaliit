@@ -26,6 +26,9 @@ import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.json.patcher.JSONPatcher;
 import ca.carleton.gcrc.mail.MailRecipient;
 import ca.carleton.gcrc.couch.user.UserDocument;
+import ca.carleton.gcrc.couch.export.SchemaCache;
+import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
+import ca.carleton.gcrc.couch.app.Document;
 
 public class SubmissionRobotThread extends Thread implements CouchDbChangeListener {
 	
@@ -328,9 +331,17 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		}
 		
 		if( null == currentDoc ) {
-			boolean emailOnCreate = submissionInfo.optBoolean("email_on_create");
-			if( emailOnCreate ) {
-				sendDocumentCreatedEmail(submissionDoc, currentDoc);
+			String nunaliitSchema = submittedDoc.optString("nunaliit_schema");
+			CouchDb couchDb = documentDbDesignDocument.getDatabase();
+			SchemaCache schemaCache = new SchemaCacheCouchDb(couchDb);
+			Document schemaDoc =  schemaCache.getSchema(nunaliitSchema);
+			if( null != schemaDoc ) {
+				JSONObject schemaDocObj = schemaDoc.getJSONObject();
+				JSONObject definitionJson = schemaDocObj.getJSONObject("definition");
+				boolean emailOnCreate = definitionJson.optBoolean("emailOnCreate", false);
+				if( emailOnCreate ) {
+					sendDocumentCreatedEmail(submissionDoc, currentDoc);
+				}
 			}
 		}
 	}

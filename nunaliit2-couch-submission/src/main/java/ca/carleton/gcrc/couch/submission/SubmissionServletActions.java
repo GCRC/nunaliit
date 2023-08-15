@@ -18,11 +18,7 @@ import ca.carleton.gcrc.couch.client.CouchServerVersion;
 import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.json.JSONSupport;
-import java.io.File;
-import java.io.FileReader;
 import org.json.JSONObject;
-import java.io.FilenameFilter;
-import java.io.FileFilter;
 
 public class SubmissionServletActions {
 	
@@ -31,7 +27,6 @@ public class SubmissionServletActions {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 //	private String atlasName = null;
-	private String atlasDir = null;
 	private CouchDesignDocument submissionDesign = null;
 	private CouchDb documentCouchDb = null;
 	private JSONObject cached_welcome;
@@ -40,12 +35,10 @@ public class SubmissionServletActions {
 			String atlasName
 			,CouchDesignDocument submissionDesign
 			,CouchDb documentCouchDb
-			,String atlasDir
 		){
 //		this.atlasName = atlasName;
 		this.submissionDesign = submissionDesign;
 		this.documentCouchDb = documentCouchDb;
-		this.atlasDir = atlasDir;
 	}
 	
 	synchronized public JSONObject getWelcome() throws Exception{
@@ -268,40 +261,6 @@ public class SubmissionServletActions {
 			submissionStructure.put("deletion", true);
 		}
 		
-		//Email on document create
-		if( !JSONSupport.containsKey(doc, "_rev") ){
-			// Send an email if the document is created
-			String nunaliitSchema = doc.getString("nunaliit_schema");
-			File docsDir = new File(atlasDir, "docs");
-
-			FilenameFilter schemaFilenameFilter = (dir, name) -> name != null && name.startsWith("schema");
-			// List all subdirectory names within 'docs' that starts with schema
-			File[] schemaDirs = docsDir.listFiles(file -> file.isDirectory() && schemaFilenameFilter.accept(file.getParentFile(), file.getName()));
-
-			// Iterate over each subdirectory
-			for (File schemaDir : schemaDirs) {
-				File definitionFile = new File(schemaDir, "definition.json");
-
-				if (definitionFile.exists()) {
-					JSONObject jsonContent = readJSONFromFile(definitionFile);
-					String id = jsonContent.optString("id", null);
-					String group = jsonContent.optString("group", null);
-					boolean emailOnCreate = jsonContent.optBoolean("emailOnCreate", false);
-
-					if (id != null && group != null) {
-						String schemaId = group + "_" + id;
-
-						if (schemaId.equals(nunaliitSchema) && emailOnCreate) {
-							submissionStructure.put("email_on_create", true);
-							break;
-						} else {
-							submissionStructure.put("email_on_create", false);
-						}
-					}
-				}
-			}
-		}
-		
 		// Original
 		if( null != original ){
 			JSONObject originalDoc = new JSONObject();
@@ -331,16 +290,4 @@ public class SubmissionServletActions {
 		
 		return submissionRequest;
 	}
-	
-	private JSONObject readJSONFromFile(File file) throws Exception {
-        try (FileReader reader = new FileReader(file)) {
-            StringBuilder content = new StringBuilder();
-            int ch;
-            while ((ch = reader.read()) != -1) {
-                content.append((char) ch);
-            }
-
-            return new JSONObject(content.toString());
-        }
-    }
 }

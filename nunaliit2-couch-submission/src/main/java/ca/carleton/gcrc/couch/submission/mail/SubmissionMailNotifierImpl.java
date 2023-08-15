@@ -243,7 +243,7 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 		roles.add("vetter"); // global vetters
 		roles.add(atlasName+"_vetter"); // atlas vetters
 		roles.add("administrator"); // global administrator
-		roles.add(atlasName+"administrator"); // atlas administrator
+		roles.add(atlasName+"_administrator"); // atlas administrator
 
 		users.addAll(new ArrayList<>(userDesignDocument.getUsersWithRoles(roles)));
 
@@ -265,7 +265,7 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
             return;
         }
 
-		logger.info("Sending documnet created mail notification for "
+		logger.info("Sending document created mail notification for "
 				+submissionDoc.optString("_id", "<unknown>")
 				+" to "
 				+recipients

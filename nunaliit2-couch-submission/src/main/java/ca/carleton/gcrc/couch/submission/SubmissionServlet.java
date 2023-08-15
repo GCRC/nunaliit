@@ -30,7 +30,6 @@ import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.utils.StreamUtils;
-import java.io.File;
 
 @SuppressWarnings("serial")
 public class SubmissionServlet extends JsonServlet {
@@ -39,12 +38,10 @@ public class SubmissionServlet extends JsonServlet {
 	public static final String ConfigAttributeName_UserDb = "SubmissionServlet_UserDb";
 	public static final String ConfigAttributeName_SubmissionDesign = "SubmissionServlet_SubmissionDesign";
 	public static final String ConfigAttributeName_DocumentDesign = "SubmissionServlet_DocumentDesign";
-	public static final String ConfigAttributeName_AtlasDir = "ConfigAttributeName_AtlasDir";
 	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private String atlasName = null;
-	private String atlasDirString = null;
 //	private CouchUserDb userDb = null;
 	private CouchDesignDocument documentDesign = null;
 	private CouchDesignDocument submissionDesign = null;
@@ -109,19 +106,6 @@ public class SubmissionServlet extends JsonServlet {
 			}
 		}
 
-		{
-			Object obj = context.getAttribute(ConfigAttributeName_AtlasDir);
-			if( null == obj ){
-				throw new ServletException("Atlas directory is not specified ("+ConfigAttributeName_AtlasDir+")");
-			}
-			if( obj instanceof File ){
-				File atlasDir = (File) obj;
-				atlasDirString = atlasDir.getAbsolutePath();
-			} else {
-				throw new ServletException("Unexpected object for atlas directory: "+obj.getClass().getName());
-			}
-		}
-
 		// Fix member roles on submission database
 		try {
 			if( null != submissionDesign ) {
@@ -156,7 +140,7 @@ public class SubmissionServlet extends JsonServlet {
 			throw new ServletException("Error while adjusting member roles on submission database", e);
 		}
 		
-		actions = new SubmissionServletActions(atlasName, submissionDesign, documentDesign.getDatabase(), atlasDirString);
+		actions = new SubmissionServletActions(atlasName, submissionDesign, documentDesign.getDatabase());
 
 		logger.info(this.getClass().getSimpleName()+" servlet initialization - completed");
 	}
