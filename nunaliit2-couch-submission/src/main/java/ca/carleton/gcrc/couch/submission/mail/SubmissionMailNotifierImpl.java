@@ -233,6 +233,11 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 		UserDocument currentUser
 		) throws Exception {
 
+		if(!mailDelivery.isConfigured()) {
+			logger.info("Email server is not cofigured to send document created notification");
+			return;
+		}
+
 		List<UserDocument> users = new ArrayList<>();
 
 		if( null != currentUser ) {

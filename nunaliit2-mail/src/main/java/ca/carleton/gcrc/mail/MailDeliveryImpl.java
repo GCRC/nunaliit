@@ -32,7 +32,15 @@ public class MailDeliveryImpl implements MailDelivery {
 
 	@Override
 	public boolean isConfigured() {
-		if( null == fromAddress ) {
+
+		String prot = mailProperties.getProperty("mail.transport.protocol",null);
+		String userName = mailProperties.getProperty("mail."+prot+".user",null);
+		String userPassword = mailProperties.getProperty("mail."+prot+".password",null);
+
+		if( null == fromAddress 
+		 || null == prot
+		 || null == userName
+		 || null == userPassword) {
 			return false;
 		}
 		
