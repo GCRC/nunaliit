@@ -33,18 +33,22 @@ public class MailDeliveryImpl implements MailDelivery {
 	@Override
 	public boolean isConfigured() {
 
-		String prot = mailProperties.getProperty("mail.transport.protocol",null);
-		String userName = mailProperties.getProperty("mail."+prot+".user",null);
-		String userPassword = mailProperties.getProperty("mail."+prot+".password",null);
+		String mailProtocol = mailProperties.getProperty("mail.transport.protocol",null);
+		String host = mailProperties.getProperty("mail."+mailProtocol+".host",null);
+		String port = mailProperties.getProperty("mail."+mailProtocol+".port",null);
 
 		if( null == fromAddress 
-		 || null == prot
-		 || null == userName
-		 || null == userPassword) {
+		 || isEmptyOrNull(mailProtocol)
+		 || isEmptyOrNull(host)
+		 || isEmptyOrNull(port)) {
 			return false;
 		}
 		
 		return true;
+	}
+	
+	private boolean isEmptyOrNull(String value) {
+		return value == null || value.isEmpty();
 	}
 
 	@Override

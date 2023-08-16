@@ -18,7 +18,6 @@ import ca.carleton.gcrc.couch.client.CouchServerVersion;
 import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitUtils;
 import ca.carleton.gcrc.json.JSONSupport;
-import org.json.JSONObject;
 
 public class SubmissionServletActions {
 	

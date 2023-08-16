@@ -254,6 +254,7 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 
 		List<MailRecipient> recipients = new ArrayList<>();
 
+		// create a unique set to userIds, so as we don't send duplicate mail if the current user has admin, or vetter roles
 		Set<String> userIds = new HashSet<>();
 
 		for (UserDocument user : users) {

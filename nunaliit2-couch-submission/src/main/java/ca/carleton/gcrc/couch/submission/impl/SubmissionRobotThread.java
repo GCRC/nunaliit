@@ -519,8 +519,6 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			}
 		}
 
-		// Get list of e-mails
-		List<String> emails = new Vector<String>();
 		UserDocument currentUser = null;
 
 		if( null != userDocContext ){
