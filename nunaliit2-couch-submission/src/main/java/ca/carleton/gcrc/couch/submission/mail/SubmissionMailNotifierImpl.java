@@ -23,7 +23,6 @@ import ca.carleton.gcrc.mail.MailMessage;
 import ca.carleton.gcrc.mail.MailRecipient;
 import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 import java.util.HashSet;
-import java.util.Set;
 
 public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 
@@ -232,11 +231,6 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 		JSONObject submissionDoc,
 		UserDocument currentUser
 		) throws Exception {
-
-		if(!mailDelivery.isConfigured()) {
-			logger.info("Mail server is not configured to send document created notification");
-			return;
-		}
 
 		List<UserDocument> users = new ArrayList<>();
 
