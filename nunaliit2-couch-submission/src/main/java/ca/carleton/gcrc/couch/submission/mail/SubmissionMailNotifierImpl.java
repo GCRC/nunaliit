@@ -234,7 +234,7 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 		) throws Exception {
 
 		if(!mailDelivery.isConfigured()) {
-			logger.info("Email server is not cofigured to send document created notification");
+			logger.info("Mail server is not configured to send document created notification");
 			return;
 		}
 
