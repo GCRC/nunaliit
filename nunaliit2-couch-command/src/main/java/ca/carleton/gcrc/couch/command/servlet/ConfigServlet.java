@@ -612,7 +612,7 @@ public class ConfigServlet extends JsonServlet {
 					MailMessageGenerator template = new DocumentCreatedGenerator();
 					CouchDbTemplateMailMessageGenerator couchdbTemplate = new CouchDbTemplateMailMessageGenerator(
 						documentDatabase,
-						"org.nunaliit.email_template.document_creation",
+						"org.nunaliit.email_template.schema_emailOnCreate",
 						template
 						);
 					submissionNotifier.setDocumentCreatedGenerator(couchdbTemplate);

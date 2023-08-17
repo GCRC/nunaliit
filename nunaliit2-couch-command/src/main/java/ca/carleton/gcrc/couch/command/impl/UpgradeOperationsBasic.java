@@ -86,6 +86,7 @@ public class UpgradeOperationsBasic implements UpgradeOperations {
 		try {
 			boolean deleted = targetDir.delete();
 			if( !deleted ) {
+				System.out.println("Delete directory =======================>");
 				throw new Exception("Unable to delete: "+targetDir.getAbsolutePath());
 			}
 		} catch(Exception e) {
