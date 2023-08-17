@@ -1,0 +1,10 @@
+<html>
+	<head>
+		<title>Document created notification</title>
+	</head>
+	<body>
+		<h1>Document created notification</h1>
+		
+		<p>A new document has been created for schema: {{schemaName}}</p>
+	</body>
+</html>
