@@ -1,9 +1,9 @@
 <html>
 	<head>
-		<titleNunaliit User Registration</title>
+		<title>Nunaliit User Registration</title>
 	</head>
 	<body>
-		<h1Nunaliit User Registration</h1>
+		<h1>Nunaliit User Registration</h1>
 		<p>A new user <b>{{userEmail}}</b> has registered with the atlas. </p>
 		
 		{{#link}}
