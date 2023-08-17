@@ -1,1 +1,0 @@
-org.nunaliit.email_template.user_registration
