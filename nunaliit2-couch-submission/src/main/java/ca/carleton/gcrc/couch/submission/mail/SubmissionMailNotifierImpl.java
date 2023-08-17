@@ -93,6 +93,14 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 		this.rejectionGenerator = rejectionGenerator;
 	}
 	
+	public MailMessageGenerator getDocumentCreatedGenerator() {
+		return documentCreatedGenerator;
+	}
+
+	public void setDocumentCreatedGenerator(MailMessageGenerator documentCreatedGenerator) {
+		this.documentCreatedGenerator = documentCreatedGenerator;
+	}
+	
 	@Override
 	public void sendSubmissionWaitingForApprovalNotification(
 			JSONObject submissionDoc) throws Exception {

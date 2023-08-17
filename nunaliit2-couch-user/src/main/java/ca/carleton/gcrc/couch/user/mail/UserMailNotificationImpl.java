@@ -315,4 +315,12 @@ public class UserMailNotificationImpl implements UserMailNotification {
 	public void setPasswordReminderGenerator(MailMessageGenerator passwordReminderGenerator) {
 		this.passwordReminderGenerator = passwordReminderGenerator;
 	}
+	
+	public MailMessageGenerator getUserRegistrationGenerator() {
+		return userRegistrationGenerator;
+	}
+
+	public void setUserRegistrationGenerator(MailMessageGenerator userRegistrationGenerator) {
+		this.userRegistrationGenerator = userRegistrationGenerator;
+	}
 }

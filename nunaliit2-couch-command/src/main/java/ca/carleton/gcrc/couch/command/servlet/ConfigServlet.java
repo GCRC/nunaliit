@@ -41,6 +41,7 @@ import ca.carleton.gcrc.couch.simplifiedGeometry.SimplifiedGeometryServletConfig
 import ca.carleton.gcrc.couch.submission.SubmissionRobot;
 import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
 import ca.carleton.gcrc.couch.submission.SubmissionServlet;
+import ca.carleton.gcrc.couch.submission.mail.DocumentCreatedGenerator;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionApprovalGenerator;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierImpl;
@@ -606,6 +607,15 @@ public class ConfigServlet extends JsonServlet {
 						template
 						);
 					submissionNotifier.setRejectionGenerator(couchdbTemplate);
+				}
+				{
+					MailMessageGenerator template = new DocumentCreatedGenerator();
+					CouchDbTemplateMailMessageGenerator couchdbTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDatabase,
+						"org.nunaliit.email_template.document_creation",
+						template
+						);
+					submissionNotifier.setDocumentCreatedGenerator(couchdbTemplate);
 				}
 
 				mailNotification = mail;
