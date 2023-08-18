@@ -105,7 +105,7 @@ public class SubmissionServlet extends JsonServlet {
 				throw new ServletException("Unexpected object for submission design document: "+obj.getClass().getName());
 			}
 		}
-		
+
 		// Fix member roles on submission database
 		try {
 			if( null != submissionDesign ) {

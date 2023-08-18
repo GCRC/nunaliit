@@ -21,6 +21,10 @@ public class UserDocument {
 		return json;
 	}
 
+	public String getId(){
+		return json.optString("_id",null);
+	}
+
 	public String getName(){
 		return json.optString("name",null);
 	}
