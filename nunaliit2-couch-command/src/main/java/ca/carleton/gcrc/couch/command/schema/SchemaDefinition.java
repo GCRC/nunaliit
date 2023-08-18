@@ -41,7 +41,12 @@ public class SchemaDefinition {
 				def.setAttributesPath(name);
 			}
 		}
-		
+
+		{
+			boolean emailOnCreate = jsonDef.optBoolean("emailOnCreate", false);
+			def.setEmailOnCreate(emailOnCreate);
+		}
+
 		// Attributes
 		{
 			JSONArray attributes = jsonDef.optJSONArray("attributes");
@@ -82,6 +87,7 @@ public class SchemaDefinition {
 	private String groupName;
 	private String schemaId;
 	private String schemaName;
+	private boolean emailOnCreate;
 	private String label;
 	private String attributesPath;
 	private List<SchemaAttribute> attributes = new Vector<SchemaAttribute>();
@@ -179,7 +185,14 @@ public class SchemaDefinition {
 		}
 	}
 	
-	
+	public void setEmailOnCreate(boolean emailOnCreate) {
+		this.emailOnCreate = emailOnCreate;
+	}
+
+	public boolean getEmailOnCreate() {
+		return emailOnCreate;
+	}
+
 	public void saveToDocsDir(File parentDir) throws Exception {
 		
 		// Create directory
