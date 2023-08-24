@@ -346,8 +346,6 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 					}
 				} catch (JSONException e) {
 					logger.debug(nunaliitSchema + " does not have a definition loaded");
-				} catch (Exception e) {
-					throw e;
 				}
 			}
 		}
