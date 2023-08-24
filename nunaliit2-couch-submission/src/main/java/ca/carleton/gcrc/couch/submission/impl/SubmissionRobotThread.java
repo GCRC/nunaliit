@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -329,18 +330,24 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			
 			this.mailNotifier.sendSubmissionWaitingForApprovalNotification(submissionDoc);
 		}
-		
-		if( null == currentDoc ) {
+
+		if (null == currentDoc) {
 			String nunaliitSchema = submittedDoc.optString("nunaliit_schema");
 			CouchDb couchDb = documentDbDesignDocument.getDatabase();
 			SchemaCache schemaCache = new SchemaCacheCouchDb(couchDb);
-			Document schemaDoc =  schemaCache.getSchema(nunaliitSchema);
-			if( null != schemaDoc ) {
+			Document schemaDoc = schemaCache.getSchema(nunaliitSchema);
+			if (null != schemaDoc) {
 				JSONObject schemaDocObj = schemaDoc.getJSONObject();
-				JSONObject definitionJson = schemaDocObj.getJSONObject("definition");
-				boolean emailOnCreate = definitionJson.optBoolean("emailOnCreate", false);
-				if( emailOnCreate ) {
-					sendDocumentCreatedEmail(submissionDoc, currentDoc);
+				try {
+					JSONObject definitionJson = schemaDocObj.getJSONObject("definition");
+					boolean emailOnCreate = definitionJson.optBoolean("emailOnCreate", false);
+					if (emailOnCreate) {
+						sendDocumentCreatedEmail(submissionDoc, currentDoc);
+					}
+				} catch (JSONException e) {
+					logger.debug(nunaliitSchema + " does not have a definition loaded");
+				} catch (Exception e) {
+					throw e;
 				}
 			}
 		}
