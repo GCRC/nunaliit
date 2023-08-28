@@ -132,18 +132,46 @@ public class MailDeliveryImpl implements MailDelivery {
 			{
 				List<MailRecipient> recipients = message.getToRecipients();
 				InternetAddress[] toAddresses = new InternetAddress[recipients.size()];
-				for(int loop=0; loop<toAddresses.length; ++loop) {
+				for (int loop = 0; loop < toAddresses.length; ++loop) {
 					MailRecipient recipient = recipients.get(loop);
-					if( null == recipient.getDisplayName() ) {
+					if (null == recipient.getDisplayName()) {
 						toAddresses[loop] = new InternetAddress(recipient.getAddress());
 					} else {
 						toAddresses[loop] = new InternetAddress(
-							recipient.getAddress()
-							,recipient.getDisplayName()
-						);
+								recipient.getAddress(), recipient.getDisplayName());
 					}
 				}
 				msg.setRecipients(Message.RecipientType.TO, toAddresses);
+			}
+
+			{
+				List<MailRecipient> ccRecipients = message.getCCRecipients();
+				InternetAddress[] toAddresses = new InternetAddress[ccRecipients.size()];
+				for (int loop = 0; loop < toAddresses.length; ++loop) {
+					MailRecipient recipient = ccRecipients.get(loop);
+					if (null == recipient.getDisplayName()) {
+						toAddresses[loop] = new InternetAddress(recipient.getAddress());
+					} else {
+						toAddresses[loop] = new InternetAddress(
+								recipient.getAddress(), recipient.getDisplayName());
+					}
+				}
+				msg.setRecipients(Message.RecipientType.CC, toAddresses);
+			}
+
+			{
+				List<MailRecipient> bccRecipients = message.getBCCRecipients();
+				InternetAddress[] toAddresses = new InternetAddress[bccRecipients.size()];
+				for (int loop = 0; loop < toAddresses.length; ++loop) {
+					MailRecipient recipient = bccRecipients.get(loop);
+					if (null == recipient.getDisplayName()) {
+						toAddresses[loop] = new InternetAddress(recipient.getAddress());
+					} else {
+						toAddresses[loop] = new InternetAddress(
+								recipient.getAddress(), recipient.getDisplayName());
+					}
+				}
+				msg.setRecipients(Message.RecipientType.BCC, toAddresses);
 			}
 			
 			// Subject
