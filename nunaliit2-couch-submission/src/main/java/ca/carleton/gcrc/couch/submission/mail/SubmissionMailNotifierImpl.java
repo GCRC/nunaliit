@@ -22,6 +22,7 @@ import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailMessage;
 import ca.carleton.gcrc.mail.MailRecipient;
 import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
+import java.util.HashSet;
 
 public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 
@@ -36,6 +37,7 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 	private String submissionPageLink = null;
 	private MailMessageGenerator approvalGenerator = new SubmissionApprovalGenerator();
 	private MailMessageGenerator rejectionGenerator = new SubmissionRejectionGenerator();
+	private MailMessageGenerator documentCreatedGenerator = new DocumentCreatedGenerator();
 
 	public SubmissionMailNotifierImpl(
 		String atlasName
@@ -89,6 +91,14 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 
 	public void setRejectionGenerator(MailMessageGenerator rejectionGenerator) {
 		this.rejectionGenerator = rejectionGenerator;
+	}
+	
+	public MailMessageGenerator getDocumentCreatedGenerator() {
+		return documentCreatedGenerator;
+	}
+
+	public void setDocumentCreatedGenerator(MailMessageGenerator documentCreatedGenerator) {
+		this.documentCreatedGenerator = documentCreatedGenerator;
 	}
 	
 	@Override
@@ -224,4 +234,91 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 		}
 	}
 
+	@Override
+	public void sendDocumentCreatedNotification(
+			JSONObject submissionDoc,
+			UserDocument currentUser) throws Exception {
+
+		List<UserDocument> users = new ArrayList<>();
+
+		if (null != currentUser) {
+			users.add(currentUser);
+		}
+
+		List<String> roles = new ArrayList<String>(2);
+		roles.add("vetter"); // global vetters
+		roles.add(atlasName + "_vetter"); // atlas vetters
+		roles.add("administrator"); // global administrator
+		roles.add(atlasName + "_administrator"); // atlas administrator
+
+		users.addAll(new ArrayList<>(userDesignDocument.getUsersWithRoles(roles)));
+
+		List<MailRecipient> recipients = new ArrayList<>();
+		List<MailRecipient> bccRecipients = new ArrayList<>();
+
+		// create a unique set to userIds, so as we don't send duplicate mail if the
+		// current user has admin, or vetter roles
+		Set<String> userIds = new HashSet<>();
+
+		for (UserDocument user : users) {
+			if (userIds.add(user.getId())) {
+				String display = user.getDisplayName();
+				if (user.getId() == currentUser.getId()) {
+					// To
+					for (String email : user.getEmails()) {
+						recipients.add(display == null ? new MailRecipient(email) : new MailRecipient(email, display));
+					}
+				} else {
+					// BCC everyone else
+					for (String email : user.getEmails()) {
+						bccRecipients
+								.add(display == null ? new MailRecipient(email) : new MailRecipient(email, display));
+					}
+				}
+			}
+		}
+
+		if (recipients.isEmpty() && bccRecipients.isEmpty()) {
+			logger.info("Document created notification not sent because there are no recipients");
+			return;
+		}
+
+		logger.info("Sending document created mail notification for "
+				+ submissionDoc.optString("_id", "<unknown>")
+				+ " to "
+				+ recipients
+				+ " and BCCing "
+				+ bccRecipients);
+
+		try {
+			MailMessage message = new MailMessage();
+			// From
+			message.setFromAddress(fromAddress);
+
+			// To
+			for (MailRecipient recipient : recipients) {
+				message.addToRecipient(recipient);
+			}
+
+			for (MailRecipient bcc : bccRecipients) {
+				message.addBCCRecipient(bcc);
+			}
+
+			JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+			JSONObject submittedDoc = submissionInfo.optJSONObject("submitted_doc");
+
+			// Generate message
+			Map<String, String> parameters = new HashMap<String, String>();
+			parameters.put("submissionDocId", submissionDoc.optString("_id", null));
+			parameters.put("schemaName", submittedDoc.optString("nunaliit_schema", null));
+			documentCreatedGenerator.generateMessage(message, parameters);
+
+			// Send message
+			mailDelivery.sendMessage(message);
+
+		} catch (Exception e) {
+			logger.error("Unable to send document created notification.", e);
+			throw new Exception("Unable to send document created notification.", e);
+		}
+	}
 }

@@ -7,7 +7,7 @@ import java.util.Map;
 import ca.carleton.gcrc.mail.MailMessage;
 import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
 
-class UserRegistrationGenerator implements MailMessageGenerator {
+public class UserRegistrationGenerator implements MailMessageGenerator {
 
 	public UserRegistrationGenerator(){
 

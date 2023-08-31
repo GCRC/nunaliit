@@ -33,6 +33,7 @@ import ca.carleton.gcrc.couch.user.error.TokenExpiredException;
 import ca.carleton.gcrc.couch.user.error.UserUpdatedException;
 import ca.carleton.gcrc.couch.user.mail.PasswordRecoveryGenerator;
 import ca.carleton.gcrc.couch.user.mail.PasswordReminderGenerator;
+import ca.carleton.gcrc.couch.user.mail.UserRegistrationGenerator;
 import ca.carleton.gcrc.couch.user.mail.UserCreationGenerator;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotificationImpl;
 import ca.carleton.gcrc.couch.utils.CouchDbTemplateMailMessageGenerator;
@@ -145,6 +146,15 @@ public class UserServlet extends HttpServlet {
 						template
 						);
 				userMailNotification.setPasswordReminderGenerator(couchTemplate);
+			}
+			{
+				MailMessageGenerator template = new UserRegistrationGenerator();
+				CouchDbTemplateMailMessageGenerator couchTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDb,
+						"org.nunaliit.email_template.user_registration",
+						template
+						);
+				userMailNotification.setUserRegistrationGenerator(couchTemplate);
 			}
 		}
 		
