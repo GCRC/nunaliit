@@ -394,10 +394,16 @@ class N2ModelSource extends Vector {
 					wkt = docInfo.simplifications[docInfo.simplifiedName];
 					docInfo.simplifiedInstalled = docInfo.simplifiedName;
 				}
-				var geometry = wktFormat.readGeometryFromText(wkt);
-				geometry.transform('EPSG:4326', _this.mapProjCode);
+				let geometry;
+				try {
+					geometry = wktFormat.readGeometryFromText(wkt);
+					geometry.transform('EPSG:4326', _this.mapProjCode);
+				} catch (e) {
+					$n2.log('Error parsing wkt for doc with id ' + docId);
+					continue;
+				}
+				
 				var feature = new Feature();
-
 				try {
 					feature.setGeometry(geometry);
 				}catch (err){
