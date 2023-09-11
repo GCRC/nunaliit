@@ -96,7 +96,7 @@ var AutoComplete = $n2.Class({
 			} else if( 'featureFilter' === key ){
 				this.options.featureClass = opts[key]
 					.filter(key => { return key in FeatureClass })
-					.map(fKey => { return FeatureClass[fKey]	})
+					.map(fKey => { return FeatureClass[fKey] })
 				if (!this.options.featureClass.length) this.options.featureClass = FeatureClass.PLACES
 			} else {
 				this.options[key] = opts[key];
