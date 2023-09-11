@@ -94,9 +94,10 @@ var AutoComplete = $n2.Class({
 			} else if( 'input' === key ){
 			} else if( 'autocomplete' === key ){
 			} else if( 'featureFilter' === key ){
-				this.options.featureClass = opts[key]?.map(fKey => {
-					if (fKey in FeatureClass) return FeatureClass[fKey]
-				}) || this.options.featureClass
+				this.options.featureClass = opts[key]
+					.filter(key => { return key in FeatureClass })
+					.map(fKey => { return FeatureClass[fKey]	})
+				if (!this.options.featureClass.length) this.options.featureClass = FeatureClass.PLACES
 			} else {
 				this.options[key] = opts[key];
 			};
@@ -311,9 +312,10 @@ var GeoNameService = $n2.Class({
 		};
 
 		if (opts.featureFilter) {
-			data.featureClass = opts.featureFilter.map(fKey => {
-				if (fKey in FeatureClass) return FeatureClass[fKey]
-			}) || opts.featureClass
+			data.featureClass = opts.featureFilter
+				.filter(key => { return key in FeatureClass })
+				.map(fKey => { return FeatureClass[fKey] })
+			if (!data.featureClass.length) data.featureClass = opts.featureClass
 		}
 	},
 	

@@ -349,6 +349,9 @@ var GazetteerProcess = $n2.Class({
 	initialize: function(geoNamesService_, featureFilter){
 		this.geoNamesService = geoNamesService_;
 		this.featureFilter = featureFilter
+		if (!Array.isArray(this.featureFilter) || !this.featureFilter.every(v => typeof v === "string")) {
+			$n2.reportErrorForced("featureFilter must be an array of strings")
+		}
 	},
 
 	initiateCapture: function(mapControl){
