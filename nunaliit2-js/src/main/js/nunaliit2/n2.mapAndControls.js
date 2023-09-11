@@ -343,11 +343,15 @@ function HandleWidgetDisplayRequests(m){
 var GazetteerProcess = $n2.Class({
 	
 	geoNamesService: null,
-	
+	featureFilter: null,
 	inputId: null,
 	
-	initialize: function(geoNamesService_){
+	initialize: function(geoNamesService_, featureFilter){
 		this.geoNamesService = geoNamesService_;
+		this.featureFilter = featureFilter
+		if (!Array.isArray(this.featureFilter) || !this.featureFilter.every(v => typeof v === "string")) {
+			$n2.reportErrorForced("featureFilter must be an array of strings")
+		}
 	},
 
 	initiateCapture: function(mapControl){
@@ -381,7 +385,8 @@ var GazetteerProcess = $n2.Class({
 		var $input = $('#'+this.inputId);
 		
 		this.geoNamesService.installAutoComplete({
-			input: $input
+			input: $input,
+			featureFilter: this.featureFilter
 		});
 
 		var request = {
@@ -434,6 +439,7 @@ var GazetteerProcess = $n2.Class({
 		
 		this.geoNamesService.getName({
 			name: request.name
+			,featureFilter: this.featureFilter
 			,featureClass: $n2.GeoNames.FeatureClass.PLACES
 			,maxRows: 25
 			,countryBias: countryBias
@@ -1734,7 +1740,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
     		 && this.options.directory
     		 && this.options.directory.geoNamesService ) {
     			var geoNamesService = this.options.directory.geoNamesService;
-    			var gazetteerProcess = new GazetteerProcess(geoNamesService);
+    			var gazetteerProcess = new GazetteerProcess(geoNamesService, this.options.gazetteerFeatureFilter);
     			var control = new OpenLayers.Control.NunaliitGazetteer({
     				activateListener: function(){
     					gazetteerProcess.initiateCapture(_this);
