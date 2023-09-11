@@ -1426,13 +1426,22 @@ class N2MapCanvas  {
 					});
 
 			} else {
-				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
+				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal);
 			}
-		} else if (sourceTypeInternal === VENDOR.STAMEN || sourceTypeInternal === VENDOR.STADIA) {
+		} else if (sourceTypeInternal === VENDOR.STAMEN) {
+			if (sourceOptionsInternal
+				&& sourceOptionsInternal.layerName) {
+				return new Stamen({
+					layer: sourceOptionsInternal.layerName
+				})
+			} else {
+				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal);
+			}
+		} else if (sourceTypeInternal === VENDOR.STADIA) {
 			if (sourceOptionsInternal && sourceOptionsInternal.layerName) {
 				return StadiaMaps(sourceOptionsInternal.layerName)
 			} else {
-				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
+				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal);
 			}
 		} else if (sourceTypeInternal === VENDOR.IMAGE) {
 
