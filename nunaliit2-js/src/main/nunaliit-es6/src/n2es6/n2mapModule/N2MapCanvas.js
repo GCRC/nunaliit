@@ -33,7 +33,7 @@ import mouseWheelZoom from 'ol/interaction/MouseWheelZoom.js';
 import {defaults as defaultsInteractionSet} from 'ol/interaction.js';
 
 import {default as DrawInteraction} from 'ol/interaction/Draw.js';
-import Stamen from 'ol/source/Stamen.js';
+import StadiaMaps from '../olSources/StadiaMaps.js';
 import OSM from 'ol/source/OSM';
 import XYZ from 'ol/source/XYZ';
 import BingMaps from 'ol/source/BingMaps';
@@ -66,6 +66,7 @@ const VENDOR =	{
 		OSM : 'osm',
 		XYZ: 'xyz',
 		STAMEN : 'stamen',
+		STADIA: 'stadia',
 		IMAGE : 'image',
 		COUCHDB : 'couchdb'
 };
@@ -1317,13 +1318,13 @@ class N2MapCanvas  {
 		var sourceOptionsInternal = layerDefinition.options;
 		var name = layerDefinition.name;
 		
-		if (sourceTypeInternal == VENDOR.GOOGLEMAP) {
+		if (sourceTypeInternal === VENDOR.GOOGLEMAP) {
 			$n2.log('Background of Google map is under construction');
 
-		} else if (sourceTypeInternal == VENDOR.BING) {
+		} else if (sourceTypeInternal === VENDOR.BING) {
 			return new BingMaps(sourceOptionsInternal);
 
-		} else if (sourceTypeInternal == VENDOR.WMS) {
+		} else if (sourceTypeInternal === VENDOR.WMS) {
 			if (sourceOptionsInternal
 				&& sourceOptionsInternal.url
 				&& sourceOptionsInternal.layers
@@ -1352,7 +1353,7 @@ class N2MapCanvas  {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
 
-		} else if (sourceTypeInternal == VENDOR.WMTS) {
+		} else if (sourceTypeInternal === VENDOR.WMTS) {
 			var options = sourceOptionsInternal;
 			if (options) {
 				var wmtsOpt = {
@@ -1396,7 +1397,7 @@ class N2MapCanvas  {
 				return null;
 			}
 
-		} else if ( sourceTypeInternal == VENDOR.OSM) {
+		} else if ( sourceTypeInternal === VENDOR.OSM) {
 
 			if (sourceOptionsInternal
 				&& sourceOptionsInternal.url ){
@@ -1408,7 +1409,7 @@ class N2MapCanvas  {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
 
-		} else if ( sourceTypeInternal == VENDOR.XYZ) {
+		} else if ( sourceTypeInternal === VENDOR.XYZ) {
 			if (sourceOptionsInternal
 				&& sourceOptionsInternal.url ){
 					const {
@@ -1427,19 +1428,15 @@ class N2MapCanvas  {
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
-
-		} else if (sourceTypeInternal == VENDOR.STAMEN) {
-			if (sourceOptionsInternal
-					&& sourceOptionsInternal.layerName) {
-				return new Stamen({
-					layer:	sourceOptionsInternal.layerName
-				});
+		} else if (sourceTypeInternal === VENDOR.STAMEN || sourceTypeInternal === VENDOR.STADIA) {
+			if (sourceOptionsInternal && sourceOptionsInternal.layerName) {
+				return StadiaMaps(sourceOptionsInternal.layerName)
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal );
 			}
-		} else if (sourceTypeInternal == VENDOR.IMAGE) {
+		} else if (sourceTypeInternal === VENDOR.IMAGE) {
 
-		} else if (sourceTypeInternal == VENDOR.COUCHDB) {
+		} else if (sourceTypeInternal === VENDOR.COUCHDB) {
 
 		} else {
 			$n2.reportError('Unrecognized type (' + layerDefinition.type + ')');
