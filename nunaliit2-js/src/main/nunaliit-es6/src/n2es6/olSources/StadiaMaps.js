@@ -96,6 +96,9 @@ const StadiaMaps = (layerName) => {
             maxZoom: 20
         })
     }
+    else {
+        $n2.reportErrorForced(`${layerName} is not an accepted layer name`)
+    }
 }
 
 export default StadiaMaps;
