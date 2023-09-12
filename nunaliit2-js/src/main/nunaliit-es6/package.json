@@ -6,13 +6,11 @@
   "dependencies": {
     "imports-loader": "^0.8.0",
     "json-loader": "^0.5.7",
-    "ol": "^6.7.0",
-    "ol-ext": "^3.2.6",
-    "ol-layerswitcher": "^3.8.3"
+    "ol": "^7.2.2",
+    "ol-ext": "^4.0.10",
+    "ol-layerswitcher": "^4.1.1"
   },
   "devDependencies": {
-    "jsdoc": "^3.6.10",
-    "jsdoc-plugin-typescript": "^2.0.6",
     "babel-core": "^6.26.3",
     "babel-polyfill": "^6.26.0",
     "babel-preset-env": "^1.7.0",
@@ -30,6 +28,8 @@
     "gulp-header": "^2.0.5",
     "gulp-minify": "^3.1.0",
     "gulp-watch": "^5.0.1",
+    "jsdoc": "^3.6.10",
+    "jsdoc-plugin-typescript": "^2.0.6",
     "live-server": "^1.2.0",
     "minimist": "^1.2.6",
     "npm-watch": "^0.11.0",
