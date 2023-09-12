@@ -18,7 +18,7 @@ import Map from 'ol/Map.js';
 import { default as VectorLayer } from 'ol/layer/Vector.js';
 import { default as LayerGroup } from 'ol/layer/Group.js';
 import { default as View } from 'ol/View.js';
-import { default as N2DonutCluster } from '../ol5support/N2DonutCluster.js';
+import { default as N2DonutCluster } from '../olNunaliitSupport/N2DonutCluster.js';
 
 import { extend, isEmpty, getTopLeft, getWidth } from 'ol/extent.js';
 import { transform, getTransform, transformExtent, get as getProjection } from 'ol/proj.js';
