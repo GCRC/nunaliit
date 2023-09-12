@@ -32,6 +32,7 @@ import mouseWheelZoom from 'ol/interaction/MouseWheelZoom.js';
 import { defaults as defaultsInteractionSet } from 'ol/interaction.js';
 
 import { default as DrawInteraction } from 'ol/interaction/Draw.js';
+import N2StadiaMapsFactory from './N2StadiaMapsFactory';
 import Stamen from 'ol/source/Stamen.js';
 import OSM from 'ol/source/OSM';
 import BingMaps from 'ol/source/BingMaps';
@@ -62,7 +63,8 @@ const VENDOR = {
 	WMS: 'wms',
 	WMTS: 'wmts',
 	OSM: 'osm',
-	STAMEN: 'stamen'
+	STAMEN: 'stamen',
+	STADIA: 'stadia'
 };
 
 const olStyleNames = {
@@ -1291,6 +1293,13 @@ class N2MapCanvas {
 				});
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal);
+			}
+		} else if (sourceTypeInternal === VENDOR.STADIA) {
+			if (sourceOptionsInternal
+				&& sourceOptionsInternal.layerName) {
+				return N2StadiaMapsFactory(sourceOptionsInternal.layerName)
+			} else {
+				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal)
 			}
 		} else {
 			$n2.reportError('Unrecognized type (' + layerDefinition.type + ')');
