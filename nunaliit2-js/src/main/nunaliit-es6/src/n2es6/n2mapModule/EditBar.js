@@ -3,25 +3,26 @@
 /**
 * @module n2es6/n2mapModule/EditBar
 */
-import {shiftKeyOnly as ol_events_condition_shiftKeyOnly} from 'ol/events/condition.js'
-import {click as ol_events_condition_click} from 'ol/events/condition.js'
-import ol_interaction_Draw from 'ol/interaction/Draw.js'
-import ol_geom_LineString from 'ol/geom/LineString.js'
-import ol_geom_Polygon from 'ol/geom/Polygon.js'
-import ol_interaction_Select from 'ol/interaction/Select.js'
+import {shiftKeyOnly as ol_events_condition_shiftKeyOnly} from 'ol/events/condition'
+import {click as ol_events_condition_click} from 'ol/events/condition'
+import ol_interaction_Draw from 'ol/interaction/Draw'
+import ol_geom_LineString from 'ol/geom/LineString'
+import ol_geom_Polygon from 'ol/geom/Polygon'
+import ol_interaction_Select from 'ol/interaction/Select'
+import {default as N2Select} from './N2Select.js';
 
-import ol_control_Bar from './Bar.js'
-import ol_control_Button from './Button.js'
-import ol_control_Toggle from './Toggle.js'
-import ol_control_TextButton from './TextButton.js'
-import ol_interaction_Delete from '../interaction/Delete.js'
-import ol_ext_element from '../util/element.js'
-import ol_interaction_Offset from '../interaction/Offset.js'
-import ol_interaction_Split from '../interaction/Split.js'
-import ol_interaction_Transform from '../interaction/Transform.js'
-import ol_interaction_ModifyFeature from '../interaction/ModifyFeature.js'
-import ol_interaction_DrawRegular from '../interaction/DrawRegular.js'
-import ol_interaction_DrawHole from '../interaction/DrawHole.js'
+import ol_control_Bar from 'ol-ext/control/Bar'
+import ol_control_Button from 'ol-ext/control/Button'
+import ol_control_Toggle from 'ol-ext/control/Toggle'
+import ol_control_TextButton from 'ol-ext/control/TextButton'
+import ol_interaction_Delete from 'ol-ext/interaction/Delete'
+import ol_ext_element from 'ol-ext/util/element'
+import ol_interaction_Offset from 'ol-ext/interaction/Offset'
+import ol_interaction_Split from 'ol-ext/interaction/Split'
+import ol_interaction_Transform from 'ol-ext/interaction/Transform'
+import ol_interaction_ModifyFeature from './ModifyFeature'
+import ol_interaction_DrawRegular from 'ol-ext/interaction/DrawRegular'
+import ol_interaction_DrawHole from 'ol-ext/interaction/DrawHole'
 
 /** Control bar for editing in a layer
  * @constructor
