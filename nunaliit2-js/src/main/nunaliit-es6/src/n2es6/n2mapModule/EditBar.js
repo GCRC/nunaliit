@@ -20,7 +20,7 @@ import ol_ext_element from 'ol-ext/util/element'
 import ol_interaction_Offset from 'ol-ext/interaction/Offset'
 import ol_interaction_Split from 'ol-ext/interaction/Split'
 import ol_interaction_Transform from 'ol-ext/interaction/Transform'
-import ol_interaction_ModifyFeature  from 'ol-ext/interaction/ModifyFeature'
+import ol_interaction_ModifyFeature from './ModifyFeature'
 import ol_interaction_DrawRegular from 'ol-ext/interaction/DrawRegular'
 import ol_interaction_DrawHole from 'ol-ext/interaction/DrawHole'
 
@@ -154,9 +154,7 @@ var ol_control_EditBar = class olcontrolEditBar extends ol_control_Bar {
 
     // Select button
     if (options.interactions.Select !== false) {
-		// Nunaliit customization
-      if (options.interactions.Select instanceof ol_interaction_Select
-		|| options.interactions.Select instanceof N2Select) {
+      if (options.interactions.Select instanceof ol_interaction_Select) {
         this._interactions.Select = options.interactions.Select
       } else {
         this._interactions.Select = new ol_interaction_Select({

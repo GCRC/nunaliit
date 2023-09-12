@@ -1,5 +1,5 @@
 /**
-* @module n2es6/olNunaliitSupport/N2DonutCluster
+* @module n2es6/ol5support/N2DonutCluster
 */
 
 import {getUid} from 'ol/util.js';
