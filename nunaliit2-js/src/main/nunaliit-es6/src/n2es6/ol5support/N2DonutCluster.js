@@ -3,6 +3,7 @@
 */
 
 import {getUid} from 'ol/util.js';
+import {assign} from 'ol/obj.js';
 import {listen, unlistenByKey} from 'ol/events.js';
 import EventType from 'ol/events/EventType.js';
 import VectorSource from 'ol/source/Vector.js';
@@ -25,7 +26,7 @@ class N2DonutCluster extends VectorSource {
 	* @param {Options} options CLuster options
 	*/
 	constructor(options) {
-		options = Object.assign({
+		options = assign({
 			distance: 20,
 			minimumPolygonPixelSize : 20,
 			minimumLinePixelSize : 20,
