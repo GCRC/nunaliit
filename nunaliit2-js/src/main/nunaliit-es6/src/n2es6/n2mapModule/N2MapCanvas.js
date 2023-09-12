@@ -41,10 +41,9 @@ import LayerSwitcher from 'ol-layerswitcher';
 import 'ol-layerswitcher/src/ol-layerswitcher.css';
 
 import 'ol-ext/dist/ol-ext.css';
-import EditBar from 'ol-ext/control/EditBar'
+import EditBar from './EditBar';
 import Popup from 'ol-ext/overlay/Popup';
 import Swipe from 'ol-ext/control/Swipe';
-import { NunaliitEditBarOverrides } from '../olNunaliitSupport/N2OpenLayersExtOverrides.js';
 
 import { defaults as Defaults } from 'ol/control';
 
@@ -861,7 +860,6 @@ class N2MapCanvas {
 			},
 			source: editLayer.getSource()
 		});
-		NunaliitEditBarOverrides(this.editbarControl)
 
 		customMap.addControl(this.editbarControl);
 		this.editbarControl.setVisible(false);
