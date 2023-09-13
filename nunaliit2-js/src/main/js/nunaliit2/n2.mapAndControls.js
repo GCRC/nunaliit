@@ -33,9 +33,41 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2){
 "use strict";
 
-	// Localization
-	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
-	var DH = 'n2.mapAndControls';
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+var DH = 'n2.mapAndControls';
+
+const stadiaMapsUrlGenerator = (layerName) => {
+	const res = {
+		url: "",
+		options: { projection: new OpenLayers.Projection('EPSG:900913') }
+	}
+	if (layerName === "stamen_watercolor") {
+		res.url = "https://tiles.stadiamaps.com/tiles/stamen_watercolor/${z}/${x}/${y}.jpg"
+		res.options.numZoomLevels = 16
+	}
+	else {
+		res.url = "https://tiles.stadiamaps.com/tiles/" + layerName + "/${z}/${x}/${y}@2x.png"
+		res.options.numZoomLevels = 20
+	}
+
+	if (layerName.includes("stamen")) {
+		res.options.attribution = [
+			'&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a>',
+			'&copy; <a href="https://stamen.com/" target="_blank">Stamen Design</a>',
+			'&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>',
+			'&copy; <a href="https://www.openstreetmap.org/about/" target="_blank">OpenStreetMap contributors</a>'
+		].join(" ")
+	}
+	else {
+		res.options.attribution = [
+			'&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a>',
+			'&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>',
+			'&copy; <a href="https://www.openstreetmap.org/about/" target="_blank">OpenStreetMap contributors</a>'
+		].join(" ")
+	}
+	return res
+}
 
 // **************************************************
 // Generic bridge between document model and map
@@ -2774,6 +2806,40 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			};
 			
 			
+		} else if( 'stadia' === layerDefinition.type ){ 
+			var layerName = null
+			var layerOptions = {
+				isBaseLayer: isBaseLayer
+			}
+			if (typeof (layerDefinition.visibility) === 'boolean') {
+				layerOptions.visibility = layerDefinition.visibility;
+			}
+			var options = layerDefinition.options;
+			if (options) {
+				for (var optionKey in options) {
+					var optionValue = options[optionKey];
+					if (optionKey === 'layerName') {
+						layerName = optionValue;
+					}
+					else {
+						layerOptions[optionKey] = optionValue;
+					}
+				}
+			}
+			if (!layerName) {
+				$n2.reportError('Option layerName must be specified for a Stadia background.');
+			}
+			else {
+				const {
+					url,
+					options
+				} = stadiaMapsUrlGenerator(layerName)
+				var l = new OpenLayers.Layer.XYZ(name, url, options);
+				if (name) {
+					l.name = name;
+				}
+				return l;
+			}
 		} else {
 			$n2.reportError('Unknown layer type: '+layerDefinition.type);
 		};
