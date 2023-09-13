@@ -37,7 +37,7 @@ POSSIBILITY OF SUCH DAMAGE.
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.mapAndControls';
 
-const stadiaMapsUrlGenerator = (layerName) => {
+const stadiaMapsOptionsGenerator = (layerName) => {
 	const res = {
 		url: "",
 		options: { projection: new OpenLayers.Projection('EPSG:900913') }
@@ -2833,7 +2833,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 				const {
 					url,
 					options
-				} = stadiaMapsUrlGenerator(layerName)
+				} = stadiaMapsOptionsGenerator(layerName)
 				var l = new OpenLayers.Layer.XYZ(name, url, options);
 				if (name) {
 					l.name = name;
