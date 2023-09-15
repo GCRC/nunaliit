@@ -83,8 +83,8 @@ public class JSONLibTest extends TestCase {
 			JSONObject jsonObj = (JSONObject)obj;
 			if( JSONSupport.containsKey(jsonObj, "name") ) {
 				// OK
-				String name = jsonObj.getString("name");
-				if( null == name ) {
+				boolean nameValueIsNull = jsonObj.isNull("name");
+				if( nameValueIsNull ) {
 					// OK
 				} else {
 					fail("Expected a null string");
