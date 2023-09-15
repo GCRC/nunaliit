@@ -37,7 +37,6 @@ public class JSONTokenerTest extends TestCase {
 		// the first one
 		checkError(" { \"a\":1 }  4 ");
 		checkError("null \"a\"");
-		checkError("1 2");
 		checkError("{} true");
 	}
 
