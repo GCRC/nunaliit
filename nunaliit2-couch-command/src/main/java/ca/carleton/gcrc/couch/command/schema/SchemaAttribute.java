@@ -1179,27 +1179,21 @@ public class SchemaAttribute {
 				}
 			} else if( "triple".equals(type) ){
 				if( null != id ){
-					// pw.println("\t\t\t{{#"+schemaStructure+"}}");
-					// pw.println("\t\t\t\t{{#if "+id+"}}");
-
-					// pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
-
-					// pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					// pw.println("\t\t\t\t\t<div class=\"value\">");
-					// pw.println("\t\t\t\t\t\t{{#"+id+"}}");
-					// pw.println("\t\t\t\t\t\t\t{{#tags}}");
-					// pw.println("\t\t\t\t\t\t\t\t<div class=\"n2_tag_element\" title=\"{{.}}\">");
-					// pw.println("\t\t\t\t\t\t\t\t\t{{.}}");
-					// pw.println("\t\t\t\t\t\t\t\t</div>");
-					// pw.println("\t\t\t\t\t\t\t{{/tags}}");
-					// pw.println("\t\t\t\t\t\t{{/"+id+"}}");
-					// pw.println("\t\t\t\t\t</div>");
-					// pw.println("\t\t\t\t\t<div class=\"end\"></div>");
-
-					// pw.println("\t\t\t\t</div>");
-
-					// pw.println("\t\t\t\t{{/if}}");
-					// pw.println("\t\t\t{{/"+schemaStructure+"}}");
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t\t<div class=\"n2_triple_element\">");
+					tripleSubject.printTripleDisplay(pw, id, "subject");
+					triplePredicate.printTripleDisplay(pw, id, "predicate");
+					tripleObject.printTripleDisplay(pw, id, "object");
+					pw.println("\t\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
 			} else if( "createdBy".equals(type) ){
 				if( null == label ){
@@ -1247,6 +1241,78 @@ public class SchemaAttribute {
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
+			}
+		}
+	}
+
+	public void printTripleDisplay(PrintWriter pw, String key, String field) throws Exception {
+		String label = this.label;
+		String labelLocalizeClass = " n2s_localize";
+		if( null == label ){
+			label = id;
+			labelLocalizeClass = "";
+		}
+
+		if( "string".equals(type)
+			|| "localized".equals(type) 
+			|| "numeric".equals(type) ){
+			if( null != id ){
+			
+				pw.println("\t\t\t\t\t\t\t\t{{#if "+key+"."+field+"."+id+"}}");
+				pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+
+				String fixUrlClass = "";
+				String fixMaxHeight = "";
+				if( urlsToLinks ){
+					fixUrlClass += " n2s_convertTextUrlToLink";
+				}
+				if( wikiTransform ){
+					fixUrlClass += " n2s_wikiTransform";
+				} else if( isTextarea() ){
+					fixUrlClass += " n2s_preserveSpaces";
+					
+					if( null != maxHeight && maxHeight.intValue() > 0 ){
+						fixUrlClass += " n2s_installMaxHeight";
+						fixMaxHeight = " _maxheight=\"" + maxHeight.intValue() + "\"";
+					}
+				}
+				if( "string".equals(type) ){
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+key+"."+field+"."+id+"}}</div>");
+				} else if( "localized".equals(type) ){
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+key+"."+field+"."+id+"{{/:localize}}</div>");
+				}
+				
+				pw.println("\t\t\t\t\t\t\t\t{{/if}}");
+				
+			}
+		} else if( "selection".equals(type) ){
+			if( null != id ){
+				pw.println("\t\t\t\t\t\t\t\t{{#if "+key+"."+field+"."+id+"}}");
+				pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+key+"."+field+"."+id+"}}\">");
+	
+				for(SelectionOption option : options){
+					String value = option.getValue();
+					String optLabel = option.getLabel();
+					if( null == optLabel ){
+						optLabel = value;
+					}
+					
+					pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
+				}
+				pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+key+"."+field+"."+id+"}}</span>");
+				pw.println("\t\t\t\t\t\t\t\t\t</div>");
+				pw.println("\t\t\t\t\t\t\t\t{{/if}}");
+			}
+		} else if( "reference".equals(type) ){
+			if( null != id ){
+				pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				String docRef = key+"."+field+"."+id+".doc";
+				if( "thumbnail".equals(referenceType) ){
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{"+key+"."+field+"."+id+".doc}}\"></div>");
+				} else {
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{"+key+"."+field+"."+id+".doc}}</a></div>");
+				}
 			}
 		}
 	}
