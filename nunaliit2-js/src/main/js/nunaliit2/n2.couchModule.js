@@ -1125,6 +1125,7 @@ var ModuleDisplay = $n2.Class({
 				suppress: false
 				,initiallyOpened: false
 			}
+			,gazetteerFeatureFilter: ['PLACES']
 		};
 
 		// Layer selector
@@ -1300,6 +1301,10 @@ var ModuleDisplay = $n2.Class({
 				mapOptions.overlays.push( layerDefinition );
 			};
 		};
+
+		if (mapInfo && mapInfo.gazetteerFeatureFilter) {
+			mapOptions.gazetteerFeatureFilter = mapInfo.gazetteerFeatureFilter
+		}
 
 		if( mapInfo
 			&& mapInfo.coordinates

@@ -46,6 +46,7 @@ var FeatureClass = {
 	,SPOT: 'S' // spot, building, farm
 	,MOUNTAINS: 'T' // mountain, hill, rock
 	,UNDERSEA: 'U' // undersea
+	,FOREST: 'V' //  forest,heath,...
 };
 
 //===================================
@@ -61,12 +62,14 @@ var AutoComplete = $n2.Class({
 			service: null
 			,input: null
 			,autocomplete: null
+			,featureFilter: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.service = opts.service;
-		
+		this.featureFilter = opts.featureFilter
+
 		var $input = null;
 		if( typeof(opts.input) === 'string' ) {
 			$input = $('#'+opts.input);
@@ -90,6 +93,11 @@ var AutoComplete = $n2.Class({
 			if( 'service' === key ){
 			} else if( 'input' === key ){
 			} else if( 'autocomplete' === key ){
+			} else if( 'featureFilter' === key ){
+				this.options.featureClass = opts[key]
+					.filter(key => { return key in FeatureClass })
+					.map(fKey => { return FeatureClass[fKey] })
+				if (!this.options.featureClass.length) this.options.featureClass = FeatureClass.PLACES
 			} else {
 				this.options[key] = opts[key];
 			};
@@ -98,7 +106,8 @@ var AutoComplete = $n2.Class({
 		// Install autocomplete
 		var autocompleteOptions = $n2.extend(
 			{
-				minLength: 3
+				minLength: 3,
+				delay: 500
 			}
 			,opts.autocomplete
 			,{
@@ -301,6 +310,13 @@ var GeoNameService = $n2.Class({
 		if( opts.style ){
 			data.style = opts.style;
 		};
+
+		if (opts.featureFilter) {
+			data.featureClass = opts.featureFilter
+				.filter(key => { return key in FeatureClass })
+				.map(fKey => { return FeatureClass[fKey] })
+			if (!data.featureClass.length) data.featureClass = opts.featureClass
+		}
 	},
 	
 	_getGeoNames: function(method, data, success, error) {
