@@ -186,6 +186,31 @@ public class SchemaAttribute {
 			}
 		}
 		
+		// triple
+		{
+			JSONObject tripleSubject = jsonAttr.optJSONObject("subject");
+			if( null != tripleSubject ){
+				SchemaAttribute subject = SchemaAttribute.fromJson(tripleSubject);
+				attribute.setTripleSubject(subject);
+			}
+		}
+
+		{
+			JSONObject triplePredicate = jsonAttr.optJSONObject("predicate");
+			if( null != triplePredicate ){
+				SchemaAttribute predicate = SchemaAttribute.fromJson(triplePredicate);
+				attribute.setTriplePredicate(predicate);
+			}
+		}
+
+		{
+			JSONObject tripleObject = jsonAttr.optJSONObject("object");
+			if( null != tripleObject ){
+				SchemaAttribute object = SchemaAttribute.fromJson(tripleObject);
+				attribute.setTripleObject(object);
+			}
+		}
+
 		return attribute;
 	}
 
@@ -211,10 +236,17 @@ public class SchemaAttribute {
 	private Integer maxVideoRecordingLengthSeconds = null;
 	private String recordVideoSize = null;
 	private String placeholder = null;
+	private SchemaAttribute tripleSubject = null;
+	private SchemaAttribute triplePredicate = null;
+	private SchemaAttribute tripleObject = null;
 
 	public SchemaAttribute(String type){
 		this.type = type;
 	}
+	
+	public String getType() {
+        return this.type;
+    }
 	
 	public String getId() {
 		return id;
@@ -391,6 +423,30 @@ public class SchemaAttribute {
 
 	public void setRecordVideoSize(String recordVideoSize) { this.recordVideoSize = recordVideoSize; }
 
+	public SchemaAttribute getTripleSubject() {
+		return this.tripleSubject;
+	}
+
+	public void setTripleSubject(SchemaAttribute subject) {
+		this.tripleSubject = subject;
+	}
+
+	public SchemaAttribute getTriplePredicate() {
+		return this.triplePredicate;
+	}
+
+	public void setTriplePredicate(SchemaAttribute predicate) {
+		this.triplePredicate = predicate;
+	}
+
+	public SchemaAttribute getTripleObject() {
+		return this.tripleObject;
+	}
+
+	public void setTripleObject(SchemaAttribute object) {
+		this.tripleObject = object;
+	}
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -552,9 +608,44 @@ public class SchemaAttribute {
 				throw new Exception("'id' should not be specified for attributes of type 'createdTime'");
 			}
 
+		} else if ( "triple".equals(type) ) {
+			if (id == null) {
+				throw new Exception("'id' is required for attribute of type 'triple'");
+			}
+
+			JSONObject triple = new JSONObject();
+			triple.put("nunaliit_type", "triple");
+
+			putTripleAttribute(triple, "subject", tripleSubject);
+			putTripleAttribute(triple, "predicate", triplePredicate);
+			putTripleAttribute(triple, "object", tripleObject);
+
+			schemaDoc.put(id, triple);
 		} else {
 			throw new Exception("Unable to include type "+type+" in create");
 		}
+	}
+
+	// Helper function to add subject, predicate, or object attributes
+	private void putTripleAttribute(JSONObject triple, String attributeName, SchemaAttribute attribute) throws Exception{
+		String attributeId = attribute.getId();
+		String attributeType = attribute.getType();
+
+		if (attributeId == null) {
+			throw new Exception("'id' is required for attribute of type "+ attributeName);
+		}
+
+		JSONObject attributeObject = new JSONObject();
+		attributeObject.put(attributeId, "");
+
+		if ("selection".equals(attributeType)) {
+			SelectionOption defOption = attribute.getDefaultOption();
+			if (defOption != null) {
+				attributeObject.put(attributeId, defOption.getValue());
+			}
+		}
+
+		triple.put(attributeName, attributeObject);
 	}
 
 	public boolean printBrief(PrintWriter pw, String schemaStructure, String schemaClass, boolean isFirst) throws Exception {
@@ -1086,6 +1177,30 @@ public class SchemaAttribute {
 					pw.println("\t\t\t\t{{/if}}");
 					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
+			} else if( "triple".equals(type) ){
+				if( null != id ){
+					// pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					// pw.println("\t\t\t\t{{#if "+id+"}}");
+
+					// pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
+
+					// pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					// pw.println("\t\t\t\t\t<div class=\"value\">");
+					// pw.println("\t\t\t\t\t\t{{#"+id+"}}");
+					// pw.println("\t\t\t\t\t\t\t{{#tags}}");
+					// pw.println("\t\t\t\t\t\t\t\t<div class=\"n2_tag_element\" title=\"{{.}}\">");
+					// pw.println("\t\t\t\t\t\t\t\t\t{{.}}");
+					// pw.println("\t\t\t\t\t\t\t\t</div>");
+					// pw.println("\t\t\t\t\t\t\t{{/tags}}");
+					// pw.println("\t\t\t\t\t\t{{/"+id+"}}");
+					// pw.println("\t\t\t\t\t</div>");
+					// pw.println("\t\t\t\t\t<div class=\"end\"></div>");
+
+					// pw.println("\t\t\t\t</div>");
+
+					// pw.println("\t\t\t\t{{/if}}");
+					// pw.println("\t\t\t{{/"+schemaStructure+"}}");
+				}
 			} else if( "createdBy".equals(type) ){
 				if( null == label ){
 					label = "Created By";
@@ -1394,6 +1509,22 @@ public class SchemaAttribute {
 				
 				
 				pw.println("\t\t\t{{/"+schemaStructure+"}}");
+			} else if( "triple".equals(type) ){
+				if( null != id ){
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t<div class=\"n2_triple_element\">");
+					tripleSubject.printTripleFields(pw, id, "subject");
+					triplePredicate.printTripleFields(pw, id, "predicate");
+					tripleObject.printTripleFields(pw, id, "object");
+					pw.println("\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t</div>");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
+				}
 			} else if( "createdBy".equals(type) ){
 				// nothing to do
 
@@ -1404,6 +1535,66 @@ public class SchemaAttribute {
 				throw new Exception("Unable to include type "+type+" in form");
 			}
 		}
+	}
+	
+	private void printTripleFields(PrintWriter pw, String key, String field)  throws Exception{
+		String labelLocalizeClass = " n2s_localize";
+        String label = this.label;
+		if( null == label ){
+			label = id;
+			labelLocalizeClass = "";
+		}
+
+        if( false == excludedFromForm ){
+            if( "string".equals(type)
+                || "localized".equals(type)
+                || "reference".equals(type)
+				|| "numeric".equals(type)) {
+
+                if( null != key ){
+                    String fieldType = "";
+                    if( "localized".equals(type) ){
+                        fieldType = ",localized";
+                    } else if( "reference".equals(type) ){
+                        fieldType = ",reference";
+                    } else if( "numeric".equals(type) ){
+						fieldType = ",numeric";
+					}
+
+                    if( isTextarea() ){
+                        fieldType += ",textarea";
+                    }
+
+                    if( null != placeholder ){
+                        fieldType += ",placeholder="+encodeFieldParameter(placeholder);
+                    }
+
+                    pw.println("\t\t\t\t\t\t\t<div class="+field+">");
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+                    pw.println("\t\t\t\t\t\t\t\t{{#:field}}"+key+"."+field+"."+id+","+fieldType+"{{/:field}}");
+                    pw.println("\t\t\t\t\t\t\t</div>");
+                }
+
+            } else if( "selection".equals(type) ){
+                pw.println("\t\t\t\t\t\t\t<div class="+field+">");
+				pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+                pw.println("\t\t\t\t\t\t\t\t<select class=\"{{#:input}}"+key+"."+field+"."+id+"{{/:input}}\">");
+
+                for(SelectionOption option : options){
+                    pw.print("\t\t\t\t\t\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
+                    String optLabel = option.getLabel();
+                    if( null == optLabel ){
+                        optLabel = option.getValue();
+                    }
+                    pw.print(optLabel);
+                    pw.println("</option>");
+                }
+                pw.println("\t\t\t\t\t\t\t\t</select>");
+                pw.println("\t\t\t\t\t\t\t</div>");
+            } else {
+                throw new Exception("Unable to include type "+type+" in form");
+            }
+        }
 	}
 
 	public void addExportField(JSONArray exportArr, String schemaName) throws Exception {
