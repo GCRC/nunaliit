@@ -188,7 +188,23 @@ public class SchemaAttribute {
 		
 		// triple
 		{
-			JSONObject tripleSubject = jsonAttr.optJSONObject("subject");
+			JSONObject jsonOptions = jsonAttr.optJSONObject("options");
+			if( null != jsonOptions ){
+				JSONObject elementOptiona = jsonOptions.getJSONObject("elementOptions");
+				SchemaAttribute.SetTripleAttributes(attribute, elementOptiona);
+			}
+		}
+		
+		if( "triple".equals(type) ) {
+			SchemaAttribute.SetTripleAttributes(attribute, jsonAttr);
+		}
+		
+		return attribute;
+	}
+	
+	private static void SetTripleAttributes(SchemaAttribute attribute, JSONObject tripleAttr) throws Exception{
+		{
+			JSONObject tripleSubject = tripleAttr.optJSONObject("subject");
 			if( null != tripleSubject ){
 				SchemaAttribute subject = SchemaAttribute.fromJson(tripleSubject);
 				attribute.setTripleSubject(subject);
@@ -196,7 +212,7 @@ public class SchemaAttribute {
 		}
 
 		{
-			JSONObject triplePredicate = jsonAttr.optJSONObject("predicate");
+			JSONObject triplePredicate = tripleAttr.optJSONObject("predicate");
 			if( null != triplePredicate ){
 				SchemaAttribute predicate = SchemaAttribute.fromJson(triplePredicate);
 				attribute.setTriplePredicate(predicate);
@@ -204,14 +220,12 @@ public class SchemaAttribute {
 		}
 
 		{
-			JSONObject tripleObject = jsonAttr.optJSONObject("object");
+			JSONObject tripleObject = tripleAttr.optJSONObject("object");
 			if( null != tripleObject ){
 				SchemaAttribute object = SchemaAttribute.fromJson(tripleObject);
 				attribute.setTripleObject(object);
 			}
 		}
-
-		return attribute;
 	}
 
 	private String type;
@@ -1307,7 +1321,6 @@ public class SchemaAttribute {
 		} else if( "reference".equals(type) ){
 			if( null != id ){
 				pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				String docRef = key+"."+field+"."+id+".doc";
 				if( "thumbnail".equals(referenceType) ){
 					pw.println("\t\t\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{"+key+"."+field+"."+id+".doc}}\"></div>");
 				} else {
@@ -1436,6 +1449,9 @@ public class SchemaAttribute {
 					} else if( "custom".equals(elementType) ){
 						fieldType = ",custom="+customType;
 						arrayType = " \"custom\"";
+					} else if( "triple".equals(elementType) ){
+						fieldType = ",triple";
+						arrayType = " \"triple\"";
 					}
 					
 					if( isTextarea() ){
@@ -1455,13 +1471,18 @@ public class SchemaAttribute {
 						pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 						pw.println("\t\t\t\t\t<div class=\"value\">");
 						pw.println("\t\t\t\t\t\t{{#:array "+id+arrayType+"}}");
-						pw.println("\t\t\t\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
+						if( "triple".equals(elementType)) {
+							tripleSubject.printTripleFields(pw, null, "subject");
+							triplePredicate.printTripleFields(pw, null, "predicate");
+							tripleObject.printTripleFields(pw, null, "object");
+						} else {
+							pw.println("\t\t\t\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
+						}
 						pw.println("\t\t\t\t\t\t{{/:array}}");
 						pw.println("\t\t\t\t\t</div>");
 						pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 						
 						pw.println("\t\t\t\t</div>");
-						
 						
 						pw.println("\t\t\t{{/"+schemaStructure+"}}");
 					}
@@ -1604,47 +1625,42 @@ public class SchemaAttribute {
 	}
 	
 	private void printTripleFields(PrintWriter pw, String key, String field)  throws Exception{
-		String labelLocalizeClass = " n2s_localize";
-        String label = this.label;
-		if( null == label ){
-			label = id;
-			labelLocalizeClass = "";
-		}
-
+		String labelLocalizeClass = (this.label != null) ? " n2s_localize" : "";
+        String label = (this.label != null) ? this.label : id;
+        String fieldKey = (key != null) ? key + "." + field + "." + id : field + "." + id;
+		
         if( false == excludedFromForm ){
             if( "string".equals(type)
                 || "localized".equals(type)
                 || "reference".equals(type)
 				|| "numeric".equals(type)) {
 
-                if( null != key ){
-                    String fieldType = "";
-                    if( "localized".equals(type) ){
-                        fieldType = ",localized";
-                    } else if( "reference".equals(type) ){
-                        fieldType = ",reference";
-                    } else if( "numeric".equals(type) ){
-						fieldType = ",numeric";
-					}
+				String fieldType = "";
+				if( "localized".equals(type) ){
+					fieldType = ",localized";
+				} else if( "reference".equals(type) ){
+					fieldType = ",reference";
+				} else if( "numeric".equals(type) ){
+					fieldType = ",numeric";
+				}
 
-                    if( isTextarea() ){
-                        fieldType += ",textarea";
-                    }
+				if( isTextarea() ){
+					fieldType += ",textarea";
+				}
 
-                    if( null != placeholder ){
-                        fieldType += ",placeholder="+encodeFieldParameter(placeholder);
-                    }
+				if( null != placeholder ){
+					fieldType += ",placeholder="+encodeFieldParameter(placeholder);
+				}
 
-                    pw.println("\t\t\t\t\t\t\t<div class="+field+">");
-					pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-                    pw.println("\t\t\t\t\t\t\t\t{{#:field}}"+key+"."+field+"."+id+","+fieldType+"{{/:field}}");
-                    pw.println("\t\t\t\t\t\t\t</div>");
-                }
-
+				pw.println("\t\t\t\t\t\t\t<div class=\""+field+"\">");
+                pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+                pw.println("\t\t\t\t\t\t\t\t{{#:field}}"+fieldKey+fieldType+"{{/:field}}");
+                pw.println("\t\t\t\t\t\t\t</div>");
+                
             } else if( "selection".equals(type) ){
-                pw.println("\t\t\t\t\t\t\t<div class="+field+">");
+                pw.println("\t\t\t\t\t\t\t<div class=\""+field+"\">");
 				pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-                pw.println("\t\t\t\t\t\t\t\t<select class=\"{{#:input}}"+key+"."+field+"."+id+"{{/:input}}\">");
+                pw.println("\t\t\t\t\t\t\t\t<select class=\"{{#:input}}"+fieldKey+"{{/:input}}\">");
 
                 for(SelectionOption option : options){
                     pw.print("\t\t\t\t\t\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
