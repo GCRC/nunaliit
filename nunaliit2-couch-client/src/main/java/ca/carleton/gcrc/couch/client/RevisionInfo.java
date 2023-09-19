@@ -53,8 +53,8 @@ public class RevisionInfo {
 			JSONArray revs_info = doc.getJSONArray("_revs_info");
 			for(int i=0,e=revs_info.length(); i<e; ++i){
 				JSONObject rev_info = revs_info.getJSONObject(i);
-				String rev = rev_info.getString("rev");
-				Status status = parseStatusString( rev_info.getString("status") );
+				String rev = rev_info.optString("rev", null);
+				Status status = parseStatusString( rev_info.optString("status", null) );
 				
 				if( false == revOrder.contains(rev) ) {
 					revOrder.add(rev);

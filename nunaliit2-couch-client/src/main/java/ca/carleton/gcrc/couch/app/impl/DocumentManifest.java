@@ -201,7 +201,7 @@ public class DocumentManifest {
 		// next object update
 		int nextRevision = 1; // creation
 		if( null != previousDocument ) {
-			String revString = previousDocument.getString("_rev");
+			String revString = previousDocument.optString("_rev", null);
 			if( null == revString ) {
 				throw new Exception("Previous document offered to compute a manifest does not contain a '_rev' attribute.");
 			}
