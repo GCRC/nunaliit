@@ -29,7 +29,7 @@ public class DocumentRetrievalSchema implements DocumentRetrieval {
 		
 		Set<String> ids = new HashSet<String>();
 		for(JSONObject row : results.getRows()){
-			String docId = row.optString("id");
+			String docId = row.optString("id", null);
 			if( null != docId ) {
 				ids.add(docId);
 			}

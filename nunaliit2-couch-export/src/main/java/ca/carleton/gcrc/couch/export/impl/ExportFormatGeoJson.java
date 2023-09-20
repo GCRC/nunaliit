@@ -86,7 +86,7 @@ public class ExportFormatGeoJson implements ExportFormat {
 
 		JSONObject jsonDoc = nunaliitDoc.getJSONObject();
 		
-		String schemaName = jsonDoc.optString("nunaliit_schema");
+		String schemaName = jsonDoc.optString("nunaliit_schema", null);
 		if( null != schemaName ) {
 			NunaliitGeometry docGeometry = nunaliitDoc.getOriginalGometry();
 			SchemaExportInfo exportInfo = schemaCache.getExportInfo(schemaName);
@@ -103,7 +103,7 @@ public class ExportFormatGeoJson implements ExportFormat {
 				jsonWriter.key("properties");
 				jsonWriter.object();
 				
-				String rev = jsonDoc.optString("_rev");
+				String rev = jsonDoc.optString("_rev", null);
 				if( null != rev ){
 					jsonWriter.key("_rev");
 					jsonWriter.value(rev);

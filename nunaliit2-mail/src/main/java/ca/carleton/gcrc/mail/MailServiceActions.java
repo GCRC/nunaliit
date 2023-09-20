@@ -83,8 +83,8 @@ public class MailServiceActions {
 					JSONArray contactArr = new JSONArray(contactInfo);
 					for(int i=0,e=contactArr.length(); i<e; ++i){
 						JSONObject info = contactArr.getJSONObject(i);
-						String name = info.optString("name");
-						String value = info.optString("value");
+						String name = info.optString("name", null);
+						String value = info.optString("value", null);
 						
 						if( null != name && null != value ){
 							parameters.put(name, value);

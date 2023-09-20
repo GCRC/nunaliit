@@ -36,7 +36,7 @@ public class DocumentManifest {
 			return true;
 		}
 
-		String targetDigest = targetManifest.optString("digest");
+		String targetDigest = targetManifest.optString("digest", null);
 		if( null == targetDigest ) {
 			// Can not verify digest on target document, let's assume it
 			// has changed
@@ -46,9 +46,9 @@ public class DocumentManifest {
 		// Check type
 		DigestComputer digestComputer = null;
 		{
-			String type = targetManifest.optString("type");
+			String type = targetManifest.optString("type", null);
 			if( null == type ){
-				// Has been modified sine type is missing
+				// Has been modified since type is missing
 				return true;
 				
 			} else if( DigestComputerSha1.DIGEST_COMPUTER_TYPE.equals(type) ) {

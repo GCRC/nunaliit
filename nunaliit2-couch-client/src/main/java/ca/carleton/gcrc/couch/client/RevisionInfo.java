@@ -18,7 +18,7 @@ public class RevisionInfo {
 		// Get current revision
 		RevisionInfo current = null;
 		{
-			String rev = doc.optString("_rev");
+			String rev = doc.optString("_rev", null);
 			if( null != rev ){
 				current = parseRevisionString(rev);
 				
