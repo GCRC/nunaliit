@@ -53,7 +53,10 @@ public class DocumentCouchDb implements Document {
 				if( keyObj instanceof String ){
 					String attachmentName = (String)keyObj;
 					JSONObject att = _attachments.getJSONObject(attachmentName);
-					String contentType = att.getString("content_type");
+					String contentType = att.optString("content_type", null);
+					if (null == contentType) {
+						throw new Exception(docId + " has an attachment with a problematic content_type");
+					}
 					long size = att.getLong("length");
 					
 					AttachmentCouchDb attachment = new AttachmentCouchDb(

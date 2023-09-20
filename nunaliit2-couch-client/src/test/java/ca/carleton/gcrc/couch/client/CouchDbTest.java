@@ -23,7 +23,7 @@ public class CouchDbTest extends TestCase {
 			doc.put("test", "value");
 			
 			db.createDocument(doc);
-			String id = doc.getString("_id");
+			String id = doc.optString("_id", null);
 			
 			if( false == db.documentExists(id) ) {
 				fail("Failed to create document");
@@ -43,7 +43,7 @@ public class CouchDbTest extends TestCase {
 			JSONObject result = db.createDocument(doc);
 			
 			// Verify id
-			String id = result.getString("id");
+			String id = result.optString("id", null);
 			if( false == docId.equals(id) ) {
 				fail("Invalid _id returned");
 			}
@@ -93,7 +93,7 @@ public class CouchDbTest extends TestCase {
 			}
 			
 			JSONObject doc = db.getDocument(docId);
-			String test = doc.getString("test");
+			String test = doc.optString("test", null);
 			if( false == "value".equals(test) ) {
 				fail("Wrong value returned");
 			}
@@ -163,7 +163,7 @@ public class CouchDbTest extends TestCase {
 				options.setRevision(rev);
 				JSONObject doc = db.getDocument(docId,options);
 				
-				if( false == rev.equals(doc.getString("_rev")) ){
+				if( false == rev.equals(doc.optString("_rev", null)) ){
 					fail("Unable to retrieve specific revision");
 				}
 			}
@@ -183,7 +183,7 @@ public class CouchDbTest extends TestCase {
 				doc.put("test", "value");
 				
 				JSONObject created = db.createDocument(doc);
-				initialRevision = created.getString("rev");
+				initialRevision = created.optString("rev", null);
 			}
 			
 			String check = db.getDocumentRevision(docId);
@@ -199,7 +199,7 @@ public class CouchDbTest extends TestCase {
 				
 				//JSONObject created = 
 					db.updateDocument(doc);
-				updatedRevision = doc.getString("_rev");
+				updatedRevision = doc.optString("_rev", null);
 			}
 			
 			check = db.getDocumentRevision(docId);
@@ -241,14 +241,14 @@ public class CouchDbTest extends TestCase {
 			} else {
 				Map<String,JSONObject> map = new HashMap<String,JSONObject>();
 				for(JSONObject doc : docs){
-					map.put(doc.getString("_id"), doc);
+					map.put(doc.optString("_id", null), doc);
 				}
 				
 				// Check first document
 				if( false == map.containsKey(docId1) ){
 					fail("Unable to find document: "+docId1);
 				} else {
-					String value = map.get(docId1).getString("test");
+					String value = map.get(docId1).optString("test", null);
 					if( false == docId1.equals(value) ){
 						fail("Invalid value in document: "+docId1);
 					}
@@ -258,7 +258,7 @@ public class CouchDbTest extends TestCase {
 				if( false == map.containsKey(docId2) ){
 					fail("Unable to find document: "+docId2);
 				} else {
-					String value = map.get(docId2).getString("test");
+					String value = map.get(docId2).optString("test", null);
 					if( false == docId2.equals(value) ){
 						fail("Invalid value in document: "+docId2);
 					}
@@ -283,7 +283,7 @@ public class CouchDbTest extends TestCase {
 			}
 			
 			// Capture initial revision
-			String initialRevision = doc.getString("_rev");
+			String initialRevision = doc.optString("_rev", null);
 			
 			// Modify document
 			doc.put("test","newValue");
@@ -293,11 +293,11 @@ public class CouchDbTest extends TestCase {
 			db.updateDocument(doc);
 
 			// Verify
-			String updatedRevision = doc.getString("_rev");
+			String updatedRevision = doc.optString("_rev", null);
 			if( initialRevision.equals(updatedRevision) ) {
 				fail("Expected an updated document revision");
 			}
-			if( false == "newValue".equals(doc.getString("test")) ) {
+			if( false == "newValue".equals(doc.optString("test", null)) ) {
 				fail("Expected an updated value");
 			}
 			if( true != doc.getBoolean("updated") ) {
@@ -365,7 +365,7 @@ public class CouchDbTest extends TestCase {
 				if( 37172 != att.getInt("length") ) {
 					fail("Returned wrong length");
 				}
-				if( false == "audio/ogg".equals(att.getString("content_type")) ) {
+				if( false == "audio/ogg".equals(att.optString("content_type", null)) ) {
 					fail("Returned wrong content type");
 				}
 			}

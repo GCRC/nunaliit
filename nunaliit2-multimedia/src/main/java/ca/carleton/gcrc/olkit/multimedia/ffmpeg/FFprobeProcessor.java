@@ -39,7 +39,7 @@ public class FFprobeProcessor {
             fileStreams = IntStream.range(0, streams.length())
                         .mapToObj(i -> {
                             FileStream fileStream = new FileStream();
-                            fileStream.setCodecType(streams.getJSONObject(i).getString("codec_type"));
+                            fileStream.setCodecType(streams.getJSONObject(i).optString("codec_type", null));
                             return fileStream;
                         })
                         .collect(Collectors.toList());

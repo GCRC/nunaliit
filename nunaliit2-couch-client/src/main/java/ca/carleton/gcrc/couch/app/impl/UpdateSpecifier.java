@@ -166,7 +166,7 @@ public class UpdateSpecifier {
 			return true;
 		}
 		
-		String targetAttachmentContentType = targetAttachment.optString("content_type");
+		String targetAttachmentContentType = targetAttachment.optString("content_type", null);
 		if( null == targetAttachmentContentType ){
 			// Attachment should have a content-type
 			return true;
@@ -194,7 +194,7 @@ public class UpdateSpecifier {
 			return true;
 		}
 		
-		String targetAttachmentDigest = targetAttachmentManifest.optString("digest");
+		String targetAttachmentDigest = targetAttachmentManifest.optString("digest", null);
 		if( null == targetAttachmentDigest ) {
 			// Can not verify digest on target document
 			return true;
