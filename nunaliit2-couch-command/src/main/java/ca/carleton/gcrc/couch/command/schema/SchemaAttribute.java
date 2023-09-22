@@ -188,9 +188,8 @@ public class SchemaAttribute {
 		
 		// triple
 		{
-			JSONObject jsonOptions = jsonAttr.optJSONObject("options");
-			if( null != jsonOptions ){
-				JSONObject elementOptiona = jsonOptions.getJSONObject("elementOptions");
+			JSONObject elementOptiona = jsonAttr.optJSONObject("elementOptions");
+			if( null != elementOptiona ){
 				SchemaAttribute.SetTripleAttributes(attribute, elementOptiona);
 			}
 		}
@@ -1014,6 +1013,12 @@ public class SchemaAttribute {
 								+ " nunaliit-custom=\""+customType+"\""
 								+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
 						}
+					} else if( "triple".equals(elementType) ) {
+						pw.println("\t\t\t\t\t\t\t<div class=\"n2_triple_element\">");
+						tripleSubject.printTripleDisplay(pw, null, "subject");
+						triplePredicate.printTripleDisplay(pw, null, "predicate");
+						tripleObject.printTripleDisplay(pw, null, "object");
+						pw.println("\t\t\t\t\t\t\t</div>");
 					}
 					
 					pw.println("\t\t\t\t\t\t\t</div>");
@@ -1262,8 +1267,8 @@ public class SchemaAttribute {
 	public void printTripleDisplay(PrintWriter pw, String key, String field) throws Exception {
 		String label = this.label;
 		String labelLocalizeClass = " n2s_localize";
+		String fieldKey = (key != null) ? key + "." + field + "." + id : field + "." + id;
 		if( null == label ){
-			label = id;
 			labelLocalizeClass = "";
 		}
 
@@ -1272,8 +1277,10 @@ public class SchemaAttribute {
 			|| "numeric".equals(type) ){
 			if( null != id ){
 			
-				pw.println("\t\t\t\t\t\t\t\t{{#if "+key+"."+field+"."+id+"}}");
-				pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t\t\t\t\t{{#if "+fieldKey+"}}");
+				if( null != label ) {
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				}
 
 				String fixUrlClass = "";
 				String fixMaxHeight = "";
@@ -1291,9 +1298,9 @@ public class SchemaAttribute {
 					}
 				}
 				if( "string".equals(type) ){
-					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+key+"."+field+"."+id+"}}</div>");
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+fieldKey+"}}</div>");
 				} else if( "localized".equals(type) ){
-					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+key+"."+field+"."+id+"{{/:localize}}</div>");
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+fieldKey+"{{/:localize}}</div>");
 				}
 				
 				pw.println("\t\t\t\t\t\t\t\t{{/if}}");
@@ -1301,9 +1308,11 @@ public class SchemaAttribute {
 			}
 		} else if( "selection".equals(type) ){
 			if( null != id ){
-				pw.println("\t\t\t\t\t\t\t\t{{#if "+key+"."+field+"."+id+"}}");
-				pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+key+"."+field+"."+id+"}}\">");
+				pw.println("\t\t\t\t\t\t\t\t{{#if "+fieldKey+"}}");
+				if( null != label ) {
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				}
+				pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+fieldKey+"}}\">");
 	
 				for(SelectionOption option : options){
 					String value = option.getValue();
@@ -1314,17 +1323,19 @@ public class SchemaAttribute {
 					
 					pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
 				}
-				pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+key+"."+field+"."+id+"}}</span>");
+				pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+fieldKey+"}}</span>");
 				pw.println("\t\t\t\t\t\t\t\t\t</div>");
 				pw.println("\t\t\t\t\t\t\t\t{{/if}}");
 			}
 		} else if( "reference".equals(type) ){
 			if( null != id ){
-				pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				if( null != label ) {
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				}
 				if( "thumbnail".equals(referenceType) ){
-					pw.println("\t\t\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{"+key+"."+field+"."+id+".doc}}\"></div>");
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{"+fieldKey+".doc}}\"></div>");
 				} else {
-					pw.println("\t\t\t\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{"+key+"."+field+"."+id+".doc}}</a></div>");
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{"+fieldKey+".doc}}</a></div>");
 				}
 			}
 		}
@@ -1472,9 +1483,11 @@ public class SchemaAttribute {
 						pw.println("\t\t\t\t\t<div class=\"value\">");
 						pw.println("\t\t\t\t\t\t{{#:array "+id+arrayType+"}}");
 						if( "triple".equals(elementType)) {
+							pw.println("\t\t\t\t\t\t\t<div class=\"n2_triple_element\">");
 							tripleSubject.printTripleFields(pw, null, "subject");
 							triplePredicate.printTripleFields(pw, null, "predicate");
 							tripleObject.printTripleFields(pw, null, "object");
+							pw.println("\t\t\t\t\t\t\t</div>");
 						} else {
 							pw.println("\t\t\t\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
 						}
@@ -1626,7 +1639,6 @@ public class SchemaAttribute {
 	
 	private void printTripleFields(PrintWriter pw, String key, String field)  throws Exception{
 		String labelLocalizeClass = (this.label != null) ? " n2s_localize" : "";
-        String label = (this.label != null) ? this.label : id;
         String fieldKey = (key != null) ? key + "." + field + "." + id : field + "." + id;
 		
         if( false == excludedFromForm ){
@@ -1653,14 +1665,18 @@ public class SchemaAttribute {
 				}
 
 				pw.println("\t\t\t\t\t\t\t<div class=\""+field+"\">");
-                pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				if( null != this.label) {
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				}
                 pw.println("\t\t\t\t\t\t\t\t{{#:field}}"+fieldKey+fieldType+"{{/:field}}");
                 pw.println("\t\t\t\t\t\t\t</div>");
                 
             } else if( "selection".equals(type) ){
                 pw.println("\t\t\t\t\t\t\t<div class=\""+field+"\">");
-				pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-                pw.println("\t\t\t\t\t\t\t\t<select class=\"{{#:input}}"+fieldKey+"{{/:input}}\">");
+				if( null != this.label) {
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				}
+				pw.println("\t\t\t\t\t\t\t\t<select class=\"{{#:input}}"+fieldKey+"{{/:input}}\">");
 
                 for(SelectionOption option : options){
                     pw.print("\t\t\t\t\t\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
