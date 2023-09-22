@@ -14,8 +14,8 @@ public class ReplicationStatus {
 	static public ReplicationStatus parseActiveTask(JSONObject obj) {
 		ReplicationStatus status = null;
 		if( null != obj ) {
-			String type = obj.optString("type");
-			String task = obj.optString("task");
+			String type = obj.optString("type", null);
+			String task = obj.optString("task", null);
 			if( null != type
 			 && null != task ) {
 				Matcher matcherTask0 = patternTask0.matcher(task);

@@ -47,10 +47,10 @@ public class FormEmailMessageGenerator implements MailMessageGenerator {
 			contactArr = new JSONArray(contactInfo);
 			for(int i=0,e=contactArr.length(); i<e; ++i){
 				JSONObject info = contactArr.getJSONObject(i);
-				if( null == info.getString("name") ){
+				if( null == info.optString("name", null) ){
 					throw new Exception("'name' must be provided");
 				}
-				if( null == info.getString("value") ){
+				if( null == info.optString("value", null) ){
 					throw new Exception("'value' must be provided");
 				}
 			}

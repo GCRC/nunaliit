@@ -184,11 +184,11 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		String docId = null;
 		String revision = null;
 		if( null != originalReserved ){
-			docId = originalReserved.optString("id");
-			revision = originalReserved.optString("rev");
+			docId = originalReserved.optString("id", null);
+			revision = originalReserved.optString("rev", null);
 		}
 		if( null == docId && null != submittedReserved){
-			docId = submittedReserved.optString("id");
+			docId = submittedReserved.optString("id", null);
 		}
 		
 		// At this point, we better have a docId
@@ -289,7 +289,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			
 			if( null != nunaliitLayers ){
 				for(int i=0;i<nunaliitLayers.length(); ++i){
-					String layerId = nunaliitLayers.optString(i);
+					String layerId = nunaliitLayers.optString(i, null);
 					if( null != layerId ){
 						if( "public".equals(layerId) ){
 							//atLeastOneLayer = true;
@@ -436,7 +436,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		JSONObject denial_email = submissionInfo.getJSONObject("denial_email");
 		
 		// Find user that submitted the update
-		String userId = submissionInfo.optString("submitter_name");
+		String userId = submissionInfo.optString("submitter_name", null);
 
 		// Get user document
 		CouchUserDocContext userDocContext = null;
@@ -512,7 +512,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
 
 		// Find user that submitted the update
-		String userId = submissionInfo.optString("submitter_name");
+		String userId = submissionInfo.optString("submitter_name", null);
 
 		// Get current user document
 		CouchUserDocContext userDocContext = null;

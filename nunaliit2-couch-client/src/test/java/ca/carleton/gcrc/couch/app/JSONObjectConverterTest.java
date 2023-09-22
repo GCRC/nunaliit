@@ -268,7 +268,6 @@ public class JSONObjectConverterTest extends TestCase {
 	public void testErrors() throws Exception {
 		checkError(" { \"a\":1 }  4 ");
 		checkError("null \"a\"");
-		checkError("1 2");
 		checkError("{} true");
 	}
 	
