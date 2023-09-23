@@ -1798,6 +1798,13 @@ var Form = $n2.Class({
 							} else if( 'textarea' === newType ){
 								newItem = '';
 								
+							} else if( 'triple' === newType) {
+								newItem = {
+									nunaliit_type: 'triple',
+									subject: {},
+									predicate: {},
+									object: {}
+								};
 							} else if( newType ){
 								try {
 									eval('newItem = '+newType);
