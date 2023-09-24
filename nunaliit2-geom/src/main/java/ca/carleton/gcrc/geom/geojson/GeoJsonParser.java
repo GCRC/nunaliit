@@ -39,7 +39,7 @@ public class GeoJsonParser {
 	private List<GeoJsonFeature> parseFeatureCollection(JSONObject featureCollection) throws Exception {
 		try {
 			// Verify "type"
-			String type = featureCollection.optString("type");
+			String type = featureCollection.optString("type", null);
 			if( null == type ){
 				throw new Exception("Key 'type' expected for a FeatureCollection");
 			}
@@ -75,7 +75,7 @@ public class GeoJsonParser {
 	private GeoJsonFeature parseFeature(JSONObject featureObj) throws Exception {
 		try {
 			// Verify "type"
-			String type = featureObj.optString("type");
+			String type = featureObj.optString("type", null);
 			if( null == type ){
 				throw new Exception("Key 'type' expected for a Feature");
 			}
@@ -86,7 +86,7 @@ public class GeoJsonParser {
 			GeoJsonFeature geoJsonFeature = new GeoJsonFeature();
 			
 			// Check for identifier
-			String id = featureObj.optString("id");
+			String id = featureObj.optString("id", null);
 			if( null != id ) {
 				geoJsonFeature.setId(id);
 			}
@@ -120,7 +120,7 @@ public class GeoJsonParser {
 	public Geometry parseGeometry(JSONObject geometryObj) throws Exception {
 		try {
 			// Verify "type"
-			String type = geometryObj.optString("type");
+			String type = geometryObj.optString("type", null);
 			if( null == type ){
 				throw new Exception("Key 'type' expected for a geometry");
 			}

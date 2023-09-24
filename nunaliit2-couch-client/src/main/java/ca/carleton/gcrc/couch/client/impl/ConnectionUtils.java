@@ -443,7 +443,7 @@ public class ConnectionUtils {
 			try {
 				serverMessage = obj.getString("error");
 			} catch (Exception e) {
-				serverMessage = "Unable to parse error response";
+				serverMessage = "Unable to parse CouchDB error response: " + e.toString();
 			}
 			
 			if( null == errorMessage ) {

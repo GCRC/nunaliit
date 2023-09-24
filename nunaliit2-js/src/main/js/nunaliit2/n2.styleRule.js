@@ -350,7 +350,7 @@ var Symbolizer = $n2.Class({
 
 					if( value ){
 						// text(value)
-						var textNode = svgDomElem.ownerDocument.createTextNode(value);
+						var textNode = svgDomElem.ownerDocument.createTextNode(_loc(value));
 						svgDomElem.appendChild(textNode);
 					};
 					

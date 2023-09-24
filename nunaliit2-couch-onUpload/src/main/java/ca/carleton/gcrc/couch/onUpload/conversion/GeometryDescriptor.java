@@ -29,7 +29,7 @@ public class GeometryDescriptor extends AbstractDescriptor {
 		Geometry geom = null;
 		
 		JSONObject geomObj = getJson();
-		String wkt = geomObj.getString("wkt");
+		String wkt = geomObj.optString("wkt", null);
 		
 		WktParser parser = new WktParser();
 		geom = parser.parseWkt(wkt);

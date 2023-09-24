@@ -104,7 +104,7 @@ public class DocumentDescriptor extends AbstractDescriptor {
 					String attName = (String)keyObj;
 					JSONObject attachment = files.optJSONObject(attName);
 					if( null != attachment ){
-						String attachmentUploadId = attachment.optString("uploadId");
+						String attachmentUploadId = attachment.optString("uploadId", null);
 						if( null != attachmentUploadId ){
 							if( attachmentUploadId.equals(uploadId) ){
 								return new AttachmentDescriptor(this, attName);

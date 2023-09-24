@@ -15,7 +15,7 @@ public class DocumentDigest {
 		if( null != jsonObj ){
 			// Type
 			{
-				String type = jsonObj.optString("type");
+				String type = jsonObj.optString("type", null);
 				if( null != type ) {
 					dd.setType(type);
 				}
@@ -23,7 +23,7 @@ public class DocumentDigest {
 			
 			// digest on main document
 			{
-				String digest = jsonObj.optString("digest");
+				String digest = jsonObj.optString("digest", null);
 				if( null != digest ) {
 					dd.setDocDigest(digest);
 				}
@@ -41,7 +41,7 @@ public class DocumentDigest {
 							
 							JSONObject attObj = attachments.optJSONObject(attachmentName);
 							if( null != attObj ){
-								String digest = attObj.optString("digest");
+								String digest = attObj.optString("digest", null);
 								if( null != digest ){
 									dd.addAttachmentDigest(attachmentName, digest);
 								}

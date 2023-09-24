@@ -48,7 +48,7 @@ public class StreamProducerDocumentUpdate implements StreamProducer {
 		// Compute previous revision
 		String previousRevision = null;
 		if( null != previousDoc ) {
-			previousRevision = previousDoc.getString("_rev");
+			previousRevision = previousDoc.optString("_rev", null);
 			if( null == previousRevision ) {
 				throw new Exception("On document update, the previous document must contain a revision");
 			}
