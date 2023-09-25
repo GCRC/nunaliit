@@ -83,7 +83,7 @@ public class CouchUtils {
 		List<String> roles = new Vector<String>();
 		try {
 			if( JSONSupport.containsKey(userDoc, "name") ) {
-				name = userDoc.getString("name");
+				name = userDoc.optString("name", null);
 			}
 			if( JSONSupport.containsKey(userDoc, "roles") ) {
 				JSONArray roleArray = userDoc.getJSONArray("roles");
