@@ -58,6 +58,19 @@ const StadiaMaps = (layerName) => {
               maxZoom: 20
         })
     }
+    else if (layerName === "stamen_toner_lite") {
+        return new XYZ({
+            url: STADIA_MAPS_URL_TEMPLATE("stamen_toner_lite", 2, "png"),
+            attributions: [
+                '&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a>',
+                '&copy; <a href="https://stamen.com/" target="_blank">Stamen Design</a>',
+                '&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>',
+                '&copy; <a href="https://www.openstreetmap.org/about/" target="_blank">OpenStreetMap contributors</a>'
+              ],
+              tilePixelRatio: 2,
+              maxZoom: 20
+        })
+    }
     else if (layerName === "stamen_terrain") {
         return new XYZ({
             url: STADIA_MAPS_URL_TEMPLATE("stamen_terrain", 2, "png"),

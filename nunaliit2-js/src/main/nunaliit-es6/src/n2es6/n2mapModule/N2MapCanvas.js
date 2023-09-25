@@ -33,6 +33,7 @@ import mouseWheelZoom from 'ol/interaction/MouseWheelZoom.js';
 import {defaults as defaultsInteractionSet} from 'ol/interaction.js';
 
 import {default as DrawInteraction} from 'ol/interaction/Draw.js';
+import Stamen from 'ol/source/Stamen.js';
 import StadiaMaps from '../olSources/StadiaMaps.js';
 import OSM from 'ol/source/OSM';
 import XYZ from 'ol/source/XYZ';
