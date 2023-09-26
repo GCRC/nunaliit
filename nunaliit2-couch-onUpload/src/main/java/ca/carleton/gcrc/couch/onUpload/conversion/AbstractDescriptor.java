@@ -13,7 +13,7 @@ public abstract class AbstractDescriptor {
 
 		JSONObject json = getJson();
 		if( JSONSupport.containsKey(json, key) ) {
-			value = json.getString(key);
+			value = json.optString(key, null);
 		}
 		
 		return value;

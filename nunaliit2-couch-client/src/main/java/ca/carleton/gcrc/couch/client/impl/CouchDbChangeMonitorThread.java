@@ -124,11 +124,11 @@ public class CouchDbChangeMonitorThread extends Thread {
 	}
 	
 	private void reportChanges(JSONObject changeObj) throws Exception {
-		String docId = changeObj.getString("id");
+		String docId = changeObj.optString("id", null);
 		boolean deleted = changeObj.optBoolean("deleted", false);
 		JSONArray changes = changeObj.getJSONArray("changes");
 		JSONObject change = changes.getJSONObject(0);
-		String rev = change.getString("rev");
+		String rev = change.optString("rev", null);
 		
 		CouchDbChangeListener.Type type = CouchDbChangeListener.Type.DOC_UPDATED;
 		if( deleted ) {

@@ -17,7 +17,7 @@ public class UserDataDescriptor extends AbstractDescriptor {
 
 		JSONObject descriptionObj = getJson();
 		if( JSONSupport.containsKey(descriptionObj, key) ) {
-			value = descriptionObj.getString(key);
+			value = descriptionObj.optString(key, null);
 		}
 		
 		return value;
