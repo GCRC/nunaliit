@@ -420,7 +420,7 @@ public class CouchDbImpl implements CouchDb {
 			,long size
 			) throws Exception {
 
-		String docId = doc.getString("_id");
+		String docId = doc.optString("_id", null);
 		String path = URLEncoder.encode(docId,"UTF-8")
 			+ "/"
 			+ URLEncoder.encode(name,"UTF-8");
@@ -453,7 +453,7 @@ public class CouchDbImpl implements CouchDb {
 			,OutputStream os
 			) throws Exception {
 
-		String docId = doc.getString("_id");
+		String docId = doc.optString("_id", null);
 		
 		return downloadAttachment(docId, name, os);
 	}
@@ -482,7 +482,7 @@ public class CouchDbImpl implements CouchDb {
 
 	@Override
 	public JSONObject deleteAttachment(JSONObject doc, String name) throws Exception {
-		String docId = doc.getString("_id");
+		String docId = doc.optString("_id", null);
 		String path = URLEncoder.encode(docId,"UTF-8")
 			+ "/"
 			+ URLEncoder.encode(name,"UTF-8");
