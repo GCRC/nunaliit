@@ -1282,6 +1282,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		    			type: 'editCreateFromGeometry'
 		    			,geometry: feature.geometry.clone()
 		    			,projection: mapProj
+						,data: feature?.data
 		    			,_origin: _this
 		    		});
 				}

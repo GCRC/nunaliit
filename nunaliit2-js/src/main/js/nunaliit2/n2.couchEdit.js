@@ -961,7 +961,7 @@ var CouchDocumentEditor = $n2.Class({
 		return false;
 	},
 
-	startEditingFromGeometry: function(olGeom, olProj, isNewOpenlayers) {
+	startEditingFromGeometry: function(olGeom, olProj, isNewOpenlayers, extraData) {
 		
 		var _this = this;
 	
@@ -1010,6 +1010,7 @@ var CouchDocumentEditor = $n2.Class({
 			_this.dispatchService.synchronousCall(DH,{
 				type: 'preDocCreation'
 				,doc: _this.editedDocument
+				,extraData
 			});
 			
 			_this._prepareDocument();
@@ -2557,7 +2558,7 @@ var CouchEditService = $n2.Class({
 		this.showDocumentForm(doc);
 	},
 	
-	_createFromGeometry: function(olGeom, olProj, isNewOpenlayers){
+	_createFromGeometry: function(olGeom, olProj, isNewOpenlayers, extraData = {}){
 		var _this = this;
 		var _isOl3 = isNewOpenlayers || false;
 		// Check that we are logged in
@@ -2565,7 +2566,7 @@ var CouchEditService = $n2.Class({
 		if( authService && false == authService.isLoggedIn() ) {
 			authService.showLoginForm({
 				onSuccess: function(result,options) {
-					_this._createFromGeometry(olGeom, olProj, _isOl3);
+					_this._createFromGeometry(olGeom, olProj, _isOl3, extraData);
 				}
 			});
 			return;
@@ -2577,7 +2578,7 @@ var CouchEditService = $n2.Class({
 		};
 		
 		this.currentEditor = this._createEditor();
-		this.currentEditor.startEditingFromGeometry(olGeom, olProj, _isOl3);
+		this.currentEditor.startEditingFromGeometry(olGeom, olProj, _isOl3, extraData);
 	},
 	
 	_handle: function(m, addr, dispatcher){
@@ -2586,7 +2587,7 @@ var CouchEditService = $n2.Class({
 			
 		} else if( 'editCreateFromGeometry' === m.type ) {
 			if ( m._origin._classname === 'MapAndControls' ){
-				this._createFromGeometry(m.geometry, m.projection);
+				this._createFromGeometry(m.geometry, m.projection, false, m.data);
 			} else {
 				this._createFromGeometry(m.geometry, m.projection, true)
 			}
