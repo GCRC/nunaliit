@@ -56,13 +56,12 @@ function getCouchGeometry(geom, isNewOpenlayers) {
 			]
 		};
 	} else {
-		var bounds = geom.getExtent();
-		var wkt = geom.toString();
+		const wktFormat = new $n2.n2es6.ol_format_WKT()
 		
 		return {
 			nunaliit_type: 'geometry'
-			,wkt : wkt
-			,bbox: bounds
+			,wkt : wktFormat.writeGeometry(geom)
+			,bbox: geom.getExtent()
 		}
 	}
 	
