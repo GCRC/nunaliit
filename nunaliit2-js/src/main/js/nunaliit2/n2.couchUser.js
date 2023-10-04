@@ -457,7 +457,7 @@ var UserEditor = $n2.Class({
 						,password: pw1
 						,onSuccess: function() {
 							_this._refresh();
-							$dialog.dialog('close');
+							passwordDialog.closeDialog();
 						}
 						,onError: function(errMsg) {
 							alert(_loc('Unable to set password: ') + errMsg);
