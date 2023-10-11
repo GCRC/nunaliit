@@ -54,7 +54,7 @@ public class CouchSessionImpl implements CouchSession {
 		try {
 			JSONObject jsonUserCtx = response.getJSONObject("userCtx");
 			if( JSONSupport.containsKey(jsonUserCtx, "name") ) {
-				name = jsonUserCtx.getString("name");
+				name = jsonUserCtx.optString("name", null);
 			}
 			if( JSONSupport.containsKey(jsonUserCtx, "roles") ) {
 				JSONArray roleArray = jsonUserCtx.getJSONArray("roles");
