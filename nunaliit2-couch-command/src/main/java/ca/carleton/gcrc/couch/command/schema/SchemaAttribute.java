@@ -535,6 +535,18 @@ public class SchemaAttribute {
 		} else if( "array".equals(type) ){
 			if( null != id ){
 				JSONArray arr = new JSONArray();
+				
+				if( "triple".equals(elementType) && hasDefaultSelectionOption() ) {	
+					JSONObject triple = new JSONObject();
+					triple.put("nunaliit_type", "triple");
+	
+					putTripleAttribute(triple, "subject", tripleSubject);
+					putTripleAttribute(triple, "predicate", triplePredicate);
+					putTripleAttribute(triple, "object", tripleObject);
+					
+					arr.put(triple);
+				}
+				
 				schemaDoc.put(id, arr);
 			}
 		} else if ( "tag".equals(type) ) {
@@ -639,6 +651,21 @@ public class SchemaAttribute {
 		}
 	}
 
+	private boolean hasDefaultSelectionOption() {
+		SchemaAttribute[] attributes = {tripleSubject, triplePredicate, tripleObject};
+
+		for (SchemaAttribute attribute : attributes) {
+			if ("selection".equals(attribute.getType())) {
+				SelectionOption defOption = attribute.getDefaultOption();
+				if (defOption != null) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+	
 	// Helper function to add subject, predicate, or object attributes
 	private void putTripleAttribute(JSONObject triple, String attributeName, SchemaAttribute attribute) throws Exception{
 		String attributeId = attribute.getId();
@@ -1271,71 +1298,73 @@ public class SchemaAttribute {
 		if( null == label ){
 			labelLocalizeClass = "";
 		}
-
-		if( "string".equals(type)
-			|| "localized".equals(type) 
-			|| "numeric".equals(type) ){
-			if( null != id ){
-			
-				pw.println("\t\t\t\t\t\t\t\t{{#if "+fieldKey+"}}");
-				if( null != label ) {
-					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				}
-
-				String fixUrlClass = "";
-				String fixMaxHeight = "";
-				if( urlsToLinks ){
-					fixUrlClass += " n2s_convertTextUrlToLink";
-				}
-				if( wikiTransform ){
-					fixUrlClass += " n2s_wikiTransform";
-				} else if( isTextarea() ){
-					fixUrlClass += " n2s_preserveSpaces";
-					
-					if( null != maxHeight && maxHeight.intValue() > 0 ){
-						fixUrlClass += " n2s_installMaxHeight";
-						fixMaxHeight = " _maxheight=\"" + maxHeight.intValue() + "\"";
+		
+		if( false == excludedFromDisplay ){
+			if( "string".equals(type)
+				|| "localized".equals(type) 
+				|| "numeric".equals(type) ){
+				if( null != id ){
+				
+					pw.println("\t\t\t\t\t\t\t\t{{#if "+fieldKey+"}}");
+					if( null != label ) {
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 					}
-				}
-				if( "string".equals(type) ){
-					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+fieldKey+"}}</div>");
-				} else if( "localized".equals(type) ){
-					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+fieldKey+"{{/:localize}}</div>");
-				}
-				
-				pw.println("\t\t\t\t\t\t\t\t{{/if}}");
-				
-			}
-		} else if( "selection".equals(type) ){
-			if( null != id ){
-				pw.println("\t\t\t\t\t\t\t\t{{#if "+fieldKey+"}}");
-				if( null != label ) {
-					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-				}
-				pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+fieldKey+"}}\">");
-	
-				for(SelectionOption option : options){
-					String value = option.getValue();
-					String optLabel = option.getLabel();
-					if( null == optLabel ){
-						optLabel = value;
+
+					String fixUrlClass = "";
+					String fixMaxHeight = "";
+					if( urlsToLinks ){
+						fixUrlClass += " n2s_convertTextUrlToLink";
+					}
+					if( wikiTransform ){
+						fixUrlClass += " n2s_wikiTransform";
+					} else if( isTextarea() ){
+						fixUrlClass += " n2s_preserveSpaces";
+						
+						if( null != maxHeight && maxHeight.intValue() > 0 ){
+							fixUrlClass += " n2s_installMaxHeight";
+							fixMaxHeight = " _maxheight=\"" + maxHeight.intValue() + "\"";
+						}
+					}
+					if( "string".equals(type) ){
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+fieldKey+"}}</div>");
+					} else if( "localized".equals(type) ){
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+fieldKey+"{{/:localize}}</div>");
 					}
 					
-					pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
+					pw.println("\t\t\t\t\t\t\t\t{{/if}}");
+					
 				}
-				pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+fieldKey+"}}</span>");
-				pw.println("\t\t\t\t\t\t\t\t\t</div>");
-				pw.println("\t\t\t\t\t\t\t\t{{/if}}");
-			}
-		} else if( "reference".equals(type) ){
-			if( null != id ){
-				if( null != label ) {
-					pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+			} else if( "selection".equals(type) ){
+				if( null != id ){
+					pw.println("\t\t\t\t\t\t\t\t{{#if "+fieldKey+"}}");
+					if( null != label ) {
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					}
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+fieldKey+"}}\">");
+		
+					for(SelectionOption option : options){
+						String value = option.getValue();
+						String optLabel = option.getLabel();
+						if( null == optLabel ){
+							optLabel = value;
+						}
+						
+						pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
+					}
+					pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+fieldKey+"}}</span>");
+					pw.println("\t\t\t\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t\t\t{{/if}}");
 				}
-				if( "thumbnail".equals(referenceType) ){
-					pw.println("\t\t\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{"+fieldKey+".doc}}\"></div>");
-				} else {
-					pw.println("\t\t\t\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{"+fieldKey+".doc}}</a></div>");
+			} else if( "reference".equals(type) ){
+				if( null != id ){
+					if( null != label ) {
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					}
+					if( "thumbnail".equals(referenceType) ){
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{"+fieldKey+".doc}}\"></div>");
+					} else {
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{"+fieldKey+".doc}}</a></div>");
+					}
 				}
 			}
 		}

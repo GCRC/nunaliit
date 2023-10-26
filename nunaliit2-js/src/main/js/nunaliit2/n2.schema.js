@@ -1799,11 +1799,14 @@ var Form = $n2.Class({
 								newItem = '';
 								
 							} else if( 'triple' === newType) {
+								const createJson = _this.schema.create 
+								const key = classInfo.selector.getKey();
+								const triple = createJson[_this.schema.name][key][0];
 								newItem = {
 									nunaliit_type: 'triple',
-									subject: {},
-									predicate: {},
-									object: {}
+									subject: triple ? { ...triple.subject } : {},
+									predicate: triple ? { ...triple.predicate } : {},
+									object: triple ? { ...triple.object } : {},
 								};
 							} else if( newType ){
 								try {
