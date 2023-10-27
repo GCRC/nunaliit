@@ -188,9 +188,9 @@ public class SchemaAttribute {
 		
 		// triple
 		{
-			JSONObject elementOptiona = jsonAttr.optJSONObject("elementOptions");
-			if( null != elementOptiona ){
-				SchemaAttribute.SetTripleAttributes(attribute, elementOptiona);
+			JSONObject elementOptions = jsonAttr.optJSONObject("elementOptions");
+			if( null != elementOptions ){
+				SchemaAttribute.SetTripleAttributes(attribute, elementOptions);
 			}
 		}
 		
@@ -258,8 +258,8 @@ public class SchemaAttribute {
 	}
 	
 	public String getType() {
-        return this.type;
-    }
+		return this.type;
+	}
 	
 	public String getId() {
 		return id;
@@ -1295,75 +1295,75 @@ public class SchemaAttribute {
 		String label = this.label;
 		String labelLocalizeClass = " n2s_localize";
 		String fieldKey = (key != null) ? key + "." + field + "." + id : field + "." + id;
-		if( null == label ){
+		if (null == label) {
 			labelLocalizeClass = "";
 		}
-		
-		if( false == excludedFromDisplay ){
-			if( "string".equals(type)
-				|| "localized".equals(type) 
-				|| "numeric".equals(type) ){
-				if( null != id ){
-				
-					pw.println("\t\t\t\t\t\t\t\t{{#if "+fieldKey+"}}");
-					if( null != label ) {
-						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+
+		if (false == excludedFromDisplay) {
+			if ("string".equals(type)
+			 || "localized".equals(type)
+			 || "numeric".equals(type)) {
+				if (null != id) {
+
+					pw.println("\t\t\t\t\t\t\t\t{{#if " + fieldKey + "}}");
+					if (null != label) {
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
 					}
 
 					String fixUrlClass = "";
 					String fixMaxHeight = "";
-					if( urlsToLinks ){
+					if (urlsToLinks) {
 						fixUrlClass += " n2s_convertTextUrlToLink";
 					}
-					if( wikiTransform ){
+					if (wikiTransform) {
 						fixUrlClass += " n2s_wikiTransform";
-					} else if( isTextarea() ){
+					} else if (isTextarea()) {
 						fixUrlClass += " n2s_preserveSpaces";
-						
-						if( null != maxHeight && maxHeight.intValue() > 0 ){
+
+						if (null != maxHeight && maxHeight.intValue() > 0) {
 							fixUrlClass += " n2s_installMaxHeight";
 							fixMaxHeight = " _maxheight=\"" + maxHeight.intValue() + "\"";
 						}
 					}
 					if( "string".equals(type) ){
-						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{"+fieldKey+"}}</div>");
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value" + fixUrlClass + "\"" + fixMaxHeight + ">{{" + fieldKey + "}}</div>");
 					} else if( "localized".equals(type) ){
-						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value"+fixUrlClass+"\"" + fixMaxHeight + ">{{#:localize}}"+fieldKey+"{{/:localize}}</div>");
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value" + fixUrlClass + "\"" + fixMaxHeight + ">{{#:localize}}" + fieldKey + "{{/:localize}}</div>");
 					}
-					
+
 					pw.println("\t\t\t\t\t\t\t\t{{/if}}");
-					
+
 				}
-			} else if( "selection".equals(type) ){
-				if( null != id ){
-					pw.println("\t\t\t\t\t\t\t\t{{#if "+fieldKey+"}}");
-					if( null != label ) {
-						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+			} else if ("selection".equals(type)) {
+				if (null != id) {
+					pw.println("\t\t\t\t\t\t\t\t{{#if " + fieldKey + "}}");
+					if (null != label) {
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
 					}
-					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{"+fieldKey+"}}\">");
-		
-					for(SelectionOption option : options){
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{" + fieldKey + "}}\">");
+
+					for (SelectionOption option : options) {
 						String value = option.getValue();
 						String optLabel = option.getLabel();
-						if( null == optLabel ){
+						if (null == optLabel) {
 							optLabel = value;
 						}
-						
-						pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\""+value+"\">"+optLabel+"</span>");
+
+						pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\"" + value + "\">" + optLabel + "</span>");
 					}
-					pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choiceDefault\">{{"+fieldKey+"}}</span>");
+					pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choiceDefault\">{{" + fieldKey + "}}</span>");
 					pw.println("\t\t\t\t\t\t\t\t\t</div>");
 					pw.println("\t\t\t\t\t\t\t\t{{/if}}");
 				}
-			} else if( "reference".equals(type) ){
-				if( null != id ){
-					if( null != label ) {
-						pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+			} else if ("reference".equals(type)) {
+				if (null != id) {
+					if (null != label) {
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
 					}
-					if( "thumbnail".equals(referenceType) ){
-						pw.println("\t\t\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{"+fieldKey+".doc}}\"></div>");
+					if ("thumbnail".equals(referenceType)) {
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{" + fieldKey + ".doc}}\"></div>");
 					} else {
-						pw.println("\t\t\t\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{"+fieldKey+".doc}}</a></div>");
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{"+ fieldKey + ".doc}}</a></div>");
 					}
 				}
 			}
@@ -1666,62 +1666,62 @@ public class SchemaAttribute {
 		}
 	}
 	
-	private void printTripleFields(PrintWriter pw, String key, String field)  throws Exception{
+	private void printTripleFields(PrintWriter pw, String key, String field) throws Exception{
 		String labelLocalizeClass = (this.label != null) ? " n2s_localize" : "";
-        String fieldKey = (key != null) ? key + "." + field + "." + id : field + "." + id;
-		
-        if( false == excludedFromForm ){
-            if( "string".equals(type)
-                || "localized".equals(type)
-                || "reference".equals(type)
-				|| "numeric".equals(type)) {
+		String fieldKey = (key != null) ? key + "." + field + "." + id : field + "." + id;
+
+		if (false == excludedFromForm) {
+			if ("string".equals(type)
+			 || "localized".equals(type)
+			 || "reference".equals(type)
+			 || "numeric".equals(type)) {
 
 				String fieldType = "";
-				if( "localized".equals(type) ){
+				if ("localized".equals(type)) {
 					fieldType = ",localized";
-				} else if( "reference".equals(type) ){
+				} else if ("reference".equals(type)) {
 					fieldType = ",reference";
-				} else if( "numeric".equals(type) ){
+				} else if ("numeric".equals(type)) {
 					fieldType = ",numeric";
 				}
 
-				if( isTextarea() ){
+				if (isTextarea()) {
 					fieldType += ",textarea";
 				}
 
-				if( null != placeholder ){
-					fieldType += ",placeholder="+encodeFieldParameter(placeholder);
+				if (null != placeholder) {
+					fieldType += ",placeholder=" + encodeFieldParameter(placeholder);
 				}
 
-				pw.println("\t\t\t\t\t\t\t<div class=\""+field+"\">");
-				if( null != this.label) {
-					pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t\t\t\t<div class=\"" + field + "\">");
+				if (null != this.label) {
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
 				}
-                pw.println("\t\t\t\t\t\t\t\t{{#:field}}"+fieldKey+fieldType+"{{/:field}}");
-                pw.println("\t\t\t\t\t\t\t</div>");
-                
-            } else if( "selection".equals(type) ){
-                pw.println("\t\t\t\t\t\t\t<div class=\""+field+"\">");
-				if( null != this.label) {
-					pw.println("\t\t\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+				pw.println("\t\t\t\t\t\t\t\t{{#:field}}" + fieldKey + fieldType + "{{/:field}}");
+				pw.println("\t\t\t\t\t\t\t</div>");
+	
+			} else if ("selection".equals(type)) {
+				pw.println("\t\t\t\t\t\t\t<div class=\"" + field + "\">");
+				if (null != this.label) {
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
 				}
-				pw.println("\t\t\t\t\t\t\t\t<select class=\"{{#:input}}"+fieldKey+"{{/:input}}\">");
+				pw.println("\t\t\t\t\t\t\t\t<select class=\"{{#:input}}" + fieldKey + "{{/:input}}\">");
 
-                for(SelectionOption option : options){
-                    pw.print("\t\t\t\t\t\t\t\t\t<option class=\"n2s_localize\" value=\""+option.getValue()+"\">");
-                    String optLabel = option.getLabel();
-                    if( null == optLabel ){
-                        optLabel = option.getValue();
-                    }
-                    pw.print(optLabel);
-                    pw.println("</option>");
-                }
-                pw.println("\t\t\t\t\t\t\t\t</select>");
-                pw.println("\t\t\t\t\t\t\t</div>");
-            } else {
-                throw new Exception("Unable to include type "+type+" in form");
-            }
-        }
+				for (SelectionOption option : options) {
+					pw.print("\t\t\t\t\t\t\t\t\t<option class=\"n2s_localize\" value=\"" + option.getValue() + "\">");
+					String optLabel = option.getLabel();
+					if (null == optLabel) {
+						optLabel = option.getValue();
+					}
+					pw.print(optLabel);
+					pw.println("</option>");
+				}
+				pw.println("\t\t\t\t\t\t\t\t</select>");
+				pw.println("\t\t\t\t\t\t\t</div>");
+			} else {
+				throw new Exception("Unable to include type " + type + " in form");
+			}
+		}
 	}
 
 	public void addExportField(JSONArray exportArr, String schemaName) throws Exception {
