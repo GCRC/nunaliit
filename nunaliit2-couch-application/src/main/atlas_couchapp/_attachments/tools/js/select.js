@@ -19,6 +19,7 @@
 	var documentTransforms = [];
 	var allLists = [];
 	var selectedList = null;
+	var dispatchService = null;
 
 	// **********************************************************************
 	var DocumentList = $n2.Class({
@@ -3384,6 +3385,10 @@
 	
 	// -----------------------------------------------------------------
 	function viewDocument(docId){
+		dispatchService.send("select.js", {
+			type: "editCancel"
+		})
+
 		var $div = getDocumentDiv();
 
 		$div.empty();
@@ -3678,6 +3683,7 @@
 		config = opts_.config;
 		atlasDb = opts_.config.atlasDb;
 		atlasDesign = opts_.config.atlasDesign;
+		dispatchService = opts_.config.directory.dispatchService;
 		serverDesign = opts_.config.serverDesign;
 		siteDesign = opts_.config.siteDesign;
 		schemaRepository = opts_.config.directory.schemaRepository;
