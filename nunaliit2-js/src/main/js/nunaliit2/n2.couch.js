@@ -1538,6 +1538,99 @@ var Database = $n2.Class('couch.Database',{
 	    		opts.onError('Error during query of multiple documents: '+errStr);
 	    	}
 		});
+	},
+
+	bulkGetDocuments: function (opts_) {
+		var opts = $.extend(true, {
+			docIds: null
+			, onSuccess: function (docs) { }
+			, onError: function (errorMsg) { $n2.log(errorMsg); }
+		}
+			, opts_
+		)
+		if (JSON && JSON.stringify) {
+		}
+		else {
+			opts.onError('json.js is required to query multiple documents')
+			return
+		}
+		if (!opts.docIds) {
+			opts.onError('No docIds set. Can not retrieve documents')
+			return
+		}
+		const viewUrl = this.dbUrl + '_bulk_get'
+		const data = {
+			docs: opts.docIds
+		}
+		$.ajax({
+			url: viewUrl
+			, type: 'POST'
+			, async: true
+			, data: JSON.stringify(data)
+			, contentType: 'application/json'
+			, dataType: 'json'
+			, success: function (queryResult) {
+				if (queryResult.results) {
+					opts.onSuccess(queryResult.results.map(doc => {
+						if (doc.docs) {
+							// Should only be one thing in here anyway
+							const docRes = doc.docs
+							for (let state in docRes) {
+								if (docRes[state].ok) {
+									return docRes[state].ok
+								}
+							}
+						}
+					}))
+				}
+				else {
+					opts.onError('Unexpected response during _bulk_get query');
+				};
+			}
+			, error: function (XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+				opts.onError('Error during query of _bulk_get: ' + errStr);
+			}
+		})
+	},
+
+	bulkModifyDocuments: function (opts_) {
+		var opts = $.extend(true, {
+			docs: null
+			, onSuccess: function (docs) { }
+			, onError: function (errorMsg) { $n2.log(errorMsg); }
+		}
+			, opts_
+		)
+		if (JSON && JSON.stringify) {
+		}
+		else {
+			opts.onError('json.js is required to query multiple documents')
+			return
+		}
+		if (!opts.docs) {
+			opts.onError('No docs set. Can not retrieve documents')
+			return
+		}
+		const viewUrl = this.dbUrl + '_bulk_docs'
+		const data = {
+			docs: opts.docs
+		}
+		$.ajax({
+			url: viewUrl
+			, type: 'POST'
+			, async: true
+			, data: JSON.stringify(data)
+			, contentType: 'application/json'
+			, dataType: 'json'
+			, success: function (res) {
+				opts.onSuccess(res)
+			}
+			, error: function (XMLHttpRequest, textStatus, errorThrown) {
+				var errStr = httpJsonError(XMLHttpRequest, textStatus);
+				opts.onError('Error during query of _bulk_docs: ' + errStr);
+			}
+		})
 	}
 
 	,listAllDocuments: function(opts_) {
