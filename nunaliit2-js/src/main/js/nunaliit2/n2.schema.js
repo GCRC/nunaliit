@@ -128,17 +128,17 @@ function _localizeString() {
 			lang = $n2.l10n.getLocale().lang;
 		};
 		
-		if( s[lang] ) {
-			if( opts.html ) {
-				return s[lang];
-			};
-			
-			var escaped = $n2.utils.escapeHtml(s[lang]);
-			return escaped;
-			
-		} else {
-			// Find a language to fall back on
-			var fbLang = 'en';
+			if (s[lang]) {
+				if (opts.html) {
+					return s[lang];
+				};
+
+				var escaped = $n2.utils.escapeHtml(s[lang]);
+				return escaped;
+
+			} else {
+				// Find a language to fall back on
+				var fbLang = 'en';
 			if( !s[fbLang] ) {
 				fbLang = null;
 				for(var l in s){
@@ -239,6 +239,10 @@ function _formSingleField(r,completeSelectors,options){
 	
 	} else if(options.tag) {
 		r.push(' ' + typeClassStringPrefix + 'tag');
+	}
+
+	if(options.triple) {
+		r.push(' n2schema_field_triple')
 	}
 
 	if( options.textarea ){
@@ -386,7 +390,7 @@ function _formField() {
 
 	} else if( opts.reference ) {
 		var attr = completeSelectors.encodeForDomAttribute();
-		r.push('<span class="n2schema_field_reference" nunaliit-selector="'+attr+'"');
+		r.push('<span class="n2schema_field_reference ' + (opts.triple ? "n2schema_field_triple" : "") + '" nunaliit-selector="' + attr + '"');
 		if( opts.search 
 		 && opts.search[0] ){
 			r.push(' n2-search-func="'+opts.search[0]+'"');
@@ -493,7 +497,11 @@ function _inputField() {
 	if( splits[1] ) {
 		type = ' n2schema_type_'+splits[1];
 	};
-	
+
+	if(splits.includes('triple')) {
+		type += ' n2schema_field_triple';
+	}
+
 	return cl + type;
 };
 
@@ -665,7 +673,6 @@ function _selectorField(){
 	var completeSelectors = currentSelector.getChildSelector(objSel);
 	return completeSelectors.encodeForDomAttribute();
 };
-
 
 if( typeof(Handlebars) !== 'undefined' 
  && Handlebars.registerHelper ) {
@@ -1730,6 +1737,19 @@ var Form = $n2.Class({
 				
 				// Install callbacks
 				var _this = this;
+
+				$divEvent.find('.n2schema_field_triple').each(function () {
+					if($(this).hasClass('n2schema_field_reference')) {
+						_this._installReference($elem, $(this));
+						return
+					}
+
+					_this._triple($(this), $elem);
+					$(this).on('change', function (event) {
+						_this._triple($(event.target), $elem, true);
+					})
+				});
+
 				$divEvent.find('.n2schema_input').each(function(){
 					_this._installHandlers($elem, $(this),_this.obj,_this.callback);
 				});
@@ -1799,9 +1819,10 @@ var Form = $n2.Class({
 								newItem = '';
 								
 							} else if( 'triple' === newType) {
-								const createJson = _this.schema.create 
+								const createJson = _this.schema.create;
 								const key = classInfo.selector.getKey();
-								const triple = createJson[_this.schema.name][key][0];
+								//Get the first default triple object that is set create.json 
+								const triple = createJson[classInfo.selector.selectors[0]][key][0];
 								newItem = {
 									nunaliit_type: 'triple',
 									subject: triple ? { ...triple.subject } : {},
@@ -2223,12 +2244,118 @@ var Form = $n2.Class({
 		};
 	},
 
+	_triple: function ($target, $elem, shouldAddTriple = false) {
+		var classString = $target.attr('class');
+
+		var classNames = null;
+		if (classString) {
+			classNames = classString.split(' ');
+		} else {
+			classNames = [];
+		};
+		var classInfo = parseClassNames(classNames);
+		var tripleSelector = classInfo.selector;
+		var tripleSelectors = tripleSelector.selectors;
+
+		var value = $target.val() || tripleSelector.getValue(this.obj);
+
+		var schemaName = tripleSelectors[0]
+		var tripleAttrKey = tripleSelectors[1]
+		var tripleObj = tripleSelector.getValue(this.obj);
+
+		if (!tripleObj) {
+			var parentObject = null;
+			while (!parentObject && classInfo && classInfo.selector) {
+				var parentObj = classInfo.selector.getValue(this.obj);
+				if (parentObj) {
+					parentObject = parentObj;
+					break;
+				} else {
+					classInfo.selector = classInfo.selector.getParentSelector();
+				}
+			}
+			let selectors = classInfo.selector.selectors;
+			if (parentObject && typeof parentObject === 'object' ) {
+				if(selectors[selectors.length - 1] === schemaName) {
+					this._addTripleAttr(parentObj, schemaName, tripleAttrKey, shouldAddTriple);
+				}
+			} else {
+				$n2.log('Error adding triple to triple ' + classInfo.selector.getKey() + ' no object found');
+			}
+		}
+
+		var triple = this.obj[schemaName][tripleAttrKey];
+		$target.val(value);
+
+		this.callback(this.obj, [schemaName], triple);
+	},
+
+	_addTripleAttr: function(parentObj, schemaName, tripleAttrKey, shouldAddTriple) {
+		const createJson = this.schema.create;
+		let triple = createJson[schemaName][tripleAttrKey];
+		if(!triple && shouldAddTriple) {
+			triple = {
+				nunaliit_type: 'triple',
+				subject: {},
+				predicate: {},
+				object: {}
+			}
+		}
+
+		if(!parentObj[tripleAttrKey] && triple) {
+			parentObj[tripleAttrKey]= triple;
+		} else if(triple) {
+			let existingTriple = parentObj[tripleAttrKey]
+			if(existingTriple) {
+				for (let key of ['subject', 'predicate', 'object']) {
+					if (triple[key] && Object.keys(triple[key]).length > 0 && Object.keys(existingTriple[key]).length === 0) {
+						existingTriple[key] = triple[key];
+					}
+				}
+				parentObj[tripleAttrKey] = existingTriple;
+			}
+		}
+	},
+
 	_installReference: function($container, $elem) {
 		var _this = this;
 		
 		var domSelector = $elem.attr('nunaliit-selector');
 		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
 		var parentSelector = objSel.getParentSelector();
+
+		const addTripleAttr = (shouldAddTriple  = false) => {
+			var parentObject = null;
+			let classSelector = objSel;
+			let tripleSelectors = classSelector.selectors;
+			while (!parentObject && classSelector) {
+				var parentObj = classSelector.getValue(this.obj);
+
+				if (parentObj) {
+					parentObject = parentObj;
+					break;
+				} else {
+					classSelector = classSelector.getParentSelector();
+				}
+			}
+
+			var schemaName = tripleSelectors[0];
+			var tripleAttrKey = tripleSelectors[1];
+			if (parentObject && typeof parentObject === 'object' ) {
+				if(classSelector.selectors[classSelector.selectors.length - 1] === schemaName) {
+					_this._addTripleAttr(parentObject, schemaName, tripleAttrKey, shouldAddTriple);
+				}
+			}
+
+			var triple = _this.obj[schemaName][tripleAttrKey]
+
+			_this.callback(this.obj, [schemaName], triple);
+		}
+
+		if($elem.hasClass('n2schema_field_triple')) {
+			addTripleAttr();
+		}
+
 		var key = objSel.getKey();
 
 		var funcIdentifier = $elem.attr('n2-search-func');
@@ -2340,6 +2467,10 @@ var Form = $n2.Class({
 			if( focusHandler ) {
 				$input.focus(function(e, eventParam){
 					var $input = $(this);
+
+					if($elem.hasClass('n2schema_field_triple')) {
+						addTripleAttr(true);
+					}
 
 					if( eventParam && eventParam.inhibitCallback ) {
 						return true;

@@ -536,14 +536,14 @@ public class SchemaAttribute {
 			if( null != id ){
 				JSONArray arr = new JSONArray();
 				
-				if( "triple".equals(elementType) && hasDefaultSelectionOption() ) {	
+				if( "triple".equals(elementType) && hasDefaultTripleSelectionOption() ) {
 					JSONObject triple = new JSONObject();
 					triple.put("nunaliit_type", "triple");
-	
+
 					putTripleAttribute(triple, "subject", tripleSubject);
 					putTripleAttribute(triple, "predicate", triplePredicate);
 					putTripleAttribute(triple, "object", tripleObject);
-					
+
 					arr.put(triple);
 				}
 				
@@ -638,20 +638,23 @@ public class SchemaAttribute {
 				throw new Exception("'id' is required for attribute of type 'triple'");
 			}
 
-			JSONObject triple = new JSONObject();
-			triple.put("nunaliit_type", "triple");
+			if( hasDefaultTripleSelectionOption() ) {
+				JSONObject triple = new JSONObject();
+				triple.put("nunaliit_type", "triple");
 
-			putTripleAttribute(triple, "subject", tripleSubject);
-			putTripleAttribute(triple, "predicate", triplePredicate);
-			putTripleAttribute(triple, "object", tripleObject);
+				putTripleAttribute(triple, "subject", tripleSubject);
+				putTripleAttribute(triple, "predicate", triplePredicate);
+				putTripleAttribute(triple, "object", tripleObject);
 
-			schemaDoc.put(id, triple);
+				schemaDoc.put(id, triple);
+			}
+
 		} else {
 			throw new Exception("Unable to include type "+type+" in create");
 		}
 	}
 
-	private boolean hasDefaultSelectionOption() {
+	private boolean hasDefaultTripleSelectionOption() {
 		SchemaAttribute[] attributes = {tripleSubject, triplePredicate, tripleObject};
 
 		for (SchemaAttribute attribute : attributes) {
@@ -1692,6 +1695,7 @@ public class SchemaAttribute {
 				if (null != placeholder) {
 					fieldType += ",placeholder=" + encodeFieldParameter(placeholder);
 				}
+				fieldType += ",triple";
 
 				pw.println("\t\t\t\t\t\t\t<div class=\"" + field + "\">");
 				if (null != this.label) {
@@ -1705,7 +1709,7 @@ public class SchemaAttribute {
 				if (null != this.label) {
 					pw.println("\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
 				}
-				pw.println("\t\t\t\t\t\t\t\t<select class=\"{{#:input}}" + fieldKey + "{{/:input}}\">");
+				pw.println("\t\t\t\t\t\t\t\t<select data-schema-type=\"triple\" class=\"{{#:input}}" + fieldKey +",triple{{/:input}}\" >");
 
 				for (SelectionOption option : options) {
 					pw.print("\t\t\t\t\t\t\t\t\t<option class=\"n2s_localize\" value=\"" + option.getValue() + "\">");
