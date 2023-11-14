@@ -1739,7 +1739,7 @@ var Form = $n2.Class({
 				var _this = this;
 
 				$divEvent.find('.n2schema_field_triple').each(function () {
-					if($(this).hasClass('n2schema_field_reference')) {
+					if( $(this).hasClass('n2schema_field_reference') ) {
 						_this._installReference($elem, $(this));
 						return
 					}
@@ -2248,7 +2248,7 @@ var Form = $n2.Class({
 		var classString = $target.attr('class');
 
 		var classNames = null;
-		if (classString) {
+		if( classString ) {
 			classNames = classString.split(' ');
 		} else {
 			classNames = [];
@@ -2263,11 +2263,11 @@ var Form = $n2.Class({
 		var tripleAttrKey = tripleSelectors[1]
 		var tripleObj = tripleSelector.getValue(this.obj);
 
-		if (!tripleObj) {
+		if( !tripleObj ) {
 			var parentObject = null;
-			while (!parentObject && classInfo && classInfo.selector) {
+			while( !parentObject && classInfo && classInfo.selector ) {
 				var parentObj = classInfo.selector.getValue(this.obj);
-				if (parentObj) {
+				if( parentObj ) {
 					parentObject = parentObj;
 					break;
 				} else {
@@ -2275,8 +2275,8 @@ var Form = $n2.Class({
 				}
 			}
 			let selectors = classInfo.selector.selectors;
-			if (parentObject && typeof parentObject === 'object' ) {
-				if(selectors[selectors.length - 1] === schemaName) {
+			if( parentObject && typeof parentObject === 'object' ) {
+				if( selectors[selectors.length - 1] === schemaName ) {
 					this._addTripleAttr(parentObj, schemaName, tripleAttrKey, shouldAddTriple);
 				}
 			} else {
@@ -2293,7 +2293,7 @@ var Form = $n2.Class({
 	_addTripleAttr: function(parentObj, schemaName, tripleAttrKey, shouldAddTriple) {
 		const createJson = this.schema.create;
 		let triple = createJson[schemaName][tripleAttrKey];
-		if(!triple && shouldAddTriple) {
+		if( !triple && shouldAddTriple ) {
 			triple = {
 				nunaliit_type: 'triple',
 				subject: {},
@@ -2302,13 +2302,13 @@ var Form = $n2.Class({
 			}
 		}
 
-		if(!parentObj[tripleAttrKey] && triple) {
+		if( !parentObj[tripleAttrKey] && triple ) {
 			parentObj[tripleAttrKey]= triple;
-		} else if(triple) {
+		} else if( triple ) {
 			let existingTriple = parentObj[tripleAttrKey]
-			if(existingTriple) {
-				for (let key of ['subject', 'predicate', 'object']) {
-					if (triple[key] && Object.keys(triple[key]).length > 0 && Object.keys(existingTriple[key]).length === 0) {
+			if( existingTriple ) {
+				for( let key of ['subject', 'predicate', 'object'] ) {
+					if( triple[key] && Object.keys(triple[key]).length > 0 && Object.keys(existingTriple[key]).length === 0 ) {
 						existingTriple[key] = triple[key];
 					}
 				}
@@ -2324,14 +2324,14 @@ var Form = $n2.Class({
 		var objSel = $n2.objectSelector.decodeFromDomAttribute(domSelector);
 		var parentSelector = objSel.getParentSelector();
 
-		const addTripleAttr = (shouldAddTriple  = false) => {
+		const addTripleAttr = (shouldAddTriple = false) => {
 			var parentObject = null;
 			let classSelector = objSel;
 			let tripleSelectors = classSelector.selectors;
-			while (!parentObject && classSelector) {
+			while( !parentObject && classSelector ) {
 				var parentObj = classSelector.getValue(this.obj);
 
-				if (parentObj) {
+				if( parentObj ) {
 					parentObject = parentObj;
 					break;
 				} else {
@@ -2341,8 +2341,8 @@ var Form = $n2.Class({
 
 			var schemaName = tripleSelectors[0];
 			var tripleAttrKey = tripleSelectors[1];
-			if (parentObject && typeof parentObject === 'object' ) {
-				if(classSelector.selectors[classSelector.selectors.length - 1] === schemaName) {
+			if( parentObject && typeof parentObject === 'object' ) {
+				if( classSelector.selectors[classSelector.selectors.length - 1] === schemaName ) {
 					_this._addTripleAttr(parentObject, schemaName, tripleAttrKey, shouldAddTriple);
 				}
 			}
@@ -2352,7 +2352,7 @@ var Form = $n2.Class({
 			_this.callback(this.obj, [schemaName], triple);
 		}
 
-		if($elem.hasClass('n2schema_field_triple')) {
+		if( $elem.hasClass('n2schema_field_triple') ) {
 			addTripleAttr();
 		}
 
@@ -2468,7 +2468,7 @@ var Form = $n2.Class({
 				$input.focus(function(e, eventParam){
 					var $input = $(this);
 
-					if($elem.hasClass('n2schema_field_triple')) {
+					if( $elem.hasClass('n2schema_field_triple') ) {
 						addTripleAttr(true);
 					}
 
