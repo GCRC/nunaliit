@@ -1403,14 +1403,15 @@ var ModuleDisplay = $n2.Class({
 
 			// Map max extent
 			var mapInfo = _this.module.getMapInfo();
-			if( mapInfo
+			if (mapInfo
 				&& mapInfo.coordinates
-				&& mapInfo.coordinates.maxExtent ){
-				mapOptions.mapCoordinateSpecifications.maxExtent =
-					mapInfo.coordinates.maxExtent;
-
-			} else if( mapOptions.mapDisplay.srsName !== null
-				&& mapOptions.mapDisplay.srsName !== 'EPSG:4326' ) {
+				&& mapInfo.coordinates.maxExtent) {
+				mapOptions.mapCoordinateSpecifications.maxExtent = mapInfo.coordinates.maxExtent;
+				if (mapInfo.coordinates.restrictedExtent) {
+					mapOptions.mapCoordinateSpecifications.restrictedExtent = mapInfo.coordinates.restrictedExtent;
+				}
+			} else if (mapOptions.mapDisplay.srsName !== null
+				&& mapOptions.mapDisplay.srsName !== 'EPSG:4326') {
 				mapOptions.mapCoordinateSpecifications.maxExtent =
 					mapOptions.mapCoordinateSpecifications.initialBounds;
 			};
