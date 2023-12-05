@@ -1602,7 +1602,15 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		
 		// Re-project vector layer features when base layer is changed
         this.map.events.register('changebaselayer',null,function(evt){
-        	// var baseLayer = evt.layer;
+        	const newLayer = evt?.layer
+			if (newLayer) {
+				const dispatch = _this._getDispatchService()
+				dispatch.send(DH, {
+					type: "mapBaseLayerChanged",
+					canvasName: _this.getCanvasName(),
+					newLayer
+				})
+			}
         	var lastProjectionObj = evt.oldProjection;
         	var currentProjectionObj = _this.map.getProjectionObject();
 			
