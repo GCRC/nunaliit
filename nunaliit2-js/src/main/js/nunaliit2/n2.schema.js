@@ -1850,7 +1850,7 @@ var Form = $n2.Class({
 						
 						var $item = $clicked.parents('.n2schema_array_item').first();
 						$item.remove();
-						//_this.refresh($elem);
+						_this.refresh($elem);
 
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
@@ -1863,6 +1863,7 @@ var Form = $n2.Class({
 						
 						var $item = $clicked.parents('.n2_tag_element').first();
 						$item.remove();
+						_this.refresh($elem);
 
 						_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						
@@ -1885,7 +1886,7 @@ var Form = $n2.Class({
 							var $item = $clicked.parents('.n2schema_array_item').first();
 							var $prevItem = $item.prev();
 							$item.insertBefore($prevItem);
-							//_this.refresh($elem);
+							_this.refresh($elem);
 
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
@@ -1903,7 +1904,7 @@ var Form = $n2.Class({
 							var $item = $clicked.parents('.n2schema_array_item').first();
 							var $nextItem = $item.next();
 							$item.insertAfter($nextItem);
-							//_this.refresh($elem);
+							_this.refresh($elem);
 
 							_this.callback(_this.obj,classInfo.selector.selectors,ary);
 						};
