@@ -5,9 +5,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.util.Map;
 
-import com.adobe.xmp.XMPIterator;
-import com.adobe.xmp.XMPMeta;
-import com.adobe.xmp.properties.XMPPropertyInfo;
+import com.adobe.internal.xmp.XMPIterator;
+import com.adobe.internal.xmp.XMPMeta;
+import com.adobe.internal.xmp.properties.XMPPropertyInfo;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
@@ -27,7 +27,7 @@ public class XmpTest extends TestCase {
 		try {
 			fis = new FileInputStream(panoFile);
 			BufferedInputStream bis = new BufferedInputStream(fis);
-			Metadata metadata = ImageMetadataReader.readMetadata(bis, true);
+			Metadata metadata = ImageMetadataReader.readMetadata(bis);
 			for (Directory directory : metadata.getDirectories()) {
 			    if( directory instanceof XmpDirectory ){
 			    	XmpDirectory xmpDirectory = (XmpDirectory)directory;
