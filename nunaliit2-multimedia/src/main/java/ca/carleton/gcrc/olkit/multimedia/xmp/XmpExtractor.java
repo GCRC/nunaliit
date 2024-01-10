@@ -4,7 +4,7 @@ import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 
-import com.adobe.xmp.XMPMeta;
+import com.adobe.internal.xmp.XMPMeta;
 import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
@@ -18,7 +18,7 @@ public class XmpExtractor {
 		try {
 			fis = new FileInputStream(file);
 			bis = new BufferedInputStream(fis);
-			Metadata metadata = ImageMetadataReader.readMetadata(bis, true);
+			Metadata metadata = ImageMetadataReader.readMetadata(bis);
 			for (Directory directory : metadata.getDirectories()) {
 			    if( directory instanceof XmpDirectory ){
 			    	XmpDirectory xmpDirectory = (XmpDirectory)directory;
