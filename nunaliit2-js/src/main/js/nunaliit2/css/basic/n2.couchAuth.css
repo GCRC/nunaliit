@@ -310,3 +310,50 @@ textarea.n2Auth_user_agreement_content {
 	width: 600px;
 	height: 400px;
 }
+
+/* If Custom Service sets No Dialog mode */
+.n2Auth_noDialog {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_login_user_line .n2Auth_input_field + .n2Auth_login_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_create_email_line .n2Auth_input_field + .n2Auth_create_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_create_user_line .n2Auth_input_field + .n2Auth_create_label
+{
+    top: 1em;
+}
+
+.n2Auth_noDialog .n2Auth_login_user_line .n2Auth_login_input .n2Auth_input_field + .n2Auth_login_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_login_user_line .n2Auth_input_field:focus + .n2Auth_login_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_login_user_line .n2Auth_input_field.n2_input_detected + .n2Auth_login_label,
+.n2Auth_noDialog .n2Auth_create_email_line .n2Auth_create_input .n2Auth_input_field + .n2Auth_create_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_create_email_line .n2Auth_input_field:focus + .n2Auth_create_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_create_email_line .n2Auth_input_field.n2_input_detected + .n2Auth_create_label,
+.n2Auth_noDialog .n2Auth_create_user_line .n2Auth_input_field + .n2Auth_create_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_create_user_line .n2Auth_input_field:focus + .n2Auth_noDialog .n2Auth_create_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_create_user_line .n2Auth_input_field.n2_input_detected + .n2Auth_create_label,
+.n2Auth_noDialog .n2Auth_recoverPassword .n2Auth_input_field:focus + .n2Auth_recoverPassword_label,
+.n2Auth_noDialog .n2Auth_recoverPassword .n2Auth_input_field + .n2Auth_recoverPassword_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_recoverPassword_email_line .n2Auth_input_field + .n2Auth_recoverPassword_label
+{
+    top: 4em;
+}
+
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_login_pw_line .n2Auth_input_field + .n2Auth_login_label
+{
+    top: 4em;
+}
+
+.n2Auth_noDialog .n2Auth_login_pw_line .n2Auth_login_input .n2Auth_input_field + .n2Auth_login_label
+{
+    top: 7em;
+}
+
+.n2Auth_noDialog .n2Auth_login_pw_line .n2Auth_login_input .n2Auth_input_field:focus + .n2Auth_login_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_login_pw_line .n2Auth_login_input .n2Auth_input_field:focus + .n2Auth_login_label,
+.n2Auth_noDialog .n2_input_change_detector .n2Auth_login_pw_line .n2Auth_login_input .n2Auth_input_field.n2_input_detected + .n2Auth_login_label
+{
+    top: 9em;
+}
