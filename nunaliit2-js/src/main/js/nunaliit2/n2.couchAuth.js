@@ -341,7 +341,6 @@ var AuthService = $n2.Class({
 			if (!target.hasClass("n2Auth_noDialog")) {
 				target.addClass("n2Auth_noDialog")
 			}
-			// if title make a div or something and put text in
 			if (dialogOptions.title) {
 				const existingTitle = target.find(".n2AuthService_noDialog_title")
 				if (existingTitle.length) {
