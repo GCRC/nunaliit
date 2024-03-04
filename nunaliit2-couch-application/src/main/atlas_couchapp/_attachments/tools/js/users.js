@@ -421,12 +421,15 @@ var UserCreationApplication = $n2.Class({
 	,token: null
 	
 	,userAgreementDoc: null
+
+	,redirectFunction: null
 	
 	,initialize: function(opts_){
 		var opts = $n2.extend({
 			config: null
 			,div: null
 			,token: null
+			,redirectFunction: null
 		},opts_);
 		
 		var _this = this;
@@ -458,6 +461,8 @@ var UserCreationApplication = $n2.Class({
 			this.divId = $n2.getUniqueId();
 			$( opts.div ).attr('id',this.divId);
 		};
+
+		this.redirectFunction = opts.redirectFunction
 		
 		var $display = this._getDiv();
 		$display.empty();
@@ -919,13 +924,16 @@ var UserCreationApplication = $n2.Class({
 			.text(link)
 			.appendTo($redirect);
 		
+		let redirect = redirectToMainSite
+		if (this.redirectFunction) redirect = this.redirectFunction
+		
 		// Log in user
 		if( this.authService ){
 			this.authService.login({
 				username: emailAdress
 				,password: password
-				,onSuccess: redirectToMainSite
-				,onError: redirectToMainSite
+				,onSuccess: redirect
+				,onError: redirect
 			});
 		};
 		
