@@ -10,6 +10,8 @@ import java.util.Vector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import org.apache.http.client.utils.URIBuilder;
+
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailMessage;
 import ca.carleton.gcrc.mail.MailRecipient;
@@ -144,7 +146,9 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		{
 			// Compute link
 			String urlEncodedToken = URLEncoder.encode(token, "UTF-8");
-			String link = createUserUrl + "?token=" + urlEncodedToken;
+			URIBuilder builder = new URIBuilder(createUserUrl);
+			builder.addParameter("token", urlEncodedToken);
+			String link = builder.build().toString();
 			parameters.put("link", link);
 		}
 		

@@ -84,6 +84,7 @@
 		<slf4j.version>1.7.13</slf4j.version>
 		<jsoup.version>1.12.1</jsoup.version>
 		<jena.version>3.17.0</jena.version>
+		<apache-httpclient.version>4.5.1</apache-httpclient.version>
 	</properties>
 	<modules>
 		<module>nunaliit2-jdbc</module>
