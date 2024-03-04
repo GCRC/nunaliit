@@ -145,9 +145,8 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		Map<String,String> parameters = new HashMap<String,String>();
 		{
 			// Compute link
-			String urlEncodedToken = URLEncoder.encode(token, "UTF-8");
 			URIBuilder builder = new URIBuilder(createUserUrl);
-			builder.addParameter("token", urlEncodedToken);
+			builder.addParameter("token", token);
 			String link = builder.build().toString();
 			parameters.put("link", link);
 		}
