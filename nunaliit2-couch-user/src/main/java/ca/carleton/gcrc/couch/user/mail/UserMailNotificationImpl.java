@@ -1,6 +1,5 @@
 package ca.carleton.gcrc.couch.user.mail;
 
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -228,8 +227,9 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		Map<String,String> parameters = new HashMap<String,String>();
 		{
 			// Compute link
-			String urlEncodedToken = URLEncoder.encode(token, "UTF-8");
-			String link = passwordRecoveryUrl + "?token=" + urlEncodedToken;
+			URIBuilder builder = new URIBuilder(passwordRecoveryUrl);
+			builder.addParameter("token", token);
+			String link = builder.build().toString();
 			parameters.put("link", link);
 		}
 		
