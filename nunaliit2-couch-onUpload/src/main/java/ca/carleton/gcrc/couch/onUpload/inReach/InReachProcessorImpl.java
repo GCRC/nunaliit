@@ -276,16 +276,11 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 				JSONArray addresses = event.optJSONArray("addresses");
 				if (null != addresses) {
-					if (addresses.length() == 0) {
-						genericInReachSchema.put("Recipients", "");
+					StringBuilder builder = new StringBuilder();
+					for (int j = 0; j < addresses.length(); j++) {
+						builder.append(addresses.getJSONObject(j).getString("address"));
 					}
-					else {
-						StringBuilder builder = new StringBuilder();
-						for (int j = 0; j < addresses.length(); j++) {
-							builder.append(addresses.getJSONObject(j).getString("address"));
-						}
-						genericInReachSchema.put("Recipients", builder.toString());
-					}
+					genericInReachSchema.put("Recipients", builder.toString());
 				}
 			}
 		} else {
