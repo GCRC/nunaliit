@@ -4,6 +4,7 @@ import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +26,21 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 	private InReachSettings settings = InReachConfiguration.getInReachSettings();
 	private final String genericSchemaName = "inReach";
+	private static HashMap<Integer, String> garminExploreMessageCodes = new HashMap<>();
+
+	public InReachProcessorImpl() {
+		garminExploreMessageCodes.put(0, "PositionReport");
+		garminExploreMessageCodes.put(2, "LocateResponse");
+		garminExploreMessageCodes.put(3, "FreeTextMessage");
+		garminExploreMessageCodes.put(4, "DeclareSOS");
+		garminExploreMessageCodes.put(6, "ConfirmSOS");
+		garminExploreMessageCodes.put(7, "CancelSOS");
+		garminExploreMessageCodes.put(8, "ReferencePoint");
+		garminExploreMessageCodes.put(10, "StartTrack");
+		garminExploreMessageCodes.put(11, "TrackInterval");
+		garminExploreMessageCodes.put(12, "StopTrack");
+		garminExploreMessageCodes.put(20, "MailCheck");
+	}
 
 	@Override
 	public void performSubmission(FileConversionContext conversionContext) throws Exception {
@@ -37,20 +53,20 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 		JSONObject inReachItem = doc.optJSONObject("Item");
 		if (null != inReachItem) {
-			processGeoPostTypeMessage(conversionContext);
+			processGeoProTypeMessage(conversionContext);
 			return;
 		}
 
 		JSONArray inReachEvents = doc.optJSONArray("Events");
 		if (null != inReachEvents) {
-			processGarminTypeMessage(conversionContext);
+			processGarminExploreTypeMessage(conversionContext);
 			return;
 		}
 
 		throw new Exception("Unknown inReach message type: " + docDescriptor.getDocId());
 	}
 
-	public void processGeoPostTypeMessage(FileConversionContext ctx) throws Exception {
+	public void processGeoProTypeMessage(FileConversionContext ctx) throws Exception {
 		String schemaName = genericSchemaName;
 		DocumentDescriptor docDescriptor = ctx.getDocument();
 		JSONObject doc = ctx.getDoc();
@@ -191,15 +207,90 @@ public class InReachProcessorImpl implements InReachProcessor {
 		ctx.saveDocument();
 	}
 
-	public void processGarminTypeMessage(FileConversionContext ctx) throws Exception {
+	public void processGarminExploreTypeMessage(FileConversionContext ctx) throws Exception {
 		String schemaName = genericSchemaName;
 		DocumentDescriptor descriptor = ctx.getDocument();
+		String docId = descriptor.getDocId();
 		JSONObject doc = ctx.getDoc();
 		JSONArray events = doc.optJSONArray("Events");
-		JSONObject genericInReachSchema = new JSONObject();
-		JSONObject inReachPosition = new JSONObject();
+		String version = doc.optString("Version", null);
+		JSONObject genericInReachSchema = null;
+		JSONObject inReachPosition = null;
+		InReachForm form = null;
 
+		if (null == version) {
+			throw new Exception("Garmin-type inReach message missing 'Version' key: " + docId);
+		}
 
+		if (null == events) {
+			throw new Exception("Could not find 'Events' key in Garmin-type inReach message: " + docId);
+		}
+
+		if ("2.0" == version) {
+			for (int i = 0; i < events.length(); i++) {
+				form = null;
+				genericInReachSchema = new JSONObject();
+				inReachPosition = new JSONObject();
+				JSONObject event = events.getJSONObject(i);
+
+				String freeText = event.optString("freeText", null);
+				if (null != freeText) {
+					genericInReachSchema.put("Message", freeText);
+					for (InReachForm testedForm : settings.getForms()) {
+						String prefix = testedForm.getPrefix();
+						if (null != prefix) {
+							if (freeText.startsWith(prefix)) {
+								form = testedForm;
+							}
+						}
+					}
+				}
+
+				Integer messageCode = event.optInt("messageCode", -12345);
+				if (-12345 != messageCode) {
+					if ((4 == messageCode) || (6 == messageCode) || (7 == messageCode)) {
+						genericInReachSchema.put("EmergencyState", 1); // emergency-related
+					} else {
+						genericInReachSchema.put("EmergencyState", -1); // not emergency-related
+					}
+
+					String messageType = garminExploreMessageCodes.getOrDefault(messageCode, null);
+					if (null == messageType) {
+						genericInReachSchema.put("MessageType",
+								"NunaliitUnhandledGarminExploreMessageCode-" + messageCode.toString());
+					}
+					else {
+						genericInReachSchema.put("MessageType", messageType);
+					}
+				}
+
+				String imei = event.optString("imei", null);
+				if (null != imei) {
+					genericInReachSchema.put("DeviceId", imei);
+				}
+
+				Integer timeStamp = event.optInt("timeStamp", -12345);
+				if (-12345 != timeStamp) {
+					genericInReachSchema.put("MessageId", timeStamp.toString());
+				}
+
+				JSONArray addresses = event.optJSONArray("addresses");
+				if (null != addresses) {
+					if (addresses.length() == 0) {
+						genericInReachSchema.put("Recipients", "");
+					}
+					else {
+						StringBuilder builder = new StringBuilder();
+						for (int j = 0; j < addresses.length(); j++) {
+							builder.append(addresses.getJSONObject(j).getString("address"));
+						}
+						genericInReachSchema.put("Recipients", builder.toString());
+					}
+				}
+			}
+		} else {
+			throw new Exception("Unhandled version of GarminExplore type inReach message: " + docId);
+		}
 	}
 
 	public void extractInformationForForm(
