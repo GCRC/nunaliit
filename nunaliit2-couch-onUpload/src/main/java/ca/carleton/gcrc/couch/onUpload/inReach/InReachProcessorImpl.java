@@ -24,22 +24,39 @@ import ca.carleton.gcrc.utils.DateUtils;
 public class InReachProcessorImpl implements InReachProcessor {
 
 	private InReachSettings settings = InReachConfiguration.getInReachSettings();
+	private final String genericSchemaName = "inReach";
 
 	@Override
 	public void performSubmission(FileConversionContext conversionContext) throws Exception {
 		DocumentDescriptor docDescriptor = conversionContext.getDocument();
-
 		JSONObject doc = conversionContext.getDoc();
 
-		JSONObject jsonItem = null;
+		if (null == doc) {
+			throw new Exception("Unable to retrieve document while performing inReach submission");
+		}
+
+		JSONObject inReachItem = doc.optJSONObject("Item");
+		if (null != inReachItem) {
+			processGeoPostTypeMessage(conversionContext);
+			return;
+		}
+
+		JSONArray inReachEvents = doc.optJSONArray("Events");
+		if (null != inReachEvents) {
+			processGarminTypeMessage(conversionContext);
+			return;
+		}
+
+		throw new Exception("Unknown inReach message type: " + docDescriptor.getDocId());
+	}
+
+	public void processGeoPostTypeMessage(FileConversionContext ctx) throws Exception {
+		String schemaName = genericSchemaName;
+		DocumentDescriptor docDescriptor = ctx.getDocument();
+		JSONObject doc = ctx.getDoc();
+		JSONObject jsonItem = doc.optJSONObject("Item");
 		JSONObject genericInReachSchema = new JSONObject();
 		JSONObject inReachPosition = new JSONObject();
-
-		String schemaName = "inReach";
-
-		if (null != doc) {
-			jsonItem = doc.optJSONObject("Item");
-		}
 
 		// Select form
 		InReachForm form = null;
@@ -102,7 +119,6 @@ public class InReachProcessorImpl implements InReachProcessor {
 				double lon = jsonPosition.getDouble("Longitude");
 
 				GeometryDescriptor geomDesc = docDescriptor.getGeometryDescription();
-
 				Geometry point = new Point(lon, lat);
 				BoundingBox bbox = new BoundingBox(lon, lat, lon, lat);
 
@@ -137,7 +153,6 @@ public class InReachProcessorImpl implements InReachProcessor {
 				// Round ms start interval timestamp to the nearest second
 				long intervalStart = (gpsDate.getTime() + 500) / 1000;
 				long intervalStart_ms = intervalStart * 1000;
-
 				long intervalEnd = intervalStart_ms + 1000;
 
 				Date gpsTimestampDate = new Date(intervalStart_ms);
@@ -167,16 +182,23 @@ public class InReachProcessorImpl implements InReachProcessor {
 		// If a form is selected, extract information
 		if (null != form) {
 			try {
-				extractInformationForForm(conversionContext, form);
+				extractInformationForForm(ctx, form);
 			} catch (Exception e) {
 				throw new Exception("Error while extracting information from the inReach data forms", e);
 			}
 		}
 
-		conversionContext.saveDocument();
+		ctx.saveDocument();
 	}
 
-	public void processGeoPostTypeMessage(FileConversionContext ctx) throws Exception {
+	public void processGarminTypeMessage(FileConversionContext ctx) throws Exception {
+		String schemaName = genericSchemaName;
+		DocumentDescriptor descriptor = ctx.getDocument();
+		JSONObject doc = ctx.getDoc();
+		JSONArray events = doc.optJSONArray("Events");
+		JSONObject genericInReachSchema = new JSONObject();
+		JSONObject inReachPosition = new JSONObject();
+
 
 	}
 
