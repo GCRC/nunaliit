@@ -28,8 +28,8 @@ public class InReachProcessorImpl implements InReachProcessor {
 	@Override
 	public void performSubmission(FileConversionContext conversionContext) throws Exception {
 		DocumentDescriptor docDescriptor = conversionContext.getDocument();
-		
-		JSONObject doc =  conversionContext.getDoc();
+
+		JSONObject doc = conversionContext.getDoc();
 
 		JSONObject jsonItem = null;
 		JSONObject genericInReachSchema = new JSONObject();
@@ -37,20 +37,20 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 		String schemaName = "inReach";
 
-		if( null != doc ){
+		if (null != doc) {
 			jsonItem = doc.optJSONObject("Item");
 		}
 
 		// Select form
 		InReachForm form = null;
-		if( null != jsonItem ){
+		if (null != jsonItem) {
 			String message = jsonItem.optString("Message", null);
-			if( null != message ){
+			if (null != message) {
 				genericInReachSchema.put("Message", message);
-				for(InReachForm testedForm : settings.getForms()){
+				for (InReachForm testedForm : settings.getForms()) {
 					String prefix = testedForm.getPrefix();
-					if( null != prefix ){
-						if( message.startsWith(prefix) ){
+					if (null != prefix) {
+						if (message.startsWith(prefix)) {
 							form = testedForm;
 						}
 					}
@@ -58,32 +58,31 @@ public class InReachProcessorImpl implements InReachProcessor {
 			}
 
 			int emergencyState = jsonItem.optInt("EmergencyState", -12345);
-			if ( emergencyState != -12345 ){
+			if (emergencyState != -12345) {
 				genericInReachSchema.put("EmergencyState", emergencyState);
 			}
 
 			String deviceId = jsonItem.optString("DeviceId", null);
-			if ( deviceId != null ){
+			if (deviceId != null) {
 				genericInReachSchema.put("DeviceId", deviceId);
 			}
 
 			String messageId = jsonItem.optString("MessageId", null);
-			if ( messageId != null ){
+			if (messageId != null) {
 				genericInReachSchema.put("MessageId", messageId);
 			}
 
 			String messageType = jsonItem.optString("MessageType", null);
-			if ( messageType != null ){
+			if (messageType != null) {
 				genericInReachSchema.put("MessageType", messageType);
 			}
 
 			String recipients = jsonItem.optString("Recipients", null);
-			if ( recipients != null ){
+			if (recipients != null) {
 				genericInReachSchema.put("Recipients", recipients);
-			}
-			else {
+			} else {
 				JSONArray recipientsAsArray = jsonItem.optJSONArray("Recipients");
-				if ( recipientsAsArray != null ){
+				if (recipientsAsArray != null) {
 					genericInReachSchema.put("Recipients", recipientsAsArray);
 				}
 			}
@@ -94,19 +93,19 @@ public class InReachProcessorImpl implements InReachProcessor {
 		{
 			docDescriptor.removeGeometryDescription();
 
-			if( null != jsonItem ){
+			if (null != jsonItem) {
 				jsonPosition = jsonItem.optJSONObject("Position");
 			}
-			
-			if( null != jsonPosition ){
+
+			if (null != jsonPosition) {
 				double lat = jsonPosition.getDouble("Latitude");
 				double lon = jsonPosition.getDouble("Longitude");
 
 				GeometryDescriptor geomDesc = docDescriptor.getGeometryDescription();
-				
-				Geometry point = new Point(lon,lat);
+
+				Geometry point = new Point(lon, lat);
 				BoundingBox bbox = new BoundingBox(lon, lat, lon, lat);
-				
+
 				geomDesc.setGeometry(point);
 				geomDesc.setBoundingBox(bbox);
 
@@ -117,25 +116,24 @@ public class InReachProcessorImpl implements InReachProcessor {
 		}
 
 		// Extract time
-		if( null != jsonPosition ) {
+		if (null != jsonPosition) {
 			String gpsTimestamp = jsonPosition.optString("GpsTimestamp", null);
 			DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 			df.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-			
 			Date gpsDate = null;
-			if( null != gpsTimestamp ) {
+			if (null != gpsTimestamp) {
 				inReachPosition.put("GpsTimestamp", gpsTimestamp);
 				genericInReachSchema.put("Position", inReachPosition);
 				try {
 					gpsDate = DateUtils.parseGpsTimestamp(gpsTimestamp);
-				} catch(Exception e) {
+				} catch (Exception e) {
 					throw new Exception("Error while parsing GPS timestamp", e);
 				}
 			}
 
 			// create date structure
-			if( null != gpsDate ) {
+			if (null != gpsDate) {
 				// Round ms start interval timestamp to the nearest second
 				long intervalStart = (gpsDate.getTime() + 500) / 1000;
 				long intervalStart_ms = intervalStart * 1000;
@@ -159,15 +157,15 @@ public class InReachProcessorImpl implements InReachProcessor {
 		doc.put(schemaName, genericInReachSchema);
 
 		// Set schema
-		if( null != form ){
-			if( null != form.getTitle() ){
+		if (null != form) {
+			if (null != form.getTitle()) {
 				schemaName = "inReach_" + form.getTitle();
 			}
 		}
 		docDescriptor.setSchemaName(schemaName);
 
 		// If a form is selected, extract information
-		if( null != form ){
+		if (null != form) {
 			try {
 				extractInformationForForm(conversionContext, form);
 			} catch (Exception e) {
@@ -179,160 +177,160 @@ public class InReachProcessorImpl implements InReachProcessor {
 	}
 
 	public void processGeoPostTypeMessage(FileConversionContext ctx) throws Exception {
-		
+
 	}
 
 	public void extractInformationForForm(
-			FileConversionContext conversionContext, 
+			FileConversionContext conversionContext,
 			InReachForm form) throws Exception {
 
-		JSONObject doc =  conversionContext.getDoc();
+		JSONObject doc = conversionContext.getDoc();
 
 		JSONObject jsonItem = doc.getJSONObject("Item");
 		String message = jsonItem.optString("Message", null);
 		if (null == message) {
 			throw new Exception("inReach data does not have 'Message' key");
 		}
-		if( false == message.startsWith(form.getPrefix()) ){
+		if (false == message.startsWith(form.getPrefix())) {
 			throw new Exception("Message should start with the form prefix");
 		}
-		String messageData = message.substring( form.getPrefix().length() );
+		String messageData = message.substring(form.getPrefix().length());
 
 		// Install data for conversion
 		String attName = "inReach_" + form.getTitle();
 		JSONObject jsonData = new JSONObject();
 		doc.put(attName, jsonData);
-		
+
 		// Create a regular expression to parse the message
 		Pattern messagePattern = null;
 		{
 			String escapedDelimiter = regexEscape(form.getDelimiter());
-			
+
 			StringWriter sw = new StringWriter();
 			sw.write("^");
 			boolean first = true;
-			for(InReachFormField field : form.getFields()){
-				if( first ){
+			for (InReachFormField field : form.getFields()) {
+				if (first) {
 					first = false;
 				} else {
 					sw.write(escapedDelimiter);
 				}
 				sw.write("(");
-				
+
 				InReachFormField.Type fieldType = field.getType();
-				if( InReachFormField.Type.PICKLIST == fieldType ){
+				if (InReachFormField.Type.PICKLIST == fieldType) {
 					sw.write("\\d*");
-				} else if( InReachFormField.Type.TEXT == fieldType ) {
+				} else if (InReachFormField.Type.TEXT == fieldType) {
 					sw.write(".*");
-				} else if( InReachFormField.Type.NUMBER == fieldType ) {
+				} else if (InReachFormField.Type.NUMBER == fieldType) {
 					sw.write("\\d*");
 				} else {
-					throw new Exception("Unexpected type: "+fieldType);
+					throw new Exception("Unexpected type: " + fieldType);
 				}
-				
+
 				sw.write(")");
 			}
 			sw.write("$");
 			sw.flush();
-			
-			messagePattern = Pattern.compile(sw.toString(),Pattern.DOTALL);
+
+			messagePattern = Pattern.compile(sw.toString(), Pattern.DOTALL);
 		}
-		
+
 		// Parse message data using pattern
 		Matcher messageMatcher = messagePattern.matcher(messageData);
-		if( false == messageMatcher.matches() ){
+		if (false == messageMatcher.matches()) {
 			throw new Exception("Message data does not conform the expected pattern");
 		}
-		
+
 		// Iterate over the fields, assigning values
 		List<InReachFormField> fields = form.getFields();
-		for(int i=0,e=fields.size(); i<e; ++i){
+		for (int i = 0, e = fields.size(); i < e; ++i) {
 			InReachFormField field = fields.get(i);
-			String data = messageMatcher.group(i+1);
-			
+			String data = messageMatcher.group(i + 1);
+
 			String fieldName = field.getName();
 			fieldName = escapeJsonAttribute(fieldName);
 
 			String fieldDefaultValue = field.getDefault();
 
 			Type fieldType = field.getType();
-			if( InReachFormField.Type.PICKLIST == fieldType ){
-				if( "".equals(data.trim()) && null != fieldDefaultValue ) {
+			if (InReachFormField.Type.PICKLIST == fieldType) {
+				if ("".equals(data.trim()) && null != fieldDefaultValue) {
 					// Not provided. But a default is provided. Use default.
 					data = fieldDefaultValue;
 				}
 
-				if( "".equals(data.trim()) ) {
+				if ("".equals(data.trim())) {
 					// Not provided and no default: leave empty
 
 				} else {
 					int index = Integer.parseInt(data);
 					index = index - 1; // 1-based index
-					
+
 					List<String> values = field.getValues();
-					if( values.size() <= index ){
-						throw new Exception("Index is out of bound for field "+fieldName+": "+index);
+					if (values.size() <= index) {
+						throw new Exception("Index is out of bound for field " + fieldName + ": " + index);
 					}
-					
+
 					String value = values.get(index);
 					jsonData.put(fieldName, value);
 				}
-				
-			} else if( InReachFormField.Type.TEXT == fieldType ) {
-				if( "".equals(data) && null != fieldDefaultValue ){
+
+			} else if (InReachFormField.Type.TEXT == fieldType) {
+				if ("".equals(data) && null != fieldDefaultValue) {
 					jsonData.put(fieldName, fieldDefaultValue);
 				} else {
 					jsonData.put(fieldName, data);
 				}
 
-			} else if( InReachFormField.Type.NUMBER == fieldType ) {
-				if( "".equals(data.trim()) && null != fieldDefaultValue ) {
+			} else if (InReachFormField.Type.NUMBER == fieldType) {
+				if ("".equals(data.trim()) && null != fieldDefaultValue) {
 					// Not provided. But a default is provided. Use default.
 					data = fieldDefaultValue;
 				}
-				if( "".equals(data.trim()) ) {
+				if ("".equals(data.trim())) {
 					// Not provided and no default: leave empty
 
 				} else {
 					jsonData.put(fieldName, Integer.parseInt(data));
 				}
 			} else {
-				throw new Exception("Unexpected type: "+fieldType);
+				throw new Exception("Unexpected type: " + fieldType);
 			}
 		}
 	}
 
 	public String regexEscape(String delimiter) {
 		StringBuilder sb = new StringBuilder();
-		
-		for(char c : delimiter.toCharArray()){
-			if( '|' == c ){
+
+		for (char c : delimiter.toCharArray()) {
+			if ('|' == c) {
 				sb.append("\\|");
 			} else {
 				sb.append(c);
 			}
 		}
-		
+
 		return sb.toString();
 	}
 
 	public String escapeJsonAttribute(String fieldName) {
 		StringBuilder sb = new StringBuilder();
-		
-		for(char c : fieldName.toCharArray()){
-			if( c >= '0' &&  c <= '9' ){
+
+		for (char c : fieldName.toCharArray()) {
+			if (c >= '0' && c <= '9') {
 				sb.append(c);
-			} else if( c >= 'a' &&  c <= 'z' ){
+			} else if (c >= 'a' && c <= 'z') {
 				sb.append(c);
-			} else if( c >= 'A' &&  c <= 'Z' ){
+			} else if (c >= 'A' && c <= 'Z') {
 				sb.append(c);
-			} else if( c == '_' ){
+			} else if (c == '_') {
 				sb.append(c);
 			} else {
 				// skip
 			}
 		}
-		
+
 		return sb.toString();
 	}
 }
