@@ -23,10 +23,10 @@ import ca.carleton.gcrc.utils.DateUtils;
 
 public class InReachProcessorImpl implements InReachProcessor {
 
+	private InReachSettings settings = InReachConfiguration.getInReachSettings();
+
 	@Override
 	public void performSubmission(FileConversionContext conversionContext) throws Exception {
-		InReachSettings settings = InReachConfiguration.getInReachSettings();
-
 		DocumentDescriptor docDescriptor = conversionContext.getDocument();
 		
 		JSONObject doc =  conversionContext.getDoc();
@@ -176,6 +176,10 @@ public class InReachProcessorImpl implements InReachProcessor {
 		}
 
 		conversionContext.saveDocument();
+	}
+
+	public void processGeoPostTypeMessage(FileConversionContext ctx) throws Exception {
+		
 	}
 
 	public void extractInformationForForm(
