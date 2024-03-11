@@ -23,6 +23,7 @@ import ca.carleton.gcrc.geom.BoundingBox;
 import ca.carleton.gcrc.geom.Geometry;
 import ca.carleton.gcrc.geom.MultiPoint;
 import ca.carleton.gcrc.geom.Point;
+import ca.carleton.gcrc.geom.wkt.WktWriter;
 import ca.carleton.gcrc.utils.DateUtils;
 
 public class InReachProcessorImpl implements InReachProcessor {
@@ -30,6 +31,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 	private InReachSettings settings = InReachConfiguration.getInReachSettings();
 	private final String genericSchemaName = "inReach";
 	private static HashMap<Integer, String> garminExploreMessageCodes = new HashMap<>();
+	private static WktWriter wktWriter = new WktWriter();
 
 	public InReachProcessorImpl() {
 		garminExploreMessageCodes.put(0, "PositionReport");
@@ -215,6 +217,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 		DocumentDescriptor descriptor = ctx.getDocument();
 		String docId = descriptor.getDocId();
 		JSONObject doc = ctx.getDoc();
+		JSONObject generatedDoc = null;
 		JSONArray events = doc.optJSONArray("Events");
 		String version = doc.optString("Version", null);
 		JSONObject genericInReachSchema = null;
@@ -232,6 +235,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 		if ("2.0" == version) {
 			for (int i = 0; i < events.length(); i++) {
 				form = null;
+				generatedDoc = new JSONObject();
 				genericInReachSchema = new JSONObject();
 				inReachPosition = new JSONObject();
 				JSONObject event = events.getJSONObject(i);
@@ -275,15 +279,27 @@ public class InReachProcessorImpl implements InReachProcessor {
 				if (null != msgPosition) {
 					double latitude = msgPosition.getDouble("latitude");
 					double longitude = msgPosition.getDouble("longitude");
+					inReachPosition.put("Latitude", latitude);
+					inReachPosition.put("Longitude", longitude);
 
 					Point location = new Point(longitude, latitude);
 					List<Point> tmp = new Vector<Point>();
 					tmp.add(location);
 					Geometry multipoint = new MultiPoint(tmp);
-					BoundingBox bbox = new BoundingBox(longitude, latitude, longitude, latitude);
+					BoundingBox box = multipoint.getBoundingBox();
+					JSONArray bbox = new JSONArray();
+					bbox.put(box.getMinX());
+					bbox.put(box.getMinY());
+					bbox.put(box.getMaxX());
+					bbox.put(box.getMaxY());
+					StringWriter wkt = new StringWriter();
+					wktWriter.write(multipoint, wkt);
 
-					inReachPosition.put("Latitude", latitude);
-					inReachPosition.put("Longitude", longitude);
+					JSONObject geom = new JSONObject();
+					geom.put("nunaliit_type", "geometry");
+					geom.put("wkt", wkt.toString());
+					geom.put("bbox", bbox);
+					generatedDoc.put("nunaliit_geom", geom);
 				}
 
 				Long timeStamp = event.optLong("timeStamp", -12345);
@@ -331,6 +347,17 @@ public class InReachProcessorImpl implements InReachProcessor {
 					}
 					genericInReachSchema.put("Recipients", builder.toString());
 				}
+
+				generatedDoc.put(schemaName, genericInReachSchema);
+				generatedDoc.put("nunaliit_created", descriptor.getCreatedObject());
+				generatedDoc.put("nunaliit_last_updated", descriptor.getLastUpdatedObject());
+
+				if (null != form) {
+					if (null != form.getTitle()) {
+						schemaName = schemaName + "_" + form.getTitle();
+					}
+				}
+				ctx.createDocument(generatedDoc);
 			}
 		} else {
 			throw new Exception("Unhandled version of GarminExplore type inReach message: " + docId);
