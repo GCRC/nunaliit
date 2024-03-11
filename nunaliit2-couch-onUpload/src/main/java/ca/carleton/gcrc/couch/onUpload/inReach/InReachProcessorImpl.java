@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.TimeZone;
+import java.util.Vector;
+import java.time.Instant;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -19,6 +21,7 @@ import ca.carleton.gcrc.couch.onUpload.conversion.GeometryDescriptor;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachFormField.Type;
 import ca.carleton.gcrc.geom.BoundingBox;
 import ca.carleton.gcrc.geom.Geometry;
+import ca.carleton.gcrc.geom.MultiPoint;
 import ca.carleton.gcrc.geom.Point;
 import ca.carleton.gcrc.utils.DateUtils;
 
@@ -258,8 +261,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 					if (null == messageType) {
 						genericInReachSchema.put("MessageType",
 								"NunaliitUnhandledGarminExploreMessageCode-" + messageCode.toString());
-					}
-					else {
+					} else {
 						genericInReachSchema.put("MessageType", messageType);
 					}
 				}
@@ -269,16 +271,63 @@ public class InReachProcessorImpl implements InReachProcessor {
 					genericInReachSchema.put("DeviceId", imei);
 				}
 
-				Integer timeStamp = event.optInt("timeStamp", -12345);
+				JSONObject msgPosition = event.optJSONObject("point");
+				if (null != msgPosition) {
+					double latitude = msgPosition.getDouble("latitude");
+					double longitude = msgPosition.getDouble("longitude");
+
+					Point location = new Point(longitude, latitude);
+					List<Point> tmp = new Vector<Point>();
+					tmp.add(location);
+					Geometry multipoint = new MultiPoint(tmp);
+					BoundingBox bbox = new BoundingBox(longitude, latitude, longitude, latitude);
+
+					inReachPosition.put("Latitude", latitude);
+					inReachPosition.put("Longitude", longitude);
+				}
+
+				Long timeStamp = event.optLong("timeStamp", -12345);
+				String isoTimestamp = Instant.ofEpochMilli(timeStamp).toString();
+				DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+				df.setTimeZone(TimeZone.getTimeZone("UTC"));
 				if (-12345 != timeStamp) {
+					inReachPosition.put("GpsTimestamp", isoTimestamp);
+					genericInReachSchema.put("Position", inReachPosition);
+					// There is no MessageId equivalent, so use the timestamp
 					genericInReachSchema.put("MessageId", timeStamp.toString());
+				}
+
+				Date gpsDate = null;
+				try {
+					gpsDate = DateUtils.parseGpsTimestamp(isoTimestamp);
+				} catch (Exception e) {
+					throw new Exception("Error while parsing GPS timestamp", e);
+				}
+				if (null != gpsDate) {
+					long intervalStart = (gpsDate.getTime() + 500) / 1000;
+					long intervalStart_ms = intervalStart * 1000;
+					long intervalEnd = intervalStart_ms + 1000;
+
+					Date gpsTimestampDate = new Date(intervalStart_ms);
+					String formattedGpsTimestamp = df.format(gpsTimestampDate);
+
+					JSONObject jsonDate = new JSONObject();
+					jsonDate.put("nunaliit_type", "date");
+					jsonDate.put("date", formattedGpsTimestamp);
+					jsonDate.put("min", intervalStart_ms);
+					jsonDate.put("max", intervalEnd);
+
+					genericInReachSchema.put("nunaliit_gps_datetime", jsonDate);
 				}
 
 				JSONArray addresses = event.optJSONArray("addresses");
 				if (null != addresses) {
 					StringBuilder builder = new StringBuilder();
+					String delimiter = "";
 					for (int j = 0; j < addresses.length(); j++) {
+						builder.append(delimiter);
 						builder.append(addresses.getJSONObject(j).getString("address"));
+						delimiter = ","; // Unknown what separated multiple recipients previously, assume comma for now
 					}
 					genericInReachSchema.put("Recipients", builder.toString());
 				}
