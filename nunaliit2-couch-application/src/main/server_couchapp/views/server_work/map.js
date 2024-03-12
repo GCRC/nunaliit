@@ -98,6 +98,11 @@ function(doc) {
 				&& typeof doc.Item.DeviceId === 'string'
 				&& typeof doc.Item.MessageId === 'string'
 			)
+			||
+			(
+				typeof doc.Version === 'string'
+				&& Array.isArray(doc.Events)
+			)
 		)
 	) {
 		if (typeof doc.nunaliit_schema === 'string') {
