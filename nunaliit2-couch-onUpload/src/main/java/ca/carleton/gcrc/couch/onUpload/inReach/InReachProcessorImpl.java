@@ -203,7 +203,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 		// If a form is selected, extract information
 		if (null != form) {
 			try {
-				extractInformationForForm(ctx, form);
+				extractInformationForForm(ctx.getDoc(), form);
 			} catch (Exception e) {
 				throw new Exception("Error while extracting information from the inReach data forms", e);
 			}
@@ -356,7 +356,13 @@ public class InReachProcessorImpl implements InReachProcessor {
 					if (null != form.getTitle()) {
 						schemaName = schemaName + "_" + form.getTitle();
 					}
+					try {
+						extractInformationForForm(generatedDoc, form);
+					} catch (Exception e) {
+						throw new Exception("Error while extracting information from the inReach data forms: ", e);
+					}
 				}
+
 				ctx.createDocument(generatedDoc);
 			}
 		} else {
@@ -365,12 +371,10 @@ public class InReachProcessorImpl implements InReachProcessor {
 	}
 
 	public void extractInformationForForm(
-			FileConversionContext conversionContext,
+			JSONObject doc,
 			InReachForm form) throws Exception {
 
-		JSONObject doc = conversionContext.getDoc();
-
-		JSONObject jsonItem = doc.getJSONObject("Item");
+		JSONObject jsonItem = doc.getJSONObject(genericSchemaName);
 		String message = jsonItem.optString("Message", null);
 		if (null == message) {
 			throw new Exception("inReach data does not have 'Message' key");
