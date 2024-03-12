@@ -59,13 +59,11 @@ public class InReachProcessorImpl implements InReachProcessor {
 		JSONObject inReachItem = doc.optJSONObject("Item");
 		if (null != inReachItem) {
 			processGeoProTypeMessage(conversionContext);
-			return;
 		}
 
 		JSONArray inReachEvents = doc.optJSONArray("Events");
 		if (null != inReachEvents) {
 			processGarminExploreTypeMessage(conversionContext);
-			return;
 		}
 
 		throw new Exception("Unknown inReach message type: " + docDescriptor.getDocId());
