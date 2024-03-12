@@ -57,16 +57,17 @@ public class InReachProcessorImpl implements InReachProcessor {
 		}
 
 		JSONObject inReachItem = doc.optJSONObject("Item");
+		JSONArray inReachEvents = doc.optJSONArray("Events");
 		if (null != inReachItem) {
 			processGeoProTypeMessage(conversionContext);
 		}
-
-		JSONArray inReachEvents = doc.optJSONArray("Events");
-		if (null != inReachEvents) {
+		else if (null != inReachEvents) {
 			processGarminExploreTypeMessage(conversionContext);
 		}
+		else {
+			throw new Exception("Unknown inReach message type: " + docDescriptor.getDocId());
+		}
 
-		throw new Exception("Unknown inReach message type: " + docDescriptor.getDocId());
 	}
 
 	public void processGeoProTypeMessage(FileConversionContext ctx) throws Exception {
@@ -224,10 +225,6 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 		if (null == version) {
 			throw new Exception("Garmin-type inReach message missing 'Version' key: " + docId);
-		}
-
-		if (null == events) {
-			throw new Exception("Could not find 'Events' key in Garmin-type inReach message: " + docId);
 		}
 
 		if ("2.0" == version) {
