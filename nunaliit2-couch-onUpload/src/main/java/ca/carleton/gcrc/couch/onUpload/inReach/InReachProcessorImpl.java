@@ -227,7 +227,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 			throw new Exception("Garmin-type inReach message missing 'Version' key: " + docId);
 		}
 
-		if ("2.0" == version) {
+		if (version.equals("2.0")) {
 			for (int i = 0; i < events.length(); i++) {
 				form = null;
 				generatedDoc = new JSONObject();
