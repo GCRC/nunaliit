@@ -60,11 +60,9 @@ public class InReachProcessorImpl implements InReachProcessor {
 		JSONArray inReachEvents = doc.optJSONArray("Events");
 		if (null != inReachItem) {
 			processGeoProTypeMessage(conversionContext);
-		}
-		else if (null != inReachEvents) {
+		} else if (null != inReachEvents) {
 			processGarminExploreTypeMessage(conversionContext);
-		}
-		else {
+		} else {
 			throw new Exception("Unknown inReach message type: " + docDescriptor.getDocId());
 		}
 
@@ -358,8 +356,14 @@ public class InReachProcessorImpl implements InReachProcessor {
 					}
 				}
 
+				generatedDoc.put("nunaliit_schema", schemaName);
 				ctx.createDocument(generatedDoc);
 			}
+
+			// We will let this exist in the database, but set the schema to 'inReach' so it
+			// stops looping work
+			descriptor.setSchemaName(genericSchemaName);
+			ctx.saveDocument();
 		} else {
 			throw new Exception("Unhandled version of GarminExplore type inReach message: " + docId);
 		}
