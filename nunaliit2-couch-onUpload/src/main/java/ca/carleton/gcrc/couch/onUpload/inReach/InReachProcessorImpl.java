@@ -10,7 +10,9 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.TimeZone;
 import java.util.Vector;
+import java.time.format.DateTimeFormatter;
 import java.time.Instant;
+import java.time.ZoneId;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
@@ -32,6 +34,8 @@ public class InReachProcessorImpl implements InReachProcessor {
 	private final String genericSchemaName = "inReach";
 	private static HashMap<Integer, String> garminExploreMessageCodes = new HashMap<>();
 	private static WktWriter wktWriter = new WktWriter();
+	private DateTimeFormatter garminExploreMessageFormatter = DateTimeFormatter
+			.ofPattern("uuuu-MM-dd'T'HH:mm:ss.nnnnnnX").withZone(ZoneId.of("Z"));
 
 	public InReachProcessorImpl() {
 		garminExploreMessageCodes.put(0, "PositionReport");
@@ -45,6 +49,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 		garminExploreMessageCodes.put(11, "TrackInterval");
 		garminExploreMessageCodes.put(12, "StopTrack");
 		garminExploreMessageCodes.put(20, "MailCheck");
+		garminExploreMessageCodes.put(21, "AmIAlive");
 	}
 
 	@Override
@@ -228,6 +233,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 		if (version.equals("2.0")) {
 			for (int i = 0; i < events.length(); i++) {
 				form = null;
+				schemaName = genericSchemaName;
 				generatedDoc = new JSONObject();
 				genericInReachSchema = new JSONObject();
 				inReachPosition = new JSONObject();
@@ -296,7 +302,8 @@ public class InReachProcessorImpl implements InReachProcessor {
 				}
 
 				Long timeStamp = event.optLong("timeStamp", -12345);
-				String isoTimestamp = Instant.ofEpochMilli(timeStamp).toString();
+				Instant evTimestamp = Instant.ofEpochMilli(timeStamp);
+				String isoTimestamp = garminExploreMessageFormatter.format(evTimestamp);
 				DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 				df.setTimeZone(TimeZone.getTimeZone("UTC"));
 				if (-12345 != timeStamp) {
