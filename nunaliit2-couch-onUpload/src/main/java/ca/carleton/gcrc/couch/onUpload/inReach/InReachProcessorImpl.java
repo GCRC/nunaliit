@@ -35,7 +35,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 	private static HashMap<Integer, String> garminExploreMessageCodes = new HashMap<>();
 	private static WktWriter wktWriter = new WktWriter();
 	private DateTimeFormatter garminExploreMessageFormatter = DateTimeFormatter
-			.ofPattern("uuuu-MM-dd'T'HH:mm:ss.nnnnnnX").withZone(ZoneId.of("Z"));
+			.ofPattern("uuuu-MM-dd'T'HH:mm:ss.nnnnnnnnnX").withZone(ZoneId.of("Z"));
 
 	public InReachProcessorImpl() {
 		garminExploreMessageCodes.put(0, "PositionReport");
@@ -281,18 +281,15 @@ public class InReachProcessorImpl implements InReachProcessor {
 					inReachPosition.put("Latitude", latitude);
 					inReachPosition.put("Longitude", longitude);
 
-					Point location = new Point(longitude, latitude);
-					List<Point> tmp = new Vector<Point>();
-					tmp.add(location);
-					Geometry multipoint = new MultiPoint(tmp);
-					BoundingBox box = multipoint.getBoundingBox();
+					Geometry location = new Point(longitude, latitude);
+					BoundingBox box = location.getBoundingBox();
 					JSONArray bbox = new JSONArray();
 					bbox.put(box.getMinX());
 					bbox.put(box.getMinY());
 					bbox.put(box.getMaxX());
 					bbox.put(box.getMaxY());
 					StringWriter wkt = new StringWriter();
-					wktWriter.write(multipoint, wkt);
+					wktWriter.write(location, wkt);
 
 					JSONObject geom = new JSONObject();
 					geom.put("nunaliit_type", "geometry");
