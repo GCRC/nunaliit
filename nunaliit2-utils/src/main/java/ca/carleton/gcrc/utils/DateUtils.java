@@ -34,10 +34,10 @@ public class DateUtils {
 				return date;
 			}
 			
-			throw new Exception("Unrecognizd GPS timestamp: "+gpsTimestamp);
+			throw new Exception("Unrecognized GPS timestamp: "+gpsTimestamp);
 
 		} catch (Exception e) {
-			throw new Exception("Error parsing GPS  timestamp", e);
+			throw new Exception("Error parsing GPS timestamp", e);
 		}
 	}
 }
