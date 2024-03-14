@@ -122,12 +122,14 @@ public class CommandRun implements Command {
 		URL serverUrl = null;
 		URL dbUrl = null;
 		URL siteRedirect = null;
+		URL inreachUrl = null;
 		{
 			serverUrl = atlasProperties.getCouchDbUrl();
 			String dbName = atlasProperties.getCouchDbName();
 
 			dbUrl = new URL(serverUrl,dbName);
 			siteRedirect = new URL(serverUrl,dbName+"/_design/site/_rewrite/");
+			inreachUrl = new URL(serverUrl, "inreach_test");
 		}
 		
 		// Figure out media directory
@@ -177,6 +179,16 @@ public class CommandRun implements Command {
         	servletHolder.setInitParameter("requestBufferSize", REQ_BUFFER_SIZE);
         	context.addServlet(servletHolder,"/submitDb/*");
         }
+
+		// Proxy to inreach DB
+        // if( atlasProperties.isInReachEnabled()) { //TODO make it configurable
+		{
+			ServletHolder servletHolder = new ServletHolder(new TransparentProxyFixedEscaped());
+			servletHolder.setInitParameter("proxyTo", inreachUrl.toExternalForm());
+			servletHolder.setInitParameter("prefix", "/inreach_test");
+			servletHolder.setInitParameter("requestBufferSize", REQ_BUFFER_SIZE);
+			context.addServlet(servletHolder,"/inreach_test/*");
+		}
 
         // Proxy to media
         {
