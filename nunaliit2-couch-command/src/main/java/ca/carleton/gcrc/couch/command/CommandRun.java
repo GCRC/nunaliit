@@ -3,6 +3,7 @@ package ca.carleton.gcrc.couch.command;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.TransparentProxyFixedEscaped;
 import ca.carleton.gcrc.couch.command.impl.TransparentWithRedirectServlet;
+import ca.carleton.gcrc.couch.command.impl.InReachProxy;
 import ca.carleton.gcrc.couch.command.servlet.ConfigServlet;
 import ca.carleton.gcrc.couch.date.DateServlet;
 import ca.carleton.gcrc.couch.export.ExportServlet;
@@ -129,7 +130,10 @@ public class CommandRun implements Command {
 
 			dbUrl = new URL(serverUrl,dbName);
 			siteRedirect = new URL(serverUrl,dbName+"/_design/site/_rewrite/");
-			inreachUrl = new URL(serverUrl, "inreach_test");
+			if(!atlasProperties.getInReachDbName().isEmpty()) {
+				inreachUrl = new URL(serverUrl, "inreach");
+			}
+			
 		}
 		
 		// Figure out media directory
@@ -181,13 +185,12 @@ public class CommandRun implements Command {
         }
 
 		// Proxy to inreach DB
-        // if( atlasProperties.isInReachEnabled()) { //TODO make it configurable
-		{
-			ServletHolder servletHolder = new ServletHolder(new TransparentProxyFixedEscaped());
+        if(!atlasProperties.getInReachDbName().isEmpty()) { //TODO make it configurable
+			ServletHolder servletHolder = new ServletHolder(new InReachProxy(atlasProperties.getCouchDbAdminUser(), atlasProperties.getCouchDbAdminPassword()));
 			servletHolder.setInitParameter("proxyTo", inreachUrl.toExternalForm());
-			servletHolder.setInitParameter("prefix", "/inreach_test");
+			servletHolder.setInitParameter("prefix", "/"+atlasProperties.getInReachDbName());
 			servletHolder.setInitParameter("requestBufferSize", REQ_BUFFER_SIZE);
-			context.addServlet(servletHolder,"/inreach_test/*");
+			context.addServlet(servletHolder,"/" + atlasProperties.getInReachDbName() + "/*");
 		}
 
         // Proxy to media

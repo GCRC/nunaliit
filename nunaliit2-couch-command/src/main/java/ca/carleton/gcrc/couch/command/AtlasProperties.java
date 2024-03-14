@@ -35,6 +35,7 @@ public class AtlasProperties {
 		atlasProps.setCouchDbName( props.getProperty("couchdb.dbName") );
 		atlasProps.setCouchDbSubmissionDbName( props.getProperty("couchdb.submission.dbName") );
 		atlasProps.setCouchDbAdminUser( props.getProperty("couchdb.admin.user") );
+		atlasProps.setInReachDbName(props.getProperty("inreach.dbName", ""));
 
 		// CouchDb password
 		try {
@@ -278,6 +279,7 @@ public class AtlasProperties {
 	private String couchDbName;
 	private boolean couchDbSubmissionDbEnabled;
 	private String couchDbSubmissionDbName;
+	private String inReachDbName;
 	private String couchDbAdminUser;
 	private String couchDbAdminPassword;
 	private int serverPort = 8080;
@@ -319,6 +321,13 @@ public class AtlasProperties {
 	}
 	public void setCouchDbSubmissionDbName(String couchDbSubmissionDbName) {
 		this.couchDbSubmissionDbName = couchDbSubmissionDbName;
+	}
+
+	public String getInReachDbName() {
+		return inReachDbName;
+	}
+	public void setInReachDbName(String inReachDbName) {
+		this.inReachDbName = inReachDbName;
 	}
 
 	public String getCouchDbAdminUser() {
