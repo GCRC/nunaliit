@@ -70,6 +70,61 @@ public class InReachProcessorTest extends TestCase {
 		}
 	}
 
+	public void testPerformGarminExploreSubmission() throws Exception {
+		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
+		File docFile = TestSupport.findResourceFile("inreach_garminexplore_doc.json");
+		
+		InReachSettingsFromXmlFile settings = new InReachSettingsFromXmlFile(settingsFile);
+		settings.load();
+		InReachConfiguration.setInReachSettings(settings);
+		
+		InReachProcessorImpl processor = new InReachProcessorImpl();
+		
+		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
+		
+		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
+		
+		processor.performSubmission(conversionContext);
+		
+		JSONObject savedDocJson = conversionContext.getSavedDocument();
+		if( null == savedDocJson ){
+			fail("Document not saved");
+		}
+		MockFileConversionContext2 savedContext = new MockFileConversionContext2(savedDocJson);
+		DocumentDescriptor savedDoc = savedContext.getDocument();
+		
+		// Test geometry
+		GeometryDescriptor savedGeomDesc = savedDoc.getGeometryDescription();
+		Geometry savedGeom = savedGeomDesc.getGeometry();
+		
+		if( savedGeom instanceof Point ){
+			Point point = (Point)savedGeom;
+			if( point.getX() < -75.75
+			 || point.getX() > -75.73 ){
+				fail("Point Longitude should be -75.74515342712403: "+point.getX());
+			}
+			if( point.getY() < 45.38 
+			 || point.getY() > 45.4 ){
+				fail("Point Latitude should be 45.3940486907959: "+point.getY());
+			}
+		} else {
+			fail("Geometry should be a Point");
+		}
+		
+		// Test schema name
+		String schemaName = savedDoc.getSchemaName();
+		if( false == "inReach_Wildlife".equals(schemaName) ){
+			fail("Unexpected schema name: "+schemaName);
+		}
+		
+		// Check data
+		JSONObject data = savedDocJson.getJSONObject("inReach_Wildlife");
+		String condition = data.optString("What", null);
+		if( false == "Caribou".equals(condition) ){
+			fail("Unexpected data");
+		}
+	}
+
 	public void testMissingField() throws Exception {
 		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
 		File docFile = TestSupport.findResourceFile("inreach_doc_missing.json");
