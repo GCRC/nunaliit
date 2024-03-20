@@ -147,8 +147,8 @@ public class InReachProcessorTest extends TestCase {
 		}
 
 		List<JSONObject> resDocs = conversionContext.getCreatedDocuments();
-		if (resDocs.size() != 4) {
-			fail("Exactly four new documents should be created with inreach_garminexplore_multi_doc.json");
+		if (resDocs.size() != 8) {
+			fail("Exactly eight new documents should be created with inreach_garminexplore_multi_doc.json");
 		}
 
 		for (int i = 0; i < resDocs.size(); i++) {
@@ -159,34 +159,75 @@ public class InReachProcessorTest extends TestCase {
 			JSONObject jsonItem = createdDocument.getJSONObject("inReach");
 			JSONObject jsonTimestamp = jsonItem.optJSONObject("nunaliit_gps_datetime");
 			String messageType = jsonItem.getString("MessageType");
+			Integer emergencyState = jsonItem.getInt("EmergencyState");
 
 			if (i == 0) {
 				if (false == "inReach_Wildlife".equals(schemaName)) {
 					fail("Unexpected schema name: " + schemaName);
 				}
-				if (messageType != "FreeTextMessage") {
+				if (!messageType.equals("FreeTextMessage")) {
 					fail("Wrong MessageType from created document: " + messageType);
+				}
+				if (emergencyState != -1) {
+					fail("EmergencyState expected to be -1");
 				}
 			} else if (i == 1) {
 				if (false == "inReach_Place".equals(schemaName)) {
 					fail("Unexpected schema name: " + schemaName);
 				}
-				if (messageType != "FreeTextMessage") {
+				if (!messageType.equals("FreeTextMessage")) {
 					fail("Wrong MessageType from created document: " + messageType);
+				}
+				if (emergencyState != -1) {
+					fail("EmergencyState expected to be -1");
 				}
 			} else if (i == 2) {
 				if (false == "inReach_Issues".equals(schemaName)) {
 					fail("Unexpected schema name: " + schemaName);
 				}
-				if (messageType != "FreeTextMessage") {
+				if (!messageType.equals("FreeTextMessage")) {
 					fail("Wrong MessageType from created document: " + messageType);
+				}
+				if (emergencyState != -1) {
+					fail("EmergencyState expected to be -1");
 				}
 			} else if (i == 3) {
 				if (false == "inReach".equals(schemaName)) {
 					fail("Unexpected schema name: " + schemaName);
 				}
-				if (messageType != "MailCheck") {
+				if (!messageType.equals("MailCheck")) {
 					fail("Wrong MessageType from created document: " + messageType);
+				}
+				if (emergencyState != -1) {
+					fail("EmergencyState expected to be -1");
+				}
+			} else if (i == 4) {
+				if (!messageType.equals("NunaliitUnhandledGarminExploreMessageCode-1")) {
+					fail("Expected unhandled message code string for unimplemented/unknown message codes");
+				}
+				if (emergencyState != -1) {
+					fail("EmergencyState expected to be -1");
+				}
+			} else if (i == 5) {
+				if (!messageType.equals("DeclareSOS")) {
+					fail("Wrong MessageType from created document: " + messageType);
+				}
+				if (emergencyState == -1) {
+					fail("EmergencyState should be set");
+				}
+			} else if (i == 6) {
+				if (!messageType.equals("ConfirmSOS")) {
+					fail("Wrong MessageType from created document: " + messageType);
+				}
+				if (emergencyState == -1) {
+					fail("EmergencyState should be set");
+				}
+			} else if (i == 7) {
+				if (!messageType.equals("CancelSOS")) {
+					fail("Wrong MessageType from created document: " + messageType);
+				}
+				if (emergencyState == -1) {
+					fail("EmergencyState should be set");
 				}
 			}
 

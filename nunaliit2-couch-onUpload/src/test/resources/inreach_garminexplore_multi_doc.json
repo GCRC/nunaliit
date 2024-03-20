@@ -97,6 +97,90 @@
                 "intervalChange": 0,
                 "resetDetected": 0
             }
+        },
+        {
+            "addresses": [],
+            "imei": "1234567890",
+            "messageCode": 1,
+            "freeText": "",
+            "timeStamp": 1699459999000,
+            "point": {
+                "latitude": 45.3941345214844,
+                "longitude": -75.7451748847961,
+                "altitude": -422,
+                "gpsFix": 0,
+                "course": 0,
+                "speed": 0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 2,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        },
+        {
+            "addresses": [],
+            "imei": "1234567890",
+            "messageCode": 4,
+            "freeText": "",
+            "timeStamp": 1699489999000,
+            "point": {
+                "latitude": 45.3941345214844,
+                "longitude": -75.7451748847961,
+                "altitude": -422,
+                "gpsFix": 0,
+                "course": 0,
+                "speed": 0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 2,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        },
+        {
+            "addresses": [],
+            "imei": "1234567890",
+            "messageCode": 6,
+            "freeText": "",
+            "timeStamp": 1699989999000,
+            "point": {
+                "latitude": 45.3941345214844,
+                "longitude": -75.7451748847961,
+                "altitude": -422,
+                "gpsFix": 0,
+                "course": 0,
+                "speed": 0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 2,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        },
+        {
+            "addresses": [],
+            "imei": "1234567890",
+            "messageCode": 7,
+            "freeText": "",
+            "timeStamp": 1999989999000,
+            "point": {
+                "latitude": 45.3941345214844,
+                "longitude": -75.7451748847961,
+                "altitude": -422,
+                "gpsFix": 0,
+                "course": 0,
+                "speed": 0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 2,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
         }
     ]
 }
