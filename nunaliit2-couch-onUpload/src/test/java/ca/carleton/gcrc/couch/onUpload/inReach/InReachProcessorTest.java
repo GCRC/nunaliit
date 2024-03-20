@@ -1,6 +1,7 @@
 package ca.carleton.gcrc.couch.onUpload.inReach;
 
 import java.io.File;
+import java.util.List;
 
 import org.json.JSONObject;
 
@@ -90,10 +91,17 @@ public class InReachProcessorTest extends TestCase {
 		if (null == savedDocJson) {
 			fail("Document not saved");
 		}
-		MockFileConversionContext2 savedContext = new MockFileConversionContext2(savedDocJson);
-		DocumentDescriptor savedDoc = savedContext.getDocument();
 
-		// Test geometry
+		List<JSONObject> resDocs = conversionContext.getCreatedDocuments();
+		JSONObject singleCreatedDocument = null;
+		if (resDocs.size() == 1) {
+			singleCreatedDocument = resDocs.get(0);
+		} else {
+			fail("Exactly one document new document should be created with inreach_garminexplore_doc.json");
+		}
+
+		MockFileConversionContext2 savedContext = new MockFileConversionContext2(singleCreatedDocument);
+		DocumentDescriptor savedDoc = savedContext.getDocument();
 		GeometryDescriptor savedGeomDesc = savedDoc.getGeometryDescription();
 		Geometry savedGeom = savedGeomDesc.getGeometry();
 
@@ -111,14 +119,12 @@ public class InReachProcessorTest extends TestCase {
 			fail("Geometry should be a Point");
 		}
 
-		// Test schema name
 		String schemaName = savedDoc.getSchemaName();
 		if (false == "inReach_Wildlife".equals(schemaName)) {
 			fail("Unexpected schema name: " + schemaName);
 		}
 
-		// Check data
-		JSONObject data = savedDocJson.getJSONObject("inReach_Wildlife");
+		JSONObject data = singleCreatedDocument.getJSONObject("inReach_Wildlife");
 		String condition = data.optString("What", null);
 		if (false == "Caribou".equals(condition)) {
 			fail("Unexpected data");
