@@ -80,11 +80,8 @@ public class InReachProcessorTest extends TestCase {
 		InReachConfiguration.setInReachSettings(settings);
 
 		InReachProcessorImpl processor = new InReachProcessorImpl();
-
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
-
 		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
-
 		processor.performSubmission(conversionContext);
 
 		JSONObject savedDocJson = conversionContext.getSavedDocument();
@@ -97,7 +94,7 @@ public class InReachProcessorTest extends TestCase {
 		if (resDocs.size() == 1) {
 			singleCreatedDocument = resDocs.get(0);
 		} else {
-			fail("Exactly one document new document should be created with inreach_garminexplore_doc.json");
+			fail("Exactly one new document should be created with inreach_garminexplore_doc.json");
 		}
 
 		MockFileConversionContext2 savedContext = new MockFileConversionContext2(singleCreatedDocument);
@@ -128,6 +125,79 @@ public class InReachProcessorTest extends TestCase {
 		String condition = data.optString("What", null);
 		if (false == "Caribou".equals(condition)) {
 			fail("Unexpected data");
+		}
+	}
+
+	public void testPerformGarminExploreMultipleEventSubmission() throws Exception {
+		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
+		File docFile = TestSupport.findResourceFile("inreach_garminexplore_multi_doc.json");
+
+		InReachSettingsFromXmlFile settings = new InReachSettingsFromXmlFile(settingsFile);
+		settings.load();
+		InReachConfiguration.setInReachSettings(settings);
+
+		InReachProcessorImpl processor = new InReachProcessorImpl();
+		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
+		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
+		processor.performSubmission(conversionContext);
+
+		JSONObject savedDocJson = conversionContext.getSavedDocument();
+		if (null == savedDocJson) {
+			fail("Document not saved");
+		}
+
+		List<JSONObject> resDocs = conversionContext.getCreatedDocuments();
+		if (resDocs.size() != 4) {
+			fail("Exactly four new documents should be created with inreach_garminexplore_multi_doc.json");
+		}
+
+		for (int i = 0; i < resDocs.size(); i++) {
+			JSONObject createdDocument = resDocs.get(i);
+			MockFileConversionContext2 savedContext = new MockFileConversionContext2(createdDocument);
+			DocumentDescriptor savedDoc = savedContext.getDocument();
+			String schemaName = savedDoc.getSchemaName();
+			JSONObject jsonItem = createdDocument.getJSONObject("inReach");
+			JSONObject jsonTimestamp = jsonItem.optJSONObject("nunaliit_gps_datetime");
+			String messageType = jsonItem.getString("MessageType");
+
+			if (i == 0) {
+				if (false == "inReach_Wildlife".equals(schemaName)) {
+					fail("Unexpected schema name: " + schemaName);
+				}
+				if (messageType != "FreeTextMessage") {
+					fail("Wrong MessageType from created document: " + messageType);
+				}
+			} else if (i == 1) {
+				if (false == "inReach_Place".equals(schemaName)) {
+					fail("Unexpected schema name: " + schemaName);
+				}
+				if (messageType != "FreeTextMessage") {
+					fail("Wrong MessageType from created document: " + messageType);
+				}
+			} else if (i == 2) {
+				if (false == "inReach_Issues".equals(schemaName)) {
+					fail("Unexpected schema name: " + schemaName);
+				}
+				if (messageType != "FreeTextMessage") {
+					fail("Wrong MessageType from created document: " + messageType);
+				}
+			} else if (i == 3) {
+				if (false == "inReach".equals(schemaName)) {
+					fail("Unexpected schema name: " + schemaName);
+				}
+				if (messageType != "MailCheck") {
+					fail("Wrong MessageType from created document: " + messageType);
+				}
+			}
+
+			if (null == jsonTimestamp) {
+				fail("Can not find nunaliit_gps_datetime!");
+			} else {
+				String dateType = jsonTimestamp.optString("nunaliit_type", null);
+				if (false == "date".equals(dateType)) {
+					fail("Unexpected time structure");
+				}
+			}
 		}
 	}
 

@@ -1,0 +1,102 @@
+{
+    "_id": "1111111111",
+    "Version": "2.0",
+    "Events": [
+        {
+            "addresses": [
+                {
+                    "address": "tsfn-manager@gcrc.carleton.ca"
+                }
+            ],
+            "imei": "1234567890",
+            "messageCode": 3,
+            "freeText": "TSFN-W-1-6|1|Caribou Harvested",
+            "timeStamp": 1699462170000,
+            "point": {
+                "latitude": 45.3941559791565,
+                "longitude": -75.745153427124,
+                "altitude": 81.624016,
+                "gpsFix": 2,
+                "course": 0,
+                "speed": 0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 0,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        },
+        {
+            "addresses": [
+                {
+                    "address": "tsfn-manager@gcrc.carleton.ca"
+                }
+            ],
+            "imei": "1234567890",
+            "messageCode": 3,
+            "freeText": "TSFN-P-1-2|The Great Place|It was in fact, very great",
+            "timeStamp": 1699461120000,
+            "point": {
+                "latitude": 45.3941667079926,
+                "longitude": -75.7452178001404,
+                "altitude": 85.69978,
+                "gpsFix": 2,
+                "course": 0,
+                "speed": 0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 0,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        },
+        {
+            "addresses": [
+                {
+                    "address": "tsfn-manager@gcrc.carleton.ca"
+                }
+            ],
+            "imei": "1234567890",
+            "messageCode": 3,
+            "freeText": "TSFN-I-1-6|Weather weather weather",
+            "timeStamp": 1699460010000,
+            "point": {
+                "latitude": 45.3941881656647,
+                "longitude": -75.7451963424683,
+                "altitude": 77.5493,
+                "gpsFix": 2,
+                "course": 0,
+                "speed": 0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 0,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        },
+        {
+            "addresses": [],
+            "imei": "1234567890",
+            "messageCode": 20,
+            "freeText": "",
+            "timeStamp": 1699459995000,
+            "point": {
+                "latitude": 45.3941345214844,
+                "longitude": -75.7451748847961,
+                "altitude": -422,
+                "gpsFix": 0,
+                "course": 0,
+                "speed": 0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 2,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        }
+    ]
+}
