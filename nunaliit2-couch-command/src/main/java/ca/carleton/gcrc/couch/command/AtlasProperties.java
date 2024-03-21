@@ -35,7 +35,7 @@ public class AtlasProperties {
 		atlasProps.setCouchDbName( props.getProperty("couchdb.dbName") );
 		atlasProps.setCouchDbSubmissionDbName( props.getProperty("couchdb.submission.dbName") );
 		atlasProps.setCouchDbAdminUser( props.getProperty("couchdb.admin.user") );
-		atlasProps.setInReachDbName(props.getProperty("inreach.dbName", ""));
+		atlasProps.setInReachDbName(props.getProperty("couchdb.inreach.dbName", ""));
 
 		// CouchDb password
 		try {
