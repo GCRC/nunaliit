@@ -131,7 +131,7 @@ public class CommandRun implements Command {
 			dbUrl = new URL(serverUrl,dbName);
 			siteRedirect = new URL(serverUrl,dbName+"/_design/site/_rewrite/");
 			if(!atlasProperties.getInReachDbName().isEmpty()) {
-				inreachUrl = new URL(serverUrl, "inreach");
+				inreachUrl = new URL(serverUrl, atlasProperties.getInReachDbName());
 			}
 			
 		}
