@@ -1065,6 +1065,20 @@ POSSIBILITY OF SUCH DAMAGE.
 
 			htmlString += `${listHtml}</div>`;
 
+			const timeMetadataContainer = $("<div>")
+				.attr("id", "timeMetadataContainer")
+				.addClass("n2WidgetAnnotation_formfieldSection")
+				.appendTo($parent)
+			const metadata = [
+				{ text: `Created: ${new Date(doc?.nunaliit_created?.time)}` },
+				{ text: `Created By: ${doc?.nunaliit_created?.name}` },
+				{ text: `Last Modified: ${new Date(doc?.nunaliit_last_updated?.time)}` },
+				{ text: `Last Modified By: ${doc?.nunaliit_last_updated?.name}` }
+			]
+			metadata.forEach(m => {
+				timeMetadataContainer.append($("<p>").text(m.text))
+			})
+
 			const notesButtonContainer = $("<div>")
 				.attr("id", "notesButtonContainer")
 				.addClass('n2WidgetAnnotation_formfieldSection')
