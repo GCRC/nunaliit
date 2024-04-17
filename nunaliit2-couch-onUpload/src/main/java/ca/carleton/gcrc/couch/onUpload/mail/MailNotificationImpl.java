@@ -3,12 +3,14 @@ package ca.carleton.gcrc.couch.onUpload.mail;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +23,7 @@ import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailMessage;
 import ca.carleton.gcrc.mail.MailRecipient;
 import ca.carleton.gcrc.mail.messageGenerator.MailMessageGenerator;
+import ca.carleton.gcrc.couch.submission.mail.DocumentCreatedGenerator;
 
 public class MailNotificationImpl implements MailNotification {
 
@@ -37,6 +40,7 @@ public class MailNotificationImpl implements MailNotification {
 	private MailRecipient fromAddress = null;
 	private MailMessageGenerator uploadNotificationGenerator = new UploadNotificationGenerator();
 	private MailMessageGenerator dailyVetterNotificationGenerator = new DailyVetterNotificationGenerator();
+	private MailMessageGenerator documentCreatedGenerator = new DocumentCreatedGenerator();
 
 	public MailNotificationImpl(
 		String atlasName
@@ -66,6 +70,14 @@ public class MailNotificationImpl implements MailNotification {
 
 	public Properties getMailProperties() {
 		return mailProperties;
+	}
+
+	public MailMessageGenerator getDocumentCreatedGenerator() {
+		return documentCreatedGenerator;
+	}
+
+	public void setDocumentCreatedGenerator(MailMessageGenerator documentCreatedGenerator) {
+		this.documentCreatedGenerator = documentCreatedGenerator;
 	}
 
 	public void setMailProperties(Properties mailProperties) throws Exception {
@@ -264,4 +276,88 @@ public class MailNotificationImpl implements MailNotification {
 		}
 	}
 
+	@Override
+	public void sendDocumentCreatedNotification(
+			JSONObject doc,
+			UserDocument currentUser) throws Exception {
+
+		List<UserDocument> users = new ArrayList<>();
+
+		if (null != currentUser) {
+			users.add(currentUser);
+		}
+
+		List<String> roles = new ArrayList<String>(2);
+		roles.add("vetter"); // global vetters
+		roles.add(atlasName + "_vetter"); // atlas vetters
+		roles.add("administrator"); // global administrator
+		roles.add(atlasName + "_administrator"); // atlas administrator
+
+		users.addAll(new ArrayList<>(userDesignDocument.getUsersWithRoles(roles)));
+
+		List<MailRecipient> recipients = new ArrayList<>();
+		List<MailRecipient> bccRecipients = new ArrayList<>();
+
+		// create a unique set to userIds, so as we don't send duplicate mail if the
+		// current user has admin, or vetter roles
+		Set<String> userIds = new HashSet<>();
+
+		for (UserDocument user : users) {
+			if (userIds.add(user.getId())) {
+				String display = user.getDisplayName();
+				if (user.getId() == currentUser.getId()) {
+					// To
+					for (String email : user.getEmails()) {
+						recipients.add(display == null ? new MailRecipient(email) : new MailRecipient(email, display));
+					}
+				} else {
+					// BCC everyone else
+					for (String email : user.getEmails()) {
+						bccRecipients
+								.add(display == null ? new MailRecipient(email) : new MailRecipient(email, display));
+					}
+				}
+			}
+		}
+
+		if (recipients.isEmpty() && bccRecipients.isEmpty()) {
+			logger.info("Document created notification not sent because there are no recipients");
+			return;
+		}
+
+		logger.info("Sending document created mail notification for "
+				+ doc.optString("_id", "<unknown>")
+				+ " to "
+				+ recipients
+				+ " and BCCing "
+				+ bccRecipients);
+
+		try {
+			MailMessage message = new MailMessage();
+			// From
+			message.setFromAddress(fromAddress);
+
+			// To
+			for (MailRecipient recipient : recipients) {
+				message.addToRecipient(recipient);
+			}
+
+			for (MailRecipient bcc : bccRecipients) {
+				message.addBCCRecipient(bcc);
+			}
+
+			// Generate message
+			Map<String, String> parameters = new HashMap<String, String>();
+			parameters.put("docId", doc.optString("_id", null));
+			parameters.put("schemaName", doc.optString("nunaliit_schema", null));
+			documentCreatedGenerator.generateMessage(message, parameters);
+
+			// Send message
+			mailDelivery.sendMessage(message);
+
+		} catch (Exception e) {
+			logger.error("Unable to send document created notification.", e);
+			throw new Exception("Unable to send document created notification.", e);
+		}
+	}
 }

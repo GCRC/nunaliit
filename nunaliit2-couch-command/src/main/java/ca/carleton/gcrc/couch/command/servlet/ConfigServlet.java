@@ -616,6 +616,7 @@ public class ConfigServlet extends JsonServlet {
 						template
 						);
 					submissionNotifier.setDocumentCreatedGenerator(couchdbTemplate);
+					mail.setDocumentCreatedGenerator(couchdbTemplate);
 				}
 
 				mailNotification = mail;
