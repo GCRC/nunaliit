@@ -91,5 +91,10 @@
    		<artifactId>nunaliit2-mail</artifactId>
    		<version>${project.version}</version>
    	</dependency>
+    <dependency>
+      <groupId>ca.carleton.gcrc</groupId>
+      <artifactId>nunaliit2-couch-export</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 </project>

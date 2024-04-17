@@ -2,10 +2,13 @@ package ca.carleton.gcrc.couch.onUpload;
 
 import java.util.Properties;
 
+import ca.carleton.gcrc.couch.client.CouchUserDb;
+
 public class UploadWorkerSettings {
 
 	private String atlasName = null;
 	private boolean geometrySimplificationDisabled = false;
+	private CouchUserDb userDb = null;
 	
 	public UploadWorkerSettings(){
 		
@@ -24,6 +27,14 @@ public class UploadWorkerSettings {
 
 	public void setAtlasName(String atlasName) {
 		this.atlasName = atlasName;
+	}
+
+	public CouchUserDb getUserDb() {
+		return userDb;
+	}
+
+	public void setUserDb(CouchUserDb userDb) {
+		this.userDb = userDb;
 	}
 
 	public boolean isGeometrySimplificationDisabled() {

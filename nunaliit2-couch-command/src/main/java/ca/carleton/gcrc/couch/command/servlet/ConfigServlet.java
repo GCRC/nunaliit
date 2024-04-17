@@ -684,6 +684,7 @@ public class ConfigServlet extends JsonServlet {
 		try {
 			UploadWorkerSettings settings = new UploadWorkerSettings(props);
 			settings.setAtlasName(atlasProperties.getAtlasName());
+			settings.setUserDb(userDb);
 			if( atlasProperties.isGeometrySimplificationDisabled() ){
 				settings.setGeometrySimplificationDisabled(true);
 			}
