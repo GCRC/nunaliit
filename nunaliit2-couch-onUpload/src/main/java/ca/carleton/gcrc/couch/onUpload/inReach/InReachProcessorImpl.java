@@ -185,7 +185,10 @@ public class InReachProcessorImpl implements InReachProcessor {
 		JSONObject doc =  conversionContext.getDoc();
 
 		JSONObject jsonItem = doc.getJSONObject("Item");
-		String message = jsonItem.getString("Message");
+		String message = jsonItem.optString("Message", null);
+		if (null == message) {
+			throw new Exception("inReach data does not have 'Message' key");
+		}
 		if( false == message.startsWith(form.getPrefix()) ){
 			throw new Exception("Message should start with the form prefix");
 		}

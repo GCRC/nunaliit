@@ -466,7 +466,7 @@ var TableCanvas = $n2.Class({
 				});
 
 			$('<button>')
-				.text('Export CSV')
+				.text(_loc('Export CSV'))
 				.appendTo($elem)
 				.click(function(){
 					_this._exportCsv();
@@ -600,9 +600,10 @@ var TableCanvas = $n2.Class({
 		var $table = $elem.find('tbody');
 		
 		$table.empty();
+		const tableDocumentFragment = $(new DocumentFragment())
 		
 		var $tr = $('<tr>')
-			.appendTo($table);
+			.appendTo(tableDocumentFragment);
 		this.headings.forEach(function(heading){
 			var label = _loc( heading.label );
 			if( !label ){
@@ -630,7 +631,7 @@ var TableCanvas = $n2.Class({
 		this.sortedRows.forEach(function(row){
 			var $tr = $('<tr>')
 				.attr('nunaliit-row',row.getRowName())
-				.appendTo($table);
+				.appendTo(tableDocumentFragment);
 
 			// Assign element id to row
 			if( !row.elemId ){
@@ -669,16 +670,18 @@ var TableCanvas = $n2.Class({
 				};
 			});
 		});
-
-		if( this.showRowCount ){
-			this._displayRowCounter();
-		}
-
+		
 		if( this.useLazyDisplay ){
 			this._refreshRows();
 		} else {
-			this.showService.fixElementAndChildren($table);
+			this.showService.fixElementAndChildren(tableDocumentFragment);
 		};
+		
+		$table.append(tableDocumentFragment)
+		
+		if( this.showRowCount ){
+			this._displayRowCounter();
+		}
 	},
 	
 	/**

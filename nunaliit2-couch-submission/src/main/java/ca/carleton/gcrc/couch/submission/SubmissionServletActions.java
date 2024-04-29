@@ -194,7 +194,7 @@ public class SubmissionServletActions {
 			throw new Exception("Document does not contain a 'nunaliit_last_updated' field");
 		}
 		
-		String userId = lastUpdated.optString("name");
+		String userId = lastUpdated.optString("name", null);
 		if( null == userId ){
 			throw new Exception("Document contains a 'nunaliit_last_updated' structure with a missing 'name' field");
 		}

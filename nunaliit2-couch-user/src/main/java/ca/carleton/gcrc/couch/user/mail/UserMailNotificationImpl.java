@@ -1,6 +1,5 @@
 package ca.carleton.gcrc.couch.user.mail;
 
-import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +8,8 @@ import java.util.Vector;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import org.apache.http.client.utils.URIBuilder;
 
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailMessage;
@@ -143,8 +144,9 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		Map<String,String> parameters = new HashMap<String,String>();
 		{
 			// Compute link
-			String urlEncodedToken = URLEncoder.encode(token, "UTF-8");
-			String link = createUserUrl + "?token=" + urlEncodedToken;
+			URIBuilder builder = new URIBuilder(createUserUrl);
+			builder.addParameter("token", token);
+			String link = builder.build().toString();
 			parameters.put("link", link);
 		}
 		
@@ -225,8 +227,9 @@ public class UserMailNotificationImpl implements UserMailNotification {
 		Map<String,String> parameters = new HashMap<String,String>();
 		{
 			// Compute link
-			String urlEncodedToken = URLEncoder.encode(token, "UTF-8");
-			String link = passwordRecoveryUrl + "?token=" + urlEncodedToken;
+			URIBuilder builder = new URIBuilder(passwordRecoveryUrl);
+			builder.addParameter("token", token);
+			String link = builder.build().toString();
 			parameters.put("link", link);
 		}
 		
@@ -314,5 +317,13 @@ public class UserMailNotificationImpl implements UserMailNotification {
 
 	public void setPasswordReminderGenerator(MailMessageGenerator passwordReminderGenerator) {
 		this.passwordReminderGenerator = passwordReminderGenerator;
+	}
+	
+	public MailMessageGenerator getUserRegistrationGenerator() {
+		return userRegistrationGenerator;
+	}
+
+	public void setUserRegistrationGenerator(MailMessageGenerator userRegistrationGenerator) {
+		this.userRegistrationGenerator = userRegistrationGenerator;
 	}
 }

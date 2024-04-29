@@ -3,9 +3,9 @@ package ca.carleton.gcrc.olkit.multimedia.xmp;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.adobe.xmp.XMPIterator;
-import com.adobe.xmp.XMPMeta;
-import com.adobe.xmp.properties.XMPPropertyInfo;
+import com.adobe.internal.xmp.XMPIterator;
+import com.adobe.internal.xmp.XMPMeta;
+import com.adobe.internal.xmp.properties.XMPPropertyInfo;
 
 public class XmpInfoMeta implements XmpInfo {
 

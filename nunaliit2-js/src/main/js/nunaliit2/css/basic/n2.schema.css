@@ -187,3 +187,18 @@
 .n2help_content {
 	max-width: 500px;
 }
+
+.n2_triple_element {
+	display: flex;
+    flex-direction: column;
+}
+
+.n2_documentForm .n2_triple_element {
+	gap: 8px;
+}
+
+.n2_triple_element .subject,
+.predicate, .object {
+	display: flex;
+	flex-direction: column;
+}

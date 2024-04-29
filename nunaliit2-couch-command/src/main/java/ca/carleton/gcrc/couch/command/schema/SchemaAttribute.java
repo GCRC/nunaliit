@@ -186,7 +186,45 @@ public class SchemaAttribute {
 			}
 		}
 		
+		// triple
+		{
+			JSONObject elementOptions = jsonAttr.optJSONObject("elementOptions");
+			if( null != elementOptions ){
+				SchemaAttribute.SetTripleAttributes(attribute, elementOptions);
+			}
+		}
+		
+		if( "triple".equals(type) ) {
+			SchemaAttribute.SetTripleAttributes(attribute, jsonAttr);
+		}
+		
 		return attribute;
+	}
+	
+	private static void SetTripleAttributes(SchemaAttribute attribute, JSONObject tripleAttr) throws Exception{
+		{
+			JSONObject tripleSubject = tripleAttr.optJSONObject("subject");
+			if( null != tripleSubject ){
+				SchemaAttribute subject = SchemaAttribute.fromJson(tripleSubject);
+				attribute.setTripleSubject(subject);
+			}
+		}
+
+		{
+			JSONObject triplePredicate = tripleAttr.optJSONObject("predicate");
+			if( null != triplePredicate ){
+				SchemaAttribute predicate = SchemaAttribute.fromJson(triplePredicate);
+				attribute.setTriplePredicate(predicate);
+			}
+		}
+
+		{
+			JSONObject tripleObject = tripleAttr.optJSONObject("object");
+			if( null != tripleObject ){
+				SchemaAttribute object = SchemaAttribute.fromJson(tripleObject);
+				attribute.setTripleObject(object);
+			}
+		}
 	}
 
 	private String type;
@@ -211,9 +249,16 @@ public class SchemaAttribute {
 	private Integer maxVideoRecordingLengthSeconds = null;
 	private String recordVideoSize = null;
 	private String placeholder = null;
+	private SchemaAttribute tripleSubject = null;
+	private SchemaAttribute triplePredicate = null;
+	private SchemaAttribute tripleObject = null;
 
 	public SchemaAttribute(String type){
 		this.type = type;
+	}
+	
+	public String getType() {
+		return this.type;
 	}
 	
 	public String getId() {
@@ -391,6 +436,30 @@ public class SchemaAttribute {
 
 	public void setRecordVideoSize(String recordVideoSize) { this.recordVideoSize = recordVideoSize; }
 
+	public SchemaAttribute getTripleSubject() {
+		return this.tripleSubject;
+	}
+
+	public void setTripleSubject(SchemaAttribute subject) {
+		this.tripleSubject = subject;
+	}
+
+	public SchemaAttribute getTriplePredicate() {
+		return this.triplePredicate;
+	}
+
+	public void setTriplePredicate(SchemaAttribute predicate) {
+		this.triplePredicate = predicate;
+	}
+
+	public SchemaAttribute getTripleObject() {
+		return this.tripleObject;
+	}
+
+	public void setTripleObject(SchemaAttribute object) {
+		this.tripleObject = object;
+	}
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -466,6 +535,18 @@ public class SchemaAttribute {
 		} else if( "array".equals(type) ){
 			if( null != id ){
 				JSONArray arr = new JSONArray();
+				
+				if( "triple".equals(elementType) && hasDefaultTripleSelectionOption() ) {
+					JSONObject triple = new JSONObject();
+					triple.put("nunaliit_type", "triple");
+
+					putTripleAttribute(triple, "subject", tripleSubject);
+					putTripleAttribute(triple, "predicate", triplePredicate);
+					putTripleAttribute(triple, "object", tripleObject);
+
+					arr.put(triple);
+				}
+				
 				schemaDoc.put(id, arr);
 			}
 		} else if ( "tag".equals(type) ) {
@@ -552,9 +633,62 @@ public class SchemaAttribute {
 				throw new Exception("'id' should not be specified for attributes of type 'createdTime'");
 			}
 
+		} else if ( "triple".equals(type) ) {
+			if (id == null) {
+				throw new Exception("'id' is required for attribute of type 'triple'");
+			}
+
+			if( hasDefaultTripleSelectionOption() ) {
+				JSONObject triple = new JSONObject();
+				triple.put("nunaliit_type", "triple");
+
+				putTripleAttribute(triple, "subject", tripleSubject);
+				putTripleAttribute(triple, "predicate", triplePredicate);
+				putTripleAttribute(triple, "object", tripleObject);
+
+				schemaDoc.put(id, triple);
+			}
+
 		} else {
 			throw new Exception("Unable to include type "+type+" in create");
 		}
+	}
+
+	private boolean hasDefaultTripleSelectionOption() {
+		SchemaAttribute[] attributes = {tripleSubject, triplePredicate, tripleObject};
+
+		for (SchemaAttribute attribute : attributes) {
+			if ("selection".equals(attribute.getType())) {
+				SelectionOption defOption = attribute.getDefaultOption();
+				if (defOption != null) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+	
+	// Helper function to add subject, predicate, or object attributes
+	private void putTripleAttribute(JSONObject triple, String attributeName, SchemaAttribute attribute) throws Exception{
+		String attributeId = attribute.getId();
+		String attributeType = attribute.getType();
+
+		if (attributeId == null) {
+			throw new Exception("'id' is required for attribute of type "+ attributeName);
+		}
+
+		JSONObject attributeObject = new JSONObject();
+		attributeObject.put(attributeId, "");
+
+		if ("selection".equals(attributeType)) {
+			SelectionOption defOption = attribute.getDefaultOption();
+			if (defOption != null) {
+				attributeObject.put(attributeId, defOption.getValue());
+			}
+		}
+
+		triple.put(attributeName, attributeObject);
 	}
 
 	public boolean printBrief(PrintWriter pw, String schemaStructure, String schemaClass, boolean isFirst) throws Exception {
@@ -909,6 +1043,12 @@ public class SchemaAttribute {
 								+ " nunaliit-custom=\""+customType+"\""
 								+ " nunaliit-selector=\"{{#:selector}}.{{/:selector}}\"></span>");
 						}
+					} else if( "triple".equals(elementType) ) {
+						pw.println("\t\t\t\t\t\t\t<div class=\"n2_triple_element\">");
+						tripleSubject.printTripleDisplay(pw, null, "subject");
+						triplePredicate.printTripleDisplay(pw, null, "predicate");
+						tripleObject.printTripleDisplay(pw, null, "object");
+						pw.println("\t\t\t\t\t\t\t</div>");
 					}
 					
 					pw.println("\t\t\t\t\t\t\t</div>");
@@ -1086,6 +1226,24 @@ public class SchemaAttribute {
 					pw.println("\t\t\t\t{{/if}}");
 					pw.println("\t\t\t{{/"+schemaStructure+"}}");
 				}
+			} else if( "triple".equals(type) ){
+				if( null != id ){
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t{{#if "+id+"}}");
+					pw.println("\t\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t\t<div class=\"n2_triple_element\">");
+					tripleSubject.printTripleDisplay(pw, id, "subject");
+					triplePredicate.printTripleDisplay(pw, id, "predicate");
+					tripleObject.printTripleDisplay(pw, id, "object");
+					pw.println("\t\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t{{/if}}");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
+				}
 			} else if( "createdBy".equals(type) ){
 				if( null == label ){
 					label = "Created By";
@@ -1132,6 +1290,85 @@ public class SchemaAttribute {
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
+			}
+		}
+	}
+
+	public void printTripleDisplay(PrintWriter pw, String key, String field) throws Exception {
+		String label = this.label;
+		String labelLocalizeClass = " n2s_localize";
+		String fieldKey = (key != null) ? key + "." + field + "." + id : field + "." + id;
+		if (null == label) {
+			labelLocalizeClass = "";
+		}
+
+		if (false == excludedFromDisplay) {
+			if ("string".equals(type)
+			 || "localized".equals(type)
+			 || "numeric".equals(type)) {
+				if (null != id) {
+
+					pw.println("\t\t\t\t\t\t\t\t{{#if " + fieldKey + "}}");
+					if (null != label) {
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
+					}
+
+					String fixUrlClass = "";
+					String fixMaxHeight = "";
+					if (urlsToLinks) {
+						fixUrlClass += " n2s_convertTextUrlToLink";
+					}
+					if (wikiTransform) {
+						fixUrlClass += " n2s_wikiTransform";
+					} else if (isTextarea()) {
+						fixUrlClass += " n2s_preserveSpaces";
+
+						if (null != maxHeight && maxHeight.intValue() > 0) {
+							fixUrlClass += " n2s_installMaxHeight";
+							fixMaxHeight = " _maxheight=\"" + maxHeight.intValue() + "\"";
+						}
+					}
+					if( "string".equals(type) ){
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value" + fixUrlClass + "\"" + fixMaxHeight + ">{{" + fieldKey + "}}</div>");
+					} else if( "localized".equals(type) ){
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value" + fixUrlClass + "\"" + fixMaxHeight + ">{{#:localize}}" + fieldKey + "{{/:localize}}</div>");
+					}
+
+					pw.println("\t\t\t\t\t\t\t\t{{/if}}");
+
+				}
+			} else if ("selection".equals(type)) {
+				if (null != id) {
+					pw.println("\t\t\t\t\t\t\t\t{{#if " + fieldKey + "}}");
+					if (null != label) {
+						pw.println("\t\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
+					}
+					pw.println("\t\t\t\t\t\t\t\t\t<div class=\"value n2s_select\" n2-choice=\"{{" + fieldKey + "}}\">");
+
+					for (SelectionOption option : options) {
+						String value = option.getValue();
+						String optLabel = option.getLabel();
+						if (null == optLabel) {
+							optLabel = value;
+						}
+
+						pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\"" + value + "\">" + optLabel + "</span>");
+					}
+					pw.println("\t\t\t\t\t\t\t\t\t\t<span class=\"n2s_choiceDefault\">{{" + fieldKey + "}}</span>");
+					pw.println("\t\t\t\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t\t\t\t{{/if}}");
+				}
+			} else if ("reference".equals(type)) {
+				if (null != id) {
+					if (null != label) {
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
+					}
+					if ("thumbnail".equals(referenceType)) {
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"value n2s_insertFirstThumbnail\" nunaliit-document=\"{{" + fieldKey + ".doc}}\"></div>");
+					} else {
+						pw.println("\t\t\t\t\t\t\t\t<div class=\"value\"><a href=\"#\" class=\"n2s_referenceLink\">{{"+ fieldKey + ".doc}}</a></div>");
+					}
+				}
 			}
 		}
 	}
@@ -1255,6 +1492,9 @@ public class SchemaAttribute {
 					} else if( "custom".equals(elementType) ){
 						fieldType = ",custom="+customType;
 						arrayType = " \"custom\"";
+					} else if( "triple".equals(elementType) ){
+						fieldType = ",triple";
+						arrayType = " \"triple\"";
 					}
 					
 					if( isTextarea() ){
@@ -1274,13 +1514,20 @@ public class SchemaAttribute {
 						pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
 						pw.println("\t\t\t\t\t<div class=\"value\">");
 						pw.println("\t\t\t\t\t\t{{#:array "+id+arrayType+"}}");
-						pw.println("\t\t\t\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
+						if( "triple".equals(elementType)) {
+							pw.println("\t\t\t\t\t\t\t<div class=\"n2_triple_element\">");
+							tripleSubject.printTripleFields(pw, null, "subject");
+							triplePredicate.printTripleFields(pw, null, "predicate");
+							tripleObject.printTripleFields(pw, null, "object");
+							pw.println("\t\t\t\t\t\t\t</div>");
+						} else {
+							pw.println("\t\t\t\t\t\t\t<div>{{#:field}}."+fieldType+searchFnName+"{{/:field}}</div>");
+						}
 						pw.println("\t\t\t\t\t\t{{/:array}}");
 						pw.println("\t\t\t\t\t</div>");
 						pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 						
 						pw.println("\t\t\t\t</div>");
-						
 						
 						pw.println("\t\t\t{{/"+schemaStructure+"}}");
 					}
@@ -1394,6 +1641,22 @@ public class SchemaAttribute {
 				
 				
 				pw.println("\t\t\t{{/"+schemaStructure+"}}");
+			} else if( "triple".equals(type) ){
+				if( null != id ){
+					pw.println("\t\t\t{{#"+schemaStructure+"}}");
+					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
+					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\">");
+					pw.println("\t\t\t\t\t\t<div class=\"n2_triple_element\">");
+					tripleSubject.printTripleFields(pw, id, "subject");
+					triplePredicate.printTripleFields(pw, id, "predicate");
+					tripleObject.printTripleFields(pw, id, "object");
+					pw.println("\t\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t</div>");
+					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
+					pw.println("\t\t\t\t</div>");
+					pw.println("\t\t\t{{/"+schemaStructure+"}}");
+				}
 			} else if( "createdBy".equals(type) ){
 				// nothing to do
 
@@ -1402,6 +1665,65 @@ public class SchemaAttribute {
 				
 			} else {
 				throw new Exception("Unable to include type "+type+" in form");
+			}
+		}
+	}
+	
+	private void printTripleFields(PrintWriter pw, String key, String field) throws Exception{
+		String labelLocalizeClass = (this.label != null) ? " n2s_localize" : "";
+		String fieldKey = (key != null) ? key + "." + field + "." + id : field + "." + id;
+
+		if (false == excludedFromForm) {
+			if ("string".equals(type)
+			 || "localized".equals(type)
+			 || "reference".equals(type)
+			 || "numeric".equals(type)) {
+
+				String fieldType = "";
+				if ("localized".equals(type)) {
+					fieldType = ",localized";
+				} else if ("reference".equals(type)) {
+					fieldType = ",reference";
+				} else if ("numeric".equals(type)) {
+					fieldType = ",numeric";
+				}
+
+				if (isTextarea()) {
+					fieldType += ",textarea";
+				}
+
+				if (null != placeholder) {
+					fieldType += ",placeholder=" + encodeFieldParameter(placeholder);
+				}
+				fieldType += ",triple";
+
+				pw.println("\t\t\t\t\t\t\t<div class=\"" + field + "\">");
+				if (null != this.label) {
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
+				}
+				pw.println("\t\t\t\t\t\t\t\t{{#:field}}" + fieldKey + fieldType + "{{/:field}}");
+				pw.println("\t\t\t\t\t\t\t</div>");
+	
+			} else if ("selection".equals(type)) {
+				pw.println("\t\t\t\t\t\t\t<div class=\"" + field + "\">");
+				if (null != this.label) {
+					pw.println("\t\t\t\t\t\t\t\t<div class=\"label" + labelLocalizeClass + "\">" + label + "</div>");
+				}
+				pw.println("\t\t\t\t\t\t\t\t<select data-schema-type=\"triple\" class=\"{{#:input}}" + fieldKey +",triple{{/:input}}\" >");
+
+				for (SelectionOption option : options) {
+					pw.print("\t\t\t\t\t\t\t\t\t<option class=\"n2s_localize\" value=\"" + option.getValue() + "\">");
+					String optLabel = option.getLabel();
+					if (null == optLabel) {
+						optLabel = option.getValue();
+					}
+					pw.print(optLabel);
+					pw.println("</option>");
+				}
+				pw.println("\t\t\t\t\t\t\t\t</select>");
+				pw.println("\t\t\t\t\t\t\t</div>");
+			} else {
+				throw new Exception("Unable to include type " + type + " in form");
 			}
 		}
 	}

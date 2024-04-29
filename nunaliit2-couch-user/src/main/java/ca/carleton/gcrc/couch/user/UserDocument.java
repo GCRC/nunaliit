@@ -21,6 +21,10 @@ public class UserDocument {
 		return json;
 	}
 
+	public String getId(){
+		return json.optString("_id",null);
+	}
+
 	public String getName(){
 		return json.optString("name",null);
 	}
@@ -35,7 +39,7 @@ public class UserDocument {
 		JSONArray roleArray = json.optJSONArray("roles");
 		if( null != roleArray ){
 			for(int i=0,e=roleArray.length(); i<e; ++i){
-				String role = roleArray.optString(i);
+				String role = roleArray.optString(i, null);
 				if( null != role ){
 					roles.add(role);
 				}
@@ -51,7 +55,7 @@ public class UserDocument {
 		JSONArray emailArray = json.optJSONArray(PROP_NAME_EMAILS);
 		if( null != emailArray ){
 			for(int i=0,e=emailArray.length(); i<e; ++i){
-				String email = emailArray.optString(i);
+				String email = emailArray.optString(i, null);
 				if( null != email ){
 					emails.add(email);
 				}

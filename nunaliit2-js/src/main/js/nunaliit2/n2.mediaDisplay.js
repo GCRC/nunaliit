@@ -383,14 +383,16 @@ $n2.MediaDisplay = $n2.Class({
 		
 		$mediaDialog.dialog(dialogOptions);
 		let features = ['playpause','progress','volume','sourcechooser'];
+		let options = {
+			features: features
+		}
 		if(opts.vttFiles) {
 			features.push('tracks');
+			options['startLanguage'] = $n2.l10n.getLocale().lang;
 		}
 		features.push('fullscreen');
 
-		$('#'+videoId).mediaelementplayer({
-			features: features
-		});
+		$('#'+videoId).mediaelementplayer(options);
 	}
 
 	,_displayAudio: function(opts) {

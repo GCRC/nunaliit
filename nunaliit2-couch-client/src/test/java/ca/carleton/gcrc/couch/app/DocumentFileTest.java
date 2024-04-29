@@ -75,7 +75,7 @@ public class DocumentFileTest extends TestCase {
 		// Check that file was included
 		JSONObject jsonObj = doc.getJSONObject();
 		{
-			String value = jsonObj.getString("map");
+			String value = jsonObj.optString("map", null);
 			if( false == value.contains("INCLUDE_UTIL") ){
 				fail("File not included");
 			}
@@ -156,7 +156,7 @@ public class DocumentFileTest extends TestCase {
 
 		// That EOL was removed
 		JSONObject obj = doc.getJSONObject();
-		String name = obj.getString("name");
+		String name = obj.optString("name", null);
 		if( false == " name".equals(name) ) {
 			fail("Unexpected attribute value: >"+name+"<  EOL should be removed");
 		}
@@ -176,7 +176,7 @@ public class DocumentFileTest extends TestCase {
 
 		// That EOL was removed
 		JSONObject obj = doc.getJSONObject();
-		String name = obj.getString("name");
+		String name = obj.optString("name", null);
 		if( false == " name".equals(name) ) {
 			fail("Unexpected attribute value: >"+name+"<  EOL should be removed");
 		}
@@ -196,7 +196,7 @@ public class DocumentFileTest extends TestCase {
 
 		// That EOL was removed
 		JSONObject obj = doc.getJSONObject();
-		String name = obj.getString("name");
+		String name = obj.optString("name", null);
 		if( false == "line1\nline2\n".equals(name) ) {
 			fail("Unexpected attribute value: >"+name+"<  EOL should NOT be removed");
 		}
@@ -216,7 +216,7 @@ public class DocumentFileTest extends TestCase {
 
 		// That EOL was removed
 		JSONObject obj = doc.getJSONObject();
-		String name = obj.getString("name");
+		String name = obj.optString("name", null);
 		if( false == "".equals(name) ) {
 			fail("Unexpected attribute value. It should be empty.");
 		}
@@ -236,7 +236,7 @@ public class DocumentFileTest extends TestCase {
 
 		// Check _id
 		JSONObject obj = doc.getJSONObject();
-		String id = obj.getString("_id");
+		String id = obj.optString("_id", null);
 		if( false == "test".equals(id) ) {
 			fail("Unexpected attribute value: >"+id+"<  Spaces should be removed");
 		}

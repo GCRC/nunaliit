@@ -161,7 +161,7 @@ public class NunaliitDocument implements Document {
 		if( obj instanceof JSONObject ){
 			JSONObject jsonObj = (JSONObject)obj;
 			
-			String nunaliitType = jsonObj.optString("nunaliit_type");
+			String nunaliitType = jsonObj.optString("nunaliit_type", null);
 			if( null != nunaliitType && nunaliitType.equals(type) ){
 				structures.add(jsonObj);
 			}

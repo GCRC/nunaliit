@@ -65,6 +65,8 @@ var AuthService = $n2.Class({
 	
 	,couchServer: null
 
+	,customService: null
+
 	,loginStateListeners: null
 	
 	,lastAuthSessionCookie: null
@@ -104,9 +106,13 @@ var AuthService = $n2.Class({
 		this.autoRegistrationAvailable = false;
 		
 		this.couchServer = undefined;
+		this.customService = undefined;
 		if( this.options.directory ){
 			this.couchServer = this.options.directory.couchServer;
 		};
+		if (this.options.directory) {
+			this.customService = this.options.directory.customService;
+		}
 		if( !this.couchServer ){
 			$n2.log('Couch Server must be specified for CouchDb AuthService');
 			this.options.onError( _loc('Server must be specified for CouchDb AuthService') );
@@ -328,6 +334,26 @@ var AuthService = $n2.Class({
 		};
 		
 		return info;
+	},
+
+	initDialog: function (target, dialogOptions) {
+		if (this.customService.getOption("authServiceDoNotUseDialog")) {
+			if (!target.hasClass("n2Auth_noDialog")) {
+				target.addClass("n2Auth_noDialog")
+			}
+			if (dialogOptions.title) {
+				const existingTitle = target.find(".n2AuthService_noDialog_title")
+				if (existingTitle.length) {
+					existingTitle[0].innerText = dialogOptions.title
+				}
+				else {
+					target.prepend($(`<div class="n2AuthService_noDialog_title">${dialogOptions.title}</div>`))
+				}
+			}
+		}
+		else {
+			target.dialog(dialogOptions)
+		}
 	}
 	
 	,login: function(opts_) {
@@ -357,7 +383,7 @@ var AuthService = $n2.Class({
 		    	,async: true
 		    	,traditional: true
 		    	,data: {
-		    		email: username
+		    		email: username.toLowerCase()
 		    	}
 		    	,dataType: 'json'
 		    	,success: function(userDoc) {
@@ -843,9 +869,9 @@ var AuthService = $n2.Class({
 		
 		// Adjust dialog title
 		if( opts.prompt ) {
-			$dialog.dialog('option','title',opts.prompt);
+			this.initDialog($dialog, { 'title': opts.prompt })
 		} else {
-			$dialog.dialog('option','title',_loc('Please login'));
+			this.initDialog($dialog, { 'title': _loc('Please login') })
 		};
 		
 		function performLogin(){
@@ -990,7 +1016,7 @@ var AuthService = $n2.Class({
 			};
 		});
 		
-		$dialog.dialog('option','title',_loc('User Creation'));
+		this.initDialog($dialog, { 'title': _loc('User Creation') })
 		
 		function performUserCreation(){
 			var $dialog = $('#'+dialogId);
@@ -1110,7 +1136,7 @@ var AuthService = $n2.Class({
 				return false;
 			});
 		
-		$dialog.dialog('option','title',_loc('User Registration'));
+		this.initDialog($dialog, { 'title': _loc('User Registration') })
 		
 		function performUserRegistration(){
 			var $dialog = $('#'+dialogId);
@@ -1178,7 +1204,7 @@ var AuthService = $n2.Class({
 					return false;
 				});
 
-			$dialog.dialog('option','title',_loc('Registration Initiated'));
+			_this.initDialog($dialog, { 'title': _loc('Registration Initiated') })
 		};
 	}
 	
@@ -1249,7 +1275,8 @@ var AuthService = $n2.Class({
 				return false;
 			});
 
-		$dialog.dialog('option','title',_loc('Recover Password'));
+
+		this.initDialog($dialog, { 'title': _loc('Recover Password') })
 		
 		function performPasswordRecovery(){
 			var $dialog = $('#'+dialogId);
@@ -1318,7 +1345,7 @@ var AuthService = $n2.Class({
 					return false;
 				});
 
-			$dialog.dialog('option','title',_loc('Password Recovery Initiated'));
+			_this.initDialog($dialog, { 'title': _loc('Password Recovery Initiated') })
 		};
 		
 		function reportError(errorMessage){
@@ -1358,20 +1385,27 @@ var AuthService = $n2.Class({
 					return false;
 				});
 
-			$dialog.dialog('option','title',_loc('Password Recovery Failure'));
+			_this.initDialog($dialog, { 'title': _loc('Password Recovery Failure') })
 		};
 	}
 
 	,showLoginForm: function(opts_) {
 		var opts = $.extend({
 			prompt: this.options.prompt
+			,container: null
 			,onSuccess: function(context){}
 			,onError: $n2.reportErrorForced
 		}, opts_);
 
 		var dialogId = $n2.getUniqueId();
 		var $dialog = $('<div id="'+dialogId+'"></div>');
-		$(document.body).append($dialog);
+
+		if (opts.container !== null) {
+			$(opts.container).append($dialog)
+		}
+		else {
+			$(document.body).append($dialog);
+		}
 		
 		this._fillDialogWithLogin(dialogId, {
 			prompt: opts.prompt
@@ -1397,7 +1431,7 @@ var AuthService = $n2.Class({
 		if( opts.prompt ) {
 			dialogOptions.title = opts.prompt;
 		}
-		$dialog.dialog(dialogOptions);
+		this.initDialog($dialog, dialogOptions)
 	}
 	
 	,logout: function(opts_) {

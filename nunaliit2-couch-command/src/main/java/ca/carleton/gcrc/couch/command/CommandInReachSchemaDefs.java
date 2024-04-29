@@ -103,7 +103,7 @@ public class CommandInReachSchemaDefs implements Command {
 		for (InReachForm form : inReachSettings.getForms()) {
 			String userResponse = null;
 			JSONObject jsonDef = schemaDefinitionFromForm(form);
-			String schemaId = form.getPrefix().replace("-", "_") + form.getTitle().replace(" ", "_");
+			String schemaId = form.getTitle();
 			if(null == shouldAddSchema) {
 				// if --generate-schema flag not provided, ask user if they want to create schema or not
 				do {
@@ -161,7 +161,7 @@ public class CommandInReachSchemaDefs implements Command {
 		JSONObject jsonDef = new JSONObject();
 
 		jsonDef.put("group", "inReach");
-		jsonDef.put("id", form.getPrefix().replace("-", "_") + form.getTitle().replace(" ", "_"));
+		jsonDef.put("id", form.getTitle());
 		jsonDef.put("label", "InReach "+form.getTitle());
 
 		JSONArray attributes = new JSONArray();

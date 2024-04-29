@@ -19,6 +19,7 @@
 	var documentTransforms = [];
 	var allLists = [];
 	var selectedList = null;
+	var dispatchService = null;
 
 	// **********************************************************************
 	var DocumentList = $n2.Class({
@@ -1923,9 +1924,10 @@
 			};
 			
 			this.getTransformFunction({
-				onSuccess: function(transformFn){
+				onSuccess: function(transformFn, isBulkUpdate){
 					_this.transformListUsingFunction({
 						list: opts.list
+						, isBulkUpdate
 						,transformFn: transformFn
 						,onCompleted: opts.onCompleted
 						,onError: opts.onError
@@ -1955,8 +1957,10 @@
 			var opCancelled = false;
 			var progressDialog = new $n2.couchDialogs.ProgressDialog({
 				title: _loc('Transform Progress')
+				,cancelButtonLabel: _loc('Close')
 				,onCancelFn: function(){
-					opCancelled = true;
+					opCancelled = true
+					this.close()
 				}
 			});
 			
@@ -1976,7 +1980,77 @@
 			// can save temporary objects to it
 			var my_scriptConfig = $n2.extend({},g_scriptConfig);
 			
-			processNext();
+			if (opts.isBulkUpdate) {
+				processBulk()
+			}
+			else {
+				processNext()
+			}
+
+			function processBulk() {
+				if (opCancelled) {
+					cancel()
+					return
+				}
+				progressDialog.updateHtmlMessage(`<span>Performing bulk document retrieval</span>`)
+				atlasDb.bulkGetDocuments({
+					docIds: opts.list.docIds.map(id => { return { id }}),
+					onSuccess: function(retrievedDocs) {
+						if (opCancelled) {
+							cancel()
+							return
+						}
+						progressDialog.updateHtmlMessage(`<span>Transforming documents</span>`)
+						const affectedDocs = []
+						retrievedDocs.forEach(transformingDoc => {
+							opts.transformFn(
+								transformingDoc,
+								() => {
+									affectedDocs.push(transformingDoc)
+									return
+								},
+								() => {
+									return
+								},
+								my_scriptConfig
+							)
+						})
+						progressDialog.updateHtmlMessage(`<span>Saving changed documents</span>`)
+						atlasDb.bulkModifyDocuments({
+							docs: affectedDocs,
+							onSuccess: function(res) {
+								let html = `<div style="overflow-y: scroll; max-height: 300px;">`
+								res.forEach(docRes => {
+									html += `<pre`
+									if (docRes.error) html += ` style="color: red;"`
+									html += `>${docRes.id}\n`
+									if (docRes.ok) {
+										html += `Document modified successfully\n`
+									}
+									if (docRes.error) {
+										html += `${docRes.error}\n`
+										if (docRes.reason === "Database submissions are restricted to users that have accepted the user agreement null roles: ") {
+											html += `Insufficient roles or not logged in\n`
+										}
+									}
+									else {
+										html += `${docRes.rev}</pre>`
+									}
+								})
+								progressDialog.updateHtmlMessage(html)
+							},
+							onError: function(err){
+								reportError(err);
+								progressDialog.updateHtmlMessage(`<span>${err}</span>`);
+							}
+						})
+					},
+					onError: function(err){
+						reportError(err);
+						progressDialog.updateHtmlMessage(`<span>${err}</span>`);
+					}
+				})
+			}
 			
 			function processNext(){
 				if( opCancelled ) {
@@ -2208,7 +2282,7 @@
 			var dialogId = $n2.getUniqueId();
 			var $dialog = $('<div id="'+dialogId+'" class="selectAppDocumentTransformJavascript">'
 				+'<div>'+_loc('Javascript')+':<br/><textarea></textarea></div>'
-				+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button></div>'
+				+'<div><button>'+_loc('OK')+'</button><button>'+_loc('Cancel')+'</button><button>'+_loc('Bulk')+'</button></div>'
 				+'</div>');
 
 			$dialog.find('textarea').val('function(doc, onTransformedFn, onSkippedFn, config){\n\t// Modify document, then call onTransformedFn() to save it\n\t// Otherwise, call onSkippedFn()\n}')
@@ -2248,6 +2322,28 @@
 					.click(function(){
 						var $dialog = $('#'+dialogId);
 						$dialog.dialog('close');
+						return false;
+					})
+				.next()
+					.button({icons:{primary:'ui-icon-cart'}})
+					.click(function(){
+						var $dialog = $('#'+dialogId);
+						var script = $dialog.find('textarea').val();
+						var scriptFn = null;
+						var my_scriptConfig = $n2.extend({},g_scriptConfig);
+						try {
+							eval('scriptFn = '+script);
+							scriptFn({_id:'test',_revision:'1-abcde'},function(){},function(){},my_scriptConfig);
+						} catch(e) {
+							alert(_loc('Error')+': '+e);
+							return;
+						};
+						if( typeof(scriptFn) !== 'function' ) {
+							alert(_loc('You must enter a valid function'));
+							return;
+						};
+						$dialog.dialog('close');
+						opts.onSuccess(scriptFn, true);
 						return false;
 					})
 				;
@@ -3344,6 +3440,10 @@
 	
 	// -----------------------------------------------------------------
 	function viewDocument(docId){
+		dispatchService.send("select.js", {
+			type: "editCancel"
+		})
+
 		var $div = getDocumentDiv();
 		var $revs = getDocumentRevisionsDiv();
 		
@@ -3574,6 +3674,7 @@
 		config = opts_.config;
 		atlasDb = opts_.config.atlasDb;
 		atlasDesign = opts_.config.atlasDesign;
+		dispatchService = opts_.config.directory.dispatchService;
 		serverDesign = opts_.config.serverDesign;
 		siteDesign = opts_.config.siteDesign;
 		schemaRepository = opts_.config.directory.schemaRepository;

@@ -33,6 +33,7 @@ import ca.carleton.gcrc.couch.user.error.TokenExpiredException;
 import ca.carleton.gcrc.couch.user.error.UserUpdatedException;
 import ca.carleton.gcrc.couch.user.mail.PasswordRecoveryGenerator;
 import ca.carleton.gcrc.couch.user.mail.PasswordReminderGenerator;
+import ca.carleton.gcrc.couch.user.mail.UserRegistrationGenerator;
 import ca.carleton.gcrc.couch.user.mail.UserCreationGenerator;
 import ca.carleton.gcrc.couch.user.mail.UserMailNotificationImpl;
 import ca.carleton.gcrc.couch.utils.CouchDbTemplateMailMessageGenerator;
@@ -145,6 +146,15 @@ public class UserServlet extends HttpServlet {
 						template
 						);
 				userMailNotification.setPasswordReminderGenerator(couchTemplate);
+			}
+			{
+				MailMessageGenerator template = new UserRegistrationGenerator();
+				CouchDbTemplateMailMessageGenerator couchTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDb,
+						"org.nunaliit.email_template.user_registration",
+						template
+						);
+				userMailNotification.setUserRegistrationGenerator(couchTemplate);
 			}
 		}
 		
@@ -271,7 +281,7 @@ public class UserServlet extends HttpServlet {
 				} else if( null != emailStrings && emailStrings.length > 0 ){
 					// Request by e-mail
 					String emailAddress = emailStrings[0];
-					JSONObject result = actions.getUserFromEmailAddress(emailAddress);
+					JSONObject result = actions.getUserFromEmailAddress(emailAddress.toLowerCase());
 					sendJsonResponse(resp, result);
 				}
 
@@ -343,7 +353,7 @@ public class UserServlet extends HttpServlet {
 					throw new Exception("'email' parameter must be specified exactly once");
 				}
 				
-				JSONObject result = actions.initUserCreation(emailStrings[0]);
+				JSONObject result = actions.initUserCreation(emailStrings[0].toLowerCase());
 				sendJsonResponse(resp, result);
 
 			} else if( path.size() == 1 && path.get(0).equals("validateUserCreation") ) {
@@ -369,7 +379,7 @@ public class UserServlet extends HttpServlet {
 					throw new Exception("'email' parameter must be specified exactly once");
 				}
 				
-				JSONObject result = actions.initPasswordRecovery(emailStrings[0]);
+				JSONObject result = actions.initPasswordRecovery(emailStrings[0].toLowerCase());
 				sendJsonResponse(resp, result);
 
 			} else if( path.size() == 1 && path.get(0).equals("validatePasswordRecovery") ) {

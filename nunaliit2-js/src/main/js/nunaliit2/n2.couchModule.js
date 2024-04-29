@@ -1125,6 +1125,7 @@ var ModuleDisplay = $n2.Class({
 				suppress: false
 				,initiallyOpened: false
 			}
+			,gazetteerFeatureFilter: ['PLACES']
 		};
 
 		// Layer selector
@@ -1301,6 +1302,10 @@ var ModuleDisplay = $n2.Class({
 			};
 		};
 
+		if (mapInfo && mapInfo.gazetteerFeatureFilter) {
+			mapOptions.gazetteerFeatureFilter = mapInfo.gazetteerFeatureFilter
+		}
+
 		if( mapInfo
 			&& mapInfo.coordinates
 			&& mapInfo.coordinates.autoInitialBounds ){
@@ -1376,14 +1381,15 @@ var ModuleDisplay = $n2.Class({
 
 			// Map max extent
 			var mapInfo = _this.module.getMapInfo();
-			if( mapInfo
+			if (mapInfo
 				&& mapInfo.coordinates
-				&& mapInfo.coordinates.maxExtent ){
-				mapOptions.mapCoordinateSpecifications.maxExtent =
-					mapInfo.coordinates.maxExtent;
-
-			} else if( mapOptions.mapDisplay.srsName !== null
-				&& mapOptions.mapDisplay.srsName !== 'EPSG:4326' ) {
+				&& mapInfo.coordinates.maxExtent) {
+				mapOptions.mapCoordinateSpecifications.maxExtent = mapInfo.coordinates.maxExtent;
+				if (mapInfo.coordinates.restrictedExtent) {
+					mapOptions.mapCoordinateSpecifications.restrictedExtent = mapInfo.coordinates.restrictedExtent;
+				}
+			} else if (mapOptions.mapDisplay.srsName !== null
+				&& mapOptions.mapDisplay.srsName !== 'EPSG:4326') {
 				mapOptions.mapCoordinateSpecifications.maxExtent =
 					mapOptions.mapCoordinateSpecifications.initialBounds;
 			};
@@ -1545,7 +1551,7 @@ var ModuleDisplay = $n2.Class({
 					if( doc
 						&& doc.nunaliit_help ){
 						$n2.help.InstallHelpInfo('main',doc.nunaliit_help);
-						installHelpButton();
+						installHelpButton(moduleInfo.help?.label);
 					} else {
 						$n2.log('Do not know how to interpret help document');
 						$elem.attr('n2_error','Do not know how to interpret help document');
@@ -1562,10 +1568,11 @@ var ModuleDisplay = $n2.Class({
 			$elem.attr('n2_error','Do not know how to handle help information');
 		};
 
-		function installHelpButton(){
+		function installHelpButton(label){
 
 			var $a = $('<a class="nunaliit_module_help_button" href="#"></a>');
-			$a.text( _loc('Help') );
+			const helpLabel = label || 'Help'
+			$a.text( _loc(helpLabel));
 
 			$('#'+_this.helpButtonName)
 				.empty()

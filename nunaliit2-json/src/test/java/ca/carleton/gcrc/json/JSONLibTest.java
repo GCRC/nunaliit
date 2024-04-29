@@ -83,7 +83,7 @@ public class JSONLibTest extends TestCase {
 			JSONObject jsonObj = (JSONObject)obj;
 			if( JSONSupport.containsKey(jsonObj, "name") ) {
 				// OK
-				String name = jsonObj.getString("name");
+				String name = jsonObj.optString("name", null);
 				if( null == name ) {
 					// OK
 				} else {

@@ -31,4 +31,6 @@ public interface UserRepository {
 	void computeUserPassword(JSONObject userDoc, String password) throws Exception;
 	
 	Collection<UserDocument> getUsersWithRoles(List<String> roles) throws Exception;
+
+	boolean isEmailAddressInUse(String email) throws Exception;
 }

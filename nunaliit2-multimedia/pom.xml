@@ -33,12 +33,12 @@
 	<dependency>
 		<groupId>com.adobe.xmp</groupId>
 		<artifactId>xmpcore</artifactId>
-		<version>5.1.3</version>
+		<version>6.1.11</version>
 	</dependency>
 	<dependency>
 		<groupId>com.drewnoakes</groupId>
 		<artifactId>metadata-extractor</artifactId>
-		<version>2.6.2</version>
+		<version>2.18.0</version>
 	</dependency>
 	<dependency>
 		<groupId>ca.carleton.gcrc</groupId>
@@ -59,7 +59,7 @@
 	<dependency>
 		<groupId>org.apache.tika</groupId>
 		<artifactId>tika-core</artifactId>
-		<version>1.24.1</version>
+		<version>1.28.3</version>
 	</dependency>
 	<dependency>
 		<groupId>org.apache.commons</groupId>

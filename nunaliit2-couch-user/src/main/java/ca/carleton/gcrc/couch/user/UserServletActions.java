@@ -115,7 +115,14 @@ public class UserServletActions {
 	}
 	
 	public JSONObject initUserCreation(String emailAddr) throws Exception {
+		boolean isEmailInUse = userRepository.isEmailAddressInUse(emailAddr);
 		JSONObject result = new JSONObject();
+
+		if (isEmailInUse) {
+			result.put("error", "Email is already associated with an existing user");
+			return result;
+		}
+
 		result.put("message", "User creation email was sent to the given address");
 
 		// Create token
@@ -389,7 +396,7 @@ public class UserServletActions {
 			
 			// Verify that user document was not modified since the token was generated
 			{
-				String rev = userDoc.optString("_rev");
+				String rev = userDoc.optString("_rev", null);
 				if( null == rev ){
 					throw new Exception("Revision not available from user document");
 				}

@@ -27,7 +27,7 @@ public class DocumentDescriptor extends AbstractDescriptor {
 	
 	public String getDocId() throws Exception {
 		JSONObject doc = getJson();
-		return doc.getString(UploadConstants.KEY_DOC_ID);
+		return doc.optString(UploadConstants.KEY_DOC_ID, null);
 	}
 	
 	public String getRevision() throws Exception {
@@ -104,7 +104,7 @@ public class DocumentDescriptor extends AbstractDescriptor {
 					String attName = (String)keyObj;
 					JSONObject attachment = files.optJSONObject(attName);
 					if( null != attachment ){
-						String attachmentUploadId = attachment.optString("uploadId");
+						String attachmentUploadId = attachment.optString("uploadId", null);
 						if( null != attachmentUploadId ){
 							if( attachmentUploadId.equals(uploadId) ){
 								return new AttachmentDescriptor(this, attName);

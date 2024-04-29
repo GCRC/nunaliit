@@ -3,6 +3,7 @@ package ca.carleton.gcrc.couch.command;
 import ca.carleton.gcrc.couch.command.impl.CommandSupport;
 import ca.carleton.gcrc.couch.command.impl.TransparentProxyFixedEscaped;
 import ca.carleton.gcrc.couch.command.impl.TransparentWithRedirectServlet;
+import ca.carleton.gcrc.couch.command.impl.InReachProxy;
 import ca.carleton.gcrc.couch.command.servlet.ConfigServlet;
 import ca.carleton.gcrc.couch.date.DateServlet;
 import ca.carleton.gcrc.couch.export.ExportServlet;
@@ -20,21 +21,17 @@ import org.apache.log4j.PatternLayout;
 import org.apache.log4j.rolling.RollingFileAppender;
 import org.apache.log4j.rolling.TimeBasedRollingPolicy;
 import org.eclipse.jetty.proxy.ProxyServlet;
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.handler.HandlerCollection;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.DefaultServlet;
-import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.eclipse.jetty.servlets.GzipFilter;
 
-import javax.servlet.DispatcherType;
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
-import java.util.EnumSet;
-import java.util.logging.Handler;
 
 public class CommandRun implements Command {
 	public static final String REQ_BUFFER_SIZE = "16384";
@@ -126,19 +123,28 @@ public class CommandRun implements Command {
 		URL serverUrl = null;
 		URL dbUrl = null;
 		URL siteRedirect = null;
+		URL inreachUrl = null;
 		{
 			serverUrl = atlasProperties.getCouchDbUrl();
 			String dbName = atlasProperties.getCouchDbName();
 
 			dbUrl = new URL(serverUrl,dbName);
 			siteRedirect = new URL(serverUrl,dbName+"/_design/site/_rewrite/");
+			if(!atlasProperties.getInReachDbName().isEmpty()) {
+				inreachUrl = new URL(serverUrl, atlasProperties.getInReachDbName());
+			}
+			
 		}
 		
 		// Figure out media directory
 		File mediaDir = new File(atlasDir, "media");
 
 		// Create server
-		Server server = new Server(atlasProperties.getServerPort());
+		Server server = new Server();
+		ServerConnector serverConnector = new ServerConnector(server);
+		serverConnector.setPort(atlasProperties.getServerPort());
+		serverConnector.setIdleTimeout(300000L);
+		server.setConnectors(new Connector[]{serverConnector});
 		
 		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
 		context.setContextPath("/");
@@ -177,6 +183,15 @@ public class CommandRun implements Command {
         	servletHolder.setInitParameter("requestBufferSize", REQ_BUFFER_SIZE);
         	context.addServlet(servletHolder,"/submitDb/*");
         }
+
+		// Proxy to inreach DB
+        if( !atlasProperties.getInReachDbName().isEmpty() ) {
+			ServletHolder servletHolder = new ServletHolder(new InReachProxy(atlasProperties.getCouchDbAdminUser(), atlasProperties.getCouchDbAdminPassword()));
+			servletHolder.setInitParameter("proxyTo", inreachUrl.toExternalForm());
+			servletHolder.setInitParameter("prefix", "/"+atlasProperties.getInReachDbName());
+			servletHolder.setInitParameter("requestBufferSize", REQ_BUFFER_SIZE);
+			context.addServlet(servletHolder,"/" + atlasProperties.getInReachDbName() + "/*");
+		}
 
         // Proxy to media
         {

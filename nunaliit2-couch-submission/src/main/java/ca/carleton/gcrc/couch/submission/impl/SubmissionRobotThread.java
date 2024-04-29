@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.Vector;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,10 @@ import ca.carleton.gcrc.couch.utils.SubmissionUtils;
 import ca.carleton.gcrc.json.JSONSupport;
 import ca.carleton.gcrc.json.patcher.JSONPatcher;
 import ca.carleton.gcrc.mail.MailRecipient;
+import ca.carleton.gcrc.couch.user.UserDocument;
+import ca.carleton.gcrc.couch.export.SchemaCache;
+import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
+import ca.carleton.gcrc.couch.app.Document;
 
 public class SubmissionRobotThread extends Thread implements CouchDbChangeListener {
 	
@@ -179,11 +184,11 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		String docId = null;
 		String revision = null;
 		if( null != originalReserved ){
-			docId = originalReserved.optString("id");
-			revision = originalReserved.optString("rev");
+			docId = originalReserved.optString("id", null);
+			revision = originalReserved.optString("rev", null);
 		}
 		if( null == docId && null != submittedReserved){
-			docId = submittedReserved.optString("id");
+			docId = submittedReserved.optString("id", null);
 		}
 		
 		// At this point, we better have a docId
@@ -284,7 +289,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			
 			if( null != nunaliitLayers ){
 				for(int i=0;i<nunaliitLayers.length(); ++i){
-					String layerId = nunaliitLayers.optString(i);
+					String layerId = nunaliitLayers.optString(i, null);
 					if( null != layerId ){
 						if( "public".equals(layerId) ){
 							//atLeastOneLayer = true;
@@ -324,6 +329,25 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			submissionDb.updateDocument(submissionDoc);
 			
 			this.mailNotifier.sendSubmissionWaitingForApprovalNotification(submissionDoc);
+		}
+
+		if (null == currentDoc) {
+			String nunaliitSchema = submittedDoc.optString("nunaliit_schema");
+			CouchDb couchDb = documentDbDesignDocument.getDatabase();
+			SchemaCache schemaCache = new SchemaCacheCouchDb(couchDb);
+			Document schemaDoc = schemaCache.getSchema(nunaliitSchema);
+			if (null != schemaDoc) {
+				JSONObject schemaDocObj = schemaDoc.getJSONObject();
+				try {
+					JSONObject definitionJson = schemaDocObj.getJSONObject("definition");
+					boolean emailOnCreate = definitionJson.optBoolean("emailOnCreate", false);
+					if (emailOnCreate) {
+						sendDocumentCreatedEmail(submissionDoc, currentDoc);
+					}
+				} catch (JSONException e) {
+					logger.debug(nunaliitSchema + " does not have a definition loaded");
+				}
+			}
 		}
 	}
 
@@ -412,7 +436,7 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		JSONObject denial_email = submissionInfo.getJSONObject("denial_email");
 		
 		// Find user that submitted the update
-		String userId = submissionInfo.optString("submitter_name");
+		String userId = submissionInfo.optString("submitter_name", null);
 
 		// Get user document
 		CouchUserDocContext userDocContext = null;
@@ -482,6 +506,33 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
 		denial_email.put("sent", true);
 		submissionDb.updateDocument(submissionDoc);
+	}
+
+	public void sendDocumentCreatedEmail(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
+		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+
+		// Find user that submitted the update
+		String userId = submissionInfo.optString("submitter_name", null);
+
+		// Get current user document
+		CouchUserDocContext userDocContext = null;
+		if( null != userId ){
+			try {
+				userDocContext = userDb.getUserFromName(userId);
+			} catch(Exception e) {
+				// Ignore if we can not find user
+			}
+		}
+
+		UserDocument currentUser = null;
+
+		if( null != userDocContext ){
+			JSONObject userDoc = userDocContext.getUserDoc();
+			currentUser = new UserDocument(userDoc);
+		}
+
+		// Send notification
+		mailNotifier.sendDocumentCreatedNotification(submissionDoc, currentUser);
 	}
 
 	private boolean waitMillis(int millis) {

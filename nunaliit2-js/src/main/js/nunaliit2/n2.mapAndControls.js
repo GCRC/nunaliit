@@ -33,9 +33,41 @@ POSSIBILITY OF SUCH DAMAGE.
 ;(function($,$n2){
 "use strict";
 
-	// Localization
-	var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
-	var DH = 'n2.mapAndControls';
+// Localization
+var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
+var DH = 'n2.mapAndControls';
+
+const stadiaMapsOptionsGenerator = (layerName) => {
+	const res = {
+		url: "",
+		options: { projection: new OpenLayers.Projection('EPSG:900913') }
+	}
+	if (layerName === "stamen_watercolor") {
+		res.url = "https://tiles.stadiamaps.com/tiles/stamen_watercolor/${z}/${x}/${y}.jpg"
+		res.options.numZoomLevels = 16
+	}
+	else {
+		res.url = "https://tiles.stadiamaps.com/tiles/" + layerName + "/${z}/${x}/${y}@2x.png"
+		res.options.numZoomLevels = 20
+	}
+
+	if (layerName.includes("stamen")) {
+		res.options.attribution = [
+			'&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a>',
+			'&copy; <a href="https://stamen.com/" target="_blank">Stamen Design</a>',
+			'&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>',
+			'&copy; <a href="https://www.openstreetmap.org/about/" target="_blank">OpenStreetMap contributors</a>'
+		].join(" ")
+	}
+	else {
+		res.options.attribution = [
+			'&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a>',
+			'&copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a>',
+			'&copy; <a href="https://www.openstreetmap.org/about/" target="_blank">OpenStreetMap contributors</a>'
+		].join(" ")
+	}
+	return res
+}
 
 // **************************************************
 // Generic bridge between document model and map
@@ -343,11 +375,15 @@ function HandleWidgetDisplayRequests(m){
 var GazetteerProcess = $n2.Class({
 	
 	geoNamesService: null,
-	
+	featureFilter: null,
 	inputId: null,
 	
-	initialize: function(geoNamesService_){
+	initialize: function(geoNamesService_, featureFilter){
 		this.geoNamesService = geoNamesService_;
+		this.featureFilter = featureFilter
+		if (!Array.isArray(this.featureFilter) || !this.featureFilter.every(v => typeof v === "string")) {
+			$n2.reportErrorForced("featureFilter must be an array of strings")
+		}
 	},
 
 	initiateCapture: function(mapControl){
@@ -381,7 +417,8 @@ var GazetteerProcess = $n2.Class({
 		var $input = $('#'+this.inputId);
 		
 		this.geoNamesService.installAutoComplete({
-			input: $input
+			input: $input,
+			featureFilter: this.featureFilter
 		});
 
 		var request = {
@@ -434,6 +471,7 @@ var GazetteerProcess = $n2.Class({
 		
 		this.geoNamesService.getName({
 			name: request.name
+			,featureFilter: this.featureFilter
 			,featureClass: $n2.GeoNames.FeatureClass.PLACES
 			,maxRows: 25
 			,countryBias: countryBias
@@ -1564,7 +1602,15 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		
 		// Re-project vector layer features when base layer is changed
         this.map.events.register('changebaselayer',null,function(evt){
-        	// var baseLayer = evt.layer;
+        	const newLayer = evt?.layer
+			if (newLayer) {
+				const dispatch = _this._getDispatchService()
+				dispatch.send(DH, {
+					type: "mapBaseLayerChanged",
+					canvasName: _this.getCanvasName(),
+					newLayer
+				})
+			}
         	var lastProjectionObj = evt.oldProjection;
         	var currentProjectionObj = _this.map.getProjectionObject();
 			
@@ -1734,7 +1780,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
     		 && this.options.directory
     		 && this.options.directory.geoNamesService ) {
     			var geoNamesService = this.options.directory.geoNamesService;
-    			var gazetteerProcess = new GazetteerProcess(geoNamesService);
+    			var gazetteerProcess = new GazetteerProcess(geoNamesService, this.options.gazetteerFeatureFilter);
     			var control = new OpenLayers.Control.NunaliitGazetteer({
     				activateListener: function(){
     					gazetteerProcess.initiateCapture(_this);
@@ -2768,6 +2814,40 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			};
 			
 			
+		} else if( 'stadia' === layerDefinition.type ){ 
+			var layerName = null
+			var layerOptions = {
+				isBaseLayer: isBaseLayer
+			}
+			if (typeof (layerDefinition.visibility) === 'boolean') {
+				layerOptions.visibility = layerDefinition.visibility;
+			}
+			var options = layerDefinition.options;
+			if (options) {
+				for (var optionKey in options) {
+					var optionValue = options[optionKey];
+					if (optionKey === 'layerName') {
+						layerName = optionValue;
+					}
+					else {
+						layerOptions[optionKey] = optionValue;
+					}
+				}
+			}
+			if (!layerName) {
+				$n2.reportError('Option layerName must be specified for a Stadia background.');
+			}
+			else {
+				const {
+					url,
+					options
+				} = stadiaMapsOptionsGenerator(layerName)
+				var l = new OpenLayers.Layer.XYZ(name, url, options);
+				if (name) {
+					l.name = name;
+				}
+				return l;
+			}
 		} else {
 			$n2.reportError('Unknown layer type: '+layerDefinition.type);
 		};

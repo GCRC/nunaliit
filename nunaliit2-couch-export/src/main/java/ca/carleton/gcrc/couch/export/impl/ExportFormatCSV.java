@@ -72,7 +72,7 @@ public class ExportFormatCSV implements ExportFormat {
 		NunaliitDocument nunaliitDoc = new NunaliitDocument(doc);
 		JSONObject jsonDoc = nunaliitDoc.getJSONObject();
 
-		String docSchemaName = jsonDoc.optString("nunaliit_schema");
+		String docSchemaName = jsonDoc.optString("nunaliit_schema", null);
 		if( null != docSchemaName ) {
 			// Capture first schema name and associated export info
 			if( null == schemaName ){

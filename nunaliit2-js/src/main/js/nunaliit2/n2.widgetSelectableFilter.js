@@ -281,7 +281,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 			};
 			
 			var $option = $('<option>')
-				.text(label)
+				.text(_loc(label))
 				.val(choice.id)
 				.appendTo($selector);
 		};
@@ -637,7 +637,7 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 					return false;
 				});
 			$('<span>')
-				.text(label)
+				.text(_loc(label))
 				.appendTo($a);
 		};
 		
@@ -1008,7 +1008,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 				.appendTo($selectDiv);
 
 			$('<a>')
-				.text(label)
+				.text(_loc(label))
 				.attr('data-n2-choiceId',choiceId)
 				.appendTo($div)
 				.click(function(){
@@ -1233,6 +1233,7 @@ function HandleWidgetDisplayRequests(m){
 //--------------------------------------------------------------------------
 $n2.widgetSelectableFilter = {
 	SingleFilterSelectionWidget: SingleFilterSelectionWidget
+	,MultiFilterSelectionWidget: MultiFilterSelectionWidget
 	,MultiFilterSelectionDropDownWidget: MultiFilterSelectionDropDownWidget
 	,HandleWidgetAvailableRequests: HandleWidgetAvailableRequests
 	,HandleWidgetDisplayRequests: HandleWidgetDisplayRequests
