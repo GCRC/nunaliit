@@ -185,7 +185,7 @@ public class CommandRun implements Command {
         }
 
 		// Proxy to inreach DB
-        if(!atlasProperties.getInReachDbName().isEmpty()) { //TODO make it configurable
+        if( !atlasProperties.getInReachDbName().isEmpty() ) {
 			ServletHolder servletHolder = new ServletHolder(new InReachProxy(atlasProperties.getCouchDbAdminUser(), atlasProperties.getCouchDbAdminPassword()));
 			servletHolder.setInitParameter("proxyTo", inreachUrl.toExternalForm());
 			servletHolder.setInitParameter("prefix", "/"+atlasProperties.getInReachDbName());
