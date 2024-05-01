@@ -37,6 +37,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 	public InReachProcessorImpl() {
 		garminExploreMessageCodes.put(0, "PositionReport");
+		garminExploreMessageCodes.put(1, "Reserved");
 		garminExploreMessageCodes.put(2, "LocateResponse");
 		garminExploreMessageCodes.put(3, "FreeTextMessage");
 		garminExploreMessageCodes.put(4, "DeclareSOS");
@@ -46,6 +47,10 @@ public class InReachProcessorImpl implements InReachProcessor {
 		garminExploreMessageCodes.put(10, "StartTrack");
 		garminExploreMessageCodes.put(11, "TrackInterval");
 		garminExploreMessageCodes.put(12, "StopTrack");
+		garminExploreMessageCodes.put(14, "PuckMessage1");
+		garminExploreMessageCodes.put(15, "PuckMessage2");
+		garminExploreMessageCodes.put(16, "PuckMessage3");
+		garminExploreMessageCodes.put(17, "MapShare");
 		garminExploreMessageCodes.put(20, "MailCheck");
 		garminExploreMessageCodes.put(21, "AmIAlive");
 	}
