@@ -15,7 +15,10 @@ import java.time.ZoneId;
 
 import org.json.JSONObject;
 import org.json.JSONArray;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.GeometryDescriptor;
@@ -28,14 +31,16 @@ import ca.carleton.gcrc.utils.DateUtils;
 
 public class InReachProcessorImpl implements InReachProcessor {
 
+	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	private InReachSettings settings = InReachConfiguration.getInReachSettings();
+	private CouchClient couchClient;
 	private final String genericSchemaName = "inReach";
 	private static HashMap<Integer, String> garminExploreMessageCodes = new HashMap<>();
 	private static WktWriter wktWriter = new WktWriter();
 	private DateTimeFormatter garminExploreMessageFormatter = DateTimeFormatter
 			.ofPattern("uuuu-MM-dd'T'HH:mm:ss.nnnnnnnnnX").withZone(ZoneId.of("Z"));
 
-	public InReachProcessorImpl() {
+	public InReachProcessorImpl(CouchClient client) {
 		garminExploreMessageCodes.put(0, "PositionReport");
 		garminExploreMessageCodes.put(1, "Reserved");
 		garminExploreMessageCodes.put(2, "LocateResponse");
@@ -53,6 +58,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 		garminExploreMessageCodes.put(17, "MapShare");
 		garminExploreMessageCodes.put(20, "MailCheck");
 		garminExploreMessageCodes.put(21, "AmIAlive");
+		couchClient = client;
 	}
 
 	@Override
@@ -229,12 +235,26 @@ public class InReachProcessorImpl implements InReachProcessor {
 		JSONObject inReachPosition = null;
 		InReachForm form = null;
 
+		// Set this to avoid looping work because map.js checks for this
+		JSONObject inReachStatus = new JSONObject();
+		JSONArray eventDocIds = new JSONArray();
+		inReachStatus.put("eventDocIds", eventDocIds);
+		doc.put("nunaliit_inreach", inReachStatus);
+		try {
+			ctx.saveDocument();
+		} catch (Exception e) {
+			throw new Exception("Could not set GarminExplore inReach processing information", e);
+		}
+
 		if (null == version) {
-			throw new Exception("Garmin-type inReach message missing 'Version' key: " + docId);
+			logger.error("Garmin-type inReach message missing 'Version' key: " + docId);
 		}
 
 		if (version.equals("2.0")) {
+			String[] uuids = this.couchClient.getUuids(events.length());
 			for (int i = 0; i < events.length(); i++) {
+				String uuidForNewDocument = uuids[i];
+				Boolean processFailure = false;
 				form = null;
 				schemaName = genericSchemaName;
 				generatedDoc = new JSONObject();
@@ -279,26 +299,31 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 				JSONObject msgPosition = event.optJSONObject("point");
 				if (null != msgPosition) {
-					double latitude = msgPosition.getDouble("latitude");
-					double longitude = msgPosition.getDouble("longitude");
-					inReachPosition.put("Latitude", latitude);
-					inReachPosition.put("Longitude", longitude);
+					Double latitude = msgPosition.getDouble("latitude");
+					Double longitude = msgPosition.getDouble("longitude");
+					if (latitude.toString().equals("0.0") && longitude.toString().equals("0.0")) {
+						System.out.println("do not make");
+						// Do not make geom for 0,0 messages
+					} else {
+						inReachPosition.put("Latitude", latitude);
+						inReachPosition.put("Longitude", longitude);
 
-					Geometry location = new Point(longitude, latitude);
-					BoundingBox box = location.getBoundingBox();
-					JSONArray bbox = new JSONArray();
-					bbox.put(box.getMinX());
-					bbox.put(box.getMinY());
-					bbox.put(box.getMaxX());
-					bbox.put(box.getMaxY());
-					StringWriter wkt = new StringWriter();
-					wktWriter.write(location, wkt);
+						Geometry location = new Point(longitude, latitude);
+						BoundingBox box = location.getBoundingBox();
+						JSONArray bbox = new JSONArray();
+						bbox.put(box.getMinX());
+						bbox.put(box.getMinY());
+						bbox.put(box.getMaxX());
+						bbox.put(box.getMaxY());
+						StringWriter wkt = new StringWriter();
+						wktWriter.write(location, wkt);
 
-					JSONObject geom = new JSONObject();
-					geom.put("nunaliit_type", "geometry");
-					geom.put("wkt", wkt.toString());
-					geom.put("bbox", bbox);
-					generatedDoc.put("nunaliit_geom", geom);
+						JSONObject geom = new JSONObject();
+						geom.put("nunaliit_type", "geometry");
+						geom.put("wkt", wkt.toString());
+						geom.put("bbox", bbox);
+						generatedDoc.put("nunaliit_geom", geom);
+					}
 				}
 
 				Long timeStamp = event.optLong("timeStamp", -12345);
@@ -317,7 +342,8 @@ public class InReachProcessorImpl implements InReachProcessor {
 				try {
 					gpsDate = DateUtils.parseGpsTimestamp(isoTimestamp);
 				} catch (Exception e) {
-					throw new Exception("Error while parsing GPS timestamp", e);
+					processFailure = true;
+					logger.error("Error while parsing GPS timestamp", e);
 				}
 				if (null != gpsDate) {
 					long intervalStart = (gpsDate.getTime() + 500) / 1000;
@@ -348,6 +374,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 					genericInReachSchema.put("Recipients", builder.toString());
 				}
 
+				genericInReachSchema.put("garminExploreSourceId", docId);
 				generatedDoc.put(schemaName, genericInReachSchema);
 				generatedDoc.put("nunaliit_created", descriptor.getCreatedObject());
 				generatedDoc.put("nunaliit_last_updated", descriptor.getLastUpdatedObject());
@@ -359,20 +386,24 @@ public class InReachProcessorImpl implements InReachProcessor {
 					try {
 						extractInformationForForm(generatedDoc, form);
 					} catch (Exception e) {
-						throw new Exception("Error while extracting information from the inReach data forms: ", e);
+						processFailure = true;
+						logger.error("Error while extracting information from the inReach data forms: ", e);
 					}
 				}
 
 				generatedDoc.put("nunaliit_schema", schemaName);
-				ctx.createDocument(generatedDoc);
-			}
+				generatedDoc.put("_id", uuidForNewDocument);
 
-			// We will let this exist in the database, but set the schema to 'inReach' so it
-			// stops looping work
-			descriptor.setSchemaName(genericSchemaName);
+				if (processFailure) {
+					eventDocIds.put(-1);
+				} else {
+					eventDocIds.put(uuidForNewDocument);
+					ctx.createDocument(generatedDoc);
+				}
+			}
 			ctx.saveDocument();
 		} else {
-			throw new Exception("Unhandled version of GarminExplore type inReach message: " + docId);
+			logger.error("Unhandled version of GarminExplore type inReach message: " + docId);
 		}
 	}
 
