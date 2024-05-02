@@ -302,7 +302,6 @@ public class InReachProcessorImpl implements InReachProcessor {
 					Double latitude = msgPosition.getDouble("latitude");
 					Double longitude = msgPosition.getDouble("longitude");
 					if (latitude.toString().equals("0.0") && longitude.toString().equals("0.0")) {
-						System.out.println("do not make");
 						// Do not make geom for 0,0 messages
 					} else {
 						inReachPosition.put("Latitude", latitude);
