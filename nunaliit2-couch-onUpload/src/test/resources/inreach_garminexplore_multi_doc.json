@@ -101,7 +101,7 @@
         {
             "addresses": [],
             "imei": "1234567890",
-            "messageCode": 1,
+            "messageCode": 5,
             "freeText": "",
             "timeStamp": 1699459999000,
             "point": {
@@ -170,6 +170,48 @@
             "point": {
                 "latitude": 45.3941345214844,
                 "longitude": -75.7451748847961,
+                "altitude": -422,
+                "gpsFix": 0,
+                "course": 0,
+                "speed": 0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 2,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        },
+        {
+            "addresses": [],
+            "imei": "1234567890",
+            "messageCode": 100,
+            "freeText": "",
+            "timeStamp": 2999989999000,
+            "point": {
+                "latitude": 0,
+                "longitude": 0,
+                "altitude": -422,
+                "gpsFix": 0,
+                "course": 0,
+                "speed": 0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 2,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        },
+        {
+            "addresses": [],
+            "imei": "1234567890",
+            "messageCode": 100,
+            "freeText": "",
+            "timeStamp": 292343423234224323424323423443243234423344239998923423999000,
+            "point": {
+                "latitude": 0,
+                "longitude": 0,
                 "altitude": -422,
                 "gpsFix": 0,
                 "course": 0,

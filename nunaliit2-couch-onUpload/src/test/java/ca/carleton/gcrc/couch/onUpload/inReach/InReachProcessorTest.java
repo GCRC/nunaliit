@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.json.JSONObject;
 
+import ca.carleton.gcrc.couch.client.CouchClient;
+import ca.carleton.gcrc.couch.onUpload.MockCouchClient;
 import ca.carleton.gcrc.couch.onUpload.MockFileConversionContext2;
 import ca.carleton.gcrc.couch.onUpload.TestSupport;
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
@@ -16,6 +18,8 @@ import junit.framework.TestCase;
 
 public class InReachProcessorTest extends TestCase {
 
+	private CouchClient testCouchClient;
+
 	public void testPerformSubmission() throws Exception {
 		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
 		File docFile = TestSupport.findResourceFile("inreach_doc.json");
@@ -24,7 +28,7 @@ public class InReachProcessorTest extends TestCase {
 		settings.load();
 		InReachConfiguration.setInReachSettings(settings);
 
-		InReachProcessorImpl processor = new InReachProcessorImpl();
+		InReachProcessorImpl processor = new InReachProcessorImpl(null);
 
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
 
@@ -72,6 +76,11 @@ public class InReachProcessorTest extends TestCase {
 	}
 
 	public void testPerformGarminExploreSubmission() throws Exception {
+		try {
+			testCouchClient = new MockCouchClient();
+		} catch (Exception e) {
+			fail("Could not init testing Couch client:" + e);
+		}
 		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
 		File docFile = TestSupport.findResourceFile("inreach_garminexplore_doc.json");
 
@@ -79,7 +88,7 @@ public class InReachProcessorTest extends TestCase {
 		settings.load();
 		InReachConfiguration.setInReachSettings(settings);
 
-		InReachProcessorImpl processor = new InReachProcessorImpl();
+		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchClient);
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
 		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
 		processor.performSubmission(conversionContext);
@@ -96,7 +105,6 @@ public class InReachProcessorTest extends TestCase {
 		} else {
 			fail("Exactly one new document should be created with inreach_garminexplore_doc.json");
 		}
-
 		MockFileConversionContext2 savedContext = new MockFileConversionContext2(singleCreatedDocument);
 		DocumentDescriptor savedDoc = savedContext.getDocument();
 		GeometryDescriptor savedGeomDesc = savedDoc.getGeometryDescription();
@@ -129,6 +137,11 @@ public class InReachProcessorTest extends TestCase {
 	}
 
 	public void testPerformGarminExploreMultipleEventSubmission() throws Exception {
+		try {
+			testCouchClient = new MockCouchClient();
+		} catch (Exception e) {
+			fail("Could not init testing Couch client:" + e);
+		}
 		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
 		File docFile = TestSupport.findResourceFile("inreach_garminexplore_multi_doc.json");
 
@@ -136,7 +149,7 @@ public class InReachProcessorTest extends TestCase {
 		settings.load();
 		InReachConfiguration.setInReachSettings(settings);
 
-		InReachProcessorImpl processor = new InReachProcessorImpl();
+		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchClient);
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
 		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
 		processor.performSubmission(conversionContext);
@@ -147,8 +160,8 @@ public class InReachProcessorTest extends TestCase {
 		}
 
 		List<JSONObject> resDocs = conversionContext.getCreatedDocuments();
-		if (resDocs.size() != 8) {
-			fail("Exactly eight new documents should be created with inreach_garminexplore_multi_doc.json");
+		if (resDocs.size() != 9) {
+			fail("Exactly nine new documents should be created with inreach_garminexplore_multi_doc.json (last one fails to create document)");
 		}
 
 		for (int i = 0; i < resDocs.size(); i++) {
@@ -202,7 +215,7 @@ public class InReachProcessorTest extends TestCase {
 					fail("EmergencyState expected to be -1");
 				}
 			} else if (i == 4) {
-				if (!messageType.equals("NunaliitUnhandledGarminExploreMessageCode-1")) {
+				if (!messageType.equals("NunaliitUnhandledGarminExploreMessageCode-5")) {
 					fail("Expected unhandled message code string for unimplemented/unknown message codes");
 				}
 				if (emergencyState != -1) {
@@ -229,6 +242,16 @@ public class InReachProcessorTest extends TestCase {
 				if (emergencyState == -1) {
 					fail("EmergencyState should be set");
 				}
+			} else if (i == 8) {
+				if (!messageType.equals("NunaliitUnhandledGarminExploreMessageCode-100")) {
+					fail("Wrong MessageType from created document: " + messageType);
+				}
+				try {
+					createdDocument.getJSONObject("nunaliit_geom");
+					fail("No geom should be created when latitude and longitude are 0");
+				} catch (Exception e) {
+				}
+
 			}
 
 			if (null == jsonTimestamp) {
@@ -250,7 +273,7 @@ public class InReachProcessorTest extends TestCase {
 		settings.load();
 		InReachConfiguration.setInReachSettings(settings);
 
-		InReachProcessorImpl processor = new InReachProcessorImpl();
+		InReachProcessorImpl processor = new InReachProcessorImpl(null);
 
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
 
@@ -295,7 +318,7 @@ public class InReachProcessorTest extends TestCase {
 		settings.load();
 		InReachConfiguration.setInReachSettings(settings);
 
-		InReachProcessorImpl processor = new InReachProcessorImpl();
+		InReachProcessorImpl processor = new InReachProcessorImpl(null);
 
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
 
