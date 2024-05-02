@@ -88,27 +88,36 @@ function(doc) {
 		};
 	};
 
-	// InReach records
+	// InReach GeoPro records
 	if (doc &&
-		(
-			(typeof doc.Action === 'string'
-				&& typeof doc.ItemType === 'string'
-				&& doc.Item
-				&& typeof doc.Item.TenantCode === 'string'
-				&& typeof doc.Item.DeviceId === 'string'
-				&& typeof doc.Item.MessageId === 'string'
-			)
-			||
-			(
-				typeof doc.Version === 'string'
-				&& Array.isArray(doc.Events)
-			)
-		)
-	) {
+		(typeof doc.Action === 'string'
+			&& typeof doc.ItemType === 'string'
+			&& doc.Item
+			&& typeof doc.Item.TenantCode === 'string'
+			&& typeof doc.Item.DeviceId === 'string'
+			&& typeof doc.Item.MessageId === 'string'
+		)) {
 		if (typeof doc.nunaliit_schema === 'string') {
 			// Nothing to do
 		} else {
 			emit(['inReachSubmit'], null);
 		};
 	};
+
+	// inReach GarminExplore messages
+	if (doc &&
+		(
+			typeof doc.Version === 'string'
+			&& Array.isArray(doc.Events)
+		)
+	) {
+		if (typeof doc.nunaliit_inreach === 'object'
+			&& doc.nunaliit_inreach.eventDocIds
+			&& Array.isArray(doc.nunaliit_inreach.eventDocIds)) {
+			// Original GarminExplore message already processed
+		}
+		else {
+			emit(['inReachSubmit'], null);
+		}
+	}
 };
