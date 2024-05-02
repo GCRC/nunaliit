@@ -400,6 +400,9 @@ public class InReachProcessorImpl implements InReachProcessor {
 					ctx.createDocument(generatedDoc);
 				}
 			}
+			JSONObject rDoc = ctx.getDoc();
+			inReachStatus.put("eventDocIds", eventDocIds);
+			rDoc.put("nunaliit_inreach", inReachStatus);
 			ctx.saveDocument();
 		} else {
 			logger.error("Unhandled version of GarminExplore type inReach message: " + docId);
