@@ -14,35 +14,36 @@ import ca.carleton.gcrc.couch.client.CouchSession;
 import ca.carleton.gcrc.couch.client.CouchUserDb;
 import ca.carleton.gcrc.couch.client.ReplicationRequest;
 
-public class MockCouchClient implements CouchClient{
-    public MockCouchClient() throws Exception {}
+public class MockCouchClient implements CouchClient {
+    public MockCouchClient() throws Exception {
+    }
 
     @Override
     public CouchContext getContext() {
         return null;
     }
-	
-	@Override
+
+    @Override
     public URL getUrl() {
         return null;
     }
-	
-	@Override
+
+    @Override
     public CouchServerVersion getVersion() throws Exception {
         return null;
     }
-	
-	@Override
+
+    @Override
     public CouchSession getSession() throws Exception {
         return null;
     }
 
-	@Override
+    @Override
     public String getUuid() throws Exception {
         return null;
     }
 
-	@Override
+    @Override
     public String[] getUuids(int count) throws Exception {
         String[] results = new String[count];
         for (Integer c = 0; c < count; c++) {
@@ -50,44 +51,46 @@ public class MockCouchClient implements CouchClient{
         }
         return results;
     }
-	
-	@Override
-    public void validateContext() throws Exception {}
-	
+
+    @Override
+    public void validateContext() throws Exception {
+    }
+
     @Override
     public List<String> listDatabases() throws Exception {
         return null;
     }
-	
-	@Override
+
+    @Override
     public CouchDb createDatabase(String dbName) throws Exception {
         return null;
     }
 
-	@Override
+    @Override
     public boolean databaseExists(String dbName) throws Exception {
         return false;
     }
 
-	@Override
+    @Override
     public CouchDb getDatabase(String dbName) throws Exception {
         return null;
     }
 
-	@Override
-    public void deleteDatabase(CouchDb couchDb) throws Exception {}
+    @Override
+    public void deleteDatabase(CouchDb couchDb) throws Exception {
+    }
 
-	@Override
+    @Override
     public CouchUserDb getUserDatabase() throws Exception {
         return null;
     }
-	
-	@Override
+
+    @Override
     public JSONObject replicate(ReplicationRequest replicationRequest) throws Exception {
         return null;
     }
-	
-	@Override
+
+    @Override
     public JSONArray activeTasks() throws Exception {
         return null;
     }
