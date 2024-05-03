@@ -110,6 +110,7 @@ var NavigationDisplay = $n2.Class({
 				
 				var $li = $('<li>')
 					.addClass('n2nav_setChildModuleCurrent')
+					.attr('tabindex', 0)
 					.appendTo($ul);
 				
 				if( item.key ){
