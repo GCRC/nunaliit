@@ -3,6 +3,7 @@ package ca.carleton.gcrc.couch.onUpload.inReach;
 import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -251,6 +252,24 @@ public class InReachProcessorImpl implements InReachProcessor {
 		}
 
 		if (version.equals("2.0")) {
+			// Check if any phone number address messages should be removed
+			ArrayList<Integer> eventsToRemove = new ArrayList<Integer>();
+			for (int k = 0; k < events.length(); k++) {
+				JSONObject event = events.getJSONObject(k);
+				JSONArray addresses = event.optJSONArray("addresses");
+				if (null != addresses) {
+					for (int j = 0; j < addresses.length(); j++) {
+						String address = addresses.getJSONObject(j).getString("address");
+						if (!address.contains("@")) {
+							eventsToRemove.add(k);
+						}
+					}
+				}
+			}
+			for (int x = 0; x < eventsToRemove.size(); x++) {
+				events.remove(eventsToRemove.get(x));
+			}
+
 			String[] uuids = this.couchClient.getUuids(events.length());
 			for (int i = 0; i < events.length(); i++) {
 				String uuidForNewDocument = uuids[i];

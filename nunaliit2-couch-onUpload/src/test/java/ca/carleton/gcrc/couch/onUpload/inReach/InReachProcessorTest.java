@@ -161,7 +161,7 @@ public class InReachProcessorTest extends TestCase {
 
 		List<JSONObject> resDocs = conversionContext.getCreatedDocuments();
 		if (resDocs.size() != 9) {
-			fail("Exactly nine new documents should be created with inreach_garminexplore_multi_doc.json (last one fails to create document)");
+			fail("Exactly nine new documents should be created with inreach_garminexplore_multi_doc.json (last one fails to create document, phone number messages are removed)");
 		}
 
 		for (int i = 0; i < resDocs.size(); i++) {
