@@ -3,13 +3,17 @@ package ca.carleton.gcrc.couch.export;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,25 +34,74 @@ import ca.carleton.gcrc.couch.export.impl.DocumentRetrievalSchema;
 import ca.carleton.gcrc.couch.export.impl.ExportFormatGeoJson;
 import ca.carleton.gcrc.couch.export.impl.SchemaCacheCouchDb;
 
-public class ExportFullAtlas {
-	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
+public class ExportFullAtlas implements Runnable {
+	private static final Logger logger = LoggerFactory.getLogger(ExportFullAtlas.class);
 	private CouchDesignDocument dd;
-	private String atlasRootPath;
+	private File exportDir;
 	private CouchDb couchDb;
+	private String atlasRootPath;
 
-	public ExportFullAtlas(String realRootPath, CouchDb couchDb) throws Exception {
+	public ExportFullAtlas(File exportDir, CouchDb couchDb, String atlasRootPath) throws Exception {
 		this.couchDb = couchDb;
 		dd = couchDb.getDesignDocument("atlas");
-		atlasRootPath = realRootPath;
+		this.atlasRootPath = atlasRootPath;
+		this.exportDir = exportDir;
 	}
 
-	public void createExport() {
-		File exportDir = getExportDir();
-		exportData(exportDir);
-		exportMedia(exportDir);
+	public static String createExport(String atlasRootPath, CouchDb couchDb) {
+		File exportDir = getExportDir(atlasRootPath);
+		File exportCompressFinalFile = new File(exportDir.getAbsolutePath() + ".tar.gz");
 
 		try {
-			compress(exportDir.getAbsolutePath() + ".tar.gz", exportDir);
+			ExportFullAtlas export = new ExportFullAtlas(exportDir, couchDb, atlasRootPath);
+			new Thread(export).start();
+		} catch (Exception e) {
+			logger.error("Error setting up export", e);
+		}
+		
+		return exportCompressFinalFile.getName();
+	}
+
+	public static File getExport(String atlasRootPath, String filename) {
+		File dumpDir = new File(atlasRootPath, "dump");
+		return new File(dumpDir, filename);
+	}
+
+	public static List<String> getExports(String atlasRootPath) {
+		File dir = new File(atlasRootPath, "dump");
+		File [] files = dir.listFiles(new FilenameFilter() {
+			@Override
+			public boolean accept(File dir, String name) {
+				return name.startsWith("full_export") && name.endsWith(".tar.gz");
+			}
+		});
+		List<File> filesList = Arrays.asList(files);
+		List<String> names = filesList.stream().map(f -> f.getName()).collect(Collectors.toList());
+		return names;
+	}
+
+	private static File getExportDir(String atlasRootPath) {
+		File exportDir = null;
+		{
+			Calendar calendar = Calendar.getInstance();
+			String name = String.format(
+					"full_export_%04d-%02d-%02d-%02d_%02d-%02d", calendar.get(Calendar.YEAR),
+					(calendar.get(Calendar.MONTH) + 1), calendar.get(Calendar.DAY_OF_MONTH),
+					calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), calendar.get(Calendar.SECOND));
+			exportDir = new File(atlasRootPath, "dump/" + name);
+			exportDir.mkdirs();
+		}
+		return exportDir;
+	}
+
+	public void run() {
+		File exportCompressTmpFile = new File(exportDir.getAbsolutePath() + ".tar.gz.tmp");
+		File exportCompressFinalFile = new File(exportDir.getAbsolutePath() + ".tar.gz");
+		exportData(exportDir);
+		exportMedia(exportDir);
+		try {
+			compress(exportCompressTmpFile.getAbsolutePath(), exportDir);
+			FileUtils.moveFile(FileUtils.getFile(exportCompressTmpFile), FileUtils.getFile(exportCompressFinalFile));
 		} catch (IOException e) {
 			logger.error("Error writing export tar.gz", e);
 		}
@@ -57,21 +110,6 @@ public class ExportFullAtlas {
 		} catch (IOException e) {
 			logger.error("Error deleting export directory " + exportDir.getAbsolutePath() + " after compressing", e);
 		}
-	}
-
-	private File getExportDir() {
-		File exportDir = null;
-		{
-			Calendar calendar = Calendar.getInstance();
-			String name = String.format(
-					"export_%04d-%02d-%02d-%02d_%02d-%02d", calendar.get(Calendar.YEAR),
-					(calendar.get(Calendar.MONTH) + 1), calendar.get(Calendar.DAY_OF_MONTH),
-					calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), calendar.get(Calendar.SECOND));
-			exportDir = new File(atlasRootPath, "dump/" + name);
-			exportDir.mkdirs();
-		}
-		logger.debug("Writing export " + exportDir.getAbsolutePath());
-		return exportDir;
 	}
 
 	private void exportData(File exportDir) {
