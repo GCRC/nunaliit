@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,8 +33,14 @@ import ca.carleton.gcrc.utils.DateUtils;
 
 public class InReachProcessorImpl implements InReachProcessor {
 
+	private enum GarminExploreProcessRejectionStates {
+		EVENT_ERROR,
+		EVENT_REDACTION
+	}
+
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	private InReachSettings settings = InReachConfiguration.getInReachSettings();
+	private HashSet<String> recipients = new HashSet<String>();
 	private CouchClient couchClient;
 	private final String genericSchemaName = "inReach";
 	private static HashMap<Integer, String> garminExploreMessageCodes = new HashMap<>();
@@ -60,6 +67,12 @@ public class InReachProcessorImpl implements InReachProcessor {
 		garminExploreMessageCodes.put(20, "MailCheck");
 		garminExploreMessageCodes.put(21, "AmIAlive");
 		couchClient = client;
+		for (InReachForm form : settings.getForms()) {
+			String recipient = form.getDestination();
+			if (null != recipient) {
+				recipients.add(recipient);
+			}
+		}
 	}
 
 	@Override
@@ -252,26 +265,41 @@ public class InReachProcessorImpl implements InReachProcessor {
 		}
 
 		if (version.equals("2.0")) {
-			// Check if any phone number address messages should be removed
-			ArrayList<Integer> eventsToRemove = new ArrayList<Integer>();
+			// Check if address is one of the destinations from the forms
+			ArrayList<Integer> eventsToRedact = new ArrayList<Integer>();
 			for (int k = 0; k < events.length(); k++) {
 				JSONObject event = events.getJSONObject(k);
 				JSONArray addresses = event.optJSONArray("addresses");
 				if (null != addresses) {
 					for (int j = 0; j < addresses.length(); j++) {
 						String address = addresses.getJSONObject(j).getString("address");
-						if (!address.contains("@")) {
-							eventsToRemove.add(k);
+						if (!recipients.contains(address)) {
+							eventsToRedact.add(k);
 						}
 					}
 				}
 			}
-			for (int x = 0; x < eventsToRemove.size(); x++) {
-				events.remove(eventsToRemove.get(x));
+			for (int x = 0; x < eventsToRedact.size(); x++) {
+				events.put(eventsToRedact.get(x), new JSONObject());
+			}
+			if (eventsToRedact.size() > 0) {
+				JSONObject refreshedDoc = ctx.getDoc();
+				refreshedDoc.put("Events", events);
+				try {
+					ctx.saveDocument();
+				} catch (Exception e) {
+					throw new Exception("Failed to save document after redacting events", e);
+				}
 			}
 
 			String[] uuids = this.couchClient.getUuids(events.length());
 			for (int i = 0; i < events.length(); i++) {
+				JSONObject event = events.getJSONObject(i);
+				if (event.length() == 0) {
+					// Redacted message, note it and skip
+					eventDocIds.put(GarminExploreProcessRejectionStates.EVENT_REDACTION);
+					continue;
+				}
 				String uuidForNewDocument = uuids[i];
 				Boolean processFailure = false;
 				form = null;
@@ -279,7 +307,6 @@ public class InReachProcessorImpl implements InReachProcessor {
 				generatedDoc = new JSONObject();
 				genericInReachSchema = new JSONObject();
 				inReachPosition = new JSONObject();
-				JSONObject event = events.getJSONObject(i);
 
 				String freeText = event.optString("freeText", null);
 				if (null != freeText) {
@@ -413,7 +440,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 				generatedDoc.put("_id", uuidForNewDocument);
 
 				if (processFailure) {
-					eventDocIds.put(-1);
+					eventDocIds.put(GarminExploreProcessRejectionStates.EVENT_ERROR);
 				} else {
 					eventDocIds.put(uuidForNewDocument);
 					ctx.createDocument(generatedDoc);
