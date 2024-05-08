@@ -288,7 +288,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 				try {
 					ctx.saveDocument();
 				} catch (Exception e) {
-					throw new Exception("Failed to save document after redacting events", e);
+					logger.error("Failed to save document after redacting events", e);
 				}
 			}
 
