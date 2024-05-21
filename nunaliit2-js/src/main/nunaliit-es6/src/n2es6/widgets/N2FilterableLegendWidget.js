@@ -55,6 +55,8 @@ class N2FilterableLegendWidgetWithGraphic {
         this.graphicToggle = null;
         this.graphicVisibility = true;
 
+        this.labels = options.labels || null;
+
         this.cachedSymbols = {};
 
         this.state = {
@@ -98,6 +100,10 @@ class N2FilterableLegendWidgetWithGraphic {
         if (legendAndGraphicContainer === null) {
             throw new Error(`containerId ${this.containerId} could not be found`)
         }
+
+        if (this.labels && !Array.isArray(this.labels)) {
+            throw new Error('labels must be an array');
+        };
 
         this.elementId = nunaliit2.getUniqueId();
 
@@ -299,10 +305,26 @@ class N2FilterableLegendWidgetWithGraphic {
             this.state.stylesByKey.set(_loc(style.style.label), style);
         });
 
-        this.state.availableChoices.forEach(choice => {
-            const label = choice.label || choice.id;
-            this._drawLegendOption(legendFragment, choice.id, _loc(label));
-        });
+        if (this.labels) {
+            this.labelsToIds = {}
+            this.state.availableChoices.forEach(choice => {
+                this.labelsToIds[_loc(choice.label)] = choice.id
+            })
+            this.labels.forEach(label => {
+                const correspondingId = this.labelsToIds[label]
+                if (correspondingId) {
+                    this._drawLegendOption(legendFragment, correspondingId, _loc(label))
+                }
+            })
+        }
+        else {
+            this.state.availableChoices.sort((a,b) => a.label.localeCompare(b.label))
+            this.state.availableChoices.forEach(choice => {
+                const label = choice.label || choice.id;
+                this._drawLegendOption(legendFragment, choice.id, _loc(label));
+            });
+        }
+
 
         legend.append(legendFragment);
         this.legendContainer.append(legend);
