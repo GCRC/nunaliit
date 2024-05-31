@@ -214,6 +214,7 @@ var UserEditor = $n2.Class({
 		
 		var $elem = this._getElem();
 		$elem.empty();
+		$('.nunaliit_login_menu_mask').remove();
 		
 		var $editor = $('<div class="n2UserEdit_editor"></div>')
 			.appendTo($elem);

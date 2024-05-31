@@ -1471,13 +1471,10 @@ var AuthService = $n2.Class({
 
 				userEditDialog = new $n2.mdc.MDCDialog({
 					mdcClasses: ['n2Auth_userEdit'],
-					dialogTitle: 'Edit User'
+					dialogTitle: 'Edit User',
+					closeBtn: true,
+					closeBtnText: _loc("Close")
 				});
-
-				// Hide empty mdc-dialog__actions div
-				$('#' + userEditDialog.getId())
-					.find('.mdc-dialog__actions')
-					.css('display', 'none');
 
 				userService.startEdit({
 					userDoc: userDoc
