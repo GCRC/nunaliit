@@ -2785,12 +2785,25 @@ var MapAndControls = $n2.Class('MapAndControls',{
 					} else if( 'srsName' === key ) {
 						var proj = new OpenLayers.Projection( options[key] );
 						layerOptions.projection = proj;
-
+					} else if ('tileFullExtent' === key) {
+						const {
+							bounds,
+							sourceProjection,
+							destinationProjection
+						} = options[key]
+						const olBounds = new OpenLayers.Bounds(...bounds)
+						if (sourceProjection !== destinationProjection) {
+							olBounds.transform(
+								new OpenLayers.Projection(sourceProjection),
+								new OpenLayers.Projection(destinationProjection)
+							)
+						}
+						layerOptions.tileFullExtent = olBounds
 					} else if( 'opacity' === key
 							|| 'scales' === key 
 							|| 'resolutions' === key  ) {
 						layerOptions[key] = options[key];
-						
+
 					} else if( 'numZoomLevels' === key){
 						var matrixIds = new Array(options["numZoomLevels"]);
 						var srsName = options['srsName'];
