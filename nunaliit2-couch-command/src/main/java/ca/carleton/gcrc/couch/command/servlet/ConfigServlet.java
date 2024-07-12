@@ -841,6 +841,7 @@ public class ConfigServlet extends JsonServlet {
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_AtlasName, atlasProperties.getAtlasName());
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_UserDb, userDb);
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_DocumentDesign, couchDd);
+			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_Submission_UnauthenticatedRecordsEndpointEnabled, atlasProperties.isCouchDbSubmissionUnauthenticatedRecordsEndpointEnabled());
 
 			// Is submission DB enabled?
 			if( null != submissionDb ){

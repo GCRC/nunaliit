@@ -98,6 +98,15 @@ public class AtlasProperties {
 			}
 		}
 
+		// Submission DB unauthenticated records endpoint enabled
+		{
+			String enabledString = props.getProperty("couchdb.submission.unauthenticatedRecords.enabled", "false");
+			boolean enabled = Boolean.parseBoolean(enabledString);
+			if (enabled) {
+				atlasProps.setCouchDbSubmissionUnauthenticatedRecordsEndpointEnabled(enabled);
+			}
+		}
+
 		// Geometry simplification disabled
 		{
 			String disabledString = props.getProperty("geometry.simplification.disabled","false");
@@ -278,6 +287,7 @@ public class AtlasProperties {
 	private URL couchDbUrl;
 	private String couchDbName;
 	private boolean couchDbSubmissionDbEnabled;
+	private boolean couchDbSubmissionUnauthenticatedRecordsEndpointEnabled;
 	private String couchDbSubmissionDbName;
 	private String inReachDbName;
 	private String couchDbAdminUser;
@@ -314,6 +324,13 @@ public class AtlasProperties {
 	}
 	public void setCouchDbSubmissionDbEnabled(boolean couchDbSubmissionDbEnabled) {
 		this.couchDbSubmissionDbEnabled = couchDbSubmissionDbEnabled;
+	}
+
+	public boolean isCouchDbSubmissionUnauthenticatedRecordsEndpointEnabled() {
+		return couchDbSubmissionUnauthenticatedRecordsEndpointEnabled;
+	}
+	public void setCouchDbSubmissionUnauthenticatedRecordsEndpointEnabled(boolean couchDbSubmissionUnauthenticatedRecordsEndpointEnabled) {
+		this.couchDbSubmissionUnauthenticatedRecordsEndpointEnabled = couchDbSubmissionUnauthenticatedRecordsEndpointEnabled;
 	}
 
 	public String getCouchDbSubmissionDbName() {
