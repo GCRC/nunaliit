@@ -842,6 +842,9 @@ public class ConfigServlet extends JsonServlet {
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_UserDb, userDb);
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_DocumentDesign, couchDd);
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_Submission_UnauthenticatedRecordsEndpointEnabled, atlasProperties.isCouchDbSubmissionUnauthenticatedRecordsEndpointEnabled());
+			servletContext.setAttribute("couchdb.server", atlasProperties.getCouchDbUrl().toExternalForm());
+			servletContext.setAttribute("couchdb.admin.user", atlasProperties.getCouchDbAdminUser());
+			servletContext.setAttribute("couchdb.admin.password", atlasProperties.getCouchDbAdminPassword());
 
 			// Is submission DB enabled?
 			if( null != submissionDb ){
