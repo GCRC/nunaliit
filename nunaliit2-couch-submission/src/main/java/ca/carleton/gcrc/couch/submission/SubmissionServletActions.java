@@ -77,6 +77,26 @@ public class SubmissionServletActions {
 		}
 	}
 
+	public JSONObject createUnauthenticatedDocument(CouchAuthenticationContext adminContext, JSONObject payload) throws Exception {
+		if (JSONSupport.containsKey(payload, "_id")) payload.remove("_id");
+		if (JSONSupport.containsKey(payload, "_rev")) payload.remove("_rev");
+		if (JSONSupport.containsKey(payload, "nunaliit_type")) payload.remove("nunaliit_type");
+		if (JSONSupport.containsKey(payload, "nunaliit_submission")) payload.remove("nunaliit_submission");
+		if (JSONSupport.containsKey(payload, "nunaliit_last_updated")) payload.remove("nunaliit_last_updated");
+		if (JSONSupport.containsKey(payload, "nunaliit_created")) payload.remove("nunaliit_created");
+
+		JSONObject uuidRes = getUuids(null, 1);
+		JSONArray uuid = uuidRes.getJSONArray("uuids");
+		payload.put("_id", uuid.get(0));
+
+		// to test: how the validate_doc_update handles lack of updated/created. i think we know the answer to that though.
+
+		JSONObject unauthenticatedSubmissionRequest = buildSubmissionRequest(adminContext, null, payload, null);
+		JSONObject result = submissionDesign.getDatabase().createDocument(unauthenticatedSubmissionRequest);
+
+		return result;
+	}
+
 	public JSONObject modifyDocument(
 			CouchAuthenticationContext authContext 
 			,String dbIdentifier 
