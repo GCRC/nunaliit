@@ -31,6 +31,7 @@ import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.utils.StreamUtils;
+import ca.carleton.gcrc.couch.submission.SubmissionConstants;
 
 @SuppressWarnings("serial")
 public class SubmissionServlet extends JsonServlet {
@@ -45,7 +46,7 @@ public class SubmissionServlet extends JsonServlet {
 
 	private String atlasName = null;
 	private boolean isSubmissionUnauthenticatedRecordsEndpointEnabled = false;
-	private CouchAuthenticationContext adminAuthContext = null;
+	private CouchAuthenticationContext unauthenticatedRecordsUserAuthContext = null;
 //	private CouchUserDb userDb = null;
 	private CouchDesignDocument documentDesign = null;
 	private CouchDesignDocument submissionDesign = null;
@@ -87,34 +88,39 @@ public class SubmissionServlet extends JsonServlet {
 			}
 
 			if (isSubmissionUnauthenticatedRecordsEndpointEnabled) {
-				Object userObj = context.getAttribute("couchdb.admin.user");
-				String couchDbAdminUser = null;
-				String couchDbAdminUserPassword = null;
+				Object userObj = context
+						.getAttribute(SubmissionConstants.PROP_ATTR_SUBMISSION_UNAUTHENTICATED_RECORDS_USER);
+				String couchDbUnauthEndpointUser = null;
+				String couchDbUnauthEndpointUserPassword = null;
 				String couchDbServerURL = null;
 				if (null == userObj) {
-					throw new ServletException("CouchDB admin user not specified when unauthenticated endpoint is enabled");
+					throw new ServletException(
+							"CouchDB unauthenticated endpoint user not specified when unauthenticated endpoint is enabled");
 				}
 				if (userObj instanceof String) {
-					couchDbAdminUser = (String) userObj;
+					couchDbUnauthEndpointUser = (String) userObj;
 				} else {
-					throw new ServletException("Unexpected object for CouchDB admin username: "
+					throw new ServletException("Unexpected object for CouchDB unauthenticated endpoint username: "
 							+ userObj.getClass().getName());
 				}
 
-				Object passwordObj = context.getAttribute("couchdb.admin.password");
+				Object passwordObj = context
+						.getAttribute(SubmissionConstants.PROP_ATTR_SUBMISSION_UNAUTHENTICATED_RECORDS_USER_PASSWORD);
 				if (null == passwordObj) {
-					throw new ServletException("CouchDB admin user's password not specified when unauthenticated endpoint is enabled");
+					throw new ServletException(
+							"CouchDB unauthenticated endpoint user's password not specified when unauthenticated endpoint is enabled");
 				}
 				if (passwordObj instanceof String) {
-					couchDbAdminUserPassword = (String) passwordObj;
+					couchDbUnauthEndpointUserPassword = (String) passwordObj;
 				} else {
-					throw new ServletException("Unexpected object for CouchDB admin password: "
+					throw new ServletException("Unexpected object for CouchDB unauthenticated endpoint user's password: "
 							+ passwordObj.getClass().getName());
 				}
 
 				Object serverObj = context.getAttribute("couchdb.server");
 				if (null == serverObj) {
-					throw new ServletException("CouchDB server URL not specified when unauthenticated endpoint is enabled");
+					throw new ServletException(
+							"CouchDB server URL not specified when unauthenticated endpoint is enabled");
 				}
 				if (serverObj instanceof String) {
 					couchDbServerURL = (String) serverObj;
@@ -123,24 +129,24 @@ public class SubmissionServlet extends JsonServlet {
 							+ serverObj.getClass().getName());
 				}
 
-				if (couchDbAdminUser != null && couchDbAdminUserPassword != null && couchDbServerURL != null) {
+				if (couchDbUnauthEndpointUser != null && couchDbUnauthEndpointUserPassword != null && couchDbServerURL != null) {
 					Properties properties = new Properties();
 					properties.put("couchdb.server", couchDbServerURL);
-					properties.put("couchdb.user", couchDbAdminUser);
-					properties.put("couchdb.password", couchDbAdminUserPassword);
-					
+					properties.put("couchdb.user", couchDbUnauthEndpointUser);
+					properties.put("couchdb.password", couchDbUnauthEndpointUserPassword);
+
 					CouchFactory factory = new CouchFactory();
 					try {
 						CouchClient client = factory.getClient(properties);
 						client.validateContext();
 						CouchSession session = client.getSession();
-						adminAuthContext = session.getAuthenticationContext();
+						unauthenticatedRecordsUserAuthContext = session.getAuthenticationContext();
 					} catch (Exception e) {
 						throw new ServletException("Failed to generate admin authentication context.", e);
 					}
-				}
-				else {
-					throw new ServletException("Failed to configure Couch admin user authentication context for unauthenticated endpoint");
+				} else {
+					throw new ServletException(
+							"Failed to configure CouchDB unauthenticated endpoint user authentication context for unauthenticated endpoint");
 				}
 			}
 		}
@@ -455,7 +461,7 @@ public class SubmissionServlet extends JsonServlet {
 					if (obj instanceof JSONObject) {
 						JSONObject doc = (JSONObject) obj;
 						JSONObject result = actions.createUnauthenticatedDocument(
-							adminAuthContext,
+							unauthenticatedRecordsUserAuthContext,
 							doc
 						);
 						sendJsonResponse(resp, result);

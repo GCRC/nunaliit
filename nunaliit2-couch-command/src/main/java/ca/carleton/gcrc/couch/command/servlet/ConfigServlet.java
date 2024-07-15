@@ -47,6 +47,7 @@ import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierImpl;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierNull;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionRejectionGenerator;
+import ca.carleton.gcrc.couch.submission.SubmissionConstants;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.couch.utils.CouchDbTemplateMailMessageGenerator;
@@ -838,13 +839,18 @@ public class ConfigServlet extends JsonServlet {
 
 	private void initSubmission(ServletContext servletContext) throws ServletException {
 		try {
-			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_AtlasName, atlasProperties.getAtlasName());
+			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_AtlasName,
+					atlasProperties.getAtlasName());
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_UserDb, userDb);
 			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_DocumentDesign, couchDd);
-			servletContext.setAttribute(SubmissionServlet.ConfigAttributeName_Submission_UnauthenticatedRecordsEndpointEnabled, atlasProperties.isCouchDbSubmissionUnauthenticatedRecordsEndpointEnabled());
+			servletContext.setAttribute(
+					SubmissionServlet.ConfigAttributeName_Submission_UnauthenticatedRecordsEndpointEnabled,
+					atlasProperties.isCouchDbSubmissionUnauthenticatedRecordsEndpointEnabled());
 			servletContext.setAttribute("couchdb.server", atlasProperties.getCouchDbUrl().toExternalForm());
-			servletContext.setAttribute("couchdb.admin.user", atlasProperties.getCouchDbAdminUser());
-			servletContext.setAttribute("couchdb.admin.password", atlasProperties.getCouchDbAdminPassword());
+			servletContext.setAttribute(SubmissionConstants.PROP_ATTR_SUBMISSION_UNAUTHENTICATED_RECORDS_USER,
+					atlasProperties.getCouchDbSubmissionUnauthenticatedRecordsUser());
+			servletContext.setAttribute(SubmissionConstants.PROP_ATTR_SUBMISSION_UNAUTHENTICATED_RECORDS_USER_PASSWORD,
+					atlasProperties.getCouchDbSubmissionUnauthenticatedRecordsUserPassword());
 
 			// Is submission DB enabled?
 			if( null != submissionDb ){
