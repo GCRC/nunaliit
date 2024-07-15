@@ -129,20 +129,39 @@ public class SubmissionServlet extends JsonServlet {
 							+ serverObj.getClass().getName());
 				}
 
-				if (couchDbUnauthEndpointUser != null && couchDbUnauthEndpointUserPassword != null && couchDbServerURL != null) {
+				if (couchDbUnauthEndpointUser != null && couchDbUnauthEndpointUser.trim().length() > 0
+				&& couchDbUnauthEndpointUserPassword != null && couchDbUnauthEndpointUserPassword.trim().length() > 0
+				&& couchDbServerURL != null) {
 					Properties properties = new Properties();
 					properties.put("couchdb.server", couchDbServerURL);
 					properties.put("couchdb.user", couchDbUnauthEndpointUser);
 					properties.put("couchdb.password", couchDbUnauthEndpointUserPassword);
-
+					
 					CouchFactory factory = new CouchFactory();
+					CouchClient client = null;
+					CouchSession session = null;
 					try {
-						CouchClient client = factory.getClient(properties);
+						client = factory.getClient(properties);
+					} catch (Exception e) {
+						throw new ServletException(
+								"Failed to get Couch client for unauthenticated records endpoint user");
+					}
+					try {
 						client.validateContext();
-						CouchSession session = client.getSession();
+					} catch (Exception e) {
+						throw new ServletException(
+								"Failed to validate unauthenticated records endpoint user authentication context (wrong credentials?)");
+					}
+					try {
+						session = client.getSession();
+					} catch (Exception e) {
+						throw new ServletException(
+								"Failed to get unauthenticated records endpoint user session");
+					}
+					try {
 						unauthenticatedRecordsUserAuthContext = session.getAuthenticationContext();
 					} catch (Exception e) {
-						throw new ServletException("Failed to generate admin authentication context.", e);
+						throw new ServletException("Failed to generate unauthenticated endpoint user authentication context.", e);
 					}
 				} else {
 					throw new ServletException(
