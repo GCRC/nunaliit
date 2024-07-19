@@ -68,162 +68,133 @@ public class WktWriter {
 	}
 	
 	private void writePoint(Point point, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		pw.write("POINT(");
-		boolean firstPosition = true;
-		for(Number position : point.getPositions()){
-			if( firstPosition ) {
-				firstPosition = false;
-			} else {
-				pw.write(" ");
+		if (point.getPositions().size() == 0) {
+			pw.write("POINT EMPTY");
+		} else {
+			pw.write("POINT(");
+			boolean firstPosition = true;
+			for (Number position : point.getPositions()) {
+				if (firstPosition) {
+					firstPosition = false;
+				} else {
+					pw.write(" ");
+				}
+
+				writeNumber(pw, numFormat, position);
 			}
-			
-			writeNumber(pw, numFormat, position);
+			pw.write(")");
 		}
-		pw.write(")");
 	}
 	
 	private void writeMultiPoint(MultiPoint multiPoint, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		pw.write("MULTIPOINT(");
-		boolean firstPoint = true;
-		for(Point point : multiPoint.getPoints()){
-			if( firstPoint ) {
-				firstPoint = false;
-			} else {
-				pw.write(",");
-			}
-
-			pw.write("(");
-			
-			boolean firstPosition = true;
-			for(Number position : point.getPositions()){
-				if( firstPosition ) {
-					firstPosition = false;
+		if (multiPoint.getPoints().size() == 0) {
+			pw.write("MULTIPOINT EMPTY");
+		} else {
+			pw.write("MULTIPOINT(");
+			boolean firstPoint = true;
+			for (Point point : multiPoint.getPoints()) {
+				if (firstPoint) {
+					firstPoint = false;
 				} else {
-					pw.write(" ");
+					pw.write(",");
 				}
-				
-				writeNumber(pw, numFormat, position);
-			}
 
+				pw.write("(");
+
+				boolean firstPosition = true;
+				for (Number position : point.getPositions()) {
+					if (firstPosition) {
+						firstPosition = false;
+					} else {
+						pw.write(" ");
+					}
+
+					writeNumber(pw, numFormat, position);
+				}
+
+				pw.write(")");
+			}
 			pw.write(")");
 		}
-		pw.write(")");
 	}
 	
 	private void writeLineString(LineString lineString, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		pw.write("LINESTRING(");
-		boolean firstPoint = true;
-		for(Point point : lineString.getPoints()){
-			if( firstPoint ) {
-				firstPoint = false;
-			} else {
-				pw.write(",");
-			}
-
-			boolean firstPosition = true;
-			for(Number position : point.getPositions()){
-				if( firstPosition ) {
-					firstPosition = false;
+		if (lineString.getPoints().size() == 0) {
+			pw.write("LINESTRING EMPTY");
+		} else {
+			pw.write("LINESTRING(");
+			boolean firstPoint = true;
+			for (Point point : lineString.getPoints()) {
+				if (firstPoint) {
+					firstPoint = false;
 				} else {
-					pw.write(" ");
+					pw.write(",");
 				}
-				
-				writeNumber(pw, numFormat, position);
+
+				boolean firstPosition = true;
+				for (Number position : point.getPositions()) {
+					if (firstPosition) {
+						firstPosition = false;
+					} else {
+						pw.write(" ");
+					}
+
+					writeNumber(pw, numFormat, position);
+				}
 			}
+			pw.write(")");
 		}
-		pw.write(")");
 	}
 	
 	private void writeMultiLineString(MultiLineString multiLineString, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		pw.write("MULTILINESTRING(");
-		boolean firstLineString = true;
-		for(LineString lineString : multiLineString.getLineStrings()){
-			if( firstLineString ) {
-				firstLineString = false;
-			} else {
-				pw.write(",");
-			}
-
-			pw.write("(");
-
-			boolean firstPoint = true;
-			for(Point point : lineString.getPoints()){
-				if( firstPoint ) {
-					firstPoint = false;
+		if (multiLineString.getLineStrings().size() == 0) {
+			pw.write("MULTILINESTRING EMPTY");
+		} else {
+			pw.write("MULTILINESTRING(");
+			boolean firstLineString = true;
+			for (LineString lineString : multiLineString.getLineStrings()) {
+				if (firstLineString) {
+					firstLineString = false;
 				} else {
 					pw.write(",");
 				}
 
-				boolean firstPosition = true;
-				for(Number position : point.getPositions()){
-					if( firstPosition ) {
-						firstPosition = false;
-					} else {
-						pw.write(" ");
-					}
-					
-					writeNumber(pw, numFormat, position);
-				}
-			}
+				pw.write("(");
 
+				boolean firstPoint = true;
+				for (Point point : lineString.getPoints()) {
+					if (firstPoint) {
+						firstPoint = false;
+					} else {
+						pw.write(",");
+					}
+
+					boolean firstPosition = true;
+					for (Number position : point.getPositions()) {
+						if (firstPosition) {
+							firstPosition = false;
+						} else {
+							pw.write(" ");
+						}
+
+						writeNumber(pw, numFormat, position);
+					}
+				}
+
+				pw.write(")");
+			}
 			pw.write(")");
 		}
-		pw.write(")");
 	}
 	
 	private void writePolygon(Polygon polygon, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		pw.write("POLYGON(");
-		boolean firstLinearRing = true;
-		for(LineString lineString : polygon.getLinearRings()){
-			if( firstLinearRing ) {
-				firstLinearRing = false;
-			} else {
-				pw.write(",");
-			}
-
-			pw.write("(");
-
-			boolean firstPoint = true;
-			for(Point point : lineString.getPoints()){
-				if( firstPoint ) {
-					firstPoint = false;
-				} else {
-					pw.write(",");
-				}
-
-				boolean firstPosition = true;
-				for(Number position : point.getPositions()){
-					if( firstPosition ) {
-						firstPosition = false;
-					} else {
-						pw.write(" ");
-					}
-					
-					writeNumber(pw, numFormat, position);
-				}
-			}
-
-			pw.write(")");
-		}
-		pw.write(")");
-	}
-	
-	private void writeMultiPolygon(MultiPolygon multiPolygon, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		pw.write("MULTIPOLYGON(");
-		
-		boolean firstPolygon = true;
-		for(Polygon polygon : multiPolygon.getPolygons()){
-			if( firstPolygon ) {
-				firstPolygon = false;
-			} else {
-				pw.write(",");
-			}
-
-			pw.write("(");
-			
+		if (polygon.getLinearRings().size() == 0) {
+			pw.write("POLYGON EMPTY");
+		} else {
+			pw.write("POLYGON(");
 			boolean firstLinearRing = true;
-			for(LineString lineString : polygon.getLinearRings()){
-				if( firstLinearRing ) {
+			for (LineString lineString : polygon.getLinearRings()) {
+				if (firstLinearRing) {
 					firstLinearRing = false;
 				} else {
 					pw.write(",");
@@ -232,47 +203,104 @@ public class WktWriter {
 				pw.write("(");
 
 				boolean firstPoint = true;
-				for(Point point : lineString.getPoints()){
-					if( firstPoint ) {
+				for (Point point : lineString.getPoints()) {
+					if (firstPoint) {
 						firstPoint = false;
 					} else {
 						pw.write(",");
 					}
 
 					boolean firstPosition = true;
-					for(Number position : point.getPositions()){
-						if( firstPosition ) {
+					for (Number position : point.getPositions()) {
+						if (firstPosition) {
 							firstPosition = false;
 						} else {
 							pw.write(" ");
 						}
-						
+
 						writeNumber(pw, numFormat, position);
 					}
 				}
 
 				pw.write(")");
 			}
-			
 			pw.write(")");
 		}
+	}
+	
+	private void writeMultiPolygon(MultiPolygon multiPolygon, NumberFormat numFormat, PrintWriter pw) throws Exception {
+		if (multiPolygon.getPolygons().size() == 0) {
+			pw.write("MULTIPOLYGON EMPTY");
+		} else {
+			pw.write("MULTIPOLYGON(");
 
-		pw.write(")");
+			boolean firstPolygon = true;
+			for (Polygon polygon : multiPolygon.getPolygons()) {
+				if (firstPolygon) {
+					firstPolygon = false;
+				} else {
+					pw.write(",");
+				}
+
+				pw.write("(");
+
+				boolean firstLinearRing = true;
+				for (LineString lineString : polygon.getLinearRings()) {
+					if (firstLinearRing) {
+						firstLinearRing = false;
+					} else {
+						pw.write(",");
+					}
+
+					pw.write("(");
+
+					boolean firstPoint = true;
+					for (Point point : lineString.getPoints()) {
+						if (firstPoint) {
+							firstPoint = false;
+						} else {
+							pw.write(",");
+						}
+
+						boolean firstPosition = true;
+						for (Number position : point.getPositions()) {
+							if (firstPosition) {
+								firstPosition = false;
+							} else {
+								pw.write(" ");
+							}
+
+							writeNumber(pw, numFormat, position);
+						}
+					}
+
+					pw.write(")");
+				}
+
+				pw.write(")");
+			}
+
+			pw.write(")");
+		}
 	}
 	
 	private void writeGeometryCollection(GeometryCollection geometryCollection, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		pw.write("GEOMETRYCOLLECTION(");
-		boolean firstGeometry = true;
-		for(Geometry geometry : geometryCollection.getGeometries()){
-			if( firstGeometry ) {
-				firstGeometry = false;
-			} else {
-				pw.write(",");
+		if (geometryCollection.getGeometries().size() == 0) {
+			pw.write("GEOMETRYCOLLECTION EMPTY");
+		} else {
+			pw.write("GEOMETRYCOLLECTION(");
+			boolean firstGeometry = true;
+			for (Geometry geometry : geometryCollection.getGeometries()) {
+				if (firstGeometry) {
+					firstGeometry = false;
+				} else {
+					pw.write(",");
+				}
+
+				write(geometry, numFormat, pw);
 			}
-			
-			write(geometry, numFormat, pw);
+			pw.write(")");
 		}
-		pw.write(")");
 	}
 	
 	/**
