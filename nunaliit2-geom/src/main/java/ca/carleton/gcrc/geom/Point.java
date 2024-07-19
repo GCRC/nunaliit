@@ -69,6 +69,12 @@ public class Point extends GeometryAbstract implements Geometry {
 	public String toString(){
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
+
+		if (getPositions().size() == 0) {
+			pw.print("POINT EMPTY");
+			pw.flush();
+			return sw.toString();
+		}
 		
 		pw.print("POINT(");
 		

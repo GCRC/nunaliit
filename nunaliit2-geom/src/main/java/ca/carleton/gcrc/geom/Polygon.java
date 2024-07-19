@@ -29,6 +29,12 @@ public class Polygon extends GeometryAbstract implements Geometry {
 	public String toString(){
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
+
+		if (getLinearRings().size() == 0) {
+			pw.print("POLYGON EMPTY");
+			pw.flush();
+			return sw.toString();
+		}
 		
 		pw.print("POLYGON(");
 		

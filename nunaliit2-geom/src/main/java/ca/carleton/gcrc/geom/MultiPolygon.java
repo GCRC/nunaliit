@@ -41,6 +41,12 @@ public class MultiPolygon extends GeometryAbstract implements Geometry,GeometryA
 	public String toString(){
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
+
+		if (getPolygons().size() == 0) {
+			pw.print("MULTIPOLYGON EMPTY");
+			pw.flush();
+			return sw.toString();
+		}
 		
 		pw.print("MULTIPOLYGON(");
 

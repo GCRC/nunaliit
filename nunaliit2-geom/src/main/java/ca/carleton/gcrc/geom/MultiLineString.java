@@ -41,6 +41,12 @@ public class MultiLineString extends GeometryAbstract implements Geometry,Geomet
 	public String toString(){
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
+
+		if (getLineStrings().size() == 0) {
+			pw.print("MULTILINESTRING EMPTY");
+			pw.flush();
+			return sw.toString();
+		}
 		
 		pw.print("MULTILINESTRING(");
 		

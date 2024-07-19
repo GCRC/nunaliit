@@ -41,6 +41,12 @@ public class MultiPoint extends GeometryAbstract implements Geometry,GeometryAss
 	public String toString(){
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
+
+		if (getPoints().size() == 0) {
+			pw.print("MULTIPOINT EMPTY");
+			pw.flush();
+			return sw.toString();
+		}
 		
 		pw.print("MULTIPOINT(");
 		

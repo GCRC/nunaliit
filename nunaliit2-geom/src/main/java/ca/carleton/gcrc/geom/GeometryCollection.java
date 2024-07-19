@@ -35,6 +35,12 @@ public class GeometryCollection extends GeometryAbstract implements Geometry,Geo
 	public String toString(){
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
+
+		if (getGeometries().size() == 0) {
+			pw.print("GEOMETRYCOLLECTION EMPTY");
+			pw.flush();
+			return sw.toString();
+		}
 		
 		pw.print("GEOMETRYCOLLECTION(");
 		

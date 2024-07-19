@@ -29,6 +29,12 @@ public class LineString extends GeometryAbstract implements Geometry {
 	public String toString(){
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
+
+		if (getPoints().size() == 0) {
+			pw.print("LINESTRING EMPTY");
+			pw.flush();
+			return sw.toString();
+		}
 		
 		pw.print("LINESTRING(");
 		
