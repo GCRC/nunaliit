@@ -42,7 +42,7 @@ public class MultiLineString extends GeometryAbstract implements Geometry,Geomet
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 
-		if (getLineStrings().size() == 0) {
+		if (isEmpty()) {
 			pw.print("MULTILINESTRING EMPTY");
 			pw.flush();
 			return sw.toString();
@@ -99,5 +99,10 @@ public class MultiLineString extends GeometryAbstract implements Geometry,Geomet
 		for(LineString lineString : this.lineStrings){
 			lineString.accumulateBasicGeometries(geometries);
 		}
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return (getLineStrings().size() == 0);
 	}
 }

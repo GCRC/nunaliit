@@ -68,7 +68,7 @@ public class WktWriter {
 	}
 	
 	private void writePoint(Point point, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		if (point.getPositions().size() == 0) {
+		if (point.isEmpty()) {
 			pw.write("POINT EMPTY");
 		} else {
 			pw.write("POINT(");
@@ -87,7 +87,7 @@ public class WktWriter {
 	}
 	
 	private void writeMultiPoint(MultiPoint multiPoint, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		if (multiPoint.getPoints().size() == 0) {
+		if (multiPoint.isEmpty()) {
 			pw.write("MULTIPOINT EMPTY");
 		} else {
 			pw.write("MULTIPOINT(");
@@ -119,7 +119,7 @@ public class WktWriter {
 	}
 	
 	private void writeLineString(LineString lineString, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		if (lineString.getPoints().size() == 0) {
+		if (lineString.isEmpty()) {
 			pw.write("LINESTRING EMPTY");
 		} else {
 			pw.write("LINESTRING(");
@@ -147,7 +147,7 @@ public class WktWriter {
 	}
 	
 	private void writeMultiLineString(MultiLineString multiLineString, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		if (multiLineString.getLineStrings().size() == 0) {
+		if (multiLineString.isEmpty()) {
 			pw.write("MULTILINESTRING EMPTY");
 		} else {
 			pw.write("MULTILINESTRING(");
@@ -188,7 +188,7 @@ public class WktWriter {
 	}
 	
 	private void writePolygon(Polygon polygon, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		if (polygon.getLinearRings().size() == 0) {
+		if (polygon.isEmpty()) {
 			pw.write("POLYGON EMPTY");
 		} else {
 			pw.write("POLYGON(");
@@ -229,7 +229,7 @@ public class WktWriter {
 	}
 	
 	private void writeMultiPolygon(MultiPolygon multiPolygon, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		if (multiPolygon.getPolygons().size() == 0) {
+		if (multiPolygon.isEmpty()) {
 			pw.write("MULTIPOLYGON EMPTY");
 		} else {
 			pw.write("MULTIPOLYGON(");
@@ -285,7 +285,7 @@ public class WktWriter {
 	}
 	
 	private void writeGeometryCollection(GeometryCollection geometryCollection, NumberFormat numFormat, PrintWriter pw) throws Exception {
-		if (geometryCollection.getGeometries().size() == 0) {
+		if (geometryCollection.isEmpty()) {
 			pw.write("GEOMETRYCOLLECTION EMPTY");
 		} else {
 			pw.write("GEOMETRYCOLLECTION(");

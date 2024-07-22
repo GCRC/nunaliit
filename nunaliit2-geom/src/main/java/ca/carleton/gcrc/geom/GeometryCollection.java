@@ -36,7 +36,7 @@ public class GeometryCollection extends GeometryAbstract implements Geometry,Geo
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 
-		if (getGeometries().size() == 0) {
+		if (isEmpty()) {
 			pw.print("GEOMETRYCOLLECTION EMPTY");
 			pw.flush();
 			return sw.toString();
@@ -73,5 +73,10 @@ public class GeometryCollection extends GeometryAbstract implements Geometry,Geo
 		for(Geometry geometry : this.geometries){
 			geometry.accumulateBasicGeometries(geometries);
 		}
+	}
+	
+	@Override
+	public boolean isEmpty() {
+		return (getGeometries().size() == 0);
 	}
 }

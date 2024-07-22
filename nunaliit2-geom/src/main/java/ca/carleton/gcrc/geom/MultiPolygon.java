@@ -42,7 +42,7 @@ public class MultiPolygon extends GeometryAbstract implements Geometry,GeometryA
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 
-		if (getPolygons().size() == 0) {
+		if (isEmpty()) {
 			pw.print("MULTIPOLYGON EMPTY");
 			pw.flush();
 			return sw.toString();
@@ -112,5 +112,10 @@ public class MultiPolygon extends GeometryAbstract implements Geometry,GeometryA
 		for(Polygon polygon : this.polygons){
 			polygon.accumulateBasicGeometries(geometries);
 		}
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return (getPolygons().size() == 0);
 	}
 }

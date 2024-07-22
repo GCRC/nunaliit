@@ -42,7 +42,7 @@ public class MultiPoint extends GeometryAbstract implements Geometry,GeometryAss
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 
-		if (getPoints().size() == 0) {
+		if (isEmpty()) {
 			pw.print("MULTIPOINT EMPTY");
 			pw.flush();
 			return sw.toString();
@@ -90,5 +90,10 @@ public class MultiPoint extends GeometryAbstract implements Geometry,GeometryAss
 		for(Point point : this.points){
 			point.accumulateBasicGeometries(geometries);
 		}
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return (getPoints().size() == 0);
 	}
 }

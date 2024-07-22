@@ -70,7 +70,7 @@ public class Point extends GeometryAbstract implements Geometry {
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
 
-		if (getPositions().size() == 0) {
+		if (isEmpty()) {
 			pw.print("POINT EMPTY");
 			pw.flush();
 			return sw.toString();
@@ -103,5 +103,10 @@ public class Point extends GeometryAbstract implements Geometry {
 	@Override
 	public void accumulateBasicGeometries(Collection<Geometry> geometries) {
 		geometries.add(this);
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return (getPositions().size() == 0);
 	}
 }
