@@ -5707,7 +5707,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			
 		} else if( 'find' === type ) {
 			var doc = m.doc;
-			if( doc && doc.nunaliit_geom ){
+			if( doc && doc.nunaliit_geom && doc.nunaliit_geom.bbox ){
 				var x = (doc.nunaliit_geom.bbox[0] + doc.nunaliit_geom.bbox[2]) / 2;
 				var y = (doc.nunaliit_geom.bbox[1] + doc.nunaliit_geom.bbox[3]) / 2;
 				this._centerMapOnXY(x, y, 'EPSG:4326');

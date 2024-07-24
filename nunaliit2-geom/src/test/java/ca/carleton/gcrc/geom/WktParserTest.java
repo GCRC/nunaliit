@@ -121,4 +121,50 @@ public class WktParserTest extends TestCase {
 			fail("Expected two geometries");
 		}
 	}
+
+	public void testEmptyWKT() throws Exception {
+		Geometry geomPoint = (new WktParser()).parseWkt("POINT EMPTY");
+		Geometry geomLineString = (new WktParser()).parseWkt("LINESTRING EMPTY");
+		Geometry geomPolygon = (new WktParser()).parseWkt("POLYGON EMPTY");
+		Geometry geomMultiPoint = (new WktParser()).parseWkt("MULTIPOINT EMPTY");
+		Geometry geomMultiLineString = (new WktParser()).parseWkt("MULTILINESTRING EMPTY");
+		Geometry geomMultiPolygon = (new WktParser()).parseWkt("MULTIPOLYGON EMPTY");
+		Geometry geomGeometryCollection = (new WktParser()).parseWkt("GEOMETRYCOLLECTION EMPTY");
+
+		if (false == (geomPoint instanceof Point)) fail("Expected an instance of Point");
+		if (false == (geomLineString instanceof LineString)) fail("Expected an instance of LineString");
+		if (false == (geomPolygon instanceof Polygon)) fail("Expected an instance of Polygon");
+		if (false == (geomMultiPoint instanceof MultiPoint)) fail("Expected an instance of MultiPoint");
+		if (false == (geomMultiLineString instanceof MultiLineString)) fail("Expected an instance of MultiLineString");
+		if (false == (geomMultiPolygon instanceof MultiPolygon)) fail("Expected an instance of MultiPolygon");
+		if (false == (geomGeometryCollection instanceof GeometryCollection)) fail("Expected an instance of GeometryCollection");
+
+		Point point = (Point) geomPoint;
+		if (point.getPositions().size() != 0) fail("Expected no positions");
+		if (!point.toString().equals("POINT EMPTY")) fail("Unexpected WKT string for empty POINT");
+		
+		LineString ls = (LineString) geomLineString;
+		if (ls.getPoints().size() != 0) fail("Expected no points");
+		if (!ls.toString().equals("LINESTRING EMPTY")) fail("Unexpected WKT string for empty LINESTRING");
+		
+		Polygon polygon = (Polygon) geomPolygon;
+		if (polygon.getLinearRings().size() != 0) fail("Expected no linear rings");
+		if (!polygon.toString().equals("POLYGON EMPTY")) fail("Unexpected WKT string for empty POLYGON");
+		
+		MultiPoint multipoint = (MultiPoint) geomMultiPoint;
+		if (multipoint.getPoints().size() != 0) fail("Expected no points");
+		if (!multipoint.toString().equals("MULTIPOINT EMPTY")) fail("Unexpected WKT string for empty MULTIPOINT");
+		
+		MultiLineString multiLS = (MultiLineString) geomMultiLineString;
+		if (multiLS.getLineStrings().size() != 0) fail("Expected no linestrings");
+		if (!multiLS.toString().equals("MULTILINESTRING EMPTY")) fail("Unexpected WKT string for empty MULTILINESTRING");
+		
+		MultiPolygon multiPolygon = (MultiPolygon) geomMultiPolygon;
+		if (multiPolygon.getPolygons().size() != 0) fail("Expected no polygons");
+		if (!multiPolygon.toString().equals("MULTIPOLYGON EMPTY")) fail("Unexpected WKT string for empty MULTIPOLYGON");
+		
+		GeometryCollection gCollection = (GeometryCollection) geomGeometryCollection;
+		if (gCollection.getGeometries().size() != 0) fail("Expected no geometries");
+		if (!gCollection.toString().equals("GEOMETRYCOLLECTION EMPTY")) fail("Unexpected WKT string for empty GEOMETRYCOLLECTION");
+	}
 }

@@ -29,6 +29,12 @@ public class LineString extends GeometryAbstract implements Geometry {
 	public String toString(){
 		StringWriter sw = new StringWriter();
 		PrintWriter pw = new PrintWriter(sw);
+
+		if (isEmpty()) {
+			pw.print("LINESTRING EMPTY");
+			pw.flush();
+			return sw.toString();
+		}
 		
 		pw.print("LINESTRING(");
 		
@@ -68,5 +74,10 @@ public class LineString extends GeometryAbstract implements Geometry {
 	@Override
 	public void accumulateBasicGeometries(Collection<Geometry> geometries) {
 		geometries.add(this);
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return (getPoints().size() == 0);
 	}
 }
