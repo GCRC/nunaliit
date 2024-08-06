@@ -77,6 +77,33 @@ public class SubmissionServletActions {
 		}
 	}
 
+	public JSONObject createUnauthenticatedDocument(CouchAuthenticationContext authContext, JSONObject payload) throws Exception {
+		if (JSONSupport.containsKey(payload, "_id")) payload.remove("_id");
+		if (JSONSupport.containsKey(payload, "_rev")) payload.remove("_rev");
+		if (JSONSupport.containsKey(payload, "_attachments")) payload.remove("_attachments");
+		if (JSONSupport.containsKey(payload, "nunaliit_type")) payload.remove("nunaliit_type");
+		if (JSONSupport.containsKey(payload, "nunaliit_submission")) payload.remove("nunaliit_submission");
+		if (JSONSupport.containsKey(payload, "nunaliit_last_updated")) payload.remove("nunaliit_last_updated");
+		if (JSONSupport.containsKey(payload, "nunaliit_created")) payload.remove("nunaliit_created");
+		if (JSONSupport.containsKey(payload, "nunaliit_layers")) payload.remove("nunaliit_layers");
+		if (JSONSupport.containsKey(payload, "nunaliit_attachments")) payload.remove("nunaliit_attachments");
+		if (JSONSupport.containsKey(payload, "nunaliit_manifest")) payload.remove("nunaliit_manifest");
+		if (JSONSupport.containsKey(payload, "nunaliit_date_clusters")) payload.remove("nunaliit_date_clusters");
+		if (JSONSupport.containsKey(payload, "nunaliit_email_template")) payload.remove("nunaliit_email_template");
+		if (JSONSupport.containsKey(payload, "nunaliit_script")) payload.remove("nunaliit_script");
+		if (JSONSupport.containsKey(payload, "nunaliit_source")) payload.remove("nunaliit_source");
+		if (JSONSupport.containsKey(payload, "nunaliit_relations")) payload.remove("nunaliit_relations");
+
+		JSONObject uuidRes = getUuids(null, 1);
+		JSONArray uuid = uuidRes.getJSONArray("uuids");
+		payload.put("_id", uuid.get(0));
+
+		JSONObject unauthenticatedSubmissionRequest = buildSubmissionRequest(authContext, null, payload, null);
+		JSONObject result = submissionDesign.getDatabase().createDocument(unauthenticatedSubmissionRequest);
+
+		return result;
+	}
+
 	public JSONObject modifyDocument(
 			CouchAuthenticationContext authContext 
 			,String dbIdentifier 
