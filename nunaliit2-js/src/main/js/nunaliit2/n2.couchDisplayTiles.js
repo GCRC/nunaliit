@@ -230,6 +230,8 @@ var TiledDisplay = $n2.Class({
 		this.customService = opts.customService;
 		this.dispatchService = opts.dispatchService;
 		this.createDocProcess = opts.createDocProcess;
+
+		this.noDocumentHoverFunctions = false;
 		
 		// Initialize display
 		this._getDisplayDiv();
@@ -245,6 +247,10 @@ var TiledDisplay = $n2.Class({
 			this.restrictAddRelatedButtonToLoggedIn = 
 				this.customService.getOption('restrictAddRelatedButtonToLoggedIn',false);
 		};
+
+		if (this.customService) {
+			this.noDocumentHoverFunctions = this.customService.getOption('disableDocumentHoverFunctions', false)
+		}
 
 		var dispatcher = this.dispatchService;
 		if( dispatcher ) {
@@ -364,28 +370,34 @@ var TiledDisplay = $n2.Class({
 		};
 		
 		// Hover in and out
-		this.hoverInFn = function(){
-			var $tile = $(this);
-			var docId = $tile.attr('n2DocId');
-			if( docId && docId !== _this.hoverDocId ) {
-				_this.hoverDocId = docId;
-				_this._dispatch({
-					type: 'userFocusOn'
-					,docId: docId
-				});
+		if (this.noDocumentHoverFunctions) {
+			this.hoverInFn = () => {}
+			this.hoverOutFn = () => {}
+		}
+		else {
+			this.hoverInFn = function(){
+				var $tile = $(this);
+				var docId = $tile.attr('n2DocId');
+				if( docId && docId !== _this.hoverDocId ) {
+					_this.hoverDocId = docId;
+					_this._dispatch({
+						type: 'userFocusOn'
+						,docId: docId
+					});
+				};
 			};
-		};
-		this.hoverOutFn = function(){
-			var $tile = $(this);
-			var docId = $tile.attr('n2DocId');
-			if( docId && docId === _this.hoverDocId ) {
-				_this.hoverDocId = null;
-				_this._dispatch({
-					type: 'userFocusOff'
-					,docId: docId
-				});
+			this.hoverOutFn = function(){
+				var $tile = $(this);
+				var docId = $tile.attr('n2DocId');
+				if( docId && docId === _this.hoverDocId ) {
+					_this.hoverDocId = null;
+					_this._dispatch({
+						type: 'userFocusOff'
+						,docId: docId
+					});
+				};
 			};
-		};
+		}
 		
 		// Detect changes in displayed current content size
 		var intervalID = window.setInterval(function(){
