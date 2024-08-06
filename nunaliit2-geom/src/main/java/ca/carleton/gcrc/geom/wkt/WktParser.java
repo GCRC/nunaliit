@@ -325,7 +325,7 @@ public class WktParser {
 
 			Point point = new Point(positions);
 			lineString.addPoint(point);
-			
+			skipWhiteSpaces(br);
 			if( checkForRightParen(br) ) {
 				done = true;
 			} else {
@@ -393,6 +393,7 @@ public class WktParser {
 				multiPoint.addPoint(point);
 			}
 
+			skipWhiteSpaces(br);
 			if( checkForRightParen(br) ) {
 				done = true;
 			} else {
@@ -424,6 +425,7 @@ public class WktParser {
 			LineString lineString = parseLineString(br);
 			multiLineString.addLineString(lineString);
 
+			skipWhiteSpaces(br);
 			if( checkForRightParen(br) ) {
 				done = true;
 			} else {
@@ -455,6 +457,7 @@ public class WktParser {
 			Polygon polygon = parsePolygon(br);
 			multiPolygon.addPolygon(polygon);
 
+			skipWhiteSpaces(br);
 			if( checkForRightParen(br) ) {
 				done = true;
 			} else {
@@ -486,6 +489,7 @@ public class WktParser {
 			Geometry geometry = parseGeometry(br);
 			geometryCollection.addGeometry(geometry);
 
+			skipWhiteSpaces(br);
 			if( checkForRightParen(br) ) {
 				done = true;
 			} else {

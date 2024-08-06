@@ -167,4 +167,30 @@ public class WktParserTest extends TestCase {
 		if (gCollection.getGeometries().size() != 0) fail("Expected no geometries");
 		if (!gCollection.toString().equals("GEOMETRYCOLLECTION EMPTY")) fail("Unexpected WKT string for empty GEOMETRYCOLLECTION");
 	}
+
+	public void testWKTWithWhitespaceParentheses() throws Exception {
+		Geometry geom = (new WktParser()).parseWkt("MULTIPOINT(\r\n" + //
+				"(-53 69),\r\n" + //
+				"(-51 64),\r\n" + //
+				"(-20 74)\r\n" + //
+				")");
+		if (false == (geom instanceof MultiPoint)) {
+			fail("Expected an instance of MultiPoint");
+		}
+		
+		Geometry geom2 = (new WktParser()).parseWkt("MULTIPOLYGON( ( (0 0, 0 10, 10 10, 0 0) ),( (100 100, 100 110, 110 110, 110 100, 100 100) ,(101 101, 101 102, 102 102, 101 101) ) )");
+		if (false == (geom2 instanceof MultiPolygon)) {
+			fail("Expected an instance of MultiPolygon");
+		}
+		
+		Geometry geom3 = (new WktParser()).parseWkt("MULTIPOINT( (0 0)  ,  (0 10)          )");
+		if (false == (geom3 instanceof MultiPoint)) {
+			fail("Expected an instance of MultiPoint");
+		}
+		
+		Geometry geom4 = (new WktParser()).parseWkt("POLYGON   (     (0 0, 0 10, 10 10, 10 0, 0 0)    ,         (1 1, 1 2, 2 2, 2 1, 1 1)        )  ");
+		if (false == (geom4 instanceof Polygon)) {
+			fail("Expected an instance of Polygon");
+		}
+	}
 }
