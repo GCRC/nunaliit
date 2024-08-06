@@ -1288,6 +1288,8 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 		this.customService = opts.customService;
 		this.dispatchService = opts.dispatchService;
 		this.createDocProcess = opts.createDocProcess;
+
+		this.noDocumentHoverFunctions = false;
 		
 		// Initialize display
 		this._getDisplayDiv();
@@ -1345,6 +1347,10 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 				documentSource: this.documentSource
 			});
 		};
+
+		if (this.customService) {
+			this.noDocumentHoverFunctions = this.customService.getOption('disableDocumentHoverFunctions', false)
+		}
 		
 		// Document info function
 		this.documentInfoFunction = opts.documentInfoFunction;
@@ -1422,16 +1428,22 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 		};
 		
 		// Hover in and out
-		this.hoverInFn = function(){
-			var $tile = $(this);
-			_this._hoverInTile($tile);
-			return false;
-		};
-		this.hoverOutFn = function(){
-			var $tile = $(this);
-			_this._hoverOutTile($tile);
-			return false;
-		};
+		if (this.noDocumentHoverFunctions) {
+			this.hoverInFn = () => {}
+			this.hoverOutFn = () => {}
+		}
+		else {
+			this.hoverInFn = function(){
+				var $tile = $(this);
+				_this._hoverInTile($tile);
+				return false;
+			};
+			this.hoverOutFn = function(){
+				var $tile = $(this);
+				_this._hoverOutTile($tile);
+				return false;
+			};
+		}
 		
 		// Click function
 		this.clickFn = function(){
