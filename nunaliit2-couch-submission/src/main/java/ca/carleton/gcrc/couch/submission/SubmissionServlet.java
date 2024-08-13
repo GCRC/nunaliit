@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
+import java.util.Properties;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
@@ -30,6 +31,7 @@ import ca.carleton.gcrc.couch.client.impl.ConnectionStreamResult;
 import ca.carleton.gcrc.couch.client.impl.CouchContextCookie;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.utils.StreamUtils;
+import ca.carleton.gcrc.couch.submission.SubmissionConstants;
 
 @SuppressWarnings("serial")
 public class SubmissionServlet extends JsonServlet {
@@ -38,10 +40,13 @@ public class SubmissionServlet extends JsonServlet {
 	public static final String ConfigAttributeName_UserDb = "SubmissionServlet_UserDb";
 	public static final String ConfigAttributeName_SubmissionDesign = "SubmissionServlet_SubmissionDesign";
 	public static final String ConfigAttributeName_DocumentDesign = "SubmissionServlet_DocumentDesign";
+	public static final String ConfigAttributeName_Submission_UnauthenticatedRecordsEndpointEnabled = "SubmissionServlet_Submission_UnauthenticatedRecordsEndpointEnabled";
 	
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private String atlasName = null;
+	private boolean isSubmissionUnauthenticatedRecordsEndpointEnabled = false;
+	private CouchAuthenticationContext unauthenticatedRecordsUserAuthContext = null;
 //	private CouchUserDb userDb = null;
 	private CouchDesignDocument documentDesign = null;
 	private CouchDesignDocument submissionDesign = null;
@@ -66,6 +71,102 @@ public class SubmissionServlet extends JsonServlet {
 				atlasName = (String)obj;
 			} else {
 				throw new ServletException("Unexpected object for atlas name: "+obj.getClass().getName());
+			}
+		}
+
+		// Should the unauthenticated records endpoint be enabled?
+		{
+			Object obj = context.getAttribute(ConfigAttributeName_Submission_UnauthenticatedRecordsEndpointEnabled);
+			if (null == obj) {
+				// Not present, it defaults to false anyway
+			}
+			if (obj instanceof Boolean) {
+				isSubmissionUnauthenticatedRecordsEndpointEnabled = (Boolean) obj;
+			} else {
+				throw new ServletException("Unexpected object for unauthenticated records endpoint configuration: "
+						+ obj.getClass().getName());
+			}
+
+			if (isSubmissionUnauthenticatedRecordsEndpointEnabled) {
+				Object userObj = context
+						.getAttribute(SubmissionConstants.PROP_ATTR_SUBMISSION_UNAUTHENTICATED_RECORDS_USER);
+				String couchDbUnauthEndpointUser = null;
+				String couchDbUnauthEndpointUserPassword = null;
+				String couchDbServerURL = null;
+				if (null == userObj) {
+					throw new ServletException(
+							"CouchDB unauthenticated endpoint user not specified when unauthenticated endpoint is enabled");
+				}
+				if (userObj instanceof String) {
+					couchDbUnauthEndpointUser = (String) userObj;
+				} else {
+					throw new ServletException("Unexpected object for CouchDB unauthenticated endpoint username: "
+							+ userObj.getClass().getName());
+				}
+
+				Object passwordObj = context
+						.getAttribute(SubmissionConstants.PROP_ATTR_SUBMISSION_UNAUTHENTICATED_RECORDS_USER_PASSWORD);
+				if (null == passwordObj) {
+					throw new ServletException(
+							"CouchDB unauthenticated endpoint user's password not specified when unauthenticated endpoint is enabled");
+				}
+				if (passwordObj instanceof String) {
+					couchDbUnauthEndpointUserPassword = (String) passwordObj;
+				} else {
+					throw new ServletException("Unexpected object for CouchDB unauthenticated endpoint user's password: "
+							+ passwordObj.getClass().getName());
+				}
+
+				Object serverObj = context.getAttribute("couchdb.server");
+				if (null == serverObj) {
+					throw new ServletException(
+							"CouchDB server URL not specified when unauthenticated endpoint is enabled");
+				}
+				if (serverObj instanceof String) {
+					couchDbServerURL = (String) serverObj;
+				} else {
+					throw new ServletException("Unexpected object for CouchDB server URL: "
+							+ serverObj.getClass().getName());
+				}
+
+				if (couchDbUnauthEndpointUser != null && couchDbUnauthEndpointUser.trim().length() > 0
+				&& couchDbUnauthEndpointUserPassword != null && couchDbUnauthEndpointUserPassword.trim().length() > 0
+				&& couchDbServerURL != null) {
+					Properties properties = new Properties();
+					properties.put("couchdb.server", couchDbServerURL);
+					properties.put("couchdb.user", couchDbUnauthEndpointUser);
+					properties.put("couchdb.password", couchDbUnauthEndpointUserPassword);
+					
+					CouchFactory factory = new CouchFactory();
+					CouchClient client = null;
+					CouchSession session = null;
+					try {
+						client = factory.getClient(properties);
+					} catch (Exception e) {
+						throw new ServletException(
+								"Failed to get Couch client for unauthenticated records endpoint user");
+					}
+					try {
+						client.validateContext();
+					} catch (Exception e) {
+						throw new ServletException(
+								"Failed to validate unauthenticated records endpoint user authentication context (wrong credentials?)");
+					}
+					try {
+						session = client.getSession();
+					} catch (Exception e) {
+						throw new ServletException(
+								"Failed to get unauthenticated records endpoint user session");
+					}
+					try {
+						unauthenticatedRecordsUserAuthContext = session.getAuthenticationContext();
+					} catch (Exception e) {
+						throw new ServletException("Failed to generate unauthenticated endpoint user authentication context.", e);
+					}
+				} else {
+					throw new ServletException(
+							"Failed to configure CouchDB unauthenticated endpoint user authentication context for unauthenticated endpoint");
+				}
 			}
 		}
 		
@@ -363,15 +464,35 @@ public class SubmissionServlet extends JsonServlet {
 
 	@Override
 	protected void doPost(
-		HttpServletRequest req
-		,HttpServletResponse resp
-		) throws ServletException, IOException {
-
-		try {
-			throw new Exception("Invalid action requested");
-			
-		} catch(Exception e) {
-			reportError(e, resp);
+			HttpServletRequest req,
+			HttpServletResponse resp)
+			throws ServletException, IOException {
+		if (!isSubmissionUnauthenticatedRecordsEndpointEnabled) {
+			resp.setStatus(404);
+		}
+		else {
+			try {
+				List<String> path = computeRequestPath(req);
+				if (path.size() == 1 && path.get(0).equals("unauthenticatedRecords")) {
+					BufferedReader reader = req.getReader();
+					JSONTokener tokener = new JSONTokener(reader);
+					Object obj = tokener.nextValue();
+					if (obj instanceof JSONObject) {
+						JSONObject doc = (JSONObject) obj;
+						JSONObject result = actions.createUnauthenticatedDocument(
+							unauthenticatedRecordsUserAuthContext,
+							doc
+						);
+						sendJsonResponse(resp, result);
+					} else {
+						throw new Exception("On document creation, a JSON object is expected as content");
+					}
+				} else {
+					throw new Exception("Invalid action requested");
+				}
+			} catch (Exception e) {
+				reportError(e, resp);
+			}
 		}
 	}
 	
