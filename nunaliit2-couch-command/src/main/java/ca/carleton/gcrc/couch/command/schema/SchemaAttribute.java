@@ -811,8 +811,12 @@ public class SchemaAttribute {
 						pw.print("{{#doc}}");
 						pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
 						pw.print("{{/doc}}");
+					} else if ( "triple".equals(elementType) ){
+						pw.println("");
+						tripleSubject.printTripleBrief(pw, null, "subject");
+						triplePredicate.printTripleBrief(pw, null, "predicate");
+						tripleObject.printTripleBrief(pw, null, "object");
 					}
-					
 					pw.println("{{/"+id+"}}");
 					pw.println("\t\t\t</span>");
 					pw.println("\t\t{{/if}}");
