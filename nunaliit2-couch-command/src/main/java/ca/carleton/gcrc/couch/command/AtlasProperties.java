@@ -37,6 +37,8 @@ public class AtlasProperties {
 		atlasProps.setCouchDbSubmissionDbName( props.getProperty("couchdb.submission.dbName") );
 		atlasProps.setCouchDbAdminUser( props.getProperty("couchdb.admin.user") );
 		atlasProps.setInReachDbName(props.getProperty("couchdb.inreach.dbName", ""));
+		atlasProps.setExportUser(props.getProperty("export.complete.user"));
+		atlasProps.setExportPassword(props.getProperty("export.complete.password"));
 
 		// CouchDb password
 		try {
@@ -201,6 +203,7 @@ public class AtlasProperties {
 		Set<String> sensitivePropertyNames = new HashSet<String>();
 		{
 			sensitivePropertyNames.add("couchdb.admin.password");
+			sensitivePropertyNames.add("export.complete.password");
 			sensitivePropertyNames.add("server.key");
 			sensitivePropertyNames.add("google.mapapi.key");
 
@@ -320,6 +323,8 @@ public class AtlasProperties {
 	private String inReachDbName;
 	private String couchDbAdminUser;
 	private String couchDbAdminPassword;
+	private String exportUser;
+	private String exportPassword;
 	private int serverPort = 8080;
 	private boolean restricted = false;
 	private byte[] serverKey = null;
@@ -401,6 +406,20 @@ public class AtlasProperties {
 	}
 	public void setCouchDbAdminPassword(String couchDbAdminPassword) {
 		this.couchDbAdminPassword = couchDbAdminPassword;
+	}
+
+	public String getExportUser() {
+		return exportUser;
+	}
+	public void setExportUser(String exportUser) {
+		this.exportUser = exportUser;
+	}
+
+	public String getExportPassword() {
+		return exportPassword;
+	}
+	public void setExportPassword(String exportPassword) {
+		this.exportPassword = exportPassword;
 	}
 
 	public int getServerPort() {
