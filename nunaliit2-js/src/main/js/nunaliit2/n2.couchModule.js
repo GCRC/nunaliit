@@ -1073,6 +1073,8 @@ var ModuleDisplay = $n2.Class({
 			showSRSAttribution = mapInfo.showSRSAttribution;
 		};
 
+		const enableKeyboardControls = mapInfo.enableKeyboardControls || false
+
 		// ScaleLine
 		var scaleLine = {
 			visible: false
@@ -1114,6 +1116,7 @@ var ModuleDisplay = $n2.Class({
 			,overlays: []
 			,toggleClick: toggleClick
 			,showSRSAttribution: showSRSAttribution
+			,enableKeyboardControls: enableKeyboardControls
 			,scaleLine: scaleLine
 			,enableWheelZoom: enableWheelZoom
 			,sidePanelName: _this.sidePanelName
