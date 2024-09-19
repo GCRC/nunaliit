@@ -1571,7 +1571,10 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		};
 
 		if (this.options.enableKeyboardControls) {
-			this.map.addControl(new OpenLayers.Control.KeyboardDefaults())
+			const keyboardControls = new OpenLayers.Control.KeyboardDefaults()
+			this.map.div.tabIndex = 0
+			keyboardControls.observeElement = this.map.div
+			this.map.addControl(keyboardControls)
 		}
 
 		// Disable zoom on mouse wheel
