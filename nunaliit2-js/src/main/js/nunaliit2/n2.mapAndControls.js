@@ -1570,6 +1570,13 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			this.map.addControl(scaleLine);
 		};
 
+		if (this.options.enableKeyboardControls) {
+			const keyboardControls = new OpenLayers.Control.KeyboardDefaults()
+			this.map.div.tabIndex = 0
+			keyboardControls.observeElement = this.map.div
+			this.map.addControl(keyboardControls)
+		}
+
 		// Disable zoom on mouse wheel
 		if( this.options.enableWheelZoom ) {
 			// Do nothing. Enabled by default
