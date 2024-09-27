@@ -46,15 +46,19 @@ POSSIBILITY OF SUCH DAMAGE.
                 }
                 if (options.dispatch) this.dispatch = options.dispatch
                 this.DH = 'MapAndControlsKeyboardControls'
+                this.defaultSelectionRadius = 100000
             },
 
             selectAtMapCenter: function (position) {
                 // Select everything in the bounds
                 let docs = []
+                const mapZoom = this.map.getZoom()
+                const radius = this.defaultSelectionRadius / mapZoom
+                const { lon, lat } = position
                 var bounds = new OpenLayers.Bounds(
-                    position.lon + 100000, position.lat + 100000, position.lon - 100000, position.lat - 100000
-                );
-                var layers = this.layers || [this.layer];
+                    lon - (radius), lat - (radius), lon + (radius), lat + (radius)
+                    );
+                var layers = this.layers
                 var layer;
                 for (var l = 0; l < layers.length; ++l) {
                     layer = layers[l];
