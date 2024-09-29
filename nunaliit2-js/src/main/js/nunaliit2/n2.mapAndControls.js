@@ -1570,6 +1570,13 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			this.map.addControl(scaleLine);
 		};
 
+		if (this.options.enableKeyboardControls) {
+			const keyboardControls = new OpenLayers.Control.KeyboardDefaults()
+			this.map.div.tabIndex = 0
+			keyboardControls.observeElement = this.map.div
+			this.map.addControl(keyboardControls)
+		}
+
 		// Disable zoom on mouse wheel
 		if( this.options.enableWheelZoom ) {
 			// Do nothing. Enabled by default
@@ -2785,12 +2792,25 @@ var MapAndControls = $n2.Class('MapAndControls',{
 					} else if( 'srsName' === key ) {
 						var proj = new OpenLayers.Projection( options[key] );
 						layerOptions.projection = proj;
-
+					} else if ('tileFullExtent' === key) {
+						const {
+							bounds,
+							sourceProjection,
+							destinationProjection
+						} = options[key]
+						const olBounds = new OpenLayers.Bounds(...bounds)
+						if (sourceProjection !== destinationProjection) {
+							olBounds.transform(
+								new OpenLayers.Projection(sourceProjection),
+								new OpenLayers.Projection(destinationProjection)
+							)
+						}
+						layerOptions.tileFullExtent = olBounds
 					} else if( 'opacity' === key
 							|| 'scales' === key 
 							|| 'resolutions' === key  ) {
 						layerOptions[key] = options[key];
-						
+
 					} else if( 'numZoomLevels' === key){
 						var matrixIds = new Array(options["numZoomLevels"]);
 						var srsName = options['srsName'];
@@ -5694,7 +5714,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			
 		} else if( 'find' === type ) {
 			var doc = m.doc;
-			if( doc && doc.nunaliit_geom ){
+			if( doc && doc.nunaliit_geom && doc.nunaliit_geom.bbox ){
 				var x = (doc.nunaliit_geom.bbox[0] + doc.nunaliit_geom.bbox[2]) / 2;
 				var y = (doc.nunaliit_geom.bbox[1] + doc.nunaliit_geom.bbox[3]) / 2;
 				this._centerMapOnXY(x, y, 'EPSG:4326');

@@ -693,7 +693,6 @@ public class SchemaAttribute {
 
 	public boolean printBrief(PrintWriter pw, String schemaStructure, String schemaClass, boolean isFirst) throws Exception {
 		boolean printed = false;
-		
 		if( includedInBrief ){
 			if( "title".equals(type) ){
 				
@@ -812,8 +811,12 @@ public class SchemaAttribute {
 						pw.print("{{#doc}}");
 						pw.print("<span class=\"n2s_briefDisplay\">{{.}}</span>");
 						pw.print("{{/doc}}");
+					} else if ( "triple".equals(elementType) ){
+						pw.println("");
+						tripleSubject.printTripleBrief(pw, null, "subject");
+						triplePredicate.printTripleBrief(pw, null, "predicate");
+						tripleObject.printTripleBrief(pw, null, "object");
 					}
-					
 					pw.println("{{/"+id+"}}");
 					pw.println("\t\t\t</span>");
 					pw.println("\t\t{{/if}}");
@@ -864,6 +867,16 @@ public class SchemaAttribute {
 				pw.println("\t\t{{/if}}");
 				pw.println("\t{{/nunaliit_key_media_ref}}");
 
+			} else if( "triple".equals(type) ){
+				pw.println("\t{{#"+schemaStructure+"}}");
+				pw.println("\t\t{{#if "+id+"}}");
+				pw.println("\t\t\t<span class=\""+schemaClass+"_"+id+"\">");
+				tripleSubject.printTripleBrief(pw, id, "subject");
+				triplePredicate.printTripleBrief(pw, id, "predicate");
+				tripleObject.printTripleBrief(pw, id, "object");
+				pw.println("\t\t\t</span>");
+				pw.println("\t\t{{/if}}");
+				pw.println("\t{{/"+schemaStructure+"}}");
 			} else if( "createdBy".equals(type) ){
 				pw.println("\t{{#nunaliit_created}}");
 				pw.println("\t\t<span class=\"n2s_insertUserName "+schemaClass+"_createdBy\">{{name}}</span>");
@@ -1290,6 +1303,69 @@ public class SchemaAttribute {
 							
 			} else {
 				throw new Exception("Unable to include type "+type+" in display");
+			}
+		}
+	}
+
+	public void printTripleBrief(PrintWriter pw, String key, String field) throws Exception {
+		String fieldKey = (key != null) ? key + "." + field + "." + id : field + "." + id;
+		String briefClass = (key != null) ? key + "_" + field : field;
+
+		if ("string".equals(type)
+			|| "localized".equals(type)
+			|| "numeric".equals(type)) {
+			if (null != id) {
+
+				pw.println("\t\t\t\t{{#if " + fieldKey + "}}");
+				String fixUrlClass = "";
+				String fixMaxHeight = "";
+				if (urlsToLinks) {
+					fixUrlClass += " n2s_convertTextUrlToLink";
+				}
+				if (wikiTransform) {
+					fixUrlClass += " n2s_wikiTransform";
+				} else if (isTextarea()) {
+					fixUrlClass += " n2s_preserveSpaces";
+
+					if (null != maxHeight && maxHeight.intValue() > 0) {
+						fixUrlClass += " n2s_installMaxHeight";
+						fixMaxHeight = " _maxheight=\"" + maxHeight.intValue() + "\"";
+					}
+				}
+				if( "string".equals(type) ){
+					pw.println("\t\t\t\t\t<span class=\"" + briefClass + fixUrlClass + "\"" + fixMaxHeight + ">{{" + fieldKey + "}}</span>");
+				} else if( "localized".equals(type) ){
+					pw.println("\t\t\t\t\t<span class=\"" + briefClass + fixUrlClass + "\"" + fixMaxHeight + ">{{#:localize}}" + fieldKey + "{{/:localize}}</span>");
+				}
+
+				pw.println("\t\t\t\t{{/if}}");
+
+			}
+		} else if ("selection".equals(type)) {
+			if (null != id) {
+				pw.println("\t\t\t\t{{#if " + fieldKey + "}}");
+				pw.println("\t\t\t\t\t<span class=\"" + briefClass + " n2s_select\" n2-choice=\"{{" + fieldKey + "}}\">");
+
+				for (SelectionOption option : options) {
+					String value = option.getValue();
+					String optLabel = option.getLabel();
+					if (null == optLabel) {
+						optLabel = value;
+					}
+
+					pw.println("\t\t\t\t\t\t<span class=\"n2s_choice n2s_localize\" n2-choice=\"" + value + "\">" + optLabel + "</span>");
+				}
+				pw.println("\t\t\t\t\t\t<span class=\"n2s_choice\">{{" + fieldKey + "}}</span>");
+				pw.println("\t\t\t\t\t</span>");
+				pw.println("\t\t\t\t{{/if}}");
+			}
+		} else if ("reference".equals(type)) {
+			if (null != id) {
+				if ("thumbnail".equals(referenceType)) {
+					pw.println("\t\t\t\t<span class=\"" + briefClass + " n2s_insertFirstThumbnail\" nunaliit-document=\"{{" + fieldKey + ".doc}}\"></span>");
+				} else {
+					pw.println("\t\t\t\t<span class=\"" + briefClass + "\"><a href=\"#\" class=\"n2s_referenceLink\">{{"+ fieldKey + ".doc}}</a></span>");
+				}
 			}
 		}
 	}

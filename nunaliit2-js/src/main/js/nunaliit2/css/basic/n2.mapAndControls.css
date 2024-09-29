@@ -349,3 +349,7 @@ table.mediaSelection td {
 .olLayerGooglePoweredBy, .gmnoprint, .gm-style-cc {
 	visibility: hidden;
 }
+
+.n2_content_map:focus {
+	border: solid #444444 2px;
+}

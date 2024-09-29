@@ -7,6 +7,8 @@ public interface Geometry {
 	BoundingBox getBoundingBox();
 	
 	void extendBoundingBox(BoundingBox boundingBox);
+
+	boolean isEmpty();
 	
 	/**
 	 * Unravels all the geometry collections and saves the basic

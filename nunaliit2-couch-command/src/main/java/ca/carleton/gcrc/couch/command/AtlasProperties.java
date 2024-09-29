@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.utils.PropertiesWriter;
+import ca.carleton.gcrc.couch.submission.SubmissionConstants;
 
 public class AtlasProperties {
 
@@ -35,6 +36,7 @@ public class AtlasProperties {
 		atlasProps.setCouchDbName( props.getProperty("couchdb.dbName") );
 		atlasProps.setCouchDbSubmissionDbName( props.getProperty("couchdb.submission.dbName") );
 		atlasProps.setCouchDbAdminUser( props.getProperty("couchdb.admin.user") );
+		atlasProps.setInReachDbName(props.getProperty("couchdb.inreach.dbName", ""));
 
 		// CouchDb password
 		try {
@@ -90,10 +92,44 @@ public class AtlasProperties {
 
 		// Submission DB enabled
 		{
-			String enabledString = props.getProperty("couchdb.submission.enabled","false");
+			String enabledString = props.getProperty(
+				SubmissionConstants.PROP_ATTR_SUBMISSION_ENABLED,
+				"false"
+			);
 			boolean enabled = Boolean.parseBoolean(enabledString);
 			if( enabled ){
 				atlasProps.setCouchDbSubmissionDbEnabled(enabled);
+			}
+		}
+
+		// Submission DB unauthenticated records endpoint enabled
+		{
+			String enabledString = props.getProperty(
+				SubmissionConstants.PROP_ATTR_SUBMISSION_UNAUTHENTICATED_RECORDS_ENDPOINT_ENABLED,
+				"false"
+			);
+			boolean enabled = Boolean.parseBoolean(enabledString);
+			if (enabled) {
+				atlasProps.setCouchDbSubmissionUnauthenticatedRecordsEndpointEnabled(enabled);
+
+				// If unauthenticated records endpoint enabled, then the user and password are relevant
+				try {
+					String unauthEndpointUser = props
+							.getProperty(SubmissionConstants.PROP_ATTR_SUBMISSION_UNAUTHENTICATED_RECORDS_USER);
+					if (null == unauthEndpointUser) {
+						throw new Exception("Unauthenticated records user required when endpoint enabled");
+					}
+					atlasProps.setCouchDbSubmissionUnauthenticatedRecordsUser(unauthEndpointUser);
+
+					String unauthEndpointUserPass = props
+							.getProperty(SubmissionConstants.PROP_ATTR_SUBMISSION_UNAUTHENTICATED_RECORDS_USER_PASSWORD);
+					if (null == unauthEndpointUserPass) {
+						throw new Exception("Unauthenticated records user password required when endpoint enabled");
+					}
+					atlasProps.setCouchDbSubmissionUnauthenticatedRecordsUserPassword(unauthEndpointUserPass);
+				} catch (Exception e) {
+					throw new Exception("Unable to interpret unauthenticated records endpoint user credentials", e);
+				}
 			}
 		}
 
@@ -277,7 +313,11 @@ public class AtlasProperties {
 	private URL couchDbUrl;
 	private String couchDbName;
 	private boolean couchDbSubmissionDbEnabled;
+	private boolean couchDbSubmissionUnauthenticatedRecordsEndpointEnabled;
+	private String couchDbSubmissionUnauthenticatedRecordsUser;
+	private String couchDbSubmissionUnauthenticatedRecordsUserPassword;
 	private String couchDbSubmissionDbName;
+	private String inReachDbName;
 	private String couchDbAdminUser;
 	private String couchDbAdminPassword;
 	private int serverPort = 8080;
@@ -314,11 +354,39 @@ public class AtlasProperties {
 		this.couchDbSubmissionDbEnabled = couchDbSubmissionDbEnabled;
 	}
 
+	public boolean isCouchDbSubmissionUnauthenticatedRecordsEndpointEnabled() {
+		return couchDbSubmissionUnauthenticatedRecordsEndpointEnabled;
+	}
+	public void setCouchDbSubmissionUnauthenticatedRecordsEndpointEnabled(boolean couchDbSubmissionUnauthenticatedRecordsEndpointEnabled) {
+		this.couchDbSubmissionUnauthenticatedRecordsEndpointEnabled = couchDbSubmissionUnauthenticatedRecordsEndpointEnabled;
+	}
+
+	public String getCouchDbSubmissionUnauthenticatedRecordsUser() {
+		return couchDbSubmissionUnauthenticatedRecordsUser;
+	}
+	public void setCouchDbSubmissionUnauthenticatedRecordsUser(String couchDbSubmissionUnauthenticatedRecordsUser) {
+		this.couchDbSubmissionUnauthenticatedRecordsUser = couchDbSubmissionUnauthenticatedRecordsUser;
+	}
+
+	public String getCouchDbSubmissionUnauthenticatedRecordsUserPassword() {
+		return couchDbSubmissionUnauthenticatedRecordsUserPassword;
+	}
+	public void setCouchDbSubmissionUnauthenticatedRecordsUserPassword(String couchDbSubmissionUnauthenticatedRecordsUserPassword) {
+		this.couchDbSubmissionUnauthenticatedRecordsUserPassword = couchDbSubmissionUnauthenticatedRecordsUserPassword;
+	}
+
 	public String getCouchDbSubmissionDbName() {
 		return couchDbSubmissionDbName;
 	}
 	public void setCouchDbSubmissionDbName(String couchDbSubmissionDbName) {
 		this.couchDbSubmissionDbName = couchDbSubmissionDbName;
+	}
+
+	public String getInReachDbName() {
+		return inReachDbName;
+	}
+	public void setInReachDbName(String inReachDbName) {
+		this.inReachDbName = inReachDbName;
 	}
 
 	public String getCouchDbAdminUser() {
