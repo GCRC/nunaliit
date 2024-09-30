@@ -479,6 +479,10 @@ CreateDocument widget
 	border: 1px solid #9e9e9e;
 }
 
+.nunaliit_form_link:focus { 
+	border: 3px solid rgb(0, 255,255)
+}
+
 .nunaliit_form_link_tree_view {
 	display: none;
 }

@@ -191,10 +191,23 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         // populate div with current info
         this.redraw();    
 
+        this.div.tabIndex = 0
+
         // Do not let click events leave the control and reach the map
         // This allows the html elements to function properly
 		$(this.div).click((ev) => {
             this._suppressedClick(ev)
+        });
+
+        $(this.div).keydown((ev) => {
+            if (ev.key === 'Enter') {
+                const theCurrentlyVisibleButton = [...this.div.children]
+                    .filter(child => child.classList.contains("olButton"))
+                    .find(button => button.style.display !== 'none')
+                ev.target = theCurrentlyVisibleButton
+                this._simulateClick(ev)
+                this._suppressedClick(ev)
+            }
         });
 
 		// Suppress double click

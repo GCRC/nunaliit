@@ -929,9 +929,15 @@ var ForceGraph = $n2.Class({
  				return this.ownerDocument.createElementNS(this.namespaceURI, "circle");
  			})
  			.attr('class','node')
+			.attr('tabindex', 0)
  			.on('click', function(n,i){
  				_this._initiateMouseClick(n);
  			})
+			.on('keydown', function (n) {
+				if (d3?.event?.key === 'Enter') {
+					_this._initiateMouseClick(n)
+				}
+			})
  			.on('mouseover', function(n,i){
  				_this._initiateMouseOver(n);
  			})

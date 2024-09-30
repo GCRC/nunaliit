@@ -1570,13 +1570,6 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			this.map.addControl(scaleLine);
 		};
 
-		if (this.options.enableKeyboardControls) {
-			const keyboardControls = new OpenLayers.Control.KeyboardDefaults()
-			this.map.div.tabIndex = 0
-			keyboardControls.observeElement = this.map.div
-			this.map.addControl(keyboardControls)
-		}
-
 		// Disable zoom on mouse wheel
 		if( this.options.enableWheelZoom ) {
 			// Do nothing. Enabled by default
@@ -1774,6 +1767,16 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		
 		// Handle feature events
 		this._installFeatureSelector();
+
+		if (this.options.enableKeyboardControls) {
+			const dispatch = this._getDispatchService()
+			if (!dispatch) throw new Error("Failed to obtain dispatch service for keyboard controls")
+			const keyboardControls = new OpenLayers.Control.MapAndControlsKeyboardControls(this.vectorLayers, { dispatch })
+			this.map.div.tabIndex = 0
+			this.map.div.classList.add('enabledKeyboardControls')
+			keyboardControls.observeElement = this.map.div
+			this.map.addControl(keyboardControls)
+		}
 		
     	// Select adding of new features
     	if( this.options.addPointsOnly ) {
