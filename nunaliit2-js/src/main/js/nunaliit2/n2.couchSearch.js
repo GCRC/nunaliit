@@ -1696,6 +1696,26 @@ var SearchServer = $n2.Class({
 		// Search icon
 		var searchIcon = $('<div>')
 			.addClass('searchIcon')
+			.attr('tabindex', 0)
+			.on('keydown', (ev) => {
+				if (ev.key === 'Enter') {
+					if( $('.nunaliit_search_input').hasClass('search_active') ){
+						this.dispatchService.send(DH,{
+							type: 'searchDeactivated'
+						});
+	
+					} else if( $('.nunaliit_search_input').hasClass('search_inactive') ){
+						this.dispatchService.send(DH,{
+							type: 'searchActivated'
+						});
+	
+					} else {
+						this.dispatchService.send(DH,{
+							type: 'searchActivated'
+						});
+					};
+				}
+			})
 			.appendTo($elem);
 
 		// Text box
