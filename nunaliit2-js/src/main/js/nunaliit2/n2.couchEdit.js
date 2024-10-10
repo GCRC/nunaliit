@@ -1107,6 +1107,10 @@ var CouchDocumentEditor = $n2.Class({
 							,wkt: wkt
 						});
 						startEditor();
+						_this.dispatchService.synchronousCall(DH, {
+							type: "editDocumentWKTReceived",
+							doc: editedDoc
+						})
 					}
 					,error: function(XMLHttpRequest, textStatus, errorThrown) {
 						$n2.log('Unable to retrieve original geometry',editedDoc);
