@@ -34,6 +34,11 @@ public class WktParser {
 		BufferedReader bufReader = new BufferedReader(reader);
 		return parseGeometry(bufReader);
 	}
+
+	private boolean isWKTEmpty(BufferedReader br) throws Exception {
+		String geomData = readIdentifier(br);
+		return geomData.equalsIgnoreCase("empty");
+	}
 	
 	private Geometry parseGeometry(BufferedReader bufReader) throws Exception {
 		
@@ -41,7 +46,6 @@ public class WktParser {
 		try {
 			skipWhiteSpaces(bufReader);
 			String identifier = readIdentifier(bufReader);
-			
 			if( "point".equalsIgnoreCase(identifier) ) {
 				geometry = parsePoint(bufReader);
 				
@@ -281,6 +285,11 @@ public class WktParser {
 	private Point parsePoint(BufferedReader br) throws Exception {
 		
 		skipWhiteSpaces(br);
+
+		if (isWKTEmpty(br)) {
+			return new Point();
+		}
+
 		popLeftParen(br);
 		
 		List<Number> positions = parsePositions(br);
@@ -299,6 +308,11 @@ public class WktParser {
 		LineString lineString = new LineString();
 		
 		skipWhiteSpaces(br);
+
+		if (isWKTEmpty(br)) {
+			return lineString;
+		}
+
 		popLeftParen(br);
 		
 		// Accumulate points
@@ -311,7 +325,7 @@ public class WktParser {
 
 			Point point = new Point(positions);
 			lineString.addPoint(point);
-			
+			skipWhiteSpaces(br);
 			if( checkForRightParen(br) ) {
 				done = true;
 			} else {
@@ -329,6 +343,11 @@ public class WktParser {
 		Polygon polygon = new Polygon();
 		
 		skipWhiteSpaces(br);
+
+		if (isWKTEmpty(br)) {
+			return polygon;
+		}
+
 		popLeftParen(br);
 		
 		LineString ls = parseLineString(br);
@@ -351,6 +370,11 @@ public class WktParser {
 		MultiPoint multiPoint = new MultiPoint();
 		
 		skipWhiteSpaces(br);
+
+		if (isWKTEmpty(br)) {
+			return multiPoint;
+		}
+
 		popLeftParen(br);
 		
 		boolean done = false;
@@ -369,6 +393,7 @@ public class WktParser {
 				multiPoint.addPoint(point);
 			}
 
+			skipWhiteSpaces(br);
 			if( checkForRightParen(br) ) {
 				done = true;
 			} else {
@@ -386,6 +411,11 @@ public class WktParser {
 		MultiLineString multiLineString = new MultiLineString();
 		
 		skipWhiteSpaces(br);
+
+		if (isWKTEmpty(br)) {
+			return multiLineString;
+		}
+
 		popLeftParen(br);
 		
 		boolean done = false;
@@ -395,6 +425,7 @@ public class WktParser {
 			LineString lineString = parseLineString(br);
 			multiLineString.addLineString(lineString);
 
+			skipWhiteSpaces(br);
 			if( checkForRightParen(br) ) {
 				done = true;
 			} else {
@@ -412,6 +443,11 @@ public class WktParser {
 		MultiPolygon multiPolygon = new MultiPolygon();
 		
 		skipWhiteSpaces(br);
+
+		if (isWKTEmpty(br)) {
+			return multiPolygon;
+		}
+
 		popLeftParen(br);
 		
 		boolean done = false;
@@ -421,6 +457,7 @@ public class WktParser {
 			Polygon polygon = parsePolygon(br);
 			multiPolygon.addPolygon(polygon);
 
+			skipWhiteSpaces(br);
 			if( checkForRightParen(br) ) {
 				done = true;
 			} else {
@@ -438,6 +475,11 @@ public class WktParser {
 		GeometryCollection geometryCollection = new GeometryCollection();
 		
 		skipWhiteSpaces(br);
+
+		if (isWKTEmpty(br)) {
+			return geometryCollection;
+		}
+
 		popLeftParen(br);
 		
 		boolean done = false;
@@ -447,6 +489,7 @@ public class WktParser {
 			Geometry geometry = parseGeometry(br);
 			geometryCollection.addGeometry(geometry);
 
+			skipWhiteSpaces(br);
 			if( checkForRightParen(br) ) {
 				done = true;
 			} else {

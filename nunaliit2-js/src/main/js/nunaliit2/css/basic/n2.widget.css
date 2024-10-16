@@ -104,7 +104,8 @@
 	/*visibility: inherit;  fixes IE7 'sticky bug' */
 	text-decoration: underline;
 }
-.nunaliit_header-nav li:hover>ul {
+.nunaliit_header-nav li:hover>ul,
+.nunaliit_header-nav li:focus-within > ul {
 	display: block;
 	z-index: 99;
 }

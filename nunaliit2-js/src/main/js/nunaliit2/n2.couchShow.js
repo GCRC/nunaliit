@@ -2554,6 +2554,7 @@ var Show = $n2.Class({
 				// If empty, set class to report it
 				} else {
 					$elem.addClass('n2show_documentList_empty');
+					$elem.text(_loc('No documents found.'));
 				};
 			};
 		});

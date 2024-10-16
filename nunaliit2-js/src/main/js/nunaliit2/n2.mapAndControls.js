@@ -1767,6 +1767,16 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		
 		// Handle feature events
 		this._installFeatureSelector();
+
+		if (this.options.enableKeyboardControls) {
+			const dispatch = this._getDispatchService()
+			if (!dispatch) throw new Error("Failed to obtain dispatch service for keyboard controls")
+			const keyboardControls = new OpenLayers.Control.MapAndControlsKeyboardControls(this.vectorLayers, { dispatch })
+			this.map.div.tabIndex = 0
+			this.map.div.classList.add('enabledKeyboardControls')
+			keyboardControls.observeElement = this.map.div
+			this.map.addControl(keyboardControls)
+		}
 		
     	// Select adding of new features
     	if( this.options.addPointsOnly ) {
@@ -2785,12 +2795,25 @@ var MapAndControls = $n2.Class('MapAndControls',{
 					} else if( 'srsName' === key ) {
 						var proj = new OpenLayers.Projection( options[key] );
 						layerOptions.projection = proj;
-
+					} else if ('tileFullExtent' === key) {
+						const {
+							bounds,
+							sourceProjection,
+							destinationProjection
+						} = options[key]
+						const olBounds = new OpenLayers.Bounds(...bounds)
+						if (sourceProjection !== destinationProjection) {
+							olBounds.transform(
+								new OpenLayers.Projection(sourceProjection),
+								new OpenLayers.Projection(destinationProjection)
+							)
+						}
+						layerOptions.tileFullExtent = olBounds
 					} else if( 'opacity' === key
 							|| 'scales' === key 
 							|| 'resolutions' === key  ) {
 						layerOptions[key] = options[key];
-						
+
 					} else if( 'numZoomLevels' === key){
 						var matrixIds = new Array(options["numZoomLevels"]);
 						var srsName = options['srsName'];
@@ -5694,7 +5717,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			
 		} else if( 'find' === type ) {
 			var doc = m.doc;
-			if( doc && doc.nunaliit_geom ){
+			if( doc && doc.nunaliit_geom && doc.nunaliit_geom.bbox ){
 				var x = (doc.nunaliit_geom.bbox[0] + doc.nunaliit_geom.bbox[2]) / 2;
 				var y = (doc.nunaliit_geom.bbox[1] + doc.nunaliit_geom.bbox[3]) / 2;
 				this._centerMapOnXY(x, y, 'EPSG:4326');

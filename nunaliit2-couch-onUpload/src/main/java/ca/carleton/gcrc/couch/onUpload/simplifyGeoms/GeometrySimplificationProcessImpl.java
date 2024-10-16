@@ -38,6 +38,9 @@ public class GeometrySimplificationProcessImpl implements GeometrySimplification
 			
 			if( geometry instanceof Point ){
 				// Do not simplify points
+			} 
+			else if (geometry.isEmpty()) {
+				// Don't simplify what doesn't exist
 			} else {
 				Geometry lastGeometry = null;
 				for(Double resolution : resolutions){

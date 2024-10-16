@@ -680,6 +680,7 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"{docId} transformed and saved":"{docId} transformé et sauvegardé"
 	,"{index}/{count}":"{index}/{count}"
 	,"{label} definition ({key}) already exists - not loaded or updated":"Définition {label} ({key}) existe déjà - ignorée"
+	,"No documents found.": "Aucun document n'a été trouvé."
 });
 
 if( $ && $.datepicker ) {

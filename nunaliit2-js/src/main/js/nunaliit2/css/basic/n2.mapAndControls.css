@@ -349,3 +349,15 @@ table.mediaSelection td {
 .olLayerGooglePoweredBy, .gmnoprint, .gm-style-cc {
 	visibility: hidden;
 }
+
+.n2_content_map:focus {
+	border: solid #444444 2px;
+}
+
+.olMap.n2_content_map.enabledKeyboardControls:focus > .olMapViewport::before {
+    content: url('data:image/svg+xml;charset=UTF-8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg">	<path d="M 0 10 h 20 h -10 v 10 v -20 v 10 z" stroke="rgba(68, 68, 68, 1)" stroke-width="3"/></svg>');
+    top: 50%;
+    left: 50%;
+    position: relative;
+    z-index: 1000;
+}
