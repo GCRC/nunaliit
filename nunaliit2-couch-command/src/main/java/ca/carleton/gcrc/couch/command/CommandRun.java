@@ -229,6 +229,8 @@ public class CommandRun implements Command {
         // Servlet for export
         {
         	ServletHolder servletHolder = new ServletHolder(new ExportServlet());
+			servletHolder.setInitParameter("exportUser", atlasProperties.getExportUser());
+			servletHolder.setInitParameter("exportPassword", atlasProperties.getExportPassword());
         	servletHolder.setInitOrder(2);
         	context.addServlet(servletHolder,"/servlet/export/*");
         }
