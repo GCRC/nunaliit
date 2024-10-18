@@ -110,6 +110,7 @@ var HelpDisplay = $n2.Class({
 		
 		var $dialog = $('<div>')
 			.attr('id',this.helpDialogId)
+			.attr('tabindex', 0)
 			.addClass('n2help_content')
 			.appendTo( $('body') );
 		
