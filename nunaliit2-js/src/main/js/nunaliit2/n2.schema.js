@@ -1928,6 +1928,24 @@ var Form = $n2.Class({
 					};
 				});
 			};
+			
+			/**
+			 * When adding or removing form elements within a jQuery dialog, the focus may
+			 * shift to the body tag, preventing keyboard users from navigating back to 
+			 * the dialog. To handle this scenario, we check for any visible jQuery dialogs,
+			 * search for focusable elements within the dialog, and set the focus to the first 
+			 * visible one.
+			 */
+			var $openDialog = $('.ui-dialog-content:visible');
+			if ($openDialog.length) {
+				var $focusableElements = $openDialog
+					.find('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])')
+					.filter(':visible');
+
+				if ($focusableElements.length) {
+					$focusableElements.first().focus();
+				}
+			}
 		};
 	},
 
