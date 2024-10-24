@@ -1,5 +1,9 @@
 package ca.carleton.gcrc.couch.export;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -12,9 +16,11 @@ import java.util.Vector;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
@@ -45,9 +51,15 @@ public class ExportServlet extends JsonServlet {
 
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	public static final String ConfigAttributeName_AtlasName = "ExportServlet_AtlasName";
+	public static final String CONFIG_EXPORT_USER = "exportUser";
+	public static final String CONFIG_EXPORT_PASS = "exportPassword";
 
 	private ExportConfiguration configuration;
+	private ServletConfig servletConfig;
+	
 	private String atlasName = null;
+
+	private String exportUserPass;
 
 	public ExportServlet() {
 
@@ -78,6 +90,16 @@ public class ExportServlet extends JsonServlet {
 		} else {
 			throw new ServletException("Invalid class for configuration: "+configurationObj.getClass().getName());
 		}
+
+		String exportUser = config.getInitParameter(CONFIG_EXPORT_USER);
+		String exportPassword = config.getInitParameter(CONFIG_EXPORT_PASS);
+		if(exportUser == null || exportUser.isEmpty() || exportPassword == null || exportPassword.isEmpty()) {
+			exportUserPass = null;
+		} else {
+			exportUserPass = exportUser + ":" + exportPassword;
+		}
+
+		servletConfig = config;
 	}
 	
 	public void destroy() {
@@ -96,6 +118,14 @@ public class ExportServlet extends JsonServlet {
 				doGetWelcome(request, response);
 			} else if ("test".equalsIgnoreCase(path)) {
 				doGetTest(request, response);
+			} else if ("complete".equalsIgnoreCase(path)) {
+				if(paths.size() == 1) {
+					doGetCompleteList(request, response);
+				} else if (paths.size() == 2) {
+					doGetCompleteFile(paths.get(1), request, response);
+				} else {
+					throw new Exception("Can't get " + paths.toString());
+				}
 			} else {
 				throw new Exception("Unknown request");
 			}
@@ -112,17 +142,58 @@ public class ExportServlet extends JsonServlet {
 			if (paths.size() > 0) {
 				path = paths.get(0);
 			}
-
-			if ("definition".equalsIgnoreCase(path)) {
+			
+			if( "definition".equalsIgnoreCase(path) ) {
 				doPostDefinition(request, response);
-			} else if ("records".equalsIgnoreCase(path)) {
+			} else if( "records".equalsIgnoreCase(path) ) {
 				doPostRecords(request, response);
+			} else if("complete".equalsIgnoreCase(path)) {
+				doPostComplete(request, response);	
 			} else {
 				throw new Exception("Unknown request: " + path);
 			}
 
 		} catch (Exception e) {
 			reportError(e, response);
+		}
+	}
+
+	protected void doPostComplete(HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		//get output folder 
+		// Figure out root file
+		if(exportUserPass == null || exportUserPass.isEmpty()) {
+			try {
+				response.sendError(403);
+			} catch (Exception e) {
+				logger.error("Couldn't send 403 response", e);
+			}
+			return;
+		}
+		String authHeader = request.getHeader("Authorization");
+		if (!allowUser(authHeader)) {
+			try {
+				response.sendError(401);
+			} catch (Exception e) {
+				logger.error("Couldn't send 401 response", e);
+			}
+			return;
+		}
+
+		String realRootPath = servletConfig.getServletContext().getRealPath(".");
+		try {
+			String exportName = ExportFullAtlas.createExport(realRootPath, configuration.getCouchDb());
+			response.setHeader("Content-Type", "text/plain");
+			PrintWriter writer = response.getWriter();
+			writer.write(exportName);
+			writer.close();
+		} catch (Exception e) {
+			logger.error("Error writing full export");
+			try {
+				response.sendError(500);
+			} catch (Exception e1) {
+				logger.error("Couldn't send 500 response", e1);
+			}
+			return;
 		}
 	}
 
@@ -429,6 +500,26 @@ public class ExportServlet extends JsonServlet {
 		}
 	}
 
+	private boolean allowUser(String auth) {
+        if (auth == null) {
+            return false;  // no auth
+        }
+        if (!auth.toUpperCase().startsWith("BASIC ")) { 
+            return false;  // we only do BASIC
+        }
+        // Get encoded user and password, comes after "BASIC "
+        String userpassEncoded = auth.substring(6);
+        // Decode it, using any base 64 decoder
+        String userpassDecoded = new String(Base64.decodeBase64(userpassEncoded));
+     
+        // Check our user list to see if that user and password are "allowed"
+        if (exportUserPass.equals(userpassDecoded)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 	private void doGetWelcome(HttpServletRequest request, HttpServletResponse response) throws Exception {
 		try {
 			// Return JSON object to acknowledge the welcome
@@ -559,6 +650,55 @@ public class ExportServlet extends JsonServlet {
 
 		} catch (Exception e) {
 			throw new Exception("Can not generate test message",e);
+		}
+	}
+
+	private void doGetCompleteList(HttpServletRequest request, HttpServletResponse response) throws IOException{
+		String realRootPath = servletConfig.getServletContext().getRealPath(".");
+		logger.error("realrootpath: " + realRootPath);
+		List<String> filenames = ExportFullAtlas.getExports(realRootPath);
+		JSONObject obj = new JSONObject();
+		obj.put("filenames", filenames);
+		response.setContentType("application/json");
+		response.setCharacterEncoding("UTF-8");
+		response.setDateHeader("Expires", (new Date()).getTime());
+		
+		PrintWriter out = response.getWriter();
+		out.print(obj);
+		out.flush();
+	}
+
+	private void doGetCompleteFile(String filename, HttpServletRequest request, HttpServletResponse response) throws ServletException {
+		ServletContext ctx = servletConfig.getServletContext();
+		String realRootPath = ctx.getRealPath(".");
+		logger.error("realrootpath: " + realRootPath);
+		File file = ExportFullAtlas.getExport(realRootPath, filename);	
+		if(!file.exists()){
+			logger.error("Export file does not exist: " + file.getAbsolutePath());
+			throw new ServletException("Export File Does Not Exist!");
+		}
+
+		
+		response.setContentLength((int) file.length());
+		response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+
+        try(InputStream in = new FileInputStream(file);
+			ServletOutputStream out = response.getOutputStream()) {
+			String mimeType = ctx.getMimeType(file.getAbsolutePath());
+			response.setContentType(mimeType != null? mimeType:"application/octet-stream");
+
+            byte[] buffer = new byte[1024];
+        
+            int numBytesRead;
+            while ((numBytesRead = in.read(buffer)) > 0) {
+                out.write(buffer, 0, numBytesRead);
+            }
+        } catch (FileNotFoundException e) {
+			logger.error("Export file not found: " + file.getAbsolutePath(), e);
+			throw new ServletException("Export File Not Found!");
+		} catch (IOException e) {
+			logger.error("Exception with export file handling: " + file.getAbsolutePath(), e);
+			throw new ServletException("Error retrieving the file");
 		}
 	}
 }
