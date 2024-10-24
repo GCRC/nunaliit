@@ -717,6 +717,7 @@ var ModuleDisplay = $n2.Class({
 				_this.sidePanelName = $n2.getUniqueId();
 				var $sidePanel = $('<div></div>')
 					.attr('id',_this.sidePanelName)
+					.attr('tabindex', 0)
 					.addClass('n2_content_text');
 
 				// Add side panel inside content panel or after content panel

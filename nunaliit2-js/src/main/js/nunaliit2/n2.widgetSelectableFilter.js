@@ -1010,6 +1010,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			$('<a>')
 				.text(_loc(label))
 				.attr('data-n2-choiceId',choiceId)
+				.attr('href', '#')
 				.appendTo($div)
 				.click(function(){
 					var $a = $(this);

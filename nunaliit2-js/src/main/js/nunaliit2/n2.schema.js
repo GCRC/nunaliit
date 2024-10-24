@@ -531,20 +531,20 @@ function _arrayField() {
 			
 			r.push('<div class="n2schema_array_item">');
 
-			r.push('<div class="n2schema_array_item_buttons">');
-	
-			r.push('<div class="n2schema_array_item_delete '+cl+'"></div>');
-			
-			r.push('<div class="n2schema_array_item_up '+cl+'"></div>');
-			
-			r.push('<div class="n2schema_array_item_down '+cl+'"></div>');
-
-			r.push('</div>'); // close buttons
-	
 			r.push('<div class="n2schema_array_item_wrapper">');
 	
 			r.push( options.fn(item,{data:{n2_selector:completeSelectors}}) );
 			
+			r.push('</div>');
+			
+			r.push('<div class="n2schema_array_item_buttons">');
+	
+			r.push('<button class="n2schema_array_item_delete '+cl+'"></button>');
+			
+			r.push('<button class="n2schema_array_item_up '+cl+'"></button>');
+			
+			r.push('<button class="n2schema_array_item_down '+cl+'"></button>');
+
 			r.push('</div></div>');
 		};
 	};
@@ -561,11 +561,11 @@ function _arrayField() {
 	};
 	if( arraySelector ){
 		var arrayClass = createClassStringFromSelector(arraySelector);
-		r.push('<div class="n2schema_array_add '+arrayClass+'"');
+		r.push('<button class="n2schema_array_add '+arrayClass+'"');
 		if( newType ) {
 			r.push('n2_array_new_type="'+newType+'"');
 		};
-		r.push('></div>');
+		r.push('></button>');
 	};
 	
 	r.push('</div>');
@@ -1928,6 +1928,24 @@ var Form = $n2.Class({
 					};
 				});
 			};
+			
+			/**
+			 * When adding or removing form elements within a jQuery dialog, the focus may
+			 * shift to the body tag, preventing keyboard users from navigating back to 
+			 * the dialog. To handle this scenario, we check for any visible jQuery dialogs,
+			 * search for focusable elements within the dialog, and set the focus to the first 
+			 * visible one.
+			 */
+			var $openDialog = $('.ui-dialog-content:visible');
+			if ($openDialog.length) {
+				var $focusableElements = $openDialog
+					.find('a, button, input, select, textarea, [tabindex]:not([tabindex="-1"])')
+					.filter(':visible');
+
+				if ($focusableElements.length) {
+					$focusableElements.first().focus();
+				}
+			}
 		};
 	},
 
