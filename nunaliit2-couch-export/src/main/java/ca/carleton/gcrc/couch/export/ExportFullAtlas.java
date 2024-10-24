@@ -139,22 +139,6 @@ public class ExportFullAtlas implements Runnable {
 		// Loop over schemas and export docs to GeoJSON
 		try {
 			for (String schemaName : schemas) {
-				// CouchQuery queryBySchema = new CouchQuery();
-				// queryBySchema.setViewName("nunaliit-schema");
-				// queryBySchema.setStartKey(schemaName);
-				// queryBySchema.setEndKey(schemaName);
-				// queryBySchema.setIncludeDocs(false);
-
-				// CouchQueryResults resultBySchema = dd.performQuery(queryBySchema);
-
-				// Set<String> ids = new HashSet<String>();
-				// for(JSONObject row : resultBySchema.getRows()){
-				// String docId = row.optString("id");
-				// if( null != docId ) {
-				// ids.add(docId);
-				// }
-				// }
-
 				// Build doc retrieval based on method
 				DocumentRetrieval docRetrieval = null;
 				docRetrieval = DocumentRetrievalSchema.create(couchDb, schemaName);
@@ -229,7 +213,7 @@ public class ExportFullAtlas implements Runnable {
 				}
 			}
 		} else {
-			System.out.println(file.getName() + " is not supported");
+			logger.error(file.getName() + " is not supported");
 		}
 	}
 }
