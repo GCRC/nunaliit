@@ -21,3 +21,12 @@
 	margin: 9px 5px 9px 0px;
 	padding: 2px 5px;
 }
+
+.n2TableCanvas .nunaliit-sort-asc-1 a::after {
+	content: " \25bc";
+}
+
+.n2TableCanvas .nunaliit-sort-desc-1 a::after {
+	content: " \25b2";
+}
+

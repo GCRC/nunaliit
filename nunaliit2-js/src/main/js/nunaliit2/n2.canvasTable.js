@@ -896,6 +896,26 @@ var TableCanvas = $n2.Class({
 				,direction: 1
 			});
 		};
+
+		const headerElements = $('th');
+		for(let i = 0; i < headerElements.length; i++){
+			$(headerElements[i]).removeClass();
+		}
+
+		//remove sort info
+		for(let i = 0; i < this.sortOrder.length; i++) {
+			const s = this.sortOrder[i];
+			const order = i+1
+			//add sort order info to th
+			const thElement = $(($(`a[data-sort-name=${s.name}]`).parent())[0])
+			if(s.direction > 0) {
+				thElement.addClass('nunaliit-sort-asc')
+				thElement.addClass(`nunaliit-sort-asc-${order}`)
+			} else {
+				thElement.addClass('nunaliit-sort-desc')
+				thElement.addClass(`nunaliit-sort-desc-${order}`)
+			}
+		}
 		
 		this._sortRows(this.sortedRows);
 		
