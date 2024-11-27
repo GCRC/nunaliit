@@ -558,13 +558,29 @@ var Display = $n2.Class({
  		// Show 'add related' button
 		if( opt.related
 		 && this.displayRelatedInfoProcess ) {
- 			this.displayRelatedInfoProcess.addButton({
- 				display: this
- 				,div: $buttons[0]
- 				,doc: data
- 				,schema: opt.schema
- 				,buttonDisplay: buttonDisplay
- 			});
+			let showAddRelatedButton = true
+			if (this.restrictAddRelatedButtonToLoggedIn) {
+				var isLoggedInMsg = {
+					type: 'authIsLoggedIn'
+					, isLoggedIn: false
+				}
+				if (dispatcher) {
+					dispatcher.synchronousCall(DH, isLoggedInMsg);
+				}
+				if (!isLoggedInMsg.isLoggedIn) {
+					showAddRelatedButton = false;
+				}
+			}
+			if (showAddRelatedButton) {
+				this.displayRelatedInfoProcess.addButton({
+					display: this
+					,div: $buttons[0]
+					,doc: data
+					,schema: opt.schema
+					,buttonDisplay: buttonDisplay
+				});
+			}
+			
  		};
 		
  		// Show 'reply' button
