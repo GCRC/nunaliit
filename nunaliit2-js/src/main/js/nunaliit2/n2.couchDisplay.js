@@ -1490,8 +1490,12 @@ var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
 			,onElementCreated: function($addRelatedButton){
 				$addRelatedButton.addClass('nunaliit_form_link');
 				$addRelatedButton.addClass('nunaliit_form_link_add_related_item');
-				
-				$addRelatedButton.menuselector();
+				const options = {}
+				if ($n2.couchMap.documentOwnedBySessionUser(this.doc)) {
+					options.wrapperSpanClass = 'n2_document_user_owned_can_add_related'
+				}
+
+				$addRelatedButton.menuselector(options);
 			}
 			,onRelatedDocumentCreated: function(docId){}
 		});
