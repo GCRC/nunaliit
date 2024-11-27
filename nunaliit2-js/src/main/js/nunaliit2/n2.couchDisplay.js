@@ -524,27 +524,35 @@ var Display = $n2.Class({
  		// Show 'edit' button
  		if( opt.edit 
  		 && $n2.couchMap.canEditDoc(data) ) {
- 			buttonDisplay.drawButton({
- 				elem: $buttons
- 				,name: 'edit'
- 				,label: _loc('Edit')
- 				,click: function(){
- 					_this._performDocumentEdit(data, opt);
- 				}
- 			});
+			const editButtonCfg = {
+				elem: $buttons
+				,name: 'edit'
+				,label: _loc('Edit')
+				,click: function(){
+					_this._performDocumentEdit(data, opt);
+				}
+			}
+			if ($n2.couchMap.documentOwnedBySessionUser(data)) {
+				editButtonCfg.classNames = ['n2_document_user_owned_editable']
+			}
+ 			buttonDisplay.drawButton(editButtonCfg);
  		};
 
  		// Show 'delete' button
  		if( opt['delete'] 
  		 && $n2.couchMap.canDeleteDoc(data) ) {
- 			buttonDisplay.drawButton({
- 				elem: $buttons
- 				,name: 'delete'
- 				,label: _loc('Delete')
- 				,click: function(){
- 					_this._performDocumentDelete(data, opt);
- 				}
- 			});
+			const deleteButtonCfg = {
+				elem: $buttons
+				,name: 'delete'
+				,label: _loc('Delete')
+				,click: function(){
+					_this._performDocumentDelete(data, opt);
+				}
+			}
+			if ($n2.couchMap.documentOwnedBySessionUser(data)) {
+				deleteButtonCfg.classNames = ['n2_document_user_owned_deletable']
+			}
+ 			buttonDisplay.drawButton(deleteButtonCfg);
  		};
 		
  		// Show 'add related' button
