@@ -159,11 +159,7 @@ function canEditDoc(data) {
 
 	// If a document is not on a controlled layer, then the creator of the
 	// document can edit it
-	if( data.nunaliit_created
-	 && data.nunaliit_created.nunaliit_type
-	 && data.nunaliit_created.nunaliit_type === 'actionstamp'
-	 && data.nunaliit_created.name === userName
-	 ) {
+	if (documentOwnedBySessionUser(data)) {
 		return true;
 	};
 
@@ -175,6 +171,18 @@ function canDeleteDoc(data) {
 
 	// At this time, if one can edit a document, one can delete it
 	return canEditDoc(data);
+};
+
+function documentOwnedBySessionUser(doc) {
+	const sessionContext = getCurrentContext()
+	if (sessionContext) {
+		const username = sessionContext.name
+		return (doc
+			&& doc.nunaliit_created
+			&& doc.nunaliit_created.nunaliit_type === 'actionstamp'
+			&& doc.nunaliit_created.name === username)
+	}
+	return false
 };
 
 function documentContainsMedia(doc){
@@ -238,6 +246,7 @@ $n2.couchMap = {
 	,documentContainsMedia: documentContainsMedia
 	,documentContainsApprovedMedia: documentContainsApprovedMedia
 	,documentContainsDeniedMedia: documentContainsDeniedMedia
+	,documentOwnedBySessionUser
 };
 
 })(nunaliit2);

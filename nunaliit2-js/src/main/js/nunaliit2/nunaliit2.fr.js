@@ -681,6 +681,9 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"{index}/{count}":"{index}/{count}"
 	,"{label} definition ({key}) already exists - not loaded or updated":"Définition {label} ({key}) existe déjà - ignorée"
 	,"No documents found.": "Aucun document n'a été trouvé."
+	,"File Upload": "Téléchargement de fichiers"
+	,"Record Audio": "Enregistrer l'audio"
+	,"Record Video": "Enregistrer une vidéo"
 });
 
 if( $ && $.datepicker ) {

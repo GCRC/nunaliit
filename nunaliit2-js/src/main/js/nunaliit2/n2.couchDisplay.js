@@ -524,39 +524,63 @@ var Display = $n2.Class({
  		// Show 'edit' button
  		if( opt.edit 
  		 && $n2.couchMap.canEditDoc(data) ) {
- 			buttonDisplay.drawButton({
- 				elem: $buttons
- 				,name: 'edit'
- 				,label: _loc('Edit')
- 				,click: function(){
- 					_this._performDocumentEdit(data, opt);
- 				}
- 			});
+			const editButtonCfg = {
+				elem: $buttons
+				,name: 'edit'
+				,label: _loc('Edit')
+				,click: function(){
+					_this._performDocumentEdit(data, opt);
+				}
+			}
+			if ($n2.couchMap.documentOwnedBySessionUser(data)) {
+				editButtonCfg.classNames = ['n2_document_user_owned_editable']
+			}
+ 			buttonDisplay.drawButton(editButtonCfg);
  		};
 
  		// Show 'delete' button
  		if( opt['delete'] 
  		 && $n2.couchMap.canDeleteDoc(data) ) {
- 			buttonDisplay.drawButton({
- 				elem: $buttons
- 				,name: 'delete'
- 				,label: _loc('Delete')
- 				,click: function(){
- 					_this._performDocumentDelete(data, opt);
- 				}
- 			});
+			const deleteButtonCfg = {
+				elem: $buttons
+				,name: 'delete'
+				,label: _loc('Delete')
+				,click: function(){
+					_this._performDocumentDelete(data, opt);
+				}
+			}
+			if ($n2.couchMap.documentOwnedBySessionUser(data)) {
+				deleteButtonCfg.classNames = ['n2_document_user_owned_deletable']
+			}
+ 			buttonDisplay.drawButton(deleteButtonCfg);
  		};
 		
  		// Show 'add related' button
 		if( opt.related
 		 && this.displayRelatedInfoProcess ) {
- 			this.displayRelatedInfoProcess.addButton({
- 				display: this
- 				,div: $buttons[0]
- 				,doc: data
- 				,schema: opt.schema
- 				,buttonDisplay: buttonDisplay
- 			});
+			let showAddRelatedButton = true
+			if (this.restrictAddRelatedButtonToLoggedIn) {
+				var isLoggedInMsg = {
+					type: 'authIsLoggedIn'
+					, isLoggedIn: false
+				}
+				if (dispatcher) {
+					dispatcher.synchronousCall(DH, isLoggedInMsg);
+				}
+				if (!isLoggedInMsg.isLoggedIn) {
+					showAddRelatedButton = false;
+				}
+			}
+			if (showAddRelatedButton) {
+				this.displayRelatedInfoProcess.addButton({
+					display: this
+					,div: $buttons[0]
+					,doc: data
+					,schema: opt.schema
+					,buttonDisplay: buttonDisplay
+				});
+			}
+			
  		};
 		
  		// Show 'reply' button
@@ -1466,8 +1490,12 @@ var LegacyDisplayRelatedFunctionAdapter = $n2.Class({
 			,onElementCreated: function($addRelatedButton){
 				$addRelatedButton.addClass('nunaliit_form_link');
 				$addRelatedButton.addClass('nunaliit_form_link_add_related_item');
-				
-				$addRelatedButton.menuselector();
+				const options = {}
+				if ($n2.couchMap.documentOwnedBySessionUser(this.doc)) {
+					options.wrapperSpanClass = 'n2_document_user_owned_can_add_related'
+				}
+
+				$addRelatedButton.menuselector(options);
 			}
 			,onRelatedDocumentCreated: function(docId){}
 		});

@@ -91,7 +91,8 @@ if( typeof $.widget === 'function' ){
 	$.widget( 'nunaliit.menuselector', {
 		
 		options: {
-			menuClass: null
+			menuClass: null,
+			spanClass: null
 		}
 	
 		,_create: function() {
@@ -99,8 +100,13 @@ if( typeof $.widget === 'function' ){
 	
 			this.wrapper = $('<span>')
 				.addClass('nunaliit-menuselector')
+				.addClass('nunaliit_form_link_add_related_item_wrapper')
 				.insertAfter(this.element);
-			
+
+			if (this.options.wrapperSpanClass) {
+				this.wrapper.addClass(this.options.wrapperSpanClass)
+			}
+
 			var classes = this.element.attr('class');
 			
 			var text = this.element.find('option').first().text();
@@ -126,7 +132,7 @@ if( typeof $.widget === 'function' ){
 				.css('z-index',1000)
 				.hide()
 				.appendTo(this.wrapper);
-	
+
 			this.element.hide();
 		}
 		

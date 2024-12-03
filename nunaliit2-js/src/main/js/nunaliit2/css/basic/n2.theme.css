@@ -493,6 +493,12 @@ CreateDocument widget
 	display: inline-block;
 }
 
+.nunaliit_form_link_add_related_item_wrapper
+.nunaliit_form_link.nunaliit_form_link_add_related_item
+{
+	cursor: pointer;
+}
+
 .intro b {
 	font-size: 26px;
 	font-weight: normal;
