@@ -282,7 +282,7 @@
 			var _this = this;
 			
 			collectApprovalMessage(function(message, sendEmail) {
-				this._getSubmissionDocument({
+				_this._getSubmissionDocument({
 					subDocId: subDocId
 					,onSuccess: function(subDoc){
 						subDoc.nunaliit_submission.state = 'approved';
