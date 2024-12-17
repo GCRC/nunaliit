@@ -208,6 +208,17 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 			}
 		}
 		
+		boolean sendApprovalEmail = false;
+		JSONObject approvalEmail = submissionInfo.optJSONObject("approval_email");
+		if (null != approvalEmail) {
+			boolean requested = approvalEmail.optBoolean("requested", false);
+			boolean sent = approvalEmail.optBoolean("sent", false);
+
+			if (requested && !sent) {
+				sendApprovalEmail = true;
+			}
+		}
+		
 		// Get document in document database
 		CouchDb documentDb = documentDbDesignDocument.getDatabase();
 		JSONObject currentDoc = null;
@@ -232,6 +243,9 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 				performSubmittedWork(submissionDoc, currentDoc);
 
 			} else if( "approved".equals(stateStr) ) {
+				if (sendApprovalEmail) {
+					performApprovalEmail(submissionDoc, currentDoc);
+				}
 				performApprovedWork(submissionDoc, currentDoc);
 
 			} else if( sendDenialEmail ) {
@@ -505,6 +519,83 @@ public class SubmissionRobotThread extends Thread implements CouchDbChangeListen
 		// Remember it was sent
 		CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
 		denial_email.put("sent", true);
+		submissionDb.updateDocument(submissionDoc);
+	}
+
+	public void performApprovalEmail(JSONObject submissionDoc, JSONObject currentDoc) throws Exception {
+		JSONObject submissionInfo = submissionDoc.getJSONObject("nunaliit_submission");
+		JSONObject approval_email = submissionInfo.getJSONObject("approval_email");
+
+		// Find user that submitted the update
+		String userId = submissionInfo.optString("submitter_name", null);
+
+		// Get user document
+		CouchUserDocContext userDocContext = null;
+		if (null != userId) {
+			try {
+				userDocContext = userDb.getUserFromName(userId);
+			} catch (Exception e) {
+				// Ignore if we can not find user
+			}
+		}
+
+		// Get list of e-mails
+		List<String> emails = new Vector<String>();
+		String userName = null;
+		if (null != userDocContext) {
+			JSONObject userDoc = userDocContext.getUserDoc();
+
+			Set<String> validatedEmails = new HashSet<String>();
+			JSONArray jsonValidated = userDoc.optJSONArray("nunaliit_validated_emails");
+			if (null != jsonValidated) {
+				for (int i = 0; i < jsonValidated.length(); ++i) {
+					String email = jsonValidated.getString(i);
+					validatedEmails.add(email);
+				}
+			}
+
+			JSONArray jsonEmails = userDoc.optJSONArray("nunaliit_emails");
+			if (null != jsonEmails) {
+				for (int i = 0; i < jsonEmails.length(); ++i) {
+					String email = jsonEmails.getString(i);
+					if (validatedEmails.contains(email)) {
+						emails.add(email);
+					}
+				}
+			}
+
+			userName = userDoc.optString("display", null);
+			if (null == userName) {
+				userName = userDoc.optString("name", null);
+			}
+		}
+
+		// If no e-mails, just quit
+		if (emails.size() < 1) {
+			CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+			approval_email.put("sent", true);
+			submissionDb.updateDocument(submissionDoc);
+			return;
+		}
+
+		// Convert e-mail addresses into recipient
+		List<MailRecipient> recipients = new ArrayList<MailRecipient>(emails.size());
+		for (String email : emails) {
+			MailRecipient recipient = null;
+			if (null != userName) {
+				recipient = new MailRecipient(email, userName);
+			} else {
+				recipient = new MailRecipient(email);
+			}
+			recipients.add(recipient);
+		}
+
+		// Send notification
+		mailNotifier.sendSubmissionApprovalNotification(submissionDoc, recipients);
+
+		// Remember it was sent
+		CouchDb submissionDb = submissionDbDesignDocument.getDatabase();
+		approval_email.put("sent", true);
 		submissionDb.updateDocument(submissionDoc);
 	}
 
