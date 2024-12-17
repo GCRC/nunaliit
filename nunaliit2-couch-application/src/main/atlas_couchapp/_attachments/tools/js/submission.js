@@ -281,7 +281,7 @@
 		,_approve: function(subDocId, approvedDoc, approveFn){
 			var _this = this;
 			
-			collectApprovalMessage(function(reason, sendEmail) {
+			collectApprovalMessage(function(message, sendEmail) {
 				this._getSubmissionDocument({
 					subDocId: subDocId
 					,onSuccess: function(subDoc){
@@ -289,6 +289,17 @@
 						$n2.couchDocument.adjustDocument(subDoc);
 						
 						if( approvedDoc ){
+
+							if (message && message !== '') {
+								subDoc.nunaliit_submission.approval_message = message;
+							}
+
+							if (sendEmail) {
+								subDoc.nunaliit_submission.approval_email = {
+									requested: true
+								}
+							}
+
 							subDoc.nunaliit_submission.approved_doc = {};
 							subDoc.nunaliit_submission.approved_reserved = {};
 							for(var key in approvedDoc){
