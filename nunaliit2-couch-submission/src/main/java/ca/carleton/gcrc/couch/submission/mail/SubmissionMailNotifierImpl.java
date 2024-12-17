@@ -235,6 +235,59 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 	}
 
 	@Override
+	public void sendSubmissionApprovalNotification(
+			JSONObject submissionDoc,
+			List<MailRecipient> recipients) throws Exception {
+
+		if (false == sendUploadMailNotification) {
+			logger.debug("Email notification disabled");
+			return;
+		}
+
+		if (recipients.size() < 1) {
+			logger.info("Approval notification not sent because there are no recipients");
+			return;
+		}
+
+		String approvalMessage = null;
+		JSONObject submissionInfo = submissionDoc.optJSONObject("nunaliit_submission");
+		if (null != submissionInfo) {
+			approvalMessage = submissionInfo.optString("approval_message", null);
+		}
+
+		logger.info("Sending submission approval notification for "
+				+ submissionDoc.optString("_id", "<unknown>")
+				+ " to "
+				+ recipients);
+
+		try {
+			MailMessage message = new MailMessage();
+
+			// From
+			message.setFromAddress(fromAddress);
+
+			// To
+			for (MailRecipient recipient : recipients) {
+				message.addToRecipient(recipient);
+			}
+
+			// Generate message
+			// Map<String, String> parameters = new HashMap<String, String>();
+			// parameters.put("submissionDocId", submissionDoc.optString("_id", null));
+			// parameters.put("submissionPageLink", submissionPageLink);
+			// parameters.put("approvalMessage", approvalMessage);
+			// rejectionGenerator.generateMessage(message, parameters);
+
+			// Send message
+			mailDelivery.sendMessage(message);
+
+		} catch (Exception e) {
+			logger.error("Unable to send submission notification", e);
+			throw new Exception("Unable to send submission notification", e);
+		}
+	}
+
+	@Override
 	public void sendDocumentCreatedNotification(
 			JSONObject submissionDoc,
 			UserDocument currentUser) throws Exception {
