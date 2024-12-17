@@ -91,6 +91,16 @@ textarea.submission_deny_dialog_reason {
 	margin-bottom: 5px;
 }
 
+textarea.submission_approve_dialog_message {
+	width: 460px;
+	height: 125px;
+}
+
+.submission_approve_dialog_options {
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
 span.patchSelected, div.patchSelected {
 	font-weight: bold;
 	color: #00ff00;
