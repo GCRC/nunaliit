@@ -47,6 +47,7 @@ import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierImpl;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierNull;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionRejectionGenerator;
+import ca.carleton.gcrc.couch.submission.mail.SubmissionAcceptedGenerator;
 import ca.carleton.gcrc.couch.submission.SubmissionConstants;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
@@ -617,6 +618,15 @@ public class ConfigServlet extends JsonServlet {
 						template
 						);
 					submissionNotifier.setDocumentCreatedGenerator(couchdbTemplate);
+				}
+				{
+					MailMessageGenerator template = new SubmissionAcceptedGenerator();
+					CouchDbTemplateMailMessageGenerator couchdbTemplate = new CouchDbTemplateMailMessageGenerator(
+						documentDatabase,
+						"org.nunaliit.email_template.submission_accepted",
+						template
+						);
+					submissionNotifier.setSubmissionAcceptedGenerator(couchdbTemplate);
 				}
 
 				mailNotification = mail;
