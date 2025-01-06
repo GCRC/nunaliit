@@ -290,8 +290,8 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 			mailDelivery.sendMessage(message);
 
 		} catch (Exception e) {
-			logger.error("Unable to send submission notification", e);
-			throw new Exception("Unable to send submission notification", e);
+			logger.error("Unable to send submission approval notification", e);
+			throw new Exception("Unable to send submission approval notification", e);
 		}
 	}
 
