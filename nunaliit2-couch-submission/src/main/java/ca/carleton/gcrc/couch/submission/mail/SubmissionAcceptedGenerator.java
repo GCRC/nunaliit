@@ -28,7 +28,7 @@ public class SubmissionAcceptedGenerator implements MailMessageGenerator {
 		pw.println("<html><head><title>Submission Approved</title></head><body><h1>Submission Approved</h1>");
 		pw.println("<p>Your submission was approved and is now available in the atlas.</p>");
 		if (null != approvalMessage) {
-			pw.println("<p>" + approvalMessage + "</p>")
+			pw.println("<p>" + approvalMessage + "</p>");
 		}
 		pw.println("</body></html>");
 		pw.flush();
