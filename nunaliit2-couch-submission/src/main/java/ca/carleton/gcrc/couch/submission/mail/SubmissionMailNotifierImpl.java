@@ -37,6 +37,7 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 	private String submissionPageLink = null;
 	private MailMessageGenerator approvalGenerator = new SubmissionApprovalGenerator();
 	private MailMessageGenerator rejectionGenerator = new SubmissionRejectionGenerator();
+	private MailMessageGenerator submissionAcceptedGenerator = new SubmissionAcceptedGenerator();
 	private MailMessageGenerator documentCreatedGenerator = new DocumentCreatedGenerator();
 
 	public SubmissionMailNotifierImpl(
@@ -99,6 +100,14 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 
 	public void setDocumentCreatedGenerator(MailMessageGenerator documentCreatedGenerator) {
 		this.documentCreatedGenerator = documentCreatedGenerator;
+	}
+
+	public MailMessageGenerator getSubmissionAcceptedGenerator() {
+		return submissionAcceptedGenerator;
+	}
+
+	public void setSubmissionAcceptedGenerator(MailMessageGenerator submissionAcceptedGenerator) {
+		this.submissionAcceptedGenerator = submissionAcceptedGenerator;
 	}
 	
 	@Override
@@ -272,11 +281,10 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 			}
 
 			// Generate message
-			// Map<String, String> parameters = new HashMap<String, String>();
-			// parameters.put("submissionDocId", submissionDoc.optString("_id", null));
-			// parameters.put("submissionPageLink", submissionPageLink);
-			// parameters.put("approvalMessage", approvalMessage);
-			// rejectionGenerator.generateMessage(message, parameters);
+			Map<String, String> parameters = new HashMap<String, String>();
+			parameters.put("submissionDocId", submissionDoc.optString("_id", null));
+			parameters.put("approvalMessage", approvalMessage);
+			submissionAcceptedGenerator.generateMessage(message, parameters);
 
 			// Send message
 			mailDelivery.sendMessage(message);
