@@ -278,45 +278,128 @@
 			});
 		}
 
-		,_approve: function(subDocId, approvedDoc){
+		,_approve: function(subDocId, approvedDoc, approveFn){
 			var _this = this;
 			
-			this._getSubmissionDocument({
-				subDocId: subDocId
-				,onSuccess: function(subDoc){
-					subDoc.nunaliit_submission.state = 'approved';
-					$n2.couchDocument.adjustDocument(subDoc);
-					
-					if( approvedDoc ){
-						subDoc.nunaliit_submission.approved_doc = {};
-						subDoc.nunaliit_submission.approved_reserved = {};
-						for(var key in approvedDoc){
-							if( key.length > 0 && key[0] === '_' ) {
-								var effectiveKey = key.substr(1);
-								subDoc.nunaliit_submission.approved_reserved[effectiveKey] =
-									approvedDoc[key];
-							} else {
-								subDoc.nunaliit_submission.approved_doc[key] =
-									approvedDoc[key];
+			collectApprovalMessage(function(message, sendEmail) {
+				_this._getSubmissionDocument({
+					subDocId: subDocId
+					,onSuccess: function(subDoc){
+						subDoc.nunaliit_submission.state = 'approved';
+						$n2.couchDocument.adjustDocument(subDoc);
+						
+						if( approvedDoc ){
+
+							if (message && message !== '') {
+								subDoc.nunaliit_submission.approval_message = message;
+							}
+
+							if (sendEmail) {
+								subDoc.nunaliit_submission.approval_email = {
+									requested: true
+								}
+							}
+
+							subDoc.nunaliit_submission.approved_doc = {};
+							subDoc.nunaliit_submission.approved_reserved = {};
+							for(var key in approvedDoc){
+								if( key.length > 0 && key[0] === '_' ) {
+									var effectiveKey = key.substr(1);
+									subDoc.nunaliit_submission.approved_reserved[effectiveKey] =
+										approvedDoc[key];
+								} else {
+									subDoc.nunaliit_submission.approved_doc[key] =
+										approvedDoc[key];
+								};
 							};
 						};
-					};
-					
-					_this.submissionDb.updateDocument({
-						data: subDoc
-						,onSuccess: function(docInfo){
-							_this.logger.log( _loc('Submission approved') );
-							_this._refreshSubmissions();
-						}
-						,onError: function(err){ 
-							_this.logger.error( _loc('Unable to update submission document: {err}',{err:err}) ); 
-						}
+						
+						_this.submissionDb.updateDocument({
+							data: subDoc
+							,onSuccess: function(docInfo){
+								_this.logger.log( _loc('Submission approved') );
+								if( typeof approveFn === 'function' ){
+									approveFn();
+								};
+								_this._refreshSubmissions();
+							}
+							,onError: function(err){ 
+								_this.logger.error( _loc('Unable to update submission document: {err}',{err:err}) ); 
+							}
+						});
+					}
+					,onError: function(err){
+						_this.logger.error( _loc('Unable to obtain submission document: {err}',{err:err}) ); 
+					}
+				});
+			})
+
+			function collectApprovalMessage(callback, sendEmail){
+				var diagId = $n2.getUniqueId();
+				var $diag = $('<div>')
+					.attr('id',diagId)
+					.addClass('submission_approve_dialog')
+					.appendTo( $('body') );
+				
+				$('<textarea>')
+					.addClass('submission_approve_dialog_message')
+					.appendTo($diag);
+				
+				var $options = $('<div>')
+					.addClass('submission_approve_dialog_options')
+					.appendTo($diag);
+				
+				var cbId = $n2.getUniqueId();
+				$('<input type="checkbox">')
+					.attr('id',cbId)
+					.attr('name','send_email')
+					.appendTo($options);
+				$('<label>')
+					.attr('for',cbId)
+					.text( _loc('Send e-mail to submitter with message') )
+					.appendTo($options);
+				
+				var $buttons = $('<div>')
+					.addClass('submission_approve_dialog_buttons')
+					.appendTo($diag);
+
+				$('<button>')
+					.addClass('n2_button_ok')
+					.text( _loc('OK') )
+					.appendTo($buttons)
+					.click(function(){
+						var $diag = $('#'+diagId);
+						
+						var comment = $diag.find('textarea.submission_approve_dialog_message').val();
+						var email = $diag.find('input[name="send_email"]').is(':checked');
+						
+						$diag.dialog('close');
+						if( typeof callback === 'function' ){
+							callback(comment,email);
+						};
 					});
-				}
-				,onError: function(err){
-					_this.logger.error( _loc('Unable to obtain submission document: {err}',{err:err}) ); 
-				}
-			});
+
+				$('<button>')
+					.addClass('n2_button_cancel')
+					.text( _loc('Cancel') )
+					.appendTo($buttons)
+					.click(function(){
+						var $diag = $('#'+diagId);
+						$diag.dialog('close');
+					});
+				
+				$diag.dialog({
+					autoOpen: true
+					,title: _loc('Enter approval message')
+					,modal: true
+					,width: 'auto'
+					,close: function(event, ui){
+						var diag = $(event.target);
+						diag.dialog('destroy');
+						diag.remove();
+					}
+				});
+			}
 		}
 
 		,_deny: function(subDocId, onDeniedFn){
@@ -1013,9 +1096,10 @@
 					.text( _loc('Approve') )
 					.appendTo($buttons)
 					.click(function(){
-						_this._approve(subDocId, proposedDoc);
-						var $diag = $('#'+diagId);
-						$diag.dialog('close');
+						_this._approve(subDocId, proposedDoc, function() {
+							var $diag = $('#'+diagId);
+							$diag.dialog('close');
+						});
 						return false;
 					});
 				$('<button>')

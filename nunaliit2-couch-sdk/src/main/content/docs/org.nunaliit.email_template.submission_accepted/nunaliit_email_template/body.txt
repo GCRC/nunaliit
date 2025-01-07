@@ -1,0 +1,12 @@
+<html>
+	<head>
+		<title>Submission Approved</title>
+	</head>
+	<body>
+		<h1>Submission Approved</h1>
+		<p>Your submission was approved and is now available in the atlas.</p>
+		{{#approvalMessage}}
+			<p>{{approvalMessage}}</p>
+		{{/approvalMessage}}
+	</body>
+</html>

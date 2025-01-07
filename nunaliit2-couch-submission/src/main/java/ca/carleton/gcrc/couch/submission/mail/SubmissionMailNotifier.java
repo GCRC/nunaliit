@@ -13,6 +13,8 @@ public interface SubmissionMailNotifier {
 	void sendSubmissionWaitingForApprovalNotification(JSONObject submissionDoc) throws Exception;
 
 	void sendSubmissionRejectionNotification(JSONObject submissionDoc, List<MailRecipient> recipients) throws Exception;
-
+	
+	void sendSubmissionApprovalNotification(JSONObject submissionDoc, List<MailRecipient> recipients) throws Exception;
+	
 	void sendDocumentCreatedNotification(JSONObject submissionDb, UserDocument currentUser) throws Exception;
 }

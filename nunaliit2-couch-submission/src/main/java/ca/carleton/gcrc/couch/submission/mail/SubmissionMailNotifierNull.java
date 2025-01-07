@@ -22,6 +22,12 @@ public class SubmissionMailNotifierNull implements SubmissionMailNotifier {
 	}
 
 	@Override
+	public void sendSubmissionApprovalNotification(
+			JSONObject submissionDoc,
+			List<MailRecipient> recipients) throws Exception {
+	}
+
+	@Override
 	public void sendDocumentCreatedNotification(
 			JSONObject submissionDoc,
 			UserDocument currentUser) throws Exception {

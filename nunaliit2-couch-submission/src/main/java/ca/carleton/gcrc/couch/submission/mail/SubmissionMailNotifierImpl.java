@@ -37,6 +37,7 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 	private String submissionPageLink = null;
 	private MailMessageGenerator approvalGenerator = new SubmissionApprovalGenerator();
 	private MailMessageGenerator rejectionGenerator = new SubmissionRejectionGenerator();
+	private MailMessageGenerator submissionAcceptedGenerator = new SubmissionAcceptedGenerator();
 	private MailMessageGenerator documentCreatedGenerator = new DocumentCreatedGenerator();
 
 	public SubmissionMailNotifierImpl(
@@ -99,6 +100,14 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 
 	public void setDocumentCreatedGenerator(MailMessageGenerator documentCreatedGenerator) {
 		this.documentCreatedGenerator = documentCreatedGenerator;
+	}
+
+	public MailMessageGenerator getSubmissionAcceptedGenerator() {
+		return submissionAcceptedGenerator;
+	}
+
+	public void setSubmissionAcceptedGenerator(MailMessageGenerator submissionAcceptedGenerator) {
+		this.submissionAcceptedGenerator = submissionAcceptedGenerator;
 	}
 	
 	@Override
@@ -231,6 +240,58 @@ public class SubmissionMailNotifierImpl implements SubmissionMailNotifier {
 		} catch (Exception e) {
 			logger.error("Unable to send submission notification",e);
 			throw new Exception("Unable to send submission notification",e);
+		}
+	}
+
+	@Override
+	public void sendSubmissionApprovalNotification(
+			JSONObject submissionDoc,
+			List<MailRecipient> recipients) throws Exception {
+
+		if (false == sendUploadMailNotification) {
+			logger.debug("Email notification disabled");
+			return;
+		}
+
+		if (recipients.size() < 1) {
+			logger.info("Approval notification not sent because there are no recipients");
+			return;
+		}
+
+		String approvalMessage = null;
+		JSONObject submissionInfo = submissionDoc.optJSONObject("nunaliit_submission");
+		if (null != submissionInfo) {
+			approvalMessage = submissionInfo.optString("approval_message", null);
+		}
+
+		logger.info("Sending submission approval notification for "
+				+ submissionDoc.optString("_id", "<unknown>")
+				+ " to "
+				+ recipients);
+
+		try {
+			MailMessage message = new MailMessage();
+
+			// From
+			message.setFromAddress(fromAddress);
+
+			// To
+			for (MailRecipient recipient : recipients) {
+				message.addToRecipient(recipient);
+			}
+
+			// Generate message
+			Map<String, String> parameters = new HashMap<String, String>();
+			parameters.put("submissionDocId", submissionDoc.optString("_id", null));
+			parameters.put("approvalMessage", approvalMessage);
+			submissionAcceptedGenerator.generateMessage(message, parameters);
+
+			// Send message
+			mailDelivery.sendMessage(message);
+
+		} catch (Exception e) {
+			logger.error("Unable to send submission approval notification", e);
+			throw new Exception("Unable to send submission approval notification", e);
 		}
 	}
 
