@@ -684,6 +684,7 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"File Upload": "Téléchargement de fichiers"
 	,"Record Audio": "Enregistrer l'audio"
 	,"Record Video": "Enregistrer une vidéo"
+	,"Skip to content": "Omettre la navigation"
 });
 
 if( $ && $.datepicker ) {
