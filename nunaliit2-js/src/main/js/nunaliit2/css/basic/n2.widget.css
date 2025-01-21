@@ -159,7 +159,8 @@
 	left: 47px;
 	top: 100px;
 }
-.olControlLayerSwitcher .maximizeDiv, .olControlLayerSwitcher .minimizeDiv {
+.olControlLayerSwitcher .maximizeDiv, .olControlLayerSwitcher .minimizeDiv,
+.olControlLayerSwitcher .layerTogglerDiv {
 	width: 28px;
 	height: 28px;
 	background-image: url('openlayers/settings_icon.png');
@@ -167,7 +168,8 @@
 	top: 5px;
 	left: -29px;
 }
-.olControlLayerSwitcher .maximizeDiv:hover, .olControlLayerSwitcher .minimizeDiv:hover {
+.olControlLayerSwitcher .maximizeDiv:hover, .olControlLayerSwitcher .minimizeDiv:hover,
+.olControlLayerSwitcher .layerTogglerDiv:hover {
 	opacity: 1;
 }
 #OpenLayers_Control_MaximizeDiv img,

@@ -76,19 +76,18 @@ OpenLayers.Control.NunaliitLayerSwitcher =
      */
     dataLayers: null,
 
-
     /** 
-     * Property: minimizeDiv
+     * Property: layerSwitcherDiv
      * {DOMElement} 
      */
-    minimizeDiv: null,
+    layerSwitcherDiv: null,
 
-    /** 
-     * Property: maximizeDiv
-     * {DOMElement} 
+    /**
+     * Property: isLayerSwitcherOn
+     * {Boolean} 
      */
-    maximizeDiv: null,
-    
+    isLayerSwitcherOn: false,
+
     /**
      * APIProperty: ascending
      * {Boolean} 
@@ -183,16 +182,14 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         // create layout divs
         this.loadContents();
 
-        // set mode to minimize
+        // set isLayerSwitcherOn to false for the first time
         if(!this.outsideViewport) {
-            this.minimizeControl();
+            this.toggleLayerControl();
         }
 
         // populate div with current info
         this.redraw();    
-
-        this.div.tabIndex = 0
-
+        
         // Do not let click events leave the control and reach the map
         // This allows the html elements to function properly
 		$(this.div).click((ev) => {
@@ -245,10 +242,8 @@ OpenLayers.Control.NunaliitLayerSwitcher =
     _onButtonClick: function(evt) {    	
         const target = $(evt.target);
 
-        if (target.hasClass('minimizeDiv')) {
-            this.minimizeControl();
-        } else if (target.hasClass('maximizeDiv')) {
-            this.maximizeControl();
+        if(target.hasClass('layerTogglerDiv')) {
+            this.toggleLayerControl();
         }
     },
     
@@ -608,64 +603,21 @@ OpenLayers.Control.NunaliitLayerSwitcher =
     },
 
     /** 
-     * Method: maximizeControl
-     * Set up the labels and divs for the control
-     * 
-     * Parameters:
-     * e - {Event} 
-     */
-    maximizeControl: function(e) {
-
-        // set the div's width and height to empty values, so
-        // the div dimensions can be controlled by CSS
-        this.div.style.width = "";
-        this.div.style.height = "";
-
-        this.showControls(false);
-
-        if (e != null) {
-            OpenLayers.Event.stop(e);                                            
-        }
-    },
-    
-    /** 
-     * Method: minimizeControl
+     * Method: toggleLayerControl
      * Hide all the contents of the control, shrink the size, 
      *     add the maximize icon
      *
      * Parameters:
      * e - {Event} 
      */
-    minimizeControl: function(e) {
+    toggleLayerControl: function(e) {
 
-        // to minimize the control we set its div's width
-        // and height to 0px, we cannot just set "display"
-        // to "none" because it would hide the maximize
-        // div
-        this.div.style.width = "0px";
-        this.div.style.height = "0px";
-
-        this.showControls(true);
+        this.layersDiv.style.display = !this.isLayerSwitcherOn ? "none" : "";
+        this.isLayerSwitcherOn = !this.isLayerSwitcherOn;
 
         if (e != null) {
-            OpenLayers.Event.stop(e);                                            
+            OpenLayers.Event.stop(e);
         }
-    },
-
-    /**
-     * Method: showControls
-     * Hide/Show all LayerSwitcher controls depending on whether we are
-     *     minimized or not
-     * 
-     * Parameters:
-     * minimize - {Boolean}
-     */
-    showControls: function(minimize) {
-
-        this.maximizeDiv.style.display = minimize ? "" : "none";
-        this.minimizeDiv.style.display = minimize ? "none" : "";
-
-        this.layersDiv.style.display = minimize ? "none" : "";
     },
     
     /** 
@@ -673,7 +625,18 @@ OpenLayers.Control.NunaliitLayerSwitcher =
      * Set up the labels and divs for the control
      */
     loadContents: function() {
-
+        // layer switcher button div
+        var img = OpenLayers.Util.getImageLocation('layer-switcher-maximize.png');
+        this.layerSwitcherDiv = OpenLayers.Util.createAlphaImageDiv(
+                                    "OpenLayers_Control_MaximizeDiv", 
+                                    null, 
+                                    null, 
+                                    img, 
+                                    "absolute");
+        OpenLayers.Element.addClass(this.layerSwitcherDiv, "layerTogglerDiv olButton");
+        this.layerSwitcherDiv.setAttribute("tabindex", "0");
+        this.div.appendChild(this.layerSwitcherDiv);
+        
         // layers list div        
         this.layersDiv = document.createElement("div");
         this.layersDiv.id = this.id + "_layersDiv";
@@ -706,32 +669,6 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         }    
  
         this.div.appendChild(this.layersDiv);
-
-        // maximize button div
-        var img = OpenLayers.Util.getImageLocation('layer-switcher-maximize.png');
-        this.maximizeDiv = OpenLayers.Util.createAlphaImageDiv(
-                                    "OpenLayers_Control_MaximizeDiv", 
-                                    null, 
-                                    null, 
-                                    img, 
-                                    "absolute");
-        OpenLayers.Element.addClass(this.maximizeDiv, "maximizeDiv olButton");
-        this.maximizeDiv.style.display = "none";
-        
-        this.div.appendChild(this.maximizeDiv);
-
-        // minimize button div
-        var img = OpenLayers.Util.getImageLocation('layer-switcher-minimize.png');
-        this.minimizeDiv = OpenLayers.Util.createAlphaImageDiv(
-                                    "OpenLayers_Control_MinimizeDiv", 
-                                    null, 
-                                    null, 
-                                    img, 
-                                    "absolute");
-        OpenLayers.Element.addClass(this.minimizeDiv, "minimizeDiv olButton");
-        this.minimizeDiv.style.display = "none";
-
-        this.div.appendChild(this.minimizeDiv);
     },
     
     /** 

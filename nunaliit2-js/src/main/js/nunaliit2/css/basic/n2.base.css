@@ -78,7 +78,7 @@ body {
  * Address `outline` inconsistency between Chrome and other browsers.
  */
 a:focus {
-    outline: thin dotted;
+    outline: 1px solid -webkit-focus-ring-color;
 }
 
 /**
