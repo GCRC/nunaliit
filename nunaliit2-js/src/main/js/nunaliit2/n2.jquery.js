@@ -207,4 +207,32 @@ if( typeof $.widget === 'function' ){
 	});
 };
 
+/**
+ * Enhances the jQuery UI Dialog to maintain focus on the element that opened it.
+ * This prevents focus from moving to the document root after the dialog closes.
+ */
+const enhanceDialog = () => {
+    const originalClose = $.ui.dialog.prototype.close;
+    const originalOpen = $.ui.dialog.prototype.open;
+
+    // Extend the jQuery UI Dialog widget
+    $.extend($.ui.dialog.prototype, {
+        close: function (event) {
+			originalClose.call(this, event);
+
+			// Focus the element that triggered the dialog, if available
+			if (this.triggerElement) {
+				this.triggerElement.focus();
+			}
+        },
+
+        open: function (event) {
+            // Capture the element that triggered the dialog
+            this.triggerElement = $(document.activeElement);
+            originalOpen.call(this, event);
+        },
+    });
+};
+enhanceDialog()
+
 })(jQuery,nunaliit2);

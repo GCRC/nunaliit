@@ -878,6 +878,8 @@ POSSIBILITY OF SUCH DAMAGE.
 				dateFormat: 'yy-mm-dd'
 				,gotoCurrent: true
 				,changeYear: true
+				,showButtonPanel: true
+				,closeText: 'Close'
 			});
 			li.append(input);
 			saveInput(columnName, input, value);

@@ -189,7 +189,7 @@ if( !$d ) return;
  				};
  			};
  			
- 			$('<div>')
+ 			$('<button>')
  				.addClass('n2ForceGraph_settings_button')
  				.appendTo($outer).
  				click(function(){

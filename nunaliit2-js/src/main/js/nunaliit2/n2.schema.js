@@ -254,7 +254,7 @@ function _formSingleField(r,completeSelectors,options){
 	};
 
 	if( options.date ){
-		r.push('<div class="n2schema_help_date"></div>');
+		r.push('<a href="javascript:void(0)" class="n2schema_help_date"></a>');
 	}
 	
 	if( options.wikiTransform ){
@@ -2105,6 +2105,8 @@ var Form = $n2.Class({
 						,changeYear: true
 						,constrainInput: false
 						,yearRange: "c-50:c+50"
+						,showButtonPanel: true
+						,closeText: _loc('Close')
 						,onSelect: function(){
 							var $input = $(this);
 							changeHandler.call($input);

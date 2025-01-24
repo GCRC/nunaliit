@@ -318,6 +318,8 @@ var DateRangeWidget = $n2.Class({
 			,gotoCurrent: true
 			,changeYear: true
 			,constrainInput: false
+			,showButtonPanel: true
+			,closeText: _loc('Close')
 			,onSelect: function() {
 				var $startDate = $('.n2widget_date_range_window')
 					.find('.start_date');
@@ -353,6 +355,8 @@ var DateRangeWidget = $n2.Class({
 			,gotoCurrent: true
 			,changeYear: true
 			,constrainInput: false
+			,showButtonPanel: true
+			,closeText: _loc('Close')
 			,onSelect: function() {
 				var $endDate = $('.n2widget_date_range_window')
 					.find('.end_date');
