@@ -2106,7 +2106,7 @@ var Form = $n2.Class({
 						,constrainInput: false
 						,yearRange: "c-50:c+50"
 						,showButtonPanel: true
-						,closeText: 'Close'
+						,closeText: _loc('Close')
 						,onSelect: function(){
 							var $input = $(this);
 							changeHandler.call($input);

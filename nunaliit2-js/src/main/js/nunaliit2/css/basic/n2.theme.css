@@ -480,7 +480,7 @@ CreateDocument widget
 }
 
 .nunaliit_form_link:focus { 
-	outline: 3px solid -webkit-focus-ring-color;
+	outline: 1px solid -webkit-focus-ring-color;
 }
 
 .nunaliit_form_link_tree_view {
