@@ -218,14 +218,12 @@ const enhanceDialog = () => {
     // Extend the jQuery UI Dialog widget
     $.extend($.ui.dialog.prototype, {
         close: function (event) {
-            this.uiDialog.fadeOut(() => {
-                originalClose.call(this, event);
+			originalClose.call(this, event);
 
-                // Focus the element that triggered the dialog, if available
-                if (this.triggerElement) {
-                    this.triggerElement.focus();
-                }
-            });
+			// Focus the element that triggered the dialog, if available
+			if (this.triggerElement) {
+				this.triggerElement.focus();
+			}
         },
 
         open: function (event) {
