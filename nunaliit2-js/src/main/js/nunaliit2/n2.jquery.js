@@ -112,13 +112,15 @@ if( typeof $.widget === 'function' ){
 			var text = this.element.find('option').first().text();
 			this.button = $('<select>')
 				.appendTo(this.wrapper)
-				.mousedown(function(e){
+				.on('mousedown', function(e) {
 					_this._toggleMenu();
 					return false;
 				})
-				.focus(function(e){
-					_this._toggleMenu();
-					return false;
+				.on('keydown', function(e) {
+					if (e.key === 'Enter' || e.keyCode === 13) {
+						_this._toggleMenu();
+						return false;
+					}
 				});
 			if( classes ){
 				this.button.attr('class',classes);
@@ -137,7 +139,14 @@ if( typeof $.widget === 'function' ){
 				.attr('tabindex',0)
 				.hide()
 				.appendTo(this.wrapper);
-
+			
+			// Close menu when focus moves **completely** away
+			this.menu.on('focusout', function(e) {
+				// Check if focus is moving outside the menu and its children
+				if (!_this.menu.has(e.relatedTarget).length) {
+					_this._toggleMenu();
+				}
+			});
 			this.element.hide();
 		}
 		
