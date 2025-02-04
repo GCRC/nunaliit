@@ -115,6 +115,10 @@ if( typeof $.widget === 'function' ){
 				.mousedown(function(e){
 					_this._toggleMenu();
 					return false;
+				})
+				.focus(function(e){
+					_this._toggleMenu();
+					return false;
 				});
 			if( classes ){
 				this.button.attr('class',classes);
@@ -130,6 +134,7 @@ if( typeof $.widget === 'function' ){
 				.css('top','0px')
 				.css('display','block')
 				.css('z-index',1000)
+				.attr('tabindex',0)
 				.hide()
 				.appendTo(this.wrapper);
 
@@ -184,6 +189,7 @@ if( typeof $.widget === 'function' ){
 			} else {
 				this._createMenu(menu);
 				menu.show();
+				menu.find('a').attr('tabindex', 0);
 				menu.position({
 						my:'left top'
 						,at: 'left bottom'
