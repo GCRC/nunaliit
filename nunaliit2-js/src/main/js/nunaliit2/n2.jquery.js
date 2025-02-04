@@ -140,11 +140,9 @@ if( typeof $.widget === 'function' ){
 				.hide()
 				.appendTo(this.wrapper);
 			
-			// Close menu when focus moves **completely** away
 			this.menu.on('focusout', function(e) {
-				// Check if focus is moving outside the menu and its children
 				if (!_this.menu.has(e.relatedTarget).length) {
-					_this._toggleMenu();
+					_this.menu.hide();
 				}
 			});
 			this.element.hide();
@@ -196,6 +194,7 @@ if( typeof $.widget === 'function' ){
 				menu.empty();
 				menu.hide();
 			} else {
+				menu.empty();
 				this._createMenu(menu);
 				menu.show();
 				menu.find('a').attr('tabindex', 0);
