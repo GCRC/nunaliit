@@ -208,9 +208,32 @@ var Upload = $n2.Class({
 				$form.prepend( $('<input class="n2UploadProgressId" type="hidden" name="progressId" value="'+progressKey+'"/>') );
 			};
 
-			var formData = new FormData($form[0]);
-			if(opts.uploadFile !== null) {
+			const formData = new FormData($form[0]);
+			if (opts.uploadFile !== null) {
 				formData.append('media', uploadFile);
+			}
+			for (let [name, value] of formData.entries()) {
+				if (name === 'media') {
+					const filesize = value?.size
+					const serverMaxSize = _this?.welcomeMessage?.maxSize
+					if (!isNaN(filesize) && !isNaN(serverMaxSize)) {
+						// 500 is a guess for the remainder of the request contents
+						// Because the server actually checks for entire request size (not just file size) in reality
+						if ((filesize + 500) >= serverMaxSize) {
+							const filesizeWarningDivID = "filesizeWarning"
+							if ($('#' + filesizeWarningDivID).length === 0) {
+								const filesizeWarningDiv = $(
+									'<div id="' + filesizeWarningDivID + '" style="color: red;">' 
+									+ _loc('Maximum file size allowed') + ': '
+									+  Math.floor((serverMaxSize / 1000000) / 10) * 10
+									+ 'MB'
+									+ '</div>');
+								$form.before(filesizeWarningDiv);
+							}
+							return
+						}
+					}
+				}
 			}
 
 			$.ajax({

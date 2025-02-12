@@ -685,6 +685,7 @@ $n2.l10n.addLocalizedStrings('fr',{
 	,"Record Audio": "Enregistrer l'audio"
 	,"Record Video": "Enregistrer une vidéo"
 	,"Skip to content": "Omettre la navigation"
+	,"Maximum file size allowed": "Taille maximale du fichier autorisée"
 });
 
 if( $ && $.datepicker ) {
