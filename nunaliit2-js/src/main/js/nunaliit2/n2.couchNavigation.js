@@ -89,11 +89,32 @@ var NavigationDisplay = $n2.Class({
 
 			// Navigation menu
 			$nav.empty();
+
+			const menuToggle = $(`
+			<div id="menuToggle">
+				<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<g clip-path="url(#clip0_429_11066)">
+					<path d="M3 6.00092H21M3 12.0009H21M3 18.0009H21"/>
+					</g>
+					<defs>
+					<clipPath id="clip0_429_11066">
+					<rect width="24" height="24" fill="white" transform="translate(0 0.000915527)"/>
+					</clipPath>
+					</defs>
+				</svg>
+			</div>`)
+
+			$nav.append(menuToggle)
+
+			menuToggle.click(function() {
+				$(this.parentNode)?.toggleClass('n2nav_showMenu')
+			})
 			
 			if( doc.nunaliit_navigation.items 
 			 && doc.nunaliit_navigation.items.length > 0 ) {
 				var $ul = $('<ul>')
 					.addClass('n2nav_setChildModuleCurrent')
+					.addClass('n2nav_menu')
 					.appendTo($nav);
 				
 				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId);
@@ -179,8 +200,14 @@ var NavigationDisplay = $n2.Class({
 				};
 				
 				if( item.items && item.items.length > 0 ){
+					$li.click(function(ev) {
+						ev.stopPropagation()
+						$(this).toggleClass('n2nav_submenu_clicked')
+					})
 					var $innerUl = $('<ul>')
 						.addClass('n2nav_setChildModuleCurrent')
+						.addClass('n2nav_menu')
+						.addClass('n2nav_submenu')
 						.appendTo($li);
 					insertItems($innerUl, item.items, currentModuleId);
 				};
