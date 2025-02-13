@@ -117,7 +117,7 @@ var NavigationDisplay = $n2.Class({
 					.addClass('n2nav_menu')
 					.appendTo($nav);
 				
-				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId);
+				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId, true);
 			};
 			
 			if( this.showService ){
@@ -125,7 +125,8 @@ var NavigationDisplay = $n2.Class({
 			};
 		};
 		
-		function insertItems($ul, items, currentModuleId){
+		function insertItems($ul, items, currentModuleId, alternatingClassType){
+			$ul.addClass(alternatingClassType ? 'n2nav_responsiveMenuTypeA' : 'n2nav_responsiveMenuTypeB')
 			for(var i=0,e=items.length; i<e; ++i){
 				var item = items[i];
 				
@@ -209,7 +210,7 @@ var NavigationDisplay = $n2.Class({
 						.addClass('n2nav_menu')
 						.addClass('n2nav_submenu')
 						.appendTo($li);
-					insertItems($innerUl, item.items, currentModuleId);
+					insertItems($innerUl, item.items, currentModuleId, !alternatingClassType);
 				};
 			};
 		};
