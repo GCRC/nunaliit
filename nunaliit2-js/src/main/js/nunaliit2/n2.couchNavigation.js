@@ -38,6 +38,8 @@ var
 	,DH = 'n2.couchNavigation'
 	;
 
+const SUBMENU_CLICKED_CLASS = 'n2nav_submenu_clicked'
+
 //=========================================================================
 function setNavElementAsCurrentModule($elem){
 	$elem.addClass('n2_nav_currentModule');
@@ -108,6 +110,9 @@ var NavigationDisplay = $n2.Class({
 
 			menuToggle.click(function() {
 				$(this.parentNode)?.toggleClass('n2nav_showMenu')
+				$('.' + SUBMENU_CLICKED_CLASS).each((_, el) => {
+					el.classList.remove(SUBMENU_CLICKED_CLASS)
+				})
 			})
 			
 			if( doc.nunaliit_navigation.items 
@@ -203,7 +208,7 @@ var NavigationDisplay = $n2.Class({
 				if( item.items && item.items.length > 0 ){
 					$li.click(function(ev) {
 						ev.stopPropagation()
-						$(this).toggleClass('n2nav_submenu_clicked')
+						$(this).toggleClass(SUBMENU_CLICKED_CLASS)
 					})
 					var $innerUl = $('<ul>')
 						.addClass('n2nav_setChildModuleCurrent')
