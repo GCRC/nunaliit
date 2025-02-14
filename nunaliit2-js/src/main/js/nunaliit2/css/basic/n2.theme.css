@@ -139,6 +139,123 @@ input[type="text"], input[type="password"], textarea {
 	margin-right: -1px;
 }
 
+#menuToggle {
+    display: none;
+}
+
+@media only screen and (max-width: 960px) {    
+    html {
+        height: 100%;
+    }
+    
+    /*
+    Header
+    */
+
+    .nunaliit_atlas .nunaliit_header-nav {
+        width: 8rem; /* fixes the location of the icon in place */
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav a {
+        padding: 0 !important;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav li {
+        text-decoration: none;
+    }
+    
+    .nunaliit_atlas .nunaliit_header .nunaliit_header_container {
+        display: grid;
+        grid-template-columns: auto 1fr 1fr;
+        justify-items: center;
+    }
+    
+    #menuToggle {
+        display: block;
+        position: absolute;
+        margin-top: 1.5rem;
+        z-index: 100000;
+        cursor: pointer;
+    }
+    
+    #menuToggle > svg {
+        height: 32px;
+        width: 32px;
+    }
+    
+    #menuToggle > svg > g > path {
+        stroke: white;
+        stroke-width: 2.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav.n2nav_showMenu > ul.n2nav_menu {
+        display: flex;
+        position: relative;
+        z-index: 100000;
+        top: 60px;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav > ul.n2nav_menu {
+        display: none;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav .n2nav_menu {
+        display: flex;
+        flex-wrap: nowrap;
+        flex-direction: column;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav .n2nav_menu li {
+        height: 100%;
+        padding: 15px;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav .n2nav_menu li span {
+        top: 0px;
+        line-height: 1.0;
+        z-index: 100000;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav .n2nav_menu li a {
+        top: 0px;
+        line-height: 1.0;
+        z-index: 100000;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav .n2nav_menu .n2nav_submenu {
+        display: none;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav .n2nav_menu .n2nav_submenu_clicked > .n2nav_submenu {
+        display: block;
+        z-index: 1000001;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav > ul > li > ul {
+        top: 0;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav li:hover ul li:first-child {
+        border-left: 1px solid rgba(255, 255, 255, 0.6);
+    }
+    
+    /* The immediate first menu from the hamburger menu icon should not be offset */
+    .nunaliit_atlas .nunaliit_header-nav > ul.n2nav_menu.n2nav_responsiveMenuTypeA {
+        left: 0 !important;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav ul.n2nav_responsiveMenuTypeA {
+        left: -233px !important;
+        top: -1px;
+    }
+    
+    .nunaliit_atlas .nunaliit_header-nav ul.n2nav_responsiveMenuTypeB {
+        left: 100% !important;
+    }
+}
+
 /* Login (within nunaliit_header_container) */
 .nunaliit_atlas .nunaliit_header_container .nunaliit_login {
 	position: absolute;
