@@ -695,11 +695,18 @@ function loadRuleFromObject(ruleObj){
 		condition = $n2.styleRuleParser.parse(ruleObj.condition);
 	};
 	
+	var normalStyle = ruleObj.normal ? ruleObj.normal : {};
+	if (ruleObj.marker && ruleObj.marker.icon) {
+		normalStyle.externalGraphic = ruleObj.marker.icon;
+		normalStyle.graphicWidth = ruleObj.marker.width || 16;
+		normalStyle.graphicHeight = ruleObj.marker.height || 16;
+	}
+	
 	var rule = new StyleRule({
 		condition: condition
 		,label: ruleObj.label
 		,source: ruleObj.condition
-		,normal: ruleObj.normal ? ruleObj.normal : {}
+		,normal: normalStyle
 		,selected: ruleObj.selected ? ruleObj.selected : {}
 		,found: ruleObj.found ? ruleObj.found : {}
 		,hovered: ruleObj.hovered ? ruleObj.hovered : {}
