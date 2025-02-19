@@ -695,22 +695,30 @@ function loadRuleFromObject(ruleObj){
 		condition = $n2.styleRuleParser.parse(ruleObj.condition);
 	};
 	
-	var normalStyle = ruleObj.normal ? ruleObj.normal : {};
-	if (ruleObj.marker && ruleObj.marker.icon) {
-		normalStyle.externalGraphic = ruleObj.marker.icon;
-		normalStyle.graphicWidth = ruleObj.marker.width || 16;
-		normalStyle.graphicHeight = ruleObj.marker.height || 16;
-	}
+	function parseSymbolizer(rule) {
+        if (!rule) return {};
+
+        var parsed = $n2.extend({}, rule);
+
+        // If icon is provided, set it as externalGraphic
+        if (rule.icon) {
+            parsed.externalGraphic = rule.icon;
+            parsed.graphicWidth = rule.width || 24;
+            parsed.graphicHeight = rule.height || 24;
+        }
+
+        return parsed;
+    }
 	
 	var rule = new StyleRule({
-		condition: condition
-		,label: ruleObj.label
-		,source: ruleObj.condition
-		,normal: normalStyle
-		,selected: ruleObj.selected ? ruleObj.selected : {}
-		,found: ruleObj.found ? ruleObj.found : {}
-		,hovered: ruleObj.hovered ? ruleObj.hovered : {}
-	});
+        condition: condition,
+        label: ruleObj.label,
+        source: ruleObj.condition,
+        normal: parseSymbolizer(ruleObj.normal),
+        selected: parseSymbolizer(ruleObj.selected),
+        found: parseSymbolizer(ruleObj.found),
+        hovered: parseSymbolizer(ruleObj.hovered),
+    });
 	
 	return rule;
 };
