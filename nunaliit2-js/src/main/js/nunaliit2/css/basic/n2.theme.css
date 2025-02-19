@@ -143,6 +143,30 @@ input[type="text"], input[type="password"], textarea {
     display: none;
 }
 
+@media screen and (orientation:portrait) {
+	.nunaliit_atlas .intro {
+        width: 100%;
+    }
+
+    .nunaliit_atlas .n2_content_map {
+        right: 0;
+        height: 50%;
+        width: 100%;
+    }
+
+    .nunaliit_atlas .n2_content_text {
+        position: relative;
+        height: 50%;
+        top: 50%;
+        padding: 0.5rem;
+        border-left: initial;
+    }
+
+    .nunaliit_atlas .n2_content_contains_map .n2_content_text {
+        width: auto;
+    }  
+}
+
 @media only screen and (max-width: 960px) {    
     html {
         height: 100%;
@@ -213,7 +237,7 @@ input[type="text"], input[type="password"], textarea {
     }
     
     .nunaliit_atlas .nunaliit_header-nav .n2nav_menu li span {
-        top: 0px;
+        top: 0px !important;
         line-height: 1.0;
         z-index: 100000;
     }
