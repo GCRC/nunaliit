@@ -113,6 +113,8 @@ function main_init(config, atlasDoc) {
 };
 
 jQuery().ready(function() {
+	const isMobile = window?.navigator?.userAgent?.toLowerCase()?.includes("mobi")
+	if (isMobile) document.body.classList.add('nunaliit_mobile')
 	nunaliitConfigure({
 		configuredFunction: loadAtlasDocument
 	});

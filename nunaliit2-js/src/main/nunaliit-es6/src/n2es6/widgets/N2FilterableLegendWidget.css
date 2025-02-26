@@ -1,4 +1,4 @@
-#content .n2_filterableLegendWidgetWithGraphic {
+.nunaliit_content .n2_filterableLegendWidgetWithGraphic {
 	position: absolute;
 	display: flex;
 	bottom: 10px;
@@ -6,17 +6,17 @@
 	margin-bottom: 30px;
 }
 
-#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend {
+.nunaliit_content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend {
 	position: static;
 }
 
-#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend_svg {
+.nunaliit_content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend_svg {
 	display: inline-block;
 	width: 14px;
 	height: 14px;
 }
 
-#content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend .n2widgetLegend_outer {
+.nunaliit_content .n2_filterableLegendWidgetWithGraphic .n2widgetLegend .n2widgetLegend_outer {
 	background-color: rgba(0,0,0,0.9);
 	color: #fff;
 	padding: 10px;

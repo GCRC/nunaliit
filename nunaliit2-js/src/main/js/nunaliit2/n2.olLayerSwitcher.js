@@ -636,11 +636,22 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         OpenLayers.Element.addClass(this.layerSwitcherDiv, "layerTogglerDiv olButton");
         this.layerSwitcherDiv.setAttribute("tabindex", "0");
         this.div.appendChild(this.layerSwitcherDiv);
-        
+
         // layers list div        
         this.layersDiv = document.createElement("div");
         this.layersDiv.id = this.id + "_layersDiv";
         OpenLayers.Element.addClass(this.layersDiv, "layersDiv");
+
+        this.events = new OpenLayers.Events(this, this.layersDiv, null, false);
+        this.events.on({
+            "touchstart": (ev) => {
+                ev.stopPropagation()
+            },
+            "touchmove": (ev) => {
+                ev.stopPropagation()
+            },
+            scope: this
+        });
 
         this.baseLbl = document.createElement("div");
         this.baseLbl.innerHTML = _loc("Base Layer");

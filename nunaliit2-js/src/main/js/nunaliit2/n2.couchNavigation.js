@@ -38,6 +38,8 @@ var
 	,DH = 'n2.couchNavigation'
 	;
 
+const SUBMENU_CLICKED_CLASS = 'n2nav_submenu_clicked'
+
 //=========================================================================
 function setNavElementAsCurrentModule($elem){
 	$elem.addClass('n2_nav_currentModule');
@@ -89,14 +91,38 @@ var NavigationDisplay = $n2.Class({
 
 			// Navigation menu
 			$nav.empty();
+
+			const menuToggle = $(`
+			<div id="menuToggle">
+				<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+					<g clip-path="url(#clip0_429_11066)">
+					<path d="M3 6.00092H21M3 12.0009H21M3 18.0009H21"/>
+					</g>
+					<defs>
+					<clipPath id="clip0_429_11066">
+					<rect width="24" height="24" fill="white" transform="translate(0 0.000915527)"/>
+					</clipPath>
+					</defs>
+				</svg>
+			</div>`)
+
+			$nav.append(menuToggle)
+
+			menuToggle.click(function() {
+				$(this.parentNode)?.toggleClass('n2nav_showMenu')
+				$('.' + SUBMENU_CLICKED_CLASS).each((_, el) => {
+					el.classList.remove(SUBMENU_CLICKED_CLASS)
+				})
+			})
 			
 			if( doc.nunaliit_navigation.items 
 			 && doc.nunaliit_navigation.items.length > 0 ) {
 				var $ul = $('<ul>')
 					.addClass('n2nav_setChildModuleCurrent')
+					.addClass('n2nav_menu')
 					.appendTo($nav);
 				
-				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId);
+				insertItems($ul, doc.nunaliit_navigation.items, currentModuleId, true);
 			};
 			
 			if( this.showService ){
@@ -104,7 +130,8 @@ var NavigationDisplay = $n2.Class({
 			};
 		};
 		
-		function insertItems($ul, items, currentModuleId){
+		function insertItems($ul, items, currentModuleId, alternatingClassType){
+			$ul.addClass(alternatingClassType ? 'n2nav_responsiveMenuTypeA' : 'n2nav_responsiveMenuTypeB')
 			for(var i=0,e=items.length; i<e; ++i){
 				var item = items[i];
 				
@@ -179,10 +206,16 @@ var NavigationDisplay = $n2.Class({
 				};
 				
 				if( item.items && item.items.length > 0 ){
+					$li.click(function(ev) {
+						ev.stopPropagation()
+						$(this).toggleClass(SUBMENU_CLICKED_CLASS)
+					})
 					var $innerUl = $('<ul>')
 						.addClass('n2nav_setChildModuleCurrent')
+						.addClass('n2nav_menu')
+						.addClass('n2nav_submenu')
 						.appendTo($li);
-					insertItems($innerUl, item.items, currentModuleId);
+					insertItems($innerUl, item.items, currentModuleId, !alternatingClassType);
 				};
 			};
 		};
