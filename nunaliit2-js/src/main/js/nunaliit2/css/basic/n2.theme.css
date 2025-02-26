@@ -195,11 +195,13 @@ input[type="text"], input[type="password"], textarea {
     }
     
     .nunaliit_mobile #menuToggle {
-        display: block;
-        position: absolute;
-        margin-top: 1.5rem;
+		display: block;
+        position: relative;
+        margin: 1.5rem auto 0 auto;
         z-index: 100000;
         cursor: pointer;
+        padding: 0;
+        width: fit-content;
     }
     
     .nunaliit_mobile #menuToggle > svg {
@@ -218,7 +220,7 @@ input[type="text"], input[type="password"], textarea {
         display: flex;
         position: relative;
         z-index: 100000;
-        top: 60px;
+        top: unset;
     }
     
     .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav > ul.n2nav_menu {
