@@ -193,8 +193,8 @@ input[type="text"], input[type="password"], textarea {
         grid-template-columns: auto 1fr 1fr;
         justify-items: center;
     }
-    
-    .nunaliit_mobile #menuToggle {
+
+    .nunaliit_mobile.nunaliit_atlas #menuToggle {
 		display: block;
         position: relative;
         margin: 1.5rem auto 0 auto;
@@ -204,12 +204,12 @@ input[type="text"], input[type="password"], textarea {
         width: fit-content;
     }
     
-    .nunaliit_mobile #menuToggle > svg {
+    .nunaliit_mobile.nunaliit_atlas #menuToggle > svg {
         height: 32px;
         width: 32px;
     }
     
-    .nunaliit_mobile #menuToggle > svg > g > path {
+    .nunaliit_mobile.nunaliit_atlas #menuToggle > svg > g > path {
         stroke: white;
         stroke-width: 2.5;
         stroke-linecap: round;
@@ -234,7 +234,7 @@ input[type="text"], input[type="password"], textarea {
     }
     
     .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav .n2nav_menu li {
-        height: 100%;
+        height: auto;
         padding: 15px;
     }
     
@@ -283,9 +283,9 @@ input[type="text"], input[type="password"], textarea {
 
 	/* Splash Dialog */
 	.nunaliit_mobile .n2Splash_dialog_container {
-		width: auto;
-		top: 0;
-		left: 0;
+		width: auto !important;
+		top: 0 !important;
+		left: 0 !important;
 	}
 }
 
