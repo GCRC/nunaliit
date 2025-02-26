@@ -178,7 +178,7 @@
 }
 
 @media screen and (orientation:portrait) {
-	.olControlLayerSwitcher .layersDiv {
+	.nunaliit_mobile .olControlLayerSwitcher .layersDiv {
 		max-height: 20vh;
 		max-width: 70vw;
 		overflow: auto;
@@ -186,7 +186,7 @@
 }
 
 @media screen and (max-width: 960px) and (orientation:landscape) {
-	.olControlLayerSwitcher .layersDiv {
+	.nunaliit_mobile .olControlLayerSwitcher .layersDiv {
 		max-height: 20vh;
 		max-width: 15vw;
 		overflow: auto;
