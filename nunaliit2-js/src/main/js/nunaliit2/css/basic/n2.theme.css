@@ -190,7 +190,7 @@ input[type="text"], input[type="password"], textarea {
     
     .nunaliit_mobile.nunaliit_atlas .nunaliit_header .nunaliit_header_container {
         display: grid;
-        grid-template-columns: auto 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
         justify-items: center;
     }
 
