@@ -140,152 +140,155 @@ input[type="text"], input[type="password"], textarea {
 }
 
 #menuToggle {
-    display: none;
+	display: none;
 }
 
-@media screen and (orientation:portrait) {
-	.nunaliit_mobile.nunaliit_atlas .intro {
-        width: 100%;
-    }
-
-    .nunaliit_mobile.nunaliit_atlas .n2_content_map {
-        right: 0;
-        height: 50%;
-        width: 100%;
-    }
-
-    .nunaliit_mobile.nunaliit_atlas .n2_content_text {
-        position: relative;
-        height: 50%;
-        top: 50%;
-        padding: 0.5rem;
-        border-left: initial;
-    }
-
-    .nunaliit_mobile.nunaliit_atlas .n2_content_contains_map .n2_content_text {
-        width: auto;
-    }
+html .nunaliit_mobile {
+	height: 100%;
 }
 
-@media only screen and (max-width: 960px) {    
-    html .nunaliit_mobile {
-        height: 100%;
-    }
-    
-    /*
-    Header
-    */
+.nunaliit_mobile.nunaliit_atlas {
+	@media screen and (orientation:portrait) {
+		.intro {
+			width: 100%;
+		}
 
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav {
-        width: 8rem; /* fixes the location of the icon in place */
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav a {
-        padding: 0;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav li {
-        text-decoration: none;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header .nunaliit_header_container {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
-        justify-items: center;
-    }
+		.n2_content_map {
+			right: 0;
+			height: 50%;
+			width: 100%;
+		}
 
-    .nunaliit_mobile.nunaliit_atlas #menuToggle {
-		display: block;
-        position: relative;
-        margin: 1.5rem auto 0 auto;
-        z-index: 100000;
-        cursor: pointer;
-        padding: 0;
-        width: fit-content;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas #menuToggle > svg {
-        height: 32px;
-        width: 32px;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas #menuToggle > svg > g > path {
-        stroke: white;
-        stroke-width: 2.5;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav.n2nav_showMenu > ul.n2nav_menu {
-        display: flex;
-        position: relative;
-        z-index: 100000;
-        top: unset;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav > ul.n2nav_menu {
-        display: none;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav .n2nav_menu {
-        display: flex;
-        flex-wrap: nowrap;
-        flex-direction: column;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav .n2nav_menu li {
-        height: auto;
-        padding: 15px;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav .n2nav_menu li span {
-        top: 0px !important;
-        line-height: 1.0;
-        z-index: 100000;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav .n2nav_menu li a {
-        top: 0px;
-        line-height: 1.0;
-        z-index: 100000;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav .n2nav_menu .n2nav_submenu {
-        display: none;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav .n2nav_menu .n2nav_submenu_clicked > .n2nav_submenu {
-        display: block;
-        z-index: 1000001;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav > ul > li > ul {
-        top: 0;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav li:hover ul li:first-child {
-        border-left: 1px solid rgba(255, 255, 255, 0.6);
-    }
-    
-    /* The immediate first menu from the hamburger menu icon should not be offset */
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav > ul.n2nav_menu.n2nav_responsiveMenuTypeA {
-        left: 0;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav ul.n2nav_responsiveMenuTypeA {
-        left: -233px;
-        top: -1px;
-    }
-    
-    .nunaliit_mobile.nunaliit_atlas .nunaliit_header-nav ul.n2nav_responsiveMenuTypeB {
-        left: 100%;
-    }
+		.n2_content_text {
+			position: relative;
+			height: 50%;
+			top: 50%;
+			padding: 0.5rem;
+			border-left: initial;
+		}
 
-	/* Splash Dialog */
-	.nunaliit_mobile .n2Splash_dialog_container {
-		width: auto !important;
-		top: 0 !important;
-		left: 0 !important;
+		.n2_content_contains_map .n2_content_text {
+			width: auto;
+		}
+	}
+
+	@media only screen and (max-width: 960px) {
+		/*
+	   Header
+	   */
+
+		.nunaliit_header-nav {
+			width: 8rem;
+			/* fixes the location of the icon in place */
+		}
+
+		.nunaliit_header-nav a {
+			padding: 0;
+		}
+
+		.nunaliit_header-nav li {
+			text-decoration: none;
+		}
+
+		.nunaliit_header .nunaliit_header_container {
+			display: grid;
+			grid-template-columns: 1fr 1fr 1fr;
+			justify-items: center;
+		}
+
+		#menuToggle {
+			display: block;
+			position: relative;
+			margin: 1.5rem auto 0 auto;
+			z-index: 100000;
+			cursor: pointer;
+			padding: 0;
+			width: fit-content;
+		}
+
+		#menuToggle>svg {
+			height: 32px;
+			width: 32px;
+		}
+
+		#menuToggle>svg>g>path {
+			stroke: white;
+			stroke-width: 2.5;
+			stroke-linecap: round;
+			stroke-linejoin: round;
+		}
+
+		.nunaliit_header-nav.n2nav_showMenu>ul.n2nav_menu {
+			display: flex;
+			position: relative;
+			z-index: 100000;
+			top: unset;
+		}
+
+		.nunaliit_header-nav>ul.n2nav_menu {
+			display: none;
+		}
+
+		.nunaliit_header-nav .n2nav_menu {
+			display: flex;
+			flex-wrap: nowrap;
+			flex-direction: column;
+		}
+
+		.nunaliit_header-nav .n2nav_menu li {
+			height: auto;
+			padding: 15px;
+		}
+
+		.nunaliit_header-nav .n2nav_menu li span {
+			top: 0px !important;
+			line-height: 1.0;
+			z-index: 100000;
+		}
+
+		.nunaliit_header-nav .n2nav_menu li a {
+			top: 0px;
+			line-height: 1.0;
+			z-index: 100000;
+		}
+
+		.nunaliit_header-nav .n2nav_menu .n2nav_submenu {
+			display: none;
+		}
+
+		.nunaliit_header-nav .n2nav_menu .n2nav_submenu_clicked>.n2nav_submenu {
+			display: block;
+			z-index: 1000001;
+		}
+
+		.nunaliit_header-nav>ul>li>ul {
+			top: 0;
+		}
+
+		.nunaliit_header-nav li:hover ul li:first-child {
+			border-left: 1px solid rgba(255, 255, 255, 0.6);
+		}
+
+		/* The immediate first menu from the hamburger menu icon should not be offset */
+		.nunaliit_header-nav>ul.n2nav_menu.n2nav_responsiveMenuTypeA {
+			left: 0;
+		}
+
+		.nunaliit_header-nav ul.n2nav_responsiveMenuTypeA {
+			left: -233px;
+			top: -1px;
+		}
+
+		.nunaliit_header-nav ul.n2nav_responsiveMenuTypeB {
+			left: 100%;
+		}
+
+		.n2Splash_dialog_container,
+		.ui-dialog {
+			width: auto !important;
+			top: 0 !important;
+			left: 0 !important;
+		}
 	}
 }
 
