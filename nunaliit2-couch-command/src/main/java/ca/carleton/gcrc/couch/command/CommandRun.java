@@ -230,6 +230,7 @@ public class CommandRun implements Command {
         {
         	ServletHolder servletHolder = new ServletHolder(new ExportServlet());
 			servletHolder.setInitParameter("exportUser", atlasProperties.getExportUser());
+			servletHolder.setInitParameter("atlasRootPath", atlasProperties.getAtlasRootPath());
 			servletHolder.setInitParameter("exportPassword", atlasProperties.getExportPassword());
         	servletHolder.setInitOrder(2);
         	context.addServlet(servletHolder,"/servlet/export/*");

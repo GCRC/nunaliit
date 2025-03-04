@@ -51,6 +51,7 @@ public class ExportFullAtlas implements Runnable {
 	public static String createExport(String atlasRootPath, CouchDb couchDb) {
 		File exportDir = getExportDir(atlasRootPath);
 		File exportCompressFinalFile = new File(exportDir.getAbsolutePath() + ".tar.gz");
+		logger.info("Full atlas export to: " + exportCompressFinalFile);
 
 		try {
 			ExportFullAtlas export = new ExportFullAtlas(exportDir, couchDb, atlasRootPath);
