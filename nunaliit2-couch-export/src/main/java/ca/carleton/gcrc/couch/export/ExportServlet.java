@@ -182,9 +182,13 @@ public class ExportServlet extends JsonServlet {
 			return;
 		}
 
-		String realRootPath = atlasRootPath;
 		try {
-			String exportName = ExportFullAtlas.createExport(realRootPath, configuration.getCouchDb());
+			if(atlasRootPath == null || atlasRootPath.isEmpty()) {
+				logger.error("atlas.root.path not set, the export servlet requires this config to work.");
+				response.sendError(500);
+				return;
+			}
+			String exportName = ExportFullAtlas.createExport(atlasRootPath, configuration.getCouchDb());
 			response.setHeader("Content-Type", "text/plain");
 			PrintWriter writer = response.getWriter();
 			writer.write(exportName);
@@ -657,8 +661,11 @@ public class ExportServlet extends JsonServlet {
 	}
 
 	private void doGetCompleteList(HttpServletRequest request, HttpServletResponse response) throws IOException{
-		String realRootPath = atlasRootPath;
-		List<String> filenames = ExportFullAtlas.getExports(realRootPath);
+		if(atlasRootPath == null || atlasRootPath.isEmpty()) {
+			logger.error("atlas.root.path not set, the export servlet requires this config to work.");
+			return;
+		}
+		List<String> filenames = ExportFullAtlas.getExports(atlasRootPath);
 		JSONObject obj = new JSONObject();
 		obj.put("filenames", filenames);
 		response.setContentType("application/json");
@@ -672,8 +679,10 @@ public class ExportServlet extends JsonServlet {
 
 	private void doGetCompleteFile(String filename, HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		ServletContext ctx = servletConfig.getServletContext();
-		String realRootPath = atlasRootPath;
-		File file = ExportFullAtlas.getExport(realRootPath, filename);	
+		if(atlasRootPath == null || atlasRootPath.isEmpty()) {
+			logger.error("atlas.root.path not set, the export servlet requires this config to work.");
+		}
+		File file = ExportFullAtlas.getExport(atlasRootPath, filename);	
 		if(!file.exists()){
 			logger.error("Export file does not exist: " + file.getAbsolutePath());
 			throw new ServletException("Export File Does Not Exist!");
