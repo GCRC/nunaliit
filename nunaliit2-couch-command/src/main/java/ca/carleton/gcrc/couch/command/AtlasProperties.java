@@ -38,6 +38,7 @@ public class AtlasProperties {
 		atlasProps.setCouchDbAdminUser( props.getProperty("couchdb.admin.user") );
 		atlasProps.setInReachDbName(props.getProperty("couchdb.inreach.dbName", ""));
 		atlasProps.setExportUser(props.getProperty("export.complete.user"));
+		atlasProps.setAtlasRootPath(props.getProperty("atlas.root.path"));
 		atlasProps.setExportPassword(props.getProperty("export.complete.password"));
 
 		// CouchDb password
@@ -324,6 +325,7 @@ public class AtlasProperties {
 	private String couchDbAdminUser;
 	private String couchDbAdminPassword;
 	private String exportUser;
+	private String atlasRootPath;
 	private String exportPassword;
 	private int serverPort = 8080;
 	private boolean restricted = false;
@@ -413,6 +415,13 @@ public class AtlasProperties {
 	}
 	public void setExportUser(String exportUser) {
 		this.exportUser = exportUser;
+	}
+
+	public String getAtlasRootPath() {
+		return atlasRootPath;
+	}
+	public void setAtlasRootPath(String atlasRootPath) {
+		this.atlasRootPath = atlasRootPath;
 	}
 
 	public String getExportPassword() {

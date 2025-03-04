@@ -53,6 +53,7 @@ public class ExportServlet extends JsonServlet {
 	public static final String ConfigAttributeName_AtlasName = "ExportServlet_AtlasName";
 	public static final String CONFIG_EXPORT_USER = "exportUser";
 	public static final String CONFIG_EXPORT_PASS = "exportPassword";
+	public static final String CONFIG_ATLAS_ROOT_PATH = "atlasRootPath";
 
 	private ExportConfiguration configuration;
 	private ServletConfig servletConfig;
@@ -60,6 +61,7 @@ public class ExportServlet extends JsonServlet {
 	private String atlasName = null;
 
 	private String exportUserPass;
+	private String atlasRootPath;
 
 	public ExportServlet() {
 
@@ -93,7 +95,8 @@ public class ExportServlet extends JsonServlet {
 
 		String exportUser = config.getInitParameter(CONFIG_EXPORT_USER);
 		String exportPassword = config.getInitParameter(CONFIG_EXPORT_PASS);
-		if(exportUser == null || exportUser.isEmpty() || exportPassword == null || exportPassword.isEmpty()) {
+		atlasRootPath = config.getInitParameter(CONFIG_ATLAS_ROOT_PATH);
+		if(exportUser == null || exportUser.isEmpty() || exportPassword == null || exportPassword.isEmpty() || atlasRootPath == null || atlasRootPath.isEmpty()) {
 			exportUserPass = null;
 		} else {
 			exportUserPass = exportUser + ":" + exportPassword;
@@ -179,7 +182,7 @@ public class ExportServlet extends JsonServlet {
 			return;
 		}
 
-		String realRootPath = servletConfig.getServletContext().getRealPath(".");
+		String realRootPath = atlasRootPath;
 		try {
 			String exportName = ExportFullAtlas.createExport(realRootPath, configuration.getCouchDb());
 			response.setHeader("Content-Type", "text/plain");
@@ -654,8 +657,7 @@ public class ExportServlet extends JsonServlet {
 	}
 
 	private void doGetCompleteList(HttpServletRequest request, HttpServletResponse response) throws IOException{
-		String realRootPath = servletConfig.getServletContext().getRealPath(".");
-		logger.error("realrootpath: " + realRootPath);
+		String realRootPath = atlasRootPath;
 		List<String> filenames = ExportFullAtlas.getExports(realRootPath);
 		JSONObject obj = new JSONObject();
 		obj.put("filenames", filenames);
@@ -670,8 +672,7 @@ public class ExportServlet extends JsonServlet {
 
 	private void doGetCompleteFile(String filename, HttpServletRequest request, HttpServletResponse response) throws ServletException {
 		ServletContext ctx = servletConfig.getServletContext();
-		String realRootPath = ctx.getRealPath(".");
-		logger.error("realrootpath: " + realRootPath);
+		String realRootPath = atlasRootPath;
 		File file = ExportFullAtlas.getExport(realRootPath, filename);	
 		if(!file.exists()){
 			logger.error("Export file does not exist: " + file.getAbsolutePath());
