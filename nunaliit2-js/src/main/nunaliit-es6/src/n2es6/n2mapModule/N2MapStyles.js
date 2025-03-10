@@ -3,6 +3,7 @@
 */
 import {Fill, RegularShape, Stroke, Style, Text} from 'ol/style.js';
 import CircleStyle from 'ol/style/Circle';
+import Icon from 'ol/style/Icon';
 
 const StyleNamesMapForAll = 
 	{
@@ -23,7 +24,9 @@ const StyleNamesMapForAll =
 			,"label" : "Style.text.text"
 			,"labelOutlineColor" : "Style.text.stroke.color"
 			,"labelOutlineWidth" : "Style.text.stroke.width"
-			
+			,"iconSrc" : "Style.image.src"
+			,"scale" : "Style.image.scale"
+			,"iconColor" : "Style.image.iconColor"
 		}
 		,'line':{
 			"fillColor": "Style.fill.color"
@@ -124,6 +127,7 @@ class N2MapStyles {
 				internalOl5StyleNames[internalOl5StyleName] = symbols[tags];
 			}
 		}
+		
 		if (geometryType.indexOf("point") >= 0){
 			return this.getOl5StyleObjFromStyleName_point(internalOl5StyleNames);
 		}else {
@@ -154,7 +158,20 @@ class N2MapStyles {
 			arr = null;
 		}
 		var option_innerImage = handle.style['image_'];
-		var innerImage = new RegularShape(option_innerImage);
+		let innerImage;
+		if (n2InternalStyle["Style.image.src"]) {
+			const scale = n2InternalStyle['Style.image.scale'];
+			const iconColor = n2InternalStyle['Style.image.iconColor'] || undefined;
+			innerImage = new Icon({
+				crossOrigin: "anonymous",
+				scale: scale,
+				color: iconColor,
+				src: n2InternalStyle["Style.image.src"],
+			});
+		} else {
+			innerImage = new RegularShape(option_innerImage);
+		}
+
 		handle.style.setImage(innerImage);
 		return handle.style;
 		
@@ -178,6 +195,12 @@ class N2MapStyles {
 
 			} else if (currNodeString === 'image') {
 				let currnode = option_image;
+				
+				if (nextNodeString === 'src') {
+					currnode.src = value;
+					return currnode;
+				}
+				
 				currnode[nextNodeString] =
 				recurProps (arr,
 						currnode,
@@ -185,6 +208,17 @@ class N2MapStyles {
 				
 				return	currnode;
 
+			} else if (currNodeString === 'scale') {
+				if (
+					Array.isArray(value) &&
+					value.length === 2 &&
+					value.every(num => typeof num === 'number' && num >= 0 && num <= 1)
+				) {
+					return value;
+				}
+				throw new Error("Invalid scale value. It must be an array of two numbers between 0 and 1.");
+			} else if (currNodeString === 'iconColor') {
+				return value;
 			} else if (currNodeString === 'text') {
 				let currnode = supernode.getText();
 				if (!currnode) {
