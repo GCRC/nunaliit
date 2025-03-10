@@ -701,8 +701,8 @@ function loadRuleFromObject(ruleObj){
         var parsed = $n2.extend({}, rule);
 
         // If icon is provided, set it as externalGraphic
-        if (rule.icon) {
-            parsed.externalGraphic = rule.icon;
+        if (rule.iconSrc) {
+            parsed.externalGraphic = rule.iconSrc;
             parsed.graphicWidth = rule.width || 24;
             parsed.graphicHeight = rule.height || 24;
         }
