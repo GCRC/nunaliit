@@ -27,11 +27,13 @@
 
 #n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_legendEntry {
 	display: flex;
-	height: 1.3em;
+	align-items: center;
+	height: auto;
 }
 
 #n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_legendEntry > label {
 	display: flex;
+	align-items: center;
 }
 
 #n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_labelColumn {
@@ -41,8 +43,11 @@
 }
 
 #n2_filterableLegendWidgetLegend .n2widgetLegend_outer .n2widgetLegend_symbolColumn {
-	width: 50px;
+	max-width: 50px;
 	padding-left: 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 #n2_filterableLegendWidgetGraphic {
