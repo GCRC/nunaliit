@@ -353,7 +353,7 @@ class N2FilterableLegendWidgetWithGraphic {
         const symbolColumn = document.createElement("div");
         symbolColumn.setAttribute("class", "n2widgetLegend_symbolColumn");
         checkboxLabel.append(symbolColumn);
-
+    
         if (optionValue !== ALL_CHOICES) {
             symbolColumn.append(...this._getSVGSymbol(optionLabel));
         }
@@ -380,14 +380,26 @@ class N2FilterableLegendWidgetWithGraphic {
             if (aSum && bSum) return aSum - bSum;
             else return 0;
         });
-        
+    
         for (let i = 0; i < styleObjs.length; i++) {
             const style = styleObjs[i].style;
             if (!style) return symbols;
-
+            
+            const iconSrc = style?.symbolizersByLabel?.normal?.symbols?.iconSrc;
+            if (iconSrc) {
+                const height = style?.symbolizersByLabel?.normal?.symbols?.height || 20;
+                const width = style?.symbolizersByLabel?.normal?.symbols?.width || 20;
+                const imgEl = document.createElement('img');
+                imgEl.setAttribute('src', iconSrc);
+                imgEl.setAttribute('height', height)
+                imgEl.setAttribute('width', width)
+                symbols.push(imgEl);
+                continue;
+            }
+    
             Object.entries(styleObjs[i]).forEach(([key, value]) => {
                 if (key === "style") return;
-    
+                
                 const svgNode = document.createElementNS("http://www.w3.org/2000/svg", "svg");
                 svgNode.setAttribute("viewBox", "-7 -7 14 14");
                 svgNode.setAttribute("class", "n2widgetLegend_svg");
@@ -401,7 +413,7 @@ class N2FilterableLegendWidgetWithGraphic {
                 };
                 const symbolizer = style.getSymbolizer(context);
                 let geometry = null;
-                
+    
                 if (key === "point") {
                     const graphicName = symbolizer.getSymbolValue("graphicName", context);
                     let symbol = null;
@@ -419,7 +431,7 @@ class N2FilterableLegendWidgetWithGraphic {
                         geometry = document.createElementNS(svgNode.namespaceURI, "circle");
                         geometry.setAttributeNS(null, "r" , 5);
                     }
-            
+                    
                     symbolizer.forEachSymbol((name, value) => {
                         if (name === "r") { }
                         else if (name === "fill-opacity") {
@@ -430,8 +442,7 @@ class N2FilterableLegendWidgetWithGraphic {
                             geometry.setAttributeNS(null, name, value)
                         }
                     }, context);
-                }
-                else if (key === "line") {
+                } else if (key === "line") {
                     geometry = document.createElementNS(svgNode.namespaceURI, "line");
                     geometry.setAttributeNS(null, "x1", -5);
                     geometry.setAttributeNS(null, "y1", 0);
@@ -441,8 +452,7 @@ class N2FilterableLegendWidgetWithGraphic {
                     symbolizer.forEachSymbol((name, value) => {
                         geometry.setAttributeNS(null, name, value);
                     }, context);
-                }
-                else if (key === "polygon") {
+                } else if (key === "polygon") {
                     geometry = document.createElementNS(svgNode.namespaceURI, "path");
                     geometry.setAttributeNS(null, "d", "M -5 -5 L -2.5 5 L 5 5 L 2.5 -5 Z");
     

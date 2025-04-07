@@ -282,6 +282,10 @@ POSSIBILITY OF SUCH DAMAGE.
 					var $symbolColumnCluster = $('<div>')
 					.addClass('n2widgetLegend_symbolColumn_cluster')
 					.appendTo($symbolColumn);
+					
+					var $symbolColumnIcon = $('<div>')
+					.addClass('n2widgetLegend_symbolColumn_icon')
+					.appendTo($symbolColumn);
 
 					var $labelColumn = $('<div>')
 					.addClass('n2widgetLegend_labelColumn')
@@ -301,6 +305,17 @@ POSSIBILITY OF SUCH DAMAGE.
 					styleIds.forEach(function(styleId){
 						var styleInfo = labelInfo[styleId];
 						var style = styleInfo.style;
+						
+						const iconSrc = style?.symbolizersByLabel?.normal?.symbols?.iconSrc;
+						if (iconSrc) {
+							var $preview = $('<div>')
+							.addClass('n2widgetLegend_preview n2widgetLegend_previewIcon')
+							.attr('n2-style-id',style.id)
+							.appendTo($symbolColumnIcon);
+							_this._insertIcon($preview, style, iconSrc);
+							
+							return;
+						}
 
 						// Check if point is a cluster and create either a point or
 						// cluster symbol
@@ -407,6 +422,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				$parent.append($svg);
 			};
+		},
+		
+		_insertIcon: function($parent, style, iconSrc) {
+			const height = style?.symbolizersByLabel?.normal?.symbols?.height || 20;
+			const width = style?.symbolizersByLabel?.normal?.symbols?.width || 20;
+			const imgEl = document.createElement('img');
+			imgEl.setAttribute('src', iconSrc);
+			imgEl.setAttribute('height', height)
+			imgEl.setAttribute('width', width)
+							
+			$parent.append(imgEl);
 		},
 
 		_insertSvgPreviewLine: function($parent, style, context_){
@@ -1021,12 +1047,24 @@ POSSIBILITY OF SUCH DAMAGE.
 						var $symbolColumnCluster = $target.find('.n2widgetLegend_symbolColumn_cluster').first().empty();
 						var $symbolColumnLine = $target.find('.n2widgetLegend_symbolColumn_line').first().empty();
 						var $symbolColumnPolygon = $target.find('.n2widgetLegend_symbolColumn_polygon').first().empty();
+						var $symbolColumnIcon = $target.find('.n2widgetLegend_symbolColumn_icon').first().empty();
 						
 						
 
 						styleIds.forEach(function(styleId){
 							var styleInfo = labelInfo[styleId];
 							var style = styleInfo.style;
+							
+							const iconSrc = style?.symbolizersByLabel?.normal?.symbols?.iconSrc;
+							if (iconSrc) {
+								var $preview = $('<div>')
+								.addClass('n2widgetLegend_preview n2widgetLegend_previewIcon')
+								.attr('n2-style-id',style.id)
+								.appendTo($symbolColumnIcon);
+								_this._insertIcon($preview, style, iconSrc);
+								
+								return;
+							}
 
 							// Check if point is a cluster and create either a point or
 							// cluster symbol
@@ -1136,6 +1174,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 					$parent.append($svg);
 				};
+			},
+			
+			_insertIcon: function($parent, style, iconSrc) {
+				const height = style?.symbolizersByLabel?.normal?.symbols?.height || 20;
+				const width = style?.symbolizersByLabel?.normal?.symbols?.width || 20;
+				const imgEl = document.createElement('img');
+				imgEl.setAttribute('src', iconSrc);
+				imgEl.setAttribute('height', height)
+				imgEl.setAttribute('width', width)
+								
+				$parent.append(imgEl);
 			},
 
 			_insertSvgPreviewLine: function($parent, style, context_){
