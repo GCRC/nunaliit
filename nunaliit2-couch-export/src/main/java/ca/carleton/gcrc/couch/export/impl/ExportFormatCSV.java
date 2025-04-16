@@ -3,6 +3,9 @@ package ca.carleton.gcrc.couch.export.impl;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Vector;
 
@@ -28,6 +31,8 @@ public class ExportFormatCSV implements ExportFormat {
 	private SchemaCache schemaCache = null;
 	private String schemaName;
 	private SchemaExportInfo exportInfo;
+	private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ssa xxx")
+			.withZone(ZoneOffset.UTC);
 	
 	public ExportFormatCSV(
 		SchemaCache schemaCache
@@ -118,7 +123,15 @@ public class ExportFormatCSV implements ExportFormat {
 							String wkt = docGeometry.getWKT();
 							value = wkt;
 						}
-
+					} else if (SchemaExportProperty.Type.DATE == exportProperty.getType()) {
+						try {
+							long expectedTimestamp = (long) exportProperty.select(jsonDoc);
+							Instant instant = Instant.ofEpochMilli(expectedTimestamp);
+							value = dateFormatter.format(instant);
+						}
+						catch (Exception e) {
+							value = "Failed to convert value to date";
+						}
 					} else {
 						value = exportProperty.select(jsonDoc);
 					};
