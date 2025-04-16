@@ -30,7 +30,7 @@ public class ExportFormatGeoJson implements ExportFormat {
 	
 	private DocumentRetrieval retrieval = null;
 	private SchemaCache schemaCache = null;
-	private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ssa xxx")
+	private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSX")
 			.withZone(ZoneOffset.UTC);
 	
 	public ExportFormatGeoJson(

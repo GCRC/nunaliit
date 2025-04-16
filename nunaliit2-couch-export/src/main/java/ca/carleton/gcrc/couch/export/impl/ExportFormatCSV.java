@@ -31,7 +31,7 @@ public class ExportFormatCSV implements ExportFormat {
 	private SchemaCache schemaCache = null;
 	private String schemaName;
 	private SchemaExportInfo exportInfo;
-	private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ssa xxx")
+	private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSX")
 			.withZone(ZoneOffset.UTC);
 	
 	public ExportFormatCSV(
