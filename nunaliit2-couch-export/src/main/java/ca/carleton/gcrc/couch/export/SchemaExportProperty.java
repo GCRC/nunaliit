@@ -11,6 +11,7 @@ public class SchemaExportProperty {
 		TEXT("text")
 		,JSON("json")
 		,GEOMETRY("geometry")
+		,DATE("date")
 		;
 		
 		private String definitionString;

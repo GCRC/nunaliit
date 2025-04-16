@@ -3,6 +3,9 @@ package ca.carleton.gcrc.couch.export.impl;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.time.ZoneOffset;
 
 import org.json.JSONObject;
 import org.json.JSONWriter;
@@ -27,6 +30,8 @@ public class ExportFormatGeoJson implements ExportFormat {
 	
 	private DocumentRetrieval retrieval = null;
 	private SchemaCache schemaCache = null;
+	private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("uuuu-MM-dd'T'HH:mm:ss.SSSX")
+			.withZone(ZoneOffset.UTC);
 	
 	public ExportFormatGeoJson(
 		SchemaCache schemaCache
@@ -113,6 +118,16 @@ public class ExportFormatGeoJson implements ExportFormat {
 					for(SchemaExportProperty exportProperty : exportInfo.getProperties()){
 						Object value = exportProperty.select(jsonDoc);
 						if( null != value ) {
+							if (SchemaExportProperty.Type.DATE == exportProperty.getType()) {
+								try {
+									long expectedTimestamp = (long) exportProperty.select(jsonDoc);
+									Instant instant = Instant.ofEpochMilli(expectedTimestamp);
+									value = dateFormatter.format(instant);
+								}
+								catch (Exception e) {
+									value = "Failed to convert value to date";
+								}
+							}
 							jsonWriter.key(exportProperty.getLabel());
 							jsonWriter.value(value);
 						}
