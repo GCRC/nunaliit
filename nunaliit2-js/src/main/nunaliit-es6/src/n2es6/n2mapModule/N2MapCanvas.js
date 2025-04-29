@@ -131,6 +131,7 @@ class N2MapCanvas {
 		this.center = undefined;
 		this.resolution = undefined;
 		this.proj = undefined;
+		this.viewProjectionCode = 'EPSG:3857'
 		this.lastTime = null;
 		this.initialTime = null;
 		this.endIdx = 0;
@@ -220,7 +221,7 @@ class N2MapCanvas {
 					_this.dispatchService.send(DH, {
 						type: 'editCreateFromGeometry'
 						, geometry: feature.getGeometry()
-						, projection: new Projection({ code: 'EPSG:3857' })
+						, projection: new Projection({ code: _this.viewProjectionCode })
 						, _origin: _this
 					});
 				}
@@ -351,7 +352,7 @@ class N2MapCanvas {
 					source = new CouchDbSource({
 						sourceModelId: sourceModelId
 						, dispatchService: this.dispatchService
-						, projCode: 'EPSG:3857'
+						, projCode: _this.viewProjectionCode
 					});
 					this.sources.push(source);
 				}
@@ -364,7 +365,7 @@ class N2MapCanvas {
 					source = new N2ModelSource({
 						sourceModelId: sourceModelId
 						, dispatchService: this.dispatchService
-						, projCode: 'EPSG:3857'
+						, projCode: _this.viewProjectionCode
 						, onUpdateCallback: function (state) { }
 						, notifications: {
 							readStart: function () { }
@@ -609,8 +610,8 @@ class N2MapCanvas {
 		const _this = this;
 
 		const olView = new View({
-			center: transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
-			projection: 'EPSG:3857',
+			center: transform([-75, 45.5], 'EPSG:4326', this.viewProjectionCode),
+			projection: this.viewProjectionCode,
 			zoom: 6
 		});
 
@@ -643,7 +644,7 @@ class N2MapCanvas {
 			const bbox = this.coordinates.initialBounds;
 			const boundInProj = transformExtent(bbox,
 				new Projection({ code: 'EPSG:4326' }),
-				new Projection({ code: 'EPSG:3857' })
+				_this.n2View.getProjection()
 			);
 
 			customMap.once('postrender', function (evt) {
@@ -883,7 +884,7 @@ class N2MapCanvas {
 					type: 'editGeometryModified'
 					, docId: features[i].fid
 					, geom: geometry
-					, proj: new Projection({ code: 'EPSG:3857' })
+					, proj: _this.n2View.getProjection()
 					, _origin: _this
 				});
 			}
@@ -1399,13 +1400,13 @@ class N2MapCanvas {
 
 			if (m.projCode) {
 				const sourceProjCode = m.projCode;
-				const targetProjCode = 'EPSG:3857';
+				const targetProjCode = _this.viewProjectionCode;
 				if (targetProjCode !== sourceProjCode) {
 					const transformFn = getTransform(sourceProjCode, targetProjCode);
 					// Convert [0,0] and [0,1] to proj
 					targetCenter = transformFn([x, y]);
 				}
-				extent = this._computeFullBoundingBox(m.doc, 'EPSG:4326', 'EPSG:3857');
+				extent = this._computeFullBoundingBox(m.doc, 'EPSG:4326', _this.viewProjectionCode);
 			}
 
 			_this.n2View.cancelAnimations();
