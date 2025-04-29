@@ -20,6 +20,8 @@ import { default as LayerGroup } from 'ol/layer/Group.js';
 import { default as View } from 'ol/View.js';
 import { default as N2DonutCluster } from '../ol5support/N2DonutCluster.js';
 
+import proj4 from 'proj4';
+import {register} from 'ol/proj/proj4.js';
 import { extend, isEmpty, getTopLeft, getWidth } from 'ol/extent.js';
 import { transform, getTransform, transformExtent, get as getProjection } from 'ol/proj.js';
 import { default as Projection } from 'ol/proj/Projection.js';
@@ -102,7 +104,13 @@ class N2MapCanvas {
 			, onSuccess: function () { }
 			, onError: function (err) { }
 		}, opts_);
-
+		
+		if(opts.projDefs) {
+			for(const def of opts.projDefs) {
+				proj4.defs(def.code, def.definition);
+			}
+			register(proj4);
+		}
 		const _this = this;
 		this.options = opts;
 		this._classname = 'N2MapCanvas';
@@ -131,7 +139,7 @@ class N2MapCanvas {
 		this.center = undefined;
 		this.resolution = undefined;
 		this.proj = undefined;
-		this.viewProjectionCode = 'EPSG:3857'
+		this.viewProjectionCode = (opts && opts.defaultProjectionCode) ? opts.defaultProjectionCode : 'EPSG:3857'
 		this.lastTime = null;
 		this.initialTime = null;
 		this.endIdx = 0;
