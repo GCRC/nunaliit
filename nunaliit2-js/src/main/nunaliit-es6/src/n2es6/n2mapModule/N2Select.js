@@ -4,6 +4,7 @@
 
 import {getUid} from 'ol/util.js';
 import {default as Interaction} from 'ol/interaction/Interaction.js';
+import ol_interaction_Select from 'ol/interaction/Select.js'
 import Collection from 'ol/Collection.js';
 import {singleClick, never,click, shiftKeyOnly, pointerMove} from 'ol/events/condition.js';
 import Event from 'ol/events/Event.js';
@@ -59,7 +60,7 @@ class N2SelectEvent extends Event {
  * @fires N2SelectEvent
  * @api
  */
-class N2Select extends Interaction {
+class N2Select extends ol_interaction_Select {
 	constructor(opt_options){
 		const options = $n2.extend({
 

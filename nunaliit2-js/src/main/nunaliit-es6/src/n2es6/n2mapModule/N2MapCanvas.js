@@ -35,7 +35,6 @@ import { defaults as defaultsInteractionSet } from 'ol/interaction.js';
 
 import { default as DrawInteraction } from 'ol/interaction/Draw.js';
 import N2StadiaMapsFactory from './N2StadiaMapsFactory';
-import Stamen from 'ol/source/Stamen.js';
 import OSM from 'ol/source/OSM';
 import BingMaps from 'ol/source/BingMaps';
 import TileWMS from 'ol/source/TileWMS';
@@ -43,7 +42,7 @@ import LayerSwitcher from 'ol-layerswitcher';
 import 'ol-layerswitcher/src/ol-layerswitcher.css';
 
 import 'ol-ext/dist/ol-ext.css';
-import EditBar from './EditBar';
+import EditBar from 'ol-ext/control/EditBar';
 import Popup from 'ol-ext/overlay/Popup';
 import Swipe from 'ol-ext/control/Swipe';
 
@@ -65,7 +64,6 @@ const VENDOR = {
 	WMS: 'wms',
 	WMTS: 'wmts',
 	OSM: 'osm',
-	STAMEN: 'stamen',
 	STADIA: 'stadia'
 };
 
@@ -110,6 +108,12 @@ class N2MapCanvas {
 				proj4.defs(def.code, def.definition);
 			}
 			register(proj4);
+			for(const d of opts.projDefs) {
+				if(d.extent) {
+					const p = getProjection(d.code);
+					p.setExtent(d.extent);
+				}
+			}
 		}
 		const _this = this;
 		this.options = opts;
@@ -136,6 +140,7 @@ class N2MapCanvas {
 		this.overlayInfos = [];
 		this.mapLayers = [];
 		this.overlayLayers = [];
+		this.defaultCenter = (opts && opts.defaultMapCenter) ? opts.defaultMapCenter : null;
 		this.center = undefined;
 		this.resolution = undefined;
 		this.proj = undefined;
@@ -504,7 +509,8 @@ class N2MapCanvas {
 		if (this.currentMode === this.modes.ADD_OR_SELECT_FEATURE) {
 
 			this.editbarControl.setVisible(true);
-			this.editbarControl.setModifyWithSelect(true);
+			// this.editbarControl.setModifyWithSelect(true);
+			this.editbarControl.getInteraction('ModifySelect').setActive(true);
 			this.editbarControl.deactivateControls();
 			this.editbarControl.setActive(true);
 
@@ -512,15 +518,16 @@ class N2MapCanvas {
 
 		} else if (this.currentMode === this.modes.EDIT_FEATURE) {
 			this.editbarControl.deactivateControls();
-			this.editbarControl.setModifyWithSelect(true);
+			// this.editbarControl.setModifyWithSelect(true);
 			this.editbarControl.setActive(true);
 
 
 		} else if (this.currentMode === this.modes.NAVIGATE) {
 			this.editbarControl.deactivateControls();
-			this.editbarControl.setModifyWithSelect(false);
+			// this.editbarControl.setModifyWithSelect(false);
+			this.editbarControl.getInteraction('ModifySelect').setActive(false);
 			this.editbarControl.setActive(true);
-			this.editbarControl.deactivateModify();
+			// this.editbarControl.deactivateModify();
 			this.editbarControl.setVisible(false);
 			this.editLayerSource.clear();
 		}
@@ -617,8 +624,9 @@ class N2MapCanvas {
 	_drawMap() {
 		const _this = this;
 
+		const drawCenter = this.defaultCenter ? this.defaultCenter : transform([-75, 45.5], 'EPSG:4326', this.viewProjectionCode);
 		const olView = new View({
-			center: transform([-75, 45.5], 'EPSG:4326', this.viewProjectionCode),
+			center: drawCenter,
 			projection: this.viewProjectionCode,
 			zoom: 6
 		});
@@ -872,6 +880,7 @@ class N2MapCanvas {
 
 		customMap.addControl(this.editbarControl);
 		this.editbarControl.setVisible(false);
+		this.editbarControl.getInteraction('ModifySelect').setActive(false);
 		this.editbarControl.getInteraction('Select').on('clicked', function (e) {
 			if (_this.currentMode === _this.modes.ADD_OR_SELECT_FEATURE
 				|| _this.currentMode === _this.modes.EDIT_FEATURE) {
@@ -1294,15 +1303,6 @@ class N2MapCanvas {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal);
 			}
 
-		} else if (sourceTypeInternal === VENDOR.STAMEN) {
-			if (sourceOptionsInternal
-				&& sourceOptionsInternal.layerName) {
-				return new Stamen({
-					layer: sourceOptionsInternal.layerName
-				});
-			} else {
-				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal);
-			}
 		} else if (sourceTypeInternal === VENDOR.STADIA) {
 			if (sourceOptionsInternal
 				&& sourceOptionsInternal.layerName) {
