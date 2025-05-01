@@ -144,7 +144,8 @@ class N2MapCanvas {
 		this.center = undefined;
 		this.resolution = undefined;
 		this.proj = undefined;
-		this.viewProjectionCode = (opts && opts.defaultProjectionCode) ? opts.defaultProjectionCode : 'EPSG:3857'
+		this.defaultProjection = 'EPSG:3857'
+		this.viewProjectionCode = (opts && opts.defaultProjectionCode) ? opts.defaultProjectionCode : this.defaultProjection
 		this.lastTime = null;
 		this.initialTime = null;
 		this.endIdx = 0;
@@ -660,7 +661,6 @@ class N2MapCanvas {
 				new Projection({ code: 'EPSG:4326' }),
 				_this.n2View.getProjection()
 			);
-
 			customMap.once('postrender', function (evt) {
 				const res = evt.frameState.viewState.resolution;
 				const proj = _this.n2View.getProjection();
@@ -871,7 +871,9 @@ class N2MapCanvas {
 
 		this.editbarControl = new EditBar({
 			interactions: {
-				Select: this.interactionSet.selectInteraction
+				Select: this.interactionSet.selectInteraction,
+				Delete: false,
+				Info: false
 			},
 			source: editLayer.getSource()
 		});
