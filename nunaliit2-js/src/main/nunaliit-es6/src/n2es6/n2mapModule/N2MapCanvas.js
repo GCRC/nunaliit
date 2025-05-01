@@ -624,11 +624,15 @@ class N2MapCanvas {
 		const _this = this;
 
 		const drawCenter = this.defaultCenter ? this.defaultCenter : transform([-75, 45.5], 'EPSG:4326', this.viewProjectionCode);
-		const olView = new View({
+		const viewOpts = {
 			center: drawCenter,
 			projection: this.viewProjectionCode,
 			zoom: 6
-		});
+		}
+		if(getProjection(this.viewProjectionCode).getExtent()) {
+			viewOpts.extent = getProjection(this.viewProjectionCode).getExtent()
+		}
+		const olView = new View(viewOpts);
 
 		this.n2View = olView;
 		const customMap = new Map({
