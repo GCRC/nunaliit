@@ -42,7 +42,7 @@ import LayerSwitcher from 'ol-layerswitcher';
 import 'ol-layerswitcher/src/ol-layerswitcher.css';
 
 import 'ol-ext/dist/ol-ext.css';
-import EditBar from 'ol-ext/control/EditBar';
+import EditBar from './EditBar.js';
 import Popup from 'ol-ext/overlay/Popup';
 import Swipe from 'ol-ext/control/Swipe';
 
@@ -103,13 +103,13 @@ class N2MapCanvas {
 			, onError: function (err) { }
 		}, opts_);
 		
-		if(opts.projDefs) {
-			for(const def of opts.projDefs) {
+		if (opts.projDefs) {
+			for (const def of opts.projDefs) {
 				proj4.defs(def.code, def.definition);
 			}
 			register(proj4);
-			for(const d of opts.projDefs) {
-				if(d.extent) {
+			for (const d of opts.projDefs) {
+				if (d.extent) {
 					const p = getProjection(d.code);
 					p.setExtent(d.extent);
 				}
@@ -509,8 +509,7 @@ class N2MapCanvas {
 		if (this.currentMode === this.modes.ADD_OR_SELECT_FEATURE) {
 
 			this.editbarControl.setVisible(true);
-			// this.editbarControl.setModifyWithSelect(true);
-			this.editbarControl.getInteraction('ModifySelect').setActive(true);
+			this.editbarControl.setModifyWithSelect(true);
 			this.editbarControl.deactivateControls();
 			this.editbarControl.setActive(true);
 
@@ -518,16 +517,15 @@ class N2MapCanvas {
 
 		} else if (this.currentMode === this.modes.EDIT_FEATURE) {
 			this.editbarControl.deactivateControls();
-			// this.editbarControl.setModifyWithSelect(true);
+			this.editbarControl.setModifyWithSelect(true);
 			this.editbarControl.setActive(true);
 
 
 		} else if (this.currentMode === this.modes.NAVIGATE) {
 			this.editbarControl.deactivateControls();
-			// this.editbarControl.setModifyWithSelect(false);
-			this.editbarControl.getInteraction('ModifySelect').setActive(false);
+			this.editbarControl.setModifyWithSelect(false);
 			this.editbarControl.setActive(true);
-			// this.editbarControl.deactivateModify();
+			this.editbarControl.deactivateModify();
 			this.editbarControl.setVisible(false);
 			this.editLayerSource.clear();
 		}
@@ -880,7 +878,6 @@ class N2MapCanvas {
 
 		customMap.addControl(this.editbarControl);
 		this.editbarControl.setVisible(false);
-		this.editbarControl.getInteraction('ModifySelect').setActive(false);
 		this.editbarControl.getInteraction('Select').on('clicked', function (e) {
 			if (_this.currentMode === _this.modes.ADD_OR_SELECT_FEATURE
 				|| _this.currentMode === _this.modes.EDIT_FEATURE) {
