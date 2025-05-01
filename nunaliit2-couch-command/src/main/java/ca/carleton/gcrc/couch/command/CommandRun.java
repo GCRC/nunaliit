@@ -251,11 +251,13 @@ public class CommandRun implements Command {
         }
 
         // Servlet for date
-        {
-        	ServletHolder servletHolder = new ServletHolder(new DateServlet());
-        	servletHolder.setInitOrder(2);
-        	context.addServlet(servletHolder,"/servlet/date/*");
-        }
+		if(!atlasProperties.isDateServletDisabled()) {
+			{
+				ServletHolder servletHolder = new ServletHolder(new DateServlet());
+				servletHolder.setInitOrder(2);
+				context.addServlet(servletHolder,"/servlet/date/*");
+			}
+		}
 
         // Servlet for simplified geometry
         {

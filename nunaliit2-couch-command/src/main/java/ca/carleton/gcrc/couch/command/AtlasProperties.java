@@ -82,6 +82,15 @@ public class AtlasProperties {
 			}
 		}
 
+		// Date servlet
+		{
+			String dateServletDisabledString = props.getProperty("atlas.dateServlet.disabled","false");
+			boolean de = Boolean.parseBoolean(dateServletDisabledString);
+			if( de ){
+				atlasProps.setDateServletDisabled(de);
+			}
+		}
+
 		// Server Key
 		try {
 			String serverKeyString = props.getProperty("server.key",null);
@@ -331,6 +340,7 @@ public class AtlasProperties {
 	private boolean restricted = false;
 	private byte[] serverKey = null;
 	private boolean geometrySimplificationDisabled = false;
+	private boolean dateServletDisabled = false;
 	private String googleMapApiKey;
 
 	public String getAtlasName() {
@@ -458,6 +468,14 @@ public class AtlasProperties {
 
 	public void setGeometrySimplificationDisabled(boolean geometrySimplificationDisabled) {
 		this.geometrySimplificationDisabled = geometrySimplificationDisabled;
+	}
+
+	public boolean isDateServletDisabled() {
+		return dateServletDisabled;
+	}
+
+	public void setDateServletDisabled(boolean dateServletDisabled) {
+		this.dateServletDisabled = dateServletDisabled;
 	}
 
 	public String getGoogleMapApiKey() {
