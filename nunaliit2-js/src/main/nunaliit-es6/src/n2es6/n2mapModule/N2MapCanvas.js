@@ -661,7 +661,7 @@ class N2MapCanvas {
 		//Config the initial bound on the map
 		if (this.coordinates && !this.coordinates.autoInitialBounds) {
 			const bbox = this.coordinates.initialBounds;
-			const boundInProj = this.defaultProjection === this.viewProjectionCode ? transformExtent(bbox, getProjection('EPSG:4326'), _this.n2View.getProjection()) : bbox
+			const boundInProj = this.defaultProjection === this.viewProjectionCode ? transformExtent(bbox, 'EPSG:4326', _this.n2View.getProjection()) : bbox
 			customMap.once('postrender', function (evt) {
 				const res = evt.frameState.viewState.resolution;
 				const proj = _this.n2View.getProjection();
