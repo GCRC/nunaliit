@@ -8,7 +8,8 @@
     "json-loader": "^0.5.7",
     "ol": "^10.5.0",
     "ol-ext": "^4.0.31",
-    "ol-layerswitcher": "^4.1.2"
+    "ol-layerswitcher": "^4.1.2",
+    "proj4": "2.15.0"
   },
   "devDependencies": {
     "jsdoc": "^3.6.10",
@@ -34,7 +35,6 @@
     "minimist": "^1.2.6",
     "npm-watch": "^0.11.0",
     "plugin-error": "^1.0.1",
-    "proj4": "2.15.0",
     "script-loader": "^0.7.2",
     "shx": "^0.3.2",
     "style-loader": "^3.3.1",
