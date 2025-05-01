@@ -2,11 +2,9 @@
  * @module n2es6/n2mapModule/N2Select
  */
 
-import {getUid} from 'ol/util.js';
 import {default as Interaction} from 'ol/interaction/Interaction.js';
-import ol_interaction_Select from 'ol/interaction/Select.js'
 import Collection from 'ol/Collection.js';
-import {singleClick, never,click, shiftKeyOnly, pointerMove} from 'ol/events/condition.js';
+import {click, pointerMove} from 'ol/events/condition.js';
 import Event from 'ol/events/Event.js';
 var _loc = function(str,args){ return $n2.loc(str,'nunaliit2',args); };
 var DH = 'n2.canvasMap';
@@ -60,7 +58,7 @@ class N2SelectEvent extends Event {
  * @fires N2SelectEvent
  * @api
  */
-class N2Select extends ol_interaction_Select {
+class N2Select extends Interaction {
 	constructor(opt_options){
 		const options = $n2.extend({
 
