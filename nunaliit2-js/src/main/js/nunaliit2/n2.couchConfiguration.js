@@ -826,6 +826,17 @@ function Configure(options_){
 			});
 		};
 		
+		// Load ol default pop-ups
+		if( configuration.atlasDb ){
+			new $n2.couchEvents.SelectionRedirector({
+				dispatchService: configuration.directory.dispatchService,
+				eventService: configuration.directory.eventService,
+				atlasDb: configuration.atlasDb,
+				showService: configuration.directory.showService,
+				customService: configuration.directory.customService,
+			});
+		}
+
 		callCustomConfiguration();
 	};
 	
