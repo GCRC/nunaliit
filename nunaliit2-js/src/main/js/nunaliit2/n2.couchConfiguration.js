@@ -348,6 +348,11 @@ function Configure(options_){
 		configuration.directory.history = new $n2.history.History({
 			dispatchService: configuration.directory.dispatchService
 		});
+		
+		if(configuration.atlasDb) {
+			
+			console.log("configuration ===============> ", configuration.atlasDb)
+		}
 	
 		// Event translation
 		configuration.directory.eventService = new $n2.couchEvents.EventSupport({
@@ -697,6 +702,14 @@ function Configure(options_){
 			,schemaEditorService: configuration.directory.schemaEditorService
 			,userServerUrl: options.userServerUrl
 			,customService: configuration.directory.customService
+		});
+		
+		new $n2.couchEvents.SelectionRedirector({
+			dispatchService: configuration.directory.dispatchService,
+			eventService: configuration.directory.eventService,
+			atlasDb: configuration.atlasDb,
+			showService: configuration.directory.showService,
+			customService: configuration.directory.customService,
 		});
 		
 	 	configuration.directory.modelService = new $n2.model.Service({
