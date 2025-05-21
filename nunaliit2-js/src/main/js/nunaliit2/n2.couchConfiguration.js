@@ -348,11 +348,6 @@ function Configure(options_){
 		configuration.directory.history = new $n2.history.History({
 			dispatchService: configuration.directory.dispatchService
 		});
-		
-		if(configuration.atlasDb) {
-			
-			console.log("configuration ===============> ", configuration.atlasDb)
-		}
 	
 		// Event translation
 		configuration.directory.eventService = new $n2.couchEvents.EventSupport({
