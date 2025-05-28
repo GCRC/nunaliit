@@ -17,7 +17,8 @@
   "scripts": {
     "clean": "rm -f dist/target/*",
     "full-clean": "rm -rf node_modules && npm run clean",
-    "build": "vite build"
+    "build": "vite build",
+    "watch": "vite build --watch"
   },
   "keywords": [
     "nunaliit"
