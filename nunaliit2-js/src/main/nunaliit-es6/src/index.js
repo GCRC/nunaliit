@@ -11,14 +11,14 @@ import N2Select from './n2es6/n2mapModule/N2Select'
 import N2SourceWithN2Intent from './n2es6/n2mapModule/N2SourceWithN2Intent'
 import N2StackingHistory from './n2es6/n2mapModule/N2StackingHistory'
 
-import N2DonutCluster from './n2es6/ol5support/N2DonutCluster'
+import N2DonutCluster from './n2es6/openlayersSupport/N2DonutCluster'
 
 import N2FilterableLegendWidget from './n2es6/widgets/N2FilterableLegendWidget'
 import N2ModelExportWidget from './n2es6/widgets/N2ModelExportWidget'
 
 const n2es6 = {};
 n2es6.n2mapModule = {};
-n2es6.ol5support = {};
+n2es6.openlayersSupport = {};
 n2es6.widgets = {};
 
 n2es6.n2mapModule.N2CouchDbSource = N2CouchDbSource;
@@ -33,7 +33,7 @@ n2es6.n2mapModule.N2ModelSource = N2ModelSource;
 n2es6.n2mapModule.N2Select = N2Select;
 n2es6.n2mapModule.N2SourceWithN2Intent = N2SourceWithN2Intent;
 n2es6.n2mapModule.N2StackingHistory = N2StackingHistory;
-n2es6.ol5support.N2DonutCluster = N2DonutCluster;
+n2es6.openlayersSupport.N2DonutCluster = N2DonutCluster;
 n2es6.widgets.N2FilterableLegendWidget = N2FilterableLegendWidget;
 n2es6.widgets.N2ModelExportWidget = N2ModelExportWidget;
 

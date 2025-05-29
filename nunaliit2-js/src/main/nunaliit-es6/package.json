@@ -1,7 +1,7 @@
 {
   "name": "n2es6",
   "version": "1.0.0",
-  "description": "n2es6 builder",
+  "description": "ES6 modules for Nunaliit2",
   "main": "dist/n2es6.js",
   "dependencies": {
     "imports-loader": "^0.8.0",
