@@ -20,9 +20,15 @@
     "build": "vite build",
     "watch": "vite build --watch"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GCRC/nunaliit.git"
+  },
   "keywords": [
-    "nunaliit"
+    "nunaliit",
+    "openlayers"
   ],
   "author": "Jean-Pierre Fiset, Decheng Zhang",
-  "license": "BSD-3-Clause"
+  "license": "BSD-3-Clause",
+  "homepage": "https://github.com/GCRC/nunaliit"
 }
