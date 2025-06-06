@@ -107,16 +107,30 @@ class N2MapCanvas {
 		}, opts_);
 		
 		if (opts.projDefs) {
-			for (const def of opts.projDefs) {
-				proj4.defs(def.code, def.definition);
-			}
-			register(proj4);
-			for (const d of opts.projDefs) {
-				if (d.extent) {
-					const p = getProjection(d.code);
-					p.setExtent(d.extent);
+			if(!Array.isArray(opts.projDefs)) {
+				$n2.reportError('projDefs should be an array of objects with keys code, definition and optionally extent')
+			} else {
+				for (const def of opts.projDefs) {
+					if(!def.code || !def.definition) {
+						$n2.reportError('code and definition keys are required for each projDefs entry: ' + def);
+						continue;
+					} else {
+						proj4.defs(def.code, def.definition);
+					}
+				}
+				register(proj4);
+				for (const d of opts.projDefs) {
+					if (d.extent) {
+						if(!Array.isArray(d.extent) || typeof d.extent[0] !== 'number') {
+							$n2.reportError('projDefs extent must be an array of numbers');
+							continue;
+						}
+						const p = getProjection(d.code);
+						p.setExtent(d.extent);
+					}
 				}
 			}
+			
 		}
 		const _this = this;
 		this.options = opts;
