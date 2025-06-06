@@ -21,7 +21,7 @@ import { default as View } from 'ol/View.js';
 import { default as N2DonutCluster } from '../ol5support/N2DonutCluster.js';
 
 import proj4 from 'proj4';
-import {register} from 'ol/proj/proj4.js';
+import { register } from 'ol/proj/proj4.js';
 import { extend, isEmpty, getTopLeft, getWidth } from 'ol/extent.js';
 import { transform, getTransform, transformExtent, get as getProjection } from 'ol/proj.js';
 import { default as Projection } from 'ol/proj/Projection.js';
@@ -38,6 +38,8 @@ import N2StadiaMapsFactory from './N2StadiaMapsFactory';
 import OSM from 'ol/source/OSM';
 import BingMaps from 'ol/source/BingMaps';
 import TileWMS from 'ol/source/TileWMS';
+import ImageTileSource from 'ol/source/ImageTile.js';
+import { TileGrid } from 'ol/tilegrid';
 import LayerSwitcher from 'ol-layerswitcher';
 import 'ol-layerswitcher/src/ol-layerswitcher.css';
 
@@ -64,7 +66,8 @@ const VENDOR = {
 	WMS: 'wms',
 	WMTS: 'wmts',
 	OSM: 'osm',
-	STADIA: 'stadia'
+	STADIA: 'stadia',
+	XYZ: 'xyz'
 };
 
 const olStyleNames = {
@@ -1269,7 +1272,7 @@ class N2MapCanvas {
 					for (let z = 0; z < numofzoom; ++z) {
 						// generate resolutions and matrixIds arrays for this WMTS
 						resolutions[z] = size / Math.pow(2, z);
-						matrixIds[z] = options.matrixSet + ":" + z;
+						matrixIds[z] = z;
 					}
 
 					wmtsOpt.projection = projection;
@@ -1291,6 +1294,22 @@ class N2MapCanvas {
 				return null;
 			}
 
+		} else if (sourceTypeInternal === VENDOR.XYZ) {
+			if (sourceOptionsInternal && sourceOptionsInternal.url) {
+				const parameters = {url: sourceOptionsInternal.url}
+				if(sourceOptionsInternal.attribution) {
+					parameters.attribution = sourceOptionsInternal.attribution
+				}
+				if(sourceOptionsInternal.projection) {
+					parameters.projection = sourceOptionsInternal.projection
+				}
+				if(sourceOptionsInternal.tileGrid) {
+					parameters.tileGrid = new TileGrid(sourceOptionsInternal.tileGrid)
+				}
+				return new ImageTileSource(parameters);
+			} else {
+				$n2.reportError(`Source '${sourceTypeInternal}' requires URL Parameter`);
+			}
 		} else if (sourceTypeInternal === VENDOR.OSM) {
 
 			if (sourceOptionsInternal
