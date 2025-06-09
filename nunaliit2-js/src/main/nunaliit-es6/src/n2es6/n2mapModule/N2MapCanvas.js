@@ -157,7 +157,6 @@ class N2MapCanvas {
 		this.overlayInfos = [];
 		this.mapLayers = [];
 		this.overlayLayers = [];
-		this.defaultCenter = (opts && opts.defaultMapCenter) ? opts.defaultMapCenter : null;
 		this.center = undefined;
 		this.resolution = undefined;
 		this.proj = undefined;
@@ -640,7 +639,7 @@ class N2MapCanvas {
 	_drawMap() {
 		const _this = this;
 
-		const drawCenter = this.defaultCenter ? this.defaultCenter : transform([-75, 45.5], 'EPSG:4326', this.viewProjectionCode);
+		const drawCenter = transform([-75, 45.5], 'EPSG:4326', this.viewProjectionCode);
 		const viewOpts = {
 			center: drawCenter,
 			projection: this.viewProjectionCode,
