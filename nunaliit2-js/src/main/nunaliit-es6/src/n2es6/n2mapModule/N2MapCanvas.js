@@ -21,7 +21,7 @@ import { default as View } from 'ol/View.js';
 import { default as N2DonutCluster } from '../openlayersSupport/N2DonutCluster.js';
 
 import proj4 from 'proj4';
-import {register} from 'ol/proj/proj4.js';
+import { register } from 'ol/proj/proj4.js';
 import { extend, isEmpty, getTopLeft, getWidth } from 'ol/extent.js';
 import { transform, getTransform, transformExtent, get as getProjection } from 'ol/proj.js';
 import { default as Projection } from 'ol/proj/Projection.js';
@@ -38,6 +38,8 @@ import N2StadiaMapsFactory from './N2StadiaMapsFactory';
 import OSM from 'ol/source/OSM';
 import BingMaps from 'ol/source/BingMaps';
 import TileWMS from 'ol/source/TileWMS';
+import ImageTileSource from 'ol/source/ImageTile.js';
+import { TileGrid } from 'ol/tilegrid';
 import LayerSwitcher from 'ol-layerswitcher';
 import 'ol-layerswitcher/src/ol-layerswitcher.css';
 
@@ -64,7 +66,8 @@ const VENDOR = {
 	WMS: 'wms',
 	WMTS: 'wmts',
 	OSM: 'osm',
-	STADIA: 'stadia'
+	STADIA: 'stadia',
+	XYZ: 'xyz'
 };
 
 const olStyleNames = {
@@ -104,16 +107,30 @@ class N2MapCanvas {
 		}, opts_);
 		
 		if (opts.projDefs) {
-			for (const def of opts.projDefs) {
-				proj4.defs(def.code, def.definition);
-			}
-			register(proj4);
-			for (const d of opts.projDefs) {
-				if (d.extent) {
-					const p = getProjection(d.code);
-					p.setExtent(d.extent);
+			if(!Array.isArray(opts.projDefs)) {
+				$n2.reportError('projDefs should be an array of objects with keys code, definition and optionally extent')
+			} else {
+				for (const def of opts.projDefs) {
+					if(!def.code || !def.definition) {
+						$n2.reportError('code and definition keys are required for each projDefs entry: ' + def);
+						continue;
+					} else {
+						proj4.defs(def.code, def.definition);
+					}
+				}
+				register(proj4);
+				for (const d of opts.projDefs) {
+					if (d.extent) {
+						if(!Array.isArray(d.extent) || typeof d.extent[0] !== 'number') {
+							$n2.reportError('projDefs extent must be an array of numbers');
+							continue;
+						}
+						const p = getProjection(d.code);
+						p.setExtent(d.extent);
+					}
 				}
 			}
+			
 		}
 		const _this = this;
 		this.options = opts;
@@ -623,7 +640,7 @@ class N2MapCanvas {
 	_drawMap() {
 		const _this = this;
 
-		const drawCenter = this.defaultCenter ? this.defaultCenter : transform([-75, 45.5], 'EPSG:4326', this.viewProjectionCode);
+		const drawCenter = transform([-75, 45.5], 'EPSG:4326', this.viewProjectionCode);
 		const viewOpts = {
 			center: drawCenter,
 			projection: this.viewProjectionCode,
@@ -1269,7 +1286,7 @@ class N2MapCanvas {
 					for (let z = 0; z < numofzoom; ++z) {
 						// generate resolutions and matrixIds arrays for this WMTS
 						resolutions[z] = size / Math.pow(2, z);
-						matrixIds[z] = options.matrixSet + ":" + z;
+						matrixIds[z] = z;
 					}
 
 					wmtsOpt.projection = projection;
@@ -1291,6 +1308,22 @@ class N2MapCanvas {
 				return null;
 			}
 
+		} else if (sourceTypeInternal === VENDOR.XYZ) {
+			if (sourceOptionsInternal && sourceOptionsInternal.url) {
+				const parameters = {url: sourceOptionsInternal.url}
+				if(sourceOptionsInternal.attribution) {
+					parameters.attribution = sourceOptionsInternal.attribution
+				}
+				if(sourceOptionsInternal.projection) {
+					parameters.projection = sourceOptionsInternal.projection
+				}
+				if(sourceOptionsInternal.tileGrid) {
+					parameters.tileGrid = new TileGrid(sourceOptionsInternal.tileGrid)
+				}
+				return new ImageTileSource(parameters);
+			} else {
+				$n2.reportError(`Source '${sourceTypeInternal}' requires URL Parameter`);
+			}
 		} else if (sourceTypeInternal === VENDOR.OSM) {
 
 			if (sourceOptionsInternal
