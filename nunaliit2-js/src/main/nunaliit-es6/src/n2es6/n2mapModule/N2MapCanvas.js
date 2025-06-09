@@ -20,6 +20,8 @@ import { default as LayerGroup } from 'ol/layer/Group.js';
 import { default as View } from 'ol/View.js';
 import { default as N2DonutCluster } from '../ol5support/N2DonutCluster.js';
 
+import proj4 from 'proj4';
+import { register } from 'ol/proj/proj4.js';
 import { extend, isEmpty, getTopLeft, getWidth } from 'ol/extent.js';
 import { transform, getTransform, transformExtent, get as getProjection } from 'ol/proj.js';
 import { default as Projection } from 'ol/proj/Projection.js';
@@ -33,15 +35,16 @@ import { defaults as defaultsInteractionSet } from 'ol/interaction.js';
 
 import { default as DrawInteraction } from 'ol/interaction/Draw.js';
 import N2StadiaMapsFactory from './N2StadiaMapsFactory';
-import Stamen from 'ol/source/Stamen.js';
 import OSM from 'ol/source/OSM';
 import BingMaps from 'ol/source/BingMaps';
 import TileWMS from 'ol/source/TileWMS';
+import ImageTileSource from 'ol/source/ImageTile.js';
+import { TileGrid } from 'ol/tilegrid';
 import LayerSwitcher from 'ol-layerswitcher';
 import 'ol-layerswitcher/src/ol-layerswitcher.css';
 
 import 'ol-ext/dist/ol-ext.css';
-import EditBar from './EditBar';
+import EditBar from './EditBar.js';
 import Popup from 'ol-ext/overlay/Popup';
 import Swipe from 'ol-ext/control/Swipe';
 
@@ -63,8 +66,8 @@ const VENDOR = {
 	WMS: 'wms',
 	WMTS: 'wmts',
 	OSM: 'osm',
-	STAMEN: 'stamen',
-	STADIA: 'stadia'
+	STADIA: 'stadia',
+	XYZ: 'xyz'
 };
 
 const olStyleNames = {
@@ -102,7 +105,33 @@ class N2MapCanvas {
 			, onSuccess: function () { }
 			, onError: function (err) { }
 		}, opts_);
-
+		
+		if (opts.projDefs) {
+			if(!Array.isArray(opts.projDefs)) {
+				$n2.reportError('projDefs should be an array of objects with keys code, definition and optionally extent')
+			} else {
+				for (const def of opts.projDefs) {
+					if(!def.code || !def.definition) {
+						$n2.reportError('code and definition keys are required for each projDefs entry: ' + def);
+						continue;
+					} else {
+						proj4.defs(def.code, def.definition);
+					}
+				}
+				register(proj4);
+				for (const d of opts.projDefs) {
+					if (d.extent) {
+						if(!Array.isArray(d.extent) || typeof d.extent[0] !== 'number') {
+							$n2.reportError('projDefs extent must be an array of numbers');
+							continue;
+						}
+						const p = getProjection(d.code);
+						p.setExtent(d.extent);
+					}
+				}
+			}
+			
+		}
 		const _this = this;
 		this.options = opts;
 		this._classname = 'N2MapCanvas';
@@ -131,6 +160,8 @@ class N2MapCanvas {
 		this.center = undefined;
 		this.resolution = undefined;
 		this.proj = undefined;
+		this.defaultProjection = 'EPSG:3857'
+		this.viewProjectionCode = (opts && opts.defaultProjectionCode) ? opts.defaultProjectionCode : this.defaultProjection
 		this.lastTime = null;
 		this.initialTime = null;
 		this.endIdx = 0;
@@ -220,7 +251,7 @@ class N2MapCanvas {
 					_this.dispatchService.send(DH, {
 						type: 'editCreateFromGeometry'
 						, geometry: feature.getGeometry()
-						, projection: new Projection({ code: 'EPSG:3857' })
+						, projection: new Projection({ code: _this.viewProjectionCode })
 						, _origin: _this
 					});
 				}
@@ -351,7 +382,7 @@ class N2MapCanvas {
 					source = new CouchDbSource({
 						sourceModelId: sourceModelId
 						, dispatchService: this.dispatchService
-						, projCode: 'EPSG:3857'
+						, projCode: _this.viewProjectionCode
 					});
 					this.sources.push(source);
 				}
@@ -364,7 +395,7 @@ class N2MapCanvas {
 					source = new N2ModelSource({
 						sourceModelId: sourceModelId
 						, dispatchService: this.dispatchService
-						, projCode: 'EPSG:3857'
+						, projCode: _this.viewProjectionCode
 						, onUpdateCallback: function (state) { }
 						, notifications: {
 							readStart: function () { }
@@ -608,11 +639,16 @@ class N2MapCanvas {
 	_drawMap() {
 		const _this = this;
 
-		const olView = new View({
-			center: transform([-75, 45.5], 'EPSG:4326', 'EPSG:3857'),
-			projection: 'EPSG:3857',
+		const drawCenter = transform([-75, 45.5], 'EPSG:4326', this.viewProjectionCode);
+		const viewOpts = {
+			center: drawCenter,
+			projection: this.viewProjectionCode,
 			zoom: 6
-		});
+		}
+		if(getProjection(this.viewProjectionCode).getExtent()) {
+			viewOpts.extent = getProjection(this.viewProjectionCode).getExtent()
+		}
+		const olView = new View(viewOpts);
 
 		this.n2View = olView;
 		const customMap = new Map({
@@ -641,11 +677,7 @@ class N2MapCanvas {
 		//Config the initial bound on the map
 		if (this.coordinates && !this.coordinates.autoInitialBounds) {
 			const bbox = this.coordinates.initialBounds;
-			const boundInProj = transformExtent(bbox,
-				new Projection({ code: 'EPSG:4326' }),
-				new Projection({ code: 'EPSG:3857' })
-			);
-
+			const boundInProj = this.defaultProjection === this.viewProjectionCode ? transformExtent(bbox, 'EPSG:4326', _this.n2View.getProjection()) : bbox
 			customMap.once('postrender', function (evt) {
 				const res = evt.frameState.viewState.resolution;
 				const proj = _this.n2View.getProjection();
@@ -856,7 +888,9 @@ class N2MapCanvas {
 
 		this.editbarControl = new EditBar({
 			interactions: {
-				Select: this.interactionSet.selectInteraction
+				Select: this.interactionSet.selectInteraction,
+				Delete: false,
+				Info: false
 			},
 			source: editLayer.getSource()
 		});
@@ -883,7 +917,7 @@ class N2MapCanvas {
 					type: 'editGeometryModified'
 					, docId: features[i].fid
 					, geom: geometry
-					, proj: new Projection({ code: 'EPSG:3857' })
+					, proj: _this.n2View.getProjection()
 					, _origin: _this
 				});
 			}
@@ -1251,7 +1285,7 @@ class N2MapCanvas {
 					for (let z = 0; z < numofzoom; ++z) {
 						// generate resolutions and matrixIds arrays for this WMTS
 						resolutions[z] = size / Math.pow(2, z);
-						matrixIds[z] = options.matrixSet + ":" + z;
+						matrixIds[z] = z;
 					}
 
 					wmtsOpt.projection = projection;
@@ -1273,6 +1307,22 @@ class N2MapCanvas {
 				return null;
 			}
 
+		} else if (sourceTypeInternal === VENDOR.XYZ) {
+			if (sourceOptionsInternal && sourceOptionsInternal.url) {
+				const parameters = {url: sourceOptionsInternal.url}
+				if(sourceOptionsInternal.attribution) {
+					parameters.attribution = sourceOptionsInternal.attribution
+				}
+				if(sourceOptionsInternal.projection) {
+					parameters.projection = sourceOptionsInternal.projection
+				}
+				if(sourceOptionsInternal.tileGrid) {
+					parameters.tileGrid = new TileGrid(sourceOptionsInternal.tileGrid)
+				}
+				return new ImageTileSource(parameters);
+			} else {
+				$n2.reportError(`Source '${sourceTypeInternal}' requires URL Parameter`);
+			}
 		} else if (sourceTypeInternal === VENDOR.OSM) {
 
 			if (sourceOptionsInternal
@@ -1285,15 +1335,6 @@ class N2MapCanvas {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal);
 			}
 
-		} else if (sourceTypeInternal === VENDOR.STAMEN) {
-			if (sourceOptionsInternal
-				&& sourceOptionsInternal.layerName) {
-				return new Stamen({
-					layer: sourceOptionsInternal.layerName
-				});
-			} else {
-				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal);
-			}
 		} else if (sourceTypeInternal === VENDOR.STADIA) {
 			if (sourceOptionsInternal
 				&& sourceOptionsInternal.layerName) {
@@ -1399,13 +1440,13 @@ class N2MapCanvas {
 
 			if (m.projCode) {
 				const sourceProjCode = m.projCode;
-				const targetProjCode = 'EPSG:3857';
+				const targetProjCode = _this.viewProjectionCode;
 				if (targetProjCode !== sourceProjCode) {
 					const transformFn = getTransform(sourceProjCode, targetProjCode);
 					// Convert [0,0] and [0,1] to proj
 					targetCenter = transformFn([x, y]);
 				}
-				extent = this._computeFullBoundingBox(m.doc, 'EPSG:4326', 'EPSG:3857');
+				extent = this._computeFullBoundingBox(m.doc, 'EPSG:4326', _this.viewProjectionCode);
 			}
 
 			_this.n2View.cancelAnimations();
