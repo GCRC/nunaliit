@@ -712,8 +712,7 @@ function Configure(options_){
 		});
 		
 	 	configuration.directory.canvasService = new $n2.canvas.Service({
-			dispatchService: configuration.directory.dispatchService,
-			customService: configuration.directory.customService
+			dispatchService: configuration.directory.dispatchService
 		});
 		
 	 	configuration.directory.displayService = new $n2.display.Service({
@@ -826,7 +825,7 @@ function Configure(options_){
 				,key: 'wiki'
 			});
 		};
-
+		
 		callCustomConfiguration();
 	};
 	

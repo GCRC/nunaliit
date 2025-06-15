@@ -43,20 +43,15 @@ var Service = $n2.Class({
 	
 	dispatchService: null,
 	
-	customService: null,
-	
 	initialize: function(opts_){
 		var opts = $n2.extend({
-			dispatchService: null,
-			customService: null
+			dispatchService: null
 		},opts_);
 		
 		var _this = this;
 		
 		this.dispatchService = opts.dispatchService;
 		
-		this.customService = opts.customService;
-
 		// Register to events
 		if( this.dispatchService ){
 			var f = function(m, addr, dispatcher){
@@ -135,7 +130,6 @@ var Service = $n2.Class({
 			};
 
 		} else if( 'canvasDisplay' === m.type ) {
-			m.customService = this.customService
 			if( $n2.canvasForceGraph 
 			 && $n2.canvasForceGraph.HandleCanvasDisplayRequest ){
 				$n2.canvasForceGraph.HandleCanvasDisplayRequest(m);
