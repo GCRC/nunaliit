@@ -712,7 +712,8 @@ function Configure(options_){
 		});
 		
 	 	configuration.directory.canvasService = new $n2.canvas.Service({
-			dispatchService: configuration.directory.dispatchService
+			dispatchService: configuration.directory.dispatchService,
+			customService: configuration.directory.customService
 		});
 		
 	 	configuration.directory.displayService = new $n2.display.Service({
@@ -825,17 +826,6 @@ function Configure(options_){
 				,key: 'wiki'
 			});
 		};
-		
-		// Load ol default pop-ups
-		if( configuration.atlasDb ){
-			new $n2.couchEvents.SelectionRedirector({
-				dispatchService: configuration.directory.dispatchService,
-				eventService: configuration.directory.eventService,
-				atlasDb: configuration.atlasDb,
-				showService: configuration.directory.showService,
-				customService: configuration.directory.customService,
-			});
-		}
 
 		callCustomConfiguration();
 	};

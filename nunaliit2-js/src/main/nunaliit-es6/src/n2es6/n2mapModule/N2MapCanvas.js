@@ -965,10 +965,56 @@ class N2MapCanvas {
 						, onError: function () { }
 					});
 				}
+
+				if(!featurePopupHtmlFn ){
+					this.defaultPopupHtmlFn({
+						feature: feature
+						, onSuccess: function (content) {
+							const mousepoint = mapBrowserEvent.coordinate;
+							popup.show(mousepoint, content);
+						}
+						, onError: function () { }
+					})
+				};
 			} else {
 				//n2es6 does not support multi hover, so does nunaliit2 
 			}
 		}
+	}
+
+	defaultPopupHtmlFn(opt_) {
+		var feature = opt_.feature;
+
+		if( feature.cluster && feature.cluster.length === 1 ){
+			feature = feature.cluster[0];
+		};
+
+		if( feature.cluster ){
+			var clusterSize = feature.cluster.length;
+
+			var $tmp = $('<span class="n2_popup"></span>');
+			$tmp.text( _loc('This cluster contains {count} features',{
+				count: clusterSize
+			}) );
+
+			var $wrapper = $('<div></div>');
+			$wrapper.append($tmp);
+			var html = $wrapper.html();
+
+			opt_.onSuccess(html);
+
+		} else {
+			var doc = opt_.feature.data;
+
+			var $tmp = $('<span class="n2_popup"></span>');
+			this.showService.displayBriefDescription($tmp,{},doc);
+
+			var $wrapper = $('<div></div>');
+			$wrapper.append($tmp);
+			var html = $wrapper.html();
+
+			opt_.onSuccess(html);
+		};
 	}
 
 	_retrievingDocsAndSendSelectedEvent(features) {
@@ -1076,7 +1122,7 @@ class N2MapCanvas {
 				const charlieSource = new N2SourceWithN2Intent({
 					interaction: _this.interactionSet.selectInteraction,
 					source: betaSource,
-					dispatchService: _this.dispatchService
+					dispatchService: _this.dispatchService,
 				});
 
 				_this.n2intentWrapper = charlieSource;
@@ -1652,7 +1698,6 @@ class N2MapCanvas {
 
 		return geomBounds;
 	}
-
 }
 
 export function HandleCanvasAvailableRequest(m) {
@@ -1685,6 +1730,7 @@ export function HandleCanvasDisplayRequest(m) {
 		options.onSuccess = m.onSuccess;
 		options.onError = m.onError;
 		options.interactionId = m.interactionId;
+		options.config.customService = m.customService
 		new N2MapCanvas(options);
 	}
 }

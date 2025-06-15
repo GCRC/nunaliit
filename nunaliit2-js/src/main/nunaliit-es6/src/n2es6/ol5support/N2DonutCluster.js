@@ -216,6 +216,7 @@ class N2DonutCluster extends VectorSource {
 				this.features.push.apply(this.features, this.createCluster(neighbors));
 			}
 		}
+		
 	}
 
 	/**
@@ -255,6 +256,7 @@ class N2DonutCluster extends VectorSource {
 			newf.n2GeomProj = f.n2GeomProj;
 			newf.setGeometry(centroidGeom);
 			newf.setId(f.getId()+'_inCluster');
+			newf.cluster = features
 			newf.clusterId = this.clusterPrefix + this.clusterId;
 			rst.push(newf);
 		}
