@@ -1000,10 +1000,56 @@ class N2MapCanvas {
 						, onError: function () { }
 					});
 				}
+
+				if(!featurePopupHtmlFn ){
+					this.defaultPopupHtmlFn({
+						feature: feature
+						, onSuccess: function (content) {
+							const mousepoint = mapBrowserEvent.coordinate;
+							popup.show(mousepoint, content);
+						}
+						, onError: function () { }
+					})
+				};
 			} else {
 				//n2es6 does not support multi hover, so does nunaliit2 
 			}
 		}
+	}
+
+	defaultPopupHtmlFn(opt_) {
+		var feature = opt_.feature;
+
+		if( feature.cluster && feature.cluster.length === 1 ){
+			feature = feature.cluster[0];
+		};
+
+		if( feature.cluster ){
+			var clusterSize = feature.cluster.length;
+
+			var $tmp = $('<span class="n2_popup"></span>');
+			$tmp.text( _loc('This cluster contains {count} features',{
+				count: clusterSize
+			}) );
+
+			var $wrapper = $('<div></div>');
+			$wrapper.append($tmp);
+			var html = $wrapper.html();
+
+			opt_.onSuccess(html);
+
+		} else {
+			var doc = opt_.feature.data;
+
+			var $tmp = $('<span class="n2_popup"></span>');
+			this.showService.displayBriefDescription($tmp,{},doc);
+
+			var $wrapper = $('<div></div>');
+			$wrapper.append($tmp);
+			var html = $wrapper.html();
+
+			opt_.onSuccess(html);
+		};
 	}
 
 	_retrievingDocsAndSendSelectedEvent(features) {
@@ -1694,7 +1740,6 @@ class N2MapCanvas {
 
 		return geomBounds;
 	}
-
 }
 
 export function HandleCanvasAvailableRequest(m) {
