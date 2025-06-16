@@ -1,7 +1,7 @@
 /**
 * @module n2es6/n2mapModule/N2StackingHistory
 */
-import {listen, unlisten} from 'ol/events.js';
+import {listen} from 'ol/events.js';
 class N2StackingHistory {
 
 	constructor(opt_options){

@@ -1,9 +1,8 @@
 /**
-* @module n2es6/ol5support/N2DonutCluster
+* @module n2es6/openlayersSupport/N2DonutCluster
 */
 
 import {getUid} from 'ol/util.js';
-import {assign} from 'ol/obj.js';
 import {listen, unlistenByKey} from 'ol/events.js';
 import EventType from 'ol/events/EventType.js';
 import VectorSource from 'ol/source/Vector.js';
@@ -26,15 +25,16 @@ class N2DonutCluster extends VectorSource {
 	* @param {Options} options CLuster options
 	*/
 	constructor(options) {
-		options = assign({
+		options = {
 			distance: 20,
 			minimumPolygonPixelSize : 20,
 			minimumLinePixelSize : 20,
 			clusterPointsOnly : false,
 			threshold: null,
 			clusterPrefix: null,
-			disableDynamicClustering : false
-		}, options);
+			disableDynamicClustering : false,
+			...options
+		}
 		super(options);
 
 		/**
