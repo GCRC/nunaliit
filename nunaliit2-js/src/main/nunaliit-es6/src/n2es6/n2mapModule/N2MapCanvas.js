@@ -1772,7 +1772,6 @@ export function HandleCanvasDisplayRequest(m) {
 		options.onSuccess = m.onSuccess;
 		options.onError = m.onError;
 		options.interactionId = m.interactionId;
-		options.config.customService = m.customService
 		new N2MapCanvas(options);
 	}
 }
