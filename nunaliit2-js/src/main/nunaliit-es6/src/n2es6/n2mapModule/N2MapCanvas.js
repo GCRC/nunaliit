@@ -52,6 +52,7 @@ import { defaults as Defaults } from 'ol/control';
 
 import N2MapSpy from './N2MapSpy';
 import N2MapScale from './N2MapScale';
+import N2RotationControl from './N2RotationControl';
 
 const _loc = function (str, args) { return $n2.loc(str, 'nunaliit2', args); };
 const DH = 'n2.canvasMap';
@@ -110,25 +111,25 @@ class N2MapCanvas {
 			if(!Array.isArray(opts.projDefs)) {
 				$n2.reportError('projDefs should be an array of objects with keys code, definition and optionally extent')
 			} else {
-				for (const def of opts.projDefs) {
+			for (const def of opts.projDefs) {
 					if(!def.code || !def.definition) {
 						$n2.reportError('code and definition keys are required for each projDefs entry: ' + def);
 						continue;
 					} else {
-						proj4.defs(def.code, def.definition);
+				proj4.defs(def.code, def.definition);
 					}
-				}
-				register(proj4);
-				for (const d of opts.projDefs) {
-					if (d.extent) {
+			}
+			register(proj4);
+			for (const d of opts.projDefs) {
+				if (d.extent) {
 						if(!Array.isArray(d.extent) || typeof d.extent[0] !== 'number') {
 							$n2.reportError('projDefs extent must be an array of numbers');
 							continue;
 						}
-						const p = getProjection(d.code);
-						p.setExtent(d.extent);
-					}
+					const p = getProjection(d.code);
+					p.setExtent(d.extent);
 				}
+			}
 			}
 			
 		}
@@ -812,6 +813,11 @@ class N2MapCanvas {
 			};
 			const scaleCtrl = new N2MapScale(data);
 			customMap.addControl(scaleCtrl);
+		}
+
+		if (this.options.rotationControl) {
+			const rotationsCtrl = new N2RotationControl(this.options.rotationControl);
+			customMap.addControl(rotationsCtrl)
 		}
 
 		this.overlayInfos.forEach( (info, idx) => {
