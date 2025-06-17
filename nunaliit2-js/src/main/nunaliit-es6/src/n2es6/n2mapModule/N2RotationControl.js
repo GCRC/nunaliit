@@ -17,32 +17,20 @@ class N2RotationControl extends Control{
 	constructor(opt_options) {
 		const options = opt_options || {};
 		
-		const cwTemplate = document.createElement('template');
-		cwTemplate.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-clockwise" viewBox="0 0 16 16">
-  <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2z"/>
-  <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466"/>
-</svg>`
 		const cwbutton = document.createElement('button');
-		cwbutton.appendChild(cwTemplate.content.cloneNode(true));
-
+		cwbutton.className = 'n2_ol_cw_button';
 		const cwelement = document.createElement('div');
 		cwelement.className = 'ol-unselectable';
 		cwelement.appendChild(cwbutton);
 
-		const ccwTemplate = document.createElement('template');
-		ccwTemplate.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
-  <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"/>
-  <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966A.25.25 0 0 0 8 4.466"/>
-</svg>`;
 		const ccwbutton = document.createElement('button');
-		ccwbutton.appendChild(ccwTemplate.content.cloneNode(true));
-
+		ccwbutton.className = 'n2_ol_ccw_button';
 		const ccwelement = document.createElement('div');
 		cwelement.className = 'ol-unselectable';
 		ccwelement.appendChild(ccwbutton);
 
 		const element = document.createElement('div');
-		element.className = 'rotate-button-group ol-unselectable ol-control';
+		element.className = 'n2_rotate_button_group ol-unselectable ol-control';
 		element.appendChild(cwelement);
 		element.appendChild(ccwelement);
 		super({
