@@ -816,7 +816,12 @@ class N2MapCanvas {
 		}
 
 		if (this.options.rotationControl) {
-			const rotationsCtrl = new N2RotationControl(this.options.rotationControl);
+			const defaultProjDef = proj4.defs(this.viewProjectionCode);
+			const rotationControlOpts = {
+				defaultProjDef,
+				...this.options.rotationControl
+			}
+			const rotationsCtrl = new N2RotationControl(rotationControlOpts);
 			customMap.addControl(rotationsCtrl)
 		}
 

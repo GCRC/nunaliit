@@ -4,7 +4,6 @@
 
 import { Control } from "ol/control";
 import "./N2RotationControl.css";
-import { get as getProjection } from "ol/proj.js";
 
 /**
  * @classdesc
@@ -42,11 +41,10 @@ class N2RotationControl extends Control {
     ccwbutton.addEventListener("click", this.handleRotateCCW.bind(this), false);
 
     if (options.autoRotateCurrentPosition) {
-      const lon_0 = options.lon_0 || 0;
+      const long0 = options.defaultProjDef?.long0 || 0;
       navigator.geolocation.getCurrentPosition((position) => {
         const long = position.coords.longitude;
-        const rotationAmount = long - lon_0;
-        const radianRotation = rotationAmount * 0.01745;
+        const radianRotation = long * 0.01745 - long0;
         this.getMap().getView().adjustRotation(radianRotation);
       });
     }
