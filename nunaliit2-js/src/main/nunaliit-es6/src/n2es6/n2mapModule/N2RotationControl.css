@@ -1,6 +1,6 @@
 .n2_rotate_button_group {
-    top: 90px;
-    left: .5em;
+  top: 90px;
+  left: 0.5em;
 }
 
 .n2_ol_cw_button {
@@ -16,4 +16,3 @@
   background-position: center;
   background-size: contain;
 }
-

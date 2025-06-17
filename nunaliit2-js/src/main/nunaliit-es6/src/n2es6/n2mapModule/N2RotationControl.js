@@ -3,8 +3,8 @@
  */
 
 import { Control } from "ol/control";
-import './N2RotationControl.css';
-import { get as getProjection } from 'ol/proj.js';
+import "./N2RotationControl.css";
+import { get as getProjection } from "ol/proj.js";
 
 /**
  * @classdesc
@@ -13,52 +13,51 @@ import { get as getProjection } from 'ol/proj.js';
  * @api
  */
 
-class N2RotationControl extends Control{
-	constructor(opt_options) {
-		const options = opt_options || {};
-		
-		const cwbutton = document.createElement('button');
-		cwbutton.className = 'n2_ol_cw_button';
-		const cwelement = document.createElement('div');
-		cwelement.className = 'ol-unselectable';
-		cwelement.appendChild(cwbutton);
+class N2RotationControl extends Control {
+  constructor(opt_options) {
+    const options = opt_options || {};
 
-		const ccwbutton = document.createElement('button');
-		ccwbutton.className = 'n2_ol_ccw_button';
-		const ccwelement = document.createElement('div');
-		cwelement.className = 'ol-unselectable';
-		ccwelement.appendChild(ccwbutton);
+    const cwbutton = document.createElement("button");
+    cwbutton.className = "n2_ol_cw_button";
+    const cwelement = document.createElement("div");
+    cwelement.className = "ol-unselectable";
+    cwelement.appendChild(cwbutton);
 
-		const element = document.createElement('div');
-		element.className = 'n2_rotate_button_group ol-unselectable ol-control';
-		element.appendChild(cwelement);
-		element.appendChild(ccwelement);
-		super({
-			element: element,
-			target: options.target,
-		});
+    const ccwbutton = document.createElement("button");
+    ccwbutton.className = "n2_ol_ccw_button";
+    const ccwelement = document.createElement("div");
+    cwelement.className = "ol-unselectable";
+    ccwelement.appendChild(ccwbutton);
 
-		cwbutton.addEventListener('click', this.handleRotateCW.bind(this), false);
-		ccwbutton.addEventListener('click', this.handleRotateCCW.bind(this), false);
+    const element = document.createElement("div");
+    element.className = "n2_rotate_button_group ol-unselectable ol-control";
+    element.appendChild(cwelement);
+    element.appendChild(ccwelement);
+    super({
+      element: element,
+      target: options.target,
+    });
 
-		if(options.autoRotateCurrentPosition) {
-			const lon_0 = options.lon_0 || 0;
-			navigator.geolocation.getCurrentPosition((position) => {
-				const long = position.coords.longitude;
-				const rotationAmount = long - lon_0;
-				const radianRotation = rotationAmount * 0.01745;
-				this.getMap().getView().adjustRotation(radianRotation);
-			});
-		}
-		
-	}
+    cwbutton.addEventListener("click", this.handleRotateCW.bind(this), false);
+    ccwbutton.addEventListener("click", this.handleRotateCCW.bind(this), false);
 
-	handleRotateCW() {
-		this.getMap().getView().adjustRotation(0.5236);
-	}
+    if (options.autoRotateCurrentPosition) {
+      const lon_0 = options.lon_0 || 0;
+      navigator.geolocation.getCurrentPosition((position) => {
+        const long = position.coords.longitude;
+        const rotationAmount = long - lon_0;
+        const radianRotation = rotationAmount * 0.01745;
+        this.getMap().getView().adjustRotation(radianRotation);
+      });
+    }
+  }
 
-	handleRotateCCW() {
-		this.getMap().getView().adjustRotation(-0.5236);
-	}
+  handleRotateCW() {
+    this.getMap().getView().adjustRotation(0.5236);
+  }
+
+  handleRotateCCW() {
+    this.getMap().getView().adjustRotation(-0.5236);
+  }
 }
 export default N2RotationControl;
