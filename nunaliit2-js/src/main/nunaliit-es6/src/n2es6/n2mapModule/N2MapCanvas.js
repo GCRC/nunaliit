@@ -22,7 +22,7 @@ import { default as N2DonutCluster } from '../openlayersSupport/N2DonutCluster.j
 
 import proj4 from 'proj4';
 import { register } from 'ol/proj/proj4.js';
-import { extend, isEmpty, getTopLeft, getWidth } from 'ol/extent.js';
+import { extend, isEmpty, getTopLeft, getWidth, getCenter } from 'ol/extent.js';
 import { transform, getTransform, transformExtent, get as getProjection } from 'ol/proj.js';
 import { default as Projection } from 'ol/proj/Projection.js';
 import Tile from 'ol/layer/Tile.js';
@@ -177,7 +177,6 @@ class N2MapCanvas {
 		this.editbarControl = null;
 		this.editLayerSource = undefined;
 		this.refreshCallback = null;
-		this.findOnMapBufferZoom = (opts && opts.findOnMapBufferZoom) ? opts.findOnMapBufferZoom : undefined;
 
 		this.canvasName = null;
 		if (this.options) {
@@ -1489,7 +1488,6 @@ class N2MapCanvas {
 
 		if ('n2ViewAnimation' === type) {
 			const { x, y } = m;
-			const zoom = m.zoom || 9;
 			if (m._suppressSetHash) {
 				this._suppressSetHash = m._suppressSetHash
 			}
@@ -1505,56 +1503,18 @@ class N2MapCanvas {
 					// Convert [0,0] and [0,1] to proj
 					targetCenter = transformFn([x, y]);
 				}
-				if(this.findOnMapBufferZoom) {
-					if (m.doc && m.doc.nunaliit_geom
-						&& m.doc.nunaliit_geom.bbox) {
-						const bbox = m.doc.nunaliit_geom.bbox;
-						if(this.findOnMapBufferZoom) {
-							bbox[0] = Math.max(bbox[0] - this.findOnMapBufferZoom, -180);
-							bbox[1] = Math.max(bbox[1] - this.findOnMapBufferZoom, -90);
-							bbox[2] = Math.min(bbox[2] + this.findOnMapBufferZoom, 180);
-							bbox[3] = Math.min(bbox[3] + this.findOnMapBufferZoom, 90);
-						}
-						let geomBounds = null;
-						if (Array.isArray(bbox)) {
-							geomBounds = transformExtent(bbox,
-								new Projection({ code: 'EPSG:4326' }),
-								new Projection({ code: this.viewProjectionCode })
-							);
-							extent = geomBounds;
-						}
-					}
-				} else {
-					extent = this._computeFullBoundingBox(m.doc, 'EPSG:4326', _this.viewProjectionCode);
-				}
-				
 			}
 
 			_this.n2View.cancelAnimations();
 			if (extent) {
-				//If projCode for extent is  provided, calculate the transformed 
-				//extent and zoom into that
-				if (extent[0] === extent[2] || extent[1] === extent[3]) {
-					//If calculated extent is a point
-					_this.n2View.animate({
-							center: targetCenter,
-							duration: 500
-						}
-						, {
-							zoom: 9,
-							duration: 500
-						}
-					);
-
-				} else {
-					_this.n2View.fit(extent, { duration: 1500 });
-				}
-
+				_this.n2View.animate({
+					center: targetCenter,
+					duration: 500
+				});
 			} else {
 				// No projCode provided, just zoom in with targetCenter
 				_this.n2View.animate({
 					center: targetCenter
-					, zoom: zoom
 					, duration: 200
 				});
 			}
@@ -1703,9 +1663,9 @@ class N2MapCanvas {
 
 	_centerMapOnFeature(feature) {
 		const extent = feature.getGeometry().getExtent();
-		if (extent) {
-			const map = this.n2Map;
-			map.getView().fit(extent, map.getSize());
+		const center = getCenter(extent);
+		if (center) {
+			this.n2Map.getView().animate({center: center})
 		}
 	}
 
