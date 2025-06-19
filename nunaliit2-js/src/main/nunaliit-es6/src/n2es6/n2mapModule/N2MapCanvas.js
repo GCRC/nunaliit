@@ -177,6 +177,7 @@ class N2MapCanvas {
 		this.editbarControl = null;
 		this.editLayerSource = undefined;
 		this.refreshCallback = null;
+		this.findOnMapBufferZoom = (opts && opts.findOnMapBufferZoom) ? opts.findOnMapBufferZoom : undefined;
 
 		this.canvasName = null;
 		if (this.options) {
@@ -1504,7 +1505,29 @@ class N2MapCanvas {
 					// Convert [0,0] and [0,1] to proj
 					targetCenter = transformFn([x, y]);
 				}
-				extent = this._computeFullBoundingBox(m.doc, 'EPSG:4326', _this.viewProjectionCode);
+				if(this.findOnMapBufferZoom) {
+					if (m.doc && m.doc.nunaliit_geom
+						&& m.doc.nunaliit_geom.bbox) {
+						const bbox = m.doc.nunaliit_geom.bbox;
+						if(this.findOnMapBufferZoom) {
+							bbox[0] = Math.max(bbox[0] - this.findOnMapBufferZoom, -180);
+							bbox[1] = Math.max(bbox[1] - this.findOnMapBufferZoom, -90);
+							bbox[2] = Math.min(bbox[2] + this.findOnMapBufferZoom, 180);
+							bbox[3] = Math.min(bbox[3] + this.findOnMapBufferZoom, 90);
+						}
+						let geomBounds = null;
+						if (Array.isArray(bbox)) {
+							geomBounds = transformExtent(bbox,
+								new Projection({ code: 'EPSG:4326' }),
+								new Projection({ code: this.viewProjectionCode })
+							);
+							extent = geomBounds;
+						}
+					}
+				} else {
+					extent = this._computeFullBoundingBox(m.doc, 'EPSG:4326', _this.viewProjectionCode);
+				}
+				
 			}
 
 			_this.n2View.cancelAnimations();
