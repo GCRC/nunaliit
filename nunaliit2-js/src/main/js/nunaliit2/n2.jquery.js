@@ -235,9 +235,9 @@ const enhanceDialog = () => {
 			originalClose.call(this, event);
 
 			// Focus the element that triggered the dialog, if available
-			if (this.triggerElement) {
-				this.triggerElement.focus();
-			}
+			//if (this.triggerElement) {
+			//	this.triggerElement.focus();
+			//}
         },
 
         open: function (event) {
