@@ -247,6 +247,6 @@ const enhanceDialog = () => {
         },
     });
 };
-enhanceDialog()
+//enhanceDialog()
 
 })(jQuery,nunaliit2);
