@@ -2,11 +2,14 @@ package ca.carleton.gcrc.couch.onUpload.inReach;
 
 import java.io.File;
 import java.util.List;
+import java.net.URL;
 
 import org.json.JSONObject;
 
-import ca.carleton.gcrc.couch.client.CouchClient;
+import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.impl.CouchDbImpl;
 import ca.carleton.gcrc.couch.onUpload.MockCouchClient;
+import ca.carleton.gcrc.couch.onUpload.MockCouchDesignDocument;
 import ca.carleton.gcrc.couch.onUpload.MockFileConversionContext2;
 import ca.carleton.gcrc.couch.onUpload.TestSupport;
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
@@ -18,9 +21,15 @@ import junit.framework.TestCase;
 
 public class InReachProcessorTest extends TestCase {
 
-	private CouchClient testCouchClient;
+	private CouchDesignDocument testCouchDesignDocument;
 
 	public void testPerformSubmission() throws Exception {
+		try {
+			testCouchDesignDocument = new MockCouchDesignDocument(
+					new CouchDbImpl(new MockCouchClient(), new URL("http://test/")), new URL("http://test/"));
+		} catch (Exception e) {
+			fail("Could not init testing Couch Design Document:" + e);
+		}
 		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
 		File docFile = TestSupport.findResourceFile("inreach_doc.json");
 
@@ -28,7 +37,7 @@ public class InReachProcessorTest extends TestCase {
 		settings.load();
 		InReachConfiguration.setInReachSettings(settings);
 
-		InReachProcessorImpl processor = new InReachProcessorImpl(null);
+		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchDesignDocument);
 
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
 
@@ -77,9 +86,10 @@ public class InReachProcessorTest extends TestCase {
 
 	public void testPerformGarminExploreSubmission() throws Exception {
 		try {
-			testCouchClient = new MockCouchClient();
+			testCouchDesignDocument = new MockCouchDesignDocument(
+					new CouchDbImpl(new MockCouchClient(), new URL("http://test/")), new URL("http://test/"));
 		} catch (Exception e) {
-			fail("Could not init testing Couch client:" + e);
+			fail("Could not init testing Couch Design Document:" + e);
 		}
 		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
 		File docFile = TestSupport.findResourceFile("inreach_garminexplore_doc.json");
@@ -88,7 +98,7 @@ public class InReachProcessorTest extends TestCase {
 		settings.load();
 		InReachConfiguration.setInReachSettings(settings);
 
-		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchClient);
+		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchDesignDocument);
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
 		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
 		processor.performSubmission(conversionContext);
@@ -138,9 +148,10 @@ public class InReachProcessorTest extends TestCase {
 
 	public void testPerformGarminExploreMultipleEventSubmission() throws Exception {
 		try {
-			testCouchClient = new MockCouchClient();
+			testCouchDesignDocument = new MockCouchDesignDocument(
+					new CouchDbImpl(new MockCouchClient(), new URL("http://test/")), new URL("http://test/"));
 		} catch (Exception e) {
-			fail("Could not init testing Couch client:" + e);
+			fail("Could not init testing Couch Design Document:" + e);
 		}
 		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
 		File docFile = TestSupport.findResourceFile("inreach_garminexplore_multi_doc.json");
@@ -149,7 +160,7 @@ public class InReachProcessorTest extends TestCase {
 		settings.load();
 		InReachConfiguration.setInReachSettings(settings);
 
-		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchClient);
+		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchDesignDocument);
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
 		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
 		processor.performSubmission(conversionContext);
@@ -266,6 +277,12 @@ public class InReachProcessorTest extends TestCase {
 	}
 
 	public void testMissingField() throws Exception {
+		try {
+			testCouchDesignDocument = new MockCouchDesignDocument(
+					new CouchDbImpl(new MockCouchClient(), new URL("http://test/")), new URL("http://test/"));
+		} catch (Exception e) {
+			fail("Could not init testing Couch Design Document:" + e);
+		}
 		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
 		File docFile = TestSupport.findResourceFile("inreach_doc_missing.json");
 
@@ -273,7 +290,7 @@ public class InReachProcessorTest extends TestCase {
 		settings.load();
 		InReachConfiguration.setInReachSettings(settings);
 
-		InReachProcessorImpl processor = new InReachProcessorImpl(null);
+		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchDesignDocument);
 
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
 
@@ -311,6 +328,12 @@ public class InReachProcessorTest extends TestCase {
 	}
 
 	public void testGpsTimestamp() throws Exception {
+		try {
+			testCouchDesignDocument = new MockCouchDesignDocument(
+					new CouchDbImpl(new MockCouchClient(), new URL("http://test/")), new URL("http://test/"));
+		} catch (Exception e) {
+			fail("Could not init testing Couch Design Document:" + e);
+		}
 		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
 		File docFile = TestSupport.findResourceFile("inreach_doc_missing.json");
 
@@ -318,7 +341,7 @@ public class InReachProcessorTest extends TestCase {
 		settings.load();
 		InReachConfiguration.setInReachSettings(settings);
 
-		InReachProcessorImpl processor = new InReachProcessorImpl(null);
+		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchDesignDocument);
 
 		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
 
@@ -341,6 +364,99 @@ public class InReachProcessorTest extends TestCase {
 			if (false == "date".equals(dateType)) {
 				fail("Unexpected time structure");
 			}
+		}
+	}
+
+	public void testGarminExploreAutoCreateInReachSignout() throws Exception {
+		try {
+			testCouchDesignDocument = new MockCouchDesignDocument(
+					new CouchDbImpl(new MockCouchClient(), new URL("http://test/")), new URL("http://test/"));
+		} catch (Exception e) {
+			fail("Could not init testing Couch Design Document:" + e);
+		}
+		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
+		File docFile = TestSupport.findResourceFile("inreach_garminexplore_auto_create_signout_doc.json");
+
+		InReachSettingsFromXmlFile settings = new InReachSettingsFromXmlFile(settingsFile);
+		settings.load();
+		InReachConfiguration.setInReachSettings(settings);
+
+		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchDesignDocument);
+		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
+		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
+		processor.performSubmission(conversionContext);
+
+		JSONObject savedDocJson = conversionContext.getSavedDocument();
+		if (null == savedDocJson) {
+			fail("Document not saved");
+		}
+
+		List<JSONObject> resDocs = conversionContext.getCreatedDocuments();
+		JSONObject singleCreatedDocument = null;
+		if (resDocs.size() == 1) {
+			singleCreatedDocument = resDocs.get(0);
+		} else {
+			fail("Exactly one new document should be created with inreach_garminexplore_auto_create_signout_doc.json");
+		}
+		MockFileConversionContext2 savedContext = new MockFileConversionContext2(singleCreatedDocument);
+		DocumentDescriptor savedDoc = savedContext.getDocument();
+
+		String schemaName = savedDoc.getSchemaName();
+		if (false == "inReach_Signout".equals(schemaName)) {
+			fail("Unexpected schema name: " + schemaName);
+		}
+
+		JSONObject data = singleCreatedDocument.getJSONObject("inReach_Signout");
+		String name = data.optString("Name", null);
+		if (false == "John Smith".equals(name)) {
+			fail("Unexpected data");
+		}
+		String device_ref = data.optString("device_ref", null);
+		if (false == "123456".equals(device_ref)) {
+			fail("Unexpected data");
+		}
+	}
+
+	public void testGeoProAutoCreateInReachSignout() throws Exception {
+		try {
+			testCouchDesignDocument = new MockCouchDesignDocument(
+					new CouchDbImpl(new MockCouchClient(), new URL("http://test/")), new URL("http://test/"));
+		} catch (Exception e) {
+			fail("Could not init testing Couch Design Document:" + e);
+		}
+		File settingsFile = TestSupport.findResourceFile("inreach_forms.xml");
+		File docFile = TestSupport.findResourceFile("inreach_geopro_auto_create_signout_doc.json");
+
+		InReachSettingsFromXmlFile settings = new InReachSettingsFromXmlFile(settingsFile);
+		settings.load();
+		InReachConfiguration.setInReachSettings(settings);
+
+		InReachProcessorImpl processor = new InReachProcessorImpl(testCouchDesignDocument);
+		JSONObject jsonDoc = TextFileUtils.readJsonObjectFile(docFile);
+		MockFileConversionContext2 conversionContext = new MockFileConversionContext2(jsonDoc);
+		processor.performSubmission(conversionContext);
+
+		JSONObject savedDocJson = conversionContext.getSavedDocument();
+		if (null == savedDocJson) {
+			fail("Document not saved");
+		}
+
+		MockFileConversionContext2 savedContext = new MockFileConversionContext2(savedDocJson);
+		DocumentDescriptor savedDoc = savedContext.getDocument();
+
+		String schemaName = savedDoc.getSchemaName();
+		if (false == "inReach_Signout".equals(schemaName)) {
+			fail("Unexpected schema name: " + schemaName);
+		}
+
+		JSONObject data = savedDocJson.getJSONObject("inReach_Signout");
+		String name = data.optString("Name", null);
+		if (false == "Jane Doe".equals(name)) {
+			fail("Unexpected data");
+		}
+		String device_ref = data.optString("device_ref", null);
+		if (false == "300434062312480".equals(device_ref)) {
+			fail("Unexpected data");
 		}
 	}
 }

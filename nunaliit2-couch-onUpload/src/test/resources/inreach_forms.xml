@@ -163,5 +163,19 @@
 </field>
 </form>
 
+<form id="5">
+<title>Signout</title>
+<destination>tsfn-manager@gcrc.carleton.ca</destination>
+<prefix>TSFN-SO-</prefix>
+<delimiter>|</delimiter>
+<field id="1">
+<name>Name</name>
+<type>Text</type>
+<length>140</length>
+<required>Y</required>
+<default></default>
+</field>
+</form>
+
 </table>
 </root>

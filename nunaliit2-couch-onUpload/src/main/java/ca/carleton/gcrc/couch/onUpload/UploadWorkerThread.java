@@ -105,7 +105,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			simplifier = new GeometrySimplifierImpl(simplifierProcess);
 		}
 		
-		inReachProcessor = new InReachProcessorImpl(this.documentDbDesign.getDatabase().getClient());
+		inReachProcessor = new InReachProcessorImpl(documentDbDesign);
 	}
 	
 	public void shutdown() {
