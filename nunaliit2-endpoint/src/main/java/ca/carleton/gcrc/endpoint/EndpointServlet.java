@@ -136,8 +136,11 @@ public class EndpointServlet extends HttpServlet {
 			if (schemas.length < 1 && layers.length < 1) {
 				obj.put("message", "At least one schema or layer must be specified");
 				this.prepareResponse(response, HttpServletResponse.SC_BAD_REQUEST);
-			} else if (transformScript.length != 1 && transformScript[0].isBlank()) {
+			} else if (transformScript.length != 1) {
 				obj.put("message", "Exactly one transform script must be specified");
+				this.prepareResponse(response, HttpServletResponse.SC_BAD_REQUEST);
+			} else if (transformScript[0].isBlank()) {
+				obj.put("message", "The name of a transform script must be specified");
 				this.prepareResponse(response, HttpServletResponse.SC_BAD_REQUEST);
 			} else {
 
@@ -175,9 +178,9 @@ public class EndpointServlet extends HttpServlet {
 							JSONObject[] convertedArray = output.stream()
 									.map((JSONObject::new))
 									.toArray(JSONObject[]::new);
-
 							JSONArray jsonOutputArray = new JSONArray(convertedArray);
 							obj.put("data", jsonOutputArray);
+							this.prepareResponse(response, HttpServletResponse.SC_OK);
 						} catch (PolyglotException e) {
 							obj.put("message", "Error while applying transformation script: " + e.getMessage());
 							this.prepareResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
