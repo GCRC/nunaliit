@@ -16,6 +16,8 @@ import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.mail.MailServlet;
 import ca.carleton.gcrc.progress.ProgressServlet;
 import ca.carleton.gcrc.upload.UploadServlet;
+import ca.carleton.gcrc.endpoint.EndpointServlet;
+
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.rolling.RollingFileAppender;
@@ -295,6 +297,12 @@ public class CommandRun implements Command {
         	servletHolder.setInitParameter("prefix", "/");
         	servletHolder.setInitParameter("requestBufferSize", REQ_BUFFER_SIZE);
         	context.addServlet(servletHolder,"/*");
+        }
+
+		{
+        	ServletHolder servletHolder = new ServletHolder(new EndpointServlet());
+        	servletHolder.setInitOrder(2);
+        	context.addServlet(servletHolder,"/servlet/endpoint/*");
         }
 
 		// Start server

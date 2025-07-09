@@ -92,6 +92,7 @@
 		<jsoup.version>1.12.1</jsoup.version>
 		<jena.version>3.17.0</jena.version>
 		<apache-httpclient.version>4.5.1</apache-httpclient.version>
+		<graaljs.version>24.2.1</graaljs.version>
 	</properties>
 	<modules>
 		<module>nunaliit2-jdbc</module>
@@ -131,5 +132,6 @@
 		<module>nunaliit2-couch-date</module>
 		<module>nunaliit2-couch-simplifiedGeometry</module>
         <module>nunaliit2-couch-metadata</module>
+		<module>nunaliit2-endpoint</module>
     </modules>
 </project>

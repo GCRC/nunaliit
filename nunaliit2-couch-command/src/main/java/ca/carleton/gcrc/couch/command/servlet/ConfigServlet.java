@@ -1,5 +1,27 @@
 package ca.carleton.gcrc.couch.command.servlet;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.ByteBuffer;
+import java.security.SecureRandom;
+import java.util.Collection;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Properties;
+
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import ca.carleton.gcrc.couch.app.Document;
 import ca.carleton.gcrc.couch.app.DocumentUpdateProcess;
 import ca.carleton.gcrc.couch.app.impl.DocumentFile;
@@ -25,8 +47,6 @@ import ca.carleton.gcrc.couch.metadata.SitemapServlet;
 import ca.carleton.gcrc.couch.onUpload.UploadListener;
 import ca.carleton.gcrc.couch.onUpload.UploadWorker;
 import ca.carleton.gcrc.couch.onUpload.UploadWorkerSettings;
-import ca.carleton.gcrc.couch.onUpload.geojson.GeoJsonFileConverter;
-import ca.carleton.gcrc.couch.onUpload.gpx.GpxFileConverter;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachConfiguration;
 import ca.carleton.gcrc.couch.onUpload.inReach.InReachSettingsFromXmlFile;
 import ca.carleton.gcrc.couch.onUpload.mail.DailyVetterNotificationGenerator;
@@ -38,21 +58,22 @@ import ca.carleton.gcrc.couch.onUpload.mail.UploadNotificationGenerator;
 import ca.carleton.gcrc.couch.onUpload.multimedia.MultimediaFileConverter;
 import ca.carleton.gcrc.couch.onUpload.pdf.PdfFileConverter;
 import ca.carleton.gcrc.couch.simplifiedGeometry.SimplifiedGeometryServletConfiguration;
+import ca.carleton.gcrc.couch.submission.SubmissionConstants;
 import ca.carleton.gcrc.couch.submission.SubmissionRobot;
 import ca.carleton.gcrc.couch.submission.SubmissionRobotSettings;
 import ca.carleton.gcrc.couch.submission.SubmissionServlet;
 import ca.carleton.gcrc.couch.submission.mail.DocumentCreatedGenerator;
+import ca.carleton.gcrc.couch.submission.mail.SubmissionAcceptedGenerator;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionApprovalGenerator;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifier;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierImpl;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionMailNotifierNull;
 import ca.carleton.gcrc.couch.submission.mail.SubmissionRejectionGenerator;
-import ca.carleton.gcrc.couch.submission.mail.SubmissionAcceptedGenerator;
-import ca.carleton.gcrc.couch.submission.SubmissionConstants;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.couch.utils.CouchDbTemplateMailMessageGenerator;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
+import ca.carleton.gcrc.endpoint.EndpointServlet;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailDeliveryImpl;
@@ -67,26 +88,6 @@ import ca.carleton.gcrc.upload.OnUploadedListenerSingleton;
 import ca.carleton.gcrc.upload.UploadServlet;
 import ca.carleton.gcrc.upload.UploadUtils;
 import ca.carleton.gcrc.utils.VersionUtils;
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.nio.ByteBuffer;
-import java.security.SecureRandom;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.List;
-import java.util.Properties;
 
 /**
  * Configures the properties of the other servlets. Accepts init
@@ -286,6 +287,14 @@ public class ConfigServlet extends JsonServlet {
 		}
 		catch (ServletException e) {
 			logger.error("Error initializing robots servlet", e);
+			throw e;
+		}
+
+		try {
+			initEndpoint(servletContext);
+		}
+		catch (ServletException e) {
+			logger.error("Error initializing endpoint servlet", e);
 			throw e;
 		}
 
@@ -951,6 +960,22 @@ public class ConfigServlet extends JsonServlet {
 		catch (Exception e) {
 			logger.error("Error configuring index servlet", e);
 			throw new ServletException("Error configuring index servlet", e);
+		}
+	}
+
+	private void initEndpoint(ServletContext servletContext) throws ServletException {
+		try {
+			CouchDb couchDb = couchDd.getDatabase();
+			CouchDesignDocument atlasDesign = couchDb.getDesignDocument("atlas");
+			CouchDesignDocument siteDesign = couchDb.getDesignDocument("site");
+			servletContext.setAttribute(EndpointServlet.ENDPOINT_CONFIG_ATTRIBUTE_ATLAS, atlasProperties.getAtlasName());
+			servletContext.setAttribute(EndpointServlet.ENDPOINT_CONFIG_ATTRIBUTE_ATLAS_DESIGN, atlasDesign);
+			servletContext.setAttribute(EndpointServlet.ENDPOINT_CONFIG_ATTRIBUTE_SITE_DESIGN, siteDesign);
+			servletContext.setAttribute(EndpointServlet.ENDPOINT_CONFIG_ATTRIBUTE_DOCUMENT_DESIGN, couchDd);
+		}
+		catch (Exception e) {
+			logger.error("Error configuring endpoint servlet", e);
+			throw new ServletException("Error configuring endpoint servlet", e);
 		}
 	}
 
