@@ -128,13 +128,13 @@ public class EndpointServlet extends HttpServlet {
 
 			String[] schemas = queryParameters.getOrDefault(QUERY_PARAMETER_SCHEMA, emptyDefault);
 			String[] layers = queryParameters.getOrDefault(QUERY_PARAMETER_LAYER, emptyDefault);
-			// String[] siteViews = queryParameters.getOrDefault(QUERY_PARAMETER_SITE_VIEW, emptyDefault);
+			String[] siteViews = queryParameters.getOrDefault(QUERY_PARAMETER_SITE_VIEW, emptyDefault);
 			String[] transformScript = queryParameters.getOrDefault(QUERY_PARAMETER_TRANSFORM, emptyDefault);
 
 			JSONObject obj = new JSONObject();
 
-			if (schemas.length < 1 && layers.length < 1) {
-				obj.put("message", "At least one schema or layer must be specified");
+			if (schemas.length < 1 && layers.length < 1 && siteViews.length < 1) {
+				obj.put("message", "At least one schema, layer, or site view name must be specified");
 				this.prepareResponse(response, HttpServletResponse.SC_BAD_REQUEST);
 			} else if (transformScript.length != 1) {
 				obj.put("message", "Exactly one transform script must be specified");
@@ -165,6 +165,9 @@ public class EndpointServlet extends HttpServlet {
 						}
 						for (String layer : layers) {
 							this.getDocuments(results, NUNALIIT_LAYER_VIEW, layer, layer, atlasDesign);
+						}
+						for (String siteView : siteViews) {
+							this.getDocuments(results, siteView, "", "", siteDesign);
 						}
 					} catch (Exception e) {
 						querySuccess = false;
@@ -234,8 +237,12 @@ public class EndpointServlet extends HttpServlet {
 		CouchQuery query = new CouchQuery();
 		query.setViewName(viewName);
 		query.setReduce(false);
-		query.setStartKey(startKey);
-		query.setEndKey(endKey);
+		if (!startKey.isBlank()) {
+			query.setStartKey(startKey);
+		}
+		if (!endKey.isBlank()) {
+			query.setEndKey(endKey);
+		}
 		try {
 			query.setIncludeDocs(true);
 		} catch (Exception e) {
@@ -251,7 +258,7 @@ public class EndpointServlet extends HttpServlet {
 		}
 		if (null == queryRes) {
 			logger.warn("Query response null");
-			throw new Exception("Null query");
+			throw new Exception("Null query results");
 		} else {
 			for (JSONObject row : queryRes.getRows()) {
 				JSONObject value = row.getJSONObject("doc");
