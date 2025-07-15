@@ -1,0 +1,31 @@
+{
+    "_id": "11111",
+    "Version": "2.0",
+    "Events": [
+        {
+            "addresses": [
+                {
+                    "address": "tsfn-manager@gcrc.carleton.ca"
+                }
+            ],
+            "imei": "123456",
+            "messageCode": 3,
+            "freeText": "TSFN-SO-John Smith",
+            "timeStamp": 1709589330000,
+            "point": {
+                "latitude": 45.3940486907959,
+                "longitude": -75.74515342712403,
+                "altitude": 71.439156,
+                "gpsFix": 2,
+                "course": 0.0,
+                "speed": 0.0
+            },
+            "status": {
+                "autonomous": 0,
+                "lowBattery": 2,
+                "intervalChange": 0,
+                "resetDetected": 0
+            }
+        }
+    ]
+}

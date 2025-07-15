@@ -21,6 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.client.CouchClient;
+import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchQuery;
+import ca.carleton.gcrc.couch.client.CouchQueryResults;
 import ca.carleton.gcrc.couch.onUpload.conversion.DocumentDescriptor;
 import ca.carleton.gcrc.couch.onUpload.conversion.FileConversionContext;
 import ca.carleton.gcrc.couch.onUpload.conversion.GeometryDescriptor;
@@ -41,14 +44,22 @@ public class InReachProcessorImpl implements InReachProcessor {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 	private InReachSettings settings = InReachConfiguration.getInReachSettings();
 	private HashSet<String> recipients = new HashSet<String>();
+	private CouchDesignDocument dbDesign;
+	private CouchDesignDocument atlasDesign;
 	private CouchClient couchClient;
-	private final String genericSchemaName = "inReach";
+	private static final String genericSchemaName = "inReach";
+	private static final String autoCreateSignoutSchema = "inReach_Signout";
+	private static final String deviceSchema = "inReach_Device";
 	private static HashMap<Integer, String> garminExploreMessageCodes = new HashMap<>();
 	private static WktWriter wktWriter = new WktWriter();
 	private DateTimeFormatter garminExploreMessageFormatter = DateTimeFormatter
 			.ofPattern("uuuu-MM-dd'T'HH:mm:ss.nnnnnnnnnX").withZone(ZoneId.of("Z"));
 
-	public InReachProcessorImpl(CouchClient client) {
+	public InReachProcessorImpl(CouchDesignDocument dbDesign) throws Exception {
+		this.dbDesign = dbDesign;
+		this.atlasDesign = dbDesign.getDatabase().getDesignDocument("atlas");
+		this.couchClient = dbDesign.getDatabase().getClient();
+
 		garminExploreMessageCodes.put(0, "PositionReport");
 		garminExploreMessageCodes.put(1, "Reserved");
 		garminExploreMessageCodes.put(2, "LocateResponse");
@@ -66,7 +77,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 		garminExploreMessageCodes.put(17, "MapShare");
 		garminExploreMessageCodes.put(20, "MailCheck");
 		garminExploreMessageCodes.put(21, "AmIAlive");
-		couchClient = client;
+
 		for (InReachForm form : settings.getForms()) {
 			String recipient = form.getDestination();
 			if (null != recipient) {
@@ -231,6 +242,13 @@ public class InReachProcessorImpl implements InReachProcessor {
 				extractInformationForForm(ctx.getDoc(), form);
 			} catch (Exception e) {
 				throw new Exception("Error while extracting information from the inReach data forms", e);
+			}
+			if (schemaName.equals(autoCreateSignoutSchema)) {
+				try {
+					addSignoutData(ctx.getDoc());
+				} catch (Exception e) {
+					logger.info(e.getMessage());
+				}
 			}
 		}
 
@@ -443,6 +461,15 @@ public class InReachProcessorImpl implements InReachProcessor {
 					eventDocIds.put(GarminExploreProcessRejectionStates.EVENT_ERROR);
 				} else {
 					eventDocIds.put(uuidForNewDocument);
+
+					if (schemaName.equals(autoCreateSignoutSchema)) {
+						try {
+							addSignoutData(generatedDoc);
+						} catch (Exception e) {
+							logger.warn(e.getMessage());
+						}
+					}
+
 					ctx.createDocument(generatedDoc);
 				}
 			}
@@ -453,6 +480,54 @@ public class InReachProcessorImpl implements InReachProcessor {
 		} else {
 			logger.error("Unhandled version of GarminExplore type inReach message: " + docId);
 		}
+	}
+
+	private void addSignoutData(JSONObject doc) throws Exception {
+		JSONObject inReach = doc.optJSONObject("inReach", null);
+		if (null == inReach)
+			return;
+		JSONObject nunaliit_gps_datetime = inReach.optJSONObject("nunaliit_gps_datetime", null);
+		if (null == nunaliit_gps_datetime)
+			return;
+		String DeviceId = inReach.optString("DeviceId", null);
+		if (null == DeviceId)
+			return;
+
+		JSONObject inReach_Signout = doc.optJSONObject(autoCreateSignoutSchema, null);
+		if (null == inReach_Signout)
+			return;
+
+		// Set device ID as default, overwrite if found
+		inReach_Signout.put("signout_date", nunaliit_gps_datetime);
+		inReach_Signout.put("device_ref", DeviceId);
+
+		CouchQuery query = new CouchQuery();
+		query.setViewName("nunaliit-schema");
+		query.setStartKey(deviceSchema);
+		query.setEndKey(deviceSchema);
+		query.setIncludeDocs(true);
+
+		CouchQueryResults results = atlasDesign.performQuery(query);
+		List<JSONObject> rows = results.getRows();
+
+		for (JSONObject row : rows) {
+			JSONObject deviceDoc = row.optJSONObject("doc", null);
+			String docId = row.optString("id");
+			if (null != deviceDoc) {
+				JSONObject device = deviceDoc.optJSONObject(deviceSchema, null);
+				if (null != device) {
+					String foundDeviceId = device.optString("device_id", null);
+					if (null != foundDeviceId && foundDeviceId.equals(DeviceId)) {
+						JSONObject reference = new JSONObject();
+						reference.put("nunaliit_type", "reference");
+						reference.put("doc", docId);
+						inReach_Signout.put("device_ref", reference);
+						break;
+					}
+				}
+			}
+		}
+		doc.put(autoCreateSignoutSchema, inReach_Signout);
 	}
 
 	public void extractInformationForForm(
