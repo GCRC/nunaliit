@@ -16,10 +16,13 @@ import N2DonutCluster from './n2es6/openlayersSupport/N2DonutCluster'
 import N2FilterableLegendWidget from './n2es6/widgets/N2FilterableLegendWidget'
 import N2ModelExportWidget from './n2es6/widgets/N2ModelExportWidget'
 
+import N2EndpointModel from './n2es6/models/N2EndpointModel'
+
 const n2es6 = {};
 n2es6.n2mapModule = {};
 n2es6.openlayersSupport = {};
 n2es6.widgets = {};
+n2es6.models = {};
 
 n2es6.n2mapModule.N2CouchDbSource = N2CouchDbSource;
 n2es6.n2mapModule.N2CustomLineStyle = N2CustomLineStyle;
@@ -36,5 +39,6 @@ n2es6.n2mapModule.N2StackingHistory = N2StackingHistory;
 n2es6.openlayersSupport.N2DonutCluster = N2DonutCluster;
 n2es6.widgets.N2FilterableLegendWidget = N2FilterableLegendWidget;
 n2es6.widgets.N2ModelExportWidget = N2ModelExportWidget;
+n2es6.models.N2EndpointModel = N2EndpointModel;
 
 export default n2es6;

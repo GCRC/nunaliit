@@ -627,6 +627,10 @@ var Service = $n2.Class({
 				$n2.modelFilterSimultaneous.handleModelCreate(m, addr, dispatcher);
 			};
 
+			if( $n2.endpointModel && typeof $n2.endpointModel.modelCreate === 'function' ){
+				$n2.endpointModel.modelCreate(m, addr, dispatcher);
+			};
+
 		} else if( 'modelGetState' === m.type ){
 			var modelId = m.modelId;
 

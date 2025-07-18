@@ -225,7 +225,7 @@ public class EndpointServlet extends HttpServlet {
 
 		Value result = null;
 		try {
-			result = context.eval(CONTEXT_LANG, JS_PREFIX + script.getString("contents") + JS_POSTFIX);
+			result = context.eval(CONTEXT_LANG, JS_PREFIX + script.getString("transform") + JS_POSTFIX);
 		} catch (PolyglotException pge) {
 			throw pge;
 		}
