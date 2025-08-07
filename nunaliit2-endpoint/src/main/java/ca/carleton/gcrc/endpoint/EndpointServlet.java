@@ -214,6 +214,9 @@ public class EndpointServlet extends HttpServlet {
 		Context context = Context.newBuilder(CONTEXT_LANG)
 				.allowHostAccess(HostAccess.ALL)
 				.allowHostClassLookup(s -> true)
+				.allowExperimentalOptions(true)
+				.option("sandbox.MaxCPUTime", "30s")
+				.option("sandbox.MaxCPUTimeCheckInterval", "500ms")
 				.build();
 
 		List<Map<String, Object>> scriptInputData = new ArrayList<>();
