@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +58,13 @@ public class EndpointServlet extends HttpServlet {
 	private CouchDesignDocument siteDesign = null;
 	private CouchDesignDocument documentDesign = null;
 	private CouchDb documentDb = null;
+
+	private final List<String> acceptedScriptProperties = Arrays.asList(
+			"_id",
+			"_rev",
+			"transform",
+			"nunaliit_schema",
+			"nunaliit_manifest");
 
 	private final String[] emptyDefault = new String[0];
 
@@ -158,36 +166,41 @@ public class EndpointServlet extends HttpServlet {
 				}
 
 				if (scriptDoc != null) {
-					boolean querySuccess = true;
-					try {
-						for (String schema : schemas) {
-							this.getDocuments(results, NUNALIIT_SCHEMA_VIEW, schema, schema, atlasDesign);
-						}
-						for (String layer : layers) {
-							this.getDocuments(results, NUNALIIT_LAYER_VIEW, layer, layer, atlasDesign);
-						}
-						for (String siteView : siteViews) {
-							this.getDocuments(results, siteView, "", "", siteDesign);
-						}
-					} catch (Exception e) {
-						querySuccess = false;
-						obj.put("message", "Failed to query view: " + e.getMessage());
-						this.prepareResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-					}
-
-					if (querySuccess == true) {
+					if (this.isScriptValid(scriptDoc)) {
+						boolean querySuccess = true;
 						try {
-							List<Map<String, Object>> output = this.applyScript(results, scriptDoc);
-							JSONObject[] convertedArray = output.stream()
-									.map((JSONObject::new))
-									.toArray(JSONObject[]::new);
-							JSONArray jsonOutputArray = new JSONArray(convertedArray);
-							obj.put("data", jsonOutputArray);
-							this.prepareResponse(response, HttpServletResponse.SC_OK);
-						} catch (PolyglotException e) {
-							obj.put("message", "Error while applying transformation script: " + e.getMessage());
+							for (String schema : schemas) {
+								this.getDocuments(results, NUNALIIT_SCHEMA_VIEW, schema, schema, atlasDesign);
+							}
+							for (String layer : layers) {
+								this.getDocuments(results, NUNALIIT_LAYER_VIEW, layer, layer, atlasDesign);
+							}
+							for (String siteView : siteViews) {
+								this.getDocuments(results, siteView, "", "", siteDesign);
+							}
+						} catch (Exception e) {
+							querySuccess = false;
+							obj.put("message", "Failed to query view: " + e.getMessage());
 							this.prepareResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
 						}
+
+						if (querySuccess == true) {
+							try {
+								List<Map<String, Object>> output = this.applyScript(results, scriptDoc);
+								JSONObject[] convertedArray = output.stream()
+										.map((JSONObject::new))
+										.toArray(JSONObject[]::new);
+								JSONArray jsonOutputArray = new JSONArray(convertedArray);
+								obj.put("data", jsonOutputArray);
+								this.prepareResponse(response, HttpServletResponse.SC_OK);
+							} catch (PolyglotException e) {
+								obj.put("message", "Error while applying transformation script: " + e.getMessage());
+								this.prepareResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+							}
+						}
+					} else {
+						obj.put("message", "Requested script document is invalid: '" + fullExpectedScriptName + "'");
+						this.prepareResponse(response, HttpServletResponse.SC_FORBIDDEN);
 					}
 				}
 			}
@@ -210,13 +223,16 @@ public class EndpointServlet extends HttpServlet {
 		}
 	}
 
+	private boolean isScriptValid(JSONObject script) {
+		return script.length() == this.acceptedScriptProperties.size()
+				&& this.acceptedScriptProperties.stream().allMatch(key -> script.has(key));
+	}
+
 	private List<Map<String, Object>> applyScript(List<JSONObject> docs, JSONObject script) throws PolyglotException {
 		Context context = Context.newBuilder(CONTEXT_LANG)
 				.allowHostAccess(HostAccess.ALL)
 				.allowHostClassLookup(s -> true)
 				.allowExperimentalOptions(true)
-				.option("sandbox.MaxCPUTime", "30s")
-				.option("sandbox.MaxCPUTimeCheckInterval", "500ms")
 				.build();
 
 		List<Map<String, Object>> scriptInputData = new ArrayList<>();
