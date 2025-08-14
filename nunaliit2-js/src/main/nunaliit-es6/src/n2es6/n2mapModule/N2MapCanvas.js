@@ -1318,7 +1318,7 @@ class N2MapCanvas {
 					params: parameters
 				}
 				
-				if(sourceOptionsInternal.attributions) {
+				if (sourceOptionsInternal.attributions) {
 					opts.attributions = sourceOptionsInternal.attributions
 				}
 
@@ -1360,7 +1360,7 @@ class N2MapCanvas {
 					});
 				}
 
-				if(sourceOptionsInternal.attributions) {
+				if (sourceOptionsInternal.attributions) {
 					wmtsOpt.attributions = sourceOptionsInternal.attributions
 				}
 
