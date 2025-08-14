@@ -1313,10 +1313,16 @@ class N2MapCanvas {
 					}
 				}
 
-				return new TileWMS({
+				const opts = {
 					url: sourceOptionsInternal.url,
 					params: parameters
-				});
+				}
+				
+				if(sourceOptionsInternal.attributions) {
+					opts.attributions = sourceOptionsInternal.attributions
+				}
+
+				return new TileWMS(opts);
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal);
 			}
@@ -1352,6 +1358,10 @@ class N2MapCanvas {
 						resolutions: resolutions,
 						matrixIds: matrixIds
 					});
+				}
+
+				if(sourceOptionsInternal.attributions) {
+					wmtsOpt.attributions = sourceOptionsInternal.attributions
 				}
 
 				for (let key in options) {

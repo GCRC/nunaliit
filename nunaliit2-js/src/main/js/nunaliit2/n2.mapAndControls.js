@@ -2815,15 +2815,20 @@ var MapAndControls = $n2.Class('MapAndControls',{
 						layerOptions[key] = options[key];
 
 					} else if( 'numZoomLevels' === key){
-						var matrixIds = new Array(options["numZoomLevels"]);
 						var srsName = options['srsName'];
 						var numzoom = options["numZoomLevels"];
-						for (var i=0; i< numzoom; ++i) {
-							matrixIds[i] = srsName + ":" + i;
+						if(!options["noCustomMatrixIds"]) {
+							var matrixIds = new Array(options["numZoomLevels"]);
+							for (var i=0; i< numzoom; ++i) {
+								matrixIds[i] = srsName + ":" + i;
+							}
+							layerOptions.matrixIds = matrixIds;
 						}
-						layerOptions.matrixIds = matrixIds;
 						layerOptions.numZoomLevels = options[key];
-					} else {
+					} else if ('noCustomMatrixIds' === key ) {
+						continue;
+					}
+						else {
 						layerOptions[key] = options[key];
 					};
 				};
