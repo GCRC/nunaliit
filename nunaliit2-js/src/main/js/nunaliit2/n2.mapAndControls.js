@@ -2827,8 +2827,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 						layerOptions.numZoomLevels = options[key];
 					} else if ('noCustomMatrixIds' === key ) {
 						continue;
-					}
-						else {
+					} else {
 						layerOptions[key] = options[key];
 					};
 				};
