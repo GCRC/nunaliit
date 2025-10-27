@@ -1265,6 +1265,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 				new $n2.mdc.MDCTagBox({
 					parentElem: $rightdiv,
+					autoCompleteViewName: 'cinemap_theme',
 					label: _loc('widget.annotationEditor.mapThemeAssociatedTags'),
 					placeholder: _loc('widget.annotationEditor.mapThemeTagBoxPlaceholder'),
 					mdcClasses: ['n2transcript_label','label_tagbox_tagGroupMembers'],
