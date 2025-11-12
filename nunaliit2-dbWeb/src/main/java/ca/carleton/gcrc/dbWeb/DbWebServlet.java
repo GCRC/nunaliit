@@ -399,7 +399,7 @@ public class DbWebServlet extends HttpServlet {
 	}
 	
 	protected Query parseQueryJson(String key, JSONObject jsonQuery) throws Exception {
-		String tableName = jsonQuery.getString("table");
+		String tableName = jsonQuery.optString("table", null);
 		if( null == tableName ) {
 			throw new Exception("Invalid query : missing 'table' parameter");
 		}

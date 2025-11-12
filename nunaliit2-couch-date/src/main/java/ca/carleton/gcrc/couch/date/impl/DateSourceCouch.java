@@ -28,7 +28,7 @@ public class DateSourceCouch implements DateSource {
 		
 		results.documentWithIntervals = new ArrayList<DocumentWithInterval>(queryResults.getRows().size());
 		for(JSONObject row : queryResults.getRows()){
-			String docId = row.optString("id");
+			String docId = row.optString("id", null);
 			JSONObject jsonInterval = row.optJSONObject("value");
 			if( null != docId && null != jsonInterval ){
 				TimeInterval interval = TimeInterval.fromJson(jsonInterval);
@@ -52,7 +52,7 @@ public class DateSourceCouch implements DateSource {
 		
 		results.documentWithIntervals = new ArrayList<DocumentWithInterval>(queryResults.getRows().size());
 		for(JSONObject row : queryResults.getRows()){
-			String docId = row.optString("id");
+			String docId = row.optString("id", null);
 			JSONObject jsonInterval = row.optJSONObject("value");
 			results.intervalCount++;
 			if( null != docId && null != jsonInterval ){

@@ -36,12 +36,13 @@ public class FFprobeProcessor {
             JSONObject json = new JSONObject(output);
             JSONArray streams = json.getJSONArray("streams");
 
-            fileStreams = new ArrayList<FileStream>();
-            for (int i = 0; i < streams.length(); i++) {
-                FileStream fileStream = new FileStream();
-                fileStream.setCodecType(streams.getJSONObject(i).getString("codec_type"));
-                fileStreams.add(fileStream);
-            }
+            fileStreams = IntStream.range(0, streams.length())
+                        .mapToObj(i -> {
+                            FileStream fileStream = new FileStream();
+                            fileStream.setCodecType(streams.getJSONObject(i).optString("codec_type", null));
+                            return fileStream;
+                        })
+                        .collect(Collectors.toList());
         } catch (IOException e) {
             log.warn("Problem getting file streams: {}", e.getMessage());
         } finally {

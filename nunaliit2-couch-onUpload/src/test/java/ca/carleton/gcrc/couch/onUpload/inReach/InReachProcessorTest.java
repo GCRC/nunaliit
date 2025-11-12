@@ -64,7 +64,7 @@ public class InReachProcessorTest extends TestCase {
 		
 		// Check data
 		JSONObject data = savedDocJson.getJSONObject("inReach_Conditions");
-		String condition = data.getString("Condition");
+		String condition = data.optString("Condition", null);
 		if( false == "high water".equals(condition) ){
 			fail("Unexpected data");
 		}
@@ -102,7 +102,7 @@ public class InReachProcessorTest extends TestCase {
 		// Check data
 		JSONObject data = savedDocJson.getJSONObject("inReach_Conditions");
 		{
-			String condition = data.getString("Condition");
+			String condition = data.optString("Condition", null);
 			if( false == "other (put in notes)".equals(condition) ){
 				fail("Unexpected data for 'Condition'");
 			}
@@ -142,7 +142,7 @@ public class InReachProcessorTest extends TestCase {
 		if( null == jsonTimestamp ){
 			fail("Can not find nunaliit timestamp");
 		} else {
-			String dateType = jsonTimestamp.getString("nunaliit_type");
+			String dateType = jsonTimestamp.optString("nunaliit_type", null);
 			if( false == "date".equals(dateType) ) {
 				fail("Unexpected time structure");
 			}
