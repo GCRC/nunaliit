@@ -60,7 +60,7 @@ public class CouchDesignDocumentTest extends TestCase {
 				JSONObject expectedDoc = new JSONObject();
 				expectedDoc.put("type", type);
 				db.createDocument(expectedDoc);
-				expectedId = expectedDoc.getString("_id");
+				expectedId = expectedDoc.optString("_id", null);
 			}
 			
 			// Insert object that should not be found in query
@@ -69,7 +69,7 @@ public class CouchDesignDocumentTest extends TestCase {
 				JSONObject unexpectedDoc = new JSONObject();
 				unexpectedDoc.put("name", type);
 				db.createDocument(unexpectedDoc);
-				unexpectedId = unexpectedDoc.getString("_id");
+				unexpectedId = unexpectedDoc.optString("_id", null);
 			}
 			
 			// Perform query
@@ -112,7 +112,7 @@ public class CouchDesignDocumentTest extends TestCase {
 				JSONObject doc = new JSONObject();
 				doc.put("type", type);
 				db.createDocument(doc);
-				docId = doc.getString("_id");
+				docId = doc.optString("_id", null);
 			}
 			
 			// Perform query
@@ -148,7 +148,7 @@ public class CouchDesignDocumentTest extends TestCase {
 				JSONObject doc = new JSONObject();
 				doc.put("type", type);
 				db.createDocument(doc);
-				docId = doc.getString("_id");
+				docId = doc.optString("_id", null);
 			}
 			
 			// Perform query

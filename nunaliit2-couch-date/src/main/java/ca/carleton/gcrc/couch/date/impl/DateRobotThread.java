@@ -172,7 +172,7 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 				CouchQueryResults results = atlasDesign.performQuery(query);
 				synchronized(this) { // protect docsInError
 					for(JSONObject row : results.getRows()) {
-						String id = row.optString("id");
+						String id = row.optString("id", null);
 						if( null != id 
 						 && false == docsInError.isDocumentInError(id) ) {
 							// Found some work
@@ -200,7 +200,7 @@ public class DateRobotThread extends Thread implements CouchDbChangeListener {
 					CouchQueryResults results = atlasDesign.performQuery(query);
 					synchronized(this) { // protect docsInError
 						for(JSONObject row : results.getRows()) {
-							String id = row.optString("id");
+							String id = row.optString("id", null);
 							if( null != id 
 							 && false == docsInError.isDocumentInError(id) ) {
 								// Found some work

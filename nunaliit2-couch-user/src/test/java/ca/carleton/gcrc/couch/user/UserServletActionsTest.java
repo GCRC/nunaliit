@@ -365,7 +365,7 @@ public class UserServletActionsTest extends TestCase {
 
 		JSONObject result = actions.generatePassword();
 		
-		String password = result.getString("password");
+		String password = result.optString("password", null);
 		if( null == password ){
 			fail("password not sent back");
 		}

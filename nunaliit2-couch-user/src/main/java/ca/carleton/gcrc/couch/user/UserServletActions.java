@@ -396,7 +396,7 @@ public class UserServletActions {
 			
 			// Verify that user document was not modified since the token was generated
 			{
-				String rev = userDoc.optString("_rev");
+				String rev = userDoc.optString("_rev", null);
 				if( null == rev ){
 					throw new Exception("Revision not available from user document");
 				}
