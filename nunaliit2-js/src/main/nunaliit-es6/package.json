@@ -12,7 +12,7 @@
     "proj4": "2.15.0"
   },
   "devDependencies": {
-    "vite": "^6.3.5"
+    "vite": "^6.4.1"
   },
   "scripts": {
     "clean": "rm -f dist/target/*",

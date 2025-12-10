@@ -22,7 +22,7 @@ import { default as N2DonutCluster } from '../openlayersSupport/N2DonutCluster.j
 
 import proj4 from 'proj4';
 import { register } from 'ol/proj/proj4.js';
-import { extend, isEmpty, getTopLeft, getWidth } from 'ol/extent.js';
+import { extend, isEmpty, getTopLeft, getWidth, getCenter } from 'ol/extent.js';
 import { transform, getTransform, transformExtent, get as getProjection } from 'ol/proj.js';
 import { default as Projection } from 'ol/proj/Projection.js';
 import Tile from 'ol/layer/Tile.js';
@@ -52,6 +52,7 @@ import { defaults as Defaults } from 'ol/control';
 
 import N2MapSpy from './N2MapSpy';
 import N2MapScale from './N2MapScale';
+import N2RotationControl from './N2RotationControl';
 
 const _loc = function (str, args) { return $n2.loc(str, 'nunaliit2', args); };
 const DH = 'n2.canvasMap';
@@ -110,25 +111,25 @@ class N2MapCanvas {
 			if(!Array.isArray(opts.projDefs)) {
 				$n2.reportError('projDefs should be an array of objects with keys code, definition and optionally extent')
 			} else {
-				for (const def of opts.projDefs) {
+			for (const def of opts.projDefs) {
 					if(!def.code || !def.definition) {
 						$n2.reportError('code and definition keys are required for each projDefs entry: ' + def);
 						continue;
 					} else {
-						proj4.defs(def.code, def.definition);
+				proj4.defs(def.code, def.definition);
 					}
-				}
-				register(proj4);
-				for (const d of opts.projDefs) {
-					if (d.extent) {
+			}
+			register(proj4);
+			for (const d of opts.projDefs) {
+				if (d.extent) {
 						if(!Array.isArray(d.extent) || typeof d.extent[0] !== 'number') {
 							$n2.reportError('projDefs extent must be an array of numbers');
 							continue;
 						}
-						const p = getProjection(d.code);
-						p.setExtent(d.extent);
-					}
+					const p = getProjection(d.code);
+					p.setExtent(d.extent);
 				}
+			}
 			}
 			
 		}
@@ -814,6 +815,16 @@ class N2MapCanvas {
 			customMap.addControl(scaleCtrl);
 		}
 
+		if (this.options.rotationControl) {
+			const defaultProjDef = proj4.defs(this.viewProjectionCode);
+			const rotationControlOpts = {
+				defaultProjDef,
+				...this.options.rotationControl
+			}
+			const rotationsCtrl = new N2RotationControl(rotationControlOpts);
+			customMap.addControl(rotationsCtrl)
+		}
+
 		this.overlayInfos.forEach( (info, idx) => {
 			if(info._layerInfo.options.wmsLegend && info.visibility) {
 				const legendUrl = _this.overlayLayers[idx].values_.source.getLegendUrl();
@@ -1000,10 +1011,56 @@ class N2MapCanvas {
 						, onError: function () { }
 					});
 				}
+
+				if(!featurePopupHtmlFn ){
+					this.defaultPopupHtmlFn({
+						feature: feature
+						, onSuccess: function (content) {
+							const mousepoint = mapBrowserEvent.coordinate;
+							popup.show(mousepoint, content);
+						}
+						, onError: function () { }
+					})
+				};
 			} else {
 				//n2es6 does not support multi hover, so does nunaliit2 
 			}
 		}
+	}
+
+	defaultPopupHtmlFn(opt_) {
+		var feature = opt_.feature;
+
+		if( feature.cluster && feature.cluster.length === 1 ){
+			feature = feature.cluster[0];
+		};
+
+		if( feature.cluster ){
+			var clusterSize = feature.cluster.length;
+
+			var $tmp = $('<span class="n2_popup"></span>');
+			$tmp.text( _loc('This cluster contains {count} features',{
+				count: clusterSize
+			}) );
+
+			var $wrapper = $('<div></div>');
+			$wrapper.append($tmp);
+			var html = $wrapper.html();
+
+			opt_.onSuccess(html);
+
+		} else {
+			var doc = opt_.feature.data;
+
+			var $tmp = $('<span class="n2_popup"></span>');
+			this.showService.displayBriefDescription($tmp,{},doc);
+
+			var $wrapper = $('<div></div>');
+			$wrapper.append($tmp);
+			var html = $wrapper.html();
+
+			opt_.onSuccess(html);
+		};
 	}
 
 	_retrievingDocsAndSendSelectedEvent(features) {
@@ -1256,10 +1313,16 @@ class N2MapCanvas {
 					}
 				}
 
-				return new TileWMS({
+				const opts = {
 					url: sourceOptionsInternal.url,
 					params: parameters
-				});
+				}
+				
+				if (sourceOptionsInternal.attributions) {
+					opts.attributions = sourceOptionsInternal.attributions
+				}
+
+				return new TileWMS(opts);
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal);
 			}
@@ -1295,6 +1358,10 @@ class N2MapCanvas {
 						resolutions: resolutions,
 						matrixIds: matrixIds
 					});
+				}
+
+				if (sourceOptionsInternal.attributions) {
+					wmtsOpt.attributions = sourceOptionsInternal.attributions
 				}
 
 				for (let key in options) {
@@ -1431,7 +1498,6 @@ class N2MapCanvas {
 
 		if ('n2ViewAnimation' === type) {
 			const { x, y } = m;
-			const zoom = m.zoom || 9;
 			if (m._suppressSetHash) {
 				this._suppressSetHash = m._suppressSetHash
 			}
@@ -1447,34 +1513,18 @@ class N2MapCanvas {
 					// Convert [0,0] and [0,1] to proj
 					targetCenter = transformFn([x, y]);
 				}
-				extent = this._computeFullBoundingBox(m.doc, 'EPSG:4326', _this.viewProjectionCode);
 			}
 
 			_this.n2View.cancelAnimations();
 			if (extent) {
-				//If projCode for extent is  provided, calculate the transformed 
-				//extent and zoom into that
-				if (extent[0] === extent[2] || extent[1] === extent[3]) {
-					//If calculated extent is a point
-					_this.n2View.animate({
-							center: targetCenter,
-							duration: 500
-						}
-						, {
-							zoom: 9,
-							duration: 500
-						}
-					);
-
-				} else {
-					_this.n2View.fit(extent, { duration: 1500 });
-				}
-
+				_this.n2View.animate({
+					center: targetCenter,
+					duration: 500
+				});
 			} else {
 				// No projCode provided, just zoom in with targetCenter
 				_this.n2View.animate({
 					center: targetCenter
-					, zoom: zoom
 					, duration: 200
 				});
 			}
@@ -1623,9 +1673,9 @@ class N2MapCanvas {
 
 	_centerMapOnFeature(feature) {
 		const extent = feature.getGeometry().getExtent();
-		if (extent) {
-			const map = this.n2Map;
-			map.getView().fit(extent, map.getSize());
+		const center = getCenter(extent);
+		if (center) {
+			this.n2Map.getView().animate({center: center})
 		}
 	}
 
@@ -1694,7 +1744,6 @@ class N2MapCanvas {
 
 		return geomBounds;
 	}
-
 }
 
 export function HandleCanvasAvailableRequest(m) {

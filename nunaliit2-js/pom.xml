@@ -116,7 +116,7 @@
 					</goals>
 					<!-- Optional configuration which provides for running any npm command -->
 					<configuration>
-						<arguments>audit --production</arguments>
+						<arguments>audit --omit=dev</arguments>
 						<installDirectory>tools</installDirectory>
 						<workingDirectory>src/main/nunaliit-es6</workingDirectory>
 					</configuration>
