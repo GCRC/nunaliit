@@ -1,19 +1,5 @@
 package ca.carleton.gcrc.couch.onUpload.parser;
 
-import ca.carleton.gcrc.geom.geojson.GeoJsonParser;
-import org.apache.tika.Tika;
-import org.apache.tika.config.TikaConfig;
-import org.apache.tika.detect.XmlRootExtractor;
-import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.TikaInputStream;
-import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FileStream;
-import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFprobeProcessor;
-
-import javax.xml.namespace.QName;
 import java.io.File;
 import java.io.InputStream;
 import java.io.DataInputStream;
@@ -24,6 +10,20 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import javax.xml.namespace.QName;
+
+import org.apache.tika.config.TikaConfig;
+import org.apache.tika.detect.XmlRootExtractor;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
+import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import ca.carleton.gcrc.geom.geojson.GeoJsonParser;
+import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FFprobeProcessor;
+import ca.carleton.gcrc.olkit.multimedia.ffmpeg.FileStream;
 import ca.carleton.gcrc.olkit.multimedia.utils.MimeUtils;
 import ca.carleton.gcrc.olkit.multimedia.utils.MimeUtils.MultimediaClass;
 
@@ -81,7 +81,7 @@ public class ContentTypeDetector {
         try (TikaInputStream tikaInputStream = TikaInputStream.get(file.toPath())) {
             TikaConfig tika = new TikaConfig();
             Metadata metadata = new Metadata();
-            metadata.set(Metadata.RESOURCE_NAME_KEY, file.getName());
+            metadata.set(TikaCoreProperties.RESOURCE_NAME_KEY, file.getName());
             mediaType = tika.getDetector().detect(tikaInputStream, metadata);
 
             MultimediaClass aClass = MimeUtils.getMultimediaClassFromMimeType(mediaType.toString());

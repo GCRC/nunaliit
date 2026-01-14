@@ -104,7 +104,20 @@
 					</goals>
 					<!-- Optional configuration which provides for running any npm command -->
 					<configuration>
-						<arguments>install</arguments>
+						<arguments>install --no-audit</arguments>
+						<installDirectory>tools</installDirectory>
+						<workingDirectory>src/main/nunaliit-es6</workingDirectory>
+					</configuration>
+				</execution>
+				<execution>
+					<id>npm-audit-prod</id>
+                    <phase>generate-sources</phase>
+					<goals>
+						<goal>npm</goal>
+					</goals>
+					<!-- Optional configuration which provides for running any npm command -->
+					<configuration>
+						<arguments>audit --omit=dev</arguments>
 						<installDirectory>tools</installDirectory>
 						<workingDirectory>src/main/nunaliit-es6</workingDirectory>
 					</configuration>
