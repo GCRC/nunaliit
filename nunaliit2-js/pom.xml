@@ -90,8 +90,8 @@
 						<goal>install-node-and-npm</goal>
 					</goals>
 					<configuration>
-						<nodeVersion>v11.2.0</nodeVersion>
-						<npmVersion>6.5.0</npmVersion>
+						<nodeVersion>v22.15.1</nodeVersion>
+						<npmVersion>10.9.2</npmVersion>
 						<installDirectory>tools</installDirectory>
 					</configuration>
 				</execution>
@@ -129,7 +129,7 @@
 						<goal>npm</goal>
 					</goals>
 					<configuration>
-						<arguments>run full-build</arguments>
+						<arguments>run build</arguments>
 						<installDirectory>tools</installDirectory>
 						<workingDirectory>src/main/nunaliit-es6</workingDirectory>
 					</configuration>
@@ -149,8 +149,8 @@
                             <echo>Ant Task - copying es6 files....</echo>
                             <copy todir="./src/main/js/nunaliit2" overwrite="true" flatten="true">
                                 <fileset dir="./src/main/nunaliit-es6/dist/target" includes="*.js" >
+                                    <include name="*.css" />
                                     <include name="*.js" />
-                                    <include name="*.js.map" />
                                 </fileset>
                             </copy>
  
