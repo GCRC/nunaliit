@@ -9,11 +9,12 @@ jobs:
   build-nunaliit-and-release:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up JDK 24
-        uses: actions/setup-java@v3.10.0
+        uses: actions/setup-java@v5.1.0
         with:
           java-version: '24.0.2'
+          java-package: 'jdk'
           distribution: 'temurin'
           cache: 'maven'
       - name: Build Nunaliit with Maven
@@ -21,7 +22,7 @@ jobs:
       - name: Get latest tag across main branch
         run: |
           git fetch --tags
-          echo "LATEST_TAG=$(git describe --tags $(git rev-list --branches=master --tags --max-count=1))" >> $GITHUB_ENV
+          echo "LATEST_TAG=$(git describe --tags --abbrev=0)" >> $GITHUB_ENV
       - name: Create release with GitHub CLI
         run: |
           gh release delete $LATEST_TAG --yes
