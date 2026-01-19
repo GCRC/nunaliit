@@ -9,7 +9,7 @@ jobs:
   build-nunaliit-and-release:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up JDK 24
         uses: actions/setup-java@v5.1.0
         with:
