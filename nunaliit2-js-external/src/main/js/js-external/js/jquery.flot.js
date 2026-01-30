@@ -314,13 +314,13 @@
 
             // the canvas
             canvas = $('<canvas width="' + canvasWidth + '" height="' + canvasHeight + '"></canvas>').appendTo(target).get(0);
-            if ($.browser.msie) // excanvas hack
+            if (false) // excanvas hack
                 canvas = window.G_vmlCanvasManager.initElement(canvas);
             ctx = canvas.getContext("2d");
 
             // overlay canvas for interactive features
             overlay = $('<canvas style="position:absolute;left:0px;top:0px;" width="' + canvasWidth + '" height="' + canvasHeight + '"></canvas>').appendTo(target).get(0);
-            if ($.browser.msie) // excanvas hack
+            if (false) // excanvas hack
                 overlay = window.G_vmlCanvasManager.initElement(overlay);
             octx = overlay.getContext("2d");
 
