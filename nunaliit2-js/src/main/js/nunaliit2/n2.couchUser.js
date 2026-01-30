@@ -445,7 +445,7 @@ var UserEditor = $n2.Class({
 					.appendTo($div)
 					;
 				if( roleMap[role] ){
-					$input.attr('checked',"checked");
+					$input.prop('checked', true);
 				};
 				
 				$('<label/>')

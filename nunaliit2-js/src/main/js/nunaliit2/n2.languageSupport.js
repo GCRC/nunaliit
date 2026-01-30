@@ -184,7 +184,7 @@ var LanguageSwitcher = $n2.Class({
 			
 			var locale = $n2.l10n.getLocale();
 			if( locale.lang === code ){
-				$input.attr('checked', 'checked');
+				$input.prop('checked', true);
 			};
 			
 			$('<label/>')

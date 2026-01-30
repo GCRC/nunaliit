@@ -476,7 +476,7 @@ function selectLayersDialog(opts_){
 				.appendTo($div);
 
 			if( layers[layerId].currentlySelected ){
-				$input.attr('checked','checked');
+				$input.prop('checked', true);
 			};
 			
 			if( opts.showService && !layers[layerId].label ){

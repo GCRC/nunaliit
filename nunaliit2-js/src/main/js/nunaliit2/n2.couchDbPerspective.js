@@ -1173,7 +1173,7 @@ var DbPerspectiveChooser = $n2.Class({
 				_this.dbPerspective.setDbSelectorVisibility(selectorInfo.id,selected);
 			});
 		if( selectorInfo.visible ){
-			$input.attr('checked','checked');
+			$input.prop('checked', true);
 		};
 		
 		// Label

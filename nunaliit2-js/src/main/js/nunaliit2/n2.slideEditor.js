@@ -865,7 +865,7 @@ var SlideEditor = $n2.Class({
 				var $checkBox = $('<input class="n2se_entry_cb" type="checkbox"/>');
 				$keyDiv.append( $checkBox );
 				if( value ) {
-					$checkBox.attr('checked','checked');
+					$checkBox.prop('checked', true);
 				}
 				if( isValueEditingAllowed ) {
 					$checkBox.click(function(e){

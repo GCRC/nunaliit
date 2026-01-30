@@ -251,7 +251,7 @@ if( !$d ) return;
  					_this.dispatchService.send(DH, m);
  				});
  			if( value ){
- 				$input.attr('checked','checked');
+ 				$input.prop('checked', true);
  			};
  		};
  		

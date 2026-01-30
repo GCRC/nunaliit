@@ -266,7 +266,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
             if( $input.is(':checked') ){
             	$input.removeAttr('checked');
         	} else {
-        		$input.attr('checked','checked');
+        		$input.prop('checked', true);
         	};
             this.updateMap();
         };
@@ -396,7 +396,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 };
 
                 if( checked ) {
-                	$input.attr('checked','checked');
+                	$input.prop('checked', true);
                 };
 
                 if (!baseLayer && !layer.inRange) {

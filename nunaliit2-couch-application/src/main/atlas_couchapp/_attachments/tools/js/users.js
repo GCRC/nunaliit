@@ -589,7 +589,7 @@ var UserCreationApplication = $n2.Class({
 			.appendTo($line);
 		$('<input class="showPassword" type="checkbox"/>')
 			.attr('id',elemId)
-			.attr('checked', true)
+			.prop('checked', true)
 			.appendTo($line)
 			.change(function(){
 				var $display = _this._getDiv();
@@ -772,7 +772,7 @@ var UserCreationApplication = $n2.Class({
 			$('<div class="value"><input class="password2" type="password"/></div>')
 				.appendTo($line);
 
-			_this._getDiv().find(".showPassword").attr("checked", false)
+			_this._getDiv().find(".showPassword").prop("checked", false)
 			showOwnPassword(false)
 		};
 

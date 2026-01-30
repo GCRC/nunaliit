@@ -2068,9 +2068,9 @@ var Form = $n2.Class({
 			var type = $input.attr('type');
 			if( 'checkbox' === type ) {
 				if( value ) {
-					$input.attr('checked',true);
+					$input.prop('checked',true);
 				} else {
-					$input.attr('checked',false);
+					$input.prop('checked',false);
 				};
 
 			} 

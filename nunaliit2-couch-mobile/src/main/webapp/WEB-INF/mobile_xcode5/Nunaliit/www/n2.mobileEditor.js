@@ -172,14 +172,14 @@ var MobileEditor = $n2.Class({
 		if( null != this.options.schema ) {
 			var $button = $('<input type="radio" class="mobileEditFlavourRadio" name="mobileEditFlavour" id="mobileEditFlavourSchema"/>');
 			$button.attr('value',FLAVOUR_SCHEMA);
-			if( FLAVOUR_SCHEMA === this.flavour ) $button.attr('checked','checked');
+			if( FLAVOUR_SCHEMA === this.flavour ) $button.attr('checked', true);
 			$radioFieldSet.append( $button );
 			$radioFieldSet.append( $('<label for="mobileEditFlavourSchema">Form</label>') );
 		};
 
 		var $button = $('<input type="radio" class="mobileEditFlavourRadio" name="mobileEditFlavour" id="mobileEditFlavourTree"/>');
 		$button.attr('value',FLAVOUR_TREE);
-		if( FLAVOUR_TREE === this.flavour ) $button.attr('checked','checked');
+		if( FLAVOUR_TREE === this.flavour ) $button.attr('checked', true);
 		$radioFieldSet.append( $button );
 		$radioFieldSet.append( $('<label for="mobileEditFlavourTree">Detailed</label>') );
 

@@ -4478,7 +4478,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		
 		function onError() {
 			warning.text('!!!');
-			cb.attr('checked',false);
+			cb.prop('checked',false);
 			disableAll(span, false);
 			if( null != filterLabel ) {
 				this.removeStyleFilter(filterLabel);
@@ -4511,7 +4511,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			}; 
 			styleFilters[filter.label] = filter;
 
-			cb.attr('checked',true);
+			cb.prop('checked',true);
 			disableAll(span, false);
 			
 			_this.redrawMap();

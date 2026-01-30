@@ -82,7 +82,7 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isBadProxyEnabled() ){
-				$cb.attr('checked','checked');
+				$cb.attr('checked', true);
 			};
 
 			// Logging
@@ -108,7 +108,7 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isEventLoggingEnabled() ){
-				$cb.attr('checked','checked');
+				$cb.attr('checked', true);
 			};
 
 			// CouchDb Caching
@@ -134,7 +134,7 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isCouchDbCachingEnabled() ){
-				$cb.attr('checked','checked');
+				$cb.attr('checked', true);
 			};
 			var $cb = $('<button>')
 				.text( _loc('Clear Cache') )
@@ -181,7 +181,7 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isCouchDbCachingDisabled() ){
-				$cb.attr('checked','checked');
+				$cb.attr('checked', true);
 			};
 
 			// Force slow connection handling
@@ -207,7 +207,7 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.forceSlowConnectionHandling() ){
-				$cb.attr('checked','checked');
+				$cb.attr('checked', true);
 			};
 		}
 	});

@@ -166,7 +166,7 @@ function _selectAll(){
 		// check all
 		$table.find('.upload_selected').each(function(){
 			var $cb = $(this);
-			$cb.attr('checked','checked');
+			$cb.prop('checked', true);
 		});
 	};
 	
