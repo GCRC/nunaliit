@@ -1360,7 +1360,7 @@ var SearchInput = $n2.Class({
 			_this._focus(e);
 		});
 		
-		$textInput.blur(function(e) { 
+		$textInput.on("blur",function(e) { 
 			_this._blur(e);
 		});
 		

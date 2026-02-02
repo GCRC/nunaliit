@@ -111,13 +111,13 @@ var MainPage = $n2.Class({
 				.appendTo($searchDiv)
 //				.on('change',function(e){
 //					var text = $(this).val();
-//					$(this).blur();
+//					$(this).trigger("blur");
 //					_this._searchTermsChanged(text);
 //				})
 				.on('keyup',function(e){
 					if( e && 13 == e.keyCode ) {
 						var text = $(this).val();
-						$(this).blur();
+						$(this).trigger("blur");
 						_this._searchTermsChanged(text);
 					};
 					return false;

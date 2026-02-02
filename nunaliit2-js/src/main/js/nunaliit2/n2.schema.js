@@ -2058,7 +2058,7 @@ var Form = $n2.Class({
 					}
 				);
 			$input.on("change",changeHandler);
-			//$input.blur(handler);
+			//$input.on("blur",handler);
 			if( 'date' !== classInfo.type ){ // no key up event for date text boxes
 				$input.keyup(keyupHandler);
 			};
