@@ -72,7 +72,7 @@
 				.attr('type','checkbox')
 				.attr('name',badProxyId)
 				.appendTo($div)
-				.change(function(){
+				.on("change",function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setBadProxyEnabled(true);
@@ -98,7 +98,7 @@
 				.attr('type','checkbox')
 				.attr('name',loggingId)
 				.appendTo($div)
-				.change(function(){
+				.on("change",function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setEventLoggingEnabled(true);
@@ -124,7 +124,7 @@
 				.attr('type','checkbox')
 				.attr('name',couchDbCachingId)
 				.appendTo($div)
-				.change(function(){
+				.on("change",function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setCouchDbCachingEnabled(true);
@@ -171,7 +171,7 @@
 				.attr('type','checkbox')
 				.attr('name',disableCouchDbCachingId)
 				.appendTo($div)
-				.change(function(){
+				.on("change",function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setCouchDbCachingDisabled(true);
@@ -197,7 +197,7 @@
 				.attr('type','checkbox')
 				.attr('name',slowConnectionHandlingId)
 				.appendTo($div)
-				.change(function(){
+				.on("change",function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setForceSlowConnectionHandling(true);

@@ -182,7 +182,7 @@ function refreshToolbar(){
 	if( $select.length < 1 ) {
 		$select = $('<select class="uploadViewSelect"><option value="approval" selected="selected">Pending Approval</option><option value="denied">Already Denied</option></select>');
 		$buttonLine.append($select);
-		$select.change(selectionChanged);
+		$select.on("change",selectionChanged);
 	};
 
 	var $limit = $buttonLine.find('.uploadLimitSelect');
@@ -194,7 +194,7 @@ function refreshToolbar(){
 		$limit.append( $('<option value="100">Limit 100</option>') );
 		$limit.append( $('<option value="-1">No Limit</option>') );
 		$buttonLine.append($limit);
-		$limit.change(limitChanged);
+		$limit.on("change",limitChanged);
 	};
 
 	var $approveSelected = $buttonLine.find('.uploadApproveSelectedButton');
@@ -406,7 +406,7 @@ function showUploads(arr) {
 				$td = $('<td class="upload_checkbox"></td>');
 				var $cb = $('<input class="upload_selected" type="checkbox"/>');
 				$cb.appendTo($td);
-				$cb.change(function(){
+				$cb.on("change",function(){
 					refreshToolbar();
 					return true;
 				});
@@ -457,7 +457,7 @@ function uploadMain( $display ) {
 	
 //	var $select = $('<select><option value="approval" selected="selected">Pending Approval</option><option value="denied">Already Denied</option></select>');
 //	$('#requests').before($select);
-//	$select.change(selectionChanged);
+//	$select.on("change",selectionChanged);
 //
 //	var $approveAllBtn = $('<input class="uploadButton uploadApproveAllButton" type="button" value="Approve All"/>');
 //	$('#requests').before($approveAllBtn);
@@ -473,7 +473,7 @@ function uploadMain( $display ) {
 //	$limit.append( $('<option value="100">Limit 100</option>') );
 //	$limit.append( $('<option value="-1">No Limit</option>') );
 //	$('#requests').before($limit);
-//	$limit.change(limitChanged);
+//	$limit.on("change",limitChanged);
 	
 	refreshToolbar();
 	refreshView();

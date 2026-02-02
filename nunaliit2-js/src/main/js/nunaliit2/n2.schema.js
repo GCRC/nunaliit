@@ -2057,7 +2057,7 @@ var Form = $n2.Class({
 					,function(obj, selector, value){
 					}
 				);
-			$input.change(changeHandler);
+			$input.on("change",changeHandler);
 			//$input.blur(handler);
 			if( 'date' !== classInfo.type ){ // no key up event for date text boxes
 				$input.keyup(keyupHandler);
@@ -2456,7 +2456,7 @@ var Form = $n2.Class({
 					_this.callback(_this.obj,objSel.selectors,cbValue);
 				};
 			};
-			$input.change(changeHandler);
+			$input.on("change",changeHandler);
 			
 			// Handle focus
 			var focusHandler = {
@@ -2550,7 +2550,7 @@ var Form = $n2.Class({
 			$elem.val('');
 		};
 		
-		$elem.change(function(e) {
+		$elem.on("change",function(e) {
 			var $elem = $(this);
 			
 			var parentObj = parentSelector.getValue(_this.obj);

@@ -720,7 +720,7 @@ var SlideEditor = $n2.Class({
 				$keyDiv.append( $keyInput );
 				$keyInput.val(key);
 				if( isKeyEditingAllowed ) {
-					$keyInput.change(function(e){
+					$keyInput.on("change",function(e){
 						var $keyInput = $(this);
 						var newKey = $keyInput.val();
 		
@@ -791,7 +791,7 @@ var SlideEditor = $n2.Class({
 				requiresForwardButton = true;
 			};
 			if( isValueEditingAllowed ) {
-				$select.change(function(e){
+				$select.on("change",function(e){
 					var $select = $(this);
 					var newType = $select.val();
 	

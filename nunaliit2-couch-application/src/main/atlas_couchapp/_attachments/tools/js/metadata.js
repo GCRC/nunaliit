@@ -282,7 +282,7 @@
         // startRequestWait();
         var $moduleSelect = $("#module_select");
         $moduleSelect.empty();
-        $moduleSelect.change(function () {
+        $moduleSelect.on("change",function () {
             var $sel = $(this);
             moduleSelectChanged($sel);
             return true;

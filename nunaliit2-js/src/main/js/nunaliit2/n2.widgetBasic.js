@@ -582,7 +582,7 @@ var DocumentSelectorWidget = $n2.Class({
 		
 		var $select = $('<select>')
 			.appendTo($div)
-			.change(function(){
+			.on("change",function(){
 				var $selection = $(this);
 				_this._selectionChanged($selection);
 			});

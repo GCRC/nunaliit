@@ -566,7 +566,7 @@ var UserCreationApplication = $n2.Class({
 		$('<input class="choosePassword" type="checkbox"/>')
 			.attr('id',elemId)
 			.appendTo($line)
-			.change(function(){
+			.on("change",function(){
 				var $display = _this._getDiv();
 				var $choose = $display.find('.choosePassword');
 				var chooseMyOwn = $choose.is(':checked');
@@ -591,7 +591,7 @@ var UserCreationApplication = $n2.Class({
 			.attr('id',elemId)
 			.prop('checked', true)
 			.appendTo($line)
-			.change(function(){
+			.on("change",function(){
 				var $display = _this._getDiv();
 				var $show = $display.find('.showPassword');
 				var showPw = $show.is(':checked');
@@ -1087,7 +1087,7 @@ var PasswordRecoveryApplication = $n2.Class({
 			.appendTo($line);
 		$('<div class="value"><input class="choosePassword" type="checkbox"/></div>')
 			.appendTo($line)
-			.change(function(){
+			.on("change",function(){
 				var $display = _this._getDiv();
 				var $choose = $display.find('.choosePassword');
 				var chooseMyOwn = $choose.is(':checked');

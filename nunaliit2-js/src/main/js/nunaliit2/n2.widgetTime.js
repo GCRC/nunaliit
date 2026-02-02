@@ -308,7 +308,7 @@ var DateRangeWidget = $n2.Class({
 			.attr('type', 'text')
 			.attr('autocomplete', 'off')
 			.attr('placeholder', _loc('Start Date') + ' yyyy-mm-dd')
-			.change(function() {
+			.on("change",function() {
 				_this._startDateRangeUpdated();
 			})
 			.appendTo($widgetWindowStart);
@@ -345,7 +345,7 @@ var DateRangeWidget = $n2.Class({
 			.attr('type', 'text')
 			.attr('autocomplete', 'off')
 			.attr('placeholder', _loc('End Date') + ' yyyy-mm-dd')
-			.change(function() {
+			.on("change",function() {
 				_this._endDateRangeUpdated();
 			})
 			.appendTo($widgetWindowEnd);

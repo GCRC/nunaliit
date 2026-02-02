@@ -434,7 +434,7 @@ var FormInput = $n2.Class({
 		};
 		
 		this.input = $(inputHtml.join(''));
-		this.input.change(this.onChanged);
+		this.input.on("change",this.onChanged);
 
 		var initialValue = null;
 		if( this.data ) {

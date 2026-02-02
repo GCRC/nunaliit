@@ -719,7 +719,7 @@ var CreateRelatedDocProcess = $n2.Class({
 			};
 			
 			$select.insertBefore($placeHolder)
-				.change(function(){
+				.on("change",function(){
 					var val = $(this).val();
 					$(this).val('');
 					if( val && val.length > 0 ) {

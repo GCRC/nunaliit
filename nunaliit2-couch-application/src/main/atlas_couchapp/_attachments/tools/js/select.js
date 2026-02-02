@@ -436,7 +436,7 @@
 			$o.attr('value',searchFilter.id);
 			$select.append( $o );
 		};
-		$select.change(function(e){
+		$select.on("change",function(e){
 			var $dialog = $('#'+dialogId);
 			var $select = $dialog.find('select.searchFilterSelector');
 
@@ -531,7 +531,7 @@
 			$o.attr('value',searchFilter.id);
 			$select.append( $o );
 		};
-		$select.change(function(e){
+		$select.on("change",function(e){
 			var $dialog = $('#'+dialogId);
 			adjustOptions($dialog);
 		});
@@ -3140,7 +3140,7 @@
 			var $formatSelect = $('<select>')
 				.attr('id',formatId)
 				.appendTo($formatDiv)
-				.change(formatChanged);
+				.on("change",formatChanged);
 			$('<option value="geojson"></options>')
 				.text( _loc('geojson') )
 				.appendTo($formatSelect);
@@ -3501,7 +3501,7 @@
 				.addClass('selectAppRevisionSelector')
 				.appendTo($revs);
 			var $selector = $('<select>')
-				.change(revisionSelected)
+				.on("change",revisionSelected)
 				.appendTo($selectorDiv);
 			var $o = $('<option>')
 				.text('Select Revision')

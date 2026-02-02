@@ -241,7 +241,7 @@ if( !$d ) return;
  				.attr('type','checkbox')
  				.attr('id',inputId)
  				.appendTo($inputDiv)
- 				.change(function(){
+ 				.on("change",function(){
  					var selected = $('#'+inputId).is(':checked');
  					var m = {
  						type: parameterInfo.setEvent

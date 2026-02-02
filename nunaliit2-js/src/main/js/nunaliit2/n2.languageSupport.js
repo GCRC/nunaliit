@@ -176,7 +176,7 @@ var LanguageSwitcher = $n2.Class({
 			var $input = $('<input type="radio" name="languageSelect"/>')
 				.attr('id',id)
 				.appendTo($div)
-				.change(onChange);
+				.on("change",onChange);
 			
 			if( code ){
 				$input.attr('n2Code',code);

@@ -524,9 +524,9 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 };
                 
                 if( baseLayer ){
-                	$input.change(this.__baseFn);
+                	$input.on("change",this.__baseFn);
                 } else {
-                	$input.change(this.__overlayFn);
+                	$input.on("change",this.__overlayFn);
                 };
             };
         };

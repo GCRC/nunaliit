@@ -137,7 +137,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		var $methodSelect = $('<select>')
 			.attr('id',methodId)
 			.appendTo($methodDiv)
-			.change(methodChanged);
+			.on("change",methodChanged);
 		$('<option>')
 			.val('__custom__')
 			.text( _loc('Custom Script') )
@@ -178,7 +178,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		var $formatSelect = $('<select>')
 			.attr('id',formatId)
 			.appendTo($formatDiv)
-			.change(formatChanged);
+			.on("change",formatChanged);
 		$('<option value="geojson"></options>')
 			.text( _loc('geojson') )
 			.appendTo($formatSelect);

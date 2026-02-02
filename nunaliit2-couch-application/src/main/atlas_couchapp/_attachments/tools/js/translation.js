@@ -135,7 +135,7 @@ function displayTranslated() {
 				.empty()
 				.append($select)
 				;
-			$select.change(languageChanged);
+			$select.on("change",languageChanged);
 			
 			languageChanged();
 		}
@@ -232,7 +232,7 @@ function main() {
 	$select.append( $('<option value="l10n-all">All</option>') );
 	$select.append( $('<option value="translated">Translated</option>') );
 	$('#'+requestPanelName).before($select);
-	$select.change(selectionChanged);
+	$select.on("change",selectionChanged);
 	
 	refreshView();
 };
