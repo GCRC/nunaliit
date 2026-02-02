@@ -105,7 +105,7 @@ function showRequests(arr) {
 		};
 	};
 	
-	$table.find('.uploadBtn').click(upload);
+	$table.find('.uploadBtn').on("click",upload);
 };
 
 function displayTranslated() {

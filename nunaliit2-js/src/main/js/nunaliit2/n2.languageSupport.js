@@ -124,7 +124,7 @@ var LanguageSwitcher = $n2.Class({
 			.text( _loc('Language') )
 			.attr('href','#')
 			.appendTo($elem)
-			.click(function(){
+			.on("click",function(){
 				_this._dialog();
 				return false;
 			});
@@ -275,7 +275,7 @@ var LanguageToggler = $n2.Class({
 				.text( language.name )
 				.attr('href','#')
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					_this._selectLanguage(language.code);
 					return false;
 				});

@@ -1172,7 +1172,7 @@ var AnalysisReport = $n2.Class({
 			$('<button>')
 				.text( _loc('Proceed') )
 				.appendTo($div)
-				.click(function(){
+				.on("click",function(){
 					_this._proceedAll({
 						onSuccess: function(){ $('#'+proceedDivId).remove(); }
 					});
@@ -1180,7 +1180,7 @@ var AnalysisReport = $n2.Class({
 			$('<button>')
 				.text( _loc('Discard') )
 				.appendTo($div)
-				.click(function(){
+				.on("click",function(){
 					var $button = $(this);
 					var $promptElem = $button.parents('.prompt');
 					$promptElem.remove();
@@ -1206,7 +1206,7 @@ var AnalysisReport = $n2.Class({
 				$('<button>')
 					.text( _loc('Proceed') )
 					.appendTo($div)
-					.click(function(){
+					.on("click",function(){
 						_this._proceedAutomatics({
 							onSuccess: function(){ $('#'+autoDivId).remove(); }
 						});
@@ -1214,7 +1214,7 @@ var AnalysisReport = $n2.Class({
 				$('<button>')
 					.text( _loc('Discard') )
 					.appendTo($div)
-					.click(function(){
+					.on("click",ick",function(){
 						var $button = $(this);
 						var $promptElem = $button.parents('.prompt');
 						$promptElem.remove();
@@ -1321,14 +1321,14 @@ var AnalysisReport = $n2.Class({
 				.addClass('discard')
 				.text( _loc('Discard') )
 				.appendTo($div)
-				.click(discardClickFn);
+				.on("click",discardClickFn);
 			
 			var $proceedButton = $('<button>')
 				.attr('id',change.changeId + '_proceed')
 				.addClass('proceed')
 				.text( _loc('Modify Document') )
 				.appendTo($div)
-				.click(proceedClickFn);
+				.on("click",proceedClickFn);
 			if( change.isAddition ){
 				$proceedButton.text( _loc('Create new document') );
 			};
@@ -1405,7 +1405,7 @@ var AnalysisReport = $n2.Class({
 						.attr('name',collisionId)
 						.attr('value','updateValue')
 						.attr('data-changeId',change.getId())
-						.click(collisionRadioButtonClickFn)
+						.on("click",collisionRadioButtonClickFn)
 						.appendTo($updatedValueDiv);
 					$('<label>')
 						.attr('for',updatedId)
@@ -1424,7 +1424,7 @@ var AnalysisReport = $n2.Class({
 						.attr('name',collisionId)
 						.attr('value','current')
 						.attr('data-changeId',change.getId())
-						.click(collisionRadioButtonClickFn)
+						.on("click",collisionRadioButtonClickFn)
 						.appendTo($currentValueDiv);
 					$('<label>')
 						.attr('for',currentId)
@@ -1468,12 +1468,12 @@ var AnalysisReport = $n2.Class({
 				.addClass('discard')
 				.text( _loc('Discard') )
 				.appendTo($del)
-				.click(discardClickFn);
+				.on("click",discardClickFn);
 			$('<button>')
 				.addClass('proceed')
 				.text( _loc('Delete Database Document') )
 				.appendTo($del)
-				.click(proceedClickFn);
+				.on("click",proceedClickFn);
 
 			var explanation = _loc('Delete existing document');
 			if( change.isAuto() ){

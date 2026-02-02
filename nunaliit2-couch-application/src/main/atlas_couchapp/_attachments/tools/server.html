@@ -166,7 +166,7 @@
 			function main() {
 				var $uploadOriginals = $('<button>Upload Original Images</button>');
 				$('#buttons').append($uploadOriginals);
-				$uploadOriginals.click(uploadOriginalFiles);
+				$uploadOriginals.on("click",uploadOriginalFiles);
 				
 				$('#status').empty();
 			};

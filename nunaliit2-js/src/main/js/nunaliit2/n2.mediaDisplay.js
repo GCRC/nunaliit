@@ -593,7 +593,7 @@ $n2.MediaDisplay = $n2.Class({
 		.attr('href',opts.url)
 		.attr('title', _loc('Download'))
 		.addClass('n2DisplayBoxButtonDownload')
-		.click(function(e){
+		.on("click",function(e){
 			if(opts.suppressLeaveConfirmation){
 				return true;
 			};

@@ -269,7 +269,7 @@ var SplashPageWidget = $n2.Class({
 				.text( label )
 				.attr('href','#')
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					var index = _this.pageIndex;
 					_this._goToPage(index-1);
 					return false;
@@ -294,7 +294,7 @@ var SplashPageWidget = $n2.Class({
 				.text( label )
 				.attr('href','#')
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					var index = _this.pageIndex;
 					_this._goToPage(index+1);
 					return false;
@@ -319,7 +319,7 @@ var SplashPageWidget = $n2.Class({
 				.text( label )
 				.attr('href','#')
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					var $diag = $('#'+_this.dialogId);
 					$diag.dialog('close');
 					return false;
@@ -362,7 +362,7 @@ var SplashPageWidget = $n2.Class({
 					.attr('href','#')
 					.text(pageNumber)
 					.appendTo($pageDiv)
-					.click(function(){
+					.on("click",function(){
 						var $pageDiv = $(this).parent();
 						var pageIndex = 1 * $pageDiv.attr('nunaliit-page-index')
 						_this._goToPage(pageIndex);
@@ -396,7 +396,7 @@ var SplashPageWidget = $n2.Class({
 				.attr('type','checkbox')
 				.attr('id',cbId)
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					var $cb = $(this);
 					var isChecked = $cb.is(':checked');
 					_this._doNotShowAgain(isChecked);
@@ -532,7 +532,7 @@ var SplashPageWidget = $n2.Class({
 				.attr('href','#')
 				.text( label )
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					_this.dispatchService.send(DH,{
 						type: 'splashShowSplashPage'
 					});

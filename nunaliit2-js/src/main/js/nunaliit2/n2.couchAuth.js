@@ -498,7 +498,7 @@ var AuthService = $n2.Class({
 						$('<button>')
 							.addClass('n2_button_ok')
 							.text( _loc('Accept') )
-							.click(function(){
+							.on("click",function(){
 								accepted = true;
 								var $diag = $('#'+diagId);
 								$diag.dialog('close');
@@ -509,7 +509,7 @@ var AuthService = $n2.Class({
 						$('<button>')
 							.addClass('n2_button_cancel')
 							.text( _loc('Reject') )
-							.click(function(){
+							.on("click",function(){
 								var $diag = $('#'+diagId);
 								$diag.dialog('close');
 							})
@@ -640,7 +640,7 @@ var AuthService = $n2.Class({
 			$('<button>')
 				.addClass('n2_button_ok')
 				.text( _loc('OK') )
-				.click(function(){
+				.on("click",function(){
 					var $diag = $('#'+diagId);
 					$diag.dialog('close');
 					saveUserAnswers(sessionResult, userDoc, answers);
@@ -650,7 +650,7 @@ var AuthService = $n2.Class({
 			$('<button>')
 				.addClass('n2_button_cancel')
 				.text( _loc('Remind me later') )
-				.click(function(){
+				.on("click",function(){
 					var $diag = $('#'+diagId);
 					$diag.dialog('close');
 					onLoginCompleted(sessionResult, userDoc);
@@ -805,7 +805,7 @@ var AuthService = $n2.Class({
 		$('<input type="submit" class="n2Auth_button_login"></input>')
 			.appendTo($buttonLine)
 			.val( _loc('Login') )
-			.click(function(){
+			.on("click",function(){
 				performLogin();
 				return false;
 			});
@@ -818,7 +818,7 @@ var AuthService = $n2.Class({
 			$('<a class="n2Auth_button_createUser" href="#"></a>')
 				.appendTo($createLine)
 				.text( _loc('Create a new user') )
-				.click(function(){
+				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					var userName = $dialog.find('.n2Auth_user_input').val();
 					opts.userName = userName;
@@ -835,7 +835,7 @@ var AuthService = $n2.Class({
 			$('<a class="n2Auth_button_recoverPassword" href="#"></a>')
 				.appendTo($recoverLine)
 				.text( _loc('Reset password?') )
-				.click(function(){
+				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					var userName = $dialog.find('.n2Auth_user_input').val();
 					opts.userName = userName;
@@ -995,7 +995,7 @@ var AuthService = $n2.Class({
 			.addClass('n2Auth_button_create')
 			.text( _loc('Create User') )
 			.appendTo($line)
-			.click(function(){
+			.on("click",function(){
 				performUserCreation();
 				return false;
 			});
@@ -1131,7 +1131,7 @@ var AuthService = $n2.Class({
 			.addClass('n2Auth_button_create')
 			.text( _loc('Create User') )
 			.appendTo($line)
-			.click(function(){
+			.on("click",function(){
 				performUserRegistration();
 				return false;
 			});
@@ -1199,7 +1199,7 @@ var AuthService = $n2.Class({
 				.text( _loc('OK') )
 				.appendTo($line)
 				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
+				.on("click",function(){
 					opts.onSuccess();
 					return false;
 				});
@@ -1270,7 +1270,7 @@ var AuthService = $n2.Class({
 			.addClass('n2Auth_button_recover')
 			.text( _loc('Reset Password') )
 			.appendTo($line)
-			.click(function(){
+			.on("click",function(){
 				performPasswordRecovery();
 				return false;
 			});
@@ -1340,7 +1340,7 @@ var AuthService = $n2.Class({
 				.text( _loc('OK') )
 				.appendTo($line)
 				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
+				.on("click",function(){
 					opts.onSuccess();
 					return false;
 				});
@@ -1380,7 +1380,7 @@ var AuthService = $n2.Class({
 				.text( _loc('OK') )
 				.appendTo($line)
 				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
+				.on("click",function(){
 					_this._fillDialogWithLogin(dialogId, opts);
 					return false;
 				});
@@ -1988,7 +1988,7 @@ var AuthWidget = $n2.Class({
 				.append(aElem);
 			var linkOuterContainer = $('<div class="nunaliit_login_link_outer_container"></div>')
 				.append(linkInnerContainer)
-				.click(clickFn);
+				.on("click",clickFn);
 
 			var nameElem = $('<span></span>')
 				.text(displayName);
@@ -2000,7 +2000,7 @@ var AuthWidget = $n2.Class({
 			if( greetingFn ){
 				greetingOuter
 					.addClass('nunaliit_login_greeting_with_editor')
-					.click(greetingFn);
+					.on("click",greetingFn);
 			};
 			
 			$login.empty().append(greetingOuter).append(linkOuterContainer);

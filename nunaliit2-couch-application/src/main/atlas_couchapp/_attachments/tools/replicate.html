@@ -146,7 +146,7 @@
 			};
 			
 			function main() {
-				$('#startButton').click(startReplication);
+				$('#startButton').on("click",startReplication);
 				
 				queryActiveTasks();
 			};

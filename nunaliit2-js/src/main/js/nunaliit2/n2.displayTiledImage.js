@@ -146,7 +146,7 @@ var DisplayTiledImage = $n2.Class({
 		$('<div>')
 			.addClass('n2TiledImage_close')
 			.appendTo($footer)
-			.click(function(){
+			.on("click",function(){
 				_this._close();
 				return false;
 			});

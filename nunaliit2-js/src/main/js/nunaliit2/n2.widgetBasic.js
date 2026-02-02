@@ -146,7 +146,7 @@ var CreateDocumentWidget = $n2.Class({
 					.attr('href','#')
 					.text( _loc('Create Document') )
 					.appendTo($div)
-					.click(function(){
+					.on("click",function(){
 						_this._startEdit();
 						return false;
 					});
@@ -154,7 +154,7 @@ var CreateDocumentWidget = $n2.Class({
 				$('<button>')
 					.text( _loc('Create Document') )
 					.appendTo($div)
-					.click(function(){
+					.on("click",function(){
 						_this._startEdit();
 						return false;
 					});
@@ -310,7 +310,7 @@ var CreateDocumentFromSchemaWidget = $n2.Class({
 				.attr('href','#')
 				.text(controlLabel)
 				.appendTo($div)
-				.click(function(){
+				.on("click",function(){
 					_this._startEdit();
 					return false;
 				});
@@ -318,7 +318,7 @@ var CreateDocumentFromSchemaWidget = $n2.Class({
 			$('<button>')
 				.text(controlLabel)
 				.appendTo($div)
-				.click(function(){
+				.on("click",function(){
 					_this._startEdit();
 					return false;
 				});
@@ -742,7 +742,7 @@ var ButtonWidget = $n2.Class('ButtonWidget',{
 			.attr('href', '#')
 			.addClass('n2widget_button')
 			.appendTo( $('#'+containerId) )
-			.click(function(){
+			.on("click",function(){
 				_this._buttonClicked();
 				return false;
 			});

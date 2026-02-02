@@ -91,7 +91,7 @@ var CreateDocWidget = $n2.Class({
 		$('<button>')
 			.text( this.label )
 			.appendTo($elem)
-			.click(function(){
+			.on("click",function(){
 				_this._createDocClicked();
 			});
 	},
@@ -237,7 +237,7 @@ var Editor = $n2.Class({
 			.text( _loc('OK') )
 			.button({icons:{primary:'ui-icon-check'}})
 			.appendTo($diagContent)
-			.click(function(){
+			.on("click",function(){
 				_this._clickOK();
 				return false;
 			});
@@ -247,7 +247,7 @@ var Editor = $n2.Class({
 			.text( _loc('Cancel') )
 			.button({icons:{primary:'ui-icon-cancel'}})
 			.appendTo( $diagContent )
-			.click(function(){
+			.on("click",function(){
 				_this._clickCancel();
 				return false;
 			});
@@ -378,7 +378,7 @@ var Editor = $n2.Class({
 			.text( _loc('Cancel') )
 			.button({icons:{primary:'ui-icon-cancel'}})
 			.appendTo( $content )
-			.click(function(){
+			.on("click",function(){
 				_this._clickCancel();
 				return false;
 			});

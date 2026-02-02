@@ -192,7 +192,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         
         // Do not let click events leave the control and reach the map
         // This allows the html elements to function properly
-		$(this.div).click((ev) => {
+		$(this.div).on("click",(ev) => {
             this._suppressedClick(ev)
         });
 

@@ -139,7 +139,7 @@
 			var $cb = $('<button>')
 				.text( _loc('Clear Cache') )
 				.appendTo($div)
-				.click(function(){
+				.on("click",function(){
 					$n2.indexedDb.openIndexedDb({
 						onSuccess: function(indexedDbConnection){
 							var documentCache = indexedDbConnection.getDocumentCache({});

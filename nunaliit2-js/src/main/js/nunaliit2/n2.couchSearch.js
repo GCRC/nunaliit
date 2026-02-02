@@ -1229,7 +1229,7 @@ var SearchInput = $n2.Class({
 			this.options.dispatchService.register(DH,'searchDeactivated',f);            
 
 			// Activate/Deactivate Search Box
-			$('.searchIcon').click(function() {
+			$('.searchIcon').on("click",function() {
 				if( $('.nunaliit_search_input').hasClass('search_active') ){
 					_this.options.dispatchService.send(DH,{
 						type: 'searchDeactivated'
@@ -1366,7 +1366,7 @@ var SearchInput = $n2.Class({
 		
 		var $searchButton = this.getSearchButton();
 		if( $searchButton ) {
-			$searchButton.click(function(e){
+			$searchButton.on("click",function(e){
 				_this._clickSearch(e);
 			});
 		};

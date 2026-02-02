@@ -731,7 +731,7 @@ var ModuleDisplay = $n2.Class({
 					// Add backdrop.
 					$('<div></div>')
 						.addClass('n2_content_backdrop')
-						.click(function() {
+						.on("click",function() {
 							if (d) {
 								d.send(DH,{
 								type: 'userUnselect'
@@ -1511,7 +1511,7 @@ var ModuleDisplay = $n2.Class({
 			.attr('href','#')
 			.text(text)
 			.appendTo($elem)
-			.click(function(e){
+			.on("click",function(e){
 				var d = _this.dispatchService;
 				if( d ){
 					d.send(DH,{
@@ -1582,7 +1582,7 @@ var ModuleDisplay = $n2.Class({
 				.empty()
 				.append($a);
 
-			$a.click(function(){
+			$a.on("click",function(){
 				var $btn = $(this);
 
 				$n2.help.ToggleHelp('main', $btn);

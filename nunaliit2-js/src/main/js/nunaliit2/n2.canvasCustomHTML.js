@@ -246,7 +246,7 @@ var CustomHtmlCanvas = $n2.Class({
 				.mouseout(function(e){
  					_this._mouseOut($(this),e);
  				})
-				.click(function(e){
+				.on("click",function(e){
  					_this._mouseClick($(this),e);
  				})
  				;
@@ -280,7 +280,7 @@ var CustomHtmlCanvas = $n2.Class({
 					.mouseout(function(e){
 	 					_this._mouseOut($(this),e);
 	 				})
-					.click(function(e){
+					.on("click",function(e){
 	 					_this._mouseClick($(this),e);
 	 				})
 	 				;
@@ -304,7 +304,7 @@ var CustomHtmlCanvas = $n2.Class({
  			var $child = $(this);
  			
  			$child
-				.click(function(e){
+				.on("click",function(e){
  					_this._mouseUnselect($(this),e);
  				})
  				.removeClass('n2canvas_unselect')

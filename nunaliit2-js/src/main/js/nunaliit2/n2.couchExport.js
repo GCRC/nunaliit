@@ -224,7 +224,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		$('<button>')
 			.text( _loc('Export') )
 			.appendTo($btnLine)
-			.click(function(){
+			.on("click",function(){
 				var filter = $('#'+filterId).val();
 				var format = $('#'+formatId).val();
 				

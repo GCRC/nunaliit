@@ -275,7 +275,7 @@
 
 		dispatcher.register(DH, 'hashChanged', _handle);
 
-		$('#selectSchemaButton').click(addDocument);
+		$('#selectSchemaButton').on("click",addDocument);
 		$('#uploadFiles').change(function (event) {
 			filesToUpload = event.target.files;
 		});

@@ -93,7 +93,7 @@ var NavigationWidget = $n2.Class({
 		$('<div>')
 			.addClass('n2NavigationWidget_button n2NavigationWidget_button_forward')
 			.appendTo($elem)
-			.click(function(){
+			.on("click",function(){
 				// Enable click only if forward is available
 				if( $(this).hasClass('n2NavigationWidget_button_enabled') ){
 					if( _this.dispatchService ){
@@ -107,7 +107,7 @@ var NavigationWidget = $n2.Class({
 		$('<div>')
 			.addClass('n2NavigationWidget_button n2NavigationWidget_button_home n2NavigationWidget_button_enabled')
 			.appendTo($elem)
-			.click(function(){
+			.on("click",function(){
 				if( _this.dispatchService ){
 					_this.dispatchService.send(DH,{
 						type: 'userUnselect'
@@ -118,7 +118,7 @@ var NavigationWidget = $n2.Class({
 		$('<div>')
 			.addClass('n2NavigationWidget_button n2NavigationWidget_button_back')
 			.appendTo($elem)
-			.click(function(){
+			.on("click",function(){
 				// Enable click only if back is available
 				if( $(this).hasClass('n2NavigationWidget_button_enabled') ){
 					if( _this.dispatchService ){

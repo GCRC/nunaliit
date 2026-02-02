@@ -243,7 +243,7 @@ var MobileViewer = $n2.Class({
 		if( doc._rev ) {
 			var $editButtonLine = $('<li><a href="#" data-role="button" data-inline="true" data-icon="gear">Edit</a></li>');
 			$buttonsUl.append($editButtonLine);
-			$editButtonLine.find('a').click(function(){
+			$editButtonLine.find('a').on("click",function(){
 				new $n2.mobile.MobileEditor({
 					currentDb: currentDb
 					,doc: doc
@@ -256,7 +256,7 @@ var MobileViewer = $n2.Class({
 		if( doc._rev ) {
 			var $deleteButtonLine = $('<li><a href="#" data-role="button" data-inline="true" data-icon="delete">Delete</a></li>');
 			$buttonsUl.append($deleteButtonLine);
-			$deleteButtonLine.find('a').click(function(){
+			$deleteButtonLine.find('a').on("click",function(){
 				_this._clickDelete(this);
 				return false;
 			});
@@ -271,7 +271,7 @@ var MobileViewer = $n2.Class({
 			$buttonsUl.append( $buttonLine );
 			
 			$buttonLine.find('a')
-				.click(function(){
+				.on("click",function(){
 					_this._clickAddRelatedDoc();
 					return false;
 				});

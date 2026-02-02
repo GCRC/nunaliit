@@ -114,7 +114,7 @@ var MobileEditor = $n2.Class({
 			$newPage.append('<div class="mobileEditContent" data-role="content" data-theme="d"></div>');
 			$newPage.append('<div class="mobileEditFooter" data-role="footer" data-theme="b"></div>');
 			
-			$newPage.find('a').click(function(e){
+			$newPage.find('a').on("click",function(e){
 				_this._clickCancel(this, e);
 				return false;
 			});
@@ -200,13 +200,13 @@ var MobileEditor = $n2.Class({
 		$navBarUl.append( $('<li><a class="mobileEditButtonSave" data-role="button" data-inline="true" data-icon="check">Save</a></li>') );
 		$navBarUl.append( $('<li><a class="mobileEditButtonCancel" data-role="button" data-inline="true" data-icon="back">Cancel</a></li>') );
 		$navBarUl.append( $('<li><a class="mobileEditButtonGps" data-role="button" data-inline="true" data-icon="add">Add Location</a></li>') );
-		$navBar.find('.mobileEditButtonSave').click(function(e){
+		$navBar.find('.mobileEditButtonSave').on("click",function(e){
 			_this._clickSave(this, e);
 		});
-		$navBar.find('.mobileEditButtonCancel').click(function(e){
+		$navBar.find('.mobileEditButtonCancel').on("click",function(e){
 			_this._clickCancel(this, e);
 		});
-		$navBar.find('.mobileEditButtonGps').click(function(e){
+		$navBar.find('.mobileEditButtonGps').on("click",function(e){
 			_this._clickGps(this);
 		});
 		
@@ -480,7 +480,7 @@ var MobileEditor = $n2.Class({
 		};
 		
 		function installMediaEditClick($button, attachment){
-			$button.click(function(){
+			$button.on("click",function(){
 				new $n2.mobile.MobileMediaEditor({
 					currentDb: _this.getCurrentDb()
 					,doc: _this.doc

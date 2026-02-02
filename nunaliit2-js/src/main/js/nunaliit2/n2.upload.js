@@ -102,7 +102,7 @@ var Upload = $n2.Class({
 			$form.append( $button );
 			$elem.append($form);
 			
-			$button.click(uploadClicked);
+			$button.on("click",uploadClicked);
 		};
 
 		function uploadClicked(evt) {
@@ -349,7 +349,7 @@ var Upload = $n2.Class({
 		$ok.text( _loc('OK') );
 		$ok.button({icons:{primary:'ui-icon-check'}});
 		$dialog.append( $ok );
-		$ok.click(function(){
+		$ok.on("click",function(){
 			var $diag = $('#'+infoDialogId);
 			$diag.dialog('close');
 			return false;

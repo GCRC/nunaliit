@@ -1769,7 +1769,7 @@ var Form = $n2.Class({
 					_this._installCustomType($elem, $(this),_this.obj,_this.callback);
 				});
 				
-				$divEvent.click(function(e){
+				$divEvent.on("click",function(e){
 					var $clicked = $(e.target);
 					var classString = $clicked.attr('class');
 					var classNames = null;
@@ -2397,7 +2397,7 @@ var Form = $n2.Class({
 			$('<div>')
 				.addClass('n2schema_referenceDelete')
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					var parentObj = parentSelector.getValue(_this.obj);
 					if( $n2.isArray(parentObj) 
 					 && typeof key === 'number' 

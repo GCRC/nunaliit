@@ -454,7 +454,7 @@
 		$dialog.find('button')
 			.first()
 				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
+				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					var $options = $dialog.find('.searchFilterOptions');
 					var $select = $dialog.find('select.searchFilterSelector');
@@ -476,7 +476,7 @@
 				})
 			.next()
 				.button({icons:{primary:'ui-icon-cancel'}})
-				.click(function(){
+				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					$dialog.dialog('close');
 					return false;
@@ -541,7 +541,7 @@
 		$dialog.find('button')
 			.first()
 				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
+				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					var $options = $dialog.find('.searchFilterOptions');
 					var filterId = $dialog.find('select.searchFilterSelector').val();
@@ -566,7 +566,7 @@
 				})
 			.next()
 				.button({icons:{primary:'ui-icon-cancel'}})
-				.click(function(){
+				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					$dialog.dialog('close');
 					return false;
@@ -2206,7 +2206,7 @@
 			$dialog.find('button')
 				.first()
 					.button({icons:{primary:'ui-icon-check'}})
-					.click(function(){
+					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						var fromText = $dialog.find('.selectAppFrom').val();
 						var toText = $dialog.find('.selectAppTo').val();
@@ -2219,7 +2219,7 @@
 					})
 				.next()
 					.button({icons:{primary:'ui-icon-cancel'}})
-					.click(function(){
+					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						$dialog.dialog('close');
 						return false;
@@ -2290,7 +2290,7 @@
 			$dialog.find('button')
 				.first()
 					.button({icons:{primary:'ui-icon-check'}})
-					.click(function(){
+					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						var script = $dialog.find('textarea').val();
 						var scriptFn = null;
@@ -2319,14 +2319,14 @@
 					})
 				.next()
 					.button({icons:{primary:'ui-icon-cancel'}})
-					.click(function(){
+					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						$dialog.dialog('close');
 						return false;
 					})
 				.next()
 					.button({icons:{primary:'ui-icon-cart'}})
-					.click(function(){
+					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						var script = $dialog.find('textarea').val();
 						var scriptFn = null;
@@ -2446,7 +2446,7 @@
 			.appendTo($h);
 		$('<button>')
 			.text( _loc('Add') )
-			.click(function(){
+			.on("click",function(){
 				SearchFilter.createNewList({
 					onSuccess: function(list){
 						addList(list);
@@ -2462,7 +2462,7 @@
 			
 			var $d = $('<div>')
 				.attr('n2-list-id', listId)
-				.click(onListClick)
+				.on("click",onListClick)
 				.appendTo($lists);
 			
 			if( list === selectedList ) {
@@ -2478,7 +2478,7 @@
 				.attr('href','#')
 				.attr('n2-list-id', listId)
 				.text( _loc('View') )
-				.click(onListClick)
+				.on("click",onListClick)
 				.appendTo($d);
 			
 			$('<a>')
@@ -2486,7 +2486,7 @@
 				.attr('href','#')
 				.attr('n2-list-id', listId)
 				.text( _loc('Text') )
-				.click(onTextClick)
+				.on("click",onTextClick)
 				.appendTo($d);
 
 			$('<a>')
@@ -2494,7 +2494,7 @@
 				.attr('href','#')
 				.attr('n2-list-id', listId)
 				.text( _loc('Remove') )
-				.click(onRemoveClick)
+				.on("click",onRemoveClick)
 				.appendTo($d);
 		};
 		
@@ -2605,7 +2605,7 @@
 		$('<button>')
 			.text( _loc('Transform') )
 			.appendTo($h)
-			.click(function(){
+			.on("click",function(){
 				transformList(list);
 				return false;
 			});
@@ -2613,7 +2613,7 @@
 		$('<button>')
 			.text( _loc('Delete') )
 			.appendTo($h)
-			.click(function(){
+			.on("click",function(){
 				deleteDocumentsFromList(list);
 				return false;
 			});
@@ -2621,7 +2621,7 @@
 		$('<button>')
 			.text( _loc('Refine List') )
 			.appendTo($h)
-			.click(function(){
+			.on("click",function(){
 				SearchFilter.refineList({
 					list: list
 					,onSuccess: function(refinedList){
@@ -2634,7 +2634,7 @@
 		$('<button>')
 			.text( _loc('Report') )
 			.appendTo($h)
-			.click(function(){
+			.on("click",function(){
 				reportList(list);
 				return false;
 			});
@@ -2642,7 +2642,7 @@
 		$('<button>')
 			.text( _loc('Export') )
 			.appendTo($h)
-			.click(function(){
+			.on("click",function(){
 				exportList(list);
 				return false;
 			});
@@ -2650,7 +2650,7 @@
 		$('<button>')
 			.text( _loc('Export by Script') )
 			.appendTo($h)
-			.click(function(){
+			.on("click",function(){
 				exportListByScript(list);
 				return false;
 			});
@@ -2679,7 +2679,7 @@
 		};
 		
 		function installViewDoc($a, docId){
-			$a.click(function(){
+			$a.on("click",function(){
 				viewDocument(docId);
 				return false;
 			});
@@ -2733,7 +2733,7 @@
 		$dialog.find('button')
 			.first()
 				.button({icons:{primary:'ui-icon-check'}})
-				.click(function(){
+				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					var $select = $dialog.find('select');
 					var transformId = $select.val();
@@ -2758,7 +2758,7 @@
 				})
 			.next()
 				.button({icons:{primary:'ui-icon-cancel'}})
-				.click(function(){
+				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					$dialog.dialog('close');
 					return false;
@@ -2796,7 +2796,7 @@
 		
 		$dialog.find('button.buttonOK')
 			.button({icons:{primary:'ui-icon-check'}})
-			.click(function(){
+			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 
 				$dialog.dialog('close');
@@ -2890,7 +2890,7 @@
 		
 		$dialog.find('button.buttonCancel')
 			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
+			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
 				return false;
@@ -2933,7 +2933,7 @@
 
 		$('<button>')
 			.text( _loc('OK') )
-			.click(function(){
+			.on("click",function(){
 				performReport();
 				return false;
 			})
@@ -3164,7 +3164,7 @@
 
 			$('<div><button>'+_loc('Export')+'</button></div>')
 				.appendTo($dialog);
-			$dialog.find('button').click(function(){
+			$dialog.find('button').on("click",function(){
 				var filter = $('#'+filterId).val();
 				var format = $('#'+formatId).val();
 				
@@ -3480,7 +3480,7 @@
 				var $edit = $('<button></button>');
 				$edit.text( _loc('Edit') );
 				$buttons.append($edit);
-				$edit.click(function(){
+				$edit.on("click",function(){
 					editDocument(doc);
 					return false;
 				});
@@ -3598,7 +3598,7 @@
 			$h.find('span').text( _loc('Logs') );
 			$h.find('button')
 				.text( _loc('Clear') )
-				.click(function(){
+				.on("click",function(){
 					var $d = getLogsDiv();
 					$d.empty();
 					addHeader($d);
@@ -3631,7 +3631,7 @@
 		$b.text( _loc('Test Temporary View') );
 		$selectAppDiv.append($b);
 		
-		$b.click(function(){
+		$b.on("click",function(){
 			atlasDb.queryTemporaryView({
 				map: 'function(doc){ emit(null,null); }'
 				,onSuccess: function(rows){
@@ -3654,7 +3654,7 @@
 		$b.text( _loc('All Documents') );
 		$selectAppDiv.append($b);
 		
-		$b.click(function(){
+		$b.on("click",function(){
 			atlasDb.listAllDocuments({
 				onSuccess: function(docIds){
 					var l = new DocumentList({

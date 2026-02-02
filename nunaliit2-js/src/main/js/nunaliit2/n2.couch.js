@@ -1205,7 +1205,7 @@ var Database = $n2.Class('couch.Database',{
 			$form.append( $button );
 			$elem.append($form);
 			
-			$button.click(function(){
+			$button.on("click",function(){
 				$form.ajaxSubmit({
 					type: 'post'
 					,url: _this.dbUrl + docId

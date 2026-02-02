@@ -140,7 +140,7 @@ var TagAssignment = $n2.Class({
 			$('<span>').attr('aria-label', 'delete this tag')
 				.addClass('n2schema_tag_item_delete')
 				.text('x')
-				.click(function() {
+				.on("click",function() {
 					_this.addTags.splice(i, 1);
 					_this._displayTags();
 					return false;
@@ -195,7 +195,7 @@ var TagAssignment = $n2.Class({
 		$('<input type="submit" value="' + _loc('save') + '">')
 			.addClass('n2TagAssignment_button_add')
 			.appendTo($buttonDiv)
-			.click(function(event){
+			.on("click",function(event){
 				event.preventDefault();
 				if(_this.addTags.length > 0) {
 					_this._preUpdateDocuments(_this.tagField, _this.addTags);

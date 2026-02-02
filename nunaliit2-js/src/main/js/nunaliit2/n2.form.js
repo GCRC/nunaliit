@@ -697,7 +697,7 @@ var Form = $n2.Class({
 					$b.button({icons:{primary:'ui-icon-check'}});
 				};
 				$d.append($b);
-				$b.click(function(){
+				$b.on("click",function(){
 					recv._ok();
 					return false;
 				});
@@ -709,7 +709,7 @@ var Form = $n2.Class({
 					$b.button({icons:{primary:'ui-icon-cancel'}});
 				};
 				$d.append($b);
-				$b.click(function(){
+				$b.on("click",function(){
 					recv._cancel();
 					return false;
 				});
@@ -721,7 +721,7 @@ var Form = $n2.Class({
 					$rb.button({icons:{primary:'ui-icon-arrowrefresh-1-s'}});
 				};
 				$d.append($rb);
-				$rb.click(function(){
+				$rb.on("click",function(){
 					recv._reset();
 					return false;
 				});
@@ -735,7 +735,7 @@ var Form = $n2.Class({
 						$b.button();
 					};
 					$d.append($b);
-					$b.click(createButtonPressedCallback(this, button.name));
+					$b.on("click",createButtonPressedCallback(this, button.name));
 				};
 			};
 		};

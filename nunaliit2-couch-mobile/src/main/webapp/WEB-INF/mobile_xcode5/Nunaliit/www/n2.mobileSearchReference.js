@@ -180,7 +180,7 @@ var CreatePage = $n2.Class({
 		};
 		
 		function installClick($a,id){
-			$a.click(function(){
+			$a.on("click",function(){
 				_this._selectDocId(id);
 				return false;
 			});

@@ -95,7 +95,7 @@
 			 ){
 				var $debugUpdateTestButton = $('<button>Update Test</button>');
 				$buttons.append($debugUpdateTestButton);
-				$debugUpdateTestButton.click(function(){
+				$debugUpdateTestButton.on("click",function(){
 					config.getCurrentDb({
 						onSuccess: function(currentDb_){
 							var db = currentDb_.getDb();
@@ -119,7 +119,7 @@
 			 ){
 				var $debugCaptureVideoTestButton = $('<button>Capture Video Test</button>');
 				$buttons.append($debugCaptureVideoTestButton);
-				$debugCaptureVideoTestButton.click(function(){
+				$debugCaptureVideoTestButton.on("click",function(){
                     $n2.mobileDebug.debugCaptureVideoTest({
                     	config: config
                     	,onSuccess: debugPageRefresh
@@ -133,7 +133,7 @@
 			 ){
 				var $debugCaptureAudioTestButton = $('<button>Capture Audio Test</button>');
 				$buttons.append($debugCaptureAudioTestButton);
-				$debugCaptureAudioTestButton.click(function(){
+				$debugCaptureAudioTestButton.on("click",function(){
                     $n2.mobileDebug.debugCaptureAudioTest({
                     	config: config
                     	,onSuccess: debugPageRefresh
@@ -148,7 +148,7 @@
 				var $debugButton = $('<button>Video URI Test</button>');
 				$buttons.append($debugButton);
 				$buttons.append( $('<div id="debugVideoUriContainer"></div>') );
-				$debugButton.click(function(){
+				$debugButton.on("click",function(){
                     $n2.mobileDebug.debugVideoUriTest({
                     	config: config
                     	,container: 'debugVideoUriContainer'
@@ -163,7 +163,7 @@
 			 ){
 				var $debugButton = $('<button>Upload Video Test</button>');
 				$buttons.append($debugButton);
-				$debugButton.click(function(){
+				$debugButton.on("click",function(){
                     $n2.mobileDebug.debugUploadVideoTest({
                     	config: config
                     	,onSuccess: debugPageRefresh

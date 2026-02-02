@@ -163,7 +163,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
 			$elem
 				.empty()
 				.addClass('n2gridcanvas')
-				.click(function(e){
+				.on("click",function(e){
 					var $target = $(e.target);
 					if( $target.hasClass('n2gridcanvas_cell') ){
 						// Ignore
@@ -271,7 +271,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
 				.addClass('n2gridcanvas_cell')
 				.attr('n2-element-id', elementId)
 				.appendTo($grid)
-				.click(function(){
+				.on("click",function(){
 					var $cell = $(this);
 					var elementId = $cell.attr('n2-element-id');
 					_this._cellClicked(elementId);

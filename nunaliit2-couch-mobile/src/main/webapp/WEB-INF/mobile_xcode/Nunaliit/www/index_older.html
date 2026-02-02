@@ -97,7 +97,7 @@
 				$('.mainDisplay').find('.remoteUser').val(createOptions.remoteUser);
 				$('.mainDisplay').find('.remotePassword').val(createOptions.remotePassword);
 
-				$('.mainDisplay').find('.serverOK').click(function(){
+				$('.mainDisplay').find('.serverOK').on("click",function(){
 					createOptions.dbName = $('.mainDisplay').find('.dbName').val();
 					createOptions.serverAddress = $('.mainDisplay').find('.serverAddress').val();
 					createOptions.remoteDbName = $('.mainDisplay').find('.remoteDbName').val();
@@ -109,7 +109,7 @@
 					createDatabase2(createOptions);
 					return false;
 				});
-				$('.mainDisplay').find('.serverCancel').click(function(){
+				$('.mainDisplay').find('.serverCancel').on("click",function(){
 					main();
 					return false;
 				});
@@ -352,7 +352,7 @@
 						var dbName = dbNames[i];
 						$select.append( $('<option>'+dbName+'</option>') );
 					};
-					$('.mainDisplay').find('input').click(function(){
+					$('.mainDisplay').find('input').on("click",function(){
 						var dbNameToDelete = $('.mainDisplay').find('select').val();
 						if( confirm('Are you sure you want to delete dataset '+dbNameToDelete) ) {
 							logIn(dbNameToDelete);
@@ -415,7 +415,7 @@
 						var dbName = dbNames[i];
 						$select.append( $('<option>'+dbName+'</option>') );
 					};
-					$('.mainDisplay').find('input').click(function(){
+					$('.mainDisplay').find('input').on("click",function(){
 						var dbName = $('.mainDisplay').find('select').val();
 						logIn(dbName);
 					});
@@ -598,7 +598,7 @@
 				function makeClick(dbName, $tr){
 					var $a = $tr.find('a');
 					var href = $a.attr('href');
-					$tr.find('a').click(function(){
+					$tr.find('a').on("click",function(){
 						displayDatabase(href, dbName);
 						return false;
 					});
@@ -643,19 +643,19 @@
 					.append( $('<input class="btnSync" type="button" value="Synchronize..."/>') )
 					.append( $('<input class="btnDelete" type="button" value="Delete Dataset..."/>') )
 					;
-				$('.btnHome').click(function(){
+				$('.btnHome').on("click",function(){
 					main();
 					return false;
 				});
-				$('.btnCreate').click(function(){
+				$('.btnCreate').on("click",function(){
 					createDatabase();
 					return false;
 				});
-				$('.btnSync').click(function(){
+				$('.btnSync').on("click",function(){
 					synchronizeDatabase();
 					return false;
 				});
-				$('.btnDelete').click(function(){
+				$('.btnDelete').on("click",function(){
 					deleteDatabase();
 					return false;
 				});

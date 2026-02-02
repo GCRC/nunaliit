@@ -201,7 +201,7 @@ function refreshToolbar(){
 	if( $approveSelected.length < 1 ) {
 		$approveSelected = $('<button class="uploadButton uploadApproveSelectedButton">Approve Selected</button>');
 		$buttonLine.append($approveSelected);
-		$approveSelected.click(function(){
+		$approveSelected.on("click",function(){
 			var selection = _getSelectedUploads();
 			_approveDenySelection(selection, 'approved');
 			return false;
@@ -212,7 +212,7 @@ function refreshToolbar(){
 	if( $denySelected.length < 1 ) {
 		$denySelected = $('<button class="uploadButton uploadDenySelectedButton">Deny Selected</button>');
 		$buttonLine.append($denySelected);
-		$denySelected.click(function(){
+		$denySelected.on("click",function(){
 			var selection = _getSelectedUploads();
 			_approveDenySelection(selection, 'denied');
 			return false;
@@ -223,7 +223,7 @@ function refreshToolbar(){
 	if( $selectAllButton.length < 1 ) {
 		$selectAllButton = $('<button class="uploadButton uploadSelectAllButton">Select All</button>');
 		$buttonLine.append($selectAllButton);
-		$selectAllButton.click(_selectAll);
+		$selectAllButton.on("click",_selectAll);
 	};
 	// Update selection button
 	var $table = $('.uploadsTable');
@@ -461,7 +461,7 @@ function uploadMain( $display ) {
 //
 //	var $approveAllBtn = $('<input class="uploadButton uploadApproveAllButton" type="button" value="Approve All"/>');
 //	$('#requests').before($approveAllBtn);
-//	$approveAllBtn.click(function(){
+//	$approveAllBtn.on("click",function(){
 //		approveAll();
 //		return false;
 //	});

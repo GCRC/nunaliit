@@ -55,7 +55,7 @@ var MainPage = $n2.Class({
 		$label.empty();
 
 		// Install new doc button
-		$page.find('a.mobileMainNewDoc').click(function(){
+		$page.find('a.mobileMainNewDoc').on("click",function(){
 			_this._createNewDoc();
 			return false;
 		}).removeClass('mobileMainNewDoc');
@@ -275,7 +275,7 @@ var MainPage = $n2.Class({
 //				};
 //				
 //				// Install new doc button
-//				$page.find('a.mobileMainNewDoc').click(function(){
+//				$page.find('a.mobileMainNewDoc').on("click",function(){
 //					new $n2.mobile.CreateNewDocument({
 //						currentDb: currentDb
 //					});

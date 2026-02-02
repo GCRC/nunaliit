@@ -107,7 +107,7 @@ function searchForDocumentId(options_){
 	
 	$dialog.find('button.cancel')
 			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
+			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
 				return false;
@@ -162,7 +162,7 @@ function searchForDocumentId(options_){
 				} else {
 					$td.find('a').text(docId);
 				};
-				$td.find('a').click( createClickHandler(docId) );
+				$td.find('a').on("click", createClickHandler(docId) );
 			};
 			
 		} else {
@@ -561,7 +561,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			$dialog.find('button')
 				.first()
 					.button({icons:{primary:'ui-icon-check'}})
-					.click(function(){
+					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						var $select = $dialog.find('select');
 						var schemaName = $select.val();
@@ -584,7 +584,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 					})
 				.next()
 					.button({icons:{primary:'ui-icon-cancel'}})
-					.click(function(){
+					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						$dialog.dialog('close');
 						return false;
@@ -730,7 +730,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 				.text( _loc('Remove') )
 				.appendTo($displayRelationDiv)
 				.button({icons:{primary:'ui-icon-trash'}})
-				.click(removeRelationFn)
+				.on("click",removeRelationFn)
 				;
 		};
 	}
@@ -1411,7 +1411,7 @@ var CouchDocumentEditor = $n2.Class({
 				.addClass('cordova-btn cordova-icon cordova-location-toggle width-200')
 				.appendTo($editorContainer)
 				.text(_loc('Current Location'))
-				.click(function(event) {
+				.on("click",function(event) {
 					event.preventDefault();
 					_this.attachmentEditor.cordovaLocation = !_this.attachmentEditor.cordovaLocation;
 					if (!!_this.attachmentEditor.cordovaLocation) {
@@ -1437,7 +1437,7 @@ var CouchDocumentEditor = $n2.Class({
 		var saveBtn = $('<button class="save">'+_loc('Save')+'</button>');
 		formButtons.append(saveBtn);
 		saveBtn.button({icons:{primary:'ui-icon-check'}});
-		saveBtn.click(function(){
+		saveBtn.on("click",function(){
 			_this._save();
 			return false;
 		});
@@ -1448,7 +1448,7 @@ var CouchDocumentEditor = $n2.Class({
 			var deleteBtn = $('<button class="delete">'+_loc('Delete')+'</button>');
 			formButtons.append(deleteBtn);
 			deleteBtn.button({icons:{primary:'ui-icon-trash'}});
-			deleteBtn.click(function(evt){
+			deleteBtn.on("click",function(evt){
 				if( confirm( _loc('Do you really want to delete this feature?') ) ) {
 					deletion(data);
 				};
@@ -1465,17 +1465,17 @@ var CouchDocumentEditor = $n2.Class({
 		var addRelationBtn = $('<button class="relation">'+_loc('Add Relation')+'</button>');
 		formButtons.append(addRelationBtn);
 		addRelationBtn.button({icons:{primary:'ui-icon-plusthick'}});
-		addRelationBtn.click(function(){ _this._addRelationDialog(); return false; });
+		addRelationBtn.on("click",function(){ _this._addRelationDialog(); return false; });
 
 		var layersBtn = $('<button class="layers">'+_loc('Layers')+'</button>');
 		formButtons.append(layersBtn);
 		layersBtn.button({icons:{primary:'ui-icon-link'}});
-		layersBtn.click(function(){ _this._manageLayersDialog(); return false; });
+		layersBtn.on("click",function(){ _this._manageLayersDialog(); return false; });
 
 		var cancelBtn = $('<button class="cancel">'+_loc('Cancel')+'</button>');
 		formButtons.append(cancelBtn);
 		cancelBtn.button({icons:{primary:'ui-icon-cancel'}});
-		cancelBtn.click(function(){ 
+		cancelBtn.on("click",function(){ 
 			_this._cancelEdit();
 			return false;
 		});
@@ -1521,9 +1521,9 @@ var CouchDocumentEditor = $n2.Class({
 		};
 
 		function installUserButtonClick($uBtn, userButton){
-			$uBtn.click(function(){
+			$uBtn.on("click",function(){
 				if( userButton.click ){
-					return userButton.click(_this.editedDocument, _this, userButton);
+					return userButton.on("click",_this.editedDocument, _this, userButton);
 				};
 				return false;
 			});
@@ -2090,7 +2090,7 @@ var CouchDocumentEditor = $n2.Class({
 				.text( _loc('Remove') )
 				.appendTo($displayRelationDiv)
 				.button({icons:{primary:'ui-icon-trash'}})
-				.click(removeRelationFn)
+				.on("click",removeRelationFn)
 				;
 		};
 	},
@@ -3025,7 +3025,7 @@ var AttachmentEditor = $n2.Class({
 		var attachBtn = $('<button>')
 		.text(_loc('Add File'))
 		.appendTo($elem)
-		.click(function(){
+		.on("click",function(){
 			_this._openAddFileDialog();
 			return false;
 		});
@@ -3376,7 +3376,7 @@ var AttachmentEditor = $n2.Class({
 		var $addBtn = $('<button>')
 			.text( _loc('Attach') )
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				var $addFileDialog = $('#'+dialogId);
 				var $addFileForm = $('#'+addFileFormId);
 				var $input = $addFileForm.find('input');
@@ -3394,7 +3394,7 @@ var AttachmentEditor = $n2.Class({
 		var $cancelBtn = $('<button>')
 			.text( _loc('Cancel') )
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				var $addFileDialog = $('#'+dialogId);
 				$addFileDialog.dialog('close');
 				return false;
@@ -3566,7 +3566,7 @@ var AttachmentEditor = $n2.Class({
 				.addClass('cordova-btn cordova-icon icon-remove cordova-remove-button')
 				.appendTo($removeAttachmentContainer)
 				.text(_loc('Remove'))
-				.click(function(event) {
+				.on("click",function(event) {
 					event.preventDefault();
 					_this.cordovaAttachment = null;
 					$buttonsContainer.show();
@@ -3664,7 +3664,7 @@ var AttachmentEditor = $n2.Class({
 						.addClass('cordova-btn width-150 cordova-icon icon-camera')
 						.appendTo($capturePhotoDiv)
 						.text(_loc('Capture Photo'))
-						.click(function(event) {
+						.on("click",function(event) {
 							event.preventDefault();
 							navigator.camera.getPicture(function(fileName) {
 								addCordovaAttachment(fileName);
@@ -3695,7 +3695,7 @@ var AttachmentEditor = $n2.Class({
 						.addClass('cordova-btn width-150 cordova-icon icon-video')
 						.appendTo($captureVideoDiv)
 						.text(_loc('Capture Video'))
-						.click(function(event) {
+						.on("click",ick",function(event) {
 							event.preventDefault();
 							navigator.device.capture.captureVideo(
 								function(mediaFiles) {
@@ -3737,7 +3737,7 @@ var AttachmentEditor = $n2.Class({
 						.addClass('cordova-btn width-150 cordova-icon icon-audio')
 						.appendTo($captureAudioDiv)
 						.text(_loc('Capture Audio'))
-						.click(function(event) {
+						.on("click",function(event) {
 							event.preventDefault();
 							var audioFilename = 'audio_' + _this.doc.nunaliit_created.time + '.aac';
 							var mediaRec = new window.Media(audioFilename,
@@ -3779,7 +3779,7 @@ var AttachmentEditor = $n2.Class({
 				.text(_loc('File Upload'))
 				.addClass('attachmentEditor_uploadTab_file')
 				.appendTo($tabList)
-				.click(function(event) {
+				.on("click",function(event) {
 					event.preventDefault();
 					_this._clickTab(attName, 'file');
 				});
@@ -3813,7 +3813,7 @@ var AttachmentEditor = $n2.Class({
 						$('<button>')
 							.text(_loc('Record Audio'))
 							.addClass('attachmentEditor_uploadTab_audio')
-							.click(function(event) {
+							.on("click",function(event) {
 								event.preventDefault();
 								_this._clickTab(attName, 'audio');
 							})
@@ -3832,7 +3832,7 @@ var AttachmentEditor = $n2.Class({
 						_this.audioRecordingButton = $('<button>')
 							.addClass('attachmentEditor_micButton')
 							.appendTo(recordInputDiv)
-							.click(function(event) {
+							.on("click",function(event) {
 								_this._clickRecording(event, 'audio');
 							});
 
@@ -3845,7 +3845,7 @@ var AttachmentEditor = $n2.Class({
 							$('<button>')
 								.text(_loc('Record Video'))
 								.addClass('attachmentEditor_uploadTab_video')
-								.click(function(event) {
+								.on("click",function(event) {
 									event.preventDefault();
 									_this._clickTab(attName, 'video');
 								})
@@ -3864,7 +3864,7 @@ var AttachmentEditor = $n2.Class({
 							_this.videoRecordingButton = $('<button>')
 								.addClass('attachmentEditor_videoButton')
 								.appendTo(recordInputVideoDiv)
-								.click(function(event) {
+								.on("click",function(event) {
 									_this._clickRecording(event, 'video');
 								});
 
@@ -3898,7 +3898,7 @@ var AttachmentEditor = $n2.Class({
 									.addClass('cordova-btn cordova-icon icon-preview cordova-preview-button')
 									.appendTo(containerDiv)
 									.text(_loc('Preview'))
-									.click(function(event) {
+									.on("click",function(event) {
 										event.preventDefault();
 										// Try to open it using a plugin
 										window.cordova.plugins.fileOpener2.open(
@@ -3928,7 +3928,7 @@ var AttachmentEditor = $n2.Class({
 				.addClass('cordova-btn cordova-icon icon-record')
 				.text(_loc('Record'))
 				.appendTo($recordingControls)
-				.click(function(event) {
+				.on("click",function(event) {
 					event.preventDefault();
 					mediaRec.startRecord();
 
@@ -3940,7 +3940,7 @@ var AttachmentEditor = $n2.Class({
 				.addClass('cordova-btn cordova-icon icon-stop')
 				.text(_loc('Stop'))
 				.appendTo($recordingControls)
-				.click(function(event) {
+				.on("click",function(event) {
 					event.preventDefault();
 					mediaRec.stopRecord();
 
@@ -4022,7 +4022,7 @@ var AttachmentEditor = $n2.Class({
 			.addClass('attachmentEditor_delete')
 			.text( _loc('Remove') )
 			.appendTo($div)
-			.click(function(){
+			.on("click",function(){
 				var $a = $(this);
 				var attName = $a.attr('n2AttName');
 				if( attName ) {

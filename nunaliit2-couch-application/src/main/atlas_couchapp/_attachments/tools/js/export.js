@@ -220,7 +220,7 @@ function showButtons(opts_){
 	$('<button>')
 		.text( _loc('Show') )
 		.appendTo( $div )
-		.click(function(){
+		.on("click",function(){
 			var $formatSel = $('#'+formatSelId);
 			var format = $formatSel.val();
 			showDocs({
@@ -234,7 +234,7 @@ function showButtons(opts_){
 	$('<button>')
 		.text( _loc('Download') )
 		.appendTo( $div )
-		.click(function(){
+		.on("click",function(){
 			var $formatSel = $('#'+formatSelId);
 			var format = $formatSel.val();
 			downloadDocs({

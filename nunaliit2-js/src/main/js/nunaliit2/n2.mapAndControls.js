@@ -517,7 +517,7 @@ var GazetteerProcess = $n2.Class({
 	_installOnClick: function(request, $entry, entry){
 		var _this = this;
 		
-		$entry.click(function(){
+		$entry.on("click",function(){
 			_this._selectEntry(request, entry);
 		});
 	},
@@ -3782,7 +3782,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
  		var _this = this;
  		var mapInteractionButton = $('<input type="button" class="n2map_map_interaction_switch"/>')
  			.val(this.modes.NAVIGATE.buttonValue)
- 			.click( function(evt) { 
+ 			.on("click", function(evt) { 
  				_this._clickedMapInteractionSwitch(evt);
  			})
  			;
@@ -4069,7 +4069,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			
 			// Buttons
 			var cancelButton = $('<input type="button" value="Cancel"/>');
-			cancelButton.click(function(){
+			cancelButton.on("click",function(){
 				selectWindow.dialog('close');
 			});
 			selectWindow.append(cancelButton);
@@ -4133,7 +4133,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			},function(){
 				_this.insertSound();
 			});
-			trElem.click(function(){
+			trElem.on("click",function(){
 				var value = media.filename?media.filename:'';
 				_this.insertSound();
 				onSelectCallback(value);
@@ -4469,7 +4469,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 				removeFilter();
 			};
 		});
-		removeButton.click(function(){
+		removeButton.on("click",function(){
 			deleteFilter();
 			return false;
 		});

@@ -98,7 +98,7 @@
 						+'<br/>Continuous:<input id="replicationContinuous" type="checkbox"/>'
 						+'<br/><input id="btnReplication" type="button" value="Add"/></div>');
 					$('#requests').append($replication);
-					$('#btnReplication').click(function(){
+					$('#btnReplication').on("click",function(){
 						var localDbName = $('#replicationLocalDb').val();
 						var remoteServerUrl = $('#replicationRemoteUrl').val();
 						var remoteDbName = $('#replicationRemoteName').val();
@@ -137,7 +137,7 @@
 					var $btnDelete = $('<input type="button" value="Delete"/>');
 					$buttons.append($btnDelete);
 					
-					$btnSave.click(function(){
+					$btnSave.on("click",function(){
 						$('#configEditErrors').html('<div class="olkit_wait"></div>');
 						configDb.updateDocument({
 							data: doc
@@ -151,7 +151,7 @@
 						});
 					});
 					
-					$btnDelete.click(function(){
+					$btnDelete.on("click",function(){
 						if( false == confirm('You are about delete a server configuration object. Do you wish to proceed?') ) {
 							return;
 						};
@@ -174,7 +174,7 @@
 				$('#requests').html('<div>Server Name: <input id="addConfigServerName" type="text"/><input id="btnAddConfig2" type="button" value="Proceed"/></div>');
 				$('#addConfigServerName').focus();
 				
-				$('#btnAddConfig2').click(function(){
+				$('#btnAddConfig2').on("click",function(){
 					var serverName = $('#addConfigServerName').val();
 					createInitialConfig(serverName);
 				});
@@ -224,7 +224,7 @@
 
 						var $a = $('<a href="#" alt="'+doc.server+'">'+doc.server+'</a>');
 						$td.append( $a );
-						$a.click(function(){
+						$a.on("click",function(){
 							var $a = $(this);
 							var serverName = $a.attr('alt');
 							initiateEdit(serverName);
@@ -237,8 +237,8 @@
 			};
 			
 			function main() {
-				$('#btnQueryConfig').click(queryConfig);
-				$('#btnAddConfig').click(addConfig);
+				$('#btnQueryConfig').on("click",queryConfig);
+				$('#btnAddConfig').on("click",addConfig);
 			};
 			
 			function main_init(config) {

@@ -1729,7 +1729,7 @@
 				.attr('href','#')
 				.text( '#' )
 				.appendTo( $resetOuter )
-				.click(function(){
+				.on("click",function(){
 					if( g_tuioService ){
 						g_tuioService.resetMapToInitialExtent();
 					};

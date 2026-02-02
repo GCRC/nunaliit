@@ -118,7 +118,7 @@ var MobileSelectDialog = $n2.Class({
 	// +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*
 	,_installSelectionClick: function($button,selectionIndex){
 		var _this = this;
-		$button.click(function(){
+		$button.on("click",function(){
 			_this._select(selectionIndex);
 			return false;
 		});
