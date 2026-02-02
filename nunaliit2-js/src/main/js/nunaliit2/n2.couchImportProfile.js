@@ -1214,7 +1214,7 @@ var AnalysisReport = $n2.Class({
 				$('<button>')
 					.text( _loc('Discard') )
 					.appendTo($div)
-					.on("click",ick",function(){
+					.on("click",function(){
 						var $button = $(this);
 						var $promptElem = $button.parents('.prompt');
 						$promptElem.remove();

@@ -3597,7 +3597,7 @@ var AttachmentEditor = $n2.Class({
 				$('<input type="file" id="file-input">')
 					.addClass('attachmentEditor_hiddenFileInput')
 					.appendTo($fileInputDiv)
-					.change(function(event) {
+					.on("change",function(event) {
 						if (event.target && event.target.files && event.target.files[0]) {
 							// Great! The user chose a file, but we don't have access to its path (damn file system security).
 							// So, we the store the file in our persistent app storage location.
@@ -3695,7 +3695,7 @@ var AttachmentEditor = $n2.Class({
 						.addClass('cordova-btn width-150 cordova-icon icon-video')
 						.appendTo($captureVideoDiv)
 						.text(_loc('Capture Video'))
-						.on("click",ick",function(event) {
+						.on("click",function(event) {
 							event.preventDefault();
 							navigator.device.capture.captureVideo(
 								function(mediaFiles) {
@@ -3790,7 +3790,7 @@ var AttachmentEditor = $n2.Class({
 
 			$('<input type="file">')
 				.attr('name','media')
-				.change(function(event) {
+				.on("change",function(event) {
 					_this._attachmentFileChanged(event);
 				})
 				.appendTo($chooseFileDiv);
