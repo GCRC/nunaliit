@@ -208,7 +208,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         });
 
 		// Suppress double click
-		$(this.div).dblclick(function(e){
+		$(this.div).on("dblclick",function(e){
         	if (e.stopPropagation) {
 				e.stopPropagation();
 			} else {
