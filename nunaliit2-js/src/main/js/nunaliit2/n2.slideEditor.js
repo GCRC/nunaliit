@@ -589,7 +589,7 @@ var SlideEditor = $n2.Class({
 			$display.append($keyDiv);
 			$keyDiv.val(objFrag);
 			if( isValueEditingAllowed ) {
-				$keyDiv.keyup(function(e){
+				$keyDiv.on("keyup",function(e){
 					var $textarea = $(this);
 					var newValue = $textarea.val();
 					var currentValue = stringParentObj[stringKey];
@@ -839,7 +839,7 @@ var SlideEditor = $n2.Class({
 				$keyDiv.append( $textBox );
 				$textBox.val(value);
 				if( isValueEditingAllowed ) {
-					$textBox.keyup(function(e){
+					$textBox.on("keyup",function(e){
 						var $textBox = $(this);
 						var newVal = $textBox.val();
 						if( typeof(objFrag[key]) === 'number' ) {

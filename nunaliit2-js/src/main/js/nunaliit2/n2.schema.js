@@ -2060,7 +2060,7 @@ var Form = $n2.Class({
 			$input.on("change",changeHandler);
 			//$input.on("blur",handler);
 			if( 'date' !== classInfo.type ){ // no key up event for date text boxes
-				$input.keyup(keyupHandler);
+				$input.on("keyup",keyupHandler);
 			};
 			
 			// Set value
@@ -2132,7 +2132,7 @@ var Form = $n2.Class({
 
 				// On key up, verify that new value is correct
 				// Else, restore previous value
-				$input.keyup(function(event) {
+				$input.on("keyup",function(event) {
 					var $input = $(this);
 					
 					var previous = $input.attr('n2Numeric');

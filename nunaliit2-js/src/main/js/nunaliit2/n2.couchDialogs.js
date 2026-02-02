@@ -595,7 +595,7 @@ var SearchBriefDialogFactory = $n2.Class({
 			.attr('id', inputId)
 			.attr('type', 'text')
 			.appendTo($searchLine)
-			.keyup(function(){
+			.on("keyup",function(){
 				var $input = $(this);
 				var text = $input.val();
 				var frags = text.split(' ');
