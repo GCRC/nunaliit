@@ -1872,7 +1872,7 @@ var Form = $n2.Class({
 						var fieldWrapper = $clicked.children()[$clicked.children().length-1];
 						var fieldContainer = $(fieldWrapper).children[0];
 						var input = $(fieldContainer).children[0];
-						$(input).focus();
+						$(input).trigger("focus");
 					}
 					else if( $clicked.hasClass('n2schema_array_item_up') ){
 						// Push item earlier in array
@@ -1943,7 +1943,7 @@ var Form = $n2.Class({
 					.filter(':visible');
 
 				if ($focusableElements.length) {
-					$focusableElements.first().focus();
+					$focusableElements.first().trigger("focus");
 				}
 			}
 		};

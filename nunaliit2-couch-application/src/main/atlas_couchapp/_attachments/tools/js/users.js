@@ -218,7 +218,7 @@ var UserManagementApplication = $n2.Class({
 			+'Password: <input id="addUserPassword1" type="password"/><br/>'
 			+'Repeat Password: <input id="addUserPassword2" type="password"/><br/>'
 			+'<input id="btnAddUser2" type="button" value="Proceed"/></div>');
-		$('#addUserName').focus();
+		$('#addUserName').trigger("focus");
 		
 		$('#btnAddUser2').on("click",function(){
 			var userName = $('#addUserName').val();

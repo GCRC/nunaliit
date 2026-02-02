@@ -264,7 +264,7 @@ function searchForDocumentId(options_){
 	});
 	
 	var $input = $('#'+inputId);
-	$('#'+inputId).focus();
+	$('#'+inputId).trigger("focus");
 	
 	function receiveSearchResults(displayData) {
 		if( !displayData ) {
@@ -1209,7 +1209,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 		});
 		
 		var $input = $('#'+inputId);
-		$('#'+inputId).focus();
+		$('#'+inputId).trigger("focus");
 		
 		// Get suggestions
 		if( opts.contextDoc && typeof opts.contextDoc._id === 'string' ){
@@ -1680,7 +1680,7 @@ var FilteredSearchDialogFactory = $n2.Class({
 		});
 		
 		var $input = $('#'+inputId);
-		$('#'+inputId).focus();
+		$('#'+inputId).trigger("focus");
 		
 		function receiveSearchResults(displayData) {
 			if( !displayData ) {

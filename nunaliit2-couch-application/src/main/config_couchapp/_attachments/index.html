@@ -172,7 +172,7 @@
 			
 			function addConfig() {
 				$('#requests').html('<div>Server Name: <input id="addConfigServerName" type="text"/><input id="btnAddConfig2" type="button" value="Proceed"/></div>');
-				$('#addConfigServerName').focus();
+				$('#addConfigServerName').trigger("focus");
 				
 				$('#btnAddConfig2').on("click",function(){
 					var serverName = $('#addConfigServerName').val();

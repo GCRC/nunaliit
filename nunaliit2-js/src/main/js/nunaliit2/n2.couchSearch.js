@@ -1509,7 +1509,7 @@ var SearchInput = $n2.Class({
 			.removeClass('search_inactive');
 
 		// Move focus to search input box
-		$('.nunaliit_search_input input').focus();
+		$('.nunaliit_search_input input').trigger("focus");
 	}
 
 	,_deactivateSearchBar: function(){    	

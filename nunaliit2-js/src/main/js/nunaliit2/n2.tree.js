@@ -1637,7 +1637,7 @@ var ObjectTreeEditor = $n2.Class({
 		};
 
 		// Set data
-		$li.children('.treeValueEditor').find('textarea').val(json).focus();
+		$li.children('.treeValueEditor').find('textarea').val(json).trigger("focus");
 	}
 
 	,_acceptValueEdit: function(okButton) {
@@ -1861,7 +1861,7 @@ var ObjectTreeEditor = $n2.Class({
 		
 		$keySpan.after($keyEditor);
 		
-		$textInput.focus();
+		$textInput.trigger("focus");
 	}
 
 	,_acceptKeyEdit: function(okButton) {

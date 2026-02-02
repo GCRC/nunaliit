@@ -19,7 +19,7 @@
             // Hide the "today" button because it doesn't do what
             // you think it supposed to do
             hideTodayButton();
-            today.focus();
+            today.trigger("focus");
             datePickHandler();
             $(document).on(
                 "click",
@@ -116,7 +116,7 @@
         // Find the next element to focus
         const nextElement = $(focusOrder[nextIndex]).first();
         if (nextElement.length) {
-            nextElement.focus();
+            nextElement.trigger("focus");
         }
     }
 
@@ -135,7 +135,7 @@
                 // updating the cached header elements
                 updateHeaderElements();
                 hideTodayButton();
-                $(".ui-datepicker-year").focus();
+                $(".ui-datepicker-year").trigger("focus");
             }, 0);
         }
     }

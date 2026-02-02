@@ -348,7 +348,7 @@
 		
 		// +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*
 		function addDatabasePageRefresh(){
-			$('#database_name').focus();
+			$('#database_name').trigger("focus");
 			jqmRefreshPage();
 		};
 
