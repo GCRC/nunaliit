@@ -331,7 +331,7 @@ var MailService = $n2.Class({
 								alert( _loc('You must provide field: {label}',{
 									label: label
 								}) );
-								$diag.find('.n2mailForm_processing_element').removeAttr('disabled');
+								$diag.find('.n2mailForm_processing_element').prop('disabled', false)
 								$diag.find('.n2mailForm_button').removeClass('n2mailForm_button_disabled');
 								return;
 							};
@@ -373,7 +373,7 @@ var MailService = $n2.Class({
 							err: err
 						}) );
 						var $diag = $('#'+diagId);
-						$diag.find('.n2mailForm_processing_element').removeAttr('disabled');
+						$diag.find('.n2mailForm_processing_element').prop('disabled', false)
 						$diag.find('.n2mailForm_button').removeClass('n2mailForm_button_disabled');
 					}
 				});

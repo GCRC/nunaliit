@@ -133,7 +133,7 @@ var Upload = $n2.Class({
 				,url: opts.url + 'put'
 				,dataType: 'json'
 				,success: function(res) {
-					$form.find('*').removeAttr('disabled');
+					$form.find('*').prop('disabled', false)
 					if( res.error ) {
 						opts.onError(_loc('Error while uploading: ')+res.error,options_);
 					} else {
@@ -141,7 +141,7 @@ var Upload = $n2.Class({
 					}
 				}
 				,error: function(xhr, status, err) {
-					$form.find('*').removeAttr('disabled');
+					$form.find('*').prop('disabled', false)
 					opts.onError(_loc('Error while uploading: ')+err,options_);
 				}
 			});
@@ -244,7 +244,7 @@ var Upload = $n2.Class({
 				,processData: false
 				,contentType: false
 				,success: function(res) {
-					$form.find('*').removeAttr('disabled');
+					$form.find('*').prop('disabled', false)
 					if( res.error ) {
 						opts.onError(_loc('Error while uploading: ')+res.error,options_);
 					} else {
@@ -255,7 +255,7 @@ var Upload = $n2.Class({
 					}
 				}
 				,error: function(xhr, status, err) {
-					$form.find('*').removeAttr('disabled');
+					$form.find('*').prop('disabled', false)
 					opts.onError(_loc('Error while uploading: ')+err,options_);
 				}
 			});

@@ -71,7 +71,7 @@ function _approveDenySelection(selected,status){
 	};
 	
 	if( docIds.length < 1 ){
-		$('.uploadButton').removeAttr('disabled');
+		$('.uploadButton').prop('disabled', false)
 		return;
 	};
 
@@ -82,7 +82,7 @@ function _approveDenySelection(selected,status){
 		}
 		,onError: function(err){
 			alert('Unable to retrieve documents for approval/denial: '+err);
-			$('.uploadButton').removeAttr('disabled');
+			$('.uploadButton').prop('disabled', false)
 		}
 	});
 	
@@ -122,7 +122,7 @@ function _approveDenySelection(selected,status){
 		atlasDb.bulkDocuments(docs, {
 			onSuccess: function(docInfos){
 				// done
-				$('.uploadButton').removeAttr('disabled');
+				$('.uploadButton').prop('disabled', false)
 				refreshView();
 				if( docInfos && docInfos.length ) {
 					for(var i=0,e=docInfos.length; i<e; ++i){
@@ -136,7 +136,7 @@ function _approveDenySelection(selected,status){
 			}
 			,onError: function(err){
 				alert('Error saving documents: '+err);
-				$('.uploadButton').removeAttr('disabled');
+				$('.uploadButton').prop('disabled', false)
 				refreshView();
 			}
 		});
@@ -160,7 +160,7 @@ function _selectAll(){
 		// uncheck all
 		$table.find('.upload_selected').each(function(){
 			var $cb = $(this);
-			$cb.removeAttr('checked');
+			$cb.prop('checked', false);
 		});
 	} else {
 		// check all
@@ -243,7 +243,7 @@ function refreshToolbar(){
 		};
 	});
 	if( anyCheckBox ){
-		$selectAllButton.removeAttr('disabled');
+		$selectAllButton.prop('disabled', false)
 	} else {
 		$selectAllButton.attr('disabled','disabled');
 	};
@@ -253,8 +253,8 @@ function refreshToolbar(){
 		$selectAllButton.text('Select All');
 	};
 	if( anyChecked ){
-		$approveSelected.removeAttr('disabled');
-		$denySelected.removeAttr('disabled');
+		$approveSelected.prop('disabled', false)
+		$denySelected.prop('disabled', false)
 	} else {
 		$approveSelected.attr('disabled','disabled');
 		$denySelected.attr('disabled','disabled');
@@ -443,7 +443,7 @@ function refreshView() {
 	
 	serverDesign.queryView(query);
 	
-	$('.uploadButton').removeAttr('disabled');
+	$('.uploadButton').prop('disabled', false)
 };
 
 function uploadMain( $display ) {

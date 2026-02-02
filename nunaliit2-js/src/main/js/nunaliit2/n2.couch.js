@@ -1211,7 +1211,7 @@ var Database = $n2.Class('couch.Database',{
 					,url: _this.dbUrl + docId
 					,dataType: 'json'
 					,success: function(res) {
-						$elem.find('*').removeAttr('disabled');
+						$elem.find('*').prop('disabled', false);
 						if( res.error ) {
 							opts.onError(_loc('Error while uploading: ')+res.error,options_);
 						} else {
@@ -1219,7 +1219,7 @@ var Database = $n2.Class('couch.Database',{
 						}
 					}
 					,error: function(xhr, status, err) {
-						$elem.find('*').removeAttr('disabled');
+						$elem.find('*').prop('disabled', false);
 						opts.onError(_loc('Error while uploading: ')+err,options_);
 					}
 				});

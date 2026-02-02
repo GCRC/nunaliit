@@ -4535,12 +4535,12 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		function disableAll(jQuerySet, flag) {
 			if( flag ) {
 				jQuerySet
-					.attr('disabled',true)
+					.prop('disabled',true)
 					.addClass('olkitDisabled')
 					;
 			} else {
 				jQuerySet
-					.removeAttr('disabled')
+					.prop('disabled', false)
 					.removeClass('olkitDisabled')
 					;
 			};

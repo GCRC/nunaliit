@@ -264,7 +264,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
 
         if( false == $input.is(':disabled') ) {
             if( $input.is(':checked') ){
-            	$input.removeAttr('checked');
+            	$input.prop('checked', false);
         	} else {
         		$input.prop('checked', true);
         	};

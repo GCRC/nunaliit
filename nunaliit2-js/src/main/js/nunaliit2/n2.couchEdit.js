@@ -1986,7 +1986,7 @@ var CouchDocumentEditor = $n2.Class({
 		
 		$('body').removeClass('nunaliit_editing');
 		$('.n2_disable_on_edit')
-			.removeAttr('disabled');
+			.prop('disabled', false);
 	},
 	
 	refresh: function() {
@@ -2240,13 +2240,13 @@ var CouchDocumentEditor = $n2.Class({
 		
 		// Do not disable text fields from upload forms, since it does not send
 		// the information
-		$editorContainer.find('.editorAttachFile').find('input:text').removeAttr('disabled');
+		$editorContainer.find('.editorAttachFile').find('input:text').prop('disabled', false);
 	},
 	
 	_enableControls: function() {
 		var $editorContainer = this._getEditorContainer();
-		$editorContainer.find('button').removeAttr('disabled');
-		$editorContainer.find('input:text').removeAttr('disabled');
+		$editorContainer.find('button').prop('disabled', false);
+		$editorContainer.find('input:text').prop('disabled', false);
 	},
 	
 	_dispatch: function(m){

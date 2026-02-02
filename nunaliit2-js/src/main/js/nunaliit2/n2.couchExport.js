@@ -329,7 +329,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 			
 			if( '__custom__' === method ){
 				$scriptArea
-					.removeAttr('disabled')
+					.prop('disabled', false)
 					.css('display','');
 				$scriptDisplay
 					.css('display','none');
