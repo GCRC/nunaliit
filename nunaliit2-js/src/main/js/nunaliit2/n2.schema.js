@@ -2189,7 +2189,7 @@ var Form = $n2.Class({
 				
 				var getLayersFn = this.functionMap['getLayers'];
 				if( getLayersFn && $input.is('input') ) {
-					$input.focus(function(e, eventParam){
+					$input.on("focus",function(e, eventParam){
 						if( eventParam && eventParam.inhibitCallback ) {
 							return true;
 						};
@@ -2486,7 +2486,7 @@ var Form = $n2.Class({
 				};
 			};
 			if( focusHandler ) {
-				$input.focus(function(e, eventParam){
+				$input.on("focus",function(e, eventParam){
 					var $input = $(this);
 
 					if( $elem.hasClass('n2schema_field_triple') ) {

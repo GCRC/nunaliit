@@ -1356,7 +1356,7 @@ var SearchInput = $n2.Class({
 			_this._keyDown(e);
 		});
 		
-		$textInput.focus(function(e) {
+		$textInput.on("focus",function(e) {
 			_this._focus(e);
 		});
 		
