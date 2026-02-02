@@ -2305,10 +2305,9 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	    	.addClass('n2DisplayRibbon_tile_' + $n2.utils.stringToHtmlId(docId))
 	    	.attr('n2DocId',docId);
 	    
-	    $elem.hover(
-			this.hoverInFn
-			,this.hoverOutFn
-	    );
+	    $elem
+			.on("mouseenter", this.hoverInFn)
+			.on("mouseleave", this.hoverOutFn)
 		
 		$elem.on("click",this.clickFn);
 	

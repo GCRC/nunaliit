@@ -1734,20 +1734,23 @@ var DomStyler = $n2.Class({
         var docId = this._getDocumentIdentifier(contextDoc, $jq);
 
         if( dispatchService ) {
-            $jq.hover(
+            $jq
+			.on("mouseenter",
                 function(){ // in
                     dispatchService.send(DH, {
                         type:'userFocusOn'
                         ,docId:docId
                     });
                 }
-                ,function(){ // out
+			)
+			.on("mouseleave",
+				function(){ // out
                     dispatchService.send(DH, {
                         type:'userFocusOff'
                         ,docId:docId
                     });
                 }
-            );
+            )
         };
     },
 

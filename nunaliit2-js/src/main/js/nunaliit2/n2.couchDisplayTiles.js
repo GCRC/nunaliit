@@ -1278,10 +1278,9 @@ var TiledDisplay = $n2.Class({
 		        	.addClass('n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId))
 		        	.attr('n2DocId',docId);
 		        
-		        $elem.hover(
-	        		_this.hoverInFn
-	        		,_this.hoverOutFn
-		        );
+		        $elem
+					.on("mouseenter", _this.hoverInFn)
+					.on("mouseleave", _this.hoverOutFn)
 
 		        var tile = new Tiles.Tile(docId, $elem);
 		        

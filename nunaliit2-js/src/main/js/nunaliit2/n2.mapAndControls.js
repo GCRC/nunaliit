@@ -4127,12 +4127,15 @@ var MapAndControls = $n2.Class('MapAndControls',{
 				tdElem.append( $('<br/>') );
 			};
 			
-			trElem.hover(function(){
-				var value = media.filename?media.filename:'';
-				_this.insertSound(value);
-			},function(){
-				_this.insertSound();
-			});
+			trElem
+				.on("mouseenter", function(){
+					var value = media.filename?media.filename:'';
+					_this.insertSound(value);
+				})
+				.on("mouseleave", function(){
+					_this.insertSound();
+				})
+			
 			trElem.on("click",function(){
 				var value = media.filename?media.filename:'';
 				_this.insertSound();
