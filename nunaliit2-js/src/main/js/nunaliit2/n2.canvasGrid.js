@@ -276,12 +276,12 @@ var GridCanvas = $n2.Class('GridCanvas',{
 					var elementId = $cell.attr('n2-element-id');
 					_this._cellClicked(elementId);
 				})
-				.mouseover(function(){
+				.on("mouseover",function(){
 					var $cell = $(this);
 					var elementId = $cell.attr('n2-element-id');
 					_this._cellMouseOver(elementId);
 				})
-				.mouseout(function(){
+				.on("mouseout",function(){
 					var $cell = $(this);
 					var elementId = $cell.attr('n2-element-id');
 					_this._cellMouseOut(elementId);

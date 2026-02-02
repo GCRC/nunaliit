@@ -995,7 +995,7 @@ var DisplayBox = $n2.Class({
 						var $wrapper = $('<div>')
 							.addClass('n2DisplayBoxImageWrapper')
 							.prependTo($divImageInner)
-							.mouseout(function(e){
+							.on("mouseout",function(e){
 								_this._imageMouseOut(e);
 							})
 							;
@@ -1004,13 +1004,13 @@ var DisplayBox = $n2.Class({
 							.addClass('n2DisplayBoxImage')
 							.attr('src',data.url)
 							.appendTo($wrapper)
-							.mousedown(function(e){
+							.on("mousedown",function(e){
 								_this._imageMouseDown(e);
 							})
-							.mousemove(function(e){
+							.on("mousemove",function(e){
 								_this._imageMouseMove(e);
 							})
-							.mouseup(function(e){
+							.on("mouseup",function(e){
 								_this._imageMouseUp(e);
 							})
 							;

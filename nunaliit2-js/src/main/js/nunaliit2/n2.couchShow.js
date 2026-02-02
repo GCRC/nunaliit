@@ -1896,13 +1896,13 @@ var DomStyler = $n2.Class({
 				};
 
 				if( !disableHover ){
-					$elem.mouseover(function(e){
+					$elem.on("mouseover",function(e){
 	 		 			dispatchService.send(DH,{
 	 		 				type: 'userFocusOn'
 	 		 				,docId: docId
 	 		 			});
 	 				})
-					.mouseout(function(e){
+					.on("mouseout",function(e){
 	 		 			dispatchService.send(DH,{
 	 		 				type: 'userFocusOff'
 	 		 				,docId: docId

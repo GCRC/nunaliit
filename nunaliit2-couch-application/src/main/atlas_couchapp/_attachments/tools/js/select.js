@@ -2671,7 +2671,7 @@
 					.addClass('n2SelectApp_waitForMouseOver')
 					.attr('nunaliit-document',docId)
 					.text(docId)
-					.mouseover(mouseOverDisplay);
+					.on("mouseover",mouseOverDisplay);
 			} else {
 				$a.text(docId);
 			};

@@ -742,12 +742,12 @@ var TableCanvas = $n2.Class({
 						var $td = $(this);
 						_this._selectedCell($td);
 						return false;
-					}).mouseover(function(){
+					}).on("mouseover",function(){
 						var $td = $(this);
 						_this._mouseOver($td);
 						return false;
 					})
-					.mouseout(function(){
+					.on("mouseout",function(){
 						var $td = $(this);
 						_this._mouseOut($td);
 						return false;
@@ -765,12 +765,12 @@ var TableCanvas = $n2.Class({
 						_this._selectedCell($a);
 						return false;
 					})
-					.mouseover(function(){
+					.on("mouseover",function(){
 						var $a = $(this);
 						_this._mouseOver($a);
 						return false;
 					})
-					.mouseout(function(){
+					.on("mouseout",function(){
 						var $a = $(this);
 						_this._mouseOut($a);
 						return false;
@@ -799,12 +799,12 @@ var TableCanvas = $n2.Class({
 								_this._selectedCell($a);
 								return false;
 							})
-							.mouseover(function(){
+							.on("mouseover",function(){
 								var $a = $(this);
 								_this._mouseOver($a);
 								return false;
 							})
-							.mouseout(function(){
+							.on("mouseout",function(){
 								var $a = $(this);
 								_this._mouseOut($a);
 								return false;

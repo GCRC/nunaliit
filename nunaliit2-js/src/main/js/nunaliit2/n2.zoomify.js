@@ -117,14 +117,14 @@ var ZoomImage = $n2.Class({
 				if (button.t === 'in') {
 					if (button.s === 'on') {
 						this.zoom_control_refs[name]
-							.mousedown(function(){
+							.on("mousedown",function(){
 								return _this.image_zoom_in();
 							});
 					};
 				} else {
 					if (button.s === 'on') {
 						this.zoom_control_refs[name]
-							.mousedown(function(){
+							.on("mousedown",function(){
 								return _this.image_zoom_out();
 							});
 					};
@@ -185,7 +185,7 @@ var ZoomImage = $n2.Class({
 			// Add events
 
 			this.img_ref
-				.mousedown(function(){
+				.on("mousedown",function(){
 					return _this.image_move_start();
 				})
 				.on('touchstart', function(){

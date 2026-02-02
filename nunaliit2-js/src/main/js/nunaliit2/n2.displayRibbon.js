@@ -734,11 +734,11 @@ var RibbonGrid = $n2.Class({
 		$('<div>')
 			.addClass('n2DisplayRibbon_grid_button_previous')
 			.appendTo($extra)
-			.mousedown(function(){
+			.on("mousedown",function(){
 				_this._buttonChanged('down','previous');
 				return false;
 			})
-			.mouseup(function(){
+			.on("mouseup",function(){
 				_this._buttonChanged('up','previous');
 				return false;
 			})
@@ -746,11 +746,11 @@ var RibbonGrid = $n2.Class({
 		$('<div>')
 			.addClass('n2DisplayRibbon_grid_button_next')
 			.appendTo($extra)
-			.mousedown(function(){
+			.on("mousedown",function(){
 				_this._buttonChanged('down','next');
 				return false;
 			})
-			.mouseup(function(){
+			.on("mouseup",function(){
 				_this._buttonChanged('up','next');
 				return false;
 			})

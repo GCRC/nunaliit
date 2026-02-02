@@ -292,7 +292,7 @@ var ModelBrowserWidget = $n2.Class({
 						_this._refreshList();
 						return false;
 					})
-					.mouseover(function(){
+					.on("mouseover",function(){
 						var $a = $(this);
 						if( $a.hasClass('n2widget_modelBrowser_list_docId_raw') ) {
 							var docId = $a.attr('nunaliit-document-id');
