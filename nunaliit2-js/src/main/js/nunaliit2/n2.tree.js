@@ -1499,7 +1499,7 @@ var ObjectTreeEditor = $n2.Class({
 					if( $key.length > 0
 					 && isKeyEditingPermitted
 					 && false == $key.hasClass('treeEditorClickInstalled') ) {
-						$key.unbind('click');
+						$key.off('click');
 						$key.on("click",function(){editor._initiateKeyEdit(this);});
 						$key.addClass('treeEditorClickInstalled');
 					};
@@ -1567,7 +1567,7 @@ var ObjectTreeEditor = $n2.Class({
 
 		this.$tree.find('li.treeEditAdd').remove();
 		this.$tree.find('.treeEditorClickInstalled')
-			.unbind('click')
+			.off('click')
 			.removeClass('treeEditorClickInstalled')
 			.removeClass('treeClickInstalled') // allow tree to reinstall click events
 			;

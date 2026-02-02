@@ -1073,7 +1073,7 @@ PROTOTYPE.toggle = function(state, event) {
 
 		// Remove mouse tracking event if not needed (all tracking qTips are hidden)
 		if(trackingBound && !$(SELECTOR+'[tracking="true"]:visible', opts.solo).not(tooltip).length) {
-			$(document).unbind('mousemove.'+NAMESPACE);
+			$(document).off('mousemove.'+NAMESPACE);
 			trackingBound = FALSE;
 		}
 
@@ -1378,7 +1378,7 @@ PROTOTYPE._bind = function(targets, events, method, suffix, context) {
 	return this;
 };
 PROTOTYPE._unbind = function(targets, suffix) {
-	targets && $(targets).unbind('.' + this._id + (suffix ? '-'+suffix : ''));
+	targets && $(targets).off('.' + this._id + (suffix ? '-'+suffix : ''));
 	return this;
 };
 
