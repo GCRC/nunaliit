@@ -188,14 +188,14 @@ var ZoomImage = $n2.Class({
 				.mousedown(function(){
 					return _this.image_move_start();
 				})
-				.bind('touchstart', function(){
+				.on('touchstart', function(){
 					return _this.image_move_start();
 				});
 
-			this.div_ref.bind('DOMMouseScroll',function(e){
+			this.div_ref.on('DOMMouseScroll',function(e){
 				return _this.scroll_event(e);
 			});
-			this.div_ref.bind('mousewheel',function(e){
+			this.div_ref.on('mousewheel',function(e){
 				return _this.scroll_event(e);
 			});
 

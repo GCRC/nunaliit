@@ -63,7 +63,7 @@ var MobileMediaEditor = $n2.Class({
 			
 			// Enhance page
 			$newPage.page();
-			$newPage.bind('pagehide',function(){
+			$newPage.on('pagehide',function(){
 				var $page = $(this),
 					prEvent = new $.Event('pageremove');
 

@@ -4461,7 +4461,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		span.append(text);
 		span.append(br);
 		
-		cb.bind('change',function(){
+		cb.on('change',function(){
 			var checked = cb.attr('checked');
 			if( checked ) {
 				refreshFilter();

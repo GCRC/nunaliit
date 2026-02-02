@@ -624,7 +624,7 @@ var SlideEditor = $n2.Class({
 			};
 			
 			$entries.sortable();
-			$entries.bind('sortupdate',function(){
+			$entries.on('sortupdate',function(){
 				editor._resortArray($display,objFrag);
 			});
 			
@@ -657,7 +657,7 @@ var SlideEditor = $n2.Class({
 			
 			if( this.options.objectKeySortAllowed ) {
 				$entries.sortable();
-				$entries.bind('sortupdate',function(){
+				$entries.on('sortupdate',function(){
 					editor._resortObject($display,objFrag);
 				});
 			};

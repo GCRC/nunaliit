@@ -462,7 +462,7 @@ var TranscriptWidget = $n2.Class('TranscriptWidget',{
 
 			// time update function: #highlight on the span to change the color of the text
 			$video
-				.bind('timeupdate', function() {
+				.on('timeupdate', function() {
 					var currentTime = this.currentTime;
 					_this._updateCurrentTime(currentTime, 'video');
 				});

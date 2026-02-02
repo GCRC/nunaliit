@@ -48,7 +48,7 @@ var MobileDebugPage = $n2.Class({
 			
 			// Enhance page
 			$newPage.page();
-			$newPage.bind('pagehide',function(){
+			$newPage.on('pagehide',function(){
 				var $this = $( this ),
 					prEvent = new $.Event( "pageremove" );
 

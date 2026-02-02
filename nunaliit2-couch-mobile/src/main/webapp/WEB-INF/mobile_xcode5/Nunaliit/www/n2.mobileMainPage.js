@@ -109,12 +109,12 @@ var MainPage = $n2.Class({
 
 			$('<input class="mobileMainSearchInput" type="text" data-type="search" autocapitalize="off" autocorrect="off" returnkey="search"/>')
 				.appendTo($searchDiv)
-//				.bind('change',function(e){
+//				.on('change',function(e){
 //					var text = $(this).val();
 //					$(this).blur();
 //					_this._searchTermsChanged(text);
 //				})
-				.bind('keyup',function(e){
+				.on('keyup',function(e){
 					if( e && 13 == e.keyCode ) {
 						var text = $(this).val();
 						$(this).blur();

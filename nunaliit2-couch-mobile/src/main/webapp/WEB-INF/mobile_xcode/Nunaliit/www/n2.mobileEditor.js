@@ -123,7 +123,7 @@ var MobileEditor = $n2.Class({
 			
 			// Enhance page
 			$newPage.page();
-			$newPage.bind('pagehide',function(){
+			$newPage.on('pagehide',function(){
 				var $page = $( this );
 
 				if( _this.cleanupPage ) {
@@ -190,7 +190,7 @@ var MobileEditor = $n2.Class({
 		$content.append( $('<div class="mobileEditAttachedFile"></div>') );
 		
 		// Events
-		$page.find('.mobileEditFlavourRadio').bind('change',function(){_this._changeFlavour(this);});
+		$page.find('.mobileEditFlavourRadio').on('change',function(){_this._changeFlavour(this);});
 		
 		// Add navigation area
 		var $navBar = $('<div data-role="navbar"></div>');

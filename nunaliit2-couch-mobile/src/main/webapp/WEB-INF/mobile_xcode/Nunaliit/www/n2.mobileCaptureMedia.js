@@ -52,7 +52,7 @@ var MobileCaptureMedia = $n2.Class({
 			
 			// Enhance page
 			$newPage.dialog();
-			$newPage.bind('pagehide',function(){
+			$newPage.on('pagehide',function(){
 				var $this = $( this ),
 					prEvent = new $.Event( "pageremove" );
 

@@ -65,7 +65,7 @@ var CreatePage = $n2.Class({
 			
 			// Enhance page
 			$newPage.page();
-			$newPage.bind('pagehide',function(){
+			$newPage.on('pagehide',function(){
 				var $page = $(this),
 					prEvent = new $.Event( "pageremove" );
 
@@ -113,7 +113,7 @@ var CreatePage = $n2.Class({
 
 		$('<input class="mobileSearchReferenceInput" type="text" data-type="search" autocapitalize="off" autocorrect="off" returnkey="search"/>')
 			.appendTo($searchDiv)
-			.bind('keyup',function(e){
+			.on('keyup',function(e){
 				if( e && 13 == e.keyCode ) {
 					var text = $(this).val();
 					_this._search(text);

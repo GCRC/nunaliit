@@ -543,7 +543,7 @@ var DisplayBox = $n2.Class({
 				e.preventDefault();
 				return false;
 			})
-			.bind('selectstart', function(e){
+			.on('selectstart', function(e){
 				e.preventDefault();
 				return false;
 			})
@@ -552,7 +552,7 @@ var DisplayBox = $n2.Class({
 			.attr('href','#')
 			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnPrev')
 			.appendTo($imageInnerDiv)
-			.bind('click',function(e) {
+			.on('click',function(e) {
 				e.preventDefault();
 				_this._previousImage();
 				return false;
@@ -562,7 +562,7 @@ var DisplayBox = $n2.Class({
 			.attr('href','#')
 			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnNext')
 			.appendTo($imageInnerDiv)
-			.bind('click',function(e) {
+			.on('click',function(e) {
 				e.preventDefault();
 				_this._nextImage();
 				return false;
