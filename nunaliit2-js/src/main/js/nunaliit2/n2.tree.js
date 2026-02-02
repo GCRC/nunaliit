@@ -1625,7 +1625,7 @@ var ObjectTreeEditor = $n2.Class({
 			var $textArea = $('<textarea></textarea>');
 			$editDiv.prepend($textArea);
 			
-			$textArea.keydown(function(evt){editor._valueEditKeyDown(evt,this);});
+			$textArea.on("keydown",function(evt){editor._valueEditKeyDown(evt,this);});
 			
 			var $okButton = $('<input type="button" value="OK"/>');
 			$editDiv.append($okButton);
@@ -1849,7 +1849,7 @@ var ObjectTreeEditor = $n2.Class({
 		$textInput.val(key);
 		$keyEditor.append($textInput);
 		
-		$textInput.keydown(function(evt){editor._keyEditKeyDown(evt, this);});
+		$textInput.on("keydown",function(evt){editor._keyEditKeyDown(evt, this);});
 		
 		var $ok = $('<div class="treeEditOk"></div>');
 		$keyEditor.append($ok);

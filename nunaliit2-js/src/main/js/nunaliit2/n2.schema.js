@@ -2121,7 +2121,7 @@ var Form = $n2.Class({
 				$input.val(value);
 
 				// On key down, save previous value
-				$input.keydown(function(event) {
+				$input.on("keydown",function(event) {
 					var $input = $(this);
 					
 					var val = $input.val();

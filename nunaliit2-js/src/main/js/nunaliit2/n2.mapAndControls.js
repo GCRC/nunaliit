@@ -428,7 +428,7 @@ var GazetteerProcess = $n2.Class({
 			,location: null
 		};
 		
-		$input.keydown(function(e){
+		$input.on("keydown",function(e){
 			var key = e.which;
 			
 			// $n2.log('key',key);

@@ -1352,7 +1352,7 @@ var SearchInput = $n2.Class({
 			});
 		};
 		
-		$textInput.keydown(function(e){
+		$textInput.on("keydown",function(e){
 			_this._keyDown(e);
 		});
 		

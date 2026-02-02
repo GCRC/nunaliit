@@ -99,7 +99,7 @@ var UserManagementApplication = $n2.Class({
 			});
 		};
 	
-		$textInput.keydown(function(e){
+		$textInput.on("keydown",function(e){
 			var charCode = null;
 			if( null === e ) {
 				e = window.event; // IE

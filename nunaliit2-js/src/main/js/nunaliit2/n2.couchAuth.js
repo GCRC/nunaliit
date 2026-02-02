@@ -851,7 +851,7 @@ var AuthService = $n2.Class({
 		
 		// Capture enter key (not needed since enter key triggers submit in a
 		// form)
-//		$dialog.find('.n2Auth_input_field').keydown(function(e){
+//		$dialog.find('.n2Auth_input_field').on("keydown",function(e){
 //			var charCode = null;
 //			if( null === e ) {
 //				e = window.event; // IE
@@ -1000,7 +1000,7 @@ var AuthService = $n2.Class({
 				return false;
 			});
 		
-		$dialog.find('.n2Auth_input_field').keydown(function(e){
+		$dialog.find('.n2Auth_input_field').on("keydown",function(e){
 			var charCode = null;
 			if( null === e ) {
 				e = window.event; // IE
@@ -1095,7 +1095,7 @@ var AuthService = $n2.Class({
 		$('<input type="text" autofocus>')
 			.addClass('n2Auth_email_input n2Auth_input_field')
 			.appendTo($input)
-			.keydown(function(e){
+			.on("keydown",function(e){
 				var charCode = null;
 				if( null === e ) {
 					e = window.event; // IE
@@ -1235,7 +1235,7 @@ var AuthService = $n2.Class({
 		$('<input type="text" autofocus>')
 			.addClass('n2Auth_email_input n2Auth_input_field')
 			.appendTo($input)
-			.keydown(function(e){
+			.on("keydown",function(e){
 				var charCode = null;
 				if( null === e ) {
 					e = window.event; // IE

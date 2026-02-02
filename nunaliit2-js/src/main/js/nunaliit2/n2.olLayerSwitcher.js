@@ -196,7 +196,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
             this._suppressedClick(ev)
         });
 
-        $(this.div).keydown((ev) => {
+        $(this.div).on("keydown",(ev) => {
             if (ev.key === 'Enter') {
                 const theCurrentlyVisibleButton = [...this.div.children]
                     .filter(child => child.classList.contains("olButton"))
