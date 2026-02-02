@@ -380,7 +380,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 	.attr('id',inputId)
                 	.attr('_layer',layer.id)
                 	.attr('_layer_switcher',this.id)
-                	.attr('defaultChecked',checked)
+                	.prop('defaultChecked',checked)
                 	.val(layer.name)
                 	.addClass('olButton')
                 	;
