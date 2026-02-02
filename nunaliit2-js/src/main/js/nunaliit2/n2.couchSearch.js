@@ -1380,7 +1380,7 @@ var SearchInput = $n2.Class({
 				$textInput.val('');
 			};
 		};
-		$textInput.select();
+		$textInput.trigger("select");
 	}
 	
 	,_blur: function(e){
