@@ -19,7 +19,7 @@
             // Hide the "today" button because it doesn't do what
             // you think it supposed to do
             hideTodayButton();
-            today.trigger("focus");
+            today.focus();
             datePickHandler();
             $(document).on(
                 "click",
@@ -462,7 +462,7 @@
     function handleNextClicks() {
         setTimeout(function () {
             updateHeaderElements();
-            $(".ui-datepicker-next").focus();
+            $(".ui-datepicker-next").trigger("focus");
             hideTodayButton();
         }, 0);
     }
@@ -470,7 +470,7 @@
     function handlePrevClicks() {
         setTimeout(function () {
             updateHeaderElements();
-            $(".ui-datepicker-prev").focus();
+            $(".ui-datepicker-prev").trigger("focus");
             hideTodayButton();
         }, 0);
     }
