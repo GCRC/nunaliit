@@ -694,7 +694,7 @@ var Form = $n2.Class({
 			if( formSchema.okButton ) {
 				var $b = $('<button>'+formSchema.okButtonLabel+'</button>');
 				if( $b.button ) {
-					$b.button({icons:{primary:'ui-icon-check'}});
+					$b.button({icon:'ui-icon-check'});
 				};
 				$d.append($b);
 				$b.on("click",function(){
@@ -706,7 +706,7 @@ var Form = $n2.Class({
 			if( formSchema.cancelButton ) {
 				var $b = $('<button>'+formSchema.cancelButtonLabel+'</button>');
 				if( $b.button ) {
-					$b.button({icons:{primary:'ui-icon-cancel'}});
+					$b.button({icon:'ui-icon-cancel'});
 				};
 				$d.append($b);
 				$b.on("click",function(){
@@ -718,7 +718,7 @@ var Form = $n2.Class({
 			if( formSchema.resetButton ) {
 				var $rb = $('<button>'+formSchema.resetButtonLabel+'</button>');
 				if( $rb.button ) {
-					$rb.button({icons:{primary:'ui-icon-arrowrefresh-1-s'}});
+					$rb.button({icon:'ui-icon-arrowrefresh-1-s'});
 				};
 				$d.append($rb);
 				$rb.on("click",function(){

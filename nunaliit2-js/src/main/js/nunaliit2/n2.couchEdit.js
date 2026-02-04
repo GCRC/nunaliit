@@ -106,7 +106,7 @@ function searchForDocumentId(options_){
 			+'</div>');
 	
 	$dialog.find('button.cancel')
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.button({icon:'ui-icon-cancel'})
 			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
@@ -560,7 +560,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			
 			$dialog.find('button')
 				.first()
-					.button({icons:{primary:'ui-icon-check'}})
+					.button({icon:'ui-icon-check'})
 					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						var $select = $dialog.find('select');
@@ -583,7 +583,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 						return false;
 					})
 				.next()
-					.button({icons:{primary:'ui-icon-cancel'}})
+					.button({icon:'ui-icon-cancel'})
 					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						$dialog.dialog('close');
@@ -729,7 +729,7 @@ var CouchSimpleDocumentEditor = $n2.Class({
 			$('<button class="editorDisplayRelationButton"></button>')
 				.text( _loc('Remove') )
 				.appendTo($displayRelationDiv)
-				.button({icons:{primary:'ui-icon-trash'}})
+				.button({icon:'ui-icon-trash'})
 				.on("click",removeRelationFn)
 				;
 		};
@@ -1436,7 +1436,7 @@ var CouchDocumentEditor = $n2.Class({
 
 		var saveBtn = $('<button class="save">'+_loc('Save')+'</button>');
 		formButtons.append(saveBtn);
-		saveBtn.button({icons:{primary:'ui-icon-check'}});
+		saveBtn.button({icon:'ui-icon-check'});
 		saveBtn.on("click",function(){
 			_this._save();
 			return false;
@@ -1447,7 +1447,7 @@ var CouchDocumentEditor = $n2.Class({
 			) {
 			var deleteBtn = $('<button class="delete">'+_loc('Delete')+'</button>');
 			formButtons.append(deleteBtn);
-			deleteBtn.button({icons:{primary:'ui-icon-trash'}});
+			deleteBtn.button({icon:'ui-icon-trash'});
 			deleteBtn.on("click",function(evt){
 				if( confirm( _loc('Do you really want to delete this feature?') ) ) {
 					deletion(data);
@@ -1464,17 +1464,17 @@ var CouchDocumentEditor = $n2.Class({
 
 		var addRelationBtn = $('<button class="relation">'+_loc('Add Relation')+'</button>');
 		formButtons.append(addRelationBtn);
-		addRelationBtn.button({icons:{primary:'ui-icon-plusthick'}});
+		addRelationBtn.button({icon:'ui-icon-plusthick'});
 		addRelationBtn.on("click",function(){ _this._addRelationDialog(); return false; });
 
 		var layersBtn = $('<button class="layers">'+_loc('Layers')+'</button>');
 		formButtons.append(layersBtn);
-		layersBtn.button({icons:{primary:'ui-icon-link'}});
+		layersBtn.button({icon:'ui-icon-link'});
 		layersBtn.on("click",function(){ _this._manageLayersDialog(); return false; });
 
 		var cancelBtn = $('<button class="cancel">'+_loc('Cancel')+'</button>');
 		formButtons.append(cancelBtn);
-		cancelBtn.button({icons:{primary:'ui-icon-cancel'}});
+		cancelBtn.button({icon:'ui-icon-cancel'});
 		cancelBtn.on("click",function(){ 
 			_this._cancelEdit();
 			return false;
@@ -2089,7 +2089,7 @@ var CouchDocumentEditor = $n2.Class({
 			$('<button class="editorDisplayRelationButton"></button>')
 				.text( _loc('Remove') )
 				.appendTo($displayRelationDiv)
-				.button({icons:{primary:'ui-icon-trash'}})
+				.button({icon:'ui-icon-trash'})
 				.on("click",removeRelationFn)
 				;
 		};
@@ -3034,7 +3034,7 @@ var AttachmentEditor = $n2.Class({
 		attachBtn.addClass(opts.classNames);
 	};
 
-	attachBtn.button({icons:{primary:'ui-icon-plusthick'}});
+	attachBtn.button({icon:'ui-icon-plusthick'});
 	},
 	
 	performPreSavingActions: function(opts_){
@@ -3389,7 +3389,7 @@ var AttachmentEditor = $n2.Class({
 				};
 				return false;
 			});
-		$addBtn.button({icons:{primary:'ui-icon-plusthick'}});
+		$addBtn.button({icon:'ui-icon-plusthick'});
 
 		var $cancelBtn = $('<button>')
 			.text( _loc('Cancel') )
@@ -3399,7 +3399,7 @@ var AttachmentEditor = $n2.Class({
 				$addFileDialog.dialog('close');
 				return false;
 			});
-		$cancelBtn.button({icons:{primary:'ui-icon-cancel'}});
+		$cancelBtn.button({icon:'ui-icon-cancel'});
 		
 		$addFileDialog.dialog({
 			autoOpen: true

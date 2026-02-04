@@ -347,7 +347,7 @@ var Upload = $n2.Class({
 		
 		var $ok = $('<button></button>');
 		$ok.text( _loc('OK') );
-		$ok.button({icons:{primary:'ui-icon-check'}});
+		$ok.button({icon:'ui-icon-check'});
 		$dialog.append( $ok );
 		$ok.on("click",function(){
 			var $diag = $('#'+infoDialogId);

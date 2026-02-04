@@ -453,7 +453,7 @@
 		
 		$dialog.find('button')
 			.first()
-				.button({icons:{primary:'ui-icon-check'}})
+				.button({icon:'ui-icon-check'})
 				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					var $options = $dialog.find('.searchFilterOptions');
@@ -475,7 +475,7 @@
 					return false;
 				})
 			.next()
-				.button({icons:{primary:'ui-icon-cancel'}})
+				.button({icon:'ui-icon-cancel'})
 				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					$dialog.dialog('close');
@@ -540,7 +540,7 @@
 		
 		$dialog.find('button')
 			.first()
-				.button({icons:{primary:'ui-icon-check'}})
+				.button({icon:'ui-icon-check'})
 				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					var $options = $dialog.find('.searchFilterOptions');
@@ -565,7 +565,7 @@
 					return false;
 				})
 			.next()
-				.button({icons:{primary:'ui-icon-cancel'}})
+				.button({icon:'ui-icon-cancel'})
 				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					$dialog.dialog('close');
@@ -2205,7 +2205,7 @@
 
 			$dialog.find('button')
 				.first()
-					.button({icons:{primary:'ui-icon-check'}})
+					.button({icon:'ui-icon-check'})
 					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						var fromText = $dialog.find('.selectAppFrom').val();
@@ -2218,7 +2218,7 @@
 						return false;
 					})
 				.next()
-					.button({icons:{primary:'ui-icon-cancel'}})
+					.button({icon:'ui-icon-cancel'})
 					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						$dialog.dialog('close');
@@ -2289,7 +2289,7 @@
 
 			$dialog.find('button')
 				.first()
-					.button({icons:{primary:'ui-icon-check'}})
+					.button({icon:'ui-icon-check'})
 					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						var script = $dialog.find('textarea').val();
@@ -2318,14 +2318,14 @@
 						return false;
 					})
 				.next()
-					.button({icons:{primary:'ui-icon-cancel'}})
+					.button({icon:'ui-icon-cancel'})
 					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						$dialog.dialog('close');
 						return false;
 					})
 				.next()
-					.button({icons:{primary:'ui-icon-cart'}})
+					.button({icon:'ui-icon-cart'})
 					.on("click",function(){
 						var $dialog = $('#'+dialogId);
 						var script = $dialog.find('textarea').val();
@@ -2732,7 +2732,7 @@
 		
 		$dialog.find('button')
 			.first()
-				.button({icons:{primary:'ui-icon-check'}})
+				.button({icon:'ui-icon-check'})
 				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					var $select = $dialog.find('select');
@@ -2757,7 +2757,7 @@
 					return false;
 				})
 			.next()
-				.button({icons:{primary:'ui-icon-cancel'}})
+				.button({icon:'ui-icon-cancel'})
 				.on("click",function(){
 					var $dialog = $('#'+dialogId);
 					$dialog.dialog('close');
@@ -2795,7 +2795,7 @@
 		$span.text(locStr);
 		
 		$dialog.find('button.buttonOK')
-			.button({icons:{primary:'ui-icon-check'}})
+			.button({icon:'ui-icon-check'})
 			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 
@@ -2889,7 +2889,7 @@
 			});
 		
 		$dialog.find('button.buttonCancel')
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.button({icon:'ui-icon-cancel'})
 			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');

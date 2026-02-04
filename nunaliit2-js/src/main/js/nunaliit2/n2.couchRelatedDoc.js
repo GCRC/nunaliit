@@ -235,7 +235,7 @@ var Editor = $n2.Class({
 		// OK
 		$('<button>')
 			.text( _loc('OK') )
-			.button({icons:{primary:'ui-icon-check'}})
+			.button({icon:'ui-icon-check'})
 			.appendTo($diagContent)
 			.on("click",function(){
 				_this._clickOK();
@@ -245,7 +245,7 @@ var Editor = $n2.Class({
 		// Cancel
 		$('<button>')
 			.text( _loc('Cancel') )
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.button({icon:'ui-icon-cancel'})
 			.appendTo( $diagContent )
 			.on("click",function(){
 				_this._clickCancel();
@@ -376,7 +376,7 @@ var Editor = $n2.Class({
 
 		$('<button>')
 			.text( _loc('Cancel') )
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.button({icon:'ui-icon-cancel'})
 			.appendTo( $content )
 			.on("click",function(){
 				_this._clickCancel();

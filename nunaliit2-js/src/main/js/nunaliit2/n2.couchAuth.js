@@ -1198,7 +1198,7 @@ var AuthService = $n2.Class({
 				.addClass('n2Auth_button_ok')
 				.text( _loc('OK') )
 				.appendTo($line)
-				.button({icons:{primary:'ui-icon-check'}})
+				.button({icon:'ui-icon-check'})
 				.on("click",function(){
 					opts.onSuccess();
 					return false;
@@ -1339,7 +1339,7 @@ var AuthService = $n2.Class({
 				.addClass('n2Auth_button_ok')
 				.text( _loc('OK') )
 				.appendTo($line)
-				.button({icons:{primary:'ui-icon-check'}})
+				.button({icon:'ui-icon-check'})
 				.on("click",function(){
 					opts.onSuccess();
 					return false;
@@ -1379,7 +1379,7 @@ var AuthService = $n2.Class({
 				.addClass('n2Auth_button_ok')
 				.text( _loc('OK') )
 				.appendTo($line)
-				.button({icons:{primary:'ui-icon-check'}})
+				.button({icon:'ui-icon-check'})
 				.on("click",function(){
 					_this._fillDialogWithLogin(dialogId, opts);
 					return false;

@@ -227,7 +227,7 @@ function searchForDocumentId(options_){
 			+'</div>');
 	
 	$dialog.find('button.cancel')
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.button({icon:'ui-icon-cancel'})
 			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
@@ -376,7 +376,7 @@ function selectLayersDialog(opts_){
 			+'</div>');
 	
 	$dialog.find('button.cancel')
-		.button({icons:{primary:'ui-icon-cancel'}})
+		.button({icon:'ui-icon-cancel'})
 		.on("click",function(){
 			var $dialog = $('#'+dialogId);
 			$dialog.dialog('close');
@@ -384,7 +384,7 @@ function selectLayersDialog(opts_){
 		});
 	$dialog.find('button.ok')
 		.button({
-			icons:{primary:'ui-icon-check'}
+			icon:'ui-icon-check'
 			,disabled: true
 		});
 	
@@ -626,7 +626,7 @@ var SearchBriefDialogFactory = $n2.Class({
 			.addClass('cancel')
 			.text( _loc('Cancel') )
 			.appendTo($buttons)
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.button({icon:'ui-icon-cancel'})
 			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
@@ -1173,7 +1173,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 			.addClass('cancel')
 			.text( _loc('Cancel') )
 			.appendTo($buttons)
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.button({icon:'ui-icon-cancel'})
 			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
@@ -1644,7 +1644,7 @@ var FilteredSearchDialogFactory = $n2.Class({
 			.addClass('cancel')
 			.text( _loc('Cancel') )
 			.appendTo($buttons)
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.button({icon:'ui-icon-cancel'})
 			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
@@ -2065,7 +2065,7 @@ var DialogService = $n2.Class({
 		} else {
 			$ok = $('<button></button>');
 			$ok.text( _loc('OK') );
-			$ok.button({icons:{primary:'ui-icon-check'}});
+			$ok.button({icon:'ui-icon-check'});
 			$dialog.append( $ok );
 		} 
 		$ok.on("click",function(){
@@ -2091,7 +2091,7 @@ var DialogService = $n2.Class({
 			$btnContainer.append($cancel);
 		} else {
 			$cancel = $('<button></button>');
-			$cancel.button({icons:{primary:'ui-icon-cancel'}});
+			$cancel.button({icon:'ui-icon-cancel'});
 			$dialog.append( $cancel );
 		}
 		$cancel.text( _loc('Cancel') );
