@@ -2493,9 +2493,16 @@ var Form = $n2.Class({
 						addTripleAttr(true);
 					}
 
-					if( eventParam && eventParam.inhibitCallback ) {
+					/* 
+						Suppress if our custom event parameter, but also 
+						if originalEvent is not present
+						since that means it was programmatically triggered.
+						jQuery UI update around 1.12 made dialogs auto-focus the original element
+						but that causes the dialog to keep opening after it is closed
+					*/
+					if ((eventParam && eventParam.inhibitCallback) || !e.originalEvent) {
 						return true;
-					};
+					}
 					
 					window.setTimeout(function(){
 						focusHandler.fn({
