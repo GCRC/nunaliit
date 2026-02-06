@@ -279,7 +279,7 @@
 		$('#uploadFiles').on("change",function (event) {
 			filesToUpload = event.target.files;
 		});
-		$('#uploadForm').submit(function (event) {
+		$('#uploadForm').on("submit",function (event) {
 			uploadFiles(event);
 			event.preventDefault();
 		});

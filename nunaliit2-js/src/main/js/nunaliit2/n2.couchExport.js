@@ -670,7 +670,7 @@ var ExportService = $n2.Class('ExportService',{
 
 		$('body').append($form);
 		
-		$form.submit();
+		$form.trigger("submit");
 	},
 	
 	exportByDocIds: function(opts_){
@@ -754,7 +754,7 @@ var ExportService = $n2.Class('ExportService',{
 		
 		$('body').append($form);
 		
-		$form.submit();
+		$form.trigger("submit");
 	},
 	
 	exportBySchemaName: function(opts_){
@@ -921,7 +921,7 @@ var ExportService = $n2.Class('ExportService',{
 		
 		$('body').append($form);
 		
-		$form.submit();
+		$form.trigger("submit");
 	},
 	
 	_exportByAjax: function(opts_){
