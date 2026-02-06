@@ -7,7 +7,7 @@
         beforeShow: beforeShowDatePicker
     });
 
-    function beforeShowDatePicker(element, pickerInstance) {
+    function beforeShowDatePicker(element) {
         datepickerElement = element
         setTimeout(function () {
             var today = $('.ui-datepicker-current-day a')[0] || $(".ui-datepicker-today a")[0];
