@@ -7,7 +7,7 @@
         beforeShow: beforeShowDatePicker
     });
 
-    function beforeShowDatePicker(element) {
+    function beforeShowDatePicker(element, pickerInstance) {
         datepickerElement = element
         setTimeout(function () {
             var today = $('.ui-datepicker-current-day a')[0] || $(".ui-datepicker-today a")[0];
@@ -24,9 +24,7 @@
             $(document).on(
                 "click",
                 "#ui-datepicker-div .ui-datepicker-close",
-                function () {
-                    closeCalendar();
-                }
+                closeCalendar
             );
         }, 0);
     }
@@ -454,9 +452,10 @@
         updateDateLabels();
     }
 
-    function closeCalendar() {
+    function closeCalendar(ev) {
+        const detail = ev?.detail;
         $("#ui-datepicker-div").off("keydown");
-        datepickerElement?.focus();
+        if (detail === 0) datepickerElement?.focus(); // not click, must be keyboard?
     }
 
     function handleNextClicks() {
