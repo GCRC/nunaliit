@@ -173,7 +173,7 @@ var GridCanvas = $n2.Class('GridCanvas',{
 						_this._backgroundClicked();
 					};
 				})
-				.scroll(function(){
+				.on("scroll",function(){
 					_this._scrollChanged( $(this) );
 					return false;
 				});

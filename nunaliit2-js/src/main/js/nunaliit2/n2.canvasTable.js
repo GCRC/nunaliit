@@ -479,7 +479,7 @@ var TableCanvas = $n2.Class({
 			
 			$('<tbody>')
 				.appendTo($table)
-				.scroll(function(){
+				.on("scroll",function(){
 					_this._scrollChanged( $(this) );
 					return true;
 				});
