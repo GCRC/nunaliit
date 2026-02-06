@@ -2084,8 +2084,8 @@ var Form = $n2.Class({
 					delay: 300,
 					minLength: 3
 				});
-				$input.keypress(function(event){
-					if(event.keyCode == 13){
+				$input.on("keypress", function(event){
+					if(event.key === "Enter"){
 						event.preventDefault();
 						_this._addTag($(event.target), $elem);
 					}

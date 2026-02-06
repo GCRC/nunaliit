@@ -172,8 +172,8 @@ var TagAssignment = $n2.Class({
 			delay: 300,
 			minLength: 3
 		});
-		$tagInput.keypress(function(event){
-			if(event.keyCode == 13){
+		$tagInput.on("keypress",function(event){
+			if(event.key === "Enter"){
 				event.preventDefault();
 				if($tagInput.val().length > 0) {
 					_this.addTags.push($tagInput.val());
