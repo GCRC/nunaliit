@@ -717,7 +717,11 @@ CreateDocument widget
 	top: 0;
 	margin-bottom: 0;
 	overflow: visible;
+	display: none;
 	zoom: 1;
+}
+.ui-accordion .ui-accordion-content-active {
+	display: block;
 }
 .ui-effects-wrapper {
 	padding: 0;
