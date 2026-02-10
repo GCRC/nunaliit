@@ -49,7 +49,9 @@ var defaultDialogTitle = _loc('View Media');
 var baseDialogOptions = {
 	autoOpen: true
 	,modal: true
-	,dialogClass: 'n2MediaDisplayDialog' // jQuery dialog option
+	,classes: {
+		'ui-dialog': 'n2MediaDisplayDialog' // jQuery dialog option
+	}
 };
 
 $n2.MediaDisplay = $n2.Class({

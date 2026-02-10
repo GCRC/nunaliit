@@ -3395,7 +3395,9 @@
 			,title: _loc('Document Identifiers')
 			,modal: true
 			,closeOnEscape: false
-			,dialogClass: 'selectAppTextDialog'
+			,classes: {
+				'ui-dialog': 'selectAppTextDialog'
+			}
 			,close: function(event, ui){
 				var diag = $(event.target);
 				diag.dialog('destroy');
