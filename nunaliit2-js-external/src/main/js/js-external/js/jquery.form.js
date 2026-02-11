@@ -850,7 +850,7 @@ $.fn.ajaxSubmit = function(options) {
  */
 $.fn.ajaxForm = function(options) {
     options = options || {};
-    options.delegation = options.delegation && $.isFunction($.fn.on);
+    options.delegation = options.delegation && typeof $.fn.on === 'function';
 
     // in jQuery 1.3+ we can fix mistakes with the ready state
     if (!options.delegation && this.length === 0) {
