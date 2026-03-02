@@ -168,7 +168,6 @@ class N2MapCanvas {
 		this.initialTime = null;
 		this.endIdx = 0;
 		this.refreshCnt = undefined;
-		this._retrievingDocsAndPaintPopupthrottled = $n2.utils.debounce(this._retrievingDocsAndPaintPopup, 30);
 		this.isClustering = undefined;
 		this.n2View = undefined;
 		this.n2Map = undefined;
@@ -880,7 +879,7 @@ class N2MapCanvas {
 				_this.popupOverlay.hide();
 			}
 			if (e.selected) {
-				this._retrievingDocsAndPaintPopupthrottled(e.selected, mapBrowserEvent);
+				this._retrievingDocsAndPaintPopup(e.selected, mapBrowserEvent);
 			}
 		}).bind(this));
 
