@@ -113,6 +113,19 @@ public class UserServletActions {
 		JSONObject result = getPublicUserFromUser(doc);
 		return result;
 	}
+
+	public JSONObject getUsersTextSearch(String text) throws Exception {
+		List<JSONObject> users = userRepository.getUsersTextSearch(text);
+		JSONObject result = new JSONObject();
+		JSONArray userArray = new JSONArray();
+		result.put("users", userArray);
+		
+		for(JSONObject user : users) {
+			userArray.put(user);
+		}
+		
+		return result;
+	}
 	
 	public JSONObject initUserCreation(String emailAddr) throws Exception {
 		boolean isEmailInUse = userRepository.isEmailAddressInUse(emailAddr);
@@ -550,6 +563,30 @@ public class UserServletActions {
 		Collection<JSONObject> userDocs = userRepository.getUsersFromNames(userIds);
 
 		return userDocs;
+	}
+
+	public boolean isUserAdmin(Cookie[] cookies) throws Exception {
+		CouchAuthenticationContext context = userRepository.getRolesFromAuthentication(cookies);
+		List<String> roles = context.getRoles();
+		
+		String atlasAdmin = atlasName + "_administrator";
+		boolean isAdmin = false;
+		for(String role : roles){
+			if( "_admin".equals(role) ) {
+				isAdmin = true;
+				break;
+
+			} else if( "administrator".equals(role) ) {
+				isAdmin = true;
+				break;
+
+			} else if( atlasAdmin.equals(role) ) {
+				isAdmin = true;
+				break;
+
+			}
+		}
+		return isAdmin;
 	}
 
 	public JSONObject acceptUserAgreement(Cookie[] cookies, String userAgreement) throws Exception {

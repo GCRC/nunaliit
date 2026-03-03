@@ -202,4 +202,10 @@ public class MockUserRepository implements UserRepository {
 	public boolean isEmailAddressInUse(String email) throws Exception {
 		return false;
 	}
+
+	@Override
+	public List<JSONObject> getUsersTextSearch(String text) throws Exception {
+		List<JSONObject> userDocs = new ArrayList<JSONObject>();
+		return userDocs;
+	}	
 }

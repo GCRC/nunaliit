@@ -185,4 +185,26 @@ public class UserRepositoryCouchDb implements UserRepository {
 			throw new Exception("Error querying users for existing email: "+email,e);
 		}
 	}
+
+	@Override
+	public List<JSONObject> getUsersTextSearch(String text) throws Exception {
+		CouchQuery query = new CouchQuery();
+		query.setViewName("text-search");
+		query.setReduce(false);
+
+		Object[] sKey = new Object[2];
+		sKey[0] = text;
+		sKey[1] = 0;
+		query.setStartKey(sKey);
+
+		Object[] eKey = new Object[2];
+		eKey[0] = text;
+		eKey[1] = "{}";
+		query.setEndKey(eKey);
+		
+		logger.info("Running query", query);
+		CouchQueryResults results = nunaliitUserDesignDocument.performQuery(query);
+		List<JSONObject> rows = results.getRows();
+		return rows;
+	}
 }
