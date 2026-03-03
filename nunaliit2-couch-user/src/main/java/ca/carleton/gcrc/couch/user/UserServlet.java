@@ -316,7 +316,6 @@ public class UserServlet extends HttpServlet {
 				Cookie[] cookies = req.getCookies();
 				if(!actions.isUserAdmin(cookies)) {
 					resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
-					logger.info("User forbidden");
 					return;
 				}
 				//TODO handle empty search string return all users

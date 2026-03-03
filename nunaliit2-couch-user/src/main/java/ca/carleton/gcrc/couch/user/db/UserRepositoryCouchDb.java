@@ -202,7 +202,6 @@ public class UserRepositoryCouchDb implements UserRepository {
 		eKey[1] = "{}";
 		query.setEndKey(eKey);
 		
-		logger.info("Running query", query);
 		CouchQueryResults results = nunaliitUserDesignDocument.performQuery(query);
 		List<JSONObject> rows = results.getRows();
 		return rows;
