@@ -15,6 +15,7 @@ import ca.carleton.gcrc.couch.user.UserDocument;
 import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchDocumentOptions;
 import ca.carleton.gcrc.couch.client.CouchFactory;
 import ca.carleton.gcrc.couch.client.CouchQuery;
 import ca.carleton.gcrc.couch.client.CouchQueryResults;
@@ -187,23 +188,32 @@ public class UserRepositoryCouchDb implements UserRepository {
 	}
 
 	@Override
-	public List<JSONObject> getUsersTextSearch(String text) throws Exception {
+	public Collection<JSONObject> getUsersTextSearch(String text) throws Exception {
 		CouchQuery query = new CouchQuery();
-		query.setViewName("text-search");
-		query.setReduce(false);
+		if(text.isEmpty()) {
+			CouchDocumentOptions opts = new CouchDocumentOptions();
+			opts.setStartKey("org.couchdb.user:");
+			opts.setEndKey("org.couchdb.user=");
+			opts.setFullRowResults(true);
+			Collection<JSONObject> rows = userDb.getDocuments(null, opts);
+			return rows;
+		} else {
+			query.setViewName("text-search");
+			query.setReduce(false);
 
-		Object[] sKey = new Object[2];
-		sKey[0] = text;
-		sKey[1] = 0;
-		query.setStartKey(sKey);
+			Object[] sKey = new Object[2];
+			sKey[0] = text;
+			sKey[1] = 0;
+			query.setStartKey(sKey);
 
-		Object[] eKey = new Object[2];
-		eKey[0] = text;
-		eKey[1] = "{}";
-		query.setEndKey(eKey);
-		
-		CouchQueryResults results = nunaliitUserDesignDocument.performQuery(query);
-		List<JSONObject> rows = results.getRows();
-		return rows;
+			Object[] eKey = new Object[2];
+			eKey[0] = text;
+			eKey[1] = "{}";
+			query.setEndKey(eKey);
+
+			CouchQueryResults results = nunaliitUserDesignDocument.performQuery(query);
+			List<JSONObject> rows = results.getRows();
+			return rows;
+		}
 	}
 }

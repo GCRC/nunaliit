@@ -115,7 +115,7 @@ public class UserServletActions {
 	}
 
 	public JSONObject getUsersTextSearch(String text) throws Exception {
-		List<JSONObject> users = userRepository.getUsersTextSearch(text);
+		Collection<JSONObject> users = userRepository.getUsersTextSearch(text);
 		JSONObject result = new JSONObject();
 		JSONArray userArray = new JSONArray();
 		result.put("users", userArray);

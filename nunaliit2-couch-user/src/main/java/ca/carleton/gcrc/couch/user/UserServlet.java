@@ -318,7 +318,6 @@ public class UserServlet extends HttpServlet {
 					resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
 					return;
 				}
-				//TODO handle empty search string return all users
 				String searchString = req.getParameter("text");
 				JSONObject res = actions.getUsersTextSearch(searchString);
 				sendJsonResponse(resp, res);

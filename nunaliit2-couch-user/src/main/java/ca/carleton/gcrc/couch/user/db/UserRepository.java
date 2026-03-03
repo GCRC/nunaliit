@@ -34,5 +34,5 @@ public interface UserRepository {
 
 	boolean isEmailAddressInUse(String email) throws Exception;
 
-	public List<JSONObject> getUsersTextSearch(String text) throws Exception;
+	public Collection<JSONObject> getUsersTextSearch(String text) throws Exception;
 }
