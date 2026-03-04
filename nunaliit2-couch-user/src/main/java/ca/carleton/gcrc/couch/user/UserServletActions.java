@@ -118,7 +118,7 @@ public class UserServletActions {
 		Collection<JSONObject> users = userRepository.getUsersTextSearch(text);
 		JSONObject result = new JSONObject();
 		JSONArray userArray = new JSONArray();
-		result.put("users", userArray);
+		result.put("rows", userArray);
 		
 		for(JSONObject user : users) {
 			userArray.put(user);

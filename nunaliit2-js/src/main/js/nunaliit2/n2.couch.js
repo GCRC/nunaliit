@@ -905,6 +905,10 @@ var Database = $n2.Class('couch.Database',{
 	,getUrl: function(){
 		return this.dbUrl;
 	}
+
+	,getUsersApiUrl: function(){
+		return this.server.getUsersApiUrl()
+	}
 	
 	,getServer: function(){
 		return this.server;
@@ -2232,13 +2236,9 @@ var UserDb = $n2.Class('couch.UserDb',Database,{
 			return;
 		};
 		
-		var viewUrl = this.getUrl() + '_all_docs';
+		const viewUrl = this.getUsersApiUrl() + 'searchUsers'
 		
-		var data = {
-			startkey: JSON.stringify('org.couchdb.user:')
-			,endkey: JSON.stringify('org.couchdb.user=')
-			,include_docs: true
-		};
+		var data = {};
 		
 		if( badProxy ){
 			data.r = Date.now();
@@ -2344,6 +2344,7 @@ var Server = $n2.Class('couch.Server',{
 				,version: null
 				,skipSessionInitialization: false
 				,userDbName: null
+				,pathToUsersApi: '../servlet/user/'
 				,onSuccess: function(server){}
 				,onError: function(err){}
 			}
@@ -2353,6 +2354,7 @@ var Server = $n2.Class('couch.Server',{
 		this.isInitialized = false;
 		this.uuids = [];
 		this.userDbName = this.options.userDbName;
+		this.pathToUsersApi = this.options.pathToUsersApi;
 		this.userDb = null;
 		this.session = null;
 		this.initListeners = initListeners_;
@@ -2510,6 +2512,10 @@ var Server = $n2.Class('couch.Server',{
 		return result;
 	}
 	
+	,getUsersApiUrl: function() {
+		return this.pathToUsersApi;
+	}
+
 	,getUniqueId: function(options_) {
 		var opts = $.extend({
 				onSuccess: function(uuid){}

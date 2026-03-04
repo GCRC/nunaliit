@@ -190,7 +190,7 @@ public class UserRepositoryCouchDb implements UserRepository {
 	@Override
 	public Collection<JSONObject> getUsersTextSearch(String text) throws Exception {
 		CouchQuery query = new CouchQuery();
-		if(text.isEmpty()) {
+		if(text == null || text.isEmpty()) {
 			CouchDocumentOptions opts = new CouchDocumentOptions();
 			opts.setStartKey("org.couchdb.user:");
 			opts.setEndKey("org.couchdb.user=");
