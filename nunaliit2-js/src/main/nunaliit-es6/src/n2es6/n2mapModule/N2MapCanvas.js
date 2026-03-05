@@ -421,6 +421,8 @@ class N2MapCanvas {
 				}
 			} else if (overlay.type === VENDOR.WMS) {
 				this.sources.push(overlay)
+			} else if (overlay.type === VENDOR.XYZ) {
+					this.sources.push(overlay)
 			} else if ('wfs' === overlay.type) {
 				$n2.logError(overlay.type + 'is not available');
 				this.sources.push({});
@@ -1150,6 +1152,11 @@ class N2MapCanvas {
 				const overlayInfo = _this.overlayInfos[i];
 				const alphasource = Sources[i];
 				if (typeof alphasource.type !== 'undefined' && alphasource.type === 'wms') {
+					const visible = typeof alphasource.visibility === 'undefined' || alphasource.visibility ? true : false;
+					fg.push(this._createOLLayerFromDefinition(alphasource, visible));
+					continue;
+				}
+				if (typeof alphasource.type !== 'undefined' && alphasource.type === 'xyz') {
 					const visible = typeof alphasource.visibility === 'undefined' || alphasource.visibility ? true : false;
 					fg.push(this._createOLLayerFromDefinition(alphasource, visible));
 					continue;
