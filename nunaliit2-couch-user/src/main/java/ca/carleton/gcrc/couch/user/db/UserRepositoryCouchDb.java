@@ -200,6 +200,7 @@ public class UserRepositoryCouchDb implements UserRepository {
 		} else {
 			query.setViewName("text-search");
 			query.setReduce(false);
+			query.setIncludeDocs(true);
 
 			Object[] sKey = new Object[2];
 			sKey[0] = text;

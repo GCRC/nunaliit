@@ -2219,7 +2219,8 @@ var UserDb = $n2.Class('couch.UserDb',Database,{
 		};
 	}
 
-	,getAllUsers: function(opts_) {
+	//Search users by text string, if text string is null/empty fetch all users
+	,searchUsers: function(searchText, opts_) {
 		var opts = $.extend({
 				onSuccess: function(users) {}
 				,onError: $n2.reportErrorForced
@@ -2239,6 +2240,9 @@ var UserDb = $n2.Class('couch.UserDb',Database,{
 		const viewUrl = this.getUsersApiUrl() + 'searchUsers'
 		
 		var data = {};
+		if(searchText) {
+			data.text = searchText;
+		}
 		
 		if( badProxy ){
 			data.r = Date.now();
@@ -2280,8 +2284,13 @@ var UserDb = $n2.Class('couch.UserDb',Database,{
 	    		};
 	    	}
 	    	,error: function(XMLHttpRequest, textStatus, errorThrown) {
-				var errStr = httpJsonError(XMLHttpRequest, textStatus);
-	    		opts.onError('Error during query of all users: '+errStr);
+				if(errorThrown === 'Forbidden') {
+					opts.onError('Error: insufficient privileges')
+				} else {
+					var errStr = httpJsonError(XMLHttpRequest, textStatus);
+	    			opts.onError('Users query error: '+errStr);
+				}
+				
 	    	}
 		});
 		
