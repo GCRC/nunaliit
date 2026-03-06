@@ -5,7 +5,7 @@
 		
 		<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 		<title>Translation</title>		
-		<link rel="stylesheet" href="js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
+		<link rel="stylesheet" href="js-external/css/jquery-ui/smoothness/jquery-ui.min.css" type="text/css" />
 		<link rel="stylesheet" href="js-external/css/jquery.lightbox-0.5.css" type="text/css" />
 		<link rel="stylesheet" href="nunaliit2/css/basic/nunaliit2.css" type="text/css" />
 		
@@ -28,7 +28,6 @@
 		<script type="text/javascript" src="js-external/OpenLayers/OpenLayers.js"></script>
 		<script type="text/javascript" src="js-external/js/jquery.lightbox-0.5.js"></script>
 		
-		<script type="text/javascript" src="js-external/js/jquery.cycle.pack.js"></script>
 		<script type="text/javascript" src="js-external/js/jquery.form.js"></script>
 		<script type="text/javascript" src="js-external/js/jquery.cookie-1.0.js"></script>
 
@@ -96,7 +95,7 @@
 						+'<br/>Continuous:<input id="replicationContinuous" type="checkbox"/>'
 						+'<br/><input id="btnReplication" type="button" value="Add"/></div>');
 					$('#requests').append($replication);
-					$('#btnReplication').click(function(){
+					$('#btnReplication').on("click",function(){
 						var localDbName = $('#replicationLocalDb').val();
 						var remoteServerUrl = $('#replicationRemoteUrl').val();
 						var remoteDbName = $('#replicationRemoteName').val();
@@ -135,7 +134,7 @@
 					var $btnDelete = $('<input type="button" value="Delete"/>');
 					$buttons.append($btnDelete);
 					
-					$btnSave.click(function(){
+					$btnSave.on("click",function(){
 						$('#configEditErrors').html('<div class="olkit_wait"></div>');
 						configDb.updateDocument({
 							data: doc
@@ -149,7 +148,7 @@
 						});
 					});
 					
-					$btnDelete.click(function(){
+					$btnDelete.on("click",function(){
 						if( false == confirm('You are about delete a server configuration object. Do you wish to proceed?') ) {
 							return;
 						};
@@ -170,9 +169,9 @@
 			
 			function addConfig() {
 				$('#requests').html('<div>Server Name: <input id="addConfigServerName" type="text"/><input id="btnAddConfig2" type="button" value="Proceed"/></div>');
-				$('#addConfigServerName').focus();
+				$('#addConfigServerName').trigger("focus");
 				
-				$('#btnAddConfig2').click(function(){
+				$('#btnAddConfig2').on("click",function(){
 					var serverName = $('#addConfigServerName').val();
 					createInitialConfig(serverName);
 				});
@@ -222,7 +221,7 @@
 
 						var $a = $('<a href="#" alt="'+doc.server+'">'+doc.server+'</a>');
 						$td.append( $a );
-						$a.click(function(){
+						$a.on("click",function(){
 							var $a = $(this);
 							var serverName = $a.attr('alt');
 							initiateEdit(serverName);
@@ -235,8 +234,8 @@
 			};
 			
 			function main() {
-				$('#btnQueryConfig').click(queryConfig);
-				$('#btnAddConfig').click(addConfig);
+				$('#btnQueryConfig').on("click",queryConfig);
+				$('#btnAddConfig').on("click",addConfig);
 			};
 			
 			function main_init(config) {

@@ -434,7 +434,7 @@ var FormInput = $n2.Class({
 		};
 		
 		this.input = $(inputHtml.join(''));
-		this.input.change(this.onChanged);
+		this.input.on("change",this.onChanged);
 
 		var initialValue = null;
 		if( this.data ) {
@@ -694,10 +694,10 @@ var Form = $n2.Class({
 			if( formSchema.okButton ) {
 				var $b = $('<button>'+formSchema.okButtonLabel+'</button>');
 				if( $b.button ) {
-					$b.button({icons:{primary:'ui-icon-check'}});
+					$b.button({icon:'ui-icon-check'});
 				};
 				$d.append($b);
-				$b.click(function(){
+				$b.on("click",function(){
 					recv._ok();
 					return false;
 				});
@@ -706,10 +706,10 @@ var Form = $n2.Class({
 			if( formSchema.cancelButton ) {
 				var $b = $('<button>'+formSchema.cancelButtonLabel+'</button>');
 				if( $b.button ) {
-					$b.button({icons:{primary:'ui-icon-cancel'}});
+					$b.button({icon:'ui-icon-cancel'});
 				};
 				$d.append($b);
-				$b.click(function(){
+				$b.on("click",function(){
 					recv._cancel();
 					return false;
 				});
@@ -718,10 +718,10 @@ var Form = $n2.Class({
 			if( formSchema.resetButton ) {
 				var $rb = $('<button>'+formSchema.resetButtonLabel+'</button>');
 				if( $rb.button ) {
-					$rb.button({icons:{primary:'ui-icon-arrowrefresh-1-s'}});
+					$rb.button({icon:'ui-icon-arrowrefresh-1-s'});
 				};
 				$d.append($rb);
-				$rb.click(function(){
+				$rb.on("click",function(){
 					recv._reset();
 					return false;
 				});
@@ -735,7 +735,7 @@ var Form = $n2.Class({
 						$b.button();
 					};
 					$d.append($b);
-					$b.click(createButtonPressedCallback(this, button.name));
+					$b.on("click",createButtonPressedCallback(this, button.name));
 				};
 			};
 		};

@@ -54,7 +54,7 @@ var MobileSelectDialog = $n2.Class({
 			
 			// Enhance page
 			$newPage.dialog();
-			$newPage.bind('pagehide',function(){
+			$newPage.on('pagehide',function(){
 				var $this = $( this ),
 					prEvent = new $.Event( "pageremove" );
 
@@ -118,7 +118,7 @@ var MobileSelectDialog = $n2.Class({
 	// +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*
 	,_installSelectionClick: function($button,selectionIndex){
 		var _this = this;
-		$button.click(function(){
+		$button.on("click",function(){
 			_this._select(selectionIndex);
 			return false;
 		});

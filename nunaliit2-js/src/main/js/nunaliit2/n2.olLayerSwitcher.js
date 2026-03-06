@@ -192,11 +192,11 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         
         // Do not let click events leave the control and reach the map
         // This allows the html elements to function properly
-		$(this.div).click((ev) => {
+		$(this.div).on("click",(ev) => {
             this._suppressedClick(ev)
         });
 
-        $(this.div).keydown((ev) => {
+        $(this.div).on("keydown",(ev) => {
             if (ev.key === 'Enter') {
                 const theCurrentlyVisibleButton = [...this.div.children]
                     .filter(child => child.classList.contains("olButton"))
@@ -208,7 +208,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
         });
 
 		// Suppress double click
-		$(this.div).dblclick(function(e){
+		$(this.div).on("dblclick",function(e){
         	if (e.stopPropagation) {
 				e.stopPropagation();
 			} else {
@@ -264,9 +264,9 @@ OpenLayers.Control.NunaliitLayerSwitcher =
 
         if( false == $input.is(':disabled') ) {
             if( $input.is(':checked') ){
-            	$input.removeAttr('checked');
+            	$input.prop('checked', false);
         	} else {
-        		$input.attr('checked','checked');
+        		$input.prop('checked', true);
         	};
             this.updateMap();
         };
@@ -380,7 +380,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 	.attr('id',inputId)
                 	.attr('_layer',layer.id)
                 	.attr('_layer_switcher',this.id)
-                	.attr('defaultChecked',checked)
+                	.prop('defaultChecked',checked)
                 	.val(layer.name)
                 	.addClass('olButton')
                 	;
@@ -396,7 +396,7 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 };
 
                 if( checked ) {
-                	$input.attr('checked','checked');
+                	$input.prop('checked', true);
                 };
 
                 if (!baseLayer && !layer.inRange) {
@@ -524,9 +524,9 @@ OpenLayers.Control.NunaliitLayerSwitcher =
                 };
                 
                 if( baseLayer ){
-                	$input.change(this.__baseFn);
+                	$input.on("change",this.__baseFn);
                 } else {
-                	$input.change(this.__overlayFn);
+                	$input.on("change",this.__overlayFn);
                 };
             };
         };

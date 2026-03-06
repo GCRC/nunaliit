@@ -102,7 +102,7 @@ var Upload = $n2.Class({
 			$form.append( $button );
 			$elem.append($form);
 			
-			$button.click(uploadClicked);
+			$button.on("click",uploadClicked);
 		};
 
 		function uploadClicked(evt) {
@@ -133,7 +133,7 @@ var Upload = $n2.Class({
 				,url: opts.url + 'put'
 				,dataType: 'json'
 				,success: function(res) {
-					$form.find('*').removeAttr('disabled');
+					$form.find('*').prop('disabled', false)
 					if( res.error ) {
 						opts.onError(_loc('Error while uploading: ')+res.error,options_);
 					} else {
@@ -141,7 +141,7 @@ var Upload = $n2.Class({
 					}
 				}
 				,error: function(xhr, status, err) {
-					$form.find('*').removeAttr('disabled');
+					$form.find('*').prop('disabled', false)
 					opts.onError(_loc('Error while uploading: ')+err,options_);
 				}
 			});
@@ -244,7 +244,7 @@ var Upload = $n2.Class({
 				,processData: false
 				,contentType: false
 				,success: function(res) {
-					$form.find('*').removeAttr('disabled');
+					$form.find('*').prop('disabled', false)
 					if( res.error ) {
 						opts.onError(_loc('Error while uploading: ')+res.error,options_);
 					} else {
@@ -255,7 +255,7 @@ var Upload = $n2.Class({
 					}
 				}
 				,error: function(xhr, status, err) {
-					$form.find('*').removeAttr('disabled');
+					$form.find('*').prop('disabled', false)
 					opts.onError(_loc('Error while uploading: ')+err,options_);
 				}
 			});
@@ -347,9 +347,9 @@ var Upload = $n2.Class({
 		
 		var $ok = $('<button></button>');
 		$ok.text( _loc('OK') );
-		$ok.button({icons:{primary:'ui-icon-check'}});
+		$ok.button({icon:'ui-icon-check'});
 		$dialog.append( $ok );
-		$ok.click(function(){
+		$ok.on("click",function(){
 			var $diag = $('#'+infoDialogId);
 			$diag.dialog('close');
 			return false;

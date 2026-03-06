@@ -717,9 +717,16 @@ CreateDocument widget
 	top: 0;
 	margin-bottom: 0;
 	overflow: visible;
+	display: none;
 	zoom: 1;
 }
+.ui-accordion .ui-accordion-content-active {
+	display: block;
+}
 .ui-effects-wrapper {
+	padding: 0;
+}
+.ui-accordion .ui-accordion-header {
 	padding: 0;
 }
 .ui-accordion .ui-accordion-header a {
@@ -730,7 +737,10 @@ CreateDocument widget
 	color: #000;
 }
 .ui-accordion .ui-accordion-header .ui-icon {
+	position: absolute;
 	left: 12px;
+	top: 50%;
+	margin-top: -8px;
 }
 .olkitSearchMod2_0, .olkitSearchMod2_1 {
 	background-color: #fff;

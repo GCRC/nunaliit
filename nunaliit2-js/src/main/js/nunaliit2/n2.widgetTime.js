@@ -269,7 +269,7 @@ var DateRangeWidget = $n2.Class({
 			.attr('title', _loc('Date Range Widget'))
 			.text("-- / --")
 			.appendTo($container)
-			.click(function() {
+			.on("click",function() {
 				_this._setWidgetWindowPosition();
 				$('.n2widget_date_range_window')
 					.toggleClass('active');
@@ -280,7 +280,7 @@ var DateRangeWidget = $n2.Class({
 		$('<div>')
 			.addClass('n2widget_date_range_window_backdrop')
 			.appendTo($('body'))
-			.click(function() {
+			.on("click",function() {
 				$('.n2widget_date_range_window')
 					.toggleClass('active');
 				$('.n2widget_date_range_window_backdrop')
@@ -308,7 +308,7 @@ var DateRangeWidget = $n2.Class({
 			.attr('type', 'text')
 			.attr('autocomplete', 'off')
 			.attr('placeholder', _loc('Start Date') + ' yyyy-mm-dd')
-			.change(function() {
+			.on("change",function() {
 				_this._startDateRangeUpdated();
 			})
 			.appendTo($widgetWindowStart);
@@ -345,7 +345,7 @@ var DateRangeWidget = $n2.Class({
 			.attr('type', 'text')
 			.attr('autocomplete', 'off')
 			.attr('placeholder', _loc('End Date') + ' yyyy-mm-dd')
-			.change(function() {
+			.on("change",function() {
 				_this._endDateRangeUpdated();
 			})
 			.appendTo($widgetWindowEnd);

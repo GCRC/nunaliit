@@ -461,7 +461,7 @@
 		
 		$('<button></button>')
 			.text('Schema')
-			.click(function(){
+			.on("click",function(){
 				selectDocId('org.nunaliit.schema:schema');
 			})
 			.appendTo($buttons);

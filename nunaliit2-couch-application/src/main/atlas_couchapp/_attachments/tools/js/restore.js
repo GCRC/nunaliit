@@ -87,7 +87,7 @@
 			if( $deletedHeader.length < 1 ){
 				$deletedHeader = $('<div class="restoreDeletedHeader">Deleted Documents <button>Refresh</button></div>');
 				$deletedList.append($deletedHeader);
-				$deletedHeader.find('button').click(function(){
+				$deletedHeader.find('button').on("click",function(){
 					var $div = _this._getDisplayDiv();
 					$div.find('.restoreDeletedDocs').remove();
 					_this._refresh();
@@ -132,7 +132,7 @@
 								$docA.text(docId);
 								$docDiv.append($docA);
 								$deletedDocs.append($docDiv);
-								$docA.click(_this.deletedDocClick);
+								$docA.on("click",_this.deletedDocClick);
 							};
 						};
 					}
@@ -192,7 +192,7 @@
 								.attr('data-docid',docId)
 								.attr('data-rev',revision)
 								.attr('data-lastrev',lastRev)
-								.click(_this.docRevisionClick);
+								.on("click",_this.docRevisionClick);
 						};
 					}
 					,onError: function(errorMsg){ 
@@ -235,7 +235,7 @@
 					
 					var $button = $('<button>Restore this version</button>');
 					$displayDiv.append($button);
-					$button.click(function(){
+					$button.on("click",function(){
 						var $btn = $(this);
 						_this._restoreRevision($btn, doc, lastRev);
 						return false;

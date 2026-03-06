@@ -32,7 +32,7 @@
 			$('<button>')
 				.text( _loc('Clear') )
 				.appendTo($header)
-				.click(function(){
+				.on("click",function(){
 					_this._clear();
 					return false;
 				});
@@ -105,7 +105,7 @@
 				.addClass('n2tangibles_editor_button n2tangibles_editor_button_refresh')
 				.text( _loc('Refresh') )
 				.appendTo($header)
-				.click(function(){
+				.on("click",function(){
 					_this._refresh();
 					return false;
 				});
@@ -113,7 +113,7 @@
 				.addClass('n2tangibles_editor_button n2tangibles_editor_button_enable')
 				.text( _loc('?') )
 				.appendTo($header)
-				.click(function(){
+				.on("click",function(){
 					_this._toggleEnable();
 					return false;
 				});
@@ -121,7 +121,7 @@
 				.addClass('n2tangibles_editor_button n2tangibles_editor_button_save')
 				.text( _loc('Save') )
 				.appendTo($header)
-				.click(function(){
+				.on("click",function(){
 					_this._save();
 					return false;
 				});
@@ -129,7 +129,7 @@
 				.addClass('n2tangibles_editor_button n2tangibles_editor_button_delete')
 				.text( _loc('Delete') )
 				.appendTo($header)
-				.click(function(){
+				.on("click",function(){
 					_this._delete();
 					return false;
 				});

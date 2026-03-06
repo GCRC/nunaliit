@@ -526,7 +526,7 @@ var DisplayBox = $n2.Class({
     		.addClass('n2DisplayBoxButtonClose')
     		//.text( _loc('Close') )
     		.appendTo($titleBarDiv)
-    		.click(function(){
+    		.on("click",function(){
     			_this._close();
     			return false;
     		});
@@ -538,12 +538,12 @@ var DisplayBox = $n2.Class({
 		var $imageInnerDiv = $('<div>')
 			.addClass('n2DisplayBoxImageInner')
 			.appendTo($imageOuterDiv)
-			.click(function(e){
+			.on("click",function(e){
 				// Do not close when clicking picture
 				e.preventDefault();
 				return false;
 			})
-			.bind('selectstart', function(e){
+			.on('selectstart', function(e){
 				e.preventDefault();
 				return false;
 			})
@@ -552,7 +552,7 @@ var DisplayBox = $n2.Class({
 			.attr('href','#')
 			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnPrev')
 			.appendTo($imageInnerDiv)
-			.bind('click',function(e) {
+			.on('click',function(e) {
 				e.preventDefault();
 				_this._previousImage();
 				return false;
@@ -562,7 +562,7 @@ var DisplayBox = $n2.Class({
 			.attr('href','#')
 			.addClass('n2DisplayBoxNavBtn n2DisplayBoxNavBtnNext')
 			.appendTo($imageInnerDiv)
-			.bind('click',function(e) {
+			.on('click',function(e) {
 				e.preventDefault();
 				_this._nextImage();
 				return false;
@@ -575,7 +575,7 @@ var DisplayBox = $n2.Class({
 			.addClass('n2DisplayBoxLoadingLink')
 			.attr('href','#')
 			.appendTo($loadingDiv)
-			.click(function(){
+			.on("click",function(){
 				_this._close();
 				return false;
 			});
@@ -587,7 +587,7 @@ var DisplayBox = $n2.Class({
 		var $dataOuterDiv = $('<div>')
 			.addClass('n2DisplayBoxDataOuter')
 			.appendTo($displayDiv)
-			.click(function(e){
+			.on("click",function(e){
 				var allowed = _this._isPassThruEvent(e);
 				
 				// Do not close when clicking data
@@ -623,7 +623,7 @@ var DisplayBox = $n2.Class({
 				,opacity: this.settings.overlayOpacity
 			})
 			.fadeIn()
-			.click(function(){
+			.on("click",function(){
 				_this._close();
 				return false;
 			});
@@ -631,7 +631,7 @@ var DisplayBox = $n2.Class({
 		// Calculate top and left offset for the jquery-lightbox div object and show it
 		$displayDiv
 			.hide()
-			.click(function(e){
+			.on("click",function(e){
 				var passThru = _this._isPassThruEvent(e);
 				
 				if( passThru ){
@@ -995,7 +995,7 @@ var DisplayBox = $n2.Class({
 						var $wrapper = $('<div>')
 							.addClass('n2DisplayBoxImageWrapper')
 							.prependTo($divImageInner)
-							.mouseout(function(e){
+							.on("mouseout",function(e){
 								_this._imageMouseOut(e);
 							})
 							;
@@ -1004,13 +1004,13 @@ var DisplayBox = $n2.Class({
 							.addClass('n2DisplayBoxImage')
 							.attr('src',data.url)
 							.appendTo($wrapper)
-							.mousedown(function(e){
+							.on("mousedown",function(e){
 								_this._imageMouseDown(e);
 							})
-							.mousemove(function(e){
+							.on("mousemove",function(e){
 								_this._imageMouseMove(e);
 							})
-							.mouseup(function(e){
+							.on("mouseup",function(e){
 								_this._imageMouseUp(e);
 							})
 							;
@@ -1018,7 +1018,7 @@ var DisplayBox = $n2.Class({
 						$('<div>')
 							.addClass('n2DisplayBoxImageZoom n2DisplayBoxImageZoomPlus')
 							.appendTo($divImageInner)
-							.click(function(e){
+							.on("click",function(e){
 								e.preventDefault();
 								_this._imageZoom(+1);
 								return false;
@@ -1028,7 +1028,7 @@ var DisplayBox = $n2.Class({
 						$('<div>')
 							.addClass('n2DisplayBoxImageZoom n2DisplayBoxImageZoomMinus')
 							.appendTo($divImageInner)
-							.click(function(e){
+							.on("click",function(e){
 								e.preventDefault();
 								_this._imageZoom(-1);
 								return false;

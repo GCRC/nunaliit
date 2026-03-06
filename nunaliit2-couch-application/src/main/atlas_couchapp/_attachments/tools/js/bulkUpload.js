@@ -275,11 +275,11 @@
 
 		dispatcher.register(DH, 'hashChanged', _handle);
 
-		$('#selectSchemaButton').click(addDocument);
-		$('#uploadFiles').change(function (event) {
+		$('#selectSchemaButton').on("click",addDocument);
+		$('#uploadFiles').on("change",function (event) {
 			filesToUpload = event.target.files;
 		});
-		$('#uploadForm').submit(function (event) {
+		$('#uploadForm').on("submit",function (event) {
 			uploadFiles(event);
 			event.preventDefault();
 		});

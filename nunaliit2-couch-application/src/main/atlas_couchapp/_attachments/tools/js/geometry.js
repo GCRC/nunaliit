@@ -112,7 +112,7 @@ function clearLogs(){
 function geometryMain() {
 	var $findInvalidGeomsBtn = $('<button>Find Invalid Geoms</button>');
 	$('#geometryButtons').append($findInvalidGeomsBtn);
-	$findInvalidGeomsBtn.click(function(){
+	$findInvalidGeomsBtn.on("click",function(){
 		findInvalidGeoms();
 		return false;
 	});

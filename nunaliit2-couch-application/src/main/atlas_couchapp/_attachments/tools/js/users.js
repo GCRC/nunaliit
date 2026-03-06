@@ -99,7 +99,7 @@ var UserManagementApplication = $n2.Class({
 			});
 		};
 	
-		$textInput.keydown(function(e){
+		$textInput.on("keydown",function(e){
 			var charCode = null;
 			if( null === e ) {
 				e = window.event; // IE
@@ -118,21 +118,21 @@ var UserManagementApplication = $n2.Class({
 		$('<input class="userAppQueryButton" type="button">')
 			.val( _loc('Query Users') )
 			.appendTo($userInput)
-			.click(function(){
+			.on("click",function(){
 				_this.queryUsers();
 			});
 			
 		$('<input class="userAppAddUser" type="button">')
 			.val( _loc('Add User') )
 			.appendTo($userInput)
-			.click(function(){
+			.on("click",function(){
 				_this.addUser();
 			});
 		
 		$('<input class="userAppMyUser" type="button">')
 			.val( _loc('My User') )
 			.appendTo($userInput)
-			.click(function(){
+			.on("click",function(){
 				_this.queryMyUser();
 			});
 	}
@@ -218,9 +218,9 @@ var UserManagementApplication = $n2.Class({
 			+'Password: <input id="addUserPassword1" type="password"/><br/>'
 			+'Repeat Password: <input id="addUserPassword2" type="password"/><br/>'
 			+'<input id="btnAddUser2" type="button" value="Proceed"/></div>');
-		$('#addUserName').focus();
+		$('#addUserName').trigger("focus");
 		
-		$('#btnAddUser2').click(function(){
+		$('#btnAddUser2').on("click",function(){
 			var userName = $('#addUserName').val();
 			var pw1 = $('#addUserPassword1').val();
 			var pw2 = $('#addUserPassword2').val();
@@ -338,7 +338,7 @@ var UserManagementApplication = $n2.Class({
 
 				var $a = $('<a href="#" alt="'+userDoc.name+'">'+userDoc._id+'</a>');
 				$div.append( $a );
-				$a.click(function(){
+				$a.on("click",function(){
 					var $a = $(this);
 					var userName = $a.attr('alt');
 					_this.initiateEdit(userName);
@@ -373,7 +373,7 @@ var UserManagementApplication = $n2.Class({
 					.attr('alt',userDoc.name)
 					.text(userDoc.name)
 					.appendTo($name)
-					.click(function(){
+					.on("click",function(){
 						var $a = $(this);
 						var userName = $a.attr('alt');
 						_this.initiateEdit(userName);
@@ -566,7 +566,7 @@ var UserCreationApplication = $n2.Class({
 		$('<input class="choosePassword" type="checkbox"/>')
 			.attr('id',elemId)
 			.appendTo($line)
-			.change(function(){
+			.on("change",function(){
 				var $display = _this._getDiv();
 				var $choose = $display.find('.choosePassword');
 				var chooseMyOwn = $choose.is(':checked');
@@ -589,9 +589,9 @@ var UserCreationApplication = $n2.Class({
 			.appendTo($line);
 		$('<input class="showPassword" type="checkbox"/>')
 			.attr('id',elemId)
-			.attr('checked', true)
+			.prop('checked', true)
 			.appendTo($line)
-			.change(function(){
+			.on("change",function(){
 				var $display = _this._getDiv();
 				var $show = $display.find('.showPassword');
 				var showPw = $show.is(':checked');
@@ -626,7 +626,7 @@ var UserCreationApplication = $n2.Class({
 			.addClass('createUser')
 			.appendTo($form)
 			.text( _loc('Create User') )
-			.click(function(){
+			.on("click",function(){
 				var $display = _this._getDiv();
 				var displayName = $display.find('.displayNameInput').val();
 				var password1 = $display.find('.password1').val();
@@ -732,7 +732,7 @@ var UserCreationApplication = $n2.Class({
 					$('<button>')
 						.text( _loc('Get a different password') )
 						.appendTo($value)
-						.click(function(){
+						.on("click",function(){
 							displayGeneratedPassword();
 							return false;
 						});
@@ -772,7 +772,7 @@ var UserCreationApplication = $n2.Class({
 			$('<div class="value"><input class="password2" type="password"/></div>')
 				.appendTo($line);
 
-			_this._getDiv().find(".showPassword").attr("checked", false)
+			_this._getDiv().find(".showPassword").prop("checked", false)
 			showOwnPassword(false)
 		};
 
@@ -1087,7 +1087,7 @@ var PasswordRecoveryApplication = $n2.Class({
 			.appendTo($line);
 		$('<div class="value"><input class="choosePassword" type="checkbox"/></div>')
 			.appendTo($line)
-			.change(function(){
+			.on("change",function(){
 				var $display = _this._getDiv();
 				var $choose = $display.find('.choosePassword');
 				var chooseMyOwn = $choose.is(':checked');
@@ -1114,7 +1114,7 @@ var PasswordRecoveryApplication = $n2.Class({
 			.addClass('createUser')
 			.appendTo($form)
 			.text( _loc('Set Password') )
-			.click(function(){
+			.on("click",function(){
 				var $display = _this._getDiv();
 				var password1 = $display.find('.password1').val();
 				var password2 = $display.find('.password2').val();
@@ -1196,7 +1196,7 @@ var PasswordRecoveryApplication = $n2.Class({
 					$('<button>')
 						.text( _loc('Get a different password') )
 						.appendTo($value)
-						.click(function(){
+						.on("click",function(){
 							displayGeneratedPassword();
 							return false;
 						});

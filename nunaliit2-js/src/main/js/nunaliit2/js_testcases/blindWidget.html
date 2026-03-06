@@ -87,7 +87,7 @@
 							.append( $('<a class="n2BlindA" href="#"></a>') );
 						$header.find('a')
 							.text(headerText)
-							.click(function(){
+							.on("click",function(){
 								_this._headerClicked();
 								return false;
 							});
