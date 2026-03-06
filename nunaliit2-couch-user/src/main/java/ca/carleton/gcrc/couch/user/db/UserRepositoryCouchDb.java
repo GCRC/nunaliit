@@ -217,4 +217,12 @@ public class UserRepositoryCouchDb implements UserRepository {
 			return rows;
 		}
 	}
+
+	@Override
+	public void deleteUser(String user, String rev) throws Exception {
+		JSONObject userDoc = new JSONObject();
+		userDoc.put("_id", user);
+		userDoc.put("_rev", rev);
+		userDb.deleteDocument(userDoc);
+	}
 }

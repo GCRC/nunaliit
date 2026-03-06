@@ -647,6 +647,13 @@ public class UserServletActions {
 		result.put("ok", true);
 		return result;
 	}
+
+	public JSONObject deleteUser(String user, String rev) throws Exception {
+		userRepository.deleteUser(user, rev);
+		JSONObject result = new JSONObject();
+		result.put("ok", true);
+		return result;
+	}
 	
 	private String generateRandomUserName(){
 		int i = rng.nextInt();

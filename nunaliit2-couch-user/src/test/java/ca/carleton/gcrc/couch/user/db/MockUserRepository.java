@@ -208,4 +208,9 @@ public class MockUserRepository implements UserRepository {
 		List<JSONObject> userDocs = new ArrayList<JSONObject>();
 		return userDocs;
 	}	
+
+	@Override
+	public void deleteUser(String user, String rev) throws Exception {
+		return;
+	}
 }

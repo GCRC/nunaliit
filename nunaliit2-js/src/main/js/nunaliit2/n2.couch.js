@@ -2039,7 +2039,7 @@ var UserDb = $n2.Class('couch.UserDb',Database,{
 			}
 			,opts_
 		);
-		var userDbUrl = this.getUrl();
+		var userApiUrl = this.getUsersApiUrl()
 
 		var id = null;
 		var rev = null;
@@ -2060,7 +2060,7 @@ var UserDb = $n2.Class('couch.UserDb',Database,{
 		}
 		
 		$.ajax({
-	    	url: userDbUrl + id + '?rev=' + rev 
+	    	url: userApiUrl + id + '?rev=' + rev 
  		,type: 'DELETE'
  		,async: true
  		,dataType: 'json'

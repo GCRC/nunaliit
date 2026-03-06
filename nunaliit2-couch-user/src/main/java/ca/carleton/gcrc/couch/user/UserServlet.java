@@ -597,6 +597,31 @@ public class UserServlet extends HttpServlet {
 			reportError(e, resp);
 		}
 	}
+
+	@Override
+	protected void doDelete(
+		HttpServletRequest req
+		,HttpServletResponse resp
+		) throws ServletException, IOException {
+		
+		try {
+			List<String> path = computeRequestPath(req);
+			
+			if( path.size() == 1 && path.get(0).startsWith("org.couchdb.user")) {
+				Cookie[] cookies = req.getCookies();
+				if(!actions.isUserAdmin(cookies)) {
+					resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+					return;
+				}
+				String[] revs = req.getParameterValues("rev");
+				actions.deleteUser(path.get(0), revs[0]);
+			} else {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			}
+		} catch(Exception e) {
+			reportError(e, resp);
+		}
+	}
 	
 	private void sendJsonResponse(HttpServletResponse resp, JSONObject result) throws Exception {
 		if( null == result ) {
