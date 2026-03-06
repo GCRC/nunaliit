@@ -34,7 +34,7 @@ public interface UserRepository {
 
 	boolean isEmailAddressInUse(String email) throws Exception;
 
-	public Collection<JSONObject> getUsersTextSearch(String text) throws Exception;
+	Collection<JSONObject> getUsersTextSearch(String text) throws Exception;
 
 	void deleteUser(String user, String rev) throws Exception;
 }

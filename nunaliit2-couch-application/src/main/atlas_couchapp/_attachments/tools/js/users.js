@@ -284,22 +284,12 @@ var UserManagementApplication = $n2.Class({
 			searchString = '';
 		};
 		
-		if( '' === searchString ) {
-			this.userDb.searchUsers(null, {
-				onSuccess: reportUsers
-				,onError: function(){
-					_this._reportError.apply(_this,arguments);
-				}
-			});
-		} else {
-			// Perform a search
-			this.userDb.searchUsers(searchString, {
-				onSuccess: reportUsers
-				,onError: function(){
-					_this._reportError.apply(_this,arguments);
-				}
-			});
-		};
+		this.userDb.searchUsers(searchString, {
+			onSuccess: reportUsers
+			,onError: function(){
+				_this._reportError.apply(_this,arguments);
+			}
+		});
 
 		function reportUsers(arr) {
 			var $outterDiv = $('<div class="n2UserList"></div>');
