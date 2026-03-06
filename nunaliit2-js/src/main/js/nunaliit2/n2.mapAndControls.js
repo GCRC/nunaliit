@@ -1748,9 +1748,9 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			};
 			if( this.options.layerSwitcher
 			 && this.options.layerSwitcher.initiallyOpened ) {
-				layerSwitcherControl.maximizeControl();
+				layerSwitcherControl.toggleLayerControl();
 			} else if( allLayersInitiallyInvisible ) {
-				layerSwitcherControl.maximizeControl();
+				layerSwitcherControl.toggleLayerControl();
 			};
 		};
 
