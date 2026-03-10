@@ -821,6 +821,7 @@ public class ConfigServlet extends JsonServlet {
 				,atlasProperties.getAtlasName()
 				);
 			servletContext.setAttribute(UserServlet.ConfigAttributeName_DocumentDb, documentDatabase);
+			servletContext.setAttribute(UserServlet.ConfigAttributeName_AdminCouchClient, couchClient);
 
 			byte[] serverKey = atlasProperties.getServerKey();
 			if( null != serverKey ) {

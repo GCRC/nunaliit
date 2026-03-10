@@ -113,6 +113,19 @@ public class UserServletActions {
 		JSONObject result = getPublicUserFromUser(doc);
 		return result;
 	}
+
+	public JSONObject getUsersTextSearch(String text) throws Exception {
+		Collection<JSONObject> users = userRepository.getUsersTextSearch(text);
+		JSONObject result = new JSONObject();
+		JSONArray userArray = new JSONArray();
+		result.put("rows", userArray);
+		
+		for(JSONObject user : users) {
+			userArray.put(user);
+		}
+		
+		return result;
+	}
 	
 	public JSONObject initUserCreation(String emailAddr) throws Exception {
 		boolean isEmailInUse = userRepository.isEmailAddressInUse(emailAddr);
@@ -550,6 +563,30 @@ public class UserServletActions {
 		return userDocs;
 	}
 
+	public boolean isUserAdmin(Cookie[] cookies) throws Exception {
+		CouchAuthenticationContext context = userRepository.getRolesFromAuthentication(cookies);
+		List<String> roles = context.getRoles();
+		
+		String atlasAdmin = atlasName + "_administrator";
+		boolean isAdmin = false;
+		for(String role : roles){
+			if( "_admin".equals(role) ) {
+				isAdmin = true;
+				break;
+
+			} else if( "administrator".equals(role) ) {
+				isAdmin = true;
+				break;
+
+			} else if( atlasAdmin.equals(role) ) {
+				isAdmin = true;
+				break;
+
+			}
+		}
+		return isAdmin;
+	}
+
 	public JSONObject acceptUserAgreement(Cookie[] cookies, String userAgreement) throws Exception {
 		
 		JSONObject agreementDoc = couchDb.getDocument("org.nunaliit.user_agreement");
@@ -604,6 +641,13 @@ public class UserServletActions {
 		// Save the user
 		userRepository.updateUser(userDoc);
 		
+		JSONObject result = new JSONObject();
+		result.put("ok", true);
+		return result;
+	}
+
+	public JSONObject deleteUser(String user, String rev) throws Exception {
+		userRepository.deleteUser(user, rev);
 		JSONObject result = new JSONObject();
 		result.put("ok", true);
 		return result;

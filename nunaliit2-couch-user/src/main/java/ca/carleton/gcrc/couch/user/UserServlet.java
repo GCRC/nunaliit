@@ -21,6 +21,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.couch.client.CouchClient;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbSecurityDocument;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
@@ -47,7 +48,8 @@ public class UserServlet extends HttpServlet {
 	public static final String ConfigAttributeName_UserDb = "UserServlet_UserDb";
 	public static final String ConfigAttributeName_DocumentDb = "UserServlet_DocumentDb";
 	public static final String ConfigAttributeName_ServerKey = "UserServlet_ServerKey";
-	
+	public static final String ConfigAttributeName_AdminCouchClient = "UserServlet_AdminCouchClient";
+
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private String atlasName = null;
@@ -56,6 +58,7 @@ public class UserServlet extends HttpServlet {
 	private byte[] serverKey = null;
 	private UserServletActions actions = null;
 	private AgreementRobot agreementRobot = null;
+	private CouchClient adminCouchClient = null;
 	
 	public UserServlet(){
 		
@@ -102,6 +105,19 @@ public class UserServlet extends HttpServlet {
 				documentDb = (CouchDb)obj;
 			} else {
 				throw new ServletException("Unexpected object for document database: "+obj.getClass().getName());
+			}
+		}
+
+		// Admin Connection Properties
+		{
+			Object obj = context.getAttribute(ConfigAttributeName_AdminCouchClient);
+			if( null == obj ){
+				throw new ServletException("Admin couch client is not specified");
+			}
+			if( obj instanceof CouchClient ){
+				adminCouchClient = (CouchClient)obj;
+			} else {
+				throw new ServletException("Unexpected object for admin couch client: "+obj.getClass().getName());
 			}
 		}
 		
@@ -296,6 +312,16 @@ public class UserServlet extends HttpServlet {
 				JSONObject result = actions.getUsers(users);
 				sendJsonResponse(resp, result);
 
+			} else if( path.size() >= 1 && path.get(0).equals("searchUsers") ) {
+				Cookie[] cookies = req.getCookies();
+				if(!actions.isUserAdmin(cookies)) {
+					resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+					return;
+				}
+				String searchString = req.getParameter("text");
+				JSONObject res = actions.getUsersTextSearch(searchString);
+				sendJsonResponse(resp, res);
+			
 			} else if( path.size() == 1 && path.get(0).equals("getUserDocument") ) {
 				String[] userStrings = req.getParameterValues("user");
 				if( null == userStrings ||  userStrings.length != 1 ){
@@ -567,6 +593,31 @@ public class UserServlet extends HttpServlet {
 				throw new Exception("Invalid action requested");
 			}
 			
+		} catch(Exception e) {
+			reportError(e, resp);
+		}
+	}
+
+	@Override
+	protected void doDelete(
+		HttpServletRequest req
+		,HttpServletResponse resp
+		) throws ServletException, IOException {
+		
+		try {
+			List<String> path = computeRequestPath(req);
+			
+			if( path.size() == 1 && path.get(0).startsWith("org.couchdb.user")) {
+				Cookie[] cookies = req.getCookies();
+				if(!actions.isUserAdmin(cookies)) {
+					resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+					return;
+				}
+				String[] revs = req.getParameterValues("rev");
+				actions.deleteUser(path.get(0), revs[0]);
+			} else {
+				resp.sendError(HttpServletResponse.SC_NOT_FOUND);
+			}
 		} catch(Exception e) {
 			reportError(e, resp);
 		}
