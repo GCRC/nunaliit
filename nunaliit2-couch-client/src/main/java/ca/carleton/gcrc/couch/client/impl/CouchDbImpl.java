@@ -290,6 +290,12 @@ public class CouchDbImpl implements CouchDb {
 				if( options.isDeletedConflicts() ){
 					parameters.add( new UrlParameter("deleted_conflicts","true") );
 				}
+				if( null != options.getStartKey() ) {
+					parameters.add( new UrlParameter("startkey", options.getStartKey()) );
+				}
+				if( null != options.getEndKey() ) {
+					parameters.add( new UrlParameter("endkey", options.getEndKey()) );
+				}
 			}
 			
 			effectiveUrl = ConnectionUtils.computeUrlWithParameters(
@@ -308,10 +314,15 @@ public class CouchDbImpl implements CouchDb {
 			JSONArray rows = response.getJSONArray("rows");
 			for(int loop=0,e=rows.length(); loop<e; ++loop){
 				JSONObject row = rows.getJSONObject(loop);
-				JSONObject doc = row.optJSONObject("doc");
-				if( null != doc ) {
-					result.add(doc);
+				if(options.isFullRowResults()) {
+					result.add(row);
+				} else {
+					JSONObject doc = row.optJSONObject("doc");
+					if( null != doc ) {
+						result.add(doc);
+					}
 				}
+				
 			}
 			
 		} catch(Exception e) {

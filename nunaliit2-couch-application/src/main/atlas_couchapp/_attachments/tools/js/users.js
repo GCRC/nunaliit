@@ -284,41 +284,12 @@ var UserManagementApplication = $n2.Class({
 			searchString = '';
 		};
 		
-		if( '' === searchString ) {
-			this.userDb.getAllUsers({
-				onSuccess: reportUsers
-				,onError: function(){
-					_this._reportError.apply(_this,arguments);
-				}
-			});
-		} else {
-			// Perform a search
-			var searchRequest = this.userSearchService.submitRequest(searchString, {
-				onlyFinalResults: true
-				,onError: function(){
-					_this._reportError.apply(_this,arguments);
-				}
-				,onSuccess: function(searchResults){
-					$n2.log('searchResults',searchResults);
-					
-					if( searchResults.sorted ){
-						var docIds = [];
-						for(var i=0,e=searchResults.sorted.length;i<e;++i){
-							docIds.push(searchResults.sorted[i].id);
-						};
-						_this.userDb.getUsers({
-							ids: docIds
-							,onError: function(){
-								_this._reportError.apply(_this,arguments);
-							}
-							,onSuccess: reportUsers
-						});
-					} else {
-						_this._reportError('Search result does not contain any sorted entries');
-					};
-				}
-			});
-		};
+		this.userDb.searchUsers(searchString, {
+			onSuccess: reportUsers
+			,onError: function(){
+				_this._reportError.apply(_this,arguments);
+			}
+		});
 
 		function reportUsers(arr) {
 			var $outterDiv = $('<div class="n2UserList"></div>');
