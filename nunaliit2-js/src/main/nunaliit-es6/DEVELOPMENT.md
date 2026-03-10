@@ -7,10 +7,10 @@
 ```
 
 2. Ensure that you are running a compatible version of Node and npm.  
-Presently, `node v22.15.1` and `npm v10.9.2` are the respective versions used. You can use [nvm](https://github.com/nvm-sh/nvm) to manage them (ex. `nvm use 22`). Install the relevant modules if not already done (`npm install`).
+Presently, `node v24.14.0` and `npm v11.9.0` are the respective versions used. You can use [nvm](https://github.com/nvm-sh/nvm) to manage them (ex. `nvm use 24`). Install the relevant modules if not already done (`npm install`).
 ```sh
-~/nunaliit/nunaliit2-js/src/main/nunaliit-es6$ nvm use 22
-Now using node v22.15.1 (npm v10.9.2)
+~/nunaliit/nunaliit2-js/src/main/nunaliit-es6$ nvm use 24
+Now using node v24.14.0 (npm v11.9.0)
 ```
 
 3. Run `npm run watch`.  Changes to files under the `src` directory will automatically rebuild the `n2es6` related files found at `dist/target/*`.

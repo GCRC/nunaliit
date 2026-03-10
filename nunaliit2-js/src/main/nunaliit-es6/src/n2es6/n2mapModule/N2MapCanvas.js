@@ -96,9 +96,9 @@ const stringStyles = {
 
 class GoogleLogoControl extends Control {
 	constructor() {
-		const element = document.createElement('span');
+		const element = document.createElement('img');
 		element.classList.add('openlayers-google-attribution-control')
-		element.innerText = "Google Maps"
+		element.src = "nunaliit2/css/basic/images/GoogleMaps_Logo_White.svg"
 		super({
 			element: element,
 		});
