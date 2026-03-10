@@ -31,12 +31,14 @@ import WKT from 'ol/format/WKT';
 import { getArea, getLength, getDistance } from 'ol/sphere';
 
 import mouseWheelZoom from 'ol/interaction/MouseWheelZoom.js';
+import Control from 'ol/control/Control.js'
 import { defaults as defaultsInteractionSet } from 'ol/interaction.js';
 
 import { default as DrawInteraction } from 'ol/interaction/Draw.js';
 import N2StadiaMapsFactory from './N2StadiaMapsFactory';
 import OSM from 'ol/source/OSM';
 import BingMaps from 'ol/source/BingMaps';
+import Google from 'ol/source/Google.js'
 import TileWMS from 'ol/source/TileWMS';
 import ImageTileSource from 'ol/source/ImageTile.js';
 import { TileGrid } from 'ol/tilegrid';
@@ -68,6 +70,7 @@ const VENDOR = {
 	WMTS: 'wmts',
 	OSM: 'osm',
 	STADIA: 'stadia',
+	GOOGLE: 'google',
 	XYZ: 'xyz'
 };
 
@@ -90,6 +93,17 @@ const olStyleNames = {
 const stringStyles = {
 	"label": true
 };
+
+class GoogleLogoControl extends Control {
+	constructor() {
+		const element = document.createElement('img');
+		element.classList.add('openlayers-google-attribution-control')
+		element.src = "nunaliit2/css/basic/images/GoogleMaps_Logo_White.svg"
+		super({
+			element: element,
+		});
+	}
+}
 
 /**
  * @classdesc
@@ -760,6 +774,12 @@ class N2MapCanvas {
 		this.popupOverlay = customPopup;
 		this.n2Map.addOverlay(customPopup);
 
+
+		/* Google Control if needed */
+		this.googleAttribution = new GoogleLogoControl()
+		this.overlayLayers.forEach(this._toggleGoogleAttributionControl.bind(this))
+		this.mapLayers.forEach(this._toggleGoogleAttributionControl.bind(this))
+
 		/**
 		 * Two Groups : Overlay and Background
 		 */
@@ -948,6 +968,11 @@ class N2MapCanvas {
 		this.editbarControl.getInteraction('DrawPolygon').on('drawend', function (evt) {
 			_this.editModeAddFeatureCallback(evt);
 		});
+
+		this.dispatchService.send(DH, {
+			type: 'mapInitialized',
+			mapControl: this
+		});
 	}
 
 	onMoveendCallback(evt) { }
@@ -958,6 +983,19 @@ class N2MapCanvas {
 		this.switchToEditFeatureMode(feature.fid, feature);
 		previousMode.featureAdded(feature);
 		this._centerMapOnFeature(feature);
+	}
+
+	_toggleGoogleAttributionControl(layer) {
+		if (layer?.getSource() instanceof Google) {
+			layer.on("change:visible", (ev) => {
+				if (ev.target.getVisible()) {
+					this.n2Map.addControl(this.googleAttribution)
+				}
+				else {
+					this.n2Map.removeControl(this.googleAttribution)
+				}
+			})
+		}
 	}
 
 	_createImageLegendPaylod(legendUrl, ol_uid, canvasName, layerSwipe, info, visible) {
@@ -1416,7 +1454,17 @@ class N2MapCanvas {
 			} else {
 				$n2.reportError('Parameter is missing for source: ' + sourceTypeInternal)
 			}
-		} else {
+		}
+		else if (sourceTypeInternal === VENDOR.GOOGLE) {
+			if (sourceOptionsInternal && n2atlas && n2atlas.googleMapApiKey) {
+				const parameters = {...sourceOptionsInternal}
+				parameters.key = n2atlas.googleMapApiKey
+				return new Google(parameters);
+			} else {
+				$n2.reportError(`Source '${sourceTypeInternal}' requires a Google API key`);
+			}
+		}
+		 else {
 			$n2.reportError('Unrecognized type (' + layerDefinition.type + ')');
 		}
 	}

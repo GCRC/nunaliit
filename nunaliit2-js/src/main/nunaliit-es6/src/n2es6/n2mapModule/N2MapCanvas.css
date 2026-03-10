@@ -13,3 +13,24 @@
     width: 1.375em;
     height: 1.375em;
 }
+
+.nunaliit_atlas .openlayers-google-attribution-control {
+    pointer-events: none;
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+
+    margin: 0;
+    padding: 1px .5em;
+    color: var(--ol-foreground-color);
+    text-shadow: 0 0 2px var(--ol-background-color);
+    font-size: 12px;
+    background: var(--ol-partial-background-color);
+    border-radius: 2px;
+
+    right: 135px;
+}
+
+.nunaliit_atlas .n2_content_map .ol-viewport .ol-attribution.ol-uncollapsible {
+    bottom: 6px;
+}
