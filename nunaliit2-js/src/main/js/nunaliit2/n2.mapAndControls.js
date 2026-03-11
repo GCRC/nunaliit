@@ -3205,6 +3205,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
    		if( !forced ) {
 			clickedAgain = (feature && feature.fid && this.clickedInfo.selectedId === feature.fid);
    		};
+		if (clickedAgain) this._dispatch({type:'clickedAgain',docId:feature.fid});
 		if( !forced && !this.options.toggleClick && clickedAgain ) {
 			// ignore click again
 			return;
