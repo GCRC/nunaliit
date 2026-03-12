@@ -46,7 +46,7 @@ public class CommandHelp implements Command {
 		ps.println();
 		ps.println("  "+Options.OPTION_SET_LOGGER+" <logger-name>");
 		ps.println("    This option can be specified multiple times. It sets the current");
-		ps.println("    logger to the named one. Subsequent --debug, --trace, --info and");
+		ps.println("    logger to the named one. Subsequent --trace, --debug, --info and");
 		ps.println("    --error options set the level of the current logger.");
 		ps.println();
 	}
