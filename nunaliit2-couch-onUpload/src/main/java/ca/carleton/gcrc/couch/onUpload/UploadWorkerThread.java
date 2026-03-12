@@ -281,11 +281,13 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		
 		DocumentDescriptor docDescriptor = conversionContext.getDocument();
 		
+		logger.trace("Fetching attachments for " + docDescriptor.getDocId());
 		String uploadId = work.getUploadId();
 		AttachmentDescriptor attDescription = docDescriptor.findAttachmentWithUploadId(uploadId);
 		
 		String uploadRequestDocId = work.getUploadRequestDocId();
 		JSONObject uploadRequestDoc = documentDbDesign.getDatabase().getDocument(uploadRequestDocId);
+		logger.trace("Got upload request doc " + uploadRequestDocId);
 		
 		attDescription.remove();
 		
@@ -294,6 +296,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		
 		for(int i=0,e=files.length(); i<e; ++i){
 			JSONObject file = files.getJSONObject(i);
+			logger.trace("Looping through files index " + i);
 			
 			String attachmentName = file.getString("attachmentName");
 			String originalName = file.getString("originalName");
@@ -326,9 +329,11 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 		}
 		
 		// Save document
+		logger.trace("Saving document " + docDescriptor.getDocId());
 		conversionContext.saveDocument();
 		
 		// Delete upload request
+		logger.trace("Deleting upload request for document " + docDescriptor.getDocId());
 		documentDbDesign.getDatabase().deleteDocument(uploadRequestDoc);
 	}
 
