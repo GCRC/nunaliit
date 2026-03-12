@@ -168,6 +168,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 						if( 409 == couchDbException.getReturnCode() ){
 							// This is a conflict error in CouchDb. Somebody is updating the document
 							// at the same time. Just retry the worl
+							logger.debug("CouchDB conflict exception while doing work", e);
 							shouldErrorBeTakenIntoAccount = false;
 						}
 					}
@@ -826,6 +827,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 					
 			for(JSONObject row : results.getRows()) {
 				String id = row.optString("id");
+				logger.trace("Checking " + id + " server_work");
 				
 				String state = null;
 				String attachmentName = null;
@@ -842,6 +844,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				// Discount documents in error state
 				synchronized(this) {
 					if( docsInError.isDocumentInError(id) ) {
+						logger.debug("Document " + id + " skipped due to being in an error state");
 						continue;
 					}
 				}
@@ -852,6 +855,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 					JSONObject uploadIdRow = rowsByUploadId.get(attachmentName);
 					if( null == uploadIdRow ) {
 						// Missing information to continue
+						logger.debug("Document " + id + " missing information for work, skipping");
 						continue;
 					} else {
 						String uploadRequestDocId = uploadIdRow.getString("id");
@@ -864,6 +868,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 					
 				} else if( UploadConstants.UPLOAD_WORK_UPLOADED_FILE.equals(state) ) {
 					// Ignore
+					logger.debug("Skipping document " + id + " state = " + UploadConstants.UPLOAD_WORK_UPLOADED_FILE);
 					continue;
 					
 				} else {
@@ -885,7 +890,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 			
 			for(JSONObject row : results.getRows()) {
 				String id = row.optString("id");
-				
+				logger.trace("Checking " + id + " submission upload-work");
 				String state = null;
 				String uploadId = null;
 				JSONArray key = row.optJSONArray("key");
@@ -901,6 +906,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 				// Discount documents in error state
 				synchronized(this) {
 					if( docsInError.isDocumentInError(id) ) {
+						logger.debug("Document " + id + " skipped due to being in an error state (upload-work)");
 						continue;
 					}
 				}
@@ -911,6 +917,7 @@ public class UploadWorkerThread extends Thread implements CouchDbChangeListener 
 					JSONObject uploadIdRow = rowsByUploadId.get(uploadId);
 					if( null == uploadIdRow ) {
 						// Missing information to continue
+						logger.debug("Document " + id + " missing information for work, skipping (upload-work)");
 						continue;
 					} else {
 						String uploadRequestDocId = uploadIdRow.getString("id");
