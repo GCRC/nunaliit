@@ -20,15 +20,15 @@ public class CommandHelp implements Command {
 			ps.println();
 		}
 
-		ps.println("  "+Options.OPTION_DEBUG);
-		ps.println("    When specified, sets the logging level of the current");
-		ps.println("    logger to DEBUG. The current logger is controlled by --set-logger.");
-		ps.println("    If --set-logger has not yet been specified, then the root");
-		ps.println("    logger is affected.");
-		ps.println();
 		ps.println("  "+Options.OPTION_TRACE);
 		ps.println("    When specified, sets the logging level of the current");
 		ps.println("    logger to TRACE. The current logger is controlled by --set-logger.");
+		ps.println("    If --set-logger has not yet been specified, then the root");
+		ps.println("    logger is affected.");
+		ps.println();
+		ps.println("  "+Options.OPTION_DEBUG);
+		ps.println("    When specified, sets the logging level of the current");
+		ps.println("    logger to DEBUG. The current logger is controlled by --set-logger.");
 		ps.println("    If --set-logger has not yet been specified, then the root");
 		ps.println("    logger is affected.");
 		ps.println();
