@@ -612,6 +612,11 @@ Splash Page
 	font-weight: bold;
 }
 
+.n2Splash_messages p.error {
+    color: #ff0000;
+	text-align: center;
+}
+
 /* 
 ==============================
 Mail Form 
