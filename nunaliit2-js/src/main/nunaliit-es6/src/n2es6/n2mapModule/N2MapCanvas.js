@@ -1203,17 +1203,13 @@ class N2MapCanvas {
 			for (let i = 0, e = Sources.length; i < e; i++) {
 				const overlayInfo = _this.overlayInfos[i];
 				const alphasource = Sources[i];
-				if (typeof alphasource.type !== 'undefined' && alphasource.type === VENDOR.WMS) {
-					const visible = typeof alphasource.visibility === 'undefined' || alphasource.visibility ? true : false;
-					fg.push(this._createOLLayerFromDefinition(alphasource, visible));
-					continue;
-				}
-				if (typeof alphasource.type !== 'undefined' && alphasource.type === VENDOR.XYZ) {
-					const visible = typeof alphasource.visibility === 'undefined' || alphasource.visibility ? true : false;
-					fg.push(this._createOLLayerFromDefinition(alphasource, visible));
-					continue;
-				}
-				if (typeof alphasource.type !== 'undefined' && alphasource.type === VENDOR.MVT) {
+				if (
+					typeof alphasource.type !== 'undefined'
+					&& (
+						alphasource.type === VENDOR.WMS
+						|| alphasource.type === VENDOR.XYZ
+						|| alphasource.type === VENDOR.MVT
+					)) {
 					const visible = typeof alphasource.visibility === 'undefined' || alphasource.visibility ? true : false;
 					fg.push(this._createOLLayerFromDefinition(alphasource, visible));
 					continue;
@@ -1322,32 +1318,25 @@ class N2MapCanvas {
 		const name = _loc(layerDefinition.name);
 
 		if (layerDefinition) {
-			if (isBaseLayer) {
-				return new Tile({
-					title: name,
-					type: 'base',
-					visible: isDefaultLayer,
-					source: this._createBackgroundMapSource(layerDefinition)
-				});
-			} else {
-				if (layerDefinition.type.replace(/\W/g, '').toLowerCase() === VENDOR.MVT) {
-					return new VectorTileLayer({
-						title: name,
-						// more options here are possible
-						declutter: true,
-						visible: isDefaultLayer,
-						source: this._createBackgroundMapSource(layerDefinition)
-					});
-				}
-				else {
-					return new Tile({
-						title: name,
-						visible: isDefaultLayer,
-						source: this._createBackgroundMapSource(layerDefinition)
-					});
-				}
+			const args = {
+				title: name,
+				visible: isDefaultLayer,
+				source: this._createBackgroundMapSource(layerDefinition)
+			};
 
+			if (isBaseLayer) {
+				args.type = 'base';
 			}
+
+			if (layerDefinition.type.replace(/\W/g, '').toLowerCase() === VENDOR.MVT) {
+				args.declutter = true;
+
+				return new VectorTileLayer(args);
+			}
+			else {
+				return new Tile(args);
+			}
+
 		} else {
 			$n2.reportError('Bad configuration for layer: ' + name);
 			return null;
@@ -1500,7 +1489,7 @@ class N2MapCanvas {
 				parameters.format = new MVT()
 				return new VectorTileSource(parameters)
 			} else {
-				$n2.reportError(`Source '${sourceTypeInternal}' requires URL Parameter`);
+				$n2.reportError(`Source '${sourceTypeInternal}' requires "url" Parameter`);
 			}
 		}
 		else {
