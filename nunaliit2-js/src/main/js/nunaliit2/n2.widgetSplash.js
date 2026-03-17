@@ -72,6 +72,11 @@ var SplashPageWidget = $n2.Class({
 			,dialogWidth: 800
 			,version: 1
 			,cookieName: 'NunaliitSplashDontShow'
+			,cookieExpirySeconds: 34560000 //440 days
+			,checkboxLabel: 'Do not show again'
+			,checkboxRequired: false
+			,checkboxRequiredMessage: null
+			,closeButtonLabel: 'Close'
 		},opts_);
 		
 		var _this = this;
@@ -81,6 +86,7 @@ var SplashPageWidget = $n2.Class({
 		this.dialogId = undefined;
 		this.pages = undefined;
 		this.pageIndex = 0;
+		this.checkBoxId = null;
 		
 		this.title = opts.title;
 		this.dialogWidth = opts.dialogWidth;
@@ -88,6 +94,11 @@ var SplashPageWidget = $n2.Class({
 		this.showService = opts.showService;
 		this.version = opts.version;
 		this.cookieName = opts.cookieName;
+		this.cookieExpirySeconds = opts.cookieExpirySeconds;
+		this.checkboxLabel = opts.checkboxLabel;
+		this.checkboxRequired = opts.checkboxRequired;
+		this.checkboxRequiredMessage = opts.checkboxRequiredMessage;
+		this.closeButtonLabel = opts.closeButtonLabel;
 		
 		if( opts.pages && $n2.isArray(opts.pages) ){
 			this.pages = opts.pages;
@@ -166,26 +177,30 @@ var SplashPageWidget = $n2.Class({
 			.addClass('n2Splash_container n2Splash_updatePageIndex')
 			.appendTo( $dialog );
 
+		this.messagesId = $n2.getUniqueId();
+		$('<div>').addClass('n2Splash_messages').attr('id',this.messagesId).appendTo($dialog)
+
 		var $buttons = $('<div>')
 			.addClass('n2Splash_buttons n2Splash_updatePageIndex')
 			.appendTo( $dialog );
 
-		$('<span>')
-			.addClass('n2Splash_insertPreviousButton')
-			.appendTo($buttons);
-		
-		$('<span>')
-			.addClass('n2Splash_insertIndex')
-			.appendTo($buttons);
-		
-		$('<span>')
-			.addClass('n2Splash_insertRibbon')
-			.appendTo($buttons);
+		if(this.pages.length > 1) {
+			$('<span>')
+				.addClass('n2Splash_insertPreviousButton')
+				.appendTo($buttons);
+			
+			$('<span>')
+				.addClass('n2Splash_insertIndex')
+				.appendTo($buttons);
+			
+			$('<span>')
+				.addClass('n2Splash_insertRibbon')
+				.appendTo($buttons);
 
-		$('<span>')
-			.addClass('n2Splash_insertNextButton')
-			.appendTo($buttons);
-	
+			$('<span>')
+				.addClass('n2Splash_insertNextButton')
+				.appendTo($buttons);
+		}
 
 		if( isInitialPage ){
 			$('<span>')
@@ -207,16 +222,30 @@ var SplashPageWidget = $n2.Class({
 		if( !title ){
 			title = _loc('Welcome');
 		};
+
+		const windowWidth = window.innerWidth;
+		const dw = this.dialogWidth > windowWidth ? windowWidth - 20 : this.dialogWidth
 		var diagOptions = {
 			autoOpen: true
 			,title: title
 			,modal: true
-			,width: this.dialogWidth
+			,width: dw
 			,dialogClass: 'n2Splash_dialog_container'
 			,close: function(event, ui){
 				var $diag = $(event.target);
 				$diag.dialog('destroy');
 				$diag.remove();
+			}
+			,beforeClose: function(event, ui) {
+				if(_this.checkboxRequired && !document.getElementById(_this.checkBoxId).checked) {
+					const messagesDiv = $(`#${_this.messagesId}`)
+					$('<p>')
+						.addClass('error')
+						.append(_loc(_this.checkboxRequiredMessage))
+						.appendTo(messagesDiv)
+					return false;
+				}
+				return true;
 			}
 		};
 		
@@ -311,7 +340,7 @@ var SplashPageWidget = $n2.Class({
 
 			var label = $elem.attr('nunaliit-label');
 			if( !label ){
-				label = _loc('Close');
+				label = _loc(_this.closeButtonLabel);
 			};
 
 			$('<a>')
@@ -381,20 +410,20 @@ var SplashPageWidget = $n2.Class({
 
 			var label = $elem.attr('nunaliit-label');
 			if( !label ){
-				label = _loc('Do not show again');
+				label = _loc(_this.checkboxLabel);
 			};
 
-			var cbId = $n2.getUniqueId();
+			_this.checkBoxId = $n2.getUniqueId();
 			$('<label>')
 				.addClass('n2Splash_label n2Splash_label_dontshow')
-				.attr('for',cbId)
+				.attr('for',_this.checkBoxId)
 				.text( label )
 				.appendTo($elem);
 
 			$('<input>')
 				.addClass('n2Splash_button n2Splash_button_dontshow')
 				.attr('type','checkbox')
-				.attr('id',cbId)
+				.attr('id',_this.checkBoxId)
 				.appendTo($elem)
 				.click(function(){
 					var $cb = $(this);
@@ -501,7 +530,7 @@ var SplashPageWidget = $n2.Class({
 	_doNotShowAgain: function(dontShow){
 		if( dontShow ){
 			var now = new Date();
-			var expiry = new Date(now.getTime() + (1000 * 60 * 60 * 24 * 400)); // 440 days
+			var expiry = new Date(now.getTime() + (1000 * this.cookieExpirySeconds)).toGMTString();
 			$n2.cookie.setCookie({
 				name: this.cookieName
 				,value: ''+this.version

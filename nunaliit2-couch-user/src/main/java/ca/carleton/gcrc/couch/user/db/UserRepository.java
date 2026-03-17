@@ -33,4 +33,8 @@ public interface UserRepository {
 	Collection<UserDocument> getUsersWithRoles(List<String> roles) throws Exception;
 
 	boolean isEmailAddressInUse(String email) throws Exception;
+
+	Collection<JSONObject> getUsersTextSearch(String text) throws Exception;
+
+	void deleteUser(String user, String rev) throws Exception;
 }
