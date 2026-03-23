@@ -2875,7 +2875,55 @@ var MapAndControls = $n2.Class('MapAndControls',{
 				}
 				return l;
 			}
-		} else {
+		}
+		else if ('xyz' === layerDefinition.type) {
+			const options = {
+				isBaseLayer,
+				...layerDefinition.options
+			}
+			if (typeof (layerDefinition.visibility) === 'boolean') {
+				options.visibility = layerDefinition.visibility;
+			}
+	
+			const url = options?.url
+			const projection = options?.projection
+			const resolutions = options?.resolutions
+			const tileSize = options?.tileSize
+			const tileOrigin = options?.origin
+			const maxExtent = options?.extent
+
+			if (!url) {
+				$n2.reportError('Option url must be specified for an XYZ background.');
+			}
+			if (!projection) {
+				$n2.reportError('Option projection must be specified for an XYZ background.');
+			}
+			if (!resolutions) {
+				$n2.reportError('Option resolutions must be specified for an XYZ background.');
+			}
+			if (!tileSize) {
+				$n2.reportError('Option tileSize must be specified for an XYZ background.');
+			}
+			if (!tileOrigin) {
+				$n2.reportError('Option origin must be specified for an XYZ background.');
+			}
+			if (!maxExtent) {
+				$n2.reportError('Option extent must be specified for an XYZ background.');
+			}
+			else {
+				options.projection = new OpenLayers.Projection(projection)
+				options.tileSize = new OpenLayers.Size(tileSize[0], tileSize[1])
+				options.serverResolutions = resolutions
+				options.tileOrigin = new OpenLayers.LonLat(tileOrigin[0], tileOrigin[1])
+				options.maxExtent = maxExtent
+				const l = new OpenLayers.Layer.XYZ(name, url, options);
+				if (name) {
+					l.name = name;
+				}
+				return l;
+			}
+		}
+		else {
 			$n2.reportError('Unknown layer type: '+layerDefinition.type);
 		};
 		
