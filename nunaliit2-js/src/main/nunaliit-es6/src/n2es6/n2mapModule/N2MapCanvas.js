@@ -28,6 +28,10 @@ import { default as Projection } from 'ol/proj/Projection.js';
 import Tile from 'ol/layer/Tile.js';
 import WMTSTileGrid from 'ol/tilegrid/WMTS.js';
 import WKT from 'ol/format/WKT';
+import MVT from 'ol/format/MVT.js'
+import VectorTileLayer from 'ol/layer/VectorTile.js'
+import VectorTileSource from 'ol/source/VectorTile.js'
+
 import { getArea, getLength, getDistance } from 'ol/sphere';
 
 import mouseWheelZoom from 'ol/interaction/MouseWheelZoom.js';
@@ -71,7 +75,8 @@ const VENDOR = {
 	OSM: 'osm',
 	STADIA: 'stadia',
 	GOOGLE: 'google',
-	XYZ: 'xyz'
+	XYZ: 'xyz',
+	MVT: 'mvt'
 };
 
 const olStyleNames = {
@@ -436,6 +441,8 @@ class N2MapCanvas {
 			} else if (overlay.type === VENDOR.WMS) {
 				this.sources.push(overlay)
 			} else if (overlay.type === VENDOR.XYZ) {
+					this.sources.push(overlay)
+			} else if (overlay.type === VENDOR.MVT) {
 					this.sources.push(overlay)
 			} else if ('wfs' === overlay.type) {
 				$n2.logError(overlay.type + 'is not available');
@@ -1055,8 +1062,10 @@ class N2MapCanvas {
 					this.defaultPopupHtmlFn({
 						feature: feature
 						, onSuccess: function (content) {
-							const mousepoint = mapBrowserEvent.coordinate;
-							popup.show(mousepoint, content);
+							if (content) {
+								const mousepoint = mapBrowserEvent.coordinate;
+								popup.show(mousepoint, content);
+							}
 						}
 						, onError: function () { }
 					})
@@ -1089,16 +1098,21 @@ class N2MapCanvas {
 			opt_.onSuccess(html);
 
 		} else {
-			var doc = opt_.feature.data;
+			const doc = opt_.feature.data;
+			if (doc) {
+				var $tmp = $('<span class="n2_popup"></span>');
+				this.showService.displayBriefDescription($tmp,{},doc);
+	
+				var $wrapper = $('<div></div>');
+				$wrapper.append($tmp);
+				var html = $wrapper.html();
+	
+				opt_.onSuccess(html);
+			}
+			else {
+				opt_.onSuccess(null);
+			}
 
-			var $tmp = $('<span class="n2_popup"></span>');
-			this.showService.displayBriefDescription($tmp,{},doc);
-
-			var $wrapper = $('<div></div>');
-			$wrapper.append($tmp);
-			var html = $wrapper.html();
-
-			opt_.onSuccess(html);
 		};
 	}
 
@@ -1189,12 +1203,13 @@ class N2MapCanvas {
 			for (let i = 0, e = Sources.length; i < e; i++) {
 				const overlayInfo = _this.overlayInfos[i];
 				const alphasource = Sources[i];
-				if (typeof alphasource.type !== 'undefined' && alphasource.type === 'wms') {
-					const visible = typeof alphasource.visibility === 'undefined' || alphasource.visibility ? true : false;
-					fg.push(this._createOLLayerFromDefinition(alphasource, visible));
-					continue;
-				}
-				if (typeof alphasource.type !== 'undefined' && alphasource.type === 'xyz') {
+				if (
+					typeof alphasource.type !== 'undefined'
+					&& (
+						alphasource.type === VENDOR.WMS
+						|| alphasource.type === VENDOR.XYZ
+						|| alphasource.type === VENDOR.MVT
+					)) {
 					const visible = typeof alphasource.visibility === 'undefined' || alphasource.visibility ? true : false;
 					fg.push(this._createOLLayerFromDefinition(alphasource, visible));
 					continue;
@@ -1301,23 +1316,27 @@ class N2MapCanvas {
 	 */
 	_createOLLayerFromDefinition(layerDefinition, isDefaultLayer, isBaseLayer) {
 		const name = _loc(layerDefinition.name);
-		const _this = this;
 
 		if (layerDefinition) {
+			const args = {
+				title: name,
+				visible: isDefaultLayer,
+				source: this._createBackgroundMapSource(layerDefinition)
+			};
+
 			if (isBaseLayer) {
-				return new Tile({
-					title: layerDefinition.name,
-					type: 'base',
-					visible: isDefaultLayer,
-					source: _this._createBackgroundMapSource(layerDefinition)
-				});
-			} else {
-				return new Tile({
-					title: layerDefinition.name,
-					visible: isDefaultLayer,
-					source: _this._createBackgroundMapSource(layerDefinition)
-				});
+				args.type = 'base';
 			}
+
+			if (layerDefinition.type.replace(/\W/g, '').toLowerCase() === VENDOR.MVT) {
+				args.declutter = true;
+
+				return new VectorTileLayer(args);
+			}
+			else {
+				return new Tile(args);
+			}
+
 		} else {
 			$n2.reportError('Bad configuration for layer: ' + name);
 			return null;
@@ -1464,7 +1483,16 @@ class N2MapCanvas {
 				$n2.reportError(`Source '${sourceTypeInternal}' requires a Google API key`);
 			}
 		}
-		 else {
+		else if (sourceTypeInternal === VENDOR.MVT) {
+			if (sourceOptionsInternal && sourceOptionsInternal.url) {
+				const parameters = {...sourceOptionsInternal}
+				parameters.format = new MVT()
+				return new VectorTileSource(parameters)
+			} else {
+				$n2.reportError(`Source '${sourceTypeInternal}' requires "url" Parameter`);
+			}
+		}
+		else {
 			$n2.reportError('Unrecognized type (' + layerDefinition.type + ')');
 		}
 	}
