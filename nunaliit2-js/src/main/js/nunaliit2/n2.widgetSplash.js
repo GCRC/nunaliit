@@ -611,10 +611,10 @@ var SplashPageWidget = $n2.Class({
 				if( typeof m.cookieExpirySeconds === 'number' ){
 					this.cookieExpirySeconds = m.cookieExpirySeconds;
 				}
-				if( typeof m.checkboxRequired === 'boolean' || m.checkboxRequired?.nunaliit_type === 'localized'){
+				if( typeof m.checkboxRequired === 'boolean'){
 					this.checkboxRequired = m.checkboxRequired;
 				}
-				if( typeof m.checkboxRequiredMessage === 'boolean' || m.checkboxRequiredMessage?.nunaliit_type === 'localized'){
+				if( typeof m.checkboxRequiredMessage === 'string' || m.checkboxRequiredMessage?.nunaliit_type === 'localized'){
 					this.checkboxRequiredMessage = m.checkboxRequiredMessage;
 				}
 				if( typeof m.closeButtonLabel === 'string' || m.closeButtonLabel?.nunaliit_type === 'localized'){
