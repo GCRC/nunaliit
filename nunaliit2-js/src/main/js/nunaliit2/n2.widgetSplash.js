@@ -596,13 +596,30 @@ var SplashPageWidget = $n2.Class({
 			if( $n2.isArray(m.pages) ){
 				this.pages = m.pages;
 				
+				if( typeof m.title === 'string' || m.title?.nunaliit_type === 'localized'){
+					this.title = m.title;
+				}
 				if( typeof m.version === 'number' ){
 					this.version = m.version;
-				};
-				
+				}
 				if( typeof m.cookieName === 'string' ){
 					this.cookieName = m.cookieName;
-				};
+				}
+				if( typeof m.checkboxLabel === 'string' || m.checkboxLabel?.nunaliit_type === 'localized'){
+					this.checkboxLabel = m.checkboxLabel;
+				}
+				if( typeof m.cookieExpirySeconds === 'number' ){
+					this.cookieExpirySeconds = m.cookieExpirySeconds;
+				}
+				if( typeof m.checkboxRequired === 'boolean'){
+					this.checkboxRequired = m.checkboxRequired;
+				}
+				if( typeof m.checkboxRequiredMessage === 'string' || m.checkboxRequiredMessage?.nunaliit_type === 'localized'){
+					this.checkboxRequiredMessage = m.checkboxRequiredMessage;
+				}
+				if( typeof m.closeButtonLabel === 'string' || m.closeButtonLabel?.nunaliit_type === 'localized'){
+					this.closeButtonLabel = m.closeButtonLabel;
+				}
 				
 				this.pageIndex = 0;
 				this._showInitialSplash();
