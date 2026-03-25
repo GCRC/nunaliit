@@ -11,7 +11,6 @@
 	<description>Javascript files produced in-house</description>
 	<build>
 		<plugins>
-
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
@@ -79,165 +78,154 @@
 				</executions>
 			</plugin>
 			<plugin>
-			<groupId>com.github.eirslett</groupId>
-			<artifactId>frontend-maven-plugin</artifactId>
-			<version>1.4</version>
-			<executions>
-				<execution>
-					<id>install-node-and-npm</id>
-					<phase>generate-sources</phase>
-					<goals>
-						<goal>install-node-and-npm</goal>
-					</goals>
-					<configuration>
-						<nodeVersion>v24.14.0</nodeVersion>
-						<npmVersion>11.9.0</npmVersion>
-						<installDirectory>tools</installDirectory>
-					</configuration>
-				</execution>
-	
-				<execution>
-					<id>npm-install-dependency</id>
-                    <phase>generate-sources</phase>
-					<goals>
-						<goal>npm</goal>
-					</goals>
-					<!-- Optional configuration which provides for running any npm command -->
-					<configuration>
-						<arguments>install --no-audit</arguments>
-						<installDirectory>tools</installDirectory>
-						<workingDirectory>src/main/nunaliit-es6</workingDirectory>
-					</configuration>
-				</execution>
-				<execution>
-					<id>npm-audit-prod</id>
-                    <phase>generate-sources</phase>
-					<goals>
-						<goal>npm</goal>
-					</goals>
-					<!-- Optional configuration which provides for running any npm command -->
-					<configuration>
-						<arguments>audit --omit=dev</arguments>
-						<installDirectory>tools</installDirectory>
-						<workingDirectory>src/main/nunaliit-es6</workingDirectory>
-					</configuration>
-				</execution>
-				<execution>
-					<id>npm-run-full-build</id>
-                    <phase>generate-sources</phase>
-					<goals>
-						<goal>npm</goal>
-					</goals>
-					<configuration>
-						<arguments>run build</arguments>
-						<installDirectory>tools</installDirectory>
-						<workingDirectory>src/main/nunaliit-es6</workingDirectory>
-					</configuration>
-				</execution>
-			</executions>
+				<groupId>com.github.eirslett</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+				<version>1.4</version>
+				<executions>
+					<execution>
+						<id>install-node-and-npm</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>install-node-and-npm</goal>
+						</goals>
+						<configuration>
+							<nodeVersion>v24.14.0</nodeVersion>
+							<npmVersion>11.9.0</npmVersion>
+							<installDirectory>tools</installDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-install-dependency</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<!-- Optional configuration which provides for running any npm command -->
+						<configuration>
+							<arguments>install --no-audit</arguments>
+							<installDirectory>tools</installDirectory>
+							<workingDirectory>src/main/nunaliit-es6</workingDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-audit-prod</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<!-- Optional configuration which provides for running any npm command -->
+						<configuration>
+							<arguments>audit --omit=dev</arguments>
+							<installDirectory>tools</installDirectory>
+							<workingDirectory>src/main/nunaliit-es6</workingDirectory>
+						</configuration>
+					</execution>
+					<execution>
+						<id>npm-run-full-build</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>npm</goal>
+						</goals>
+						<configuration>
+							<arguments>run build</arguments>
+							<installDirectory>tools</installDirectory>
+							<workingDirectory>src/main/nunaliit-es6</workingDirectory>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
-			
 			<plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <version>3.0.0</version>
-            <executions>
-                <execution>
-                    <id>copy-es6-js</id>
-                    <phase>process-sources</phase>
-                    <configuration>
-                        <target>
-                            <echo>Ant Task - copying es6 files....</echo>
-                            <copy todir="./src/main/js/nunaliit2" overwrite="true" flatten="true">
-                                <fileset dir="./src/main/nunaliit-es6/dist/target" includes="*.js" >
-                                    <include name="*.css" />
-                                    <include name="*.js" />
-                                </fileset>
-                            </copy>
- 
-                        </target>
-                    </configuration>
-                    <goals>
-                        <goal>run</goal>
-                    </goals>
-                </execution>
-            </executions>
-        </plugin>
-			<plugin>
-				<!-- Using the Javascript and CSS tools, create compressed and debug versions
-				libraries -->
-				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>3.0.0</version>
 				<executions>
 					<execution>
+						<id>copy-es6-js</id>
+						<phase>process-sources</phase>
+						<configuration>
+							<target>
+								<echo>Ant Task - copying es6 files....</echo>
+								<copy todir="./src/main/js/nunaliit2" overwrite="true" flatten="true">
+									<fileset dir="./src/main/nunaliit-es6/dist/target" includes="*.js">
+										<include name="*.css"/>
+										<include name="*.js"/>
+									</fileset>
+								</copy>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+					<execution>
+						<!-- Using the Javascript and CSS tools, create compressed and debug versions
+                        libraries -->
 						<phase>prepare-package</phase>
 						<configuration>
 							<!-- The following is an ANT target -->
 							<target>
 								<!-- Generate javascript libraries -->
 								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
-									<arg line="--config-file ./compress/nunaliit2.cfg" />
-									<arg line="--config-file ./compress/nunaliit2-couch.cfg" />
-									<arg line="--license-file ./compress/license.txt" />
-									<arg line="--source-dir ./src/main/js/nunaliit2" />
-									<arg line="--output ./src/main/js/nunaliit2/nunaliit2.js" />
-									<arg line="--compile-level closure" />
-									<arg line="--verify" />
-									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-debug.js" />
-									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-debug-il.js" />
+									<arg line="--config-file ./compress/nunaliit2.cfg"/>
+									<arg line="--config-file ./compress/nunaliit2-couch.cfg"/>
+									<arg line="--license-file ./compress/license.txt"/>
+									<arg line="--source-dir ./src/main/js/nunaliit2"/>
+									<arg line="--output ./src/main/js/nunaliit2/nunaliit2.js"/>
+									<arg line="--compile-level closure"/>
+									<arg line="--verify"/>
+									<arg line="--output-debug ./src/main/js/nunaliit2/nunaliit2-debug.js"/>
+									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-debug-il.js"/>
 								</java>
 								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
-									<arg line="--license-file ./compress/license.txt" />
-									<arg line="--source-dir ./src/main/js/nunaliit2" />
-									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch.js" />
-									<arg line="--compile-level closure" />
-									<arg line="--verify" />
-									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-couch-debug.js" />
+									<arg line="--license-file ./compress/license.txt"/>
+									<arg line="--source-dir ./src/main/js/nunaliit2"/>
+									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch.js"/>
+									<arg line="--compile-level closure"/>
+									<arg line="--verify"/>
+									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-couch-debug.js"/>
 								</java>
 								<java jar="target/tools/nunaliit2-javascript-compiler.jar" fork="true" failonerror="true" dir=".">
-									<arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg" />
-									<arg line="--license-file ./compress/license.txt" />
-									<arg line="--source-dir ./src/main/js/nunaliit2" />
-									<arg line="--compile-level closure" />
-									<arg line="--verify" />
-									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch-mobile.js" />
-									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js" />
+									<arg line="--config-file ./compress/nunaliit2-couch-mobile.cfg"/>
+									<arg line="--license-file ./compress/license.txt"/>
+									<arg line="--source-dir ./src/main/js/nunaliit2"/>
+									<arg line="--compile-level closure"/>
+									<arg line="--verify"/>
+									<arg line="--output ./src/main/js/nunaliit2/nunaliit2-couch-mobile.js"/>
+									<arg line="--output-debug-inline ./src/main/js/nunaliit2/nunaliit2-couch-mobile-debug.js"/>
 								</java>
-
 								<!-- Generate CSS libraries -->
 								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
-									<arg line="--config-file ./compress/nunaliit2-css.cfg" />
-									<arg line="--license-file ./compress/license.txt" />
-									<arg line="--theme-file ./compress/theme-basic.txt" />
-									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
-									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2.css" />
+									<arg line="--config-file ./compress/nunaliit2-css.cfg"/>
+									<arg line="--license-file ./compress/license.txt"/>
+									<arg line="--theme-file ./compress/theme-basic.txt"/>
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic"/>
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2.css"/>
 								</java>
 								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
-									<arg line="--config-file ./compress/nunaliit2-css.cfg" />
-									<arg line="--license-file ./compress/license.txt" />
-									<arg line="--theme-file ./compress/theme-test.txt" />
-									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
-									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-test.css" />
+									<arg line="--config-file ./compress/nunaliit2-css.cfg"/>
+									<arg line="--license-file ./compress/license.txt"/>
+									<arg line="--theme-file ./compress/theme-test.txt"/>
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic"/>
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-test.css"/>
 								</java>
 								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
-									<arg line="--config-file ./compress/nunaliit2-css.cfg" />
-									<arg line="--license-file ./compress/license.txt" />
-									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
-									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-notheme.css" />
+									<arg line="--config-file ./compress/nunaliit2-css.cfg"/>
+									<arg line="--license-file ./compress/license.txt"/>
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic"/>
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-notheme.css"/>
 								</java>
 								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
-									<arg line="--config-file ./compress/nunaliit2-css-min.cfg" />
-									<arg line="--license-file ./compress/license.txt" />
-									<arg line="--theme-file ./compress/theme-basic.txt" />
-									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
-									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-min.css" />
+									<arg line="--config-file ./compress/nunaliit2-css-min.cfg"/>
+									<arg line="--license-file ./compress/license.txt"/>
+									<arg line="--theme-file ./compress/theme-basic.txt"/>
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic"/>
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-min.css"/>
 								</java>
 								<java jar="target/tools/nunaliit2-css.jar" fork="true" failonerror="true" dir=".">
-									<arg line="--config-file ./compress/nunaliit2-css-mobile.cfg" />
-									<arg line="--license-file ./compress/license.txt" />
-									<arg line="--theme-file ./compress/theme-basic.txt" />
-									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic" />
-									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-mobile.css" />
+									<arg line="--config-file ./compress/nunaliit2-css-mobile.cfg"/>
+									<arg line="--license-file ./compress/license.txt"/>
+									<arg line="--theme-file ./compress/theme-basic.txt"/>
+									<arg line="--source-dir ./src/main/js/nunaliit2/css/basic"/>
+									<arg line="--output ./src/main/js/nunaliit2/css/basic/nunaliit2-mobile.css"/>
 								</java>
 							</target>
 						</configuration>
@@ -247,42 +235,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			
-			
-			<!-- Perform JsLint on compressed versions of libraries -->
-			<!-- Does not yet work
-			<plugin>
-				<groupId>com.googlecode.jslint4java</groupId>
-				<artifactId>jslint4java-maven-plugin</artifactId>
-				<version>${jslint4java-maven-plugin.version}</version>
-				<executions>
-					<execution>
-						<id>lint</id>
-						<phase>prepare-package</phase>
-						<goals>
-							<goal>lint</goal>
-						</goals>
-						<configuration>
-							<sourceFolders>
-								<sourceFolder>${basedir}/src/main/js/nunaliit2</sourceFolder>
-							</sourceFolders>
-							<includes>
-								<include>n2.*.js</include>
-							</includes>
-							<options>
-								<white>true</white>
-								<nomen>true</nomen>
-								<browser>true</browser>
-								<unparam>true</unparam>
-								<vars>true</vars>
-								<predef>nunaliit2,jQuery,OpenLayers</predef>
-							</options>
-							<failOnError>true</failOnError>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			 -->
 			<plugin>
 				<!-- Create tar.gz and zip files containing javascript libraries -->
 				<groupId>org.apache.maven.plugins</groupId>
@@ -306,28 +258,6 @@
 			</plugin>
 		</plugins>
 	</build>
-	<!-- reporting>
-		<plugins>
-			<plugin>
-				<groupId>gr.abiss.mvn.plugins</groupId>
-				<artifactId>maven-jstools-plugin</artifactId>
-				<version>0.7</version>
-				<configuration>
-					<jsDir>src/main/js/nunaliit2</jsDir>
-					<includes>**/n2.*.js</includes>
-					<includePrivate>true</includePrivate>
-					<includeUndocumented>true</includeUndocumented>
-				</configuration>
-				<reportSets>
-					<reportSet>
-						<reports>
-							<report>jsdoc</report>
-						</reports>
-					</reportSet>
-				</reportSets>
-			</plugin>
-		</plugins>
-	</reporting -->
 	<reporting>
 		<plugins>
 			<plugin>
