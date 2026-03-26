@@ -1,60 +1,120 @@
 .tokenCreationForm .label,
 .tokenPasswordRecoveryForm .label {
-	float: left;
+  float: left;
 }
 
 .tokenCreationForm .value,
 .tokenPasswordRecoveryForm .value {
-	float: left;
+  float: left;
 }
 
 .tokenCreationForm .line::after,
 .tokenPasswordRecoveryForm .line::after {
-	display: block;
-	clear: both;
-	content: "";
+  display: block;
+  clear: both;
+  content: "";
 }
 
 .tokenCreationForm .displayName .label,
 .tokenCreationForm .passwordEntry .label,
 .tokenPasswordRecoveryForm .passwordEntry .label {
-	width: 100px;
+  width: 100px;
 }
 
 .tokenCreationForm .changePassword .label,
 .tokenPasswordRecoveryForm .changePassword .label {
-	display: none;
+  display: none;
 }
 
 .tokenCreationForm .changePassword .value,
 .tokenPasswordRecoveryForm .changePassword .value {
-	margin: 0 0 0 100px;
+  margin: 0 0 0 100px;
 }
 
 .tokenCreationForm input[type="checkbox"],
 .tokenPasswordRecoveryForm input[type="checkbox"] {
-	margin: 2px 0 0 5px;
+  margin: 2px 0 0 5px;
 }
 
 .showOwnPassword {
-	display: none;
+  display: none;
 }
 
 .display_own_password .showOwnPassword {
-	display: block;
+  display: block;
 }
 
 .user_agreement {
-	margin-top: 10px;
-	margin-bottom: 10px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 
 .user_agreement_label {
-	font-size: 110%;
-	font-weight: bold;
+  font-size: 110%;
+  font-weight: bold;
 }
 
 textarea.user_agreement_content {
-	width: 520px; 
-	height: 300px;
+  width: 520px;
+  height: 300px;
+}
+
+/* table formatting */
+table.n2UserTable tbody a {
+  color: black;
+}
+
+table.n2UserTable {
+  border-collapse: collapse;
+  margin: 20px auto;
+  font-family: sans-serif;
+  min-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+  max-width: 99%;
+  word-break: break-word;
+}
+
+table.n2UserTable td,
+table.n2UserTable th {
+  border: none;
+  white-space: pre-line;
+}
+
+table.n2UserTable tr th {
+  background-color: #b5b5b5;
+  text-align: left;
+  font-size: 1.1em;
+  padding: 5px 1px;
+}
+
+.n2UserTable th,
+.n2UserTable td {
+  min-width: 250px;
+}
+
+.n2UserTable tbody tr {
+  border-bottom: 1px solid #dddddd;
+}
+
+.n2UserTable tbody tr:nth-of-type(odd) {
+  background-color: #f3f3f3;
+}
+
+.n2UserTable tbody tr:last-of-type {
+  border-bottom: 2px solid #000000;
+}
+
+.n2UserTable .n2ClickableUser {
+  text-decoration: underline;
+  cursor: pointer;
+  color: blue;
+}
+
+.n2UserChip {
+  display: inline-block;
+  padding: 2px 5px;
+  margin: 1px 2px;
+  border-radius: 25px;
+  border: 1px solid #757575;
+  background-color: #eeeeee;
 }

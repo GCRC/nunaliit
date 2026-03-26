@@ -87,7 +87,7 @@ var UserManagementApplication = $n2.Class({
 		
 		var $userInput = $('<div class="userAppInput"></div>')
 			.appendTo(div);
-		var $userOutput = $('<div class="userAppOutput"></div>')
+		var $userOutput = $('<div id="n2-user-app-output" class="userAppOutput"></div>')
 			.appendTo(div);
 		
 		
@@ -96,6 +96,9 @@ var UserManagementApplication = $n2.Class({
 		if( $textInput.autocomplete ) {
 			$textInput.autocomplete({
 				source: this.userSearchService.getJqAutoCompleteSource()
+			});
+			$textInput.on("autocompleteselect", function(ev, el) {
+				_this.queryUsers(el?.item?.value)
 			});
 		};
 	
@@ -270,19 +273,24 @@ var UserManagementApplication = $n2.Class({
 		};
 	}
 
-	,queryUsers: function() {
+	,queryUsers: function(searchVal) {
 		var _this = this;
 		
 		this._startRequestWait();
 		
 		var $div = this._getDiv();
 
-		var searchString = $div.find('.userAppSearchText').val();
-		if( typeof(searchString) === 'string' ){
-			searchString = $n2.trim(searchString);
+		let searchString
+		if(searchVal) {
+			searchString = searchVal;
 		} else {
-			searchString = '';
-		};
+			searchString = $div.find('.userAppSearchText').val();
+			if( typeof(searchString) === 'string' ){
+				searchString = $n2.trim(searchString);
+			} else {
+				searchString = '';
+			}
+		}
 		
 		this.userDb.searchUsers(searchString, {
 			onSuccess: reportUsers
@@ -292,82 +300,63 @@ var UserManagementApplication = $n2.Class({
 		});
 
 		function reportUsers(arr) {
-			var $outterDiv = $('<div class="n2UserList"></div>');
-			$div.find('.userAppOutput').empty().append($outterDiv);
+			const t = document.createElement("table");
+			t.setAttribute('id', 'n2-user-table');
+			t.classList.add('n2UserTable');
+
+			const outDiv = document.getElementById('n2-user-app-output');
+			outDiv.innerHTML = "";
+			const thead = document.createElement("thead");
+			const hr = document.createElement("tr");
+			const thdisplay = document.createElement("th");
+			thdisplay.appendChild(document.createTextNode('Display'));
+			hr.appendChild(thdisplay);
+			const thname = document.createElement("th")
+			thname.appendChild(document.createTextNode('Name'));
+			hr.appendChild(thname);
+			const throles = document.createElement("th")
+			throles.appendChild(document.createTextNode('Roles'));
+			hr.appendChild(throles);
+			thead.appendChild(hr);
+			t.appendChild(thead);
+			const tbody = document.createElement("tbody");
+			t.appendChild(tbody)
 
 			for(var i=0,e=arr.length; i<e; ++i) {
 				var doc = arr[i];
+				reportUserDoc(doc, tbody);
+			}
 
-				reportUserDoc(doc, $outterDiv);
-			};
+			outDiv.appendChild(t);
 		};
 
-		function reportUserDoc(userDoc, $outterDiv) {
-			if( _this.userSchema && _this.showService ){
-				var $div = $('<div></div>');
-				$outterDiv.append($div);
+		function createTd(content, userName) {
+			const td = document.createElement("td");
+			td.classList.add('n2ClickableUser');
+			td.appendChild(content);
+			td.addEventListener("click", () => {
+				_this.initiateEdit(userName);
+				return false;
+			});
+			return td;
+		}
 
-				var $a = $('<a href="#" alt="'+userDoc.name+'">'+userDoc._id+'</a>');
-				$div.append( $a );
-				$a.click(function(){
-					var $a = $(this);
-					var userName = $a.attr('alt');
-					_this.initiateEdit(userName);
-					return false;
-				});
-				
-				_this.showService.displayBriefDescription(
-					$a
-					,{
-						schemaName: 'user'
-					}
-					,userDoc
-				);
-				
-			} else {
-				var $userDiv = $('<div class="n2UserListEntry"></div>')
-					.appendTo($outterDiv);
-				
-				$('<span class="userId"></span>')
-					.text(userDoc._id)
-					.appendTo($userDiv);
-				
-				$('<span class="userRev"></span>')
-					.text(userDoc._rev)
-					.appendTo($userDiv);
-			
-				var $name = $('<span class="userName"></span>')
-					.text(userDoc._rev)
-					.appendTo($userDiv);
-		
-				$('<a href="#"></a>')
-					.attr('alt',userDoc.name)
-					.text(userDoc.name)
-					.appendTo($name)
-					.click(function(){
-						var $a = $(this);
-						var userName = $a.attr('alt');
-						_this.initiateEdit(userName);
-						return false;
-					});
+		function reportUserDoc(userDoc, tbody) {
+			const tr = document.createElement("tr");
 
-				var display = '';
-				if( userDoc.display ) {
-					display = userDoc.display;
-				};
-				$('<span class="userDisplay"></span>')
-					.text(display)
-					.appendTo($userDiv);
-				
-				var roles = '';
-				if( userDoc.roles ) {
-					roles = userDoc.roles.join(', ');
-				}
-				$('<span class="userRoles"></span>')
-					.text(roles)
-					.appendTo($userDiv);
-			};
-		};
+			const userName = userDoc.name;
+			tr.appendChild(createTd(document.createTextNode(userDoc.display), userName));
+			tr.appendChild(createTd(document.createTextNode(userDoc.name), userName));
+			const tdRole = document.createElement("td");
+			for(const r of userDoc.roles) {
+				const d = document.createElement("div");
+				d.classList.add('n2UserChip');
+				d.appendChild(document.createTextNode(r));
+				tdRole.appendChild(d);
+			}
+			tr.appendChild(tdRole);
+			tbody.appendChild(tr);
+		}
 	}
 });
 
