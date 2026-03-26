@@ -48,7 +48,7 @@ var MobileDebugPage = $n2.Class({
 			
 			// Enhance page
 			$newPage.page();
-			$newPage.bind('pagehide',function(){
+			$newPage.on('pagehide',function(){
 				var $this = $( this ),
 					prEvent = new $.Event( "pageremove" );
 
@@ -85,19 +85,19 @@ var MobileDebugPage = $n2.Class({
 		// Install buttons
 		var $buttons = $page.find('.mobileDebugButtons');
 		$('<button>Refresh Logs</button>')
-			.click(function(){
+			.on("click",function(){
 				_this._refreshLogs();
 				return false;
 			})
 			.appendTo($buttons);
 		$('<button>Restart Database</button>')
-			.click(function(){
+			.on("click",function(){
 				_this._restartDatabase();
 				return false;
 			})
 			.appendTo($buttons);
 		$('<button>Fetch Database Info</button>')
-		.click(function(){
+		.on("click",function(){
 			_this._fetchDatabaseInfo();
 			return false;
 		})

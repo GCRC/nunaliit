@@ -89,7 +89,7 @@
                 var $edit = $('<button></button>');
                 $edit.text(_loc('Edit'));
                 $buttons.append($edit);
-                $edit.click(function () {
+                $edit.on("click",function () {
                     editDocument(doc);
                     return false;
                 });
@@ -224,7 +224,7 @@
 
                         var $a = $('<a href="#' + docId + '" id="' + docId + '">' + docId + '</a>');
                         $td.append($a);
-                        $a.click(function () {
+                        $a.on("click",function () {
                             var $a = $(this);
                             var docId = $a.attr('alt');
                             initiateEdit(docId);
@@ -282,7 +282,7 @@
         // startRequestWait();
         var $moduleSelect = $("#module_select");
         $moduleSelect.empty();
-        $moduleSelect.change(function () {
+        $moduleSelect.on("change",function () {
             var $sel = $(this);
             moduleSelectChanged($sel);
             return true;
@@ -341,12 +341,12 @@
         var $moduleRadio = $('#module_radio');
         var $moduleSelect = $('#module_select');
         // Only enable module drop down when module radio is selected.
-        $moduleRadio.click(function () {
+        $moduleRadio.on("click",function () {
             $moduleSelect.attr("disabled", false);
             getDocumentDiv().empty();
             moduleSelectChanged($moduleSelect);
         });
-        $atlasRadio.click(function () {
+        $atlasRadio.on("click",function () {
             $('#module_select').attr("disabled", true);
             getDocumentDiv().empty();
             showAtlasMetadata();
@@ -355,7 +355,7 @@
         refreshModuleList();
 
         // Select atlas by default.
-        $atlasRadio.click();
+        $atlasRadio.on("click",);
     }
 
     function showAtlasMetadata() {

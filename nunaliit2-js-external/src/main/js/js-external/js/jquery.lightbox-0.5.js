@@ -138,11 +138,11 @@
 				left:	arrPageScroll[0]
 			}).show();
 			// Assigning click events in elements to close overlay
-			$('#jquery-overlay,#jquery-lightbox').click(function() {
+			$('#jquery-overlay,#jquery-lightbox').on("click",function() {
 				_finish();									
 			});
 			// Assign the _finish function to lightbox-loading-link and lightbox-secNav-btnClose objects
-			$('#lightbox-loading-link,#lightbox-secNav-btnClose').click(function() {
+			$('#lightbox-loading-link,#lightbox-secNav-btnClose').on("click",function() {
 				_finish();
 				return false;
 			});
@@ -237,7 +237,7 @@
 			// Perfomance the effect
 			$('#lightbox-container-image-box').animate({ width: intWidth, height: intHeight },settings.containerResizeSpeed,function() { _show_image(); });
 			if ( ( intDiffW == 0 ) && ( intDiffH == 0 ) ) {
-				if ( $.browser.msie ) {
+				if ( false ) {
 					___pause(250);
 				} else {
 					___pause(100);	
@@ -288,23 +288,30 @@
 			if ( settings.activeImage != 0 ) {
 				if ( settings.fixedNavigation ) {
 					$('#lightbox-nav-btnPrev').css({ 'background' : 'url(' + settings.imageLocation + settings.imageBtnPrev + ') left 15% no-repeat' })
-						.unbind()
-						.bind('click',function() {
+						.off()
+						.on('click',function() {
 							settings.activeImage = settings.activeImage - 1;
 							_set_image_to_view();
 							return false;
 						});
 				} else {
 					// Show the images button for Next buttons
-					$('#lightbox-nav-btnPrev').unbind().hover(function() {
-						$(this).css({ 'background' : 'url(' + settings.imageLocation + settings.imageBtnPrev + ') left 15% no-repeat' });
-					},function() {
-						$(this).css({ 'background' : 'transparent url(' + settings.imageLocation + settings.imageBlank + ') no-repeat' });
-					}).show().bind('click',function() {
-						settings.activeImage = settings.activeImage - 1;
-						_set_image_to_view();
-						return false;
-					});
+					$('#lightbox-nav-btnPrev')
+						.off()
+						.on("mouseenter",
+								function() {
+								$(this).css({ 'background' : 'url(' + settings.imageLocation + settings.imageBtnPrev + ') left 15% no-repeat' });
+							})
+						.on("mouseleave",
+							function() {
+								$(this).css({ 'background' : 'transparent url(' + settings.imageLocation + settings.imageBlank + ') no-repeat' });
+							})
+						.show()
+						.on('click',function() {
+							settings.activeImage = settings.activeImage - 1;
+							_set_image_to_view();
+							return false;
+						});
 				}
 			}
 			
@@ -312,23 +319,30 @@
 			if ( settings.activeImage != ( settings.imageArray.length -1 ) ) {
 				if ( settings.fixedNavigation ) {
 					$('#lightbox-nav-btnNext').css({ 'background' : 'url(' + settings.imageLocation + settings.imageBtnNext + ') right 15% no-repeat' })
-						.unbind()
-						.bind('click',function() {
+						.off()
+						.on('click',function() {
 							settings.activeImage = settings.activeImage + 1;
 							_set_image_to_view();
 							return false;
 						});
 				} else {
 					// Show the images button for Next buttons
-					$('#lightbox-nav-btnNext').unbind().hover(function() {
-						$(this).css({ 'background' : 'url(' + settings.imageLocation + settings.imageBtnNext + ') right 15% no-repeat' });
-					},function() {
-						$(this).css({ 'background' : 'transparent url(' + settings.imageLocation + settings.imageBlank + ') no-repeat' });
-					}).show().bind('click',function() {
-						settings.activeImage = settings.activeImage + 1;
-						_set_image_to_view();
-						return false;
-					});
+					$('#lightbox-nav-btnNext')
+						.off()
+						.on("mouseenter",
+							function() {
+								$(this).css({ 'background' : 'url(' + settings.imageLocation + settings.imageBtnNext + ') right 15% no-repeat' });
+							})
+						.on("mouseleave",
+							function() {
+								$(this).css({ 'background' : 'transparent url(' + settings.imageLocation + settings.imageBlank + ') no-repeat' });
+							})
+						.show()
+						.on('click',function() {
+							settings.activeImage = settings.activeImage + 1;
+							_set_image_to_view();
+							return false;
+						});
 				}
 			}
 			// Enable keyboard navigation
@@ -339,7 +353,7 @@
 		 *
 		 */
 		function _enable_keyboard_navigation() {
-			$(document).keydown(function(objEvent) {
+			$(document).on("keydown", function(objEvent) {
 				_keyboard_action(objEvent);
 			});
 		}
@@ -348,7 +362,7 @@
 		 *
 		 */
 		function _disable_keyboard_navigation() {
-			$(document).unbind();
+			$(document).off();
 		}
 		/**
 		 * Perform the keyboard actions
@@ -499,7 +513,7 @@
 		// Caching the jQuery object with all elements matched
 		var jQueryMatchedObj = this; // This, in this context, refer to jQuery object
 		// Return the jQuery object for chaining. The unbind method is used to avoid click conflict when the plugin is called more than once
-		return this.unbind('click').click(_initialize);
+		return this.off('click').on("click",_initialize);
 		
 		/**
 		 * Initializing the plugin calling the start function

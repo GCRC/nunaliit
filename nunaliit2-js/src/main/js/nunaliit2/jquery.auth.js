@@ -279,13 +279,13 @@ $Id: jquery.auth.js 8165 2012-05-31 13:14:37Z jpfiset $
 		options.form = form;
 		$dialog.append(form);
 		
-		$('#nunaliit_auth_login_'+options.index).click(function(evt){
+		$('#nunaliit_auth_login_'+options.index).on("click",function(evt){
 			userLogin(options, false);
 		});
-		$('#nunaliit_auth_cancel_'+options.index).click(function(evt){
+		$('#nunaliit_auth_cancel_'+options.index).on("click",function(evt){
 			$dialog.dialog('close');
 		});
-		$('#nunaliit_auth_anon_'+options.index).click(function(evt){
+		$('#nunaliit_auth_anon_'+options.index).on("click",function(evt){
 			userLogin(options, true);
 		});
 

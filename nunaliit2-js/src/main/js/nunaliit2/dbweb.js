@@ -808,7 +808,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				
 				if( buttons['Save'] ) {
 					var btn = $('<input type="button" value="'+(options.whereClauses?'Update':'Insert')+'"/>');
-					btn.click(function(evt){
+					btn.on("click",function(evt){
 						buttons['Save']();
 						return false;
 					});
@@ -817,7 +817,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				
 				if( buttons['Delete'] ) {
 					var btn = $('<input type="button" value="Delete"/>');
-					btn.click(function(evt){
+					btn.on("click",function(evt){
 						buttons['Delete']();
 						return false;
 					});
@@ -943,7 +943,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			
 			// Add a button to select via the callback
 			var button = $('<input class="dbWebFormSelectButton" type="button" value="..."/>');
-			button.click(function(evt){
+			button.on("click",function(evt){
 				fieldOpts.select(onSelect);
 				return false;
 			});

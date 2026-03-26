@@ -71,7 +71,7 @@ function _approveDenySelection(selected,status){
 	};
 	
 	if( docIds.length < 1 ){
-		$('.uploadButton').removeAttr('disabled');
+		$('.uploadButton').prop('disabled', false)
 		return;
 	};
 
@@ -82,7 +82,7 @@ function _approveDenySelection(selected,status){
 		}
 		,onError: function(err){
 			alert('Unable to retrieve documents for approval/denial: '+err);
-			$('.uploadButton').removeAttr('disabled');
+			$('.uploadButton').prop('disabled', false)
 		}
 	});
 	
@@ -122,7 +122,7 @@ function _approveDenySelection(selected,status){
 		atlasDb.bulkDocuments(docs, {
 			onSuccess: function(docInfos){
 				// done
-				$('.uploadButton').removeAttr('disabled');
+				$('.uploadButton').prop('disabled', false)
 				refreshView();
 				if( docInfos && docInfos.length ) {
 					for(var i=0,e=docInfos.length; i<e; ++i){
@@ -136,7 +136,7 @@ function _approveDenySelection(selected,status){
 			}
 			,onError: function(err){
 				alert('Error saving documents: '+err);
-				$('.uploadButton').removeAttr('disabled');
+				$('.uploadButton').prop('disabled', false)
 				refreshView();
 			}
 		});
@@ -160,13 +160,13 @@ function _selectAll(){
 		// uncheck all
 		$table.find('.upload_selected').each(function(){
 			var $cb = $(this);
-			$cb.removeAttr('checked');
+			$cb.prop('checked', false);
 		});
 	} else {
 		// check all
 		$table.find('.upload_selected').each(function(){
 			var $cb = $(this);
-			$cb.attr('checked','checked');
+			$cb.prop('checked', true);
 		});
 	};
 	
@@ -182,7 +182,7 @@ function refreshToolbar(){
 	if( $select.length < 1 ) {
 		$select = $('<select class="uploadViewSelect"><option value="approval" selected="selected">Pending Approval</option><option value="denied">Already Denied</option></select>');
 		$buttonLine.append($select);
-		$select.change(selectionChanged);
+		$select.on("change",selectionChanged);
 	};
 
 	var $limit = $buttonLine.find('.uploadLimitSelect');
@@ -194,14 +194,14 @@ function refreshToolbar(){
 		$limit.append( $('<option value="100">Limit 100</option>') );
 		$limit.append( $('<option value="-1">No Limit</option>') );
 		$buttonLine.append($limit);
-		$limit.change(limitChanged);
+		$limit.on("change",limitChanged);
 	};
 
 	var $approveSelected = $buttonLine.find('.uploadApproveSelectedButton');
 	if( $approveSelected.length < 1 ) {
 		$approveSelected = $('<button class="uploadButton uploadApproveSelectedButton">Approve Selected</button>');
 		$buttonLine.append($approveSelected);
-		$approveSelected.click(function(){
+		$approveSelected.on("click",function(){
 			var selection = _getSelectedUploads();
 			_approveDenySelection(selection, 'approved');
 			return false;
@@ -212,7 +212,7 @@ function refreshToolbar(){
 	if( $denySelected.length < 1 ) {
 		$denySelected = $('<button class="uploadButton uploadDenySelectedButton">Deny Selected</button>');
 		$buttonLine.append($denySelected);
-		$denySelected.click(function(){
+		$denySelected.on("click",function(){
 			var selection = _getSelectedUploads();
 			_approveDenySelection(selection, 'denied');
 			return false;
@@ -223,7 +223,7 @@ function refreshToolbar(){
 	if( $selectAllButton.length < 1 ) {
 		$selectAllButton = $('<button class="uploadButton uploadSelectAllButton">Select All</button>');
 		$buttonLine.append($selectAllButton);
-		$selectAllButton.click(_selectAll);
+		$selectAllButton.on("click",_selectAll);
 	};
 	// Update selection button
 	var $table = $('.uploadsTable');
@@ -243,7 +243,7 @@ function refreshToolbar(){
 		};
 	});
 	if( anyCheckBox ){
-		$selectAllButton.removeAttr('disabled');
+		$selectAllButton.prop('disabled', false)
 	} else {
 		$selectAllButton.attr('disabled','disabled');
 	};
@@ -253,8 +253,8 @@ function refreshToolbar(){
 		$selectAllButton.text('Select All');
 	};
 	if( anyChecked ){
-		$approveSelected.removeAttr('disabled');
-		$denySelected.removeAttr('disabled');
+		$approveSelected.prop('disabled', false)
+		$denySelected.prop('disabled', false)
 	} else {
 		$approveSelected.attr('disabled','disabled');
 		$denySelected.attr('disabled','disabled');
@@ -406,7 +406,7 @@ function showUploads(arr) {
 				$td = $('<td class="upload_checkbox"></td>');
 				var $cb = $('<input class="upload_selected" type="checkbox"/>');
 				$cb.appendTo($td);
-				$cb.change(function(){
+				$cb.on("change",function(){
 					refreshToolbar();
 					return true;
 				});
@@ -443,7 +443,7 @@ function refreshView() {
 	
 	serverDesign.queryView(query);
 	
-	$('.uploadButton').removeAttr('disabled');
+	$('.uploadButton').prop('disabled', false)
 };
 
 function uploadMain( $display ) {
@@ -457,11 +457,11 @@ function uploadMain( $display ) {
 	
 //	var $select = $('<select><option value="approval" selected="selected">Pending Approval</option><option value="denied">Already Denied</option></select>');
 //	$('#requests').before($select);
-//	$select.change(selectionChanged);
+//	$select.on("change",selectionChanged);
 //
 //	var $approveAllBtn = $('<input class="uploadButton uploadApproveAllButton" type="button" value="Approve All"/>');
 //	$('#requests').before($approveAllBtn);
-//	$approveAllBtn.click(function(){
+//	$approveAllBtn.on("click",function(){
 //		approveAll();
 //		return false;
 //	});
@@ -473,7 +473,7 @@ function uploadMain( $display ) {
 //	$limit.append( $('<option value="100">Limit 100</option>') );
 //	$limit.append( $('<option value="-1">No Limit</option>') );
 //	$('#requests').before($limit);
-//	$limit.change(limitChanged);
+//	$limit.on("change",limitChanged);
 	
 	refreshToolbar();
 	refreshView();

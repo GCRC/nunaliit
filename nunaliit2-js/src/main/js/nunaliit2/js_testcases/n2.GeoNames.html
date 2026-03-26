@@ -56,7 +56,7 @@
 			function main(){
 				geoNamesService = new $n2.GeoNames.Service();
 				
-				$('#buttonGetName').click(function(){
+				$('#buttonGetName').on("click",function(){
 					var name = $('#inputGetName').val();
 					geoNamesService.getName({
 						name: name
@@ -77,11 +77,11 @@
 						}
 					});
 				});
-				$('#clearGetName').click(function(){
+				$('#clearGetName').on("click",function(){
 					$('#resultsGetName').empty();
 				});
 				
-				$('#buttonGetNameStartsWith').click(function(){
+				$('#buttonGetNameStartsWith').on("click",function(){
 					var name = $('#inputGetNameStartsWith').val();
 					geoNamesService.getNameStartsWith({
 						name: name
@@ -102,11 +102,11 @@
 						}
 					});
 				});
-				$('#clearGetNameStartsWith').click(function(){
+				$('#clearGetNameStartsWith').on("click",function(){
 					$('#resultsGetNameStartsWith').empty();
 				});
 				
-				$('#buttonFindNearby').click(function(){
+				$('#buttonFindNearby').on("click",function(){
 					var lng = 1 * $('#inputFindNearbyLong').val();
 					var lat = 1 * $('#inputFindNearbyLat').val();
 					$n2.log('long:'+lng+' lat:'+lat);
@@ -131,7 +131,7 @@
 						}
 					});
 				});
-				$('#clearFindNearby').click(function(){
+				$('#clearFindNearby').on("click",function(){
 					$('#resultsFindNearby').empty();
 				});
 
