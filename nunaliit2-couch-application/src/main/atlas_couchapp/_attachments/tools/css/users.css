@@ -87,6 +87,32 @@ table.n2UserTable tr th {
   padding: 5px 1px;
 }
 
+table.n2UserTable th[aria-sort="ascending"] button::after {
+    content: "▲";
+    font-size: 100%;
+    padding: 1px;
+}
+
+table.n2UserTable th[aria-sort="descending"] button::after {
+  content: "▼";
+  font-size: 100%;
+  padding: 1px;
+}
+
+table.n2UserTable button {
+    font-weight: bold;
+    background: transparent;
+    border: none;
+    padding: 1px;
+}
+
+table.n2UserTable button:hover,
+table.n2UserTable button:focus {
+    border: 1px solid #b5b5b5;
+    background-color: #eeeeee;
+    padding: 0;
+}
+
 .n2UserTable th,
 .n2UserTable td {
   min-width: 250px;

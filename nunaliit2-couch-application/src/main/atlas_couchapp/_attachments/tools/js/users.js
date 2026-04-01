@@ -309,11 +309,23 @@ var UserManagementApplication = $n2.Class({
 			const thead = document.createElement("thead");
 			const hr = document.createElement("tr");
 			const thdisplay = document.createElement("th");
-			thdisplay.appendChild(document.createTextNode('Display'));
+			const displayBtn = document.createElement('button')
+			displayBtn.appendChild(document.createTextNode('Display'))
+			thdisplay.appendChild(displayBtn);
+			thdisplay.onclick = function() { sortUserTable(0) };
 			hr.appendChild(thdisplay);
 			const thname = document.createElement("th")
-			thname.appendChild(document.createTextNode('Name'));
+			const nameBtn = document.createElement('button')
+			nameBtn.appendChild(document.createTextNode('Name'))
+			thname.appendChild(nameBtn);
+			thname.onclick = function() { sortUserTable(1) };
 			hr.appendChild(thname);
+			const themail = document.createElement("th")
+			const emailBtn = document.createElement('button')
+			emailBtn.appendChild(document.createTextNode('Email'))
+			themail.appendChild(emailBtn);
+			emailBtn.onclick = function() { sortUserTable(2) };
+			hr.appendChild(themail);
 			const throles = document.createElement("th")
 			throles.appendChild(document.createTextNode('Roles'));
 			hr.appendChild(throles);
@@ -347,8 +359,9 @@ var UserManagementApplication = $n2.Class({
 			const userName = userDoc.name;
 			tr.appendChild(createTd(document.createTextNode(userDoc.display), userName));
 			tr.appendChild(createTd(document.createTextNode(userDoc.name), userName));
+			tr.appendChild(createTd(document.createTextNode(userDoc?.nunaliit_emails?.join(', ')), userName));
 			const tdRole = document.createElement("td");
-			for(const r of userDoc.roles) {
+			for(const r of userDoc.roles?.sort()) {
 				const d = document.createElement("div");
 				d.classList.add('n2UserChip');
 				d.appendChild(document.createTextNode(r));
@@ -356,6 +369,47 @@ var UserManagementApplication = $n2.Class({
 			}
 			tr.appendChild(tdRole);
 			tbody.appendChild(tr);
+		}
+
+		/* https://www.w3schools.com/howto/howto_js_sort_table.asp */
+		function sortUserTable(col) {
+			let table = document.getElementById("n2-user-table");
+			let switched = true;
+			const headerCols = table.children[0].getElementsByTagName("TH");
+			let dir = 1;
+			if(table.children[0].getElementsByTagName("TH")[col].hasAttribute('aria-sort') && table.children[0].getElementsByTagName("TH")[col].getAttribute('aria-sort') == 'ascending') {
+				dir = 0;
+			}
+			
+			let switchcount = 0;
+
+			/* Loop until no more row swaps are performed */
+			while (switched) {
+				switched = false;
+				rows = table.children[1].rows //tbody rows
+				for (let i = 0; i < (rows.length - 1); i++) {
+					const r = rows[i].getElementsByTagName("TD")[col];
+					const rNext = rows[i + 1].getElementsByTagName("TD")[col];
+					if ((dir === 1 && r.innerHTML.toLowerCase() > rNext.innerHTML.toLowerCase()) 
+						|| (dir === 0 && r.innerHTML.toLowerCase() < rNext.innerHTML.toLowerCase())
+					) {
+						switchcount++;
+						switched = true;
+						rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+						break;
+					}
+				}
+			}
+
+			for(let i = 0; i < headerCols.length; i++) {
+				if(i === col && dir === 1) {
+					headerCols[i].setAttribute('aria-sort', 'ascending')
+				} else if(i === col) {
+					headerCols[i].setAttribute('aria-sort', 'descending')
+				} else if(headerCols[i].hasAttribute('aria-sort')) {
+					headerCols[i].removeAttribute('aria-sort')
+				}
+			}
 		}
 	}
 });
