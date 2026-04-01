@@ -217,7 +217,7 @@ var UserManagementApplication = $n2.Class({
 		var $div = this._getDiv();
 		
 		$div.find('.userAppOutput').html('<div>'
-			+'User Name: <input id="addUserName" type="text"/><br/>'
+			+'User ID: <input id="addUserName" type="text"/><br/>'
 			+'Password: <input id="addUserPassword1" type="password"/><br/>'
 			+'Repeat Password: <input id="addUserPassword2" type="password"/><br/>'
 			+'<input id="btnAddUser2" type="button" value="Proceed"/></div>');
@@ -310,13 +310,13 @@ var UserManagementApplication = $n2.Class({
 			const hr = document.createElement("tr");
 			const thdisplay = document.createElement("th");
 			const displayBtn = document.createElement('button')
-			displayBtn.appendChild(document.createTextNode('Display'))
+			displayBtn.appendChild(document.createTextNode('Display Name'))
 			thdisplay.appendChild(displayBtn);
 			thdisplay.onclick = function() { sortUserTable(0) };
 			hr.appendChild(thdisplay);
 			const thname = document.createElement("th")
 			const nameBtn = document.createElement('button')
-			nameBtn.appendChild(document.createTextNode('Name'))
+			nameBtn.appendChild(document.createTextNode('User ID'))
 			thname.appendChild(nameBtn);
 			thname.onclick = function() { sortUserTable(1) };
 			hr.appendChild(thname);
