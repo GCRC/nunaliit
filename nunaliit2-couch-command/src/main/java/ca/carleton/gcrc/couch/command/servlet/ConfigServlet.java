@@ -53,6 +53,7 @@ import ca.carleton.gcrc.couch.user.UserDesignDocumentImpl;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.couch.utils.CouchDbTemplateMailMessageGenerator;
 import ca.carleton.gcrc.couch.utils.CouchNunaliitConstants;
+import ca.carleton.gcrc.pgSync.PgSyncServletConfiguration;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 import ca.carleton.gcrc.mail.MailDelivery;
 import ca.carleton.gcrc.mail.MailDeliveryImpl;
@@ -262,6 +263,13 @@ public class ConfigServlet extends JsonServlet {
 			initActions(servletContext);
 		} catch(ServletException e) {
 			logger.error("Error while creating actions",e);
+			throw e;
+		}
+
+		try {
+			initPgSync(servletContext);
+		} catch(ServletException e) {
+			logger.error("Error while initializing date service",e);
 			throw e;
 		}
 
@@ -905,6 +913,27 @@ public class ConfigServlet extends JsonServlet {
 		} catch(Exception e) {
 			logger.error("Error configuring actions",e);
 			throw new ServletException("Error configuring actions",e);
+		}
+	}
+
+	private void initPgSync(ServletContext servletContext) throws ServletException {
+
+		try {
+			PgSyncServletConfiguration config = new PgSyncServletConfiguration();
+			CouchDb couchDb = couchDd.getDatabase();
+			config.setCouchDb(couchDb);
+			CouchDesignDocument atlasDesign = couchDb.getDesignDocument("atlas");
+			config.setAtlasDesignDocument(atlasDesign);
+			config.setPostgresDb(atlasProperties.getPostgresDb());
+			config.setPostgresHost(atlasProperties.getPostgresHost());
+			config.setPostgresPass(atlasProperties.getPostgresPassword());
+			config.setPostgresPort(atlasProperties.getPostgresPort());
+			config.setPostgresUser(atlasProperties.getPostgresUser());
+			servletContext.setAttribute(PgSyncServletConfiguration.CONFIGURATION_KEY, config);
+
+		} catch(Exception e) {
+			logger.error("Error configuring pg sync service",e);
+			throw new ServletException("Error configuring pg sync service",e);
 		}
 	}
 

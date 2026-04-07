@@ -132,5 +132,6 @@
 		<module>nunaliit2-couch-date</module>
 		<module>nunaliit2-couch-simplifiedGeometry</module>
         <module>nunaliit2-couch-metadata</module>
+		<module>nunaliit2-postgres-sync</module>
     </modules>
 </project>

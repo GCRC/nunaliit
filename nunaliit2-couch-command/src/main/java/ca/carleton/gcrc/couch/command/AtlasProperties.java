@@ -40,6 +40,11 @@ public class AtlasProperties {
 		atlasProps.setExportUser(props.getProperty("export.complete.user"));
 		atlasProps.setAtlasRootPath(props.getProperty("atlas.root.path"));
 		atlasProps.setExportPassword(props.getProperty("export.complete.password"));
+		atlasProps.setPostgresHost(props.getProperty("postgres.host"));
+		atlasProps.setPostgresPort(props.getProperty("postgres.port", "5432"));
+		atlasProps.setPostgresDb(props.getProperty("postgres.dbName"));
+		atlasProps.setPostgresUser(props.getProperty("postgres.user"));
+		atlasProps.setPostgresPassword(props.getProperty("postgres.password"));
 
 		// CouchDb password
 		try {
@@ -216,6 +221,7 @@ public class AtlasProperties {
 			sensitivePropertyNames.add("export.complete.password");
 			sensitivePropertyNames.add("server.key");
 			sensitivePropertyNames.add("google.mapapi.key");
+			sensitivePropertyNames.add("postgres.password");
 
 			File sensitivePropFile = new File(atlasDir,"config/sensitive.properties");
 			if( sensitivePropFile.exists() && sensitivePropFile.isFile() ){
@@ -342,6 +348,11 @@ public class AtlasProperties {
 	private boolean geometrySimplificationDisabled = false;
 	private boolean dateServletDisabled = false;
 	private String googleMapApiKey;
+	private String postgresUser;
+	private String postgresPassword;
+	private String postgresHost;
+	private String postgresPort = "5432";
+	private String postgresDb;
 
 	public String getAtlasName() {
 		return atlasName;
@@ -484,5 +495,52 @@ public class AtlasProperties {
 
 	public void setGoogleMapApiKey(String googleMapApiKey) {
 		this.googleMapApiKey = googleMapApiKey;
+	}
+
+	public boolean isPostgresEnabled() {
+		return postgresDb != null && !postgresDb.isEmpty() &&
+				postgresUser != null && !postgresUser.isEmpty() &&
+				postgresPassword != null && !postgresPassword.isEmpty() &&
+				postgresHost != null && !postgresHost.isEmpty();
+	}
+
+	public String getPostgresUser() {
+		return postgresUser;
+	}
+
+	public void setPostgresUser(String postgresUser) {
+		this.postgresUser = postgresUser;
+	}
+
+	public String getPostgresPassword() {
+		return postgresPassword;
+	}
+
+	public void setPostgresPassword(String postgresPassword) {
+		this.postgresPassword = postgresPassword;
+	}
+
+	public String getPostgresHost() {
+		return postgresHost;
+	}
+
+	public void setPostgresHost(String postgresHost) {
+		this.postgresHost = postgresHost;
+	}
+
+	public String getPostgresPort() {
+		return postgresPort;
+	}
+
+	public void setPostgresPort(String postgresPort) {
+		this.postgresPort = postgresPort;
+	}
+
+	public String getPostgresDb() {
+		return postgresDb;
+	}
+
+	public void setPostgresDb(String postgresDb) {
+		this.postgresDb = postgresDb;
 	}
 }

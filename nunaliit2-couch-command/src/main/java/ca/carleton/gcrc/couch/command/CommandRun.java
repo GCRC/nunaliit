@@ -14,6 +14,7 @@ import ca.carleton.gcrc.couch.simplifiedGeometry.SimplifiedGeometryServlet;
 import ca.carleton.gcrc.couch.submission.SubmissionServlet;
 import ca.carleton.gcrc.couch.user.UserServlet;
 import ca.carleton.gcrc.mail.MailServlet;
+import ca.carleton.gcrc.pgSync.PgSyncServlet;
 import ca.carleton.gcrc.progress.ProgressServlet;
 import ca.carleton.gcrc.upload.UploadServlet;
 import org.apache.log4j.Logger;
@@ -272,6 +273,15 @@ public class CommandRun implements Command {
         	servletHolder.setInitOrder(2);
         	context.addServlet(servletHolder,"/servlet/mail/*");
         }
+
+		// Servlet for postgres sync
+		if(atlasProperties.isPostgresEnabled()) {
+			{
+				ServletHolder servletHolder = new ServletHolder(new PgSyncServlet());
+				servletHolder.setInitOrder(2);
+				context.addServlet(servletHolder,"/servlet/pgsync/*");
+			}
+		}
 
 		// index.html servlet
 		ServletHolder indexServlet = new ServletHolder(new IndexServlet());

@@ -206,6 +206,13 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>ca.carleton.gcrc</groupId>
+            <artifactId>nunaliit2-postgres-sync</artifactId>
+            <version>${project.version}</version>
+            <type>jar</type>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
