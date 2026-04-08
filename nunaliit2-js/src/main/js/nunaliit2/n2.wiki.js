@@ -642,7 +642,7 @@ function insertShowService(links){
 		};
 	};
 
-	html.push('/>');
+	html.push('></div>');
 	
 	return html.join('');
 };

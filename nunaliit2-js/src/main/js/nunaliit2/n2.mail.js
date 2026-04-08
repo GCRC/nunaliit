@@ -295,7 +295,7 @@ var MailService = $n2.Class({
 			.text( _loc('Cancel') )
 			.attr('href','#')
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				var $diag = $('#'+diagId);
 				$diag.dialog('close');
 				return false;
@@ -306,7 +306,7 @@ var MailService = $n2.Class({
 			.text( _loc('Send') )
 			.attr('href','#')
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				var $diag = $('#'+diagId);
 				$diag.find('.n2mailForm_processing_element').attr('disabled','disabled');
 				$diag.find('.n2mailForm_button').addClass('n2mailForm_button_disabled');
@@ -331,7 +331,7 @@ var MailService = $n2.Class({
 								alert( _loc('You must provide field: {label}',{
 									label: label
 								}) );
-								$diag.find('.n2mailForm_processing_element').removeAttr('disabled');
+								$diag.find('.n2mailForm_processing_element').prop('disabled', false)
 								$diag.find('.n2mailForm_button').removeClass('n2mailForm_button_disabled');
 								return;
 							};
@@ -363,7 +363,7 @@ var MailService = $n2.Class({
 							.text( _loc('Close') )
 							.attr('href','#')
 							.appendTo($buttons)
-							.click(function(){
+							.on("click",function(){
 								var $diag = $('#'+diagId);
 								$diag.dialog('close');
 							});
@@ -373,7 +373,7 @@ var MailService = $n2.Class({
 							err: err
 						}) );
 						var $diag = $('#'+diagId);
-						$diag.find('.n2mailForm_processing_element').removeAttr('disabled');
+						$diag.find('.n2mailForm_processing_element').prop('disabled', false)
 						$diag.find('.n2mailForm_button').removeClass('n2mailForm_button_disabled');
 					}
 				});
@@ -422,7 +422,7 @@ var MailService = $n2.Class({
 						.attr('href','#')
 						.text( label )
 						.appendTo($elem)
-						.click(function(){
+						.on("click",function(){
 							_this.dispatchService.send(DH,{
 								type: 'mailShowMailForm'
 							});

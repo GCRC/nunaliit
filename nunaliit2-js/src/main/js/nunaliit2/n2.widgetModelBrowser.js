@@ -135,7 +135,7 @@ var ModelBrowserWidget = $n2.Class({
 			.attr('href','#')
 			.text( _loc('Models') )
 			.appendTo($elem)
-			.click(function(){
+			.on("click",function(){
 				var $browsers = $('#'+_this.browserId);
 				if( $browsers.length > 0 ){
 					$browsers.dialog('close');
@@ -214,7 +214,7 @@ var ModelBrowserWidget = $n2.Class({
 				.attr('nunaliit-source-model-id',sourceModelId)
 				.text(sourceModelId)
 				.appendTo($modelsPane)
-				.click(function(){
+				.on("click",function(){
 					var $a = $(this);
 					var sourceModelId = $a.attr('nunaliit-source-model-id');
 					_this.selectedModelId = sourceModelId;
@@ -285,14 +285,14 @@ var ModelBrowserWidget = $n2.Class({
 					.attr('nunaliit-document-id',docId)
 					.appendTo($items)
 					.text( docId )
-					.click(function(){
+					.on("click",function(){
 						var $a = $(this);
 						var docId = $a.attr('nunaliit-document-id');
 						_this.selectedDocId = docId;
 						_this._refreshList();
 						return false;
 					})
-					.mouseover(function(){
+					.on("mouseover",function(){
 						var $a = $(this);
 						if( $a.hasClass('n2widget_modelBrowser_list_docId_raw') ) {
 							var docId = $a.attr('nunaliit-document-id');

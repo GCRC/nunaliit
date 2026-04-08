@@ -114,7 +114,7 @@ var MobileEditor = $n2.Class({
 			$newPage.append('<div class="mobileEditContent" data-role="content" data-theme="d"></div>');
 			$newPage.append('<div class="mobileEditFooter" data-role="footer" data-theme="b"></div>');
 			
-			$newPage.find('a').click(function(e){
+			$newPage.find('a').on("click",function(e){
 				_this._clickCancel(this, e);
 				return false;
 			});
@@ -123,7 +123,7 @@ var MobileEditor = $n2.Class({
 			
 			// Enhance page
 			$newPage.page();
-			$newPage.bind('pagehide',function(){
+			$newPage.on('pagehide',function(){
 				var $page = $( this );
 
 				if( _this.cleanupPage ) {
@@ -172,14 +172,14 @@ var MobileEditor = $n2.Class({
 		if( null != this.options.schema ) {
 			var $button = $('<input type="radio" class="mobileEditFlavourRadio" name="mobileEditFlavour" id="mobileEditFlavourSchema"/>');
 			$button.attr('value',FLAVOUR_SCHEMA);
-			if( FLAVOUR_SCHEMA === this.flavour ) $button.attr('checked','checked');
+			if( FLAVOUR_SCHEMA === this.flavour ) $button.attr('checked', true);
 			$radioFieldSet.append( $button );
 			$radioFieldSet.append( $('<label for="mobileEditFlavourSchema">Form</label>') );
 		};
 
 		var $button = $('<input type="radio" class="mobileEditFlavourRadio" name="mobileEditFlavour" id="mobileEditFlavourTree"/>');
 		$button.attr('value',FLAVOUR_TREE);
-		if( FLAVOUR_TREE === this.flavour ) $button.attr('checked','checked');
+		if( FLAVOUR_TREE === this.flavour ) $button.attr('checked', true);
 		$radioFieldSet.append( $button );
 		$radioFieldSet.append( $('<label for="mobileEditFlavourTree">Detailed</label>') );
 
@@ -190,7 +190,7 @@ var MobileEditor = $n2.Class({
 		$content.append( $('<div class="mobileEditAttachedFile"></div>') );
 		
 		// Events
-		$page.find('.mobileEditFlavourRadio').bind('change',function(){_this._changeFlavour(this);});
+		$page.find('.mobileEditFlavourRadio').on('change',function(){_this._changeFlavour(this);});
 		
 		// Add navigation area
 		var $navBar = $('<div data-role="navbar"></div>');
@@ -200,13 +200,13 @@ var MobileEditor = $n2.Class({
 		$navBarUl.append( $('<li><a class="mobileEditButtonSave" data-role="button" data-inline="true" data-icon="check">Save</a></li>') );
 		$navBarUl.append( $('<li><a class="mobileEditButtonCancel" data-role="button" data-inline="true" data-icon="back">Cancel</a></li>') );
 		$navBarUl.append( $('<li><a class="mobileEditButtonGps" data-role="button" data-inline="true" data-icon="add">Set Location</a></li>') );
-		$navBar.find('.mobileEditButtonSave').click(function(e){
+		$navBar.find('.mobileEditButtonSave').on("click",function(e){
 			_this._clickSave(this, e);
 		});
-		$navBar.find('.mobileEditButtonCancel').click(function(e){
+		$navBar.find('.mobileEditButtonCancel').on("click",function(e){
 			_this._clickCancel(this, e);
 		});
-		$navBar.find('.mobileEditButtonGps').click(function(e){
+		$navBar.find('.mobileEditButtonGps').on("click",function(e){
 			_this._clickGps(this);
 		});
 		
@@ -585,7 +585,7 @@ var MobileEditor = $n2.Class({
 		};
 		
 		function installMediaEditClick($button, attachment){
-			$button.click(function(){
+			$button.on("click",function(){
 				new $n2.mobile.MobileMediaEditor({
 					currentDb: _this.getCurrentDb()
 					,doc: _this.doc

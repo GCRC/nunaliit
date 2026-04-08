@@ -461,14 +461,14 @@ var TableCanvas = $n2.Class({
 			$elem
 				.empty()
 				.addClass('n2TableCanvas')
-				.click(function(e){
+				.on("click",function(e){
 					_this._backgroundClicked();
 				});
 
 			$('<button>')
 				.text(_loc('Export CSV'))
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					_this._exportCsv();
 					return false;
 				});
@@ -479,7 +479,7 @@ var TableCanvas = $n2.Class({
 			
 			$('<tbody>')
 				.appendTo($table)
-				.scroll(function(){
+				.on("scroll",function(){
 					_this._scrollChanged( $(this) );
 					return true;
 				});
@@ -616,7 +616,7 @@ var TableCanvas = $n2.Class({
 				.attr('data-sort-name',heading.name)
 				.text(label)
 				.appendTo($th)
-				.click(function(){
+				.on("click",function(){
 					var $a = $(this);
 					var headingName = $a.attr('data-sort-name');
 					_this._sortOnName(headingName);
@@ -738,16 +738,16 @@ var TableCanvas = $n2.Class({
 				cell.display($td, cell, row);
 				
 				$td
-					.click(function(){
+					.on("click",function(){
 						var $td = $(this);
 						_this._selectedCell($td);
 						return false;
-					}).mouseover(function(){
+					}).on("mouseover",function(){
 						var $td = $(this);
 						_this._mouseOver($td);
 						return false;
 					})
-					.mouseout(function(){
+					.on("mouseout",function(){
 						var $td = $(this);
 						_this._mouseOut($td);
 						return false;
@@ -760,17 +760,17 @@ var TableCanvas = $n2.Class({
 					.attr('nunaliit-colmun',colName)
 					.text(cell.display)
 					.appendTo($td)
-					.click(function(){
+					.on("click",function(){
 						var $a = $(this);
 						_this._selectedCell($a);
 						return false;
 					})
-					.mouseover(function(){
+					.on("mouseover",function(){
 						var $a = $(this);
 						_this._mouseOver($a);
 						return false;
 					})
-					.mouseout(function(){
+					.on("mouseout",function(){
 						var $a = $(this);
 						_this._mouseOut($a);
 						return false;
@@ -794,17 +794,17 @@ var TableCanvas = $n2.Class({
 							.attr('nunaliit-column',colName)
 							.text(value)
 							.appendTo($td)
-							.click(function(){
+							.on("click",function(){
 								var $a = $(this);
 								_this._selectedCell($a);
 								return false;
 							})
-							.mouseover(function(){
+							.on("mouseover",function(){
 								var $a = $(this);
 								_this._mouseOver($a);
 								return false;
 							})
-							.mouseout(function(){
+							.on("mouseout",function(){
 								var $a = $(this);
 								_this._mouseOut($a);
 								return false;

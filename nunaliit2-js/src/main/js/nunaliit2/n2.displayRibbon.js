@@ -209,7 +209,7 @@ var SchemaFilter = $n2.Class({
 			.addClass('n2DisplayRibbon_filter')
 			.addClass('n2DisplayRibbon_filter_all')
 			.appendTo($elem)
-			.click(clickFn);
+			.on("click",clickFn);
 
 		var keepCurrentSelection = false;
 		for(var i=0,e=schemas.length; i<e; ++i){
@@ -231,7 +231,7 @@ var SchemaFilter = $n2.Class({
 				.addClass('n2DisplayRibbon_filter_schema')
 				.addClass('n2DisplayRibbon_filter_schema_'+$n2.utils.stringToHtmlId(schema.name))
 				.appendTo($elem)
-				.click(clickFn);
+				.on("click",clickFn);
 		};
 		
 		if( !keepCurrentSelection ) {
@@ -436,7 +436,7 @@ var RibbonInfoDisplay = $n2.Class({
 			.attr('href','#')
 			.addClass('n2DisplayRibbon_popup_button n2DisplayRibbon_popup_button_close')
 			.text( _loc('Close') )
-			.click(function(){
+			.on("click",function(){
 				var $a = $(this);
 				$a.parents('.n2DisplayRibbon_popup_outer_layout').first().remove();
 				opts.onClose();
@@ -734,11 +734,11 @@ var RibbonGrid = $n2.Class({
 		$('<div>')
 			.addClass('n2DisplayRibbon_grid_button_previous')
 			.appendTo($extra)
-			.mousedown(function(){
+			.on("mousedown",function(){
 				_this._buttonChanged('down','previous');
 				return false;
 			})
-			.mouseup(function(){
+			.on("mouseup",function(){
 				_this._buttonChanged('up','previous');
 				return false;
 			})
@@ -746,11 +746,11 @@ var RibbonGrid = $n2.Class({
 		$('<div>')
 			.addClass('n2DisplayRibbon_grid_button_next')
 			.appendTo($extra)
-			.mousedown(function(){
+			.on("mousedown",function(){
 				_this._buttonChanged('down','next');
 				return false;
 			})
-			.mouseup(function(){
+			.on("mouseup",function(){
 				_this._buttonChanged('up','next');
 				return false;
 			})
@@ -1603,7 +1603,7 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	 				.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_edit')
 	 				.text( _loc('Edit') )
 	 				.appendTo($btnDiv)
-	 				.click(function(){
+	 				.on("click",function(){
 						_this._performDocumentEdit(doc);
 						return false;
 					});
@@ -1615,7 +1615,7 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	 				.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_delete')
 	 				.text( _loc('Delete') )
 	 				.appendTo($btnDiv)
-	 				.click(function(){
+	 				.on("click",function(){
 						_this._performDocumentDelete(doc);
 						return false;
 					});
@@ -1679,7 +1679,7 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 						.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_find_on_map')
 		 				.text( _loc('Find on Map') )
 		 				.appendTo($btnDiv)
-		 				.click(function(){
+		 				.on("click",function(){
 		 					_this._dispatch({
 		 						type: 'find'
 	 							,docId: doc._id
@@ -1700,7 +1700,7 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 					.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_add_layer')
 	 				.text( _loc('Add Layer') )
 	 				.appendTo($btnDiv)
-	 				.click(function(){
+	 				.on("click",function(){
 	 					_this._performAddLayerToMap(doc);
 						return false;
 					});
@@ -1712,7 +1712,7 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 					.addClass('n2DisplayRibbon_current_button n2DisplayRibbon_current_button_tree_view')
 	 				.text( _loc('Tree View') )
 	 				.appendTo($btnDiv)
-	 				.click(function(){
+	 				.on("click",function(){
 	 					_this._performTreeView(doc);
 						return false;
 					});
@@ -2305,12 +2305,11 @@ var RibbonDisplay = $n2.Class('RibbonDisplay', {
 	    	.addClass('n2DisplayRibbon_tile_' + $n2.utils.stringToHtmlId(docId))
 	    	.attr('n2DocId',docId);
 	    
-	    $elem.hover(
-			this.hoverInFn
-			,this.hoverOutFn
-	    );
+	    $elem
+			.on("mouseenter", this.hoverInFn)
+			.on("mouseleave", this.hoverOutFn)
 		
-		$elem.click(this.clickFn);
+		$elem.on("click",this.clickFn);
 	
 	    var tile = new Tile(docId, $elem);
 	    

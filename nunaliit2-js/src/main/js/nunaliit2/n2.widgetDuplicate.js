@@ -220,7 +220,7 @@ var DuplicateWidget = $n2.Class('DuplicateWidget', {
 					.attr('href', _loc('Duplicate'))
 					.text( this.label )
 					.appendTo( $elem )
-					.click(function(){
+					.on("click",function(){
 						try {
 							_this._performDuplicate();
 						} catch(e) {
@@ -233,7 +233,7 @@ var DuplicateWidget = $n2.Class('DuplicateWidget', {
 				$('<button>')
 					.text( _loc('Duplicate') )
 					.appendTo($elem)
-					.click(function(){
+					.on("click",function(){
 						_this._performDuplicate();
 						return false;
 					});

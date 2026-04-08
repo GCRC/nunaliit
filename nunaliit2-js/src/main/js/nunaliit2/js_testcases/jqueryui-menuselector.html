@@ -40,12 +40,12 @@
 
 			function main() {
 				
-				$('#regular').change(function(){
+				$('#regular').on("change",function(){
 					var val = $(this).val();
 					$(this).val('');
 					alert('Selected Regular: '+val);
 				});
-				$('#menuselector').change(function(){
+				$('#menuselector').on("change",function(){
 					var val = $(this).val();
 					$(this).val('');
 					alert('Selected via Menu: '+val);

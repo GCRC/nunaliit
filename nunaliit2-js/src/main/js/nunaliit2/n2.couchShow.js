@@ -428,7 +428,7 @@ var DomStyler = $n2.Class({
 //				    	'color': '#fff'
 //					})
 //					.appendTo( $('.nunaliit_footer') )
-//					.click(function(){
+//					.on("click",function(){
 //						$n2.log('total: '+_this.totalElapsed+' max: '+_this.maxElapsed);
 //						return false;
 //					});
@@ -440,7 +440,7 @@ var DomStyler = $n2.Class({
 //				    	'color': '#fff'
 //					})
 //					.appendTo( $('.nunaliit_footer') )
-//					.click(function(){
+//					.on("click",function(){
 //						_this.totalElapsed = 0;
 //						_this.maxElapsed = 0;
 //						return false;
@@ -898,7 +898,7 @@ var DomStyler = $n2.Class({
 		};
 
 		this.showService.printBriefDescription($jq, docId);
-		$jq.click(function(){
+		$jq.on("click",function(){
 			var dispatchService = _this.showService.dispatchService;
 			if( dispatchService ) {
 				dispatchService.send(DH, {type:'userSelect',docId:docId});
@@ -1067,7 +1067,7 @@ var DomStyler = $n2.Class({
 							,data
 							,attachmentName
 						);
-					linkDiv.click(cb);
+					linkDiv.on("click",cb);
 				};
 			};
 
@@ -1352,7 +1352,7 @@ var DomStyler = $n2.Class({
 			$('<div>')
 				.addClass('n2Show_icon_speaker')
 				.appendTo($wrapper)
-				.click(function(){
+				.on("click",function(){
 					toggleHoverSound();
 					return false;
 				});
@@ -1395,7 +1395,7 @@ var DomStyler = $n2.Class({
 			var attUrl = this.db.getAttachmentUrl(data,attachmentName);
 
 			$externalLink.attr('href',attUrl);
-			$externalLink.click(function(e){
+			$externalLink.on("click",function(e){
 				if( suppressLeaveConfirmation ){
 					return true;
 				};
@@ -1409,7 +1409,7 @@ var DomStyler = $n2.Class({
 		} else {
 			// At this point, we have a link that leads nowhere. Simply report
 			// error to user.
-			$externalLink.click(function(e){
+			$externalLink.on("click",function(e){
 				alert( _loc('File is not currently available') );
 				return false;
 			});
@@ -1454,7 +1454,7 @@ var DomStyler = $n2.Class({
 			var $a = $('<a></a>')
 				.addClass('n2s_adjustedExternalMediaLink')
 				.attr('href',attUrl)
-				.click(function(e){
+				.on("click",function(e){
 					if( suppressLeaveConfirmation ){
 						return true;
 					};
@@ -1547,7 +1547,7 @@ var DomStyler = $n2.Class({
 		 && dispatcher.isEventTypeRegistered('find')
 		 ) {
 
-			$jq.click(function(){
+			$jq.on("click",function(){
 				dispatcher.send(
 					DH
 					,{
@@ -1572,7 +1572,7 @@ var DomStyler = $n2.Class({
 		if( viewLayerFunction || dispatchService ) {
 			if( contextDoc
 			 && contextDoc.nunaliit_layer_definition ) {
-				$jq.click(function(){
+				$jq.on("click",function(){
 					var layerDefinition = contextDoc.nunaliit_layer_definition;
 					
 					if( viewLayerFunction ) {
@@ -1622,7 +1622,7 @@ var DomStyler = $n2.Class({
 		var _this = this;
 
 		if( this.editFunction ) {
-			$jq.click(function(){
+			$jq.on("click",function(){
 				_this.editFunction(contextDoc,opt);
 				return false;
 			});
@@ -1635,7 +1635,7 @@ var DomStyler = $n2.Class({
 		var _this = this;
 
 		if( this.deleteFunction ) {
-			$jq.click(function(){
+			$jq.on("click",function(){
 				_this.deleteFunction(contextDoc,opt);
 				return false;
 			});
@@ -1647,7 +1647,7 @@ var DomStyler = $n2.Class({
 	_clickLogin: function($jq){
 		var _this = this;
 
-		$jq.click(function(){
+		$jq.on("click",function(){
 			var dispatchService = _this.showService.dispatchService;
 			if( dispatchService ) {
 				dispatchService.send(DH, {
@@ -1661,7 +1661,7 @@ var DomStyler = $n2.Class({
 	_clickMapEdit: function($jq){
 		var _this = this;
 
-		$jq.click(function(){
+		$jq.on("click",function(){
 			var dispatchService = _this.showService.dispatchService;
 			if( dispatchService ) {
 				dispatchService.send(DH, {
@@ -1700,7 +1700,7 @@ var DomStyler = $n2.Class({
 			
 			var $link = $('<a href="#" class="n2show_maxHeightLink"></a>')
 				.text(showText)
-				.click(function(e) {
+				.on("click",function(e) {
 					e.preventDefault();
 
 					var $link = $(this);
@@ -1734,20 +1734,23 @@ var DomStyler = $n2.Class({
         var docId = this._getDocumentIdentifier(contextDoc, $jq);
 
         if( dispatchService ) {
-            $jq.hover(
+            $jq
+			.on("mouseenter",
                 function(){ // in
                     dispatchService.send(DH, {
                         type:'userFocusOn'
                         ,docId:docId
                     });
                 }
-                ,function(){ // out
+			)
+			.on("mouseleave",
+				function(){ // out
                     dispatchService.send(DH, {
                         type:'userFocusOff'
                         ,docId:docId
                     });
                 }
-            );
+            )
         };
     },
 
@@ -1768,7 +1771,7 @@ var DomStyler = $n2.Class({
 			
 			$elem
 				.css('cursor','pointer')
-				.click(function(){
+				.on("click",function(){
 					new $n2.displayTiledImage.DisplayTiledImage({
 						url: url
 						,tileMapResourceName: 'tilemapresource.xml'
@@ -1875,7 +1878,7 @@ var DomStyler = $n2.Class({
 				
 				// Install events
 				if( !disableClick ){
-					$elem.click(function(){
+					$elem.on("click",function(){
 						var $elem = $(this);
 						
 						var createSchema = $elem.attr('nunaliit-create-schema');
@@ -1893,13 +1896,13 @@ var DomStyler = $n2.Class({
 				};
 
 				if( !disableHover ){
-					$elem.mouseover(function(e){
+					$elem.on("mouseover",function(e){
 	 		 			dispatchService.send(DH,{
 	 		 				type: 'userFocusOn'
 	 		 				,docId: docId
 	 		 			});
 	 				})
-					.mouseout(function(e){
+					.on("mouseout",function(e){
 	 		 			dispatchService.send(DH,{
 	 		 				type: 'userFocusOff'
 	 		 				,docId: docId

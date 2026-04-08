@@ -800,10 +800,6 @@ $.fn.ajaxSubmit = function(options) {
             }
             return (doc && doc.documentElement && doc.documentElement.nodeName != 'parsererror') ? doc : null;
         };
-        var parseJSON = $.parseJSON || function(s) {
-            /*jslint evil:true */
-            return window['eval']('(' + s + ')');
-        };
 
         var httpData = function( xhr, type, s ) { // mostly lifted from jq1.4.4
 
@@ -821,7 +817,7 @@ $.fn.ajaxSubmit = function(options) {
             }
             if (typeof data === 'string') {
                 if (type === 'json' || !type && ct.indexOf('json') >= 0) {
-                    data = parseJSON(data);
+                    data = JSON.parse(data);
                 } else if (type === "script" || !type && ct.indexOf("javascript") >= 0) {
                     $.globalEval(data);
                 }
@@ -850,7 +846,7 @@ $.fn.ajaxSubmit = function(options) {
  */
 $.fn.ajaxForm = function(options) {
     options = options || {};
-    options.delegation = options.delegation && $.isFunction($.fn.on);
+    options.delegation = options.delegation && typeof $.fn.on === 'function';
 
     // in jQuery 1.3+ we can fix mistakes with the ready state
     if (!options.delegation && this.length === 0) {

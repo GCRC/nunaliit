@@ -633,7 +633,7 @@ var Monitor = $n2.Class({
 		
 		if( window && 'onhashchange' in window ) {
 			// Supported
-			$(window).bind('hashchange',function(e){
+			$(window).on('hashchange',function(e){
 				_this._hashChange(e);
 			});
 		};

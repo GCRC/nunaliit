@@ -60,7 +60,7 @@
 		$('<button>')
 			.text( _loc('Verify') )
 			.appendTo($line)
-			.click(function(){
+			.on("click",function(){
 				var $inputSection = $appDiv.find('.importAppInput');
 				var importProfileId = $inputSection.find('.import_profile').val();
 				var importData = $inputSection.find('.importData').val();
@@ -153,7 +153,7 @@
 			$h.find('span').text( _loc('Logs') );
 			$h.find('button')
 				.text( _loc('Clear') )
-				.click(function(){
+				.on("click",function(){
 					var $d = getLogsDiv();
 					$d.empty();
 					addHeader($d);

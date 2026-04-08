@@ -10,30 +10,6 @@
 			,"options": {
 			}
 		}
-		,{ 
-			"name": "Google Satellite"
-			,"type": "Google Maps"
-			,"options": {
-				"type": "SATELLITE"
-				, "numZoomLevels": 19 
-			}
-		}
-		,{ 
-			"name": "Google Hybrid"
-			,"type": "Google Maps"
-			,"options": {
-				"type": "HYBRID"
-				,"numZoomLevels": 19
-			}
-		}
-		,{ 
-			"name": "Google Physical"
-			,"type": "Google Maps"
-			,"options": {
-				"type": "TERRAIN"
-				,"numZoomLevels": 16
-			}
-		}
 	]
 	,"overlays": [
 		{

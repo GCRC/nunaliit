@@ -7,10 +7,10 @@
 		<title>Translation</title>
 
 		<link rel="shortcut icon" href="../favicon.ico" />
-		<link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
+		<link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.min.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/css/jquery.lightbox-0.5.css" type="text/css" />
 		<link rel="stylesheet" href="../nunaliit2/css/basic/nunaliit2.css" type="text/css" />
-		<link rel="stylesheet" href="../_list/css_merge/css" type="text/css" />
+		
 		<link rel="stylesheet" href="../css/atlas.css" type="text/css" />
 		
 		<style type="text/css">
@@ -37,7 +37,6 @@
 		<script type="text/javascript" src="../js-external/OpenLayers/OpenLayers.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery.lightbox-0.5.js"></script>
 		
-		<script type="text/javascript" src="../js-external/js/jquery.cycle.pack.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery.form.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery.cookie-1.0.js"></script>
 		<script type="text/javascript" src="../js-external/js/sha1.js"></script>
@@ -117,7 +116,7 @@
 		    				$table.append($tr);
 		    				
 		    				var $a = $tr.find('a');
-		    				$a.click(clickConflict);		
+		    				$a.on("click",clickConflict);		
 		    			};
 		    			
 		    			// Re-select the one that was previously selected 
@@ -185,7 +184,7 @@
 
 							var $a = $('<a class="n2s_briefDisplay" href="#'+docId+'" alt="'+docId+'">'+docId+'</a>');
 							$td.append( $a );
-							$a.click(clickDocument);
+							$a.on("click",clickDocument);
 						};
 						$('#conflictingDocuments').empty().append($table);
 						

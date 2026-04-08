@@ -1229,7 +1229,7 @@ var SearchInput = $n2.Class({
 			this.options.dispatchService.register(DH,'searchDeactivated',f);            
 
 			// Activate/Deactivate Search Box
-			$('.searchIcon').click(function() {
+			$('.searchIcon').on("click",function() {
 				if( $('.nunaliit_search_input').hasClass('search_active') ){
 					_this.options.dispatchService.send(DH,{
 						type: 'searchDeactivated'
@@ -1352,21 +1352,21 @@ var SearchInput = $n2.Class({
 			});
 		};
 		
-		$textInput.keydown(function(e){
+		$textInput.on("keydown",function(e){
 			_this._keyDown(e);
 		});
 		
-		$textInput.focus(function(e) {
+		$textInput.on("focus",function(e) {
 			_this._focus(e);
 		});
 		
-		$textInput.blur(function(e) { 
+		$textInput.on("blur",function(e) { 
 			_this._blur(e);
 		});
 		
 		var $searchButton = this.getSearchButton();
 		if( $searchButton ) {
-			$searchButton.click(function(e){
+			$searchButton.on("click",function(e){
 				_this._clickSearch(e);
 			});
 		};
@@ -1380,7 +1380,7 @@ var SearchInput = $n2.Class({
 				$textInput.val('');
 			};
 		};
-		$textInput.select();
+		$textInput.trigger("select");
 	}
 	
 	,_blur: function(e){
@@ -1509,7 +1509,7 @@ var SearchInput = $n2.Class({
 			.removeClass('search_inactive');
 
 		// Move focus to search input box
-		$('.nunaliit_search_input input').focus();
+		$('.nunaliit_search_input input').trigger("focus");
 	}
 
 	,_deactivateSearchBar: function(){    	

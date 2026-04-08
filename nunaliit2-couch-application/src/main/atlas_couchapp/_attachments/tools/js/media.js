@@ -97,7 +97,7 @@
 		$('<button>')
 			.appendTo($buttons)
 			.text( _loc('Upload') )
-			.click(function(){
+			.on("click",function(){
 				upload();
 				return false;
 			});
@@ -105,7 +105,7 @@
 		$('<button>')
 			.appendTo($buttons)
 			.text( _loc('Cancel') )
-			.click(function(){
+			.on("click",function(){
 				$('#'+dialogId).dialog('close');
 				return false;
 			});
@@ -233,7 +233,7 @@
 		$('<button>')
 			.appendTo($buttons)
 			.text( _loc('Load Info From Database') )
-			.click(function(){
+			.on("click",function(){
 				loadDatabaseInfo();
 				return false;
 			});
@@ -241,7 +241,7 @@
 		$('<button>')
 			.appendTo($buttons)
 			.text( _loc('Load Listing of Media Directory') )
-			.click(function(){
+			.on("click",function(){
 				loadMediaDirectory();
 				return false;
 			});
@@ -249,7 +249,7 @@
 		$('<button>')
 			.appendTo($buttons)
 			.text( _loc('Perform Analysis') )
-			.click(function(){
+			.on("click",function(){
 				performAnalysis();
 				return false;
 			});
@@ -257,7 +257,7 @@
 		$('<button>')
 			.appendTo($buttons)
 			.text( _loc('Commands for removal') )
-			.click(function(){
+			.on("click",function(){
 				reportRemoveCommands();
 				return false;
 			});
@@ -306,7 +306,7 @@
 		$h.find('span').text( _loc('Logs') );
 		$h.find('button')
 			.text( _loc('Clear') )
-			.click(function(){
+			.on("click",function(){
 				logClear();
 				return false;
 			});

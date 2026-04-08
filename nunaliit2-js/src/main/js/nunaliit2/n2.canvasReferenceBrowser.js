@@ -146,14 +146,14 @@ var ReferenceBrowserCanvas = $n2.Class({
 			$elem
 				.empty()
 				.addClass('n2ReferenceBrowserCanvas')
-				.click(function(e){
+				.on("click",function(e){
 					_this._backgroundClicked();
 				});
 			
 			$('<button>')
 				.text(_loc('Export CSV'))
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					_this._exportCsv();
 					return false;
 				});
@@ -176,7 +176,7 @@ var ReferenceBrowserCanvas = $n2.Class({
 					.attr('href','#')
 					.attr('data-schema-name',schemaName)
 					.appendTo($th)
-					.click(function(){
+					.on("click",function(){
 						var $a = $(this);
 						var schemaName = $a.attr('data-schema-name');
 						_this._sortOnCriteria(schemaName);
@@ -207,7 +207,7 @@ var ReferenceBrowserCanvas = $n2.Class({
 								.attr('href','#')
 								.attr('n2-doc-id',docId)
 								.appendTo($td)
-								.click(function(){
+								.on("click",function(){
 									var $a = $(this);
 									var docId = $a.attr('n2-doc-id');
 									_this._select(docId);
