@@ -17,7 +17,7 @@ To create a new release of the project:
 To bump versions:
 1. Bump the pom.xml versions: `mvn versions:set -DgenerateBackupPoms=false -DnewVersion=1.2.3`  
 2. Add and commit the affected pom.xml files `git add ...` `git commit -m '...'`
-3. Create an annotated tag: `git tag -a 1.2.3 -m '...'`
+3. Create an annotated tag on the relevant commit in the main branch (likely post-PR merge): `git tag -a 1.2.3 -m '...'`
 4. Push the tag: `git push origin 1.2.3`
 
 
