@@ -186,6 +186,29 @@ public class DocumentFile implements Document {
 	}
 
 	@Override
+	public String getSchema() {
+		if( null != jsonObj ) {
+			return jsonObj.optString("nunaliit_schema", null);
+		}
+		return null;
+	}
+
+	@Override
+	public Collection<String> getLayers() {
+		if( null != jsonObj ) {
+			JSONArray layersJsonArray = jsonObj.optJSONArray("nunaliit_layers");
+			List<String> layers = new ArrayList<>();
+			if(layersJsonArray != null) {
+				for(Object l: layersJsonArray) {
+					layers.add((String)l);
+				}
+			}
+			return layers;
+		}
+		return null;
+	}
+
+	@Override
 	public Collection<Attachment> getAttachments() {
 		return new ArrayList<Attachment>(attachmentsByName.values());
 	}

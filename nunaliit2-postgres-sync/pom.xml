@@ -69,18 +69,18 @@
 	<dependency>
 		<groupId>org.jdbi</groupId>
 		<artifactId>jdbi3-postgres</artifactId>
-		<version>3.52.0</version>
+		<version>${jdbi.version}</version>
 		<scope>compile</scope>
 	</dependency>
 	<dependency>
 		<groupId>org.jdbi</groupId>
 		<artifactId>jdbi3-postgis</artifactId>
-		<version>3.52.0</version>
+		<version>${jdbi.version}</version>
 	</dependency>
 	<dependency>
 		<groupId>org.jdbi</groupId>
 		<artifactId>jdbi3-core</artifactId>
-		<version>3.52.0</version>
+		<version>${jdbi.version}</version>
 		<scope>compile</scope>
 	</dependency>
   </dependencies>

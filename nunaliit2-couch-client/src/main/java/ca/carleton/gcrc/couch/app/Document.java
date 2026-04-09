@@ -12,6 +12,10 @@ public interface Document {
 	
 	String getRevision();
 
+	String getSchema();
+
+	Collection<String> getLayers();
+
 	JSONObject getJSONObject();
 
 	Collection<Attachment> getAttachments();

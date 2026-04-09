@@ -3,6 +3,7 @@ package ca.carleton.gcrc.couch.utils;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -51,6 +52,15 @@ public class NunaliitDocument implements Document {
 		return wrapped.getJSONObject();
 	}
 
+	@Override
+	public String getSchema() {
+		return wrapped.getSchema();
+	}
+
+	@Override
+	public Collection<String> getLayers() {
+		return wrapped.getLayers();
+	}
 	@Override
 	public Collection<Attachment> getAttachments() {
 		return wrapped.getAttachments();

@@ -4,8 +4,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,6 +94,29 @@ public class DocumentCouchDb implements Document {
 		if( null != jsonObj ) {
 			String id = jsonObj.optString("_rev");
 			return id;
+		}
+		return null;
+	}
+
+	@Override
+	public String getSchema() {
+		if( null != jsonObj ) {
+			return jsonObj.optString("nunaliit_schema", null);
+		}
+		return null;
+	}
+
+	@Override
+	public Collection<String> getLayers() {
+		if( null != jsonObj ) {
+			JSONArray layersJsonArray = jsonObj.optJSONArray("nunaliit_layers");
+			List<String> layers = new ArrayList<>();
+			if(layersJsonArray != null) {
+				for(Object l: layersJsonArray) {
+					layers.add((String)l);
+				}
+			}
+			return layers;
 		}
 		return null;
 	}
