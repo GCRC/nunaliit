@@ -95,7 +95,7 @@
 			 ){
 				var $debugUpdateTestButton = $('<button>Update Test</button>');
 				$buttons.append($debugUpdateTestButton);
-				$debugUpdateTestButton.click(function(){
+				$debugUpdateTestButton.on("click",function(){
 					config.getCurrentDb({
 						onSuccess: function(currentDb_){
 							var db = currentDb_.getDb();
@@ -119,7 +119,7 @@
 			 ){
 				var $debugCaptureVideoTestButton = $('<button>Capture Video Test</button>');
 				$buttons.append($debugCaptureVideoTestButton);
-				$debugCaptureVideoTestButton.click(function(){
+				$debugCaptureVideoTestButton.on("click",function(){
                     $n2.mobileDebug.debugCaptureVideoTest({
                     	config: config
                     	,onSuccess: debugPageRefresh
@@ -133,7 +133,7 @@
 			 ){
 				var $debugCaptureAudioTestButton = $('<button>Capture Audio Test</button>');
 				$buttons.append($debugCaptureAudioTestButton);
-				$debugCaptureAudioTestButton.click(function(){
+				$debugCaptureAudioTestButton.on("click",function(){
                     $n2.mobileDebug.debugCaptureAudioTest({
                     	config: config
                     	,onSuccess: debugPageRefresh
@@ -148,7 +148,7 @@
 				var $debugButton = $('<button>Video URI Test</button>');
 				$buttons.append($debugButton);
 				$buttons.append( $('<div id="debugVideoUriContainer"></div>') );
-				$debugButton.click(function(){
+				$debugButton.on("click",function(){
                     $n2.mobileDebug.debugVideoUriTest({
                     	config: config
                     	,container: 'debugVideoUriContainer'
@@ -163,7 +163,7 @@
 			 ){
 				var $debugButton = $('<button>Upload Video Test</button>');
 				$buttons.append($debugButton);
-				$debugButton.click(function(){
+				$debugButton.on("click",function(){
                     $n2.mobileDebug.debugUploadVideoTest({
                     	config: config
                     	,onSuccess: debugPageRefresh
@@ -284,7 +284,7 @@
 							+connectionLabel+'</label>') );
 				};
 				
-				$list.find('.mobileSettingsRadio').bind('change',settingsPageSetCurrent);
+				$list.find('.mobileSettingsRadio').on('change',settingsPageSetCurrent);
 				$list.trigger('create');
 				jqmRefreshPage();
 			};
@@ -348,7 +348,7 @@
 		
 		// +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*
 		function addDatabasePageRefresh(){
-			$('#database_name').focus();
+			$('#database_name').trigger("focus");
 			jqmRefreshPage();
 		};
 
@@ -405,7 +405,7 @@
 //		$('#mobileRemoveDbPage').live('pagebeforeshow',removeDatabasePageRefresh);
 //		$('#mobileDebugPage').live('pagebeforeshow',debugPageRefresh);
 		
-		$(document).bind('pagebeforeshow',function(e,data){
+		$(document).on('pagebeforeshow',function(e,data){
 			var $toPage = $(e.target);
 			var id = $toPage.attr('id');
 
@@ -422,7 +422,7 @@
 		
 		// Listen for any attempts to call changePage().
 		var viewDocRe = /^.*\/([^\/]*)$/;
-		$(document).bind( 'pagebeforechange', function( e, data ) {
+		$(document).on( 'pagebeforechange', function( e, data ) {
 			if( typeof(data.toPage) === 'string' ) {
 				// Get last portion of URL
 				var viewMatched = data.toPage.match(viewDocRe);

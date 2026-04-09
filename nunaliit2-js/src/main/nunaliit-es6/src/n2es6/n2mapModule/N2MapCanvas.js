@@ -501,7 +501,7 @@ class N2MapCanvas {
 			.attr('type', 'button')
 			.addClass('n2map_map_interaction_switch')
 			.val(this.modes.NAVIGATE.buttonValue)
-			.click((evt) => {
+			.on("click",(evt) => {
 				this._clickedMapInteractionSwitch(evt);
 			});
 

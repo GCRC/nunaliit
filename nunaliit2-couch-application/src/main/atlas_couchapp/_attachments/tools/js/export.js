@@ -220,7 +220,7 @@ function showButtons(opts_){
 	$('<button>')
 		.text( _loc('Show') )
 		.appendTo( $div )
-		.click(function(){
+		.on("click",function(){
 			var $formatSel = $('#'+formatSelId);
 			var format = $formatSel.val();
 			showDocs({
@@ -234,7 +234,7 @@ function showButtons(opts_){
 	$('<button>')
 		.text( _loc('Download') )
 		.appendTo( $div )
-		.click(function(){
+		.on("click",function(){
 			var $formatSel = $('#'+formatSelId);
 			var format = $formatSel.val();
 			downloadDocs({
@@ -349,7 +349,7 @@ function methodChanged($select){
 						$sel.append($o);
 					};
 					
-					$sel.change(function(){
+					$sel.on("change",function(){
 						var $sel = $(this);
 						schemaSelected($sel);
 						return true;
@@ -399,7 +399,7 @@ function methodChanged($select){
 						};
 					};
 					
-					$sel.change(function(){
+					$sel.on("change",function(){
 						var $sel = $(this);
 						layerSelected($sel);
 						return true;
@@ -429,7 +429,7 @@ function installMethodButton(){
 	var $select = $('<select>')
 		.addClass('exportControls_methodSelector')
 		.appendTo($controls)
-		.change(function(){
+		.on("change",function(){
 			var $sel = $(this);
 			methodChanged($sel);
 			return true;

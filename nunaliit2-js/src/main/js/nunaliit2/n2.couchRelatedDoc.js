@@ -91,7 +91,7 @@ var CreateDocWidget = $n2.Class({
 		$('<button>')
 			.text( this.label )
 			.appendTo($elem)
-			.click(function(){
+			.on("click",function(){
 				_this._createDocClicked();
 			});
 	},
@@ -235,9 +235,9 @@ var Editor = $n2.Class({
 		// OK
 		$('<button>')
 			.text( _loc('OK') )
-			.button({icons:{primary:'ui-icon-check'}})
+			.button({icon:'ui-icon-check'})
 			.appendTo($diagContent)
-			.click(function(){
+			.on("click",function(){
 				_this._clickOK();
 				return false;
 			});
@@ -245,9 +245,9 @@ var Editor = $n2.Class({
 		// Cancel
 		$('<button>')
 			.text( _loc('Cancel') )
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.button({icon:'ui-icon-cancel'})
 			.appendTo( $diagContent )
-			.click(function(){
+			.on("click",function(){
 				_this._clickCancel();
 				return false;
 			});
@@ -376,9 +376,9 @@ var Editor = $n2.Class({
 
 		$('<button>')
 			.text( _loc('Cancel') )
-			.button({icons:{primary:'ui-icon-cancel'}})
+			.button({icon:'ui-icon-cancel'})
 			.appendTo( $content )
-			.click(function(){
+			.on("click",function(){
 				_this._clickCancel();
 				return false;
 			});
@@ -719,7 +719,7 @@ var CreateRelatedDocProcess = $n2.Class({
 			};
 			
 			$select.insertBefore($placeHolder)
-				.change(function(){
+				.on("change",function(){
 					var val = $(this).val();
 					$(this).val('');
 					if( val && val.length > 0 ) {

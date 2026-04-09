@@ -42,7 +42,7 @@
 			$buttons.find('span').text( _loc('Logs') );
 			$buttons.find('button')
 				.text( _loc('Clear') )
-				.click(function(){
+				.on("click",function(){
 					_this.clear();
 					return false;
 				});
@@ -173,7 +173,7 @@
 			$('<button>')
 				.text( _loc('Refresh') )
 				.appendTo($buttons)
-				.click(function(){
+				.on("click",function(){
 					_this._refreshSubmissions();
 					return false;
 				});
@@ -367,7 +367,7 @@
 					.addClass('n2_button_ok')
 					.text( _loc('OK') )
 					.appendTo($buttons)
-					.click(function(){
+					.on("click",function(){
 						var $diag = $('#'+diagId);
 						
 						var comment = $diag.find('textarea.submission_approve_dialog_message').val();
@@ -383,7 +383,7 @@
 					.addClass('n2_button_cancel')
 					.text( _loc('Cancel') )
 					.appendTo($buttons)
-					.click(function(){
+					.on("click",function(){
 						var $diag = $('#'+diagId);
 						$diag.dialog('close');
 					});
@@ -478,7 +478,7 @@
 					.addClass('n2_button_ok')
 					.text( _loc('OK') )
 					.appendTo($buttons)
-					.click(function(){
+					.on("click",function(){
 						var $diag = $('#'+diagId);
 						
 						var comment = $diag.find('textarea.submission_deny_dialog_reason').val();
@@ -494,7 +494,7 @@
 					.addClass('n2_button_cancel')
 					.text( _loc('Cancel') )
 					.appendTo($buttons)
-					.click(function(){
+					.on("click",function(){
 						var $diag = $('#'+diagId);
 						$diag.dialog('close');
 					});
@@ -783,7 +783,7 @@
 			$('<button>')
 				.text( _loc('View') )
 				.appendTo($views)
-				.click(function(){
+				.on("click",function(){
 					_this._viewMerging(subDocId);
 					return false;
 				});
@@ -1095,7 +1095,7 @@
 					.addClass('n2_button_approve')
 					.text( _loc('Approve') )
 					.appendTo($buttons)
-					.click(function(){
+					.on("click",function(){
 						_this._approve(subDocId, proposedDoc, function() {
 							var $diag = $('#'+diagId);
 							$diag.dialog('close');
@@ -1106,7 +1106,7 @@
 					.addClass('n2_button_deny')
 					.text( _loc('Reject') )
 					.appendTo($buttons)
-					.click(function(){
+					.on("click",function(){
 						_this._deny(subDocId,function(){
 							var $diag = $('#'+diagId);
 							$diag.dialog('close');
@@ -1118,7 +1118,7 @@
 						.addClass('n2_button_original')
 						.text( _loc('View Original') )
 						.appendTo($buttons)
-						.click(function(){
+						.on("click",function(){
 							_this._viewOriginal(subDocId);
 							return false;
 						});
@@ -1128,7 +1128,7 @@
 						.addClass('n2_button_submitted')
 						.text( _loc('View Submitted') )
 						.appendTo($buttons)
-						.click(function(){
+						.on("click",function(){
 							_this._viewSubmitted(subDocId);
 							return false;
 						});
@@ -1138,7 +1138,7 @@
 						.addClass('n2_button_manual')
 						.text( _loc('Edit Proposed Document') )
 						.appendTo($buttons)
-						.click(function(){
+						.on("click",function(){
 							editProposedDocument(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
 							return false;
 						});
@@ -1147,7 +1147,7 @@
 					.addClass('n2_button_cancel')
 					.text( _loc('Cancel') )
 					.appendTo($buttons)
-					.click(function(){
+					.on("click",function(){
 						var $diag = $('#'+diagId);
 						$diag.dialog('close');
 						return false;
@@ -1233,7 +1233,7 @@
 					.addClass('n2_button_save')
 					.text( _loc('Save') )
 					.appendTo($buttons)
-					.click(function(){
+					.on("click",function(){
 						var updatedDoc = editor.getDocument();
 						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, updatedDoc, subDoc);
 						return false;
@@ -1242,7 +1242,7 @@
 					.addClass('n2_button_cancel')
 					.text( _loc('Cancel') )
 					.appendTo($buttons)
-					.click(function(){
+					.on("click",function(){
 						displayDocuments(diagId, originalDoc, submittedDoc, currentDoc, proposedDoc, subDoc);
 						return false;
 					});

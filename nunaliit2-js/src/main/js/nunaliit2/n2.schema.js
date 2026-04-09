@@ -1769,7 +1769,7 @@ var Form = $n2.Class({
 					_this._installCustomType($elem, $(this),_this.obj,_this.callback);
 				});
 				
-				$divEvent.click(function(e){
+				$divEvent.on("click",function(e){
 					var $clicked = $(e.target);
 					var classString = $clicked.attr('class');
 					var classNames = null;
@@ -1872,7 +1872,7 @@ var Form = $n2.Class({
 						var fieldWrapper = $clicked.children()[$clicked.children().length-1];
 						var fieldContainer = $(fieldWrapper).children[0];
 						var input = $(fieldContainer).children[0];
-						$(input).focus();
+						$(input).trigger("focus");
 					}
 					else if( $clicked.hasClass('n2schema_array_item_up') ){
 						// Push item earlier in array
@@ -1943,7 +1943,7 @@ var Form = $n2.Class({
 					.filter(':visible');
 
 				if ($focusableElements.length) {
-					$focusableElements.first().focus();
+					$focusableElements.first().trigger("focus");
 				}
 			}
 		};
@@ -2057,10 +2057,10 @@ var Form = $n2.Class({
 					,function(obj, selector, value){
 					}
 				);
-			$input.change(changeHandler);
-			//$input.blur(handler);
+			$input.on("change",changeHandler);
+			//$input.on("blur",handler);
 			if( 'date' !== classInfo.type ){ // no key up event for date text boxes
-				$input.keyup(keyupHandler);
+				$input.on("keyup",keyupHandler);
 			};
 			
 			// Set value
@@ -2068,9 +2068,9 @@ var Form = $n2.Class({
 			var type = $input.attr('type');
 			if( 'checkbox' === type ) {
 				if( value ) {
-					$input.attr('checked',true);
+					$input.prop('checked',true);
 				} else {
-					$input.attr('checked',false);
+					$input.prop('checked',false);
 				};
 
 			} 
@@ -2084,8 +2084,8 @@ var Form = $n2.Class({
 					delay: 300,
 					minLength: 3
 				});
-				$input.keypress(function(event){
-					if(event.keyCode == 13){
+				$input.on("keypress", function(event){
+					if(event.key === "Enter"){
 						event.preventDefault();
 						_this._addTag($(event.target), $elem);
 					}
@@ -2121,7 +2121,7 @@ var Form = $n2.Class({
 				$input.val(value);
 
 				// On key down, save previous value
-				$input.keydown(function(event) {
+				$input.on("keydown",function(event) {
 					var $input = $(this);
 					
 					var val = $input.val();
@@ -2132,7 +2132,7 @@ var Form = $n2.Class({
 
 				// On key up, verify that new value is correct
 				// Else, restore previous value
-				$input.keyup(function(event) {
+				$input.on("keyup",function(event) {
 					var $input = $(this);
 					
 					var previous = $input.attr('n2Numeric');
@@ -2189,7 +2189,7 @@ var Form = $n2.Class({
 				
 				var getLayersFn = this.functionMap['getLayers'];
 				if( getLayersFn && $input.is('input') ) {
-					$input.focus(function(e, eventParam){
+					$input.on("focus",function(e, eventParam){
 						if( eventParam && eventParam.inhibitCallback ) {
 							return true;
 						};
@@ -2397,7 +2397,7 @@ var Form = $n2.Class({
 			$('<div>')
 				.addClass('n2schema_referenceDelete')
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					var parentObj = parentSelector.getValue(_this.obj);
 					if( $n2.isArray(parentObj) 
 					 && typeof key === 'number' 
@@ -2456,7 +2456,7 @@ var Form = $n2.Class({
 					_this.callback(_this.obj,objSel.selectors,cbValue);
 				};
 			};
-			$input.change(changeHandler);
+			$input.on("change",changeHandler);
 			
 			// Handle focus
 			var focusHandler = {
@@ -2486,16 +2486,23 @@ var Form = $n2.Class({
 				};
 			};
 			if( focusHandler ) {
-				$input.focus(function(e, eventParam){
+				$input.on("focus",function(e, eventParam){
 					var $input = $(this);
 
 					if( $elem.hasClass('n2schema_field_triple') ) {
 						addTripleAttr(true);
 					}
 
-					if( eventParam && eventParam.inhibitCallback ) {
+					/* 
+						Suppress if our custom event parameter, but also 
+						if originalEvent is not present
+						since that means it was programmatically triggered.
+						jQuery UI update around 1.12 made dialogs auto-focus the original element
+						but that causes the dialog to keep opening after it is closed
+					*/
+					if ((eventParam && eventParam.inhibitCallback) || !e.originalEvent) {
 						return true;
-					};
+					}
 					
 					window.setTimeout(function(){
 						focusHandler.fn({
@@ -2550,7 +2557,7 @@ var Form = $n2.Class({
 			$elem.val('');
 		};
 		
-		$elem.change(function(e) {
+		$elem.on("change",function(e) {
 			var $elem = $(this);
 			
 			var parentObj = parentSelector.getValue(_this.obj);

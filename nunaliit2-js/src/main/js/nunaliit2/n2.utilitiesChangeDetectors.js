@@ -69,7 +69,7 @@ var InputChangeDetector = $n2.Class('InputChangeDetector', {
 	
 	startDetector: function(){
 		
-		$('body').change(function(){
+		$('body').on("change",function(){
 			$(this).find('input').each(function(){
 				var $input = $(this);
 				var value = $input.val();

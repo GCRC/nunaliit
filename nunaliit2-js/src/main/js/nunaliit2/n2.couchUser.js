@@ -276,7 +276,7 @@ var UserEditor = $n2.Class({
 			.addClass('n2UserEdit_saveButton')
 			.val( _loc('Save') )
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				_this._save();
 				return false;
 			});
@@ -286,7 +286,7 @@ var UserEditor = $n2.Class({
 			.addClass('n2UserEdit_deleteButton')
 			.val( _loc('Delete') )
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				_this._delete();
 				return false;
 			});
@@ -296,7 +296,7 @@ var UserEditor = $n2.Class({
 			.addClass('n2UserEdit_rolesButton')
 			.val( _loc('Roles') )
 			.appendTo($buttons)
-			.click(function(e){
+			.on("click",function(e){
 				_this._rolesDialog(doc,function(roles){
 					if( roles.length > 0 ){
 						doc.roles = roles;
@@ -313,7 +313,7 @@ var UserEditor = $n2.Class({
 			.addClass('n2UserEdit_passwordButton')
 			.val( _loc('Set Password') )
 			.appendTo($buttons)
-			.click(function(e){
+			.on("click",function(e){
 				_this._passwordDialog();
 				return false;
 			});
@@ -323,7 +323,7 @@ var UserEditor = $n2.Class({
 			.addClass('n2UserEdit_cancelButton')
 			.val( _loc('Cancel') )
 			.appendTo($buttons)
-			.click(function(e){
+			.on("click",function(e){
 				_this._cancel();
 				return false;
 			});
@@ -350,7 +350,7 @@ var UserEditor = $n2.Class({
 		$('<input type="button"/>')
 			.val( _loc('OK') )
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				var $dialog = $('#'+diagId);
 				
 				var roles = [];
@@ -369,7 +369,7 @@ var UserEditor = $n2.Class({
 		$('<input type="button"/>')
 			.val( _loc('Cancel') )
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				$('#'+diagId).dialog('close');
 			})
 			;
@@ -445,7 +445,7 @@ var UserEditor = $n2.Class({
 					.appendTo($div)
 					;
 				if( roleMap[role] ){
-					$input.attr('checked',"checked");
+					$input.prop('checked', true);
 				};
 				
 				$('<label/>')
@@ -500,7 +500,7 @@ var UserEditor = $n2.Class({
 		$('<input type="button"/>')
 			.val( _loc('OK') )
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				var $dialog = $('#'+diagId);
 				
 				var pw1 = $dialog.find('input[name=password]').val();
@@ -529,7 +529,7 @@ var UserEditor = $n2.Class({
 		$('<input type="button"/>')
 			.val( _loc('Cancel') )
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				$('#'+diagId).dialog('close');
 			})
 			;
