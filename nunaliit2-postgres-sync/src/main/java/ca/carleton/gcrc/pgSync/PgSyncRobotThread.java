@@ -2,9 +2,7 @@ package ca.carleton.gcrc.pgSync;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -127,10 +125,6 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 				if (null != docId && !docId.startsWith("org.nunaliit")) {
 					JSONObject def = null;
 					Map<String, Map<String, String>> pgCols = new HashMap<String, Map<String, String>>();
-					// no_of_employee: {
-					// valueKey: 'no_of_employee',
-					// pgType: 'TEXT'
-					// }
 					if (row.has("doc") && row.getJSONObject("doc").has("definition.json")) {
 						def = new JSONObject(row.getJSONObject("doc").getString("definition.json"));
 					} else if (row.has("doc") && row.getJSONObject("doc").has("definition")) {
@@ -354,7 +348,7 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 									Integer layerId;
 									if (layers.containsKey(l)) {
 										layerId = layers.get(l);
-									} else {// could check DB to see if it already exists;
+									} else {
 										layerId = h.select("INSERT INTO n2layers (name) values (?) returning id", l)
 												.mapTo(Integer.class).one();
 										layers.put(l, layerId);
