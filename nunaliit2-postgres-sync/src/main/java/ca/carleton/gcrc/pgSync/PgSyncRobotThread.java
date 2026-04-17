@@ -457,6 +457,7 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 										u.bind("doc_id", pgId);
 										for (String f : fields) {
 											if(fieldTypes.containsKey(f) && fieldTypes.get(f).equals("TextArray")) {
+												@SuppressWarnings("unchecked")
 												List<String> bvList = ((List<Object>)bindVals.get(f)).stream().map(v -> v.toString()).collect(Collectors.toList());;
 												u.bindArray(f, String.class, bvList);
 											} else {
