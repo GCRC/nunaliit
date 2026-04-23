@@ -1,7 +1,9 @@
 package ca.carleton.gcrc.pgSync;
 
 import javax.servlet.ServletConfig;
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -16,6 +18,13 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.couch.client.CouchDb;
+import ca.carleton.gcrc.couch.client.CouchDesignDocument;
+import ca.carleton.gcrc.couch.client.CouchUserDb;
+import ca.carleton.gcrc.couch.user.UserServlet;
+import ca.carleton.gcrc.couch.user.UserServletActions;
+import ca.carleton.gcrc.couch.user.db.UserRepository;
+import ca.carleton.gcrc.couch.user.db.UserRepositoryCouchDb;
 import ca.carleton.gcrc.json.servlet.JsonServlet;
 
 @SuppressWarnings("serial")
@@ -24,25 +33,26 @@ public class PgSyncServlet extends JsonServlet {
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private PgSyncServletConfiguration configuration = null;
-	private PgSyncActions actions = null;
+	private UserServletActions userServletActions = null;
 	private PgSyncRobotThread robot = null;
-
 	public PgSyncServlet() {
 
 	}
 
 	public void init(ServletConfig config) throws ServletException {
 		super.init(config);
+		logger.info(this.getClass().getSimpleName()+" servlet initialization - start");
 
 		// Pick up configuration
-		Object configurationObj = config.getServletContext().getAttribute(PgSyncServletConfiguration.CONFIGURATION_KEY);
+		ServletContext context = config.getServletContext();
+		Object configurationObj = context.getAttribute(PgSyncServletConfiguration.CONFIGURATION_KEY);
 		if (null == configurationObj) {
 			throw new ServletException("Can not find configuration object");
 		}
 		if (configurationObj instanceof PgSyncServletConfiguration) {
 			configuration = (PgSyncServletConfiguration) configurationObj;
 
-			actions = new PgSyncActions(configuration.getPgConnectString(), configuration.getPostgresUser(),
+			PgSyncActions actions = new PgSyncActions(configuration.getPgConnectString(), configuration.getPostgresUser(),
 					configuration.getPostgresPass(), configuration.getCouchDb(),
 					configuration.getAtlasDesignDocument());
 			actions.recreateBaseN2Tables();
@@ -57,6 +67,31 @@ public class PgSyncServlet extends JsonServlet {
 
 		} else {
 			throw new ServletException("Invalid class for configuration: " + configurationObj.getClass().getName());
+		}
+
+		CouchUserDb userDb = getAttributeFromConfig(context, UserServlet.ConfigAttributeName_UserDb, CouchUserDb.class);
+		CouchDesignDocument userDesignDocument;
+		try {
+			userDesignDocument = userDb.getDesignDocument("nunaliit_user");
+		} catch (Exception e) {
+			throw new ServletException("Unable to create user design document.", e);
+		}
+		String atlasName = getAttributeFromConfig(context, UserServlet.ConfigAttributeName_AtlasName, String.class);
+		UserRepository userRepository = new UserRepositoryCouchDb(userDb, userDesignDocument);
+		CouchDb documentDb = getAttributeFromConfig(context, UserServlet.ConfigAttributeName_DocumentDb, CouchDb.class);
+		userServletActions = new UserServletActions(atlasName, documentDb, userRepository, null);
+		logger.info(this.getClass().getSimpleName()+" servlet initialization - completed");
+	}
+
+	private <T>T getAttributeFromConfig(ServletContext context, String attributeKey, Class<T> attributeType) throws ServletException {
+		Object obj = context.getAttribute(attributeKey);
+		if( null == obj ){
+			throw new ServletException("Document database is not specified ("+attributeKey+")");
+		}
+		try {
+			return attributeType.cast(obj);
+		} catch (ClassCastException e) {
+			throw new ServletException("Unexpected object for document database: "+obj.getClass().getName());
 		}
 	}
 
@@ -73,19 +108,19 @@ public class PgSyncServlet extends JsonServlet {
 		}
 	}
 
-	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+	protected void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		try {
-			List<String> paths = computeRequestPath(request);
+			List<String> paths = computeRequestPath(req);
 
 			if (paths.size() < 1) {
-				doGetWelcome(request, response);
+				doGetWelcome(req, resp);
 
 			} else if (paths.size() == 1
 					&& "getInfo".equals(paths.get(0))) {
-				response.setContentType("text/plain");
-				response.setCharacterEncoding("utf-8");
-				OutputStream os = response.getOutputStream();
+				resp.setContentType("text/plain");
+				resp.setCharacterEncoding("utf-8");
+				OutputStream os = resp.getOutputStream();
 				OutputStreamWriter osw = new OutputStreamWriter(os, "utf-8");
 				PrintWriter pw = new PrintWriter(osw);
 
@@ -97,7 +132,27 @@ public class PgSyncServlet extends JsonServlet {
 				throw new Exception("Unrecognized request");
 			}
 		} catch (Exception e) {
-			reportError(e, response);
+			reportError(e, resp);
+		}
+	}
+
+	@Override
+	protected void doPut(
+			HttpServletRequest req
+			,HttpServletResponse resp
+			) throws ServletException, IOException {
+				try {
+					List<String> paths = computeRequestPath(req);
+					if(paths.size() == 1 && "reload".equals(paths.get(0))) {
+						Cookie[] cookies = req.getCookies();
+						if(!userServletActions.isUserAdmin(cookies)) {
+							resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
+							return;
+						}
+						robot.runSyncAllDocs();
+					}
+				} catch (Exception e) {
+			reportError(e, resp);
 		}
 	}
 

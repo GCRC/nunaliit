@@ -566,6 +566,9 @@ public class UserServletActions {
 	}
 
 	public boolean isUserAdmin(Cookie[] cookies) throws Exception {
+		if(cookies == null || cookies.length == 0) {
+			return false;
+		}
 		CouchAuthenticationContext context = userRepository.getRolesFromAuthentication(cookies);
 		List<String> roles = context.getRoles();
 		
