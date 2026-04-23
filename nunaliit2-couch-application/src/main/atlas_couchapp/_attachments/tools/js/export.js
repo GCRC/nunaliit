@@ -450,7 +450,45 @@ function installMethodButton(){
 		.appendTo($controls);
 	
 	methodChanged($select);
+
+	$.ajax({
+		url: '../servlet/pgsync',
+		dataType: 'json',
+		success: function() {
+			installPgButtons();
+		},
+		error: function() {
+			console.error('PG Sync is not available on this atlas');
+		}
+	})
 };
+
+function installPgButtons() {
+	var $pgSync = $('.exportControls');
+	$('<button>')
+		.text( _loc('Start PG Reload') )
+		.appendTo( $pgSync )
+		.on("click",function(){
+			$.ajax({
+				url: '../servlet/pgsync/reload',
+				method: 'put',
+				dataType: 'json',
+				success: function() {
+					$('.exportResult').html('<div>Postgres reload started</div>');
+				},
+				error: function(e) {
+					if(e.status === 403) {
+						reportError("You do not have permissions to start postgres reload");
+					} else if(e.status === 404) {
+						reportError("Server doesn't support postgres");
+					} else {
+						reportError("Server error starting postgres reload");
+					}
+				}
+			})
+			return false;
+		});
+}
 
 function reportError(err){
 	var $e = $('.exportError');

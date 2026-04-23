@@ -63,4 +63,11 @@ public class PgSyncServletConfiguration {
 	public void setAtlasDesignDocument(CouchDesignDocument atlasDesign) {
 		this.atlasDesignDocument = atlasDesign;
 	}
+
+	public boolean isPostgresEnabled() {
+		return postgresDb != null && !postgresDb.isEmpty() &&
+				postgresUser != null && !postgresUser.isEmpty() &&
+				postgresPass != null && !postgresPass.isEmpty() &&
+				postgresHost != null && !postgresHost.isEmpty();
+	}
 }

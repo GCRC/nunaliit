@@ -275,12 +275,10 @@ public class CommandRun implements Command {
         }
 
 		// Servlet for postgres sync
-		if(atlasProperties.isPostgresEnabled()) {
-			{
-				ServletHolder servletHolder = new ServletHolder(new PgSyncServlet());
-				servletHolder.setInitOrder(2);
-				context.addServlet(servletHolder,"/servlet/pgsync/*");
-			}
+		{
+			ServletHolder servletHolder = new ServletHolder(new PgSyncServlet());
+			servletHolder.setInitOrder(2);
+			context.addServlet(servletHolder,"/servlet/pgsync/*");
 		}
 
 		// index.html servlet

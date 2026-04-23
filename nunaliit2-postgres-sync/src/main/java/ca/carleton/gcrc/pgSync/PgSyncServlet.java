@@ -52,17 +52,19 @@ public class PgSyncServlet extends JsonServlet {
 		if (configurationObj instanceof PgSyncServletConfiguration) {
 			configuration = (PgSyncServletConfiguration) configurationObj;
 
-			PgSyncActions actions = new PgSyncActions(configuration.getPgConnectString(), configuration.getPostgresUser(),
-					configuration.getPostgresPass(), configuration.getCouchDb(),
-					configuration.getAtlasDesignDocument());
-			actions.recreateBaseN2Tables();
+			if(configuration.isPostgresEnabled()) {
+				PgSyncActions actions = new PgSyncActions(configuration.getPgConnectString(), configuration.getPostgresUser(),
+						configuration.getPostgresPass(), configuration.getCouchDb(),
+						configuration.getAtlasDesignDocument());
+				actions.recreateBaseN2Tables();
 
-			try {
-				robot = new PgSyncRobotThread(configuration.getCouchDb(), configuration.getAtlasDesignDocument(),
-						actions);
-				robot.start();
-			} catch (Exception e) {
-				throw new ServletException("Unable to start pg sync robot", e);
+				try {
+					robot = new PgSyncRobotThread(configuration.getCouchDb(), configuration.getAtlasDesignDocument(),
+							actions);
+					robot.start();
+				} catch (Exception e) {
+					throw new ServletException("Unable to start pg sync robot", e);
+				}
 			}
 
 		} else {
@@ -149,7 +151,15 @@ public class PgSyncServlet extends JsonServlet {
 							resp.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden");
 							return;
 						}
+						if(!configuration.isPostgresEnabled()) {
+							resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service not found");
+							return;
+						}
 						robot.runSyncAllDocs();
+						JSONObject result = new JSONObject();
+						result.put("ok", true);
+						result.put("message", "pg sync started");
+						sendJsonResponse(resp, result);
 					}
 				} catch (Exception e) {
 			reportError(e, resp);
@@ -157,10 +167,27 @@ public class PgSyncServlet extends JsonServlet {
 	}
 
 	private void doGetWelcome(HttpServletRequest request, HttpServletResponse resp) throws Exception {
-		JSONObject result = new JSONObject();
-		result.put("ok", true);
-		result.put("service", "pg sync");
-		sendJsonResponse(resp, result);
+		if(configuration.isPostgresEnabled()) {
+			JSONObject result = new JSONObject();
+			result.put("ok", true);
+			result.put("service", "pg sync");
+			sendJsonResponse(resp, result);
+		} else {
+			JSONObject result = new JSONObject();
+			result.put("ok", false);
+			result.put("service", "pg sync");
+			result.put("error", "service not available");
+			resp.setStatus(404);
+			resp.setContentType("application/json");
+			resp.setCharacterEncoding("utf-8");
+			resp.addHeader("Cache-Control", "no-cache");
+			resp.addHeader("Pragma", "no-cache");
+			resp.addHeader("Expires", "-1");
+			OutputStreamWriter osw = new OutputStreamWriter(resp.getOutputStream(), "UTF-8");
+			result.write(osw);
+			osw.flush();
+		}
+		
 	}
 
 	protected List<String> computeRequestPath(HttpServletRequest req) throws Exception {

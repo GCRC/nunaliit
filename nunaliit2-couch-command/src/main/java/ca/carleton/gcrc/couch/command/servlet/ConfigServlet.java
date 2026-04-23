@@ -269,7 +269,7 @@ public class ConfigServlet extends JsonServlet {
 		try {
 			initPgSync(servletContext);
 		} catch(ServletException e) {
-			logger.error("Error while initializing date service",e);
+			logger.error("Error while initializing pg sync service",e);
 			throw e;
 		}
 

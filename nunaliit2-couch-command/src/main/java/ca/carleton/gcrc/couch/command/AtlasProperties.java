@@ -497,13 +497,6 @@ public class AtlasProperties {
 		this.googleMapApiKey = googleMapApiKey;
 	}
 
-	public boolean isPostgresEnabled() {
-		return postgresDb != null && !postgresDb.isEmpty() &&
-				postgresUser != null && !postgresUser.isEmpty() &&
-				postgresPassword != null && !postgresPassword.isEmpty() &&
-				postgresHost != null && !postgresHost.isEmpty();
-	}
-
 	public String getPostgresUser() {
 		return postgresUser;
 	}
