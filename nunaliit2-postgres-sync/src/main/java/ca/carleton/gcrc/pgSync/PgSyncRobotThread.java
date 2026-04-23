@@ -28,7 +28,8 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 	private PgSyncActions actions;
 	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
 	private ConcurrentLinkedQueue<String> changeDocs;
-	private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+	private int configScheduleFixedRate = -1; //TODO move to configuration
 
 	public PgSyncRobotThread(CouchDb couchDb, CouchDesignDocument atlasDesign, PgSyncActions actions) throws Exception {
 		// this.couchDb = couchDb;
@@ -43,8 +44,9 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 		Runnable syncAllDocsTask = () -> {
 			this.syncAllDocs();
 		};
-		scheduler.scheduleAtFixedRate(syncAllDocsTask, 0, 4, TimeUnit.HOURS);
-
+		if(configScheduleFixedRate > 0) {
+			scheduler.scheduleAtFixedRate(syncAllDocsTask, 0, configScheduleFixedRate, TimeUnit.MINUTES);
+		}
 	}
 
 	public void shutdown() {
@@ -82,6 +84,13 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 			logger.info("Doc changed " + docId);
 			changeDocs.add(docId);
 		}
+	}
+
+	public void runSyncAllDocs() {
+		Runnable syncAllDocsTask = () -> {
+			this.syncAllDocs();
+		};
+		scheduler.schedule(syncAllDocsTask, 0, TimeUnit.SECONDS);
 	}
 
 	private void syncAllDocs() {
