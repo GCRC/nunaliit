@@ -719,6 +719,10 @@ class N2MapCanvas {
 					, _suppressSetHash: _this._suppressSetHash
 				});
 				customMap.getView().fit(boundInProj, { size: customMap.getSize() });
+				_this.dispatchService.send(DH, {
+					type: 'mapInitialized',
+					mapControl: this
+				});
 			});
 		}
 
@@ -1871,7 +1875,8 @@ nunaliit2.n2es6 = {
 	ol_sphere_getArea: getArea,
 	ol_sphere_getLength: getLength,
 	ol_sphere_getDistance: getDistance,
-	ol_format_WKT: WKT
+	ol_format_WKT: WKT,
+	ol_Control: Control
 };
 
 nunaliit2.canvasMap = {
