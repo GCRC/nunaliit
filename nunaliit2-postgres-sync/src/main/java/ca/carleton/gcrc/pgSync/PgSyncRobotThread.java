@@ -30,6 +30,7 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 	private ConcurrentLinkedQueue<String> changeDocs;
 	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 	private int configScheduleFixedRate = -1; //TODO move to configuration
+	private boolean lastSyncSuccess = true;
 
 	public PgSyncRobotThread(CouchDb couchDb, CouchDesignDocument atlasDesign, PgSyncActions actions) throws Exception {
 		// this.couchDb = couchDb;
@@ -93,13 +94,19 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 		scheduler.schedule(syncAllDocsTask, 0, TimeUnit.SECONDS);
 	}
 
+	public boolean getLastSyncSuccess() {
+		return lastSyncSuccess;
+	}
+
 	private void syncAllDocs() {
 		logger.info("Syncing all docs to postgres");
 		pgReloading.set(true);
 		try {
 			actions.syncAllDocs();
+			lastSyncSuccess = true;
 		} catch (Exception e) {
 			logger.error("Error syncing couchdb and postgres db", e);
+			lastSyncSuccess = false;
 			return;
 		} finally {
 			pgReloading.set(false);
