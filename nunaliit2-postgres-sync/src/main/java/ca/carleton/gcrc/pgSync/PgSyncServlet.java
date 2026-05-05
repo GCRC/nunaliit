@@ -74,7 +74,9 @@ public class PgSyncServlet extends JsonServlet {
 		UserRepository userRepository = new UserRepositoryCouchDb(userDb, userDesignDocument);
 		CouchDb documentDb = getAttributeFromConfig(context, UserServlet.ConfigAttributeName_DocumentDb, CouchDb.class);
 		userServletActions = new UserServletActions(atlasName, documentDb, userRepository, null);
-		logger.info(this.getClass().getSimpleName() + " servlet initialization - completed");
+		if(!configuration.isPostgresEnabled()) {
+			logger.info(this.getClass().getSimpleName() + " servlet initialization - completed");
+		}
 	}
 
 	private <T> T getAttributeFromConfig(ServletContext context, String attributeKey, Class<T> attributeType)
