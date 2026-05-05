@@ -1410,11 +1410,15 @@ var AuthService = $n2.Class({
 		this._fillDialogWithLogin(dialogId, {
 			prompt: opts.prompt
 			,onSuccess: function(context){
-				$('#'+dialogId).dialog('close');
+				if ($('#'+dialogId).dialog('instance') !== undefined) {
+					$('#'+dialogId).dialog('close');
+				}
 				opts.onSuccess(context);
 			}
 			,onError: function(err){
-				$('#'+dialogId).dialog('close');
+				if ($('#'+dialogId).dialog('instance') !== undefined) {
+					$('#'+dialogId).dialog('close');
+				}
 				opts.onError(err);
 			}
 		});
@@ -1425,7 +1429,9 @@ var AuthService = $n2.Class({
 			,width: 'auto'
 			,close: function(event, ui){
 				var diag = $('#'+dialogId);
-				diag.remove();
+				if (diag.dialog('instance') !== undefined) {
+					diag.remove();
+				}
 			}
 		};
 		if( opts.prompt ) {
