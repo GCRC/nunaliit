@@ -1889,6 +1889,89 @@ public class SchemaAttribute {
 			exportArr.put(attrExport);
 		}
 	}
+
+	public void addPgField(JSONArray exportArr, String schemaName) throws Exception {
+
+		if (excludedFromExport)
+			return;
+		if ("title".equals(type))
+			return;
+
+		if ("checkbox_group".equals(type)) {
+			for(CheckboxGroupItem box: checkboxes) {
+				JSONObject attrExport = new JSONObject();
+				attrExport.put("field", id + "_" + box.getId());
+				attrExport.put("type", "boolean");
+				attrExport.put("select", schemaName+"."+id+"."+box.getId());
+				exportArr.put(attrExport);
+			}
+			return;
+		}
+
+		JSONObject attrExport = new JSONObject();
+		attrExport.put("field", id);
+		if ("string".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "string");
+		} else if ("numeric".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "number");
+		} else if ("localized".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("strategy", "table");
+			attrExport.put("type", "localized");
+		} else if ("date".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "date");
+		} else if ("reference".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "reference");
+		} else if ("array".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "array");
+			attrExport.put("elementType", elementType);
+			attrExport.put("strategy", "array");
+		} else if ("tag".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "tag");
+		} else if ("selection".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "selection");
+		} else if ("checkbox".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "checkbox");
+		} else if ("file".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "file");
+		} else if ("geometry".equals(type)) {
+			if(id == null) {
+				return;
+			}
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "geometry");
+		} else if ("hover_sound".equals(type)) {
+			attrExport.put("select", "nunaliit_hoverSound");
+			attrExport.put("type", "hover_sound");
+		} else if ("key_media_ref".equals(type)) {
+			attrExport.put("select", "nunaliit_key_media_ref");
+			attrExport.put("type", "key_media_ref");
+		} else if ("triple".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "triple");
+		} else if ("createdBy".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "createdBy");
+		} else if ("createdTime".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "createdTime");
+		} else if ("custom".equals(type)) {
+			attrExport.put("select", schemaName+"."+id);
+			attrExport.put("type", "custom");
+		} else {
+			attrExport.put("type", "json");
+		}
+		exportArr.put(attrExport);
+	}
 	
 	private String encodeFieldParameter(String value) throws Exception {
 		String encoded = URLEncoder.encode(value, "UTF-8");

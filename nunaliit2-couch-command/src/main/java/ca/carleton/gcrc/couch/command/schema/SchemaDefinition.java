@@ -488,6 +488,42 @@ public class SchemaDefinition {
 				}
 			}
 		}
+
+		// pgExport.json
+		{
+			boolean eraseFile = false;
+			File file = new File(schemaDir, "pgExport.json");
+			FileOutputStream fos = null;
+			try {
+				fos = new FileOutputStream(file);
+				OutputStreamWriter osw = new OutputStreamWriter(fos);
+				JSONArray jsonExport = computePgFields();
+				osw.write( jsonExport.toString(4).replace("    ", "\t") );
+				osw.flush();
+				fos.flush();
+				fos.close();
+				fos = null;
+			} catch(Exception e) {
+				eraseFile = true;
+				throw new Exception("Error while creating file "+file,e);
+			} finally {
+				if( null != fos ){
+					try {
+						fos.close();
+					} catch(Exception e) {
+						// Ignore
+					}
+				}
+				// Do not leave file in invalid state
+				try {
+					if( eraseFile ){
+						file.delete();
+					}
+				} catch(Exception e) {
+					// ignore
+				}
+			}
+		}
 	}
 
 	public JSONObject toJson() throws Exception {
@@ -584,6 +620,17 @@ public class SchemaDefinition {
 		}
 		
 		return jsonExport;
+	}
+
+	public JSONArray computePgFields() throws Exception {
+		JSONArray fields = new JSONArray();
+
+		String schemaName = getSchemaName();
+		for(SchemaAttribute attribute : attributes){
+			attribute.addPgField(fields, schemaName);
+		}
+		
+		return fields;
 	}
 	
 	public void printBrief(PrintWriter pw) throws Exception {
