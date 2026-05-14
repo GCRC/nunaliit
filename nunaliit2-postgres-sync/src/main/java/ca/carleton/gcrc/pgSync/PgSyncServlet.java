@@ -179,7 +179,7 @@ public class PgSyncServlet extends JsonServlet {
 					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service not found");
 					return;
 				}
-				robot.runSyncAllDocs();
+				robot.runSyncAllDocs(0L);
 				JSONObject result = new JSONObject();
 				result.put("ok", true);
 				result.put("message", "pg sync started");

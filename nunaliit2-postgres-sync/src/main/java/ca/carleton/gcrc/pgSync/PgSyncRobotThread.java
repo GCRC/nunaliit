@@ -3,12 +3,14 @@ package ca.carleton.gcrc.pgSync;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import ca.carleton.gcrc.couch.app.impl.DocumentCouchDb;
 import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbChangeListener;
 import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
@@ -31,6 +33,7 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 	private int configScheduleFixedRate = -1; //TODO move to configuration
 	private boolean lastSyncSuccess = true;
+	private ScheduledFuture<?> scheduledPgReload;
 
 	public PgSyncRobotThread(CouchDb couchDb, CouchDesignDocument atlasDesign, PgSyncActions actions) throws Exception {
 		// this.couchDb = couchDb;
@@ -80,22 +83,48 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 
 	@Override
 	public void change(
-			CouchDbChangeListener.Type type, String docId, String rev, JSONObject rawChange, JSONObject doc) {
+			CouchDbChangeListener.Type type, String docId, String rev, JSONObject rawChange, JSONObject d) {
+		DocumentCouchDb doc;
+		try {
+			doc = actions.getDocument(docId);
+		} catch (Exception e) {
+			logger.error("Error fetching document " + docId + " for postgres sync");
+			return;
+		}
+		
 		synchronized (this) {
-			logger.info("Doc changed " + docId);
-			changeDocs.add(docId);
+			if(doc.getJSONObject().has("nunaliit_type") && doc.getJSONObject().getString("nunaliit_type").equals("schema")) {
+				if(scheduledPgReload != null && scheduledPgReload.getDelay(TimeUnit.MILLISECONDS) > 0) {
+					logger.info("Doc " + docId + " changed, reload already scheduled"); //TODO change to debug
+				} else {
+					runSyncAllDocs(15L);
+				}
+			} else if (doc.getJSONObject().has("nunaliit_schema")) {
+				logger.info("Secheduling reload for doc");
+				logger.info(doc.getJSONObject().toString());
+				scheduleDocReload(docId);
+			} else {
+				logger.info("Can't sync doc with id " + docId + " with type " + doc.getJSONObject().optString("nunaliit_type") + " and schema " + doc.getSchema());
+			}
 		}
 	}
 
-	public void runSyncAllDocs() {
+	public void runSyncAllDocs(Long delayInSeconds) {
 		Runnable syncAllDocsTask = () -> {
 			this.syncAllDocs();
 		};
-		scheduler.schedule(syncAllDocsTask, 0, TimeUnit.SECONDS);
+		scheduledPgReload = scheduler.schedule(syncAllDocsTask, delayInSeconds, TimeUnit.SECONDS);
 	}
 
 	public boolean getLastSyncSuccess() {
 		return lastSyncSuccess;
+	}
+
+	private void scheduleDocReload(String docId) {
+		Runnable reloadDocTask = () -> {
+			actions.reloadDoc(docId);
+		};
+		scheduler.schedule(reloadDocTask,0, TimeUnit.SECONDS);
 	}
 
 	private void syncAllDocs() {

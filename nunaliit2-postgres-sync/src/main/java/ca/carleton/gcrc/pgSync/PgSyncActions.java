@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
 import org.jdbi.v3.core.statement.Update;
 import org.jdbi.v3.postgres.PostgresPlugin;
@@ -52,7 +53,7 @@ public class PgSyncActions {
 
 	public void recreateBaseN2Tables() {
 		jdbi.useHandle(handle -> {
-			// handle.execute("DROP SCHEMA IF EXISTS n2 CASCADE");
+			handle.execute("DROP SCHEMA IF EXISTS n2 CASCADE");
 			handle.execute("CREATE SCHEMA IF NOT EXISTS n2");
 			handle.execute("CREATE EXTENSION IF NOT EXISTS postgis");
 		});
@@ -116,6 +117,27 @@ public class PgSyncActions {
 		logger.info("Done syncing all docs to postgres");
 	}
 
+	public void reloadDoc(String docId) {
+		try {
+			DocumentCouchDb doc = DocumentCouchDb.documentFromCouchDb(couchDb, docId);
+			String docSchema = doc.getSchema();
+			if (!schemas.containsKey(docSchema)) {
+				logger.error("Can't sync document " + docId + " with postgres, schema " + docSchema + " not syncable");
+			}
+			jdbi.useHandle(h -> {
+				h.execute("DELETE FROM n2.docs WHERE id = ?", docId);
+				insertDoc(doc, docSchema, h);
+			});
+			logger.info("Doc " + docId + " synced to postgres DB");
+		} catch (Exception e) {
+			logger.error("Error attempting to sync doc with id " + docId + " to postgres DB", e);
+		}
+	}
+
+	public DocumentCouchDb getDocument(String docId) throws Exception {
+		return DocumentCouchDb.documentFromCouchDb(couchDb, docId);
+	}
+
 	private void deletePgData() {
 		jdbi.useHandle(handle -> {
 			handle.execute("TRUNCATE n2.docs RESTART IDENTITY CASCADE;");
@@ -167,17 +189,18 @@ public class PgSyncActions {
 						} else if (aType.equalsIgnoreCase("localized")) {
 							String loc_type = "table";
 							String[] loc_langs = new String[0];
-							if(att.has("strategy") && att.getString("strategy").equals("column")){
-								if(att.has("language_codes") && att.getJSONArray("language_codes").length() > 0) {
+							if (att.has("strategy") && att.getString("strategy").equals("column")) {
+								if (att.has("language_codes") && att.getJSONArray("language_codes").length() > 0) {
 									loc_type = "column";
-									 loc_langs = new String[att.getJSONArray("language_codes").length()];
-									for(int i=0; i < att.getJSONArray("language_codes").length(); i++) {
+									loc_langs = new String[att.getJSONArray("language_codes").length()];
+									for (int i = 0; i < att.getJSONArray("language_codes").length(); i++) {
 										loc_langs[i] = att.getJSONArray("language_codes").getString(i);
 									}
 								} else {
-									logger.error("Localized strategy columns requires language codes definition. Reverting to table strategy.");
+									logger.error(
+											"Localized strategy columns requires language codes definition. Reverting to table strategy.");
 								}
-								
+
 							}
 							if (loc_type.equals("table")) {
 								HashMap<String, Object> colDef = new HashMap<String, Object>();
@@ -312,10 +335,10 @@ public class PgSyncActions {
 								"doc_id character varying(255) PRIMARY KEY REFERENCES n2.docs(id) ON UPDATE CASCADE ON DELETE CASCADE");
 
 						for (String colName : pgCols.keySet()) {
-							String pgType = (String)pgCols.get(colName).get("pgType");
-							String n2Type = (String)pgCols.get(colName).get("n2Type");
+							String pgType = (String) pgCols.get(colName).get("pgType");
+							String n2Type = (String) pgCols.get(colName).get("n2Type");
 							if (n2Type != null && n2Type.equals("localized") && pgType.equals("TEXT")) {
-								String[] loc_langs = (String[])pgCols.get(colName).get("languageCodes");
+								String[] loc_langs = (String[]) pgCols.get(colName).get("languageCodes");
 								for (String lang : loc_langs) {
 									fields.add(colName + "_" + lang + " " + pgType);
 								}
@@ -356,219 +379,223 @@ public class PgSyncActions {
 		});
 	}
 
+	private void insertDoc(DocumentCouchDb doc, String schemaName, Handle h) throws Exception {
+		if (doc != null && doc.getJSONObject() != null) {
+			String docId = doc.getId();
+			String geom = null;
+			Attachment geomOrig = null;
+			for (Attachment a : doc.getAttachments()) {
+				if (a.getName().startsWith("nunaliit2_geom_") && a.getName().endsWith("_original")) {
+					geomOrig = a;
+					break;
+				}
+			}
+			if (geomOrig != null) {
+				BufferedReader in = new BufferedReader(
+						new InputStreamReader(geomOrig.getInputStream()));
+				String inputLine;
+				StringBuffer geomContent = new StringBuffer();
+				while ((inputLine = in.readLine()) != null) {
+					geomContent.append(inputLine);
+				}
+				in.close();
+				geom = geomContent.toString();
+			} else if (doc.getJSONObject().has("nunaliit_geom")) {
+				JSONObject nunaliit_geom = doc.getJSONObject().optJSONObject("nunaliit_geom", null);
+				if (nunaliit_geom != null) {
+					geom = nunaliit_geom.optString("wkt", null);
+				}
+			}
+			try {
+				h.execute("INSERT INTO n2.docs " +
+						"(id, nunaliit_rev, nunaliit_schema, nunaliit_values, nunaliit_geom) values " +
+						"(?, ?, ?, CAST(? AS jsonb), ST_GeomFromText(?))",
+						docId, doc.getRevision(), doc.getSchema(), doc.getJSONObject().toString(), geom);
+
+				for (String l : doc.getLayers()) {
+					Integer layerId;
+					if (layerCache.containsKey(l)) {
+						layerId = layerCache.get(l);
+					} else {
+						layerId = h.select("INSERT INTO n2.layers (name) values (?) returning id", l)
+								.mapTo(Integer.class).one();
+						layerCache.put(l, layerId);
+					}
+					h.execute("INSERT INTO n2.docs_layers (doc_id, layer_id) VALUES (?, ?)", docId,
+							layerId);
+				}
+
+				if (doc.getJSONObject().has("nunaliit_source")) {
+					JSONObject nsrc = doc.getJSONObject().getJSONObject("nunaliit_source");
+					if (nsrc.has("doc")) {
+						String tid = nsrc.getString("doc");
+						String[] idPair = { docId, tid };
+						n2Sources.add(idPair);
+					}
+				}
+
+				if (doc.getJSONObject().has(("nunaliit_relations"))) {
+					JSONArray nrels = doc.getJSONObject().getJSONArray("nunaliit_relations");
+					for (Object nrelObj : nrels) {
+						if (!(nrelObj instanceof JSONObject)) {
+							logger.error("Doc " + docId
+									+ " has malformed nunaliit_relations, expected array of objects");
+							continue;
+						}
+						JSONObject rel = (JSONObject) nrelObj;
+						String[] link = { docId, rel.getString("doc") };
+						n2Relations.add(link);
+					}
+				}
+
+				if (doc.getJSONObject().has(schemaName)) {
+					Map<String, Map<String, Object>> pgInfo = schemas.get(schemaName);
+					String insStatment = "INSERT INTO n2." + schemaName;
+					List<String> fields = new ArrayList<String>();
+					List<String> stmtVals = new ArrayList<String>();
+					Map<String, String> fieldTypes = new HashMap<String, String>();
+					Map<String, Object> bindVals = new HashMap<String, Object>();
+					JSONObject attributeJsonObject = doc.getJSONObject().getJSONObject(schemaName);
+					for (String colName : pgInfo.keySet()) {
+						if (attributeJsonObject.has(colName)) {
+							String colPgType = (String) pgInfo.get(colName).get("pgType");
+							String refTbl = (String) pgInfo.get(colName).get("tableName");
+							String joinName = (String) pgInfo.get(colName).get("joinName");
+							String n2Type = (String) pgInfo.get(colName).get("n2Type");
+							if (colPgType.equals("REF")) {
+								if (n2Type.equals("TAG")) {
+									JSONObject tagObj = attributeJsonObject.getJSONObject(colName);
+									JSONArray tagVals = tagObj.getJSONArray("tags");
+									Set<String> uTagVals = new HashSet<String>();
+									for (Object tag : tagVals) {
+										String t = (String) tag;
+										uTagVals.add(t);
+									}
+									for (Object tag : uTagVals) {
+										Integer refId;
+										Optional<Integer> optRefId = h
+												.select("SELECT id FROM " + refTbl
+														+ " WHERE LOWER(value) = LOWER(?)",
+														tag)
+												.mapTo(Integer.class)
+												.findFirst();
+										if (optRefId.isPresent()) {
+											refId = optRefId.get();
+										} else {
+											refId = h
+													.select("INSERT INTO " + refTbl
+															+ "(value) VALUES (?) returning id",
+															tag)
+													.mapTo(Integer.class)
+													.one();
+										}
+										h.execute(
+												"INSERT INTO " + joinName
+														+ " (doc_id, link_id) VALUES (?, ?)",
+												docId, refId);
+									}
+								} else if (n2Type.equals("localized")) {
+									Object val = attributeJsonObject.get(colName);
+									String locInsQ = "INSERT INTO " + joinName
+											+ " (doc_id, text, code) VALUES (?, ?, ?)";
+									if (val instanceof String) { // no localized object
+										String text = val.toString();
+										h.execute(locInsQ, docId, text, "en");
+									} else if (val instanceof JSONObject) {
+										JSONObject locVal = (JSONObject) val;
+										for (String lk : locVal.keySet()) {
+											if (lk.equals("nunaliit_type")) {
+												continue;
+											}
+											h.execute(locInsQ, docId, locVal.get(lk).toString(), lk.toString());
+										}
+									}
+								}
+							} else if (colPgType.equals("TEXT") && n2Type != null
+									&& n2Type.equals("localized")) {
+								Object val = attributeJsonObject.get(colName);
+								String[] loc_langs = (String[]) pgInfo.get(colName).get("languageCodes");
+								for (String lang : loc_langs) {
+									String langColName = colName + "_" + lang;
+									fields.add(langColName);
+									stmtVals.add(":" + langColName);
+									if (val instanceof String) { // no localized object
+										String text = val.toString();
+										bindVals.put(langColName, text);
+									} else if (val instanceof JSONObject) {
+										JSONObject locVal = (JSONObject) val;
+										String text = locVal.optString("lang");
+										bindVals.put(langColName, text);
+									}
+								}
+							} else {
+								fields.add(colName);
+								stmtVals.add(":" + colName);
+								if (pgInfo.get(colName).containsKey("n2Type")
+										&& pgInfo.get(colName).get("n2Type").equals("date")) {
+									Object val = attributeJsonObject.getJSONObject(colName).getString("date");
+									bindVals.put(colName, val);
+								} else if (colPgType.equals("TEXT")) {
+									Object val = attributeJsonObject.get(colName).toString();
+									bindVals.put(colName, val);
+								} else if (colPgType.equals("TEXT[]")) {
+									Object val = attributeJsonObject.get(colName);
+									if (val instanceof JSONArray) {
+										List<Object> vals = ((JSONArray) val).toList();
+										fieldTypes.put(colName, "TextArray");
+										if (vals.isEmpty()) {
+											fields.remove(colName);
+											stmtVals.remove(":" + colName);
+										} else {
+											bindVals.put(colName, vals);
+										}
+									} else {
+										logger.error("Can't insert non-array value when expecting array: "
+												+ val.toString());
+									}
+								} else {
+									Object val = attributeJsonObject.get(colName);
+									bindVals.put(colName, val);
+								}
+							}
+						}
+					}
+					if (fields.size() > 0) {
+						insStatment += " ( doc_id, " + String.join(", ", fields) + ") ";
+						insStatment += " VALUES ( :doc_id, " + String.join(", ", stmtVals) + ")";
+						Update u = h.createUpdate(insStatment);
+						u.bind("doc_id", docId);
+						for (String f : fields) {
+							if (fieldTypes.containsKey(f) && fieldTypes.get(f).equals("TextArray")) {
+								@SuppressWarnings("unchecked")
+								List<String> bvList = ((List<Object>) bindVals.get(f)).stream()
+										.map(v -> v.toString()).collect(Collectors.toList());
+								;
+								u.bindArray(f, String.class, bvList);
+							} else {
+								u.bind(f, bindVals.get(f));
+							}
+						}
+						u.execute();
+					} else {
+						logger.info("Nothing to insert for doc " + docId);
+					}
+				}
+			} catch (Exception e) {
+				logger.error("Error inserting document", e);
+				logger.error(doc.getJSONObject().toString());
+			}
+		} else {
+			logger.error("Failed to fetch doc with id " + doc.getId());
+		}
+	}
+
 	private void syncDocsForSchema(CouchQueryResults schemaDocs, String schemaName) throws Exception {
 		jdbi.useHandle(h -> {
 			for (JSONObject row : schemaDocs.getRows()) {
 				String docId = row.optString("id");
 				DocumentCouchDb doc = DocumentCouchDb.documentFromCouchDb(couchDb, docId);
-				if (doc != null && doc.getJSONObject() != null) {
-					String geom = null;
-					Attachment geomOrig = null;
-					for (Attachment a : doc.getAttachments()) {
-						if (a.getName().startsWith("nunaliit2_geom_") && a.getName().endsWith("_original")) {
-							geomOrig = a;
-							break;
-						}
-					}
-					if (geomOrig != null) {
-						BufferedReader in = new BufferedReader(
-								new InputStreamReader(geomOrig.getInputStream()));
-						String inputLine;
-						StringBuffer geomContent = new StringBuffer();
-						while ((inputLine = in.readLine()) != null) {
-							geomContent.append(inputLine);
-						}
-						in.close();
-						geom = geomContent.toString();
-					} else if (doc.getJSONObject().has("nunaliit_geom")) {
-						JSONObject nunaliit_geom = doc.getJSONObject().optJSONObject("nunaliit_geom", null);
-						if (nunaliit_geom != null) {
-							geom = nunaliit_geom.optString("wkt", null);
-						}
-					}
-					try {
-						h.execute("INSERT INTO n2.docs " +
-								"(id, nunaliit_rev, nunaliit_schema, nunaliit_values, nunaliit_geom) values " +
-								"(?, ?, ?, CAST(? AS jsonb), ST_GeomFromText(?))",
-								docId, doc.getRevision(), doc.getSchema(), doc.getJSONObject().toString(), geom);
-
-						for (String l : doc.getLayers()) {
-							Integer layerId;
-							if (layerCache.containsKey(l)) {
-								layerId = layerCache.get(l);
-							} else {
-								layerId = h.select("INSERT INTO n2.layers (name) values (?) returning id", l)
-										.mapTo(Integer.class).one();
-								layerCache.put(l, layerId);
-							}
-							h.execute("INSERT INTO n2.docs_layers (doc_id, layer_id) VALUES (?, ?)", docId,
-									layerId);
-						}
-
-						if (doc.getJSONObject().has("nunaliit_source")) {
-							JSONObject nsrc = doc.getJSONObject().getJSONObject("nunaliit_source");
-							if (nsrc.has("doc")) {
-								String tid = nsrc.getString("doc");
-								String[] idPair = { docId, tid };
-								n2Sources.add(idPair);
-							}
-						}
-
-						if (doc.getJSONObject().has(("nunaliit_relations"))) {
-							JSONArray nrels = doc.getJSONObject().getJSONArray("nunaliit_relations");
-							for (Object nrelObj : nrels) {
-								if (!(nrelObj instanceof JSONObject)) {
-									logger.error("Doc " + docId
-											+ " has malformed nunaliit_relations, expected array of objects");
-									continue;
-								}
-								JSONObject rel = (JSONObject) nrelObj;
-								String[] link = { docId, rel.getString("doc") };
-								n2Relations.add(link);
-							}
-						}
-
-						if (doc.getJSONObject().has(schemaName)) {
-							Map<String, Map<String, Object>> pgInfo = schemas.get(schemaName);
-							String insStatment = "INSERT INTO n2." + schemaName;
-							List<String> fields = new ArrayList<String>();
-							List<String> stmtVals = new ArrayList<String>();
-							Map<String, String> fieldTypes = new HashMap<String, String>();
-							Map<String, Object> bindVals = new HashMap<String, Object>();
-							JSONObject attributeJsonObject = doc.getJSONObject().getJSONObject(schemaName);
-							for (String colName : pgInfo.keySet()) {
-								if (attributeJsonObject.has(colName)) {
-									String colPgType = (String)pgInfo.get(colName).get("pgType");
-									String refTbl = (String)pgInfo.get(colName).get("tableName");
-									String joinName = (String)pgInfo.get(colName).get("joinName");
-									String n2Type = (String)pgInfo.get(colName).get("n2Type");
-									if (colPgType.equals("REF")) {
-										if (n2Type.equals("TAG")) {
-											JSONObject tagObj = attributeJsonObject.getJSONObject(colName);
-											JSONArray tagVals = tagObj.getJSONArray("tags");
-											Set<String> uTagVals = new HashSet<String>();
-											for (Object tag : tagVals) {
-												String t = (String) tag;
-												uTagVals.add(t);
-											}
-											for (Object tag : uTagVals) {
-												Integer refId;
-												Optional<Integer> optRefId = h
-														.select("SELECT id FROM " + refTbl
-																+ " WHERE LOWER(value) = LOWER(?)",
-																tag)
-														.mapTo(Integer.class)
-														.findFirst();
-												if (optRefId.isPresent()) {
-													refId = optRefId.get();
-												} else {
-													refId = h
-															.select("INSERT INTO " + refTbl
-																	+ "(value) VALUES (?) returning id",
-																	tag)
-															.mapTo(Integer.class)
-															.one();
-												}
-												h.execute(
-														"INSERT INTO " + joinName
-																+ " (doc_id, link_id) VALUES (?, ?)",
-														docId, refId);
-											}
-										} else if (n2Type.equals("localized")) {
-											Object val = attributeJsonObject.get(colName);
-											String locInsQ = "INSERT INTO " + joinName
-													+ " (doc_id, text, code) VALUES (?, ?, ?)";
-											if (val instanceof String) { // no localized object
-												String text = val.toString();
-												h.execute(locInsQ, docId, text, "en");
-											} else if (val instanceof JSONObject) {
-												JSONObject locVal = (JSONObject) val;
-												for (String lk : locVal.keySet()) {
-													if (lk.equals("nunaliit_type")) {
-														continue;
-													}
-													h.execute(locInsQ, docId, locVal.get(lk).toString(), lk.toString());
-												}
-											}
-										}
-									} else if (colPgType.equals("TEXT") && n2Type != null
-											&& n2Type.equals("localized")) {
-										Object val = attributeJsonObject.get(colName);
-										String[] loc_langs = (String[])pgInfo.get(colName).get("languageCodes");
-										for (String lang : loc_langs) {
-											String langColName = colName + "_" + lang;
-											fields.add(langColName);
-											stmtVals.add(":" + langColName);
-											if (val instanceof String) { // no localized object
-												String text = val.toString();
-												bindVals.put(langColName, text);
-											} else if (val instanceof JSONObject) {
-												JSONObject locVal = (JSONObject) val;
-												String text = locVal.optString("lang");
-												bindVals.put(langColName, text);
-											}
-										}
-									} else {
-										fields.add(colName);
-										stmtVals.add(":" + colName);
-										if (pgInfo.get(colName).containsKey("n2Type")
-												&& pgInfo.get(colName).get("n2Type").equals("date")) {
-											Object val = attributeJsonObject.getJSONObject(colName).getString("date");
-											bindVals.put(colName, val);
-										} else if (colPgType.equals("TEXT")) {
-											Object val = attributeJsonObject.get(colName).toString();
-											bindVals.put(colName, val);
-										} else if (colPgType.equals("TEXT[]")) {
-											Object val = attributeJsonObject.get(colName);
-											if (val instanceof JSONArray) {
-												List<Object> vals = ((JSONArray) val).toList();
-												fieldTypes.put(colName, "TextArray");
-												if (vals.isEmpty()) {
-													fields.remove(colName);
-													stmtVals.remove(":" + colName);
-												} else {
-													bindVals.put(colName, vals);
-												}
-											} else {
-												logger.error("Can't insert non-array value when expecting array: "
-														+ val.toString());
-											}
-										} else {
-											Object val = attributeJsonObject.get(colName);
-											bindVals.put(colName, val);
-										}
-									}
-								}
-							}
-							if (fields.size() > 0) {
-								insStatment += " ( doc_id, " + String.join(", ", fields) + ") ";
-								insStatment += " VALUES ( :doc_id, " + String.join(", ", stmtVals) + ")";
-								Update u = h.createUpdate(insStatment);
-								u.bind("doc_id", docId);
-								for (String f : fields) {
-									if (fieldTypes.containsKey(f) && fieldTypes.get(f).equals("TextArray")) {
-										@SuppressWarnings("unchecked")
-										List<String> bvList = ((List<Object>) bindVals.get(f)).stream()
-												.map(v -> v.toString()).collect(Collectors.toList());
-										;
-										u.bindArray(f, String.class, bvList);
-									} else {
-										u.bind(f, bindVals.get(f));
-									}
-								}
-								u.execute();
-							} else {
-								logger.info("Nothing to insert for doc " + docId);
-							}
-						}
-					} catch (Exception e) {
-						logger.error("Error inserting document", e);
-						logger.error(doc.getJSONObject().toString());
-					}
-
-				} else {
-					logger.error("Failed to fetch doc with id " + docId);
-				}
+				insertDoc(doc, schemaName, h);
 			}
 		});
 	}
