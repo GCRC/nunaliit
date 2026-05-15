@@ -20,20 +20,6 @@
   		<version>${junit.version}</version>
   		<scope>test</scope>
   	</dependency>
-   	<dependency>
-   		<groupId>ca.carleton.gcrc</groupId>
-   		<artifactId>nunaliit2-couch-client</artifactId>
-   		<version>${project.version}</version>
-   		<type>jar</type>
-   		<scope>compile</scope>
-   	</dependency>
-	<dependency>
-   		<groupId>ca.carleton.gcrc</groupId>
-   		<artifactId>nunaliit2-json</artifactId>
-   		<version>${project.version}</version>
-   		<type>jar</type>
-   		<scope>compile</scope>
-   	</dependency>
 	<dependency>
   		<groupId>ca.carleton.gcrc</groupId>
   		<artifactId>nunaliit2-couch-utils</artifactId>
@@ -44,12 +30,6 @@
   		<artifactId>nunaliit2-couch-user</artifactId>
   		<version>${project.version}</version>
   	</dependency>
-	<dependency>
-		<groupId>org.apache.jena</groupId>
-		<artifactId>apache-jena-libs</artifactId>
-		<type>pom</type>
-		<version>${jena.version}</version>
-	</dependency>
 	<dependency>
   		<groupId>org.slf4j</groupId>
   		<artifactId>slf4j-api</artifactId>

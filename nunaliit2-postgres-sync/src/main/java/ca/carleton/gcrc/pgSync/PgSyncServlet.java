@@ -54,7 +54,7 @@ public class PgSyncServlet extends JsonServlet {
 			configuration = (PgSyncServletConfiguration) configurationObj;
 
 			if (configuration.isPostgresEnabled()) {
-				setupActionsAndRobot();
+				startRobot();
 			} else {
 				logger.info(this.getClass().getSimpleName() + " servlet not configured");
 			}
@@ -105,21 +105,9 @@ public class PgSyncServlet extends JsonServlet {
 		}
 	}
 
-	private void setupActionsAndRobot() throws ServletException {
-		PgSyncActions actions;
+	private void startRobot() throws ServletException {
 		try {
-			actions = new PgSyncActions(configuration.getPgConnectString(), configuration.getPostgresUser(),
-					configuration.getPostgresPass(), configuration.getCouchDb(),
-					configuration.getAtlasDesignDocument());
-			actions.recreateBaseN2Tables();
-		} catch (Exception e) {
-			logger.error("Error setting up postgres DB", e);
-			return;
-		}
-
-		try {
-			robot = new PgSyncRobotThread(configuration.getCouchDb(), configuration.getAtlasDesignDocument(),
-					actions);
+			robot = new PgSyncRobotThread(configuration, configuration.shouldPostgresRecreateOnStart());
 			robot.start();
 		} catch (Exception e) {
 			throw new ServletException("Unable to start pg sync robot", e);
@@ -129,7 +117,11 @@ public class PgSyncServlet extends JsonServlet {
 	private void reconnect() {
 		destroy();
 		try {
-			setupActionsAndRobot();
+			if(robot != null) {
+				robot.shutdown();
+			}
+			robot = new PgSyncRobotThread(configuration, true);
+			robot.start();
 		} catch (Exception e) {
 			logger.error("Error attempting reconnect to postgres", e);
 		}
@@ -179,7 +171,7 @@ public class PgSyncServlet extends JsonServlet {
 					resp.sendError(HttpServletResponse.SC_NOT_FOUND, "Service not found");
 					return;
 				}
-				robot.runSyncAllDocs(0L);
+				robot.scheduleSyncAllDocs(0L);
 				JSONObject result = new JSONObject();
 				result.put("ok", true);
 				result.put("message", "pg sync started");

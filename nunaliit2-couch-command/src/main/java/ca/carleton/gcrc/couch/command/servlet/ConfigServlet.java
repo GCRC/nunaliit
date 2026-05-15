@@ -929,6 +929,8 @@ public class ConfigServlet extends JsonServlet {
 			config.setPostgresPass(atlasProperties.getPostgresPassword());
 			config.setPostgresPort(atlasProperties.getPostgresPort());
 			config.setPostgresUser(atlasProperties.getPostgresUser());
+			config.setPostgresRecreateOnStart(atlasProperties.isPostgresRecreateOnStart());
+			config.setPostgresSyncOnChange(atlasProperties.isPostgresSyncOnChange());
 			servletContext.setAttribute(PgSyncServletConfiguration.CONFIGURATION_KEY, config);
 
 		} catch(Exception e) {

@@ -17,46 +17,41 @@ import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
 
 public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
-
-	static final public int DELAY_NO_WORK_POLLING = 5 * 1000; // 5 seconds
-	static final public int DELAY_NO_WORK_MONITOR = 60 * 1000; // 1 minute
-	static final public int DELAY_ERROR = 60 * 1000; // 1 minute
-
 	final protected Logger logger = LoggerFactory.getLogger(this.getClass());
 
 	private boolean isShuttingDown = false;
 	private CouchDesignDocument atlasDesign;
 	private AtomicBoolean pgReloading = new AtomicBoolean(false);
 	private PgSyncActions actions;
-	private int noWorkDelayInMs = DELAY_NO_WORK_POLLING;
-	private ConcurrentLinkedQueue<String> changeDocs;
 	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
-	private int configScheduleFixedRate = -1; //TODO move to configuration
 	private boolean lastSyncSuccess = true;
 	private ScheduledFuture<?> scheduledPgReload;
+	private Boolean shouldSyncOnChange;
 
-	public PgSyncRobotThread(CouchDb couchDb, CouchDesignDocument atlasDesign, PgSyncActions actions) throws Exception {
+	public PgSyncRobotThread(PgSyncServletConfiguration config, boolean shouldRecreate) throws Exception {
 		// this.couchDb = couchDb;
-		this.atlasDesign = atlasDesign;
-		this.actions = actions;
-		changeDocs = new ConcurrentLinkedQueue<String>();
+		this.atlasDesign = config.getAtlasDesignDocument();
+		this.shouldSyncOnChange = config.shouldPostgresSyncOnChange();
 
+		actions = new PgSyncActions(config.getPgConnectString(), config.getPostgresUser(),
+					config.getPostgresPass(), config.getCouchDb(),
+					config.getAtlasDesignDocument());
 		CouchDbChangeMonitor changeMonitor = this.atlasDesign.getDatabase().getChangeMonitor();
 		if (null != changeMonitor) {
 			changeMonitor.addChangeListener(this);
 		}
-		Runnable syncAllDocsTask = () -> {
-			this.syncAllDocs();
-		};
-		if(configScheduleFixedRate > 0) {
-			scheduler.scheduleAtFixedRate(syncAllDocsTask, 0, configScheduleFixedRate, TimeUnit.MINUTES);
+		if (shouldRecreate) {
+			Runnable recreateTask = () -> {
+				actions.recreateBaseN2Tables();
+				this.syncAllDocs();
+			};
+			scheduledPgReload = scheduler.schedule(recreateTask, 0, TimeUnit.SECONDS);
 		}
 	}
 
 	public void shutdown() {
-
 		logger.info("Shutting down pg sync worker thread");
-
+		scheduler.shutdownNow();
 		synchronized (this) {
 			isShuttingDown = true;
 			this.notifyAll();
@@ -65,25 +60,29 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 
 	@Override
 	public void run() {
-
 		logger.info("Start postgres sync worker thread");
-
 		boolean done = false;
 		do {
 			synchronized (this) {
 				done = isShuttingDown;
 			}
-			if (false == done) {
-				activity();
-			}
 		} while (false == done);
 
+		try {
+			scheduler.awaitTermination(60L, TimeUnit.SECONDS);
+		} catch (Exception e) {
+			logger.error("Error while waiting for pg sync thread shutdown", e);
+		}
 		logger.info("postgres sync thread exiting");
 	}
 
 	@Override
 	public void change(
 			CouchDbChangeListener.Type type, String docId, String rev, JSONObject rawChange, JSONObject d) {
+		if (!shouldSyncOnChange) {
+			return;
+		}
+
 		DocumentCouchDb doc;
 		try {
 			doc = actions.getDocument(docId);
@@ -91,25 +90,28 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 			logger.error("Error fetching document " + docId + " for postgres sync");
 			return;
 		}
-		
+
 		synchronized (this) {
-			if(doc.getJSONObject().has("nunaliit_type") && doc.getJSONObject().getString("nunaliit_type").equals("schema")) {
-				if(scheduledPgReload != null && scheduledPgReload.getDelay(TimeUnit.MILLISECONDS) > 0) {
-					logger.info("Doc " + docId + " changed, reload already scheduled"); //TODO change to debug
+			if (doc.getJSONObject().has("nunaliit_type")
+					&& doc.getJSONObject().getString("nunaliit_type").equals("schema")) {
+				if (scheduledPgReload != null && scheduledPgReload.getDelay(TimeUnit.MILLISECONDS) > 0) {
+					logger.debug("Doc " + docId + " changed, reload already scheduled");
 				} else {
-					runSyncAllDocs(15L);
+					// Delay for 15 seconds because usually these come in batches and only want to
+					// reload once
+					scheduleSyncAllDocs(15L);
 				}
 			} else if (doc.getJSONObject().has("nunaliit_schema")) {
-				logger.info("Secheduling reload for doc");
-				logger.info(doc.getJSONObject().toString());
+				logger.debug("Scheduling reload for doc " + docId);
 				scheduleDocReload(docId);
 			} else {
-				logger.info("Can't sync doc with id " + docId + " with type " + doc.getJSONObject().optString("nunaliit_type") + " and schema " + doc.getSchema());
+				logger.info("Can't sync doc with id " + docId + " with type "
+						+ doc.getJSONObject().optString("nunaliit_type") + " and schema " + doc.getSchema());
 			}
 		}
 	}
 
-	public void runSyncAllDocs(Long delayInSeconds) {
+	public void scheduleSyncAllDocs(Long delayInSeconds) {
 		Runnable syncAllDocsTask = () -> {
 			this.syncAllDocs();
 		};
@@ -124,7 +126,7 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 		Runnable reloadDocTask = () -> {
 			actions.reloadDoc(docId);
 		};
-		scheduler.schedule(reloadDocTask,0, TimeUnit.SECONDS);
+		scheduler.schedule(reloadDocTask, 0, TimeUnit.SECONDS);
 	}
 
 	private void syncAllDocs() {
@@ -140,36 +142,5 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 		} finally {
 			pgReloading.set(false);
 		}
-	}
-
-	private void activity() {
-		// process all documents for now, will want to change this.
-		if (pgReloading.get() == false && !changeDocs.isEmpty()) {
-			String changedDocId;
-			while ((changedDocId = changeDocs.poll()) != null) {
-				logger.info("Need to fetch and pg sync doc with ID " + changedDocId);
-				changedDocId = changeDocs.poll();
-			}
-		} else {
-			waitMillis(noWorkDelayInMs);
-			return;
-		}
-	}
-
-	private boolean waitMillis(int millis) {
-		synchronized (this) {
-			if (true == isShuttingDown) {
-				return false;
-			}
-
-			try {
-				this.wait(millis);
-			} catch (InterruptedException e) {
-				// Interrupted
-				return false;
-			}
-		}
-
-		return true;
 	}
 }

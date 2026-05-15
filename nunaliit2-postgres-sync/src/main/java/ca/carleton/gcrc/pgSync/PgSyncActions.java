@@ -32,9 +32,7 @@ public class PgSyncActions {
 	private Jdbi jdbi;
 	private CouchDb couchDb;
 	private CouchDesignDocument atlasDesign;
-	private Map<String, Integer> layerCache;
-	private List<String[]> n2Sources;
-	private List<String[]> n2Relations;
+	private Map<String, Integer> layerCache = new HashMap<String, Integer>();;
 	private Map<String, Map<String, Map<String, Object>>> schemas;
 
 	public PgSyncActions(String pgConnectString, String pgUser, String pgPass, CouchDb couchDb,
@@ -99,8 +97,8 @@ public class PgSyncActions {
 		createPgTables(results);
 
 		layerCache = new HashMap<String, Integer>();
-		n2Sources = new ArrayList<>();
-		n2Relations = new ArrayList<>();
+		List<String[]> n2Sources = new ArrayList<>();
+		List<String[]> n2Relations = new ArrayList<>();
 
 		// Loop over schemas and sync docs to postgres
 		for (String schemaName : schemas.keySet()) {
@@ -111,14 +109,18 @@ public class PgSyncActions {
 			query.setIncludeDocs(false);
 
 			CouchQueryResults docResults = atlasDesign.performQuery(query);
-			syncDocsForSchema(docResults, schemaName);
+			syncDocsForSchema(docResults, schemaName, n2Sources, n2Relations);
 		}
-		insertLinks();
+		insertLinks(n2Sources, n2Relations);
 		logger.info("Done syncing all docs to postgres");
 	}
 
 	public void reloadDoc(String docId) {
 		try {
+			if (schemas == null) {
+				CouchQueryResults results = fetchCouchSchemaInfo();
+				createPgTables(results, true);
+			}
 			DocumentCouchDb doc = DocumentCouchDb.documentFromCouchDb(couchDb, docId);
 			String docSchema = doc.getSchema();
 			if (!schemas.containsKey(docSchema)) {
@@ -126,7 +128,10 @@ public class PgSyncActions {
 			}
 			jdbi.useHandle(h -> {
 				h.execute("DELETE FROM n2.docs WHERE id = ?", docId);
-				insertDoc(doc, docSchema, h);
+				List<String[]> n2Sources = new ArrayList<>();
+				List<String[]> n2Relations = new ArrayList<>();
+				insertDoc(doc, docSchema, h, n2Sources, n2Relations);
+				insertLinks(n2Sources, n2Relations);
 			});
 			logger.info("Doc " + docId + " synced to postgres DB");
 		} catch (Exception e) {
@@ -153,6 +158,10 @@ public class PgSyncActions {
 	}
 
 	private void createPgTables(CouchQueryResults couchDocs) {
+		this.createPgTables(couchDocs, false);
+	}
+
+	private void createPgTables(CouchQueryResults couchDocs, Boolean onlyLoadConfig) {
 		schemas = new HashMap<String, Map<String, Map<String, Object>>>();
 		for (JSONObject row : couchDocs.getRows()) {
 			String docId = row.optString("id");
@@ -177,7 +186,7 @@ public class PgSyncActions {
 							continue;
 						}
 						JSONObject att = (JSONObject) a;
-						if (!att.has("field") || !att.has("type")) { // skip non-field attributes
+						if (!att.has("field") || !att.has("type") || !att.has("select")) { // skip non-field attributes
 							continue;
 						}
 						String k = att.getString("field");
@@ -185,6 +194,7 @@ public class PgSyncActions {
 						if (aType.equalsIgnoreCase("string")) {
 							HashMap<String, Object> colDef = new HashMap<String, Object>();
 							colDef.put("pgType", "TEXT");
+							colDef.put("select", att.getString("select"));
 							pgCols.put(k, colDef);
 						} else if (aType.equalsIgnoreCase("localized")) {
 							String loc_type = "table";
@@ -208,6 +218,7 @@ public class PgSyncActions {
 								colDef.put("n2Type", "localized");
 								String joinTbl = newTblName + "_" + k + "_localized";
 								colDef.put("joinName", joinTbl);
+								colDef.put("select", att.getString("select"));
 								pgCols.put(k, colDef);
 								newRefTables.add("DROP TABLE IF EXISTS " + joinTbl);
 								newRefTables.add("CREATE TABLE " + joinTbl + " (" +
@@ -222,12 +233,14 @@ public class PgSyncActions {
 								colDef.put("pgType", "TEXT");
 								colDef.put("n2Type", "localized");
 								colDef.put("languageCodes", loc_langs);
+								colDef.put("select", att.getString("select"));
 								pgCols.put(k, colDef);
 							}
 						} else if (aType.equalsIgnoreCase("date")) {
 							HashMap<String, Object> colDef = new HashMap<String, Object>();
 							colDef.put("pgType", "TEXT");
 							colDef.put("n2Type", "date");
+							colDef.put("select", att.getString("select"));
 							pgCols.put(k, colDef);
 						} else if (aType.equalsIgnoreCase("reference")) {
 							logger.error("PG Sync does not support reference field, found in schema: " + key);
@@ -236,6 +249,7 @@ public class PgSyncActions {
 						} else if (aType.equalsIgnoreCase("array")) {
 							String elType = att.getString("elementType");
 							HashMap<String, Object> colDef = new HashMap<String, Object>();
+							colDef.put("select", att.getString("select"));
 							if (elType.equals("string")) {
 								colDef.put("pgType", "TEXT[]");
 							} else {
@@ -254,6 +268,7 @@ public class PgSyncActions {
 							colDef.put("pgRefType", "TEXT");
 							colDef.put("tableName", refTbl);
 							colDef.put("joinName", joinTbl);
+							colDef.put("select", att.getString("select"));
 							pgCols.put(k, colDef);
 							newRefTables.add("DROP TABLE IF EXISTS " + joinTbl);
 							newRefTables.add("DROP TABLE IF EXISTS " + refTbl);
@@ -270,10 +285,12 @@ public class PgSyncActions {
 						} else if (aType.equalsIgnoreCase("selection")) {
 							HashMap<String, Object> colDef = new HashMap<String, Object>();
 							colDef.put("pgType", "TEXT");
+							colDef.put("select", att.getString("select"));
 							pgCols.put(k, colDef);
 						} else if (aType.equalsIgnoreCase("checkbox")) {
 							HashMap<String, Object> colDef = new HashMap<String, Object>();
 							colDef.put("pgType", "BOOLEAN");
+							colDef.put("select", att.getString("select"));
 							pgCols.put(k, colDef);
 						} else if (aType.equalsIgnoreCase("checkbox_group")) {
 							JSONArray boxes = att.getJSONArray("checkboxes");
@@ -286,6 +303,7 @@ public class PgSyncActions {
 								HashMap<String, Object> colDef = new HashMap<String, Object>();
 								String boxKey = jsonBox.getString("id");
 								colDef.put("pgType", "BOOLEAN");
+								colDef.put("select", att.getString("select"));
 								pgCols.put(boxKey, colDef);
 							}
 						} else if (aType.equalsIgnoreCase("file")) {
@@ -299,6 +317,7 @@ public class PgSyncActions {
 						} else if (aType.equalsIgnoreCase("geometry")) {
 							HashMap<String, Object> colDef = new HashMap<String, Object>();
 							colDef.put("pgType", "geometry");
+							colDef.put("select", att.getString("select"));
 							pgCols.put(k, colDef);
 						} else if (aType.equalsIgnoreCase("hover_sound")) {
 							logger.error("PG Sync does not support hover_sound field, found in schema: " + key);
@@ -328,40 +347,42 @@ public class PgSyncActions {
 						}
 					}
 
-					jdbi.useHandle(handle -> {
-						String createTable = "CREATE TABLE " + newTblName + " (\n";
-						List<String> fields = new ArrayList<String>();
-						fields.add(
-								"doc_id character varying(255) PRIMARY KEY REFERENCES n2.docs(id) ON UPDATE CASCADE ON DELETE CASCADE");
+					if (!onlyLoadConfig) {
+						jdbi.useHandle(handle -> {
+							String createTable = "CREATE TABLE " + newTblName + " (\n";
+							List<String> fields = new ArrayList<String>();
+							fields.add(
+									"doc_id character varying(255) PRIMARY KEY REFERENCES n2.docs(id) ON UPDATE CASCADE ON DELETE CASCADE");
 
-						for (String colName : pgCols.keySet()) {
-							String pgType = (String) pgCols.get(colName).get("pgType");
-							String n2Type = (String) pgCols.get(colName).get("n2Type");
-							if (n2Type != null && n2Type.equals("localized") && pgType.equals("TEXT")) {
-								String[] loc_langs = (String[]) pgCols.get(colName).get("languageCodes");
-								for (String lang : loc_langs) {
-									fields.add(colName + "_" + lang + " " + pgType);
+							for (String colName : pgCols.keySet()) {
+								String pgType = (String) pgCols.get(colName).get("pgType");
+								String n2Type = (String) pgCols.get(colName).get("n2Type");
+								if (n2Type != null && n2Type.equals("localized") && pgType.equals("TEXT")) {
+									String[] loc_langs = (String[]) pgCols.get(colName).get("languageCodes");
+									for (String lang : loc_langs) {
+										fields.add(colName + "_" + lang + " " + pgType);
+									}
+								} else if (!pgType.equals("REF")) {
+									fields.add(colName + " " + pgType);
 								}
-							} else if (!pgType.equals("REF")) {
-								fields.add(colName + " " + pgType);
 							}
-						}
-						createTable += String.join(", ", fields);
-						createTable += ");";
+							createTable += String.join(", ", fields);
+							createTable += ");";
 
-						handle.execute("DROP TABLE IF EXISTS " + newTblName);
-						handle.execute(createTable);
-						for (String modTblStmt : newRefTables) {
-							handle.execute(modTblStmt);
-						}
-					});
+							handle.execute("DROP TABLE IF EXISTS " + newTblName);
+							handle.execute(createTable);
+							for (String modTblStmt : newRefTables) {
+								handle.execute(modTblStmt);
+							}
+						});
+					}
 				}
 				schemas.put(key, pgCols);
 			}
 		}
 	}
 
-	private void insertLinks() {
+	private void insertLinks(List<String[]> n2Sources, List<String[]> n2Relations) {
 		jdbi.useHandle(h -> {
 			for (String[] n2src : n2Sources) {
 				Integer cnt = h.select("SELECT COUNT(id) FROM n2.docs WHERE id = ?", n2src[1]).mapTo(Integer.class)
@@ -379,7 +400,31 @@ public class PgSyncActions {
 		});
 	}
 
-	private void insertDoc(DocumentCouchDb doc, String schemaName, Handle h) throws Exception {
+	private boolean docHasSelector(JSONObject doc, String selector) {
+		String selectorParts[] = selector.split("\\.", 2);
+		if(selectorParts.length == 1) {
+			return doc.has(selectorParts[0]);
+		} else if (doc.has(selectorParts[0])) {
+			JSONObject innerDoc = doc.getJSONObject(selectorParts[0]);
+			return docHasSelector(innerDoc, selectorParts[1]);
+		} else {
+			return false;
+		}
+	} 
+
+	private Object getDocValue(JSONObject doc, String selector) {
+		String selectorParts[] = selector.split("\\.", 2);
+		if(selectorParts.length == 1) {
+			return doc.get(selectorParts[0]);
+		} else if (doc.has(selectorParts[0])) {
+			JSONObject innerDoc = doc.getJSONObject(selectorParts[0]);
+			return getDocValue(innerDoc, selectorParts[1]);
+		} else {
+			return null;
+		}
+	}
+
+	private void insertDoc(DocumentCouchDb doc, String schemaName, Handle h, List<String[]> n2Sources, List<String[]> n2Relations) throws Exception {
 		if (doc != null && doc.getJSONObject() != null) {
 			String docId = doc.getId();
 			String geom = null;
@@ -455,16 +500,17 @@ public class PgSyncActions {
 					List<String> stmtVals = new ArrayList<String>();
 					Map<String, String> fieldTypes = new HashMap<String, String>();
 					Map<String, Object> bindVals = new HashMap<String, Object>();
-					JSONObject attributeJsonObject = doc.getJSONObject().getJSONObject(schemaName);
+					JSONObject docJson = doc.getJSONObject();
 					for (String colName : pgInfo.keySet()) {
-						if (attributeJsonObject.has(colName)) {
+						String selector = (String) pgInfo.get(colName).get("select");
+						if (docHasSelector(docJson, selector)) {
 							String colPgType = (String) pgInfo.get(colName).get("pgType");
 							String refTbl = (String) pgInfo.get(colName).get("tableName");
 							String joinName = (String) pgInfo.get(colName).get("joinName");
 							String n2Type = (String) pgInfo.get(colName).get("n2Type");
 							if (colPgType.equals("REF")) {
 								if (n2Type.equals("TAG")) {
-									JSONObject tagObj = attributeJsonObject.getJSONObject(colName);
+									JSONObject tagObj = (JSONObject)getDocValue(docJson, selector);
 									JSONArray tagVals = tagObj.getJSONArray("tags");
 									Set<String> uTagVals = new HashSet<String>();
 									for (Object tag : tagVals) {
@@ -495,7 +541,7 @@ public class PgSyncActions {
 												docId, refId);
 									}
 								} else if (n2Type.equals("localized")) {
-									Object val = attributeJsonObject.get(colName);
+									Object val = getDocValue(docJson, selector);
 									String locInsQ = "INSERT INTO " + joinName
 											+ " (doc_id, text, code) VALUES (?, ?, ?)";
 									if (val instanceof String) { // no localized object
@@ -513,7 +559,7 @@ public class PgSyncActions {
 								}
 							} else if (colPgType.equals("TEXT") && n2Type != null
 									&& n2Type.equals("localized")) {
-								Object val = attributeJsonObject.get(colName);
+								Object val = getDocValue(docJson, selector);
 								String[] loc_langs = (String[]) pgInfo.get(colName).get("languageCodes");
 								for (String lang : loc_langs) {
 									String langColName = colName + "_" + lang;
@@ -533,13 +579,13 @@ public class PgSyncActions {
 								stmtVals.add(":" + colName);
 								if (pgInfo.get(colName).containsKey("n2Type")
 										&& pgInfo.get(colName).get("n2Type").equals("date")) {
-									Object val = attributeJsonObject.getJSONObject(colName).getString("date");
+									Object val = getDocValue(docJson, selector + ".date");
 									bindVals.put(colName, val);
 								} else if (colPgType.equals("TEXT")) {
-									Object val = attributeJsonObject.get(colName).toString();
+									String val = getDocValue(docJson, selector).toString();
 									bindVals.put(colName, val);
 								} else if (colPgType.equals("TEXT[]")) {
-									Object val = attributeJsonObject.get(colName);
+									Object val = getDocValue(docJson, selector);
 									if (val instanceof JSONArray) {
 										List<Object> vals = ((JSONArray) val).toList();
 										fieldTypes.put(colName, "TextArray");
@@ -554,7 +600,7 @@ public class PgSyncActions {
 												+ val.toString());
 									}
 								} else {
-									Object val = attributeJsonObject.get(colName);
+									Object val = getDocValue(docJson, selector);
 									bindVals.put(colName, val);
 								}
 							}
@@ -590,12 +636,12 @@ public class PgSyncActions {
 		}
 	}
 
-	private void syncDocsForSchema(CouchQueryResults schemaDocs, String schemaName) throws Exception {
+	private void syncDocsForSchema(CouchQueryResults schemaDocs, String schemaName, List<String[]> n2Sources, List<String[]> n2Relations) throws Exception {
 		jdbi.useHandle(h -> {
 			for (JSONObject row : schemaDocs.getRows()) {
 				String docId = row.optString("id");
 				DocumentCouchDb doc = DocumentCouchDb.documentFromCouchDb(couchDb, docId);
-				insertDoc(doc, schemaName, h);
+				insertDoc(doc, schemaName, h, n2Sources, n2Relations);
 			}
 		});
 	}
