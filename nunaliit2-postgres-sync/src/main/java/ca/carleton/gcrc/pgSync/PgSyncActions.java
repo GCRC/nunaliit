@@ -32,7 +32,7 @@ public class PgSyncActions {
 	private Jdbi jdbi;
 	private CouchDb couchDb;
 	private CouchDesignDocument atlasDesign;
-	private Map<String, Integer> layerCache = new HashMap<String, Integer>();;
+	private Map<String, Integer> layerCache = new HashMap<String, Integer>();
 	private Map<String, Map<String, Map<String, Object>>> schemas;
 
 	public PgSyncActions(String pgConnectString, String pgUser, String pgPass, CouchDb couchDb,
@@ -53,11 +53,9 @@ public class PgSyncActions {
 		jdbi.useHandle(handle -> {
 			handle.execute("DROP SCHEMA IF EXISTS n2 CASCADE");
 			handle.execute("CREATE SCHEMA IF NOT EXISTS n2");
-			handle.execute("CREATE EXTENSION IF NOT EXISTS postgis");
 		});
 
 		jdbi.useHandle(handle -> {
-			// Should we just truncate these tables instead? The don't change right?
 			handle.execute("DROP TABLE IF EXISTS n2.docs_docs;");
 			handle.execute("DROP TABLE IF EXISTS n2.docs_layers;");
 			handle.execute("DROP TABLE IF EXISTS n2.layers;");
@@ -122,15 +120,22 @@ public class PgSyncActions {
 				createPgTables(results, true);
 			}
 			DocumentCouchDb doc = DocumentCouchDb.documentFromCouchDb(couchDb, docId);
+
 			String docSchema = doc.getSchema();
 			if (!schemas.containsKey(docSchema)) {
 				logger.error("Can't sync document " + docId + " with postgres, schema " + docSchema + " not syncable");
 			}
 			jdbi.useHandle(h -> {
-				h.execute("DELETE FROM n2.docs WHERE id = ?", docId);
+				Optional<String> foundId = h.select("SELECT id FROM n2.docs WHERE id = ?", docId).mapTo(String.class).findOne();
 				List<String[]> n2Sources = new ArrayList<>();
 				List<String[]> n2Relations = new ArrayList<>();
-				insertDoc(doc, docSchema, h, n2Sources, n2Relations);
+				if(foundId.isPresent()) {
+					h.execute("DELETE FROM n2.docs_layers WHERE doc_id = ?", docId);
+					h.execute("DELETE FROM n2." + docSchema + " WHERE doc_id = ?", docId);	
+					insertDoc(doc, docSchema, h, n2Sources, n2Relations, true);
+				} else {
+					insertDoc(doc, docSchema, h, n2Sources, n2Relations, false);
+				}
 				insertLinks(n2Sources, n2Relations);
 			});
 			logger.info("Doc " + docId + " synced to postgres DB");
@@ -141,6 +146,17 @@ public class PgSyncActions {
 
 	public DocumentCouchDb getDocument(String docId) throws Exception {
 		return DocumentCouchDb.documentFromCouchDb(couchDb, docId);
+	}
+
+	public void deleteDoc(String docId) {
+		try {
+			jdbi.useHandle(h -> {
+				h.execute("UPDATE n2.docs SET nunaliit_source = null WHERE nunaliit_source = ?", docId);
+				h.execute("DELETE FROM n2.docs WHERE id = ?", docId);
+			});
+		} catch (Exception e) {
+			logger.error("Error deleting doc with id " + docId + " from postgres DB");
+		}
 	}
 
 	private void deletePgData() {
@@ -424,7 +440,7 @@ public class PgSyncActions {
 		}
 	}
 
-	private void insertDoc(DocumentCouchDb doc, String schemaName, Handle h, List<String[]> n2Sources, List<String[]> n2Relations) throws Exception {
+	private void insertDoc(DocumentCouchDb doc, String schemaName, Handle h, List<String[]> n2Sources, List<String[]> n2Relations, boolean update) throws Exception {
 		if (doc != null && doc.getJSONObject() != null) {
 			String docId = doc.getId();
 			String geom = null;
@@ -452,10 +468,15 @@ public class PgSyncActions {
 				}
 			}
 			try {
-				h.execute("INSERT INTO n2.docs " +
+				if(update) {
+					h.execute("UPDATE n2.docs SET nunaliit_rev=?, nunaliit_schema=?, nunaliit_values=CAST(? AS jsonb), nunaliit_geom=ST_GeomFromText(?) WHERE id = ?",
+						doc.getRevision(), doc.getSchema(), doc.getJSONObject().toString(), geom, docId);
+				} else {
+					h.execute("INSERT INTO n2.docs " +
 						"(id, nunaliit_rev, nunaliit_schema, nunaliit_values, nunaliit_geom) values " +
 						"(?, ?, ?, CAST(? AS jsonb), ST_GeomFromText(?))",
 						docId, doc.getRevision(), doc.getSchema(), doc.getJSONObject().toString(), geom);
+				}
 
 				for (String l : doc.getLayers()) {
 					Integer layerId;
@@ -641,7 +662,7 @@ public class PgSyncActions {
 			for (JSONObject row : schemaDocs.getRows()) {
 				String docId = row.optString("id");
 				DocumentCouchDb doc = DocumentCouchDb.documentFromCouchDb(couchDb, docId);
-				insertDoc(doc, schemaName, h, n2Sources, n2Relations);
+				insertDoc(doc, schemaName, h, n2Sources, n2Relations, false);
 			}
 		});
 	}

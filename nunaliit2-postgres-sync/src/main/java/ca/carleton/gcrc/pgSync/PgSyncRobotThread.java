@@ -1,6 +1,5 @@
 package ca.carleton.gcrc.pgSync;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -11,7 +10,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ca.carleton.gcrc.couch.app.impl.DocumentCouchDb;
-import ca.carleton.gcrc.couch.client.CouchDb;
 import ca.carleton.gcrc.couch.client.CouchDbChangeListener;
 import ca.carleton.gcrc.couch.client.CouchDbChangeMonitor;
 import ca.carleton.gcrc.couch.client.CouchDesignDocument;
@@ -34,16 +32,20 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 		this.shouldSyncOnChange = config.shouldPostgresSyncOnChange();
 
 		actions = new PgSyncActions(config.getPgConnectString(), config.getPostgresUser(),
-					config.getPostgresPass(), config.getCouchDb(),
-					config.getAtlasDesignDocument());
+				config.getPostgresPass(), config.getCouchDb(),
+				config.getAtlasDesignDocument());
 		CouchDbChangeMonitor changeMonitor = this.atlasDesign.getDatabase().getChangeMonitor();
 		if (null != changeMonitor) {
 			changeMonitor.addChangeListener(this);
 		}
 		if (shouldRecreate) {
 			Runnable recreateTask = () -> {
-				actions.recreateBaseN2Tables();
-				this.syncAllDocs();
+				try {
+					actions.recreateBaseN2Tables();
+					this.syncAllDocs();
+				} catch (Exception e) {
+					logger.error("Error creating postgres DB", e);
+				}
 			};
 			scheduledPgReload = scheduler.schedule(recreateTask, 0, TimeUnit.SECONDS);
 		}
@@ -83,30 +85,33 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 			return;
 		}
 
-		DocumentCouchDb doc;
-		try {
-			doc = actions.getDocument(docId);
-		} catch (Exception e) {
-			logger.error("Error fetching document " + docId + " for postgres sync");
-			return;
-		}
+		if (type == CouchDbChangeListener.Type.DOC_DELETED) {
+			scheduleDeleteDoc(docId);
+		} else {
+			DocumentCouchDb doc;
+			try {
+				doc = actions.getDocument(docId);
+			} catch (Exception e) {
+				logger.error("Error fetching document " + docId + " for postgres sync");
+				return;
+			}
 
-		synchronized (this) {
-			if (doc.getJSONObject().has("nunaliit_type")
-					&& doc.getJSONObject().getString("nunaliit_type").equals("schema")) {
-				if (scheduledPgReload != null && scheduledPgReload.getDelay(TimeUnit.MILLISECONDS) > 0) {
-					logger.debug("Doc " + docId + " changed, reload already scheduled");
+			synchronized (this) {
+				if (doc.getJSONObject().has("nunaliit_type")
+						&& doc.getJSONObject().getString("nunaliit_type").equals("schema")) {
+					if (scheduledPgReload != null && scheduledPgReload.getDelay(TimeUnit.MILLISECONDS) > 0) {
+						logger.debug("Doc " + docId + " changed, reload already scheduled");
+					} else {
+						// Delay for 15 seconds because usually these come in batches
+						scheduleSyncAllDocs(15L);
+					}
+				} else if (doc.getJSONObject().has("nunaliit_schema")) {
+					logger.debug("Scheduling reload for doc " + docId);
+					scheduleDocReload(docId);
 				} else {
-					// Delay for 15 seconds because usually these come in batches and only want to
-					// reload once
-					scheduleSyncAllDocs(15L);
+					logger.info("Can't sync doc with id " + docId + " with type "
+							+ doc.getJSONObject().optString("nunaliit_type") + " and schema " + doc.getSchema());
 				}
-			} else if (doc.getJSONObject().has("nunaliit_schema")) {
-				logger.debug("Scheduling reload for doc " + docId);
-				scheduleDocReload(docId);
-			} else {
-				logger.info("Can't sync doc with id " + docId + " with type "
-						+ doc.getJSONObject().optString("nunaliit_type") + " and schema " + doc.getSchema());
 			}
 		}
 	}
@@ -127,6 +132,13 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 			actions.reloadDoc(docId);
 		};
 		scheduler.schedule(reloadDocTask, 0, TimeUnit.SECONDS);
+	}
+
+	private void scheduleDeleteDoc(String docId) {
+		Runnable delDocTask = () -> {
+			actions.deleteDoc(docId);
+		};
+		scheduler.schedule(delDocTask, 0, TimeUnit.SECONDS);
 	}
 
 	private void syncAllDocs() {
