@@ -47,7 +47,7 @@ public class AtlasProperties {
 		atlasProps.setPostgresPassword(props.getProperty("postgres.password"));
 		boolean shouldPgRecreateOnStart = Boolean.parseBoolean(props.getProperty("postgres.recreateOnStart", "true"));
 		atlasProps.setPostgresRecreateOnStart(shouldPgRecreateOnStart);
-		boolean shouldPgSyncOnChange = Boolean.parseBoolean(props.getProperty("postgres.syncOnChange", "true"));
+		boolean shouldPgSyncOnChange = Boolean.parseBoolean(props.getProperty("postgres.syncOnChange", "false"));
 		atlasProps.setPostgresSyncOnChange(shouldPgSyncOnChange);
 
 		// CouchDb password
