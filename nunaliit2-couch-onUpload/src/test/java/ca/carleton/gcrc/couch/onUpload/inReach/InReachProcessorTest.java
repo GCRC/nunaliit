@@ -1,8 +1,8 @@
 package ca.carleton.gcrc.couch.onUpload.inReach;
 
 import java.io.File;
-import java.util.List;
 import java.net.URL;
+import java.util.List;
 
 import org.json.JSONObject;
 
@@ -226,7 +226,7 @@ public class InReachProcessorTest extends TestCase {
 					fail("EmergencyState expected to be -1");
 				}
 			} else if (i == 4) {
-				if (!messageType.equals("NunaliitUnhandledGarminExploreMessageCode-5")) {
+				if (!messageType.equals("NunaliitUnhandledGarminExploreMessageCode-9999")) {
 					fail("Expected unhandled message code string for unimplemented/unknown message codes");
 				}
 				if (emergencyState != -1) {
