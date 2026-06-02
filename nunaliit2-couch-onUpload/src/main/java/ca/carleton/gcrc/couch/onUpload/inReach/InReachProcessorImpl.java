@@ -77,6 +77,12 @@ public class InReachProcessorImpl implements InReachProcessor {
 		garminExploreMessageCodes.put(17, "MapShare");
 		garminExploreMessageCodes.put(20, "MailCheck");
 		garminExploreMessageCodes.put(21, "AmIAlive");
+		garminExploreMessageCodes.put(64, "EncryptedBinary");
+		garminExploreMessageCodes.put(65, "PingbackMessage");
+		garminExploreMessageCodes.put(66, "GenericBinary");
+		garminExploreMessageCodes.put(67, "EncryptedPinpoint");
+		garminExploreMessageCodes.put(68, "EncryptionNegotiation");
+		garminExploreMessageCodes.put(69, "EncryptionNack");
 
 		for (InReachForm form : settings.getForms()) {
 			String recipient = form.getDestination();
@@ -281,8 +287,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 		if (null == version) {
 			logger.error("Garmin-type inReach message missing 'Version' key: " + docId);
 		}
-
-		if (version.equals("2.0")) {
+		else if (version.equals("2.0") || version.equals("3.0") || version.equals("4.0")) {
 			// Check if address is one of the destinations from the forms
 			ArrayList<Integer> eventsToRedact = new ArrayList<Integer>();
 			for (int k = 0; k < events.length(); k++) {
@@ -360,6 +365,28 @@ public class InReachProcessorImpl implements InReachProcessor {
 				if (null != imei) {
 					genericInReachSchema.put("DeviceId", imei);
 				}
+
+				/* Event schema V3 */
+				String transportMode = event.optString("transportMode", null);
+				if (null != transportMode) {
+					genericInReachSchema.put("transportMode", transportMode);
+				}
+
+				/* Start - Event schema V4 */
+				String mediaId = event.optString("mediaId", null);
+				String mediaType = event.optString("mediaType", null);
+				String transcription = event.optString("transcription", null);
+				if (null != mediaId) {
+					genericInReachSchema.put("mediaId", mediaId);
+				}
+				if (null != mediaType) {
+					genericInReachSchema.put("mediaType", mediaType);
+				}
+				if (null != transcription) {
+					genericInReachSchema.put("transcription", transcription);
+				}
+				/* End - Event schema V4 */
+
 
 				JSONObject msgPosition = event.optJSONObject("point");
 				if (null != msgPosition) {
