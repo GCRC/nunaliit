@@ -293,225 +293,232 @@ public class InReachProcessorImpl implements InReachProcessor {
 		if (null == version) {
 			logger.error("Garmin-type inReach message missing 'Version' key: " + docId);
 		}
-		else if (version.equals("2.0") || version.equals("3.0") || version.equals("4.0")) {
-			// Check if address is one of the destinations from the forms
-			ArrayList<Integer> eventsToRedact = new ArrayList<Integer>();
-			for (int k = 0; k < events.length(); k++) {
-				JSONObject event = events.getJSONObject(k);
-				JSONArray addresses = event.optJSONArray("addresses");
-				if (null != addresses) {
-					for (int j = 0; j < addresses.length(); j++) {
-						String address = addresses.getJSONObject(j).getString("address");
-						if (!recipients.contains(address)) {
-							eventsToRedact.add(k);
-						}
-					}
-				}
-			}
-			for (int x = 0; x < eventsToRedact.size(); x++) {
-				events.put(eventsToRedact.get(x), new JSONObject());
-			}
-			if (eventsToRedact.size() > 0) {
-				JSONObject refreshedDoc = ctx.getDoc();
-				refreshedDoc.put("Events", events);
-				try {
-					ctx.saveDocument();
-				} catch (Exception e) {
-					logger.error("Failed to save document after redacting events", e);
-				}
-			}
+		else {
 
-			String[] uuids = this.couchClient.getUuids(events.length());
-			for (int i = 0; i < events.length(); i++) {
-				JSONObject event = events.getJSONObject(i);
-				if (event.length() == 0) {
-					// Redacted message, note it and skip
-					eventDocIds.put(GarminExploreProcessRejectionStates.EVENT_REDACTION);
-					continue;
-				}
-				String uuidForNewDocument = uuids[i];
-				Boolean processFailure = false;
-				form = null;
-				schemaName = genericSchemaName;
-				generatedDoc = new JSONObject();
-				genericInReachSchema = new JSONObject();
-				inReachPosition = new JSONObject();
-
-				String freeText = event.optString("freeText", null);
-				if (null != freeText) {
-					genericInReachSchema.put("Message", freeText);
-					for (InReachForm testedForm : settings.getForms()) {
-						String prefix = testedForm.getPrefix();
-						if (null != prefix) {
-							if (freeText.startsWith(prefix)) {
-								form = testedForm;
+			boolean isEventV2 = version.equals("2.0");
+			boolean isEventV3 = version.equals("3.0");
+			boolean isEventV4 = version.equals("4.0");
+			
+			if (isEventV2 || isEventV3 || isEventV4) {
+				// Check if address is one of the destinations from the forms
+				ArrayList<Integer> eventsToRedact = new ArrayList<Integer>();
+				for (int k = 0; k < events.length(); k++) {
+					JSONObject event = events.getJSONObject(k);
+					JSONArray addresses = event.optJSONArray("addresses");
+					if (null != addresses) {
+						for (int j = 0; j < addresses.length(); j++) {
+							String address = addresses.getJSONObject(j).getString("address");
+							if (!recipients.contains(address)) {
+								eventsToRedact.add(k);
 							}
 						}
 					}
 				}
-
-				Integer messageCode = event.optInt("messageCode", -12345);
-				if (-12345 != messageCode) {
-					if ((4 == messageCode) || (6 == messageCode) || (7 == messageCode)) {
-						genericInReachSchema.put("EmergencyState", 1); // emergency-related
-					} else {
-						genericInReachSchema.put("EmergencyState", -1); // not emergency-related
-					}
-
-					String messageType = garminExploreMessageCodes.getOrDefault(messageCode, null);
-					if (null == messageType) {
-						genericInReachSchema.put("MessageType",
-								"NunaliitUnhandledGarminExploreMessageCode-" + messageCode.toString());
-					} else {
-						genericInReachSchema.put("MessageType", messageType);
-					}
+				for (int x = 0; x < eventsToRedact.size(); x++) {
+					events.put(eventsToRedact.get(x), new JSONObject());
 				}
-
-				String imei = event.optString("imei", null);
-				if (null != imei) {
-					genericInReachSchema.put("DeviceId", imei);
-				}
-
-				/* Event schema V3 */
-				String transportMode = event.optString("transportMode", null);
-				if (null != transportMode) {
-					genericInReachSchema.put("transportMode", transportMode);
-				}
-
-				/* Start - Event schema V4 */
-				String mediaId = event.optString("mediaId", null);
-				String mediaType = event.optString("mediaType", null);
-				String transcription = event.optString("transcription", null);
-				if (null != mediaId) {
-					genericInReachSchema.put("mediaId", mediaId);
-				}
-				if (null != mediaType) {
-					genericInReachSchema.put("mediaType", mediaType);
-				}
-				if (null != transcription) {
-					genericInReachSchema.put("transcription", transcription);
-				}
-				/* End - Event schema V4 */
-
-
-				JSONObject msgPosition = event.optJSONObject("point");
-				if (null != msgPosition) {
-					Double latitude = msgPosition.getDouble("latitude");
-					Double longitude = msgPosition.getDouble("longitude");
-					if (latitude.toString().equals("0.0") && longitude.toString().equals("0.0")) {
-						// Do not make geom for 0,0 messages
-					} else {
-						inReachPosition.put("Latitude", latitude);
-						inReachPosition.put("Longitude", longitude);
-
-						Geometry location = new Point(longitude, latitude);
-						BoundingBox box = location.getBoundingBox();
-						JSONArray bbox = new JSONArray();
-						bbox.put(box.getMinX());
-						bbox.put(box.getMinY());
-						bbox.put(box.getMaxX());
-						bbox.put(box.getMaxY());
-						StringWriter wkt = new StringWriter();
-						wktWriter.write(location, wkt);
-
-						JSONObject geom = new JSONObject();
-						geom.put("nunaliit_type", "geometry");
-						geom.put("wkt", wkt.toString());
-						geom.put("bbox", bbox);
-						generatedDoc.put("nunaliit_geom", geom);
-					}
-				}
-
-				Long timeStamp = event.optLong("timeStamp", -12345);
-				Instant evTimestamp = Instant.ofEpochMilli(timeStamp);
-				String isoTimestamp = garminExploreMessageFormatter.format(evTimestamp);
-				DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-				df.setTimeZone(TimeZone.getTimeZone("UTC"));
-				if (-12345 != timeStamp) {
-					inReachPosition.put("GpsTimestamp", isoTimestamp);
-					genericInReachSchema.put("Position", inReachPosition);
-					// There is no MessageId equivalent, so use the timestamp
-					genericInReachSchema.put("MessageId", timeStamp.toString());
-				}
-
-				Date gpsDate = null;
-				try {
-					gpsDate = DateUtils.parseGpsTimestamp(isoTimestamp);
-				} catch (Exception e) {
-					processFailure = true;
-					logger.error("Error while parsing GPS timestamp", e);
-				}
-				if (null != gpsDate) {
-					long intervalStart = (gpsDate.getTime() + 500) / 1000;
-					long intervalStart_ms = intervalStart * 1000;
-					long intervalEnd = intervalStart_ms + 1000;
-
-					Date gpsTimestampDate = new Date(intervalStart_ms);
-					String formattedGpsTimestamp = df.format(gpsTimestampDate);
-
-					JSONObject jsonDate = new JSONObject();
-					jsonDate.put("nunaliit_type", "date");
-					jsonDate.put("date", formattedGpsTimestamp);
-					jsonDate.put("min", intervalStart_ms);
-					jsonDate.put("max", intervalEnd);
-
-					genericInReachSchema.put("nunaliit_gps_datetime", jsonDate);
-				}
-
-				JSONArray addresses = event.optJSONArray("addresses");
-				if (null != addresses) {
-					StringBuilder builder = new StringBuilder();
-					String delimiter = "";
-					for (int j = 0; j < addresses.length(); j++) {
-						builder.append(delimiter);
-						builder.append(addresses.getJSONObject(j).getString("address"));
-						delimiter = ","; // Unknown what separated multiple recipients previously, assume comma for now
-					}
-					genericInReachSchema.put("Recipients", builder.toString());
-				}
-
-				genericInReachSchema.put("garminExploreSourceId", docId);
-				generatedDoc.put(schemaName, genericInReachSchema);
-				generatedDoc.put("nunaliit_created", descriptor.getCreatedObject());
-				generatedDoc.put("nunaliit_last_updated", descriptor.getLastUpdatedObject());
-
-				if (null != form) {
-					if (null != form.getTitle()) {
-						schemaName = schemaName + "_" + form.getTitle();
-					}
+				if (eventsToRedact.size() > 0) {
+					JSONObject refreshedDoc = ctx.getDoc();
+					refreshedDoc.put("Events", events);
 					try {
-						extractInformationForForm(generatedDoc, form);
+						ctx.saveDocument();
 					} catch (Exception e) {
-						processFailure = true;
-						logger.error("Error while extracting information from the inReach data forms: ", e);
+						logger.error("Failed to save document after redacting events", e);
 					}
 				}
-
-				generatedDoc.put("nunaliit_schema", schemaName);
-				generatedDoc.put("_id", uuidForNewDocument);
-
-				if (processFailure) {
-					eventDocIds.put(GarminExploreProcessRejectionStates.EVENT_ERROR);
-				} else {
-					eventDocIds.put(uuidForNewDocument);
-
-					if (schemaName.equals(autoCreateSignoutSchema)) {
-						try {
-							addSignoutData(generatedDoc);
-						} catch (Exception e) {
-							logger.warn(e.getMessage());
+	
+				String[] uuids = this.couchClient.getUuids(events.length());
+				for (int i = 0; i < events.length(); i++) {
+					JSONObject event = events.getJSONObject(i);
+					if (event.length() == 0) {
+						// Redacted message, note it and skip
+						eventDocIds.put(GarminExploreProcessRejectionStates.EVENT_REDACTION);
+						continue;
+					}
+					String uuidForNewDocument = uuids[i];
+					Boolean processFailure = false;
+					form = null;
+					schemaName = genericSchemaName;
+					generatedDoc = new JSONObject();
+					genericInReachSchema = new JSONObject();
+					inReachPosition = new JSONObject();
+	
+					String freeText = event.optString("freeText", null);
+					if (null != freeText) {
+						genericInReachSchema.put("Message", freeText);
+						for (InReachForm testedForm : settings.getForms()) {
+							String prefix = testedForm.getPrefix();
+							if (null != prefix) {
+								if (freeText.startsWith(prefix)) {
+									form = testedForm;
+								}
+							}
 						}
 					}
-
-					ctx.createDocument(generatedDoc);
+	
+					Integer messageCode = event.optInt("messageCode", -12345);
+					if (-12345 != messageCode) {
+						if ((4 == messageCode) || (6 == messageCode) || (7 == messageCode)) {
+							genericInReachSchema.put("EmergencyState", 1); // emergency-related
+						} else {
+							genericInReachSchema.put("EmergencyState", -1); // not emergency-related
+						}
+	
+						String messageType = garminExploreMessageCodes.getOrDefault(messageCode, null);
+						if (null == messageType) {
+							genericInReachSchema.put("MessageType",
+									"NunaliitUnhandledGarminExploreMessageCode-" + messageCode.toString());
+						} else {
+							genericInReachSchema.put("MessageType", messageType);
+						}
+					}
+	
+					String imei = event.optString("imei", null);
+					if (null != imei) {
+						genericInReachSchema.put("DeviceId", imei);
+					}
+	
+					/* Event schema V3 */
+					String transportMode = event.optString("transportMode", null);
+					if (null != transportMode) {
+						genericInReachSchema.put("transportMode", transportMode);
+					}
+	
+					/* Start - Event schema V4 */
+					String mediaId = event.optString("mediaId", null);
+					String mediaType = event.optString("mediaType", null);
+					String transcription = event.optString("transcription", null);
+					if (null != mediaId) {
+						genericInReachSchema.put("mediaId", mediaId);
+					}
+					if (null != mediaType) {
+						genericInReachSchema.put("mediaType", mediaType);
+					}
+					if (null != transcription) {
+						genericInReachSchema.put("transcription", transcription);
+					}
+					/* End - Event schema V4 */
+	
+	
+					JSONObject msgPosition = event.optJSONObject("point");
+					if (null != msgPosition) {
+						Double latitude = msgPosition.getDouble("latitude");
+						Double longitude = msgPosition.getDouble("longitude");
+						if (latitude.toString().equals("0.0") && longitude.toString().equals("0.0")) {
+							// Do not make geom for 0,0 messages
+						} else {
+							inReachPosition.put("Latitude", latitude);
+							inReachPosition.put("Longitude", longitude);
+	
+							Geometry location = new Point(longitude, latitude);
+							BoundingBox box = location.getBoundingBox();
+							JSONArray bbox = new JSONArray();
+							bbox.put(box.getMinX());
+							bbox.put(box.getMinY());
+							bbox.put(box.getMaxX());
+							bbox.put(box.getMaxY());
+							StringWriter wkt = new StringWriter();
+							wktWriter.write(location, wkt);
+	
+							JSONObject geom = new JSONObject();
+							geom.put("nunaliit_type", "geometry");
+							geom.put("wkt", wkt.toString());
+							geom.put("bbox", bbox);
+							generatedDoc.put("nunaliit_geom", geom);
+						}
+					}
+	
+					Long timeStamp = event.optLong("timeStamp", -12345);
+					Instant evTimestamp = Instant.ofEpochMilli(timeStamp);
+					String isoTimestamp = garminExploreMessageFormatter.format(evTimestamp);
+					DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+					df.setTimeZone(TimeZone.getTimeZone("UTC"));
+					if (-12345 != timeStamp) {
+						inReachPosition.put("GpsTimestamp", isoTimestamp);
+						genericInReachSchema.put("Position", inReachPosition);
+						// There is no MessageId equivalent, so use the timestamp
+						genericInReachSchema.put("MessageId", timeStamp.toString());
+					}
+	
+					Date gpsDate = null;
+					try {
+						gpsDate = DateUtils.parseGpsTimestamp(isoTimestamp);
+					} catch (Exception e) {
+						processFailure = true;
+						logger.error("Error while parsing GPS timestamp", e);
+					}
+					if (null != gpsDate) {
+						long intervalStart = (gpsDate.getTime() + 500) / 1000;
+						long intervalStart_ms = intervalStart * 1000;
+						long intervalEnd = intervalStart_ms + 1000;
+	
+						Date gpsTimestampDate = new Date(intervalStart_ms);
+						String formattedGpsTimestamp = df.format(gpsTimestampDate);
+	
+						JSONObject jsonDate = new JSONObject();
+						jsonDate.put("nunaliit_type", "date");
+						jsonDate.put("date", formattedGpsTimestamp);
+						jsonDate.put("min", intervalStart_ms);
+						jsonDate.put("max", intervalEnd);
+	
+						genericInReachSchema.put("nunaliit_gps_datetime", jsonDate);
+					}
+	
+					JSONArray addresses = event.optJSONArray("addresses");
+					if (null != addresses) {
+						StringBuilder builder = new StringBuilder();
+						String delimiter = "";
+						for (int j = 0; j < addresses.length(); j++) {
+							builder.append(delimiter);
+							builder.append(addresses.getJSONObject(j).getString("address"));
+							delimiter = ","; // Unknown what separated multiple recipients previously, assume comma for now
+						}
+						genericInReachSchema.put("Recipients", builder.toString());
+					}
+	
+					genericInReachSchema.put("garminExploreSourceId", docId);
+					generatedDoc.put(schemaName, genericInReachSchema);
+					generatedDoc.put("nunaliit_created", descriptor.getCreatedObject());
+					generatedDoc.put("nunaliit_last_updated", descriptor.getLastUpdatedObject());
+	
+					if (null != form) {
+						if (null != form.getTitle()) {
+							schemaName = schemaName + "_" + form.getTitle();
+						}
+						try {
+							extractInformationForForm(generatedDoc, form);
+						} catch (Exception e) {
+							processFailure = true;
+							logger.error("Error while extracting information from the inReach data forms: ", e);
+						}
+					}
+	
+					generatedDoc.put("nunaliit_schema", schemaName);
+					generatedDoc.put("_id", uuidForNewDocument);
+	
+					if (processFailure) {
+						eventDocIds.put(GarminExploreProcessRejectionStates.EVENT_ERROR);
+					} else {
+						eventDocIds.put(uuidForNewDocument);
+	
+						if (schemaName.equals(autoCreateSignoutSchema)) {
+							try {
+								addSignoutData(generatedDoc);
+							} catch (Exception e) {
+								logger.warn(e.getMessage());
+							}
+						}
+	
+						ctx.createDocument(generatedDoc);
+					}
 				}
+				JSONObject rDoc = ctx.getDoc();
+				inReachStatus.put("eventDocIds", eventDocIds);
+				rDoc.put("nunaliit_inreach", inReachStatus);
+				ctx.saveDocument();
+			} else {
+				logger.error("Unhandled version of GarminExplore type inReach message: " + docId);
 			}
-			JSONObject rDoc = ctx.getDoc();
-			inReachStatus.put("eventDocIds", eventDocIds);
-			rDoc.put("nunaliit_inreach", inReachStatus);
-			ctx.saveDocument();
-		} else {
-			logger.error("Unhandled version of GarminExplore type inReach message: " + docId);
 		}
 	}
 
