@@ -3,20 +3,20 @@ package ca.carleton.gcrc.couch.onUpload.inReach;
 import java.io.StringWriter;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.TimeZone;
-import java.time.format.DateTimeFormatter;
-import java.time.Instant;
-import java.time.ZoneId;
 
-import org.json.JSONObject;
 import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,24 +65,30 @@ public class InReachProcessorImpl implements InReachProcessor {
 		garminExploreMessageCodes.put(2, "LocateResponse");
 		garminExploreMessageCodes.put(3, "FreeTextMessage");
 		garminExploreMessageCodes.put(4, "DeclareSOS");
+		garminExploreMessageCodes.put(5, "Reserved");
 		garminExploreMessageCodes.put(6, "ConfirmSOS");
 		garminExploreMessageCodes.put(7, "CancelSOS");
 		garminExploreMessageCodes.put(8, "ReferencePoint");
 		garminExploreMessageCodes.put(10, "StartTrack");
 		garminExploreMessageCodes.put(11, "TrackInterval");
 		garminExploreMessageCodes.put(12, "StopTrack");
+		garminExploreMessageCodes.put(13, "UnknownIndex");
 		garminExploreMessageCodes.put(14, "PuckMessage1");
 		garminExploreMessageCodes.put(15, "PuckMessage2");
 		garminExploreMessageCodes.put(16, "PuckMessage3");
 		garminExploreMessageCodes.put(17, "MapShare");
 		garminExploreMessageCodes.put(20, "MailCheck");
 		garminExploreMessageCodes.put(21, "AmIAlive");
+		for (int i = 24; i <= 63; i++) {
+			garminExploreMessageCodes.put(i, "Pre-definedMessage");
+		}
 		garminExploreMessageCodes.put(64, "EncryptedBinary");
 		garminExploreMessageCodes.put(65, "PingbackMessage");
 		garminExploreMessageCodes.put(66, "GenericBinary");
 		garminExploreMessageCodes.put(67, "EncryptedPinpoint");
 		garminExploreMessageCodes.put(68, "EncryptionNegotiation");
 		garminExploreMessageCodes.put(69, "EncryptionNack");
+		garminExploreMessageCodes.put(3099, "CannedMessage");
 
 		for (InReachForm form : settings.getForms()) {
 			String recipient = form.getDestination();
