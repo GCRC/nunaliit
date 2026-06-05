@@ -48,7 +48,8 @@ public class InReachProcessorImpl implements InReachProcessor {
 	private CouchDesignDocument atlasDesign;
 	private CouchClient couchClient;
 	private static final String genericSchemaName = "inReach";
-	private static final String autoCreateSignoutSchema = "inReach_Signout";
+	private static final String signoutKeyword = "Signout";
+	private static final String autoCreateSignoutSchema = "inReach_" + signoutKeyword;
 	private static final String deviceSchema = "inReach_Device";
 	private static HashMap<Integer, String> garminExploreMessageCodes = new HashMap<>();
 	private static WktWriter wktWriter = new WktWriter();
@@ -242,8 +243,11 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 		// Set schema
 		if (null != form) {
-			if (null != form.getTitle()) {
-				schemaName = "inReach_" + form.getTitle();
+			if (null != form.getTitle() && ("inReach_" + form.getTitle()).equals(autoCreateSignoutSchema)) {
+				schemaName = autoCreateSignoutSchema;
+			}
+			else if (null != form.getIdentifier()) {
+				schemaName = "inReach_" + form.getIdentifier();
 			}
 		}
 		docDescriptor.setSchemaName(schemaName);
@@ -251,7 +255,7 @@ public class InReachProcessorImpl implements InReachProcessor {
 		// If a form is selected, extract information
 		if (null != form) {
 			try {
-				extractInformationForForm(ctx.getDoc(), form);
+				extractInformationForForm(ctx.getDoc(), form, schemaName);
 			} catch (Exception e) {
 				throw new Exception("Error while extracting information from the inReach data forms", e);
 			}
@@ -482,11 +486,14 @@ public class InReachProcessorImpl implements InReachProcessor {
 					generatedDoc.put("nunaliit_last_updated", descriptor.getLastUpdatedObject());
 	
 					if (null != form) {
-						if (null != form.getTitle()) {
-							schemaName = schemaName + "_" + form.getTitle();
+						if (null != form.getTitle() && ("inReach_" + form.getTitle()).equals(autoCreateSignoutSchema)) {
+							schemaName = autoCreateSignoutSchema;
+						}
+						else if (null != form.getIdentifier()) {
+							schemaName = schemaName + "_" + form.getIdentifier();
 						}
 						try {
-							extractInformationForForm(generatedDoc, form);
+							extractInformationForForm(generatedDoc, form, schemaName);
 						} catch (Exception e) {
 							processFailure = true;
 							logger.error("Error while extracting information from the inReach data forms: ", e);
@@ -572,7 +579,9 @@ public class InReachProcessorImpl implements InReachProcessor {
 
 	public void extractInformationForForm(
 			JSONObject doc,
-			InReachForm form) throws Exception {
+			InReachForm form,
+			String schemaName
+		) throws Exception {
 
 		JSONObject jsonItem = doc.getJSONObject(genericSchemaName);
 		String message = jsonItem.optString("Message", null);
@@ -585,9 +594,8 @@ public class InReachProcessorImpl implements InReachProcessor {
 		String messageData = message.substring(form.getPrefix().length());
 
 		// Install data for conversion
-		String attName = "inReach_" + form.getTitle();
 		JSONObject jsonData = new JSONObject();
-		doc.put(attName, jsonData);
+		doc.put(schemaName, jsonData);
 
 		// Create a regular expression to parse the message
 		Pattern messagePattern = null;
