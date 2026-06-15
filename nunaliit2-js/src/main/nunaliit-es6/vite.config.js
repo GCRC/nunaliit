@@ -13,7 +13,7 @@ export default defineConfig({
 			formats: ['umd'],
 		},
 		outDir: resolve(__dirname, 'dist/target'),
-		minify: 'esbuild',
+		minify: 'oxc',
 		sourcemap: true
 	}
 })
