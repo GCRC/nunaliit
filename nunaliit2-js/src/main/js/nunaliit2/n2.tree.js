@@ -312,7 +312,7 @@ function tree_refresh($tree, opt) {
 				$li.prepend(divSymbol);
 			};
 			if( false == divSymbol.hasClass('treeClickInstalled') ) {
-				divSymbol.click(liOpenClose);
+				divSymbol.on("click",liOpenClose);
 				divSymbol.addClass('treeClickInstalled');
 			};
 			
@@ -321,7 +321,7 @@ function tree_refresh($tree, opt) {
 				firstSpan.addClass('treeKey');
 			};
 			if( false == firstSpan.hasClass('treeClickInstalled') ) {
-				firstSpan.click(function(){
+				firstSpan.on("click",function(){
 					keyClicked(this,opt);
 				});
 				firstSpan.addClass('treeClickInstalled');
@@ -1489,7 +1489,7 @@ var ObjectTreeEditor = $n2.Class({
 				if( $divChild.length > 0
 				 && isValueEditingPermitted
 				 && false == $divChild.hasClass('treeEditorClickInstalled') ) {
-					$divChild.click(function(){editor._initiateValueEdit(this);});
+					$divChild.on("click",function(){editor._initiateValueEdit(this);});
 					$divChild.addClass('treeEditorClickInstalled');
 				};
 	
@@ -1499,8 +1499,8 @@ var ObjectTreeEditor = $n2.Class({
 					if( $key.length > 0
 					 && isKeyEditingPermitted
 					 && false == $key.hasClass('treeEditorClickInstalled') ) {
-						$key.unbind('click');
-						$key.click(function(){editor._initiateKeyEdit(this);});
+						$key.off('click');
+						$key.on("click",function(){editor._initiateKeyEdit(this);});
 						$key.addClass('treeEditorClickInstalled');
 					};
 				};
@@ -1510,7 +1510,7 @@ var ObjectTreeEditor = $n2.Class({
 				if( $value.length > 0 
 				 && isValueEditingPermitted
 				 && false == $value.hasClass('treeEditorClickInstalled') ) {
-					$value.click(function(){editor._initiateValueEdit(this);});
+					$value.on("click",function(){editor._initiateValueEdit(this);});
 					$value.addClass('treeEditorClickInstalled');
 				};
 				
@@ -1520,7 +1520,7 @@ var ObjectTreeEditor = $n2.Class({
 				 && isKeyDeletionPermitted ) {
 					$delBtn = $('<div class="treeEditDelete treeEditorClickInstalled"></div>');
 					$value.after($delBtn);
-					$delBtn.click(function(){editor._initiateDeleteKey(this);});
+					$delBtn.on("click",function(){editor._initiateDeleteKey(this);});
 				};
 	
 				// Add edit up/down to array keys
@@ -1529,14 +1529,14 @@ var ObjectTreeEditor = $n2.Class({
 					if( $dnBtn.length < 1 ) {
 						$dnBtn = $('<div class="treeEditDown treeEditorClickInstalled"></div>');
 						$value.after($dnBtn);
-						$dnBtn.click(function(){editor._initiateSwapKeys(this,1);});
+						$dnBtn.on("click",function(){editor._initiateSwapKeys(this,1);});
 					};
 	
 					var $upBtn = $li.children('.treeEditUp');
 					if( $upBtn.length < 1 ) {
 						$upBtn = $('<div class="treeEditUp treeEditorClickInstalled"></div>');
 						$value.after($upBtn);
-						$upBtn.click(function(){editor._initiateSwapKeys(this,-1);});
+						$upBtn.on("click",function(){editor._initiateSwapKeys(this,-1);});
 					};
 				};
 			};
@@ -1555,7 +1555,7 @@ var ObjectTreeEditor = $n2.Class({
 			// Reinstall
 			$li = $('<li class="treeEditAdd"></li>');
 			var $addBtn = $('<div><div/>');
-			$addBtn.click(function(){ editor._initiateAddKey(this); });
+			$addBtn.on("click",function(){ editor._initiateAddKey(this); });
 			$li.append($addBtn);
 			
 			$ul.append($li);
@@ -1567,7 +1567,7 @@ var ObjectTreeEditor = $n2.Class({
 
 		this.$tree.find('li.treeEditAdd').remove();
 		this.$tree.find('.treeEditorClickInstalled')
-			.unbind('click')
+			.off('click')
 			.removeClass('treeEditorClickInstalled')
 			.removeClass('treeClickInstalled') // allow tree to reinstall click events
 			;
@@ -1625,19 +1625,19 @@ var ObjectTreeEditor = $n2.Class({
 			var $textArea = $('<textarea></textarea>');
 			$editDiv.prepend($textArea);
 			
-			$textArea.keydown(function(evt){editor._valueEditKeyDown(evt,this);});
+			$textArea.on("keydown",function(evt){editor._valueEditKeyDown(evt,this);});
 			
 			var $okButton = $('<input type="button" value="OK"/>');
 			$editDiv.append($okButton);
-			$okButton.click(function(){editor._acceptValueEdit(this);});
+			$okButton.on("click",function(){editor._acceptValueEdit(this);});
 			
 			var $cancelButton = $('<input type="button" value="Cancel"/>');
 			$editDiv.append($cancelButton);
-			$cancelButton.click(function(){editor.cancelEditing();});
+			$cancelButton.on("click",function(){editor.cancelEditing();});
 		};
 
 		// Set data
-		$li.children('.treeValueEditor').find('textarea').val(json).focus();
+		$li.children('.treeValueEditor').find('textarea').val(json).trigger("focus");
 	}
 
 	,_acceptValueEdit: function(okButton) {
@@ -1849,19 +1849,19 @@ var ObjectTreeEditor = $n2.Class({
 		$textInput.val(key);
 		$keyEditor.append($textInput);
 		
-		$textInput.keydown(function(evt){editor._keyEditKeyDown(evt, this);});
+		$textInput.on("keydown",function(evt){editor._keyEditKeyDown(evt, this);});
 		
 		var $ok = $('<div class="treeEditOk"></div>');
 		$keyEditor.append($ok);
-		$ok.click(function(){editor._acceptKeyEdit(this);});
+		$ok.on("click",function(){editor._acceptKeyEdit(this);});
 		
 		var $cancel = $('<div class="treeEditCancel"></div>');
 		$keyEditor.append($cancel);
-		$cancel.click(function(){editor.cancelEditing();});
+		$cancel.on("click",function(){editor.cancelEditing();});
 		
 		$keySpan.after($keyEditor);
 		
-		$textInput.focus();
+		$textInput.trigger("focus");
 	}
 
 	,_acceptKeyEdit: function(okButton) {

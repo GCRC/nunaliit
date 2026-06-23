@@ -68,7 +68,7 @@ $.widget("ui.progressbar", {
 			.removeAttr("aria-valuemax")
 			.removeAttr("aria-valuenow")
 			.removeData("progressbar")
-			.unbind(".progressbar");
+			.off(".progressbar");
 
 		this.valueDiv.remove();
 

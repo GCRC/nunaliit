@@ -240,13 +240,13 @@ var CustomHtmlCanvas = $n2.Class({
  			
  			$('#'+nodeId)
  				.attr('n2-doc-id', docId)
- 				.mouseover(function(e){
+ 				.on("mouseover",function(e){
  					_this._mouseOver($(this),e);
  				})
-				.mouseout(function(e){
+				.on("mouseout",function(e){
  					_this._mouseOut($(this),e);
  				})
-				.click(function(e){
+				.on("click",function(e){
  					_this._mouseClick($(this),e);
  				})
  				;
@@ -274,13 +274,13 @@ var CustomHtmlCanvas = $n2.Class({
  	 			_this.nodesById[nodeId] = node;
  	 			
  	 			$child
-	 				.mouseover(function(e){
+	 				.on("mouseover",function(e){
 	 					_this._mouseOver($(this),e);
 	 				})
-					.mouseout(function(e){
+					.on("mouseout",function(e){
 	 					_this._mouseOut($(this),e);
 	 				})
-					.click(function(e){
+					.on("click",function(e){
 	 					_this._mouseClick($(this),e);
 	 				})
 	 				;
@@ -304,7 +304,7 @@ var CustomHtmlCanvas = $n2.Class({
  			var $child = $(this);
  			
  			$child
-				.click(function(e){
+				.on("click",function(e){
  					_this._mouseUnselect($(this),e);
  				})
  				.removeClass('n2canvas_unselect')

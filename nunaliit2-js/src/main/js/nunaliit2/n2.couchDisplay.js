@@ -745,7 +745,7 @@ var Display = $n2.Class({
 									.addClass('cordova-btn cordova-preview-button icon-preview width-100')
 									.appendTo($progress)
 									.text(_loc('Preview'))
-									.click(function(event) {
+									.on("click",function(event) {
 										event.preventDefault();
 										// Try to open it using a plugin
 										window.cordova.plugins.fileOpener2.open(
@@ -1865,7 +1865,7 @@ var ButtonDisplay = $n2.Class({
 			.attr('href','#')
 			.appendTo($elem)
 			.addClass('nunaliit_form_link')
-			.click(wrapAndReturnFalse(opts.click));
+			.on("click",wrapAndReturnFalse(opts.click));
 		
 		if( label ){
 			$linkButton.text(label);
@@ -1946,7 +1946,7 @@ var TreeDocumentViewer = $n2.Class({
 		$('<button>')
 			.text( _loc('Close') )
 			.appendTo($buttons)
-			.click(function(){
+			.on("click",function(){
 				var $diag = $('#'+diagId);
 				$diag.dialog('close');
 				return false;

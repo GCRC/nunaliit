@@ -147,6 +147,7 @@ var n2utils = {
 		for(var i=0,e=words.length; i<e; ++i) {
 			n2utils.addWordToMap(words[i],i,map);
 		};
+		n2utils.addWordToMap(str, 0, map);
 	}
 
 	,extractStrings: function(obj, strings, currentPath, excludedPaths) {

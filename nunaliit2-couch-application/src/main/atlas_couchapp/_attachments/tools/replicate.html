@@ -5,7 +5,7 @@
 		<title>Replication</title>
 
 		<link rel="shortcut icon" href="../favicon.ico" />
-		<link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.custom.css" type="text/css" />
+		<link rel="stylesheet" href="../js-external/css/jquery-ui/smoothness/jquery-ui.min.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/OpenLayers/theme/default/style.css" type="text/css" />
 		<link rel="stylesheet" href="../js-external/css/jquery.lightbox-0.5.css" type="text/css" />
 		<link rel="stylesheet" href="../nunaliit2/jquery-progress-1.0.css" type="text/css" />
@@ -37,7 +37,6 @@
 		<script type="text/javascript" src="../js-external/OpenLayers/OpenLayers.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery.lightbox-0.5.js"></script>
 		
-		<script type="text/javascript" src="../js-external/js/jquery.cycle.pack.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery.form.js"></script>
 		<script type="text/javascript" src="../js-external/js/jquery.cookie-1.0.js"></script>
 
@@ -144,7 +143,7 @@
 			};
 			
 			function main() {
-				$('#startButton').click(startReplication);
+				$('#startButton').on("click",startReplication);
 				
 				queryActiveTasks();
 			};

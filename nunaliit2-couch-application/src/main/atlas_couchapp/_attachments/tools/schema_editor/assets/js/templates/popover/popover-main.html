@@ -37,7 +37,7 @@
         </div>
         <script>
             var next = 1;
-        $(".add-more").click(function(e){
+        $(".add-more").on("click",function(e){
             e.preventDefault();
             var addto="#field"+next;
             next +=1;

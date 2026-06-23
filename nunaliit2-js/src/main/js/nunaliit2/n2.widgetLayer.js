@@ -159,7 +159,7 @@ var LayerSelectionWidget = $n2.Class({
 		
 		var $selector = $('<select>')
 			.appendTo($elem)
-			.change(function(){
+			.on("change",function(){
 				_this._selectionChanged();
 			});
 

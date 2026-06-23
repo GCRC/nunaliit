@@ -55,7 +55,7 @@ var MainPage = $n2.Class({
 		$label.empty();
 
 		// Install new doc button
-		$page.find('a.mobileMainNewDoc').click(function(){
+		$page.find('a.mobileMainNewDoc').on("click",function(){
 			_this._createNewDoc();
 			return false;
 		}).removeClass('mobileMainNewDoc');
@@ -109,15 +109,15 @@ var MainPage = $n2.Class({
 
 			$('<input class="mobileMainSearchInput" type="text" data-type="search" autocapitalize="off" autocorrect="off" returnkey="search"/>')
 				.appendTo($searchDiv)
-//				.bind('change',function(e){
+//				.on('change',function(e){
 //					var text = $(this).val();
-//					$(this).blur();
+//					$(this).trigger("blur");
 //					_this._searchTermsChanged(text);
 //				})
-				.bind('keyup',function(e){
+				.on('keyup',function(e){
 					if( e && 13 == e.keyCode ) {
 						var text = $(this).val();
-						$(this).blur();
+						$(this).trigger("blur");
 						_this._searchTermsChanged(text);
 					};
 					return false;
@@ -275,7 +275,7 @@ var MainPage = $n2.Class({
 //				};
 //				
 //				// Install new doc button
-//				$page.find('a.mobileMainNewDoc').click(function(){
+//				$page.find('a.mobileMainNewDoc').on("click",function(){
 //					new $n2.mobile.CreateNewDocument({
 //						currentDb: currentDb
 //					});

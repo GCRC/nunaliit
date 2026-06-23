@@ -256,7 +256,7 @@ var BookBrowser = $n2.Class({
 		var $pagesOuter = $('<div>')
 			.addClass('n2BookBrowser_pagesOuter')
 			.appendTo($content)
-			.scroll(function(){
+			.on("scroll",function(){
 				_this._scrollChanged( $(this) );
 				return false;
 			});

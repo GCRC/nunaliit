@@ -942,7 +942,7 @@
 			if (el && isClick &&
 				((el.nodeName.toLowerCase() == "input" || el.nodeName.toLowerCase() == "textarea") &&
 				 el.getAttribute("type") != "button")) {
-				$(el).focus();  // Focus non-button input element before mouseup
+				$(el).trigger("focus");  // Focus non-button input element before mouseup
 			}
 
 			dispatchMouseEvent('mouseup', cursor.x, cursor.y);
@@ -1729,7 +1729,7 @@
 				.attr('href','#')
 				.text( '#' )
 				.appendTo( $resetOuter )
-				.click(function(){
+				.on("click",function(){
 					if( g_tuioService ){
 						g_tuioService.resetMapToInitialExtent();
 					};

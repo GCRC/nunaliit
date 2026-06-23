@@ -58,7 +58,7 @@ var DispatchSupport = $n2.Class('DispatchSupport',{
 		};
 		
 		// Window resize event
-		$(window).resize(function() {
+		$(window).on("resize", function() {
 			_this._windowResized();
 		});
 	},

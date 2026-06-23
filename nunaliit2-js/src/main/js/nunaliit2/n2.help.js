@@ -138,7 +138,9 @@ var HelpDisplay = $n2.Class({
 
 		var dialogOptions = {
 			autoOpen: true
-			,dialogClass:'n2help_dialog'
+			,classes: {
+				'ui-dialog': 'n2help_dialog'
+			}
 			,title: _loc(this.title)
 			,modal: false
 			,width: 400

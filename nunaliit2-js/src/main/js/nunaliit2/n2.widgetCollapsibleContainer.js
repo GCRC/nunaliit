@@ -124,7 +124,7 @@ var CollapsibleWidgetContainer = $n2.Class('CollapsibleWidgetContainer',{
 			var $button = $('<div>')
 				.addClass('n2widgetCollapsibleContainer_button')
 				.appendTo($widget)
-				.click(function(){
+				.on("click",function(){
 					_this._buttonClicked();
 					return false;
 				});

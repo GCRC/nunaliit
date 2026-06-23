@@ -145,12 +145,12 @@ $Id: dbbrowse.js 8165 2012-05-31 13:14:37Z jpfiset $
 		var div = $('<div></div>');
 		jqSet.append(div);
 		
-		queryAllButton.click(function(evt){
+		queryAllButton.on("click",function(evt){
 			performQueryAll(div, capability);
 			return false;
 		});
 		
-		insertButton.click(function(evt){
+		insertButton.on("click",function(evt){
 			performInsertRecord(div, capability);
 			return false;
 		});
@@ -182,7 +182,7 @@ $Id: dbbrowse.js 8165 2012-05-31 13:14:37Z jpfiset $
 		jqSet.empty().append( table );
 		
 		function selectTableClick(link, capability) {
-			link.click(function(evt){
+			link.on("click",function(evt){
 				displayCapability(jqSet, capability);
 				return false;
 			});

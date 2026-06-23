@@ -276,7 +276,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			$('<div>')
 				.attr('class', 'n2_vertical_timeline')
 				.attr('id', this.canvasContainerId)
-				.click(function(e) {
+				.on("click",function(e) {
 					$target = $(e.target);
 					if ($target.hasClass('n2_vertical_timeline_item')
 						|| $target.parents('.n2_vertical_timeline_item').length > 0) {

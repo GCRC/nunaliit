@@ -124,7 +124,7 @@ var LanguageSwitcher = $n2.Class({
 			.text( _loc('Language') )
 			.attr('href','#')
 			.appendTo($elem)
-			.click(function(){
+			.on("click",function(){
 				_this._dialog();
 				return false;
 			});
@@ -176,7 +176,7 @@ var LanguageSwitcher = $n2.Class({
 			var $input = $('<input type="radio" name="languageSelect"/>')
 				.attr('id',id)
 				.appendTo($div)
-				.change(onChange);
+				.on("change",onChange);
 			
 			if( code ){
 				$input.attr('n2Code',code);
@@ -184,7 +184,7 @@ var LanguageSwitcher = $n2.Class({
 			
 			var locale = $n2.l10n.getLocale();
 			if( locale.lang === code ){
-				$input.attr('checked', 'checked');
+				$input.prop('checked', true);
 			};
 			
 			$('<label/>')
@@ -275,7 +275,7 @@ var LanguageToggler = $n2.Class({
 				.text( language.name )
 				.attr('href','#')
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					_this._selectLanguage(language.code);
 					return false;
 				});

@@ -24,9 +24,7 @@
             $(document).on(
                 "click",
                 "#ui-datepicker-div .ui-datepicker-close",
-                function () {
-                    closeCalendar();
-                }
+                closeCalendar
             );
         }, 0);
     }
@@ -116,7 +114,7 @@
         // Find the next element to focus
         const nextElement = $(focusOrder[nextIndex]).first();
         if (nextElement.length) {
-            nextElement.focus();
+            nextElement.trigger("focus");
         }
     }
 
@@ -135,7 +133,7 @@
                 // updating the cached header elements
                 updateHeaderElements();
                 hideTodayButton();
-                $(".ui-datepicker-year").focus();
+                $(".ui-datepicker-year").trigger("focus");
             }, 0);
         }
     }
@@ -454,15 +452,16 @@
         updateDateLabels();
     }
 
-    function closeCalendar() {
+    function closeCalendar(ev) {
+        const detail = ev?.detail;
         $("#ui-datepicker-div").off("keydown");
-        datepickerElement?.focus();
+        if (detail === 0) datepickerElement?.focus(); // not click, must be keyboard?
     }
 
     function handleNextClicks() {
         setTimeout(function () {
             updateHeaderElements();
-            $(".ui-datepicker-next").focus();
+            $(".ui-datepicker-next").trigger("focus");
             hideTodayButton();
         }, 0);
     }
@@ -470,7 +469,7 @@
     function handlePrevClicks() {
         setTimeout(function () {
             updateHeaderElements();
-            $(".ui-datepicker-prev").focus();
+            $(".ui-datepicker-prev").trigger("focus");
             hideTodayButton();
         }, 0);
     }

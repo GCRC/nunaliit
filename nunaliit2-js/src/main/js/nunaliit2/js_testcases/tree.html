@@ -94,7 +94,7 @@
 				
 				var $btn = $('<input id="editButton" type="button" value="Edit"/>');
 				$buttonContainer.append($btn);
-				$btn.click(function(){
+				$btn.on("click",function(){
 					startEdit(id);
 				});
 			};
@@ -143,7 +143,7 @@
 				var $btn = $('<input type="button" value="Done"/>');
 				$buttonContainer.append($btn);
 				
-				$btn.click(function(){
+				$btn.on("click",function(){
 					endEdit(id);
 				});
 			};
@@ -160,7 +160,7 @@
 				var $btn = $('<input type="button" value="Edit"/>');
 				$buttonContainer.append($btn);
 				
-				$btn.click(function(){
+				$btn.on("click",function(){
 					startEdit(id);
 				});
 			};

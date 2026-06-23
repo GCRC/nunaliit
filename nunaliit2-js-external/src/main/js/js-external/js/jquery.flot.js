@@ -314,13 +314,13 @@
 
             // the canvas
             canvas = $('<canvas width="' + canvasWidth + '" height="' + canvasHeight + '"></canvas>').appendTo(target).get(0);
-            if ($.browser.msie) // excanvas hack
+            if (false) // excanvas hack
                 canvas = window.G_vmlCanvasManager.initElement(canvas);
             ctx = canvas.getContext("2d");
 
             // overlay canvas for interactive features
             overlay = $('<canvas style="position:absolute;left:0px;top:0px;" width="' + canvasWidth + '" height="' + canvasHeight + '"></canvas>').appendTo(target).get(0);
-            if ($.browser.msie) // excanvas hack
+            if (false) // excanvas hack
                 overlay = window.G_vmlCanvasManager.initElement(overlay);
             octx = overlay.getContext("2d");
 
@@ -675,7 +675,7 @@
 
             axis.tickSize = unit ? [size, unit] : size;
             axis.tickGenerator = generator;
-            if ($.isFunction(axisOptions.tickFormatter))
+            if (typeof axisOptions.tickFormatter === 'function')
                 axis.tickFormatter = function (v, axis) { return "" + axisOptions.tickFormatter(v, axis); };
             else
                 axis.tickFormatter = formatter;
@@ -700,7 +700,7 @@
             else if (axisOptions.ticks) {
                 var ticks = axisOptions.ticks;
 
-                if ($.isFunction(ticks))
+                if (typeof ticks === 'function')
                     // generate the ticks
                     ticks = ticks({ min: axis.min, max: axis.max });
                 
@@ -872,7 +872,7 @@
             // draw markings
             if (options.grid.markings) {
                 var markings = options.grid.markings;
-                if ($.isFunction(markings))
+                if (typeof markings === 'function')
                     // xmin etc. are backwards-compatible, to be removed in future
                     markings = markings({ xmin: axes.xaxis.min, xmax: axes.xaxis.max, ymin: axes.yaxis.min, ymax: axes.yaxis.max, xaxis: axes.xaxis, yaxis: axes.yaxis, x2axis: axes.x2axis, y2axis: axes.y2axis });
 

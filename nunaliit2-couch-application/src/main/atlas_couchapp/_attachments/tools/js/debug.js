@@ -72,7 +72,7 @@
 				.attr('type','checkbox')
 				.attr('name',badProxyId)
 				.appendTo($div)
-				.change(function(){
+				.on("change",function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setBadProxyEnabled(true);
@@ -82,7 +82,7 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isBadProxyEnabled() ){
-				$cb.attr('checked','checked');
+				$cb.attr('checked', true);
 			};
 
 			// Logging
@@ -98,7 +98,7 @@
 				.attr('type','checkbox')
 				.attr('name',loggingId)
 				.appendTo($div)
-				.change(function(){
+				.on("change",function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setEventLoggingEnabled(true);
@@ -108,7 +108,7 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isEventLoggingEnabled() ){
-				$cb.attr('checked','checked');
+				$cb.attr('checked', true);
 			};
 
 			// CouchDb Caching
@@ -124,7 +124,7 @@
 				.attr('type','checkbox')
 				.attr('name',couchDbCachingId)
 				.appendTo($div)
-				.change(function(){
+				.on("change",function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setCouchDbCachingEnabled(true);
@@ -134,12 +134,12 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isCouchDbCachingEnabled() ){
-				$cb.attr('checked','checked');
+				$cb.attr('checked', true);
 			};
 			var $cb = $('<button>')
 				.text( _loc('Clear Cache') )
 				.appendTo($div)
-				.click(function(){
+				.on("click",function(){
 					$n2.indexedDb.openIndexedDb({
 						onSuccess: function(indexedDbConnection){
 							var documentCache = indexedDbConnection.getDocumentCache({});
@@ -171,7 +171,7 @@
 				.attr('type','checkbox')
 				.attr('name',disableCouchDbCachingId)
 				.appendTo($div)
-				.change(function(){
+				.on("change",function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setCouchDbCachingDisabled(true);
@@ -181,7 +181,7 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.isCouchDbCachingDisabled() ){
-				$cb.attr('checked','checked');
+				$cb.attr('checked', true);
 			};
 
 			// Force slow connection handling
@@ -197,7 +197,7 @@
 				.attr('type','checkbox')
 				.attr('name',slowConnectionHandlingId)
 				.appendTo($div)
-				.change(function(){
+				.on("change",function(){
 					var $cb = $(this);
 					if( $cb.attr('checked') ) {
 						_this.debugConfiguration.setForceSlowConnectionHandling(true);
@@ -207,7 +207,7 @@
 					_this._refresh();
 				});
 			if( this.debugConfiguration.forceSlowConnectionHandling() ){
-				$cb.attr('checked','checked');
+				$cb.attr('checked', true);
 			};
 		}
 	});

@@ -170,7 +170,7 @@ if( typeof $.widget === 'function' ){
 						.appendTo($li)
 						.attr('href','#')
 						.text($opt.text())
-						.click(createClickHandler(value))
+						.on("click",createClickHandler(value))
 						;
 				};
 			});

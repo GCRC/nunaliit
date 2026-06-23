@@ -422,7 +422,7 @@ $.widget = function( name, base, prototype ) {
 	// inheriting from
 	basePrototype.options = $.widget.extend( {}, basePrototype.options );
 	$.each( prototype, function( prop, value ) {
-		if ( $.isFunction( value ) ) {
+		if ( typeof value === 'function' ) {
 			prototype[ prop ] = (function() {
 				var _super = function() {
 						return base.prototype[ prop ].apply( this, arguments );
@@ -521,7 +521,7 @@ $.widget.bridge = function( name, object ) {
 					return $.error( "cannot call methods on " + name + " prior to initialization; " +
 						"attempted to call method '" + options + "'" );
 				}
-				if ( !$.isFunction( instance[options] ) || options.charAt( 0 ) === "_" ) {
+				if ( !( typeof instance[options] === 'function' ) || options.charAt( 0 ) === "_" ) {
 					return $.error( "no such method '" + options + "' for " + name + " widget instance" );
 				}
 				methodValue = instance[ options ].apply( instance, args );
@@ -801,7 +801,7 @@ $.Widget.prototype = {
 		}
 
 		this.element.trigger( event, data );
-		return !( $.isFunction( callback ) &&
+		return !( typeof callback ===  'function' &&
 			callback.apply( this.element[0], [ event ].concat( data ) ) === false ||
 			event.isDefaultPrevented() );
 	}
@@ -2560,7 +2560,7 @@ $.widget( "mobile.page", $.mobile.widget, {
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
     // vvvvvvvvvvvvvvvvvvv REMOVE IF NOT SUPPORTING IE6/7/8 vvvvvvvvvvvvvvvvvvv
     // vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
-    $.browser.msie && !supports_onhashchange && (function() {
+    false && !supports_onhashchange && (function() {
       // Not only do IE6/7 need the "magical" Iframe treatment, but so does IE8
       // when running in "IE7 compatibility" mode.
       

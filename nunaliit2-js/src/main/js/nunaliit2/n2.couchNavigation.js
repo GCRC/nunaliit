@@ -108,7 +108,7 @@ var NavigationDisplay = $n2.Class({
 
 			$nav.append(menuToggle)
 
-			menuToggle.click(function() {
+			menuToggle.on("click",function() {
 				$(this.parentNode)?.toggleClass('n2nav_showMenu')
 				$('.' + SUBMENU_CLICKED_CLASS).each((_, el) => {
 					el.classList.remove(SUBMENU_CLICKED_CLASS)
@@ -206,7 +206,7 @@ var NavigationDisplay = $n2.Class({
 				};
 				
 				if( item.items && item.items.length > 0 ){
-					$li.click(function(ev) {
+					$li.on("click",function(ev) {
 						ev.stopPropagation()
 						$(this).toggleClass(SUBMENU_CLICKED_CLASS)
 					})

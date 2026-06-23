@@ -561,7 +561,7 @@ var CurrentDatabase = $n2.Class({
 
 			$n2.mobile.DisplayMediaThumbnail(_this.options.db, $button, data, attachmentName);
 
-			$button.click(function(){
+			$button.on("click",function(){
 				new $n2.mobile.MobileMediaViewer({
 					currentDb: _this
 					,doc: data
@@ -584,7 +584,7 @@ var CurrentDatabase = $n2.Class({
 			 && data._attachments 
 			 && data._attachments[attachmentName] ) {
 				
-				$externalLink.click(function(e){
+				$externalLink.on("click",function(e){
 					new $n2.mobile.MobileMediaViewer({
 						currentDb: _this
 						,doc: data
@@ -596,7 +596,7 @@ var CurrentDatabase = $n2.Class({
 			} else {
 				// At this point, we have a link that leads nowhere. Simply report
 				// error to user.
-				$externalLink.click(function(e){
+				$externalLink.on("click",function(e){
 					alert( _loc('File is not currently available') );
 					return false;
 				});

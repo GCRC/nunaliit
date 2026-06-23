@@ -1326,7 +1326,7 @@ var CouchDocumentSourceWithSubmissionDb = $n2.Class('CouchDocumentSourceWithSubm
 				.addClass('n2_button_ok')
 				.appendTo($buttons)
 				.text( _loc('OK') )
-				.click(function(){
+				.on("click",function(){
 					var $diag = $('#'+diagId);
 					$diag.dialog('close');
 				});

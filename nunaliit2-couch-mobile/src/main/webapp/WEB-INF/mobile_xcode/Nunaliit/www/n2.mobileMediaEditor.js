@@ -63,7 +63,7 @@ var MobileMediaEditor = $n2.Class({
 			
 			// Enhance page
 			$newPage.page();
-			$newPage.bind('pagehide',function(){
+			$newPage.on('pagehide',function(){
 				var $page = $(this),
 					prEvent = new $.Event('pageremove');
 
@@ -127,7 +127,7 @@ var MobileMediaEditor = $n2.Class({
 		// Remove button
 		var $removeButton = $('<a href="#" data-role="button" data-theme="e" data-icon="delete">Remove File</a>');
 		$content.append( $removeButton );
-		$removeButton.click(function(){
+		$removeButton.on("click",function(){
 			if( confirm('Are you sure you want to remove this media from the document?') ) {
 				if( doc && doc._attachments && doc._attachments[attName] ) {
 					delete doc._attachments[attName];

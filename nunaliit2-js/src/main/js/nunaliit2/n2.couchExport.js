@@ -137,7 +137,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		var $methodSelect = $('<select>')
 			.attr('id',methodId)
 			.appendTo($methodDiv)
-			.change(methodChanged);
+			.on("change",methodChanged);
 		$('<option>')
 			.val('__custom__')
 			.text( _loc('Custom Script') )
@@ -178,7 +178,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		var $formatSelect = $('<select>')
 			.attr('id',formatId)
 			.appendTo($formatDiv)
-			.change(formatChanged);
+			.on("change",formatChanged);
 		$('<option value="geojson"></options>')
 			.text( _loc('geojson') )
 			.appendTo($formatSelect);
@@ -224,7 +224,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 		$('<button>')
 			.text( _loc('Export') )
 			.appendTo($btnLine)
-			.click(function(){
+			.on("click",function(){
 				var filter = $('#'+filterId).val();
 				var format = $('#'+formatId).val();
 				
@@ -329,7 +329,7 @@ var ExportApplication = $n2.Class('ExportApplication',{
 			
 			if( '__custom__' === method ){
 				$scriptArea
-					.removeAttr('disabled')
+					.prop('disabled', false)
 					.css('display','');
 				$scriptDisplay
 					.css('display','none');
@@ -670,7 +670,7 @@ var ExportService = $n2.Class('ExportService',{
 
 		$('body').append($form);
 		
-		$form.submit();
+		$form.trigger("submit");
 	},
 	
 	exportByDocIds: function(opts_){
@@ -754,7 +754,7 @@ var ExportService = $n2.Class('ExportService',{
 		
 		$('body').append($form);
 		
-		$form.submit();
+		$form.trigger("submit");
 	},
 	
 	exportBySchemaName: function(opts_){
@@ -921,7 +921,7 @@ var ExportService = $n2.Class('ExportService',{
 		
 		$('body').append($form);
 		
-		$form.submit();
+		$form.trigger("submit");
 	},
 	
 	_exportByAjax: function(opts_){

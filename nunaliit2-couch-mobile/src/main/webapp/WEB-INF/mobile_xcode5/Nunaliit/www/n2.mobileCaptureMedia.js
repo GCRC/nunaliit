@@ -52,7 +52,7 @@ var MobileCaptureMedia = $n2.Class({
 			
 			// Enhance page
 			$newPage.dialog();
-			$newPage.bind('pagehide',function(){
+			$newPage.on('pagehide',function(){
 				var $this = $( this ),
 					prEvent = new $.Event( "pageremove" );
 
@@ -103,7 +103,7 @@ var MobileCaptureMedia = $n2.Class({
 		$content.append( $('<a class="mobileMediaCaptureVideoLibrary" href="#" data-role="button">Select Video from Library</a>') );
 		$content.append( $('<a class="mobileMediaCaptureRecordAudio" href="#" data-role="button">Record Audio</a>') );
 		
-		$content.find('a').click(function(){
+		$content.find('a').on("click",function(){
 			var $button = $(this);
 			
 			if( $button.hasClass('mobileMediaCaptureTakePicture') ) {
@@ -146,7 +146,7 @@ var MobileCaptureMedia = $n2.Class({
 		$content.append( $('<div data-role="fieldcontain"><label for="media_description">Description:</label><textarea name="media_description" id="media_description" autocapitalize="off" autocorrect="off"></textarea></div>') );
 		$content.append( $('<a data-role="button">Accept Media File</a>') );
 		
-		$content.find('a').click(function(){
+		$content.find('a').on("click",function(){
 			var $button = $(this);
 
 			var $page = _this.getPage();

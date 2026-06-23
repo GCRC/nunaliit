@@ -104,7 +104,7 @@ var PhotosphereDisplay = $n2.Class({
 		this.renderer.setSize( canvasGeom.width, canvasGeom.height );
 		$elem[0].appendChild( this.renderer.domElement );
 
-		$elem.mousedown(function( event ) {
+		$elem.on("mousedown",function( event ) {
 
 			event.preventDefault();
 
@@ -118,18 +118,18 @@ var PhotosphereDisplay = $n2.Class({
 			_this.onPointerDownLat = _this.lat;
 		});
 		
-		$elem.mousemove(function( event ) {
+		$elem.on("mousemove",function( event ) {
 			if ( _this.isUserInteracting === true ) {
 				_this.lon = ( _this.onPointerDownPointerX - event.clientX ) * 0.1 + _this.onPointerDownLon;
 				_this.lat = ( event.clientY - _this.onPointerDownPointerY ) * 0.1 + _this.onPointerDownLat;
 			};
 		});
 		
-		$elem.mouseup(function( event ) {
+		$elem.on("mouseup",function( event ) {
 			_this.isUserInteracting = false;
 		});
 		
-		$elem.mouseout(function( event ) {
+		$elem.on("mouseout",function( event ) {
 			_this.isUserInteracting = false;
 		});
 		

@@ -77,7 +77,7 @@ POSSIBILITY OF SUCH DAMAGE.
 			$header.empty()
 				.append( $('<span class="ui-icon ui-icon-triangle-1-e"></span>') )
 				.append( $('<a class="n2BlindA" href="#"></a>') )
-				.click(function(){
+				.on("click",function(){
 					_this._headerClicked();
 					return false;
 				});

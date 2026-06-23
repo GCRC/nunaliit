@@ -128,7 +128,7 @@
 							+connectionLabel+'</label>') );
 				};
 				
-				$list.find('.mobileSettingsRadio').bind('change',settingsPageSetCurrent);
+				$list.find('.mobileSettingsRadio').on('change',settingsPageSetCurrent);
 				$list.trigger('create');
 				jqmRefreshPage();
 			};
@@ -192,7 +192,7 @@
 		
 		// +*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*
 		function addDatabasePageRefresh(){
-			$('#database_name').focus();
+			$('#database_name').trigger("focus");
 			jqmRefreshPage();
 		};
 
@@ -257,7 +257,7 @@
 //		$('#mobileAddDatabase').live('pagebeforeshow',addDatabasePageRefresh);
 //		$('#mobileRemoveDbPage').live('pagebeforeshow',removeDatabasePageRefresh);
 		
-		$(document).bind('pagebeforeshow',function(e,data){
+		$(document).on('pagebeforeshow',function(e,data){
 			var $toPage = $(e.target);
 			var id = $toPage.attr('id');
 
@@ -272,7 +272,7 @@
 		
 		// Listen for any attempts to call changePage().
 		var viewDocRe = /^.*\/([^\/]*)$/;
-		$(document).bind( 'pagebeforechange', function( e, data ) {
+		$(document).on( 'pagebeforechange', function( e, data ) {
 			if( typeof(data.toPage) === 'string' ) {
 				// Get last portion of URL
 				var viewMatched = data.toPage.match(viewDocRe);

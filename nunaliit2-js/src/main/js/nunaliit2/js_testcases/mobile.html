@@ -36,12 +36,12 @@
 						+'</table>');
 				$('#create').append($table);
 
-				$('#create').find('.serverOK').click(function(){
+				$('#create').find('.serverOK').on("click",function(){
 					var serverAddress = $('#create').find('.serverAddress').val();
 					createDatabase2(serverAddress);
 					return false;
 				});
-				$('#create').find('.serverCancel').click(function(){
+				$('#create').find('.serverCancel').on("click",function(){
 					main();
 					return false;
 				});
@@ -68,7 +68,7 @@
 					$('#create').append('<div>Error: '+err+'</div>');
 					var $btn = $('<div><input type="button" value="Cancel"></div>');
 					$('#create').append($btn);
-					$btn.find('input').click(function(){
+					$btn.find('input').on("click",function(){
 						main();
 						return false;
 					});
@@ -95,13 +95,13 @@
 				clickCreate($tr.find('a'));
 				
 				function makeClick(dbName, $tr){
-					$tr.click(function(){
+					$tr.on("click",function(){
 						
 					});
 				};
 
 				function clickCreate($jq){
-					$jq.click(function(){
+					$jq.on("click",function(){
 						createDatabase();
 						return false;
 					});

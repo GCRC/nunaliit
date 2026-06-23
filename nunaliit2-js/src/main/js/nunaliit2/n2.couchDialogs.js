@@ -106,7 +106,7 @@ var ProgressDialog = $n2.Class({
 			$dialog.append(cancelLine);
 			cancelLine.find('button')
 				.text(opts.cancelButtonLabel)
-				.click(function(){
+				.on("click",function(){
 					_this.cancel();
 					return false;
 				})
@@ -175,7 +175,7 @@ var AlertDialog = $n2.Class({
 			.addClass('n2dialogs_alert_okButton')
 			.text( _loc('OK') )
 			.appendTo($okLine)
-			.click(function(){
+			.on("click",function(){
 				_this.close();
 				return false;
 			});
@@ -227,8 +227,8 @@ function searchForDocumentId(options_){
 			+'</div>');
 	
 	$dialog.find('button.cancel')
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
+			.button({icon:'ui-icon-cancel'})
+			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
 				return false;
@@ -264,7 +264,7 @@ function searchForDocumentId(options_){
 	});
 	
 	var $input = $('#'+inputId);
-	$('#'+inputId).focus();
+	$('#'+inputId).trigger("focus");
 	
 	function receiveSearchResults(displayData) {
 		if( !displayData ) {
@@ -310,7 +310,7 @@ function searchForDocumentId(options_){
 					.attr('href','#'+docId)
 					.attr('alt',docId)
 					.appendTo($td)
-					.click( createClickHandler(docId) );
+					.on("click", createClickHandler(docId) );
 
 				if( options.showService ) {
 					options.showService.printBriefDescription($a,docId);
@@ -376,15 +376,15 @@ function selectLayersDialog(opts_){
 			+'</div>');
 	
 	$dialog.find('button.cancel')
-		.button({icons:{primary:'ui-icon-cancel'}})
-		.click(function(){
+		.button({icon:'ui-icon-cancel'})
+		.on("click",function(){
 			var $dialog = $('#'+dialogId);
 			$dialog.dialog('close');
 			return false;
 		});
 	$dialog.find('button.ok')
 		.button({
-			icons:{primary:'ui-icon-check'}
+			icon:'ui-icon-check'
 			,disabled: true
 		});
 	
@@ -476,7 +476,7 @@ function selectLayersDialog(opts_){
 				.appendTo($div);
 
 			if( layers[layerId].currentlySelected ){
-				$input.attr('checked','checked');
+				$input.prop('checked', true);
 			};
 			
 			if( opts.showService && !layers[layerId].label ){
@@ -486,7 +486,7 @@ function selectLayersDialog(opts_){
 		
 		$diag.find('button.ok')
 			.button('option','disabled',false)
-			.click(function(){
+			.on("click",function(){
 				var selectedLayers = [];
 				var $diag = $('#'+dialogId);
 				$diag.find('input.layer').each(function(){
@@ -595,7 +595,7 @@ var SearchBriefDialogFactory = $n2.Class({
 			.attr('id', inputId)
 			.attr('type', 'text')
 			.appendTo($searchLine)
-			.keyup(function(){
+			.on("keyup",function(){
 				var $input = $(this);
 				var text = $input.val();
 				var frags = text.split(' ');
@@ -626,8 +626,8 @@ var SearchBriefDialogFactory = $n2.Class({
 			.addClass('cancel')
 			.text( _loc('Cancel') )
 			.appendTo($buttons)
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
+			.button({icon:'ui-icon-cancel'})
+			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
 				return false;
@@ -698,7 +698,7 @@ var SearchBriefDialogFactory = $n2.Class({
 							.attr('href','#'+docId)
 							.attr('alt',docId)
 							.appendTo($td)
-							.click( createClickHandler(docId) );
+							.on("click", createClickHandler(docId) );
 						
 						if( _this.showService ) {
 							_this.showService.displayBriefDescription($a, {}, doc);
@@ -1173,8 +1173,8 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 			.addClass('cancel')
 			.text( _loc('Cancel') )
 			.appendTo($buttons)
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
+			.button({icon:'ui-icon-cancel'})
+			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
 				return false;
@@ -1209,7 +1209,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 		});
 		
 		var $input = $('#'+inputId);
-		$('#'+inputId).focus();
+		$('#'+inputId).trigger("focus");
 		
 		// Get suggestions
 		if( opts.contextDoc && typeof opts.contextDoc._id === 'string' ){
@@ -1316,7 +1316,7 @@ var SearchRelatedMediaDialogFactory = $n2.Class('SearchRelatedMediaDialogFactory
 						.attr('href','#'+docId)
 						.attr('alt',docId)
 						.appendTo($td)
-						.click( createClickHandler(docId) );
+						.on("click", createClickHandler(docId) );
 					
 					if( _this.showService ) {
 						_this.showService.displayBriefDescription($a, {}, doc);
@@ -1644,8 +1644,8 @@ var FilteredSearchDialogFactory = $n2.Class({
 			.addClass('cancel')
 			.text( _loc('Cancel') )
 			.appendTo($buttons)
-			.button({icons:{primary:'ui-icon-cancel'}})
-			.click(function(){
+			.button({icon:'ui-icon-cancel'})
+			.on("click",function(){
 				var $dialog = $('#'+dialogId);
 				$dialog.dialog('close');
 				return false;
@@ -1680,7 +1680,7 @@ var FilteredSearchDialogFactory = $n2.Class({
 		});
 		
 		var $input = $('#'+inputId);
-		$('#'+inputId).focus();
+		$('#'+inputId).trigger("focus");
 		
 		function receiveSearchResults(displayData) {
 			if( !displayData ) {
@@ -1749,7 +1749,7 @@ var FilteredSearchDialogFactory = $n2.Class({
 						.attr('href','#'+docId)
 						.attr('alt',docId)
 						.appendTo($td)
-						.click( createClickHandler(docId) );
+						.on("click", createClickHandler(docId) );
 					
 					if( _this.showService ) {
 						_this.showService.displayBriefDescription($a, {}, doc);
@@ -2065,10 +2065,10 @@ var DialogService = $n2.Class({
 		} else {
 			$ok = $('<button></button>');
 			$ok.text( _loc('OK') );
-			$ok.button({icons:{primary:'ui-icon-check'}});
+			$ok.button({icon:'ui-icon-check'});
 			$dialog.append( $ok );
 		} 
-		$ok.click(function(){
+		$ok.on("click",function(){
 			mustReset = false;
 			
 			var $diag = $('#'+diagId);
@@ -2091,11 +2091,11 @@ var DialogService = $n2.Class({
 			$btnContainer.append($cancel);
 		} else {
 			$cancel = $('<button></button>');
-			$cancel.button({icons:{primary:'ui-icon-cancel'}});
+			$cancel.button({icon:'ui-icon-cancel'});
 			$dialog.append( $cancel );
 		}
 		$cancel.text( _loc('Cancel') );
-		$cancel.click(function(){
+		$cancel.on("click",function(){
 			$('#'+diagId).dialog('close');
 			return false;
 		});

@@ -428,7 +428,7 @@ var GazetteerProcess = $n2.Class({
 			,location: null
 		};
 		
-		$input.keydown(function(e){
+		$input.on("keydown",function(e){
 			var key = e.which;
 			
 			// $n2.log('key',key);
@@ -517,7 +517,7 @@ var GazetteerProcess = $n2.Class({
 	_installOnClick: function(request, $entry, entry){
 		var _this = this;
 		
-		$entry.click(function(){
+		$entry.on("click",function(){
 			_this._selectEntry(request, entry);
 		});
 	},
@@ -1748,9 +1748,9 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			};
 			if( this.options.layerSwitcher
 			 && this.options.layerSwitcher.initiallyOpened ) {
-				layerSwitcherControl.maximizeControl();
+				layerSwitcherControl.toggleLayerControl();
 			} else if( allLayersInitiallyInvisible ) {
-				layerSwitcherControl.maximizeControl();
+				layerSwitcherControl.toggleLayerControl();
 			};
 		};
 
@@ -2875,7 +2875,55 @@ var MapAndControls = $n2.Class('MapAndControls',{
 				}
 				return l;
 			}
-		} else {
+		}
+		else if ('xyz' === layerDefinition.type) {
+			const options = {
+				isBaseLayer,
+				...layerDefinition.options
+			}
+			if (typeof (layerDefinition.visibility) === 'boolean') {
+				options.visibility = layerDefinition.visibility;
+			}
+	
+			const url = options?.url
+			const projection = options?.projection
+			const resolutions = options?.resolutions
+			const tileSize = options?.tileSize
+			const tileOrigin = options?.origin
+			const maxExtent = options?.extent
+
+			if (!url) {
+				$n2.reportError('Option url must be specified for an XYZ background.');
+			}
+			if (!projection) {
+				$n2.reportError('Option projection must be specified for an XYZ background.');
+			}
+			if (!resolutions) {
+				$n2.reportError('Option resolutions must be specified for an XYZ background.');
+			}
+			if (!tileSize) {
+				$n2.reportError('Option tileSize must be specified for an XYZ background.');
+			}
+			if (!tileOrigin) {
+				$n2.reportError('Option origin must be specified for an XYZ background.');
+			}
+			if (!maxExtent) {
+				$n2.reportError('Option extent must be specified for an XYZ background.');
+			}
+			else {
+				options.projection = new OpenLayers.Projection(projection)
+				options.tileSize = new OpenLayers.Size(tileSize[0], tileSize[1])
+				options.serverResolutions = resolutions
+				options.tileOrigin = new OpenLayers.LonLat(tileOrigin[0], tileOrigin[1])
+				options.maxExtent = maxExtent
+				const l = new OpenLayers.Layer.XYZ(name, url, options);
+				if (name) {
+					l.name = name;
+				}
+				return l;
+			}
+		}
+		else {
 			$n2.reportError('Unknown layer type: '+layerDefinition.type);
 		};
 		
@@ -3783,7 +3831,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
  		var _this = this;
  		var mapInteractionButton = $('<input type="button" class="n2map_map_interaction_switch"/>')
  			.val(this.modes.NAVIGATE.buttonValue)
- 			.click( function(evt) { 
+ 			.on("click", function(evt) { 
  				_this._clickedMapInteractionSwitch(evt);
  			})
  			;
@@ -4070,7 +4118,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			
 			// Buttons
 			var cancelButton = $('<input type="button" value="Cancel"/>');
-			cancelButton.click(function(){
+			cancelButton.on("click",function(){
 				selectWindow.dialog('close');
 			});
 			selectWindow.append(cancelButton);
@@ -4128,13 +4176,16 @@ var MapAndControls = $n2.Class('MapAndControls',{
 				tdElem.append( $('<br/>') );
 			};
 			
-			trElem.hover(function(){
-				var value = media.filename?media.filename:'';
-				_this.insertSound(value);
-			},function(){
-				_this.insertSound();
-			});
-			trElem.click(function(){
+			trElem
+				.on("mouseenter", function(){
+					var value = media.filename?media.filename:'';
+					_this.insertSound(value);
+				})
+				.on("mouseleave", function(){
+					_this.insertSound();
+				})
+			
+			trElem.on("click",function(){
 				var value = media.filename?media.filename:'';
 				_this.insertSound();
 				onSelectCallback(value);
@@ -4462,7 +4513,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		span.append(text);
 		span.append(br);
 		
-		cb.bind('change',function(){
+		cb.on('change',function(){
 			var checked = cb.attr('checked');
 			if( checked ) {
 				refreshFilter();
@@ -4470,7 +4521,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 				removeFilter();
 			};
 		});
-		removeButton.click(function(){
+		removeButton.on("click",function(){
 			deleteFilter();
 			return false;
 		});
@@ -4479,7 +4530,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		
 		function onError() {
 			warning.text('!!!');
-			cb.attr('checked',false);
+			cb.prop('checked',false);
 			disableAll(span, false);
 			if( null != filterLabel ) {
 				this.removeStyleFilter(filterLabel);
@@ -4512,7 +4563,7 @@ var MapAndControls = $n2.Class('MapAndControls',{
 			}; 
 			styleFilters[filter.label] = filter;
 
-			cb.attr('checked',true);
+			cb.prop('checked',true);
 			disableAll(span, false);
 			
 			_this.redrawMap();
@@ -4533,12 +4584,12 @@ var MapAndControls = $n2.Class('MapAndControls',{
 		function disableAll(jQuerySet, flag) {
 			if( flag ) {
 				jQuerySet
-					.attr('disabled',true)
+					.prop('disabled',true)
 					.addClass('olkitDisabled')
 					;
 			} else {
 				jQuerySet
-					.removeAttr('disabled')
+					.prop('disabled', false)
 					.removeClass('olkitDisabled')
 					;
 			};

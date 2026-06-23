@@ -238,7 +238,7 @@ var SingleFilterSelectionWidget = $n2.Class('SingleFilterSelectionWidget',{
 		
 		var $selector = $('<select>')
 			.appendTo($elem)
-			.change(function(){
+			.on("change",function(){
 				_this._selectionChanged();
 			});
 
@@ -607,7 +607,7 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 			.attr('href','#')
 			.attr('n2-choice-id',ALL_CHOICES)
 			.appendTo($elem)
-			.click(function(){
+			.on("click",function(){
 				var $a = $(this);
 				var choiceId = $a.attr('n2-choice-id');
 				_this._selectionClicked(choiceId, $a);
@@ -630,7 +630,7 @@ var MultiFilterSelectionWidget = $n2.Class('MultiFilterSelectionWidget',{
 				.attr('href',choice.id)
 				.attr('n2-choice-id',choice.id)
 				.appendTo($elem)
-				.click(function(){
+				.on("click",function(){
 					var $a = $(this);
 					var choiceId = $a.attr('n2-choice-id');
 					_this._selectionClicked(choiceId, $a);
@@ -937,7 +937,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 				.attr('href',buttonLabel)
 				.text( buttonLabel )
 				.appendTo($relDiv)
-				.click(function(){
+				.on("click",function(){
 					_this._buttonClicked();
 					return false;
 				});
@@ -945,7 +945,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 			$('<button>')
 				.appendTo($relDiv)
 				.text( buttonLabel )
-				.click(function(){
+				.on("click",function(){
 					_this._buttonClicked();
 				});
 		};
@@ -1012,7 +1012,7 @@ var MultiFilterSelectionDropDownWidget = $n2.Class('MultiFilterSelectionDropDown
 				.attr('data-n2-choiceId',choiceId)
 				.attr('href', '#')
 				.appendTo($div)
-				.click(function(){
+				.on("click",function(){
 					var $a = $(this);
 					var choiceId = $a.attr('data-n2-choiceId');
 					_this._selectionChanged(choiceId);

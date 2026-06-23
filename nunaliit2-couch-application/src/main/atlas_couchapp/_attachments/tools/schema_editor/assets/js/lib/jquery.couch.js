@@ -144,7 +144,7 @@
             xhr.setRequestHeader('Accept', 'application/json');
         },
         complete: function(req) {
-          var resp = $.parseJSON(req.responseText);
+          var resp = JSON.parse(req.responseText);
           if (req.status == 200) {
             if (options.success) options.success(resp);
           } else if (options.error) {
@@ -210,7 +210,7 @@
             xhr.setRequestHeader('Accept', 'application/json');
         },
         complete: function(req) {
-          var resp = $.parseJSON(req.responseText);
+          var resp = JSON.parse(req.responseText);
           if (req.status == 200) {
             if (options.success) options.success(resp);
           } else if (options.error) {
@@ -241,7 +241,7 @@
             xhr.setRequestHeader('Accept', 'application/json');
         },
         complete: function(req) {
-          var resp = $.parseJSON(req.responseText);
+          var resp = JSON.parse(req.responseText);
           if (req.status == 200) {
             if (options.success) options.success(resp);
           } else if (options.error) {
@@ -631,7 +631,7 @@
             dataType: "json", data: toJSON(doc),
             beforeSend : beforeSend,
             complete: function(req) {
-              var resp = $.parseJSON(req.responseText);
+              var resp = JSON.parse(req.responseText);
               if (req.status == 200 || req.status == 201 || req.status == 202) {
                 doc._id = resp.id;
                 doc._rev = resp.rev;
@@ -747,7 +747,7 @@
               XMLHttpRequest.setRequestHeader("Destination", header);
             },
             complete: function(req) {
-              var resp = $.parseJSON(req.responseText);
+              var resp = JSON.parse(req.responseText);
               if (req.status == 201) {
                 if (options.success) options.success(resp);
               } else if (options.error) {
@@ -1016,7 +1016,7 @@
 
         if (req.getResponseHeader('Content-Type') === 'application/json') {
           try {
-            var resp = $.parseJSON(req.responseText);
+            var resp = JSON.parse(req.responseText);
           } catch(e) {
             if (options.error) {
               options.error(req.status, req, e);

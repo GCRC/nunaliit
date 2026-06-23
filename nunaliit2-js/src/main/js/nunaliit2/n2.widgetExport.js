@@ -149,7 +149,7 @@ var ExportWidget = $n2.Class({
 				.attr('href','Export Documents')
 				.text( _loc(this.label) )
 				.appendTo( $elem )
-				.click(function(){
+				.on("click",function(){
 					try {
 						_this._performExport();
 					} catch(e) {

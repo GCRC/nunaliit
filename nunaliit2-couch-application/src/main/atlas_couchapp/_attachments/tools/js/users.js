@@ -87,7 +87,7 @@ var UserManagementApplication = $n2.Class({
 		
 		var $userInput = $('<div class="userAppInput"></div>')
 			.appendTo(div);
-		var $userOutput = $('<div class="userAppOutput"></div>')
+		var $userOutput = $('<div id="n2-user-app-output" class="userAppOutput"></div>')
 			.appendTo(div);
 		
 		
@@ -97,9 +97,12 @@ var UserManagementApplication = $n2.Class({
 			$textInput.autocomplete({
 				source: this.userSearchService.getJqAutoCompleteSource()
 			});
+			$textInput.on("autocompleteselect", function(ev, el) {
+				_this.queryUsers(el?.item?.value)
+			});
 		};
 	
-		$textInput.keydown(function(e){
+		$textInput.on("keydown",function(e){
 			var charCode = null;
 			if( null === e ) {
 				e = window.event; // IE
@@ -118,21 +121,21 @@ var UserManagementApplication = $n2.Class({
 		$('<input class="userAppQueryButton" type="button">')
 			.val( _loc('Query Users') )
 			.appendTo($userInput)
-			.click(function(){
+			.on("click",function(){
 				_this.queryUsers();
 			});
 			
 		$('<input class="userAppAddUser" type="button">')
 			.val( _loc('Add User') )
 			.appendTo($userInput)
-			.click(function(){
+			.on("click",function(){
 				_this.addUser();
 			});
 		
 		$('<input class="userAppMyUser" type="button">')
 			.val( _loc('My User') )
 			.appendTo($userInput)
-			.click(function(){
+			.on("click",function(){
 				_this.queryMyUser();
 			});
 	}
@@ -214,13 +217,13 @@ var UserManagementApplication = $n2.Class({
 		var $div = this._getDiv();
 		
 		$div.find('.userAppOutput').html('<div>'
-			+'User Name: <input id="addUserName" type="text"/><br/>'
+			+'User ID: <input id="addUserName" type="text"/><br/>'
 			+'Password: <input id="addUserPassword1" type="password"/><br/>'
 			+'Repeat Password: <input id="addUserPassword2" type="password"/><br/>'
 			+'<input id="btnAddUser2" type="button" value="Proceed"/></div>');
-		$('#addUserName').focus();
+		$('#addUserName').trigger("focus");
 		
-		$('#btnAddUser2').click(function(){
+		$('#btnAddUser2').on("click",function(){
 			var userName = $('#addUserName').val();
 			var pw1 = $('#addUserPassword1').val();
 			var pw2 = $('#addUserPassword2').val();
@@ -270,19 +273,24 @@ var UserManagementApplication = $n2.Class({
 		};
 	}
 
-	,queryUsers: function() {
+	,queryUsers: function(searchVal) {
 		var _this = this;
 		
 		this._startRequestWait();
 		
 		var $div = this._getDiv();
 
-		var searchString = $div.find('.userAppSearchText').val();
-		if( typeof(searchString) === 'string' ){
-			searchString = $n2.trim(searchString);
+		let searchString
+		if(searchVal) {
+			searchString = searchVal;
 		} else {
-			searchString = '';
-		};
+			searchString = $div.find('.userAppSearchText').val();
+			if( typeof(searchString) === 'string' ){
+				searchString = $n2.trim(searchString);
+			} else {
+				searchString = '';
+			}
+		}
 		
 		this.userDb.searchUsers(searchString, {
 			onSuccess: reportUsers
@@ -292,82 +300,117 @@ var UserManagementApplication = $n2.Class({
 		});
 
 		function reportUsers(arr) {
-			var $outterDiv = $('<div class="n2UserList"></div>');
-			$div.find('.userAppOutput').empty().append($outterDiv);
+			const t = document.createElement("table");
+			t.setAttribute('id', 'n2-user-table');
+			t.classList.add('n2UserTable');
+
+			const outDiv = document.getElementById('n2-user-app-output');
+			outDiv.innerHTML = "";
+			const thead = document.createElement("thead");
+			const hr = document.createElement("tr");
+			const thdisplay = document.createElement("th");
+			const displayBtn = document.createElement('button')
+			displayBtn.appendChild(document.createTextNode('Display Name'))
+			thdisplay.appendChild(displayBtn);
+			thdisplay.onclick = function() { sortUserTable(0) };
+			hr.appendChild(thdisplay);
+			const thname = document.createElement("th")
+			const nameBtn = document.createElement('button')
+			nameBtn.appendChild(document.createTextNode('User ID'))
+			thname.appendChild(nameBtn);
+			thname.onclick = function() { sortUserTable(1) };
+			hr.appendChild(thname);
+			const themail = document.createElement("th")
+			const emailBtn = document.createElement('button')
+			emailBtn.appendChild(document.createTextNode('Email'))
+			themail.appendChild(emailBtn);
+			emailBtn.onclick = function() { sortUserTable(2) };
+			hr.appendChild(themail);
+			const throles = document.createElement("th")
+			throles.appendChild(document.createTextNode('Roles'));
+			hr.appendChild(throles);
+			thead.appendChild(hr);
+			t.appendChild(thead);
+			const tbody = document.createElement("tbody");
+			t.appendChild(tbody)
 
 			for(var i=0,e=arr.length; i<e; ++i) {
 				var doc = arr[i];
+				reportUserDoc(doc, tbody);
+			}
 
-				reportUserDoc(doc, $outterDiv);
-			};
+			outDiv.appendChild(t);
 		};
 
-		function reportUserDoc(userDoc, $outterDiv) {
-			if( _this.userSchema && _this.showService ){
-				var $div = $('<div></div>');
-				$outterDiv.append($div);
+		function createTd(content, userName) {
+			const td = document.createElement("td");
+			td.classList.add('n2ClickableUser');
+			td.appendChild(content);
+			td.addEventListener("click", () => {
+				_this.initiateEdit(userName);
+				return false;
+			});
+			return td;
+		}
 
-				var $a = $('<a href="#" alt="'+userDoc.name+'">'+userDoc._id+'</a>');
-				$div.append( $a );
-				$a.click(function(){
-					var $a = $(this);
-					var userName = $a.attr('alt');
-					_this.initiateEdit(userName);
-					return false;
-				});
-				
-				_this.showService.displayBriefDescription(
-					$a
-					,{
-						schemaName: 'user'
-					}
-					,userDoc
-				);
-				
-			} else {
-				var $userDiv = $('<div class="n2UserListEntry"></div>')
-					.appendTo($outterDiv);
-				
-				$('<span class="userId"></span>')
-					.text(userDoc._id)
-					.appendTo($userDiv);
-				
-				$('<span class="userRev"></span>')
-					.text(userDoc._rev)
-					.appendTo($userDiv);
+		function reportUserDoc(userDoc, tbody) {
+			const tr = document.createElement("tr");
+
+			const userName = userDoc.name;
+			tr.appendChild(createTd(document.createTextNode(userDoc.display), userName));
+			tr.appendChild(createTd(document.createTextNode(userDoc.name), userName));
+			tr.appendChild(createTd(document.createTextNode(userDoc?.nunaliit_emails?.join(', ')), userName));
+			const tdRole = document.createElement("td");
+			for(const r of userDoc.roles?.sort()) {
+				const d = document.createElement("div");
+				d.classList.add('n2UserChip');
+				d.appendChild(document.createTextNode(r));
+				tdRole.appendChild(d);
+			}
+			tr.appendChild(tdRole);
+			tbody.appendChild(tr);
+		}
+
+		/* https://www.w3schools.com/howto/howto_js_sort_table.asp */
+		function sortUserTable(col) {
+			let table = document.getElementById("n2-user-table");
+			let switched = true;
+			const headerCols = table.children[0].getElementsByTagName("TH");
+			let dir = 1;
+			if(table.children[0].getElementsByTagName("TH")[col].hasAttribute('aria-sort') && table.children[0].getElementsByTagName("TH")[col].getAttribute('aria-sort') == 'ascending') {
+				dir = 0;
+			}
 			
-				var $name = $('<span class="userName"></span>')
-					.text(userDoc._rev)
-					.appendTo($userDiv);
-		
-				$('<a href="#"></a>')
-					.attr('alt',userDoc.name)
-					.text(userDoc.name)
-					.appendTo($name)
-					.click(function(){
-						var $a = $(this);
-						var userName = $a.attr('alt');
-						_this.initiateEdit(userName);
-						return false;
-					});
+			let switchcount = 0;
 
-				var display = '';
-				if( userDoc.display ) {
-					display = userDoc.display;
-				};
-				$('<span class="userDisplay"></span>')
-					.text(display)
-					.appendTo($userDiv);
-				
-				var roles = '';
-				if( userDoc.roles ) {
-					roles = userDoc.roles.join(', ');
+			/* Loop until no more row swaps are performed */
+			while (switched) {
+				switched = false;
+				rows = table.children[1].rows //tbody rows
+				for (let i = 0; i < (rows.length - 1); i++) {
+					const r = rows[i].getElementsByTagName("TD")[col];
+					const rNext = rows[i + 1].getElementsByTagName("TD")[col];
+					if ((dir === 1 && r.innerHTML.toLowerCase() > rNext.innerHTML.toLowerCase()) 
+						|| (dir === 0 && r.innerHTML.toLowerCase() < rNext.innerHTML.toLowerCase())
+					) {
+						switchcount++;
+						switched = true;
+						rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+						break;
+					}
 				}
-				$('<span class="userRoles"></span>')
-					.text(roles)
-					.appendTo($userDiv);
-			};
-		};
+			}
+
+			for(let i = 0; i < headerCols.length; i++) {
+				if(i === col && dir === 1) {
+					headerCols[i].setAttribute('aria-sort', 'ascending')
+				} else if(i === col) {
+					headerCols[i].setAttribute('aria-sort', 'descending')
+				} else if(headerCols[i].hasAttribute('aria-sort')) {
+					headerCols[i].removeAttribute('aria-sort')
+				}
+			}
+		}
 	}
 });
 
@@ -537,7 +580,7 @@ var UserCreationApplication = $n2.Class({
 		$('<input class="choosePassword" type="checkbox"/>')
 			.attr('id',elemId)
 			.appendTo($line)
-			.change(function(){
+			.on("change",function(){
 				var $display = _this._getDiv();
 				var $choose = $display.find('.choosePassword');
 				var chooseMyOwn = $choose.is(':checked');
@@ -560,9 +603,9 @@ var UserCreationApplication = $n2.Class({
 			.appendTo($line);
 		$('<input class="showPassword" type="checkbox"/>')
 			.attr('id',elemId)
-			.attr('checked', true)
+			.prop('checked', true)
 			.appendTo($line)
-			.change(function(){
+			.on("change",function(){
 				var $display = _this._getDiv();
 				var $show = $display.find('.showPassword');
 				var showPw = $show.is(':checked');
@@ -597,7 +640,7 @@ var UserCreationApplication = $n2.Class({
 			.addClass('createUser')
 			.appendTo($form)
 			.text( _loc('Create User') )
-			.click(function(){
+			.on("click",function(){
 				var $display = _this._getDiv();
 				var displayName = $display.find('.displayNameInput').val();
 				var password1 = $display.find('.password1').val();
@@ -703,7 +746,7 @@ var UserCreationApplication = $n2.Class({
 					$('<button>')
 						.text( _loc('Get a different password') )
 						.appendTo($value)
-						.click(function(){
+						.on("click",function(){
 							displayGeneratedPassword();
 							return false;
 						});
@@ -743,7 +786,7 @@ var UserCreationApplication = $n2.Class({
 			$('<div class="value"><input class="password2" type="password"/></div>')
 				.appendTo($line);
 
-			_this._getDiv().find(".showPassword").attr("checked", false)
+			_this._getDiv().find(".showPassword").prop("checked", false)
 			showOwnPassword(false)
 		};
 
@@ -1058,7 +1101,7 @@ var PasswordRecoveryApplication = $n2.Class({
 			.appendTo($line);
 		$('<div class="value"><input class="choosePassword" type="checkbox"/></div>')
 			.appendTo($line)
-			.change(function(){
+			.on("change",function(){
 				var $display = _this._getDiv();
 				var $choose = $display.find('.choosePassword');
 				var chooseMyOwn = $choose.is(':checked');
@@ -1085,7 +1128,7 @@ var PasswordRecoveryApplication = $n2.Class({
 			.addClass('createUser')
 			.appendTo($form)
 			.text( _loc('Set Password') )
-			.click(function(){
+			.on("click",function(){
 				var $display = _this._getDiv();
 				var password1 = $display.find('.password1').val();
 				var password2 = $display.find('.password2').val();
@@ -1167,7 +1210,7 @@ var PasswordRecoveryApplication = $n2.Class({
 					$('<button>')
 						.text( _loc('Get a different password') )
 						.appendTo($value)
-						.click(function(){
+						.on("click",function(){
 							displayGeneratedPassword();
 							return false;
 						});

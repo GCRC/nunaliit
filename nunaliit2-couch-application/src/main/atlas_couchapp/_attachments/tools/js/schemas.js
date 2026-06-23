@@ -224,11 +224,11 @@
 				if( isInstalled ) {
 					var $b = $('<button>Replace</button>');
 					$td.append($b);
-					$b.click( createClickReplaceSchema(schema, received[name]) );
+					$b.on("click", createClickReplaceSchema(schema, received[name]) );
 				} else {
 					var $b = $('<button>Install</button>');
 					$td.append($b);
-					$b.click( createClickInstallSchema(schema) );
+					$b.on("click", createClickInstallSchema(schema) );
 				};
 			};
 		};
@@ -333,7 +333,7 @@
 		function addHeader($e){
 			var $h = $('<h1>Logs <button>Clear</button></h1>');
 			$e.append($h);
-			$h.find('button').click(function(){
+			$h.find('button').on("click",function(){
 				var $d = getLogsDiv();
 				$d.empty();
 				addHeader($d);

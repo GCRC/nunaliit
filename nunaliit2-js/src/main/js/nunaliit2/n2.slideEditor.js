@@ -453,7 +453,7 @@ var SlideEditor = $n2.Class({
 
 			var $back = $('<span class="n2se_history_back"><span class="n2se_btn"></span><span class="n2se_label">'+_loc('Back')+'</span></span>');
 			$history.append($back);
-			$back.click(function(e){
+			$back.on("click",function(e){
 				editor._backClicked(e);
 			});
 
@@ -462,7 +462,7 @@ var SlideEditor = $n2.Class({
 			
 			var $top = $('<span class="n2se_history_level">'+_loc('top')+'</span>');
 			$history.append($top);
-			$top.click(createHistoryCallback(editor, 0));
+			$top.on("click",createHistoryCallback(editor, 0));
 			
 			for(var i=0,e=currentSelectors.length; i<e; ++i) {
 				var $inter = $('<span class="n2se_history_inter"></span>');
@@ -471,7 +471,7 @@ var SlideEditor = $n2.Class({
 				var selector = currentSelectors[i];
 				var $level = $('<span class="n2se_history_level">'+selector+'</span>');
 				$history.append($level);
-				$level.click(createHistoryCallback(editor, i+1));
+				$level.on("click",createHistoryCallback(editor, i+1));
 			};
 
 			var $tail = $('<span class="n2se_history_tail"></span>');
@@ -589,7 +589,7 @@ var SlideEditor = $n2.Class({
 			$display.append($keyDiv);
 			$keyDiv.val(objFrag);
 			if( isValueEditingAllowed ) {
-				$keyDiv.keyup(function(e){
+				$keyDiv.on("keyup",function(e){
 					var $textarea = $(this);
 					var newValue = $textarea.val();
 					var currentValue = stringParentObj[stringKey];
@@ -624,7 +624,7 @@ var SlideEditor = $n2.Class({
 			};
 			
 			$entries.sortable();
-			$entries.bind('sortupdate',function(){
+			$entries.on('sortupdate',function(){
 				editor._resortArray($display,objFrag);
 			});
 			
@@ -657,7 +657,7 @@ var SlideEditor = $n2.Class({
 			
 			if( this.options.objectKeySortAllowed ) {
 				$entries.sortable();
-				$entries.bind('sortupdate',function(){
+				$entries.on('sortupdate',function(){
 					editor._resortObject($display,objFrag);
 				});
 			};
@@ -669,7 +669,7 @@ var SlideEditor = $n2.Class({
 			$display.append($addBar);
 			var $addButton = $('<span class="n2se_addbar_addButton"><span class="n2se_btn"></span><span class="n2se_label">'+_loc('Add')+'</span></span>');
 			$addBar.append($addButton);
-			$addButton.click(function(){
+			$addButton.on("click",function(){
 				if( isArray ) {
 					objFrag.push('');
 					editor._refreshDisplay();
@@ -696,7 +696,7 @@ var SlideEditor = $n2.Class({
 			var $del = $('<span class="n2se_entry_delete"></span>');
 			$keyDiv.append( $del );
 			if( isKeyDeletionAllowed ) {
-				$del.click(function(){
+				$del.on("click",function(){
 					editor.options.getDeleteConfirmation(function(){
 						if( isArray ) {
 							objFrag.splice(key,1);
@@ -720,7 +720,7 @@ var SlideEditor = $n2.Class({
 				$keyDiv.append( $keyInput );
 				$keyInput.val(key);
 				if( isKeyEditingAllowed ) {
-					$keyInput.change(function(e){
+					$keyInput.on("change",function(e){
 						var $keyInput = $(this);
 						var newKey = $keyInput.val();
 		
@@ -791,7 +791,7 @@ var SlideEditor = $n2.Class({
 				requiresForwardButton = true;
 			};
 			if( isValueEditingAllowed ) {
-				$select.change(function(e){
+				$select.on("change",function(e){
 					var $select = $(this);
 					var newType = $select.val();
 	
@@ -829,7 +829,7 @@ var SlideEditor = $n2.Class({
 			if( requiresForwardButton ) {
 				var $forwardButton = $('<span class="n2se_entry_forward"></span>');
 				$keyDiv.append( $forwardButton );
-				$forwardButton.click(function(e){
+				$forwardButton.on("click",function(e){
 					editor._forwardClicked(key);
 				});
 			};
@@ -839,7 +839,7 @@ var SlideEditor = $n2.Class({
 				$keyDiv.append( $textBox );
 				$textBox.val(value);
 				if( isValueEditingAllowed ) {
-					$textBox.keyup(function(e){
+					$textBox.on("keyup",function(e){
 						var $textBox = $(this);
 						var newVal = $textBox.val();
 						if( typeof(objFrag[key]) === 'number' ) {
@@ -865,10 +865,10 @@ var SlideEditor = $n2.Class({
 				var $checkBox = $('<input class="n2se_entry_cb" type="checkbox"/>');
 				$keyDiv.append( $checkBox );
 				if( value ) {
-					$checkBox.attr('checked','checked');
+					$checkBox.prop('checked', true);
 				}
 				if( isValueEditingAllowed ) {
-					$checkBox.click(function(e){
+					$checkBox.on("click",function(e){
 						var $checkBox = $(this);
 						var newVal = $checkBox.is(':checked');
 						objFrag[key] = newVal;
@@ -899,7 +899,7 @@ var SlideEditor = $n2.Class({
 			
 			var $back = $('<div class="n2se_back"></div>');
 			$main.append($back);
-			$back.click(function(e){ editor._backClicked(e); });
+			$back.on("click",function(e){ editor._backClicked(e); });
 			
 			var $display = $('<div class="n2se_display"></div>');
 			$main.append($display);

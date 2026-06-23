@@ -110,7 +110,7 @@ function initiateEdit(docId) {
 			var $a = $('<a href="#'+docId+'" alt="'+docId+'">'+docId+'</a>');
 			showService.printBriefDescription($a,docId);
 			$td.append( $a );
-			$a.click(function(){
+			$a.on("click",function(){
 				var $a = $(this);
 				var docId = $a.attr('alt');
 				initiateEdit(docId);
@@ -142,7 +142,7 @@ function initiateEdit(docId) {
 
 					var $a = $('<a href="#'+docId+'" alt="'+docId+'">'+docId+'</a>');
 					$td.append( $a );
-					$a.click(function(){
+					$a.on("click",function(){
 						var $a = $(this);
 						var docId = $a.attr('alt');
 						initiateEdit(docId);
@@ -292,7 +292,7 @@ function displaySearchResults(displayData) {
 	};
 	
 	function installClick($a, docId){
-		$a.click(function(){
+		$a.on("click",function(){
 			dispatcher.send(DH,{
 				type:'userSelect'
 				,docId:docId
@@ -372,7 +372,7 @@ function main(opts_) {
 	});
 	
 	
-	$('#addDocumentButton').click(addDocument);
+	$('#addDocumentButton').on("click",addDocument);
 	
 	// Editor
 	couchEditor.options.enableAddFile = true;

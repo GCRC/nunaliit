@@ -128,7 +128,7 @@ POSSIBILITY OF SUCH DAMAGE.
 				.addClass('n2widgetLegend_showhideicon')
 				.appendTo($hider);
 
-				$hider.click(function() {
+				$hider.on("click",function() {
 					_this._getElem().toggle();
 					$hider.toggleClass('n2widgetLegend_showhideClosed')
 					$hider.toggleClass('n2widgetLegend_showhide')
@@ -912,7 +912,7 @@ POSSIBILITY OF SUCH DAMAGE.
 					.text(labelName)
 					.attr('data-n2-choiceId',labelId)
 					.appendTo($div)
-					.click(function(){
+					.on("click",function(){
 						var $a = $(this);
 						var choiceId = $a.attr('data-n2-choiceId');
 						_this._selectionChanged(choiceId);

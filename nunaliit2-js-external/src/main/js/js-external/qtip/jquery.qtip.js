@@ -187,7 +187,7 @@ PROTOTYPE.render = function(show) {
 		this._createTitle();
 
 		// Update title only if its not a callback (called in toggle if so)
-		if(!$.isFunction(title)) {
+		if(!(typeof title === 'function')) {
 			deferreds.push( this._updateTitle(title, FALSE) );
 		}
 	}
@@ -196,7 +196,7 @@ PROTOTYPE.render = function(show) {
 	if(button) { this._createButton(); }
 
 	// Set proper rendered flag and update content if not a callback function (called in toggle)
-	if(!$.isFunction(text)) {
+	if(!(typeof text === 'function')) {
 		deferreds.push( this._updateContent(text, FALSE) );
 	}
 	this.rendered = TRUE;
@@ -300,11 +300,11 @@ PROTOTYPE.destroy = function(immediate) {
 	return this.target;
 };
 ;function invalidOpt(a) {
-	return a === NULL || $.type(a) !== 'object';
+	return a === NULL || typeof a !== 'object';
 }
 
 function invalidContent(c) {
-	return !( $.isFunction(c) || (c && c.attr) || c.length || ($.type(c) === 'object' && (c.jquery || c.then) ));
+	return !( typeof c === 'function' || (c && c.attr) || c.length || (typeof c === 'object' && (c.jquery || c.then) ));
 }
 
 // Option object sanitizer
@@ -467,7 +467,7 @@ CHECKS = PROTOTYPE.checks = {
 
 		// Events check
 		'^events.(render|show|move|hide|focus|blur)$': function(obj, o, v) {
-			this.rendered && this.tooltip[($.isFunction(v) ? '' : 'un') + 'bind']('tooltip'+o, v);
+			this.rendered && this.tooltip[(typeof v === 'function' ? '' : 'un') + 'bind']('tooltip'+o, v);
 		},
 
 		// Properties which require event reassignment
@@ -589,12 +589,12 @@ PROTOTYPE.set = function(option, value) {
 	if(!this.rendered || !content) { return FALSE; }
 
 	// Use function to parse content
-	if($.isFunction(content)) {
+	if(typeof content === 'function') {
 		content = content.call(this.elements.target, cache.event, this) || '';
 	}
 
 	// Handle deferred content
-	if($.isFunction(content.then)) {
+	if(typeof content.then === 'function') {
 		cache.waiting = TRUE;
 		return content.then(function(c) {
 			cache.waiting = FALSE;
@@ -669,10 +669,10 @@ PROTOTYPE._createTitle = function()
 	.insertBefore(elements.content)
 
 	// Button-specific events
-	.delegate('.qtip-close', 'mousedown keydown mouseup keyup mouseout', function(event) {
+	.on('mousedown keydown mouseup keyup mouseout', '.qtip-close', function(event) {
 		$(this).toggleClass('ui-state-active ui-state-focus', event.type.substr(-4) === 'down');
 	})
-	.delegate('.qtip-close', 'mouseover mouseout', function(event){
+	.on('mouseover mouseout', '.qtip-close', function(event){
 		$(this).toggleClass('ui-state-hover', event.type === 'mouseover');
 	});
 
@@ -726,7 +726,7 @@ PROTOTYPE.reposition = function(event, effect) {
 		pluginCalculations, offset, adjusted, newClass;
 
 	// Check if absolute position was passed
-	if($.isArray(target) && target.length === 2) {
+	if(Array.isArray(target) && target.length === 2) {
 		// Force left top and set position
 		at = { x: LEFT, y: TOP };
 		position = { left: target[0], top: target[1] };
@@ -879,12 +879,12 @@ PROTOTYPE.reposition = function(event, effect) {
 	delete position.adjusted;
 
 	// If effect is disabled, target it mouse, no animation is defined or positioning gives NaN out, set CSS directly
-	if(effect === FALSE || !visible || isNaN(position.left) || isNaN(position.top) || target === 'mouse' || !$.isFunction(posOptions.effect)) {
+	if(effect === FALSE || !visible || isNaN(position.left) || isNaN(position.top) || target === 'mouse' || !(typeof posOptions.effect === 'function')) {
 		tooltip.css(position);
 	}
 
 	// Use custom function if provided
-	else if($.isFunction(posOptions.effect)) {
+	else if(typeof posOptions.effect === 'function') {
 		posOptions.effect.call(tooltip, this, $.extend({}, position));
 		tooltip.queue(function(next) {
 			// Reset attributes to avoid cross-browser rendering bugs
@@ -1044,8 +1044,8 @@ PROTOTYPE.toggle = function(state, event) {
 		this.mouse && (cache.origin = $.event.fix(this.mouse));
 
 		// Update tooltip content & title if it's a dynamic function
-		if($.isFunction(contentOptions.text)) { this._updateContent(contentOptions.text, FALSE); }
-		if($.isFunction(contentOptions.title)) { this._updateTitle(contentOptions.title, FALSE); }
+		if(typeof contentOptions.text === 'function') { this._updateContent(contentOptions.text, FALSE); }
+		if(typeof contentOptions.title === 'function') { this._updateTitle(contentOptions.title, FALSE); }
 
 		// Cache mousemove events for positioning purposes (if not already tracking)
 		if(!trackingBound && posOptions.target === 'mouse' && posOptions.adjust.mouse) {
@@ -1073,7 +1073,7 @@ PROTOTYPE.toggle = function(state, event) {
 
 		// Remove mouse tracking event if not needed (all tracking qTips are hidden)
 		if(trackingBound && !$(SELECTOR+'[tracking="true"]:visible', opts.solo).not(tooltip).length) {
-			$(document).unbind('mousemove.'+NAMESPACE);
+			$(document).off('mousemove.'+NAMESPACE);
 			trackingBound = FALSE;
 		}
 
@@ -1120,7 +1120,7 @@ PROTOTYPE.toggle = function(state, event) {
 	}
 
 	// Use custom function if provided
-	else if($.isFunction(opts.effect)) {
+	else if(typeof opts.effect === 'function') {
 		tooltip.stop(1, 1);
 		opts.effect.call(tooltip, this);
 		tooltip.queue('fx', function(n) {
@@ -1378,14 +1378,15 @@ PROTOTYPE._bind = function(targets, events, method, suffix, context) {
 	return this;
 };
 PROTOTYPE._unbind = function(targets, suffix) {
-	targets && $(targets).unbind('.' + this._id + (suffix ? '-'+suffix : ''));
+	targets && $(targets).off('.' + this._id + (suffix ? '-'+suffix : ''));
 	return this;
 };
 
 // Global delegation helper
 function delegate(selector, events, method) {
-	$(document.body).delegate(selector,
+	$(document.body).on(
 		(events.split ? events : events.join('.'+NAMESPACE + ' ')) + '.'+NAMESPACE,
+		selector,
 		function() {
 			var api = QTIP.api[ $.attr(this, ATTR_ID) ];
 			api && !api.disabled && method.apply(api, arguments);
@@ -1444,8 +1445,8 @@ PROTOTYPE._assignInitialEvents = function(event) {
 	var options = this.options,
 		showTarget = options.show.target,
 		hideTarget = options.hide.target,
-		showEvents = options.show.event ? $.trim('' + options.show.event).split(' ') : [],
-		hideEvents = options.hide.event ? $.trim('' + options.hide.event).split(' ') : [];
+		showEvents = options.show.event ? ('' + options.show.event).trim().split(' ') : [],
+		hideEvents = options.hide.event ? ('' + options.hide.event).trim().split(' ') : [];
 
 	// Catch remove/removeqtip events on target element to destroy redundant tooltips
 	this._bind(this.elements.target, ['remove', 'removeqtip'], function(event) {
@@ -1512,8 +1513,8 @@ PROTOTYPE._assignEvents = function() {
 		bodyTarget = $(document.body),
 		windowTarget = $(window),
 
-		showEvents = options.show.event ? $.trim('' + options.show.event).split(' ') : [],
-		hideEvents = options.hide.event ? $.trim('' + options.hide.event).split(' ') : [];
+		showEvents = options.show.event ? ('' + options.show.event).trim().split(' ') : [],
+		hideEvents = options.hide.event ? ('' + options.hide.event).trim().split(' ') : [];
 
 
 	// Assign passed event callbacks
@@ -1708,7 +1709,7 @@ function init(elem, id, opts) {
 	html5 = elem.data(opts.metadata.name || 'qtipopts');
 
 	// If we don't get an object returned attempt to parse it manualyl without parseJSON
-	try { html5 = typeof html5 === 'string' ? $.parseJSON(html5) : html5; } catch(e) {}
+	try { html5 = typeof html5 === 'string' ? JSON.parse(html5) : html5; } catch(e) {}
 
 	// Merge in and sanitize metadata
 	config = $.extend(TRUE, {}, QTIP.defaults, opts,
@@ -1823,7 +1824,7 @@ QTIP = $.fn.qtip = function(options, notation, newValue)
 			var api, id;
 
 			// Find next available ID, or use custom ID if provided
-			id = $.isArray(opts.id) ? opts.id[i] : opts.id;
+			id = Array.isArray(opts.id) ? opts.id[i] : opts.id;
 			id = !id || id === FALSE || id.length < 1 || QTIP.api[id] ? QTIP.nextid++ : id;
 
 			// Initialize the qTip and re-grab newly sanitized options
@@ -2118,7 +2119,7 @@ QTIP.defaults = {
 
 	var shape = (area.attr('shape') || 'rect').toLowerCase().replace('poly', 'polygon'),
 		image = $('img[usemap="#'+area.parent('map').attr('name')+'"]'),
-		coordsString = $.trim(area.attr('coords')),
+		coordsString = area.attr('coords').trim(),
 		coordsArray = coordsString.replace(/,$/, '').split(','),
 		imageOffset, coords, i, next, result, len;
 

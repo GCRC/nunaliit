@@ -16,13 +16,13 @@
 	</div>
 	{{else}}
 	<div>
-		<div class="label n2s_localize">Name</div>
+		<div class="label n2s_localize">User ID</div>
 		<div class="value">{{name}}</div>
 		<div class="end"></div>
 	</div>
 	{{/if}}
 	<div>
-		<div class="label n2s_localize">Display</div>
+		<div class="label n2s_localize">Display Name</div>
 		<div class="value">{{display}}</div>
 		<div class="end"></div>
 	</div>

@@ -1168,12 +1168,12 @@ var DbPerspectiveChooser = $n2.Class({
 			.attr('type','checkbox')
 			.attr('id',name)
 			.appendTo($inputDiv)
-			.change(function(){
+			.on("change",function(){
 				var selected = $('#'+elemId).find('input').is(':checked');
 				_this.dbPerspective.setDbSelectorVisibility(selectorInfo.id,selected);
 			});
 		if( selectorInfo.visible ){
-			$input.attr('checked','checked');
+			$input.prop('checked', true);
 		};
 		
 		// Label

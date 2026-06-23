@@ -597,7 +597,7 @@ var TiledDisplay = $n2.Class({
 	 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_edit')
 	 				.text( _loc('Edit') )
 	 				.appendTo($btnDiv)
-	 				.click(function(){
+	 				.on("click",function(){
 						_this._performDocumentEdit(doc);
 						return false;
 					});
@@ -609,7 +609,7 @@ var TiledDisplay = $n2.Class({
 	 				.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_delete')
 	 				.text( _loc('Delete') )
 	 				.appendTo($btnDiv)
-	 				.click(function(){
+	 				.on("click",function(){
 						_this._performDocumentDelete(doc);
 						return false;
 					});
@@ -657,7 +657,7 @@ var TiledDisplay = $n2.Class({
 					.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_find_on_map')
 	 				.text( _loc('Find on Map') )
 	 				.appendTo($btnDiv)
-	 				.click(function(){
+	 				.on("click",function(){
 	 					_this._dispatch({
 	 						type: 'find'
  							,docId: doc._id
@@ -682,7 +682,7 @@ var TiledDisplay = $n2.Class({
 					.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_add_layer')
 	 				.text( _loc('Add Layer') )
 	 				.appendTo($btnDiv)
-	 				.click(function(){
+	 				.on("click",function(){
 	 					_this._performAddLayerToMap(doc);
 						return false;
 					});
@@ -694,7 +694,7 @@ var TiledDisplay = $n2.Class({
 					.addClass('n2DisplayTiled_current_button n2DisplayTiled_current_button_tree_view')
 	 				.text( _loc('Tree View') )
 	 				.appendTo($btnDiv)
-	 				.click(function(){
+	 				.on("click",function(){
 	 					_this._performTreeView(doc);
 						return false;
 					});
@@ -1278,10 +1278,9 @@ var TiledDisplay = $n2.Class({
 		        	.addClass('n2DisplayTiled_tile_' + $n2.utils.stringToHtmlId(docId))
 		        	.attr('n2DocId',docId);
 		        
-		        $elem.hover(
-	        		_this.hoverInFn
-	        		,_this.hoverOutFn
-		        );
+		        $elem
+					.on("mouseenter", _this.hoverInFn)
+					.on("mouseleave", _this.hoverOutFn)
 
 		        var tile = new Tiles.Tile(docId, $elem);
 		        
@@ -1449,7 +1448,7 @@ var TiledDisplay = $n2.Class({
 
 		var clickInstalled = $elem.attr('n2Click');
 		if( !clickInstalled ) {
-			$elem.click(function(){
+			$elem.on("click",function(){
 				_this._dispatch({
 					type:'userSelect'
 					,docId: docId
@@ -1586,7 +1585,7 @@ var SchemaFilter = $n2.Class({
 			.addClass('n2DisplayTiled_filter')
 			.addClass('n2DisplayTiled_filter_all')
 			.appendTo($elem)
-			.click(clickFn);
+			.on("click",clickFn);
 
 		var keepCurrentSelection = false;
 		for(var i=0,e=schemas.length; i<e; ++i){
@@ -1608,7 +1607,7 @@ var SchemaFilter = $n2.Class({
 				.addClass('n2DisplayTiled_filter_schema')
 				.addClass('n2DisplayTiled_filter_schema_'+$n2.utils.stringToHtmlId(schema.name))
 				.appendTo($elem)
-				.click(clickFn);
+				.on("click",clickFn);
 		};
 		
 		if( !keepCurrentSelection ) {
