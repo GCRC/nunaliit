@@ -47,8 +47,8 @@ public class AtlasProperties {
 		atlasProps.setPostgresPassword(props.getProperty("postgres.password"));
 		boolean shouldPgRecreateOnStart = Boolean.parseBoolean(props.getProperty("postgres.recreateOnStart", "true"));
 		atlasProps.setPostgresRecreateOnStart(shouldPgRecreateOnStart);
-		boolean shouldPgSyncOnChange = Boolean.parseBoolean(props.getProperty("postgres.syncOnChange", "false"));
-		atlasProps.setPostgresSyncOnChange(shouldPgSyncOnChange);
+		boolean shouldPgUpdateOnChange = Boolean.parseBoolean(props.getProperty("postgres.updateOnChange", "false"));
+		atlasProps.setPostgresUpdateOnChange(shouldPgUpdateOnChange);
 
 		// CouchDb password
 		try {
@@ -358,7 +358,7 @@ public class AtlasProperties {
 	private String postgresPort = "5432";
 	private String postgresDb;
 	private boolean postgresRecreateOnStart = true;
-	private boolean postgresSyncOnChange = true;
+	private boolean postgresUpdateOnChange = true;
 
 	public String getAtlasName() {
 		return atlasName;
@@ -551,11 +551,11 @@ public class AtlasProperties {
 		this.postgresRecreateOnStart = postgresRecreateOnStart;
 	}
 
-	public boolean isPostgresSyncOnChange() {
-		return postgresSyncOnChange;
+	public boolean isPostgresUpdateOnChange() {
+		return postgresUpdateOnChange;
 	}
 
-	public void setPostgresSyncOnChange(boolean postgresSyncOnChange) {
-		this.postgresSyncOnChange = postgresSyncOnChange;
+	public void setPostgresUpdateOnChange(boolean postgresUpdateOnChange) {
+		this.postgresUpdateOnChange = postgresUpdateOnChange;
 	}
 }

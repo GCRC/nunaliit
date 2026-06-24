@@ -46,6 +46,7 @@ public class PgSyncActions {
 			jdbi = Jdbi.create(pgConnectString, pgUser, pgPass)
 					.installPlugin(new PostgresPlugin());
 		}
+		logger.info("Postgres connection successful with user '" + pgUser + "' and connection string: " + pgConnectString);
 
 	}
 
@@ -406,7 +407,7 @@ public class PgSyncActions {
 						.one();
 				if (cnt < 1) {
 					logger.error("Can't insert nunaliit_source target " + n2src[1]
-							+ " because document with that id does not exist");
+							+ " for document with id " + n2src[0] + " because a target document with that id does not exist");
 				} else {
 					h.execute("UPDATE n2.docs SET nunaliit_source = ? WHERE id = ?", n2src[1], n2src[0]);
 				}

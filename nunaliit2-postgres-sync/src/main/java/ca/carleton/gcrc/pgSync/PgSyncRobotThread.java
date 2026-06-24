@@ -24,12 +24,12 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 	private final ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 	private boolean lastSyncSuccess = true;
 	private ScheduledFuture<?> scheduledPgReload;
-	private Boolean shouldSyncOnChange;
+	private Boolean shouldUpdateOnChange;
 
 	public PgSyncRobotThread(PgSyncServletConfiguration config, boolean shouldRecreate) throws Exception {
 		// this.couchDb = couchDb;
 		this.atlasDesign = config.getAtlasDesignDocument();
-		this.shouldSyncOnChange = config.shouldPostgresSyncOnChange();
+		this.shouldUpdateOnChange = config.shouldPostgresUpdateOnChange();
 
 		actions = new PgSyncActions(config.getPgConnectString(), config.getPostgresUser(),
 				config.getPostgresPass(), config.getCouchDb(),
@@ -81,7 +81,7 @@ public class PgSyncRobotThread extends Thread implements CouchDbChangeListener {
 	@Override
 	public void change(
 			CouchDbChangeListener.Type type, String docId, String rev, JSONObject rawChange, JSONObject d) {
-		if (!shouldSyncOnChange) {
+		if (!shouldUpdateOnChange) {
 			return;
 		}
 

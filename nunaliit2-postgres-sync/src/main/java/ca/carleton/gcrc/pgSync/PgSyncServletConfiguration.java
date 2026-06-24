@@ -15,14 +15,14 @@ public class PgSyncServletConfiguration {
 	private String postgresPort;
 	private String postgresDb;
 	private boolean postgresRecreateOnStart;
-	private boolean postgresSyncOnChange;
+	private boolean postgresUpdateOnChange;
 
-	public boolean shouldPostgresSyncOnChange() {
-		return postgresSyncOnChange;
+	public boolean shouldPostgresUpdateOnChange() {
+		return postgresUpdateOnChange;
 	}
 
-	public void setPostgresSyncOnChange(Boolean postgresSyncOnChange) {
-		this.postgresSyncOnChange = postgresSyncOnChange;
+	public void setPostgresUpdateOnChange(Boolean postgresUpdateOnChange) {
+		this.postgresUpdateOnChange = postgresUpdateOnChange;
 	}
 
 	public boolean shouldPostgresRecreateOnStart() {
