@@ -534,6 +534,9 @@ public class PgSyncActions {
 						String n2Type = (String) pgInfo.get(colName).get("n2Type");
 						if (colPgType.equals("REF")) {
 							if (n2Type.equals("TAG")) {
+								if(update) {
+									h.execute("DELETE FROM " + joinName + " WHERE doc_id = ?", docId);
+								}
 								JSONObject tagObj = (JSONObject) getDocValue(docJson, selector);
 								JSONArray tagVals = tagObj.getJSONArray("tags");
 								Set<String> uTagVals = new HashSet<String>();
