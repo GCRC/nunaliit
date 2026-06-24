@@ -110,7 +110,7 @@ public class CommandRun implements Command {
 			RollingFileAppender fileAppender = new RollingFileAppender();
 			fileAppender.setRollingPolicy(rollingPolicy);
 			fileAppender.setTriggeringPolicy(rollingPolicy);
-			fileAppender.setLayout(new PatternLayout("%d{ISO8601}[%-5p]: %m%n"));
+			fileAppender.setLayout(new PatternLayout("%d{ISO8601}[%-5p] - %c{-2}: %m%n"));
 			fileAppender.activateOptions();
 			
 			rootLogger.addAppender(fileAppender);
