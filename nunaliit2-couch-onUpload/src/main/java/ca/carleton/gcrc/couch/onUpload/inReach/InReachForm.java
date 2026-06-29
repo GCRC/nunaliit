@@ -8,5 +8,6 @@ public interface InReachForm {
 	String getDestination();
 	String getPrefix();
 	String getDelimiter();
+	String getIdentifier();
 	List<InReachFormField> getFields();
 }
