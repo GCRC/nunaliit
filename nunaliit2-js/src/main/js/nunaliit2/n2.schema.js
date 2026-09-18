@@ -2094,11 +2094,11 @@ var Form = $n2.Class({
 			else if( 'date' === classInfo.type ) {
 				if( value ) {
 					value = value.date;
-				};
+				}
 				$input.val(value);
 				$input.attr('n2OriginalDate',value);
 
-				if( $input.datepicker ) {
+				if( $input.datepicker && !$input.parents('.value')[0].hasAttribute('n2s-disable-date-picker')) {
 					$input.datepicker({
 						dateFormat: 'yy-mm-dd'
 						,gotoCurrent: true
@@ -2112,8 +2112,7 @@ var Form = $n2.Class({
 							changeHandler.call($input);
 						}
 					});
-				};
-				
+				}
 			} else if( 'numeric' === classInfo.type ) {
 				//if( false == $n2.utils.isNumber(value) ) {
 				//	value = 0;
