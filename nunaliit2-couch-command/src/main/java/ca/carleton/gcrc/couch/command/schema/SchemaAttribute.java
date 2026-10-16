@@ -197,6 +197,11 @@ public class SchemaAttribute {
 		if( "triple".equals(type) ) {
 			SchemaAttribute.SetTripleAttributes(attribute, jsonAttr);
 		}
+
+		{
+			boolean disableDatePicker = jsonAttr.optBoolean("disableDatePicker",false);
+			attribute.setDisableDatePicker(disableDatePicker);
+		}
 		
 		return attribute;
 	}
@@ -252,6 +257,7 @@ public class SchemaAttribute {
 	private SchemaAttribute tripleSubject = null;
 	private SchemaAttribute triplePredicate = null;
 	private SchemaAttribute tripleObject = null;
+	private boolean disableDatePicker = false;
 
 	public SchemaAttribute(String type){
 		this.type = type;
@@ -460,6 +466,14 @@ public class SchemaAttribute {
 		this.tripleObject = object;
 	}
 
+	public boolean isDisableDatePicker() {
+		return disableDatePicker;
+	}
+
+	public void setDisableDatePicker(boolean disableDatePicker) {
+		this.disableDatePicker = disableDatePicker;
+	}
+
 	public JSONObject toJson() throws Exception {
 		JSONObject jsonAttr = new JSONObject();
 		
@@ -483,6 +497,7 @@ public class SchemaAttribute {
 		if( null != maxAudioRecordingLengthSeconds ) jsonAttr.put("maxAudioRecordingLengthSeconds", maxAudioRecordingLengthSeconds.intValue());
 		if( null != maxVideoRecordingLengthSeconds ) jsonAttr.put("maxVideoRecordingLengthSeconds", maxVideoRecordingLengthSeconds.intValue());
 		if( null != recordVideoSize ) jsonAttr.put("recordVideoSize", recordVideoSize);
+		if( disableDatePicker ) jsonAttr.put("disableDatePicker", true);
 
 		if( options.size() > 0 ){
 			JSONArray jsonOptions = new JSONArray();
@@ -1475,9 +1490,13 @@ public class SchemaAttribute {
 			 || "numeric".equals(type)){
 				if( null != id ){
 					String fieldType = "";
+					String disableDatePickerStr = "";
 					if( "localized".equals(type) ){
 						fieldType = ",localized";
 					} else if( "date".equals(type) ){
+						if( disableDatePicker ){
+							disableDatePickerStr = " n2s-disable-date-picker";
+						}
 						fieldType = ",date";
 					} else if( "reference".equals(type) ){
 						fieldType = ",reference";
@@ -1510,7 +1529,7 @@ public class SchemaAttribute {
 					pw.println("\t\t\t\t<div class=\""+schemaClass+"_"+id+"\">");
 
 					pw.println("\t\t\t\t\t<div class=\"label"+labelLocalizeClass+"\">"+label+"</div>");
-					pw.println("\t\t\t\t\t<div class=\"value\">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
+					pw.println("\t\t\t\t\t<div class=\"value\""+disableDatePickerStr+">{{#:field}}"+id+fieldType+"{{/:field}}</div>");
 					pw.println("\t\t\t\t\t<div class=\"end\"></div>");
 					
 					pw.println("\t\t\t\t</div>");
