@@ -49,6 +49,14 @@ public class InReachFormXml implements InReachForm {
 	}
 
 	@Override
+	public String getIdentifier() {
+		if (null != title && null != prefix) {
+			return prefix.replaceAll("[^a-zA-Z0-9_]", "_") + title.replaceAll("[^a-zA-Z0-9_]", "_");
+		}
+		return null;
+	}
+
+	@Override
 	public String getDelimiter() {
 		return delimiter;
 	}
