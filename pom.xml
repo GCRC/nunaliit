@@ -78,7 +78,7 @@
 		<commons-io.version>2.21.0</commons-io.version>
 		<commons-compress.version>1.21</commons-compress.version>
 		<commons-lang3.version>3.9</commons-lang3.version>
-		<jetty.version>9.4.46.v20220331</jetty.version>
+		<jetty.version>10.0.26</jetty.version>
 		<json.version>20230618</json.version>
 		<jslint4java-maven-plugin.version>2.0.5</jslint4java-maven-plugin.version>
 		<junit.version>4.13.2</junit.version>
