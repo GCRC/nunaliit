@@ -11,7 +11,7 @@
   <description>Servlet API to access a database via dbSec (nunaliit2-dbSec)</description>
   <dependencies>
   	<dependency>
-  		<groupId>javax.servlet</groupId>
+  		<groupId>jakarta.servlet</groupId>
   		<artifactId>javax.servlet-api</artifactId>
   		<version>${servlet-api.version}</version>
   		<scope>provided</scope>
