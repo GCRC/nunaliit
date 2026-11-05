@@ -5,7 +5,7 @@ import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import org.eclipse.jetty.proxy.ProxyServlet;
+import org.eclipse.jetty.ee9.proxy.ProxyServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
