@@ -32,7 +32,7 @@ $Id$
 */
 package ca.carleton.gcrc.auth;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import ca.carleton.gcrc.auth.common.AuthenticationUtils;
 import ca.carleton.gcrc.auth.common.User;
