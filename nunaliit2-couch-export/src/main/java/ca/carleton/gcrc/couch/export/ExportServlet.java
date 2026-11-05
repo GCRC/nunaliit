@@ -21,10 +21,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.fileupload.FileItemIterator;
-import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.fileupload.util.Streams;
+import org.apache.commons.fileupload2.core.FileItemInputIterator;
+import org.apache.commons.fileupload2.core.FileItemInput;
+import org.apache.commons.fileupload2.jakarta.servlet5.JakartaServletFileUpload;
+import org.apache.commons.io.IOUtils;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -388,7 +388,7 @@ public class ExportServlet extends JsonServlet {
 		// Ignore final path. Allows client to set any download file name
 		
 		try {
-			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+			boolean isMultipart = JakartaServletFileUpload.isMultipartContent(request);
 			if( !isMultipart ){
 				throw new Exception("Must be multipart form data");
 			}
@@ -398,16 +398,16 @@ public class ExportServlet extends JsonServlet {
 			String contentType = null;
 			
 			// Parse the request
-			ServletFileUpload upload = new ServletFileUpload();
-			FileItemIterator iter = upload.getItemIterator(request);
+			JakartaServletFileUpload upload = new JakartaServletFileUpload();
+			FileItemInputIterator iter = upload.getItemIterator(request);
 			while (iter.hasNext()) {
-			    FileItemStream item = iter.next();
+			    FileItemInput item = iter.next();
 			    String name = item.getFieldName();
-			    InputStream stream = item.openStream();
+			    InputStream stream = item.getInputStream();
 
 		    	// Parse format
 			    if( "format".equals(name) ){
-					String formatStr = Streams.asString(stream);
+					String formatStr = IOUtils.toString(stream, "UTF-8");
 					
 					boolean found = false;
 					for(Format f : Format.values()){
@@ -423,7 +423,7 @@ public class ExportServlet extends JsonServlet {
 
 			    } else if( "filter".equals(name) ){
 			    	// Parse filter
-					String filterStr = Streams.asString(stream);
+					String filterStr = IOUtils.toString(stream, "UTF-8");
 
 					
 					boolean found = false;
@@ -440,7 +440,7 @@ public class ExportServlet extends JsonServlet {
 
 			    } else if( "contentType".equals(name) ){
 			    	// Parse contentType
-			    	contentType = Streams.asString(stream);
+			    	contentType = IOUtils.toString(stream, "UTF-8");
 
 			    } else if( "data".equals(name) ){
 			    	// Start export. Item "data" should be last item in form
