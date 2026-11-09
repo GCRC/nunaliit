@@ -199,7 +199,7 @@ public class CommandRun implements Command {
         	servletHolder.setInitParameter("dirAllowed", "false");
         	servletHolder.setInitParameter("gzip", "true");
         	servletHolder.setInitParameter("pathInfoOnly", "true");
-        	servletHolder.setInitParameter("resourceBase", mediaDir.getAbsolutePath());
+        	servletHolder.setInitParameter("baseResource", mediaDir.getAbsolutePath());
         	context.addServlet(servletHolder,"/media/*");
         }
 
