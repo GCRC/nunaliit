@@ -3,7 +3,7 @@ package ca.carleton.gcrc.couch.utils;
 import junit.framework.TestCase;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;

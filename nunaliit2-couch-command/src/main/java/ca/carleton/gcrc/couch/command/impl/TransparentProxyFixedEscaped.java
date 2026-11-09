@@ -3,9 +3,9 @@ package ca.carleton.gcrc.couch.command.impl;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
-import org.eclipse.jetty.proxy.ProxyServlet;
+import org.eclipse.jetty.ee9.proxy.ProxyServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

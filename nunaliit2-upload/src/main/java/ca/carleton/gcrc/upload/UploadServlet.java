@@ -47,20 +47,20 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Vector;
 
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletConfig;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
-import org.apache.commons.fileupload.FileItemIterator;
-import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.FileUploadBase.FileSizeLimitExceededException;
-import org.apache.commons.fileupload.FileUploadBase.SizeLimitExceededException;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
-import org.apache.commons.fileupload.servlet.FileCleanerCleanup;
-import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.apache.commons.fileupload.util.Streams;
+import org.apache.commons.fileupload2.core.FileItemInputIterator;
+import org.apache.commons.fileupload2.core.FileItemInput;
+import org.apache.commons.fileupload2.core.FileUploadByteCountLimitException;
+import org.apache.commons.fileupload2.core.FileUploadSizeException;
+import org.apache.commons.fileupload2.core.DiskFileItemFactory;
+import org.apache.commons.fileupload2.jakarta.servlet5.JakartaFileCleaner;
+import org.apache.commons.fileupload2.jakarta.servlet5.JakartaServletFileUpload;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.FileCleaningTracker;
 import org.apache.commons.io.FilenameUtils;
 import org.json.JSONArray;
@@ -185,17 +185,17 @@ public class UploadServlet extends HttpServlet {
 			logger.info("OnUploadedListener: "+onUploadedListener.getClass().getSimpleName());
 		}
 
-		fileItemfactory = new DiskFileItemFactory();
-		fileItemfactory.setSizeThreshold(maxMemorySize);
-		if( null != fileItemTempDir ) {
-			fileItemfactory.setRepository(fileItemTempDir);
-		}
+		fileItemfactory = DiskFileItemFactory
+			.builder()
+			.setThreshold(maxMemorySize)
+			.setPath(fileItemTempDir != null ? fileItemTempDir.toPath() : DiskFileItemFactory.builder().getPath())
+			.get();
 		
 		progressTracker = ProgressTrackerSingleton.getSingleton();
 	}
 
 	public void destroy() {
-		FileCleaningTracker cleaner = FileCleanerCleanup.getFileCleaningTracker(this.getServletContext());
+		FileCleaningTracker cleaner = JakartaFileCleaner.getFileCleaningTracker(this.getServletContext());
 		if( null != cleaner ) {
 			cleaner.exitWhenFinished();
 		}
@@ -261,7 +261,7 @@ public class UploadServlet extends HttpServlet {
 		
 		try {
 			// Check that we have a file upload request
-			boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+			boolean isMultipart = JakartaServletFileUpload.isMultipartContent(request);
 			
 			if ( false == isMultipart ) {
 				throw new Exception("File upload must be a multi-part request");
@@ -269,17 +269,17 @@ public class UploadServlet extends HttpServlet {
 			
 			UploadProgressListener listener = new UploadProgressListener(progressTracker);
 			
-			ServletFileUpload upload = new ServletFileUpload(fileItemfactory);
-			upload.setSizeMax(maxUploadSize);
+			JakartaServletFileUpload upload = new JakartaServletFileUpload(fileItemfactory);
+			upload.setMaxSize(maxUploadSize);
 			upload.setProgressListener(listener);
 			
-			FileItemIterator iter = upload.getItemIterator(request);
+			FileItemInputIterator iter = upload.getItemIterator(request);
 			while (iter.hasNext()) {
-			    FileItemStream item = iter.next();
+			    FileItemInput item = iter.next();
 			    String name = item.getFieldName();
-			    InputStream stream = item.openStream();
+			    InputStream stream = item.getInputStream();
 			    if (item.isFormField()) {
-			    	String value = Streams.asString(stream);
+			    	String value = IOUtils.toString(stream, "UTF-8");
 
 			    	logger.info("Upload "+name+":"+value); 
 			    	
@@ -417,7 +417,7 @@ public class UploadServlet extends HttpServlet {
 				obj.write(osw);
 				osw.flush();
 			}
-		} catch (SizeLimitExceededException e) {
+		} catch (FileUploadByteCountLimitException e) {
 			if( null != onUploadedListener ) {
 				onUploadedListener.onError(
 					progressId
@@ -428,7 +428,7 @@ public class UploadServlet extends HttpServlet {
 				);
 			}
 			reportError(response, HttpServletResponse.SC_REQUEST_ENTITY_TOO_LARGE, e, loadedFiles, progressId);
-		} catch (FileSizeLimitExceededException e) {
+		} catch (FileUploadSizeException e) {
 			if( null != onUploadedListener ) {
 				onUploadedListener.onError(
 					progressId

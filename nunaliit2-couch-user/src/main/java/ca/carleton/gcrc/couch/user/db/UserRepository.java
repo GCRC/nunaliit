@@ -3,7 +3,7 @@ package ca.carleton.gcrc.couch.user.db;
 import java.util.Collection;
 import java.util.List;
 
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 
 import org.json.JSONObject;
 

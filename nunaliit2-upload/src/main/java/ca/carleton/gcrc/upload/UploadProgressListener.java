@@ -32,7 +32,7 @@ $Id$
 */
 package ca.carleton.gcrc.upload;
 
-import org.apache.commons.fileupload.ProgressListener;
+import org.apache.commons.fileupload2.core.ProgressListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
