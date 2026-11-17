@@ -85,6 +85,19 @@ function main_init(config, atlasDoc) {
 	const atlasDocLanguages = atlasDoc?.nunaliit_atlas?.nunaliit_languages
 	if (atlasDocLanguages && languageService) {
 		languageService.setLanguages(atlasDocLanguages)
+		const l10nCookie = $n2.cookie.getCookie('nunaliit-l10n')
+		if (l10nCookie === null) {
+			const defaultLanguage = languageService.getDefaultLanguage()
+			if (defaultLanguage !== null) {
+				const dispatchService = config?.directory?.dispatchService
+				if (dispatchService) {
+					dispatchService.synchronousCall(DH, {
+						type: 'languageSelect',
+						lang: defaultLanguage.code
+					})
+				}
+			}
+		}
 	}
 
 	new $n2.couchModule.ModuleDisplay({
