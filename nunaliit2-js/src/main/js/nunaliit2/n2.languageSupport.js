@@ -361,6 +361,10 @@ var LanguageService = $n2.Class({
 		return this.languages;
 	},
 
+	getDefaultLanguage: function() {
+		return this.defaultLanguage
+	},
+
 	setLanguages: function(languages) {
 		this.defaultLanguage = null
 		this.languages = []
