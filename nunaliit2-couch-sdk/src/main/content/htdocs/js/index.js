@@ -81,6 +81,12 @@ function main_init(config, atlasDoc) {
 		};
 	};
 
+	const languageService = config?.directory?.languageService
+	const atlasDocLanguages = atlasDoc?.nunaliit_atlas?.nunaliit_languages
+	if (atlasDocLanguages && languageService) {
+		languageService.setLanguages(atlasDocLanguages)
+	}
+
 	new $n2.couchModule.ModuleDisplay({
 		moduleName: moduleName
 		,config: config
