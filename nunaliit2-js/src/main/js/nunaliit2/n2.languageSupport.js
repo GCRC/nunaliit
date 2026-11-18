@@ -320,6 +320,8 @@ var LanguageService = $n2.Class({
 	dispatcher: null,
 	
 	languages: null,
+
+	defaultLanguage: null,
 	
 	useToggleWidget: null,
 	
@@ -327,6 +329,7 @@ var LanguageService = $n2.Class({
 		var opts = $n2.extend({
 			directory: null
 			,languages: null
+			,defaultLanguage: null
 		},opts_);
 
 		var _this = this;
@@ -356,6 +359,29 @@ var LanguageService = $n2.Class({
 
 	getLanguages: function(){
 		return this.languages;
+	},
+
+	getDefaultLanguage: function() {
+		return this.defaultLanguage
+	},
+
+	setLanguages: function(languages) {
+		this.defaultLanguage = null
+		this.languages = []
+		if (Array.isArray(languages)) {
+			for (let i = 0; i < languages.length; i++) {
+				const language = languages[i]
+				if (language.name && language.code) {
+					this.languages.push(language)
+					if (language.default) {
+						this.defaultLanguage = language
+					}
+				}
+			}
+		}
+		else {
+			throw new Error(_loc("Languages to be set must be an array"))
+		}
 	},
 	
 	addLanguage: function(language){
@@ -398,6 +424,9 @@ var LanguageService = $n2.Class({
 		if( 'languageSelect' === msg.type ){
 			if( msg.lang ) {
 				this._selectLanguage(msg.lang);
+			}
+			else if (this.defaultLanguage) {
+				this._selectLanguage(this.defaultLanguage.code)
 			} else {
 				this._resetLanguage();
 			};
