@@ -1,8 +1,8 @@
 package ca.carleton.gcrc.couch.onUpload.inReach;
 
 import java.io.File;
-import java.util.List;
 import java.net.URL;
+import java.util.List;
 
 import org.json.JSONObject;
 
@@ -72,12 +72,12 @@ public class InReachProcessorTest extends TestCase {
 
 		// Test schema name
 		String schemaName = savedDoc.getSchemaName();
-		if (false == "inReach_Conditions".equals(schemaName)) {
+		if (false == "inReach_TSFN_C_1_Conditions".equals(schemaName)) {
 			fail("Unexpected schema name: " + schemaName);
 		}
 
 		// Check data
-		JSONObject data = savedDocJson.getJSONObject("inReach_Conditions");
+		JSONObject data = savedDocJson.getJSONObject("inReach_TSFN_C_1_Conditions");
 		String condition = data.optString("Condition", null);
 		if (false == "high water".equals(condition)) {
 			fail("Unexpected data");
@@ -135,11 +135,11 @@ public class InReachProcessorTest extends TestCase {
 		}
 
 		String schemaName = savedDoc.getSchemaName();
-		if (false == "inReach_Wildlife".equals(schemaName)) {
+		if (false == "inReach_TSFN_W_1_Wildlife".equals(schemaName)) {
 			fail("Unexpected schema name: " + schemaName);
 		}
 
-		JSONObject data = singleCreatedDocument.getJSONObject("inReach_Wildlife");
+		JSONObject data = singleCreatedDocument.getJSONObject("inReach_TSFN_W_1_Wildlife");
 		String condition = data.optString("What", null);
 		if (false == "Caribou".equals(condition)) {
 			fail("Unexpected data");
@@ -186,7 +186,7 @@ public class InReachProcessorTest extends TestCase {
 			Integer emergencyState = jsonItem.getInt("EmergencyState");
 
 			if (i == 0) {
-				if (false == "inReach_Wildlife".equals(schemaName)) {
+				if (false == "inReach_TSFN_W_1_Wildlife".equals(schemaName)) {
 					fail("Unexpected schema name: " + schemaName);
 				}
 				if (!messageType.equals("FreeTextMessage")) {
@@ -196,7 +196,7 @@ public class InReachProcessorTest extends TestCase {
 					fail("EmergencyState expected to be -1");
 				}
 			} else if (i == 1) {
-				if (false == "inReach_Place".equals(schemaName)) {
+				if (false == "inReach_TSFN_P_1_Place".equals(schemaName)) {
 					fail("Unexpected schema name: " + schemaName);
 				}
 				if (!messageType.equals("FreeTextMessage")) {
@@ -206,7 +206,7 @@ public class InReachProcessorTest extends TestCase {
 					fail("EmergencyState expected to be -1");
 				}
 			} else if (i == 2) {
-				if (false == "inReach_Issues".equals(schemaName)) {
+				if (false == "inReach_TSFN_I_1_Issues".equals(schemaName)) {
 					fail("Unexpected schema name: " + schemaName);
 				}
 				if (!messageType.equals("FreeTextMessage")) {
@@ -226,7 +226,7 @@ public class InReachProcessorTest extends TestCase {
 					fail("EmergencyState expected to be -1");
 				}
 			} else if (i == 4) {
-				if (!messageType.equals("NunaliitUnhandledGarminExploreMessageCode-5")) {
+				if (!messageType.equals("NunaliitUnhandledGarminExploreMessageCode-9999")) {
 					fail("Expected unhandled message code string for unimplemented/unknown message codes");
 				}
 				if (emergencyState != -1) {
@@ -307,12 +307,12 @@ public class InReachProcessorTest extends TestCase {
 
 		// Test schema name
 		String schemaName = savedDoc.getSchemaName();
-		if (false == "inReach_Conditions".equals(schemaName)) {
+		if (false == "inReach_TSFN_C_1_Conditions".equals(schemaName)) {
 			fail("Unexpected schema name: " + schemaName);
 		}
 
 		// Check data
-		JSONObject data = savedDocJson.getJSONObject("inReach_Conditions");
+		JSONObject data = savedDocJson.getJSONObject("inReach_TSFN_C_1_Conditions");
 		{
 			String condition = data.optString("Condition", null);
 			if (false == "other (put in notes)".equals(condition)) {

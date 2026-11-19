@@ -126,7 +126,7 @@
         {
             "addresses": [],
             "imei": "1234567890",
-            "messageCode": 5,
+            "messageCode": 9999,
             "freeText": "",
             "timeStamp": 1699459999000,
             "point": {
