@@ -9,15 +9,16 @@ jobs:
   build-nunaliit-and-release:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           fetch-tags: true
       - name: Set up JDK 24
-        uses: actions/setup-java@v5.1.0
+        uses: actions/setup-java@v6
         with:
-          java-version: '24.0.2'
+          java-version: '21'
           java-package: 'jdk'
+          check-latest: true
           distribution: 'temurin'
           cache: 'maven'
       - name: Build Nunaliit with Maven
