@@ -1,4 +1,4 @@
-name: Synchronize wiki
+name: Synchronize wiki edits in docs/ to the actual wiki
 on:
   push:
     branches: [main]
@@ -17,4 +17,5 @@ jobs:
       - uses: Andrew-Chen-Wang/github-wiki-action@v5
         with:
           direction: push
+          preprocess: true
           path: docs/
