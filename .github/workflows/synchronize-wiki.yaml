@@ -1,0 +1,20 @@
+name: Synchronize wiki
+on:
+  push:
+    branches: [main]
+    paths:
+      - docs/**
+concurrency:
+  group: synchronize-wiki
+  cancel-in-progress: true
+permissions:
+  contents: write
+jobs:
+  synchronize-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: Andrew-Chen-Wang/github-wiki-action@v5
+        with:
+          direction: push
+          path: docs/
