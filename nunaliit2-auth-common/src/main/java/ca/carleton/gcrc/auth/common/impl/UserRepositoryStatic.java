@@ -36,7 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-import javax.servlet.ServletConfig;
+import jakarta.servlet.ServletConfig;
 
 import ca.carleton.gcrc.auth.common.User;
 import ca.carleton.gcrc.auth.common.UserRepository;

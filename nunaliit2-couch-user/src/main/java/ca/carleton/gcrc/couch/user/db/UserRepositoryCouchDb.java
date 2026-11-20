@@ -5,7 +5,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Vector;
 
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;

@@ -34,8 +34,8 @@ package ca.carleton.gcrc.auth.common;
 
 import java.security.Principal;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletRequestWrapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequestWrapper;
 
 import ca.carleton.gcrc.auth.common.impl.AuthPrincipal;
 

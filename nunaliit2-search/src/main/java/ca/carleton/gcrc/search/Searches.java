@@ -44,7 +44,7 @@ import java.util.Properties;
 import java.util.Vector;
 import java.util.HashMap;
 import java.util.Map;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletException;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

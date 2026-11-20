@@ -41,8 +41,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

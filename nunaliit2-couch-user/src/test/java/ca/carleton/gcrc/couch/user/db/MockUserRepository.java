@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import ca.carleton.gcrc.couch.user.UserDocument;
-import javax.servlet.http.Cookie;
+import jakarta.servlet.http.Cookie;
 
 import org.json.JSONArray;
 import org.json.JSONObject;

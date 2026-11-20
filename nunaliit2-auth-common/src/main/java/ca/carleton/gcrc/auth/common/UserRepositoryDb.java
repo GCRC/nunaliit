@@ -38,8 +38,8 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.Vector;
 
-import javax.servlet.ServletContext;
-import javax.servlet.ServletException;
+import jakarta.servlet.ServletContext;
+import jakarta.servlet.ServletException;
 
 import ca.carleton.gcrc.auth.common.impl.UserAndPassword;
 import ca.carleton.gcrc.auth.common.impl.UserImpl;
