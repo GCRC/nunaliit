@@ -2213,7 +2213,8 @@ var DomStyler = $n2.Class({
 				chipInputId = $jq.attr('n2associatedmdc');
 				$chipInput = $('#' + chipInputId);
 				var chipsetsUpdateCallback = $('#' + chipSet.id).data('chipsetsUpdateCallback');
-				$chipInput.keydown(function(event){
+
+				function addChip(event) {
 					if (event.key === 'Enter' || event.keyCode === 13) {
 						if ($chipInput.val()){
 							var newTagText = $chipInput.val()
@@ -2223,12 +2224,12 @@ var DomStyler = $n2.Class({
 								fraction: 'full',
 								type: 'unknown'
 							});
-
+		
 							// Clear Input Field
 							$chipInput.val('');
 							chipEl.insertBefore($chipInput);
 							attachedChipSet.addChip(chipEl[0]);
-
+		
 							var chiplist = updateTagList();
 							if (typeof chipsetsUpdateCallback === 'function'){
 								chipsetsUpdateCallback(chiplist, "ADD", {
@@ -2236,11 +2237,35 @@ var DomStyler = $n2.Class({
 									type: 'unknown',
 									fraction: 'full'}
 								);
-								
 							}
 						}
 					}
-				});
+					else if (event.item) {
+						const newTagText = event.item.value
+						const chipEl = generateChip({
+							value: newTagText,
+							fraction: 'full',
+							type: 'unknown'
+						});
+	
+						$chipInput.val('');
+						chipEl.insertBefore($chipInput);
+						attachedChipSet.addChip(chipEl[0]);
+						
+						var chiplist = updateTagList();
+						if (typeof chipsetsUpdateCallback === 'function'){
+							chipsetsUpdateCallback(chiplist, "ADD", {
+								chipText: newTagText,
+								type: 'unknown',
+								fraction: 'full'
+							});
+							$chipInput.val('');
+						}
+					}
+				}
+
+				$chipInput.keydown(addChip);
+				$chipInput.on('MDCTextField:autocompleteOptionSelect', addChip)
 
 				attachedChipSet.listen('MDCChip:removal', function(event){
 					if (event.detail && event.detail.chipId) {

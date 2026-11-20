@@ -2126,7 +2126,19 @@ var MDCTextField = $n2.Class('MDCTextField', MDC, {
 			if ( $txtFldInput.autocomplete
 				&& this._autoCompleteServiceViewName ){
 				$txtFldInput.autocomplete({
-					source: this._getJqAutoCompleteSource()
+					source: this._getJqAutoCompleteSource(),
+					select: function(event, ui) {
+						setTimeout(() => {
+							if (event.handleObj.origType === 'click') {
+								// otherwise you duplicate it due to
+								// existing keydown Enter handler already
+								$txtFldInput.trigger({
+									type: 'MDCTextField:autocompleteOptionSelect',
+									item: ui.item
+								})
+							}
+						})
+					},
 				});
 				
 			}
