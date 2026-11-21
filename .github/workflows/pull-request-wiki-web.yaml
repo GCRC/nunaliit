@@ -13,6 +13,7 @@ jobs:
       - uses: Andrew-Chen-Wang/github-wiki-action@v5
         with:
           direction: pull
+          path: docs/
       - uses: peter-evans/create-pull-request@v8
         with:
           branch: sync-wiki
