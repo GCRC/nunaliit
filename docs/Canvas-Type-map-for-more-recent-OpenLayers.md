@@ -14,7 +14,7 @@ canvas.json contents:
 			"name": "Open Street Map",
 			"type": "osm",
 			"options": {
-				"url": "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+				"url": "https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 			}
 		},
 		{
