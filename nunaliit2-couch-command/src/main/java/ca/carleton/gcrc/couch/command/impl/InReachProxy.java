@@ -5,15 +5,15 @@ import java.util.regex.Pattern;
 import java.util.Arrays;
 import java.util.Base64;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 
-import org.eclipse.jetty.client.api.Request;
-import org.eclipse.jetty.client.api.Response;
+import org.eclipse.jetty.client.Request;
+import org.eclipse.jetty.client.Response;
 import org.eclipse.jetty.util.Callback;
 
-import org.eclipse.jetty.proxy.ProxyServlet;
+import org.eclipse.jetty.ee9.proxy.ProxyServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +78,7 @@ public class InReachProxy extends ProxyServlet.Transparent {
 		String basicauth = username + ":" + password;
 		String auth64 = "Basic " + Base64.getEncoder().encodeToString(basicauth.getBytes());
 		
-		proxyRequest.header("Authorization", auth64);
+		proxyRequest.headers(h -> h.add("Authorization", auth64));
 		super.sendProxyRequest(clientRequest, proxyResponse, proxyRequest);
 	}
 }
